@@ -8,6 +8,7 @@
 import Foundation
 import HealthKit
 
+@Observable
 class RootViewModel {
     
     static let healthStore: HKHealthStore = HKHealthStore()
@@ -25,6 +26,25 @@ class RootViewModel {
     
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
+    
+    private(set) var activitySection: RootActivitySectionViewModel = .init(
+        isPlaceholder: true,
+        title: "Activity Stats",
+        workouts: [])
+    
+    init () {
+        Task {
+            await fetchWorkouts()
+        }
+    }
+    
+    // MARK: UI
+    
+    private func refreshUi(with workouts: [HKWorkout]?) {
+        activitySection = .init(title: "Activity Stats", workouts: workouts)
+    }
+    
+    // MARK: - HealthKit
     
     func fetchWorkouts() async {
         do {
@@ -120,6 +140,8 @@ class RootViewModel {
                 }
                 print("PTD Sample \(idx)", sample)
             }
+            
+            self.refreshUi(with: samplesOrNil?.compactMap { $0 as? HKWorkout } )
             
         }
         

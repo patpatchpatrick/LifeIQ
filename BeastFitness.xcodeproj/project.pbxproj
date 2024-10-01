@@ -17,6 +17,10 @@
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
+		F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E052CAB9D3400C2B90B /* RootSection.swift */; };
+		F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */; };
+		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
+		F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +55,10 @@
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
+		F6F94E052CAB9D3400C2B90B /* RootSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootSection.swift; sourceTree = "<group>"; };
+		F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootActivitySectionViewModel.swift; sourceTree = "<group>"; };
+		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
+		F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkout+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +158,7 @@
 			isa = PBXGroup;
 			children = (
 				F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */,
+				F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -157,7 +166,7 @@
 		F6F94E002CAB9A7B00C2B90B /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				F657E2AA2CA50D7C00E72926 /* RootView.swift */,
+				F6F94E042CAB9D1C00C2B90B /* Root */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -166,8 +175,19 @@
 			isa = PBXGroup;
 			children = (
 				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
+				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
+				F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		F6F94E042CAB9D1C00C2B90B /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				F657E2AA2CA50D7C00E72926 /* RootView.swift */,
+				F6F94E052CAB9D3400C2B90B /* RootSection.swift */,
+			);
+			path = Root;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -303,8 +323,12 @@
 				F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
 				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
+				F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */,
+				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
+				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
+				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
