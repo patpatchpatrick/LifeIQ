@@ -8,12 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
-		F657E2AB2CA50D7C00E72926 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2AA2CA50D7C00E72926 /* ContentView.swift */; };
+		F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2AA2CA50D7C00E72926 /* RootView.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
 		F657E2B02CA50D7E00E72926 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AF2CA50D7E00E72926 /* Preview Assets.xcassets */; };
 		F657E2BA2CA50D7E00E72926 /* BeastFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2B92CA50D7E00E72926 /* BeastFitnessTests.swift */; };
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
+		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
+		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
+		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,7 +39,7 @@
 /* Begin PBXFileReference section */
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
-		F657E2AA2CA50D7C00E72926 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F657E2AA2CA50D7C00E72926 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		F657E2AC2CA50D7E00E72926 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F657E2AF2CA50D7E00E72926 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		F657E2B52CA50D7E00E72926 /* BeastFitnessTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeastFitnessTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +47,10 @@
 		F657E2BF2CA50D7E00E72926 /* BeastFitnessUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeastFitnessUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITests.swift; sourceTree = "<group>"; };
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
+		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
+		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
+		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,8 +101,12 @@
 		F657E2A72CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXGroup;
 			children = (
+				F6F94E012CAB9AA100C2B90B /* Extensions */,
+				F6F94E002CAB9A7B00C2B90B /* Views */,
+				F6F94DFD2CAB9A5500C2B90B /* ViewModels */,
+				F6F94DFA2CAB992700C2B90B /* Utility */,
+				F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */,
 				F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */,
-				F657E2AA2CA50D7C00E72926 /* ContentView.swift */,
 				F657E2AC2CA50D7E00E72926 /* Assets.xcassets */,
 				F657E2AE2CA50D7E00E72926 /* Preview Content */,
 			);
@@ -125,6 +136,38 @@
 				F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */,
 			);
 			path = BeastFitnessUITests;
+			sourceTree = "<group>";
+		};
+		F6F94DFA2CAB992700C2B90B /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				F6F94DFB2CAB993900C2B90B /* SQLogger.swift */,
+			);
+			path = Utility;
+			sourceTree = "<group>";
+		};
+		F6F94DFD2CAB9A5500C2B90B /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		F6F94E002CAB9A7B00C2B90B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F657E2AA2CA50D7C00E72926 /* RootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		F6F94E012CAB9AA100C2B90B /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,8 +300,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F657E2AB2CA50D7C00E72926 /* ContentView.swift in Sources */,
+				F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
+				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
+				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
+				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,12 +465,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -448,12 +498,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
