@@ -15,6 +15,9 @@
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
 		F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */; };
+		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
+		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
+		F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -55,6 +58,9 @@
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
 		F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
+		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
+		F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -183,6 +189,8 @@
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
 				F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */,
 				F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */,
+				F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */,
+				F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -200,6 +208,7 @@
 			isa = PBXGroup;
 			children = (
 				F6F94E0E2CB3147C00C2B90B /* SQColor.swift */,
+				F6A848892CB3241900B09AD5 /* SQFont.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -340,9 +349,12 @@
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
+				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
+				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
+				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
 			);

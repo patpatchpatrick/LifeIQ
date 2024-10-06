@@ -7,11 +7,24 @@
 
 import SwiftUI
 
+struct RootActivitySectionHeader: View {
+    let title: String
+    
+    var mainBody: some View {
+        Text(title)
+    }
+    
+    var body: some View {
+        mainBody
+            .listRowInsets(EdgeInsets())
+    }
+}
+
 struct RootActivitySection: View {
     var viewModel: RootActivitySectionViewModel
     
     var body: some View {
-        Section(header: Text(viewModel.title)) {
+        Section(header: RootActivitySectionHeader(title: viewModel.title)) {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(viewModel.rows) {
                     RootActivitySectionRow(viewModel: $0)
@@ -34,7 +47,7 @@ struct RootActivitySectionRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(viewModel.title)
-                .font(.caption)
+                .sqFont(.title3)
                 .padding(.bottom, 12)
             
             ForEach(viewModel.subRows) {
