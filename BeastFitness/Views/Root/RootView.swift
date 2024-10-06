@@ -23,7 +23,7 @@ struct RootView: View {
            content
         }
         .padding()
-        .background(Color.purple)
+        .background(SQColor.background.color)
     }
 }
 

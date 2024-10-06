@@ -14,6 +14,7 @@
 		F657E2BA2CA50D7E00E72926 /* BeastFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2B92CA50D7E00E72926 /* BeastFitnessTests.swift */; };
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
+		F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -21,6 +22,7 @@
 		F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */; };
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
 		F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */; };
+		F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0E2CB3147C00C2B90B /* SQColor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +54,7 @@
 		F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITests.swift; sourceTree = "<group>"; };
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
+		F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -59,6 +62,7 @@
 		F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootActivitySectionViewModel.swift; sourceTree = "<group>"; };
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkout+Extensions.swift"; sourceTree = "<group>"; };
+		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +113,7 @@
 		F657E2A72CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXGroup;
 			children = (
+				F6F94E0D2CB3146F00C2B90B /* UI */,
 				F6F94E012CAB9AA100C2B90B /* Extensions */,
 				F6F94E002CAB9A7B00C2B90B /* Views */,
 				F6F94DFD2CAB9A5500C2B90B /* ViewModels */,
@@ -177,6 +182,7 @@
 				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
 				F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */,
+				F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -188,6 +194,14 @@
 				F6F94E052CAB9D3400C2B90B /* RootSection.swift */,
 			);
 			path = Root;
+			sourceTree = "<group>";
+		};
+		F6F94E0D2CB3146F00C2B90B /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				F6F94E0E2CB3147C00C2B90B /* SQColor.swift */,
+			);
+			path = UI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -323,10 +337,12 @@
 				F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
 				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
+				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
+				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
 			);
