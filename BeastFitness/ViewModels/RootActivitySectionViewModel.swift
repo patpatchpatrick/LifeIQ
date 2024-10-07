@@ -14,7 +14,7 @@ class RootActivitySectionViewModel {
     let title: String
     let headerRowViewModel: RootActivitySectionHeaderRowViewModel?
     let rows: [RootActivitySectionRowViewModel]
-    let columnOrder: [ActivityColumnStatType] = [
+    let columnOrder: [ActivityColumnType] = [
         .count,
         .output,
         .time
@@ -28,14 +28,14 @@ class RootActivitySectionViewModel {
         
         var rows = [RootActivitySectionRowViewModel]()
         for (workoutType, workouts) in workoutsByType {
-            rows.append(.init(columnStatTypes: columnOrder, workoutType: workoutType, workouts: workouts))
+            rows.append(.init(columnTypes: columnOrder, workoutType: workoutType, workouts: workouts))
         }
         self.rows = rows
-        self.headerRowViewModel = .init(columns: columnOrder.map { .init(statType: $0) } )
+        self.headerRowViewModel = .init(columns: columnOrder.map { .init(columnType: $0) } )
     }
 }
 
-enum ActivityColumnStatType: String {
+enum ActivityColumnType: String {
     case count
     case output
     case time
@@ -67,14 +67,14 @@ class RootActivitySectionRowViewModel: Identifiable {
     let columns: [RootActivitySectionColumnViewModel]
     let workoutType: HKWorkoutActivityType?
     
-    init(columnStatTypes: [ActivityColumnStatType], workoutType: HKWorkoutActivityType, workouts: [HKWorkout]) {
+    init(columnTypes: [ActivityColumnType], workoutType: HKWorkoutActivityType, workouts: [HKWorkout]) {
         self.workoutType = workoutType
         var subRows = [RootActivitySectionColumnViewModel]()
-        for columnStatType in columnStatTypes {
-            subRows.append(.init(statType: columnStatType, workouts: workouts))
+        for columnType in columnTypes {
+            subRows.append(.init(columnType: columnType, workouts: workouts))
         }
         for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10] {
-            subRows.append(.init(statType: .output, workouts: workouts))
+            subRows.append(.init(columnType: .output, workouts: workouts))
         }
         self.columns = subRows
     }
@@ -84,13 +84,13 @@ class RootActivitySectionRowViewModel: Identifiable {
 class RootActivitySectionColumnViewModel: Identifiable {
     let id = UUID()
     let title: String
-    let columnType: ActivityColumnStatType
+    let columnType: ActivityColumnType
     
-    init(statType: ActivityColumnStatType, workouts: [HKWorkout]) {
-        self.columnType = statType
+    init(columnType: ActivityColumnType, workouts: [HKWorkout]) {
+        self.columnType = columnType
         let activityType = workouts.first?.workoutActivityType ?? .other
         
-        switch statType {
+        switch columnType {
         case .count:
             title = "\(workouts.count)"
         case .output:
@@ -105,10 +105,10 @@ class RootActivitySectionColumnViewModel: Identifiable {
 class RootActivitySectionColumnHeaderViewModel: Identifiable {
     let id = UUID()
     let title: String
-    let columnType: ActivityColumnStatType
+    let columnType: ActivityColumnType
     
-    init(statType: ActivityColumnStatType) {
-        self.columnType = statType
-        self.title = statType.rawValue.capitalized
+    init(columnType: ActivityColumnType) {
+        self.columnType = columnType
+        self.title = columnType.rawValue.capitalized
     }
 }

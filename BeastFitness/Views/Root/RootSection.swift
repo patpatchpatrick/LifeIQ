@@ -30,7 +30,7 @@ struct RootActivitySection: View {
         Section(header: RootActivitySectionHeader(title: viewModel.title)) {
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: rowSpacing) {
-                    if let headerRowViewModel = viewModel.headerRowViewModel {
+                    if viewModel.headerRowViewModel != nil {
                         /// Placeholder for the header row
                         Text("")
                             .frame(height: headerRowHeight)
