@@ -13,9 +13,11 @@ class RootActivitySectionViewModel {
     let isPlaceholder: Bool
     let title: String
     let rows: [RootActivitySectionRowViewModel]
-    let rowTypeOrder: [RootActivitySectionRowViewModel.RowType] = [
+    let columnOrder: [ActivityColumnStatType] = [
+        .activityIcon,
         .count,
-        .distance
+        .output,
+        .time
     ]
     
     init(isPlaceholder: Bool = false, title: String, workouts: [HKWorkout]?) {
@@ -25,57 +27,54 @@ class RootActivitySectionViewModel {
         let workoutsByType = workouts?.workoutsByActivityType ?? .init()
         
         var rows = [RootActivitySectionRowViewModel]()
-        for rowTypeOrder in rowTypeOrder {
-            rows.append(.init(rowType: rowTypeOrder, workoutsByType: workoutsByType))
+        for (workoutType, workouts) in workoutsByType {
+            rows.append(.init(columnStatTypes: columnOrder, workoutType: workoutType, workouts: workouts))
         }
         self.rows = rows
     }
 }
 
+enum ActivityColumnStatType {
+    case activityIcon
+    case count
+    case output
+    case time
+}
+
 @Observable
 class RootActivitySectionRowViewModel: Identifiable {
-    enum RowType {
-        case count
-        case distance
-    }
     let id = UUID()
-    let rowType: RowType
-    let title: String
-    let subRows: [RootActivitySectionSubRowViewModel]
+    let columns: [RootActivitySectionColumnViewModel]
     
-    init(rowType: RowType, workoutsByType: [HKWorkoutActivityType : [HKWorkout]]) {
-        self.rowType = rowType
-        
-        switch rowType {
-        case .count:
-            self.title = "Count"
-        case .distance:
-            self.title = "Distance"
+    init(columnStatTypes: [ActivityColumnStatType], workoutType: HKWorkoutActivityType, workouts: [HKWorkout]) {
+        var subRows = [RootActivitySectionColumnViewModel]()
+        for columnStatType in columnStatTypes {
+            subRows.append(.init(statType: columnStatType, workouts: workouts))
         }
-        
-        var subRows = [RootActivitySectionSubRowViewModel]()
-        for (_ , workouts) in workoutsByType {
-            subRows.append(.init(rowType: rowType, workouts: workouts))
+        for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10] {
+            subRows.append(.init(statType: .activityIcon, workouts: workouts))
         }
-        self.subRows = subRows
+        self.columns = subRows
     }
 }
 
 @Observable
-class RootActivitySectionSubRowViewModel: Identifiable {
+class RootActivitySectionColumnViewModel: Identifiable {
     let id = UUID()
-    let rowType: RootActivitySectionRowViewModel.RowType
     let title: String
     
-    init(rowType: RootActivitySectionRowViewModel.RowType, workouts: [HKWorkout]) {
-        self.rowType = rowType
+    init(statType: ActivityColumnStatType, workouts: [HKWorkout]) {
         let activityType = workouts.first?.workoutActivityType ?? .other
         
-        switch rowType {
+        switch statType {
+        case .activityIcon:
+            title = "Icon"
         case .count:
-            self.title = "\(activityType.name) \(workouts.count)"
-        case .distance:
-            self.title = "PTD TBD"
+            title = "\(workouts.count)"
+        case .output:
+            title = "TBD"
+        case .time:
+            title = "TBD"
         }
     }
 }
