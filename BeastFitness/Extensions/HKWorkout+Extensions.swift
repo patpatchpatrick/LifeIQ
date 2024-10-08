@@ -14,6 +14,8 @@ extension HKWorkout {
         switch self.workoutActivityType {
         case .running:
             return .distanceWalkingRunning
+        case .cycling:
+            return .distanceCycling
         case .pickleball:
             return .activeEnergyBurned
         default:
@@ -54,7 +56,7 @@ extension HKWorkout {
         switch quantityTypeIdentifier {
         case .activeEnergyBurned:
             return .kilocalorie()
-        case .distanceWalkingRunning:
+        case .distanceWalkingRunning, .distanceCycling:
             return .mile()
         case .heartRate:
             return .count().unitDivided(by: .minute())
@@ -65,17 +67,21 @@ extension HKWorkout {
     
     var duration: TimeInterval? {
         switch self.workoutActivityType {
-        case .running, .functionalStrengthTraining, .pickleball, .other:
-            guard let quantityType: HKQuantityType = .quantityType(forIdentifier: .activeEnergyBurned) else {
-                return nil
-            }
-            
-            guard let startDate = self.allStatistics[quantityType]?.startDate, let endDate = self.allStatistics[quantityType]?.endDate else {
-                return nil
-            }
-            
-            return abs(endDate.distance(to: startDate))
         default:
+            var quantityTypeIdsToCheck: [HKQuantityTypeIdentifier] = [.activeEnergyBurned, .distanceWalkingRunning, .distanceCycling]
+            
+            for quantityTypeId in quantityTypeIdsToCheck {
+                guard let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeId) else {
+                    continue
+                }
+                
+                guard let startDate = self.allStatistics[quantityType]?.startDate, let endDate = self.allStatistics[quantityType]?.endDate else {
+                    continue
+                }
+                
+                return abs(endDate.distance(to: startDate))
+            }
+            
             return nil
         }
     }

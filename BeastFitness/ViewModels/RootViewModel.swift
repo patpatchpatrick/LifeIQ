@@ -67,7 +67,7 @@ class RootViewModel {
     }
     
     private func getLastWeekStartDate(from date: Date = Date()) -> Date {
-        return Calendar.current.date(byAdding: .day, value: -6, to: date)!
+        return Calendar.current.date(byAdding: .day, value: -365, to: date)!
     }
     
     private func createLastWeekPredicate(from endDate: Date = Date()) -> NSPredicate {
