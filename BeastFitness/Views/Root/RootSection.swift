@@ -100,7 +100,6 @@ struct RootActivitySectionColumnHeader: View {
     var body: some View {
         Text(viewModel.title)
             .font(.footnote)
-            .background(Color.cyan)
             .frame(width: 100)
     }
 }

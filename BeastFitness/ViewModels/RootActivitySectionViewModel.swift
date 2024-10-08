@@ -17,7 +17,9 @@ class RootActivitySectionViewModel {
     let columnOrder: [ActivityColumnType] = [
         .count,
         .output,
-        .time
+        .time,
+        .calories,
+        .avgHeartRate
     ]
     
     init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkout]?) {
@@ -39,11 +41,30 @@ enum ActivityColumnType: String {
     case count
     case output
     case time
+    case calories
+    case avgHeartRate
     
     var width: CGFloat {
         switch self {
-        case .count, .output, .time:
+        case .count:
             return 75
+        case .output, .time, .calories, .avgHeartRate:
+            return 110
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .count:
+            "Count"
+        case .output:
+            "Output"
+        case .time:
+            "Time"
+        case .calories:
+            "Calories"
+        case .avgHeartRate:
+            "HR"
         }
     }
 }
@@ -89,6 +110,10 @@ class RootActivitySectionColumnViewModel: Identifiable {
             title = workouts.sumOutputString ?? ""
         case .time:
             title = workouts.timeString ?? ""
+        case .calories:
+            title = workouts.caloriesString ?? ""
+        case .avgHeartRate:
+            title = workouts.heartRateString ?? ""
         }
     }
 }
@@ -101,6 +126,6 @@ class RootActivitySectionColumnHeaderViewModel: Identifiable {
     
     init(columnType: ActivityColumnType) {
         self.columnType = columnType
-        self.title = columnType.rawValue.capitalized
+        self.title = columnType.title
     }
 }

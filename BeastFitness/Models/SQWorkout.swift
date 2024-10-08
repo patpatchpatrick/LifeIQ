@@ -26,70 +26,34 @@ class SQWorkouts {
     
     let sumOutputString: String?
     let timeString: String?
+    let caloriesString: String?
+    let heartRateString: String?
     
     init(workouts: [SQWorkout]) {
         self.workouts = workouts
         
         var totalOutput = 0.0
         var totalTime: TimeInterval = 0.0
+        var totalCalories = 0.0
+        var totalAvgHeartRateTimesSeconds = 0.0
+        var averageHeartRate = 0.0
+        
+        let firstWorkout = workouts.first?.workout
         
         workouts.forEach {
-            totalOutput += $0.workout.output ?? 0
-            totalTime += $0.workout.duration ?? 0
+            if let coreOutputQuantityTypeId = $0.workout.coreOutputQuantityTypeId {
+                totalOutput += $0.workout.sumOutputFor(coreOutputQuantityTypeId) ?? 0
+            }
+            let workoutDuration = $0.workout.duration ?? 0
+            totalTime += workoutDuration
+            totalCalories += $0.workout.sumOutputFor(.activeEnergyBurned) ?? 0
+            totalAvgHeartRateTimesSeconds += ($0.workout.averageOutputFor(.heartRate) ?? 0) * workoutDuration
         }
+        averageHeartRate = totalAvgHeartRateTimesSeconds / totalTime
         
-        sumOutputString = "\(totalOutput.sqShortString) \(workouts.first?.workout.unit?.unitString ?? "")"
+        sumOutputString = "\(totalOutput.sqShortString) \(firstWorkout?.coreOutputUnit?.unitString ?? "")"
         timeString = SQDateFormatters.shared.durationFormatter.string(from: totalTime)
-    }
-}
-
-extension HKWorkout {
-    
-    // TODO: - PTD finish with all activities
-    var output: Double? {
-        switch self.workoutActivityType {
-        case .running:
-            guard let quantityType: HKQuantityType = .quantityType(forIdentifier: .distanceWalkingRunning), let unit else {
-                return nil
-            }
-            return self.allStatistics[quantityType]?.sumQuantity()?.doubleValue(for: unit)
-        default:
-            return nil
-        }
-    }
-    
-    var duration: TimeInterval? {
-        switch self.workoutActivityType {
-        case .running:
-            guard let quantityType: HKQuantityType = .quantityType(forIdentifier: .activeEnergyBurned) else {
-                return nil
-            }
-            
-            guard let startDate = self.allStatistics[quantityType]?.startDate, let endDate = self.allStatistics[quantityType]?.endDate else {
-                return nil
-            }
-            
-            return abs(endDate.distance(to: startDate))
-        default:
-            return nil
-        }
-    }
-    
-    var unit: HKUnit? {
-        switch self.workoutActivityType {
-        case .running:
-            return .mile()
-        default:
-            return nil
-        }
-    }
-    
-    var outputString: String? {
-        switch self.workoutActivityType {
-        case .running:
-            return "\(output.sqShortString) \(unit?.unitString ?? "")"
-        default:
-            return nil
-        }
+        caloriesString = "\(totalCalories.sqShortString) \(firstWorkout?.unitFor(.activeEnergyBurned)?.unitString ?? "")"
+        heartRateString = "\(averageHeartRate.sqShortString) \(firstWorkout?.unitFor(.heartRate)?.unitString ?? "")"
     }
 }

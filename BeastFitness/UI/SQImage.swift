@@ -50,6 +50,7 @@ struct SQImage {
     
     enum ImageAsset: String {
         case dumbell = "dumbell"
+        case pickleball = "pickleball"
     }
     
     enum ImageSymbol: String {

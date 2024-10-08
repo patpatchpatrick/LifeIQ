@@ -95,6 +95,8 @@ extension HKWorkoutActivityType {
     // iOS 13
     case .discSports:                   return "Disc Sports"
     case .fitnessGaming:                return "Fitness Gaming"
+        
+    case .pickleball:                   return "Pickleball"
 
     // Catch-all
     default:                            return "Other"
@@ -110,6 +112,8 @@ extension HKWorkoutActivityType {
             return .init(asset: .dumbell)
         case .cycling:
             return .init(symbol: .bicycle)
+        case .pickleball:
+            return .init(asset: .pickleball)
         default:
             return .init(symbol: .questionmarkCircle)
         }
