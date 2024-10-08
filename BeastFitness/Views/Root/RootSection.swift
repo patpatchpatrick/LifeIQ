@@ -37,11 +37,15 @@ struct RootActivitySection: View {
                     }
                     
                     ForEach(viewModel.rows) {
-                        Text($0.workoutType?.name ?? "")
+                        SQImageView(image: $0.workoutType?.image ?? .init())
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 20)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                             .frame(height: rowHeight)
-                            .background(Color.purple)
                     }
-                }.frame(maxHeight: .infinity)
+                }
+                .frame(maxHeight: .infinity)
+                .frame(width: 50)
                 
                 ScrollView(.horizontal) {
                     VStack(alignment: .leading, spacing: rowSpacing) {
@@ -53,7 +57,6 @@ struct RootActivitySection: View {
                         ForEach(viewModel.rows) {
                             RootActivitySectionRow(viewModel: $0)
                                 .frame(height: rowHeight)
-                                .background(Color.pink)
                         }
                     }
                 }.frame(maxHeight: .infinity)
@@ -122,6 +125,5 @@ struct RootActivitySectionColumn: View {
     var body: some View {
         Text(viewModel.title)
             .font(.footnote)
-            .background(Color.orange)
     }
 }

@@ -20,7 +20,7 @@ class RootActivitySectionViewModel {
         .time
     ]
     
-    init(isPlaceholder: Bool = false, title: String, workouts: [HKWorkout]?) {
+    init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkout]?) {
         self.isPlaceholder = isPlaceholder
         self.title = title
         
@@ -28,7 +28,7 @@ class RootActivitySectionViewModel {
         
         var rows = [RootActivitySectionRowViewModel]()
         for (workoutType, workouts) in workoutsByType {
-            rows.append(.init(columnTypes: columnOrder, workoutType: workoutType, workouts: workouts))
+            rows.append(.init(columnTypes: columnOrder, workoutType: workoutType, workouts: .init(workouts: workouts)))
         }
         self.rows = rows
         self.headerRowViewModel = .init(columns: columnOrder.map { .init(columnType: $0) } )
@@ -42,12 +42,8 @@ enum ActivityColumnType: String {
     
     var width: CGFloat {
         switch self {
-        case .count:
-            return 50
-        case .output:
-            return 50
-        case .time:
-            return 50
+        case .count, .output, .time:
+            return 75
         }
     }
 }
@@ -67,14 +63,11 @@ class RootActivitySectionRowViewModel: Identifiable {
     let columns: [RootActivitySectionColumnViewModel]
     let workoutType: HKWorkoutActivityType?
     
-    init(columnTypes: [ActivityColumnType], workoutType: HKWorkoutActivityType, workouts: [HKWorkout]) {
+    init(columnTypes: [ActivityColumnType], workoutType: HKWorkoutActivityType, workouts: SQWorkouts) {
         self.workoutType = workoutType
         var subRows = [RootActivitySectionColumnViewModel]()
         for columnType in columnTypes {
             subRows.append(.init(columnType: columnType, workouts: workouts))
-        }
-        for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10] {
-            subRows.append(.init(columnType: .output, workouts: workouts))
         }
         self.columns = subRows
     }
@@ -86,17 +79,16 @@ class RootActivitySectionColumnViewModel: Identifiable {
     let title: String
     let columnType: ActivityColumnType
     
-    init(columnType: ActivityColumnType, workouts: [HKWorkout]) {
+    init(columnType: ActivityColumnType, workouts: SQWorkouts) {
         self.columnType = columnType
-        let activityType = workouts.first?.workoutActivityType ?? .other
         
         switch columnType {
         case .count:
-            title = "\(workouts.count)"
+            title = "\(workouts.workouts.count)"
         case .output:
-            title = "TBD"
+            title = workouts.sumOutputString ?? ""
         case .time:
-            title = "TBD"
+            title = workouts.timeString ?? ""
         }
     }
 }

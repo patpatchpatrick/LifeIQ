@@ -18,13 +18,18 @@
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
 		F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */; };
+		F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488F2CB4A55700B09AD5 /* SQImage.swift */; };
+		F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848922CB4A7F000B09AD5 /* SQImageView.swift */; };
+		F6A848962CB4ABE300B09AD5 /* SQWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848952CB4ABE300B09AD5 /* SQWorkout.swift */; };
+		F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */; };
+		F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
 		F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E052CAB9D3400C2B90B /* RootSection.swift */; };
 		F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */; };
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
-		F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */; };
+		F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */; };
 		F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0E2CB3147C00C2B90B /* SQColor.swift */; };
 /* End PBXBuildFile section */
 
@@ -61,13 +66,18 @@
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
 		F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Extensions.swift"; sourceTree = "<group>"; };
+		F6A8488F2CB4A55700B09AD5 /* SQImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQImage.swift; sourceTree = "<group>"; };
+		F6A848922CB4A7F000B09AD5 /* SQImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQImageView.swift; sourceTree = "<group>"; };
+		F6A848952CB4ABE300B09AD5 /* SQWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkout.swift; sourceTree = "<group>"; };
+		F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+Extensions.swift"; sourceTree = "<group>"; };
+		F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E052CAB9D3400C2B90B /* RootSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootSection.swift; sourceTree = "<group>"; };
 		F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootActivitySectionViewModel.swift; sourceTree = "<group>"; };
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
-		F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkout+Extensions.swift"; sourceTree = "<group>"; };
+		F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkout+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -123,6 +133,7 @@
 				F6F94E012CAB9AA100C2B90B /* Extensions */,
 				F6F94E002CAB9A7B00C2B90B /* Views */,
 				F6F94DFD2CAB9A5500C2B90B /* ViewModels */,
+				F6A848942CB4ABCF00B09AD5 /* Models */,
 				F6F94DFA2CAB992700C2B90B /* Utility */,
 				F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */,
 				F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */,
@@ -157,9 +168,34 @@
 			path = BeastFitnessUITests;
 			sourceTree = "<group>";
 		};
+		F6A848912CB4A7E900B09AD5 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		F6A848942CB4ABCF00B09AD5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848952CB4ABE300B09AD5 /* SQWorkout.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		F6A8489B2CB4DD5400B09AD5 /* Formatters */ = {
+			isa = PBXGroup;
+			children = (
+				F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */,
+			);
+			path = Formatters;
+			sourceTree = "<group>";
+		};
 		F6F94DFA2CAB992700C2B90B /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				F6A8489B2CB4DD5400B09AD5 /* Formatters */,
 				F6F94DFB2CAB993900C2B90B /* SQLogger.swift */,
 			);
 			path = Utility;
@@ -177,6 +213,7 @@
 		F6F94E002CAB9A7B00C2B90B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F6A848912CB4A7E900B09AD5 /* Shared */,
 				F6F94E042CAB9D1C00C2B90B /* Root */,
 			);
 			path = Views;
@@ -187,10 +224,11 @@
 			children = (
 				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
-				F6F94E0B2CABA1E700C2B90B /* HKWorkout+Extensions.swift */,
+				F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */,
 				F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */,
 				F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */,
 				F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */,
+				F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -209,6 +247,7 @@
 			children = (
 				F6F94E0E2CB3147C00C2B90B /* SQColor.swift */,
 				F6A848892CB3241900B09AD5 /* SQFont.swift */,
+				F6A8488F2CB4A55700B09AD5 /* SQImage.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -344,19 +383,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */,
+				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
+				F6A848962CB4ABE300B09AD5 /* SQWorkout.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
 				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
-				F6F94E0C2CABA1E700C2B90B /* HKWorkout+Extensions.swift in Sources */,
+				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
+				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
+				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
+				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

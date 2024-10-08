@@ -100,5 +100,19 @@ extension HKWorkoutActivityType {
     default:                            return "Other"
     }
   }
+    
+    var image: SQImage {
+        // TODO: - PTD add icons for all activity types
+        switch self {
+        case .running:
+            return .init(symbol: .figureWalk)
+        case .functionalStrengthTraining:
+            return .init(asset: .dumbell)
+        case .cycling:
+            return .init(symbol: .bicycle)
+        default:
+            return .init(symbol: .questionmarkCircle)
+        }
+    }
 }
 

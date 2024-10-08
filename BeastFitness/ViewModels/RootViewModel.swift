@@ -40,7 +40,7 @@ class RootViewModel {
     
     // MARK: UI
     
-    private func refreshUi(with workouts: [HKWorkout]?) {
+    private func refreshUi(with workouts: [SQWorkout]?) {
         activitySection = .init(title: "Activity Stats", workouts: workouts)
     }
     
@@ -141,7 +141,7 @@ class RootViewModel {
                 print("PTD Sample \(idx)", sample)
             }
             
-            self.refreshUi(with: samplesOrNil?.compactMap { $0 as? HKWorkout } )
+            self.refreshUi(with: samplesOrNil?.compactMap { $0 as? HKWorkout }.compactMap { .init($0) } )
             
         }
         
