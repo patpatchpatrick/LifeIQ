@@ -12,6 +12,7 @@ import HealthKit
 class RootViewModel {
     
     static let healthStore: HKHealthStore = HKHealthStore()
+    let deepLinkManager = SQDeepLinkManager()
     
     // MARK: - Vars
     
@@ -35,6 +36,10 @@ class RootViewModel {
     init () {
         Task {
             await fetchWorkouts()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            print("PTD fetch strava data")
+            SQStravaImport.shared.getActivities(userAccessToken: "f3e41aab811c1bb224dd045aaa2c4d8006795465")
         }
     }
     

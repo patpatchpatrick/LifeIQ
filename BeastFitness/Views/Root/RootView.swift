@@ -20,10 +20,13 @@ struct RootView: View {
     
     var body: some View {
         VStack {
-           content
+            content
         }
         .padding()
         .background(SQColor.background.color)
+        .onOpenURL(perform: { url in
+            viewModel.deepLinkManager.handleUriDeepLink(for: url)
+        })
     }
 }
 

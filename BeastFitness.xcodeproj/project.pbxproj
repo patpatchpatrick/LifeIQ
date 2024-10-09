@@ -24,6 +24,9 @@
 		F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */; };
 		F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */; };
 		F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8489E2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift */; };
+		F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */; };
+		F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A52CB608D200B09AD5 /* AppDelegate.swift */; };
+		F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -73,6 +76,10 @@
 		F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+Extensions.swift"; sourceTree = "<group>"; };
 		F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
 		F6A8489E2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkout+Extensions.swift"; sourceTree = "<group>"; };
+		F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStravaImport.swift; sourceTree = "<group>"; };
+		F6A848A32CB6066100B09AD5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F6A848A52CB608D200B09AD5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeepLinkManager.swift; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -131,10 +138,13 @@
 		F657E2A72CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXGroup;
 			children = (
+				F6A848A42CB608C400B09AD5 /* CoreFiles */,
+				F6A848A32CB6066100B09AD5 /* Info.plist */,
 				F6F94E0D2CB3146F00C2B90B /* UI */,
 				F6F94E012CAB9AA100C2B90B /* Extensions */,
 				F6F94E002CAB9A7B00C2B90B /* Views */,
 				F6F94DFD2CAB9A5500C2B90B /* ViewModels */,
+				F6A848A72CB619E900B09AD5 /* Managers */,
 				F6A848942CB4ABCF00B09AD5 /* Models */,
 				F6F94DFA2CAB992700C2B90B /* Utility */,
 				F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */,
@@ -194,9 +204,34 @@
 			path = Formatters;
 			sourceTree = "<group>";
 		};
+		F6A848A22CB6033100B09AD5 /* ThirdParty */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */,
+			);
+			path = ThirdParty;
+			sourceTree = "<group>";
+		};
+		F6A848A42CB608C400B09AD5 /* CoreFiles */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848A52CB608D200B09AD5 /* AppDelegate.swift */,
+			);
+			path = CoreFiles;
+			sourceTree = "<group>";
+		};
+		F6A848A72CB619E900B09AD5 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
 		F6F94DFA2CAB992700C2B90B /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				F6A848A22CB6033100B09AD5 /* ThirdParty */,
 				F6A8489B2CB4DD5400B09AD5 /* Formatters */,
 				F6F94DFB2CAB993900C2B90B /* SQLogger.swift */,
 			);
@@ -385,6 +420,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F657E2AB2CA50D7C00E72926 /* RootView.swift in Sources */,
 				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
 				F6A848962CB4ABE300B09AD5 /* SQWorkout.swift in Sources */,
@@ -400,7 +436,9 @@
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
+				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
+				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
@@ -572,6 +610,7 @@
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
@@ -605,6 +644,7 @@
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
