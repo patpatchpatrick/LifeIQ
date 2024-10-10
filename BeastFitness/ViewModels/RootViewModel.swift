@@ -39,7 +39,7 @@ class RootViewModel {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             print("PTD fetch strava data")
-            SQStravaImport.shared.getActivities(userAccessToken: "f3e41aab811c1bb224dd045aaa2c4d8006795465")
+//            SQStravaImport.shared.getActivities(userAccessToken: "f3e41aab811c1bb224dd045aaa2c4d8006795465")
         }
     }
     
@@ -72,7 +72,7 @@ class RootViewModel {
     }
     
     private func getLastWeekStartDate(from date: Date = Date()) -> Date {
-        return Calendar.current.date(byAdding: .day, value: -365, to: date)!
+        return Calendar.current.date(byAdding: .year, value: -10, to: date)!
     }
     
     private func createLastWeekPredicate(from endDate: Date = Date()) -> NSPredicate {
@@ -137,6 +137,12 @@ class RootViewModel {
             for (idx, sample) in samplesOrNil!.enumerated() {
                 if let workout = sample as? HKWorkout {
                     print("PTD Workout", workout.workoutActivityType.name, workout)
+                    print("PTD Workout Id", workout.uuid)
+                    if let workoutMetadata = workout.metadata {
+                        if let workoutElevation = workoutMetadata["HKElevationAscended"] as? HKQuantity {
+                            print("PTD Elevation = \(workoutElevation.doubleValue(for: HKUnit.meter()))m")
+                        }
+                    }
                     for (key, statistic) in workout.allStatistics {
                         print("PTD Stat Key", key)
                         print("PTD Stat Data\nQuantityType\(statistic.quantityType)\n\(statistic.duration())\nStartDate\(statistic.startDate)\nEndDate\(statistic.endDate)\nMaximum\(statistic.maximumQuantity())\nMinimum\(statistic.minimumQuantity())\nAverage\(statistic.averageQuantity())\nRecentQuantity\(statistic.mostRecentQuantity())\nSumQuantity\(statistic.sumQuantity())")
