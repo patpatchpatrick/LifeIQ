@@ -39,7 +39,7 @@ class SQDeepLinkManager {
             return
         }
         
-        SQStravaImport.shared.handleStravaAuthorization()
+        SQStravaImport.shared.handleStravaAuthorization(code: code)
     }
     
 }

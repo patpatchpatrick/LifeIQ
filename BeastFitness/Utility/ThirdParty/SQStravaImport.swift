@@ -11,12 +11,39 @@ import SafariServices
 final class SQStravaImport {
     static let shared = SQStravaImport()
     
+    func getAllStravaActivitiesAndSaveToDocumentsDirectory(userAccessToken: String) async {
+        var page = 1
+        var allStravaActivities = [SQStravaActivity]()
+        while true {
+            let stravaActivities = await getActivities(userAccessToken: userAccessToken, page: page)
+            allStravaActivities.append(contentsOf: stravaActivities)
+            if stravaActivities.isEmpty { break }
+            page += 1
+        }
+        
+        func getDocumentsDirectoryUrl() -> URL {
+             let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+             let documentsDirectory = paths[0]
+             return documentsDirectory
+         }
+        
+        let filePath = getDocumentsDirectoryUrl().appendingPathComponent("beast-fitness-strava-activities-all-2.json")
+        do {
+            let jsonData = try JSONEncoder().encode(allStravaActivities)
+            try jsonData.write(to: filePath)
+        }
+        catch {
+            SQLogger.shared.log("Error Saving All Strava Activities: \(error.localizedDescription)", .error)
+        }
+    }
+    
     /// Returns a list of activities (first 30)
     /// - Parameter userAccessToken: User's strava access token
-    func getActivities(userAccessToken: String) {
+    func getActivities(userAccessToken: String, page: Int) async -> [SQStravaActivity] {
         var urlComponents = URLComponents(string: "https://www.strava.com/api/v3/athlete/activities")!
 
-        let queryItems = [URLQueryItem(name: "access_token", value: userAccessToken)]
+        let queryItems = [URLQueryItem(name: "access_token", value: userAccessToken),
+                          URLQueryItem(name: "page", value: "\(page)")]
 
         urlComponents.queryItems = queryItems
         let token = userAccessToken
@@ -26,25 +53,20 @@ final class SQStravaImport {
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
         
-        URLSession.shared.dataTask(with: request) { (data, response , error) in
-              guard let data = data else { return }
-              do {
-                  print("PTD JSON 1")
-                  if let json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) {
-                      print("PTD JSON 2")
-                     if let prettyPrintedData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-                         print("PTD JSON 3")
-                        print(String(bytes: prettyPrintedData, encoding: String.Encoding.utf8) ?? "NIL")
-                     }
-                  }
-              } catch let error {
-                  print("PTD getActivities Error \(error)")
-              }
-          }.resume()
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let stravaActivities = try JSONDecoder().decode([SQStravaActivity].self, from: data)
+            SQLogger.shared.log("Getting Strava Activities for page: \(page) count: \(stravaActivities.count)", .debug)
+            return stravaActivities
+        }
+        catch {
+            SQLogger.shared.log("Error decoding strava activities", .error)
+            return []
+        }
     }
     
-    func handleStravaAuthorization() {
-        
+    func handleStravaAuthorization(code: String) {
+        requestAccessToken(uriCode: code)
     }
     
     /// Request Strava App Access, upon success, will deep link back into the app
@@ -60,7 +82,7 @@ final class SQStravaImport {
           } else {
               authSession = SFAuthenticationSession(url: webOAuthUrl, callbackURLScheme: "beastfitness://stravaauth") { url, error in
                   // TODO: - PTD handle the URL from a web oAuthUrl the same as we are for the app OAuthUrl
-                  self.handleStravaAuthorization()
+//                  self.handleStravaAuthorization(code: <#T##String#>)
               }
 
               authSession?.start()
@@ -90,9 +112,9 @@ final class SQStravaImport {
         URLSession.shared.dataTask(with: request) { (data, response , error) in
               guard let data = data else { return }
               do {
-                  let testData = try JSONSerialization.jsonObject(with: data) as? [AnyHashable: Any] ?? [:]
-                  print("PTD Begin strava request 2", testData)
-                  // TODO: - PTD Handle Storing the access token and refresh token in User Defaults and handling them appropriately
+                  let stravaAuthData = try JSONSerialization.jsonObject(with: data) as? [AnyHashable: Any] ?? [:]
+                  SQLogger.shared.log("Strava Auth Data: \(stravaAuthData)", .debug)
+                  // TODO: - PTD Handle Storing the access token and refresh token in User Defaults and handling them appropriately.  DO NOT LOG Auth DATA IN PROD APP
               } catch let error {
                   // TODO: - PTD Handle errors appropriately
                   SQLogger.shared.log("Error requesting access token: \(error)", .error)

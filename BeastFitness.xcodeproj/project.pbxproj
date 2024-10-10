@@ -28,7 +28,6 @@
 		F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A52CB608D200B09AD5 /* AppDelegate.swift */; };
 		F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */; };
 		F6A848AB2CB779A300B09AD5 /* SQStravaActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848AA2CB779A300B09AD5 /* SQStravaActivity.swift */; };
-		F6A848AE2CB7818F00B09AD5 /* SQHealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848AD2CB7818F00B09AD5 /* SQHealthKitManager.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -83,7 +82,6 @@
 		F6A848A52CB608D200B09AD5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeepLinkManager.swift; sourceTree = "<group>"; };
 		F6A848AA2CB779A300B09AD5 /* SQStravaActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStravaActivity.swift; sourceTree = "<group>"; };
-		F6A848AD2CB7818F00B09AD5 /* SQHealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHealthKitManager.swift; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -229,7 +227,6 @@
 			isa = PBXGroup;
 			children = (
 				F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */,
-				F6A848AD2CB7818F00B09AD5 /* SQHealthKitManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -437,7 +434,6 @@
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
-				F6A848AE2CB7818F00B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
