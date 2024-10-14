@@ -123,13 +123,13 @@ final class SQStravaImport {
      }
     
     // TODO: - PTD remove this method
-    func getSavedStravaWorkouts() -> [SQStravaWorkout]? {
+    func getSavedStravaWorkouts() -> [SQWorkout]? {
         let filePath = getDocumentsDirectoryUrl().appendingPathComponent("beast-fitness-strava-activities-all-2.json")
         
         do {
             let data = try Data(contentsOf: filePath)
             let workouts = try JSONDecoder().decode([SQStravaWorkout].self, from: data)
-            return workouts
+            return workouts.map { .init(.stravaWorkout($0)) }
         }
         catch {
             return nil

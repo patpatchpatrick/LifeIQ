@@ -28,6 +28,9 @@
 		F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A52CB608D200B09AD5 /* AppDelegate.swift */; };
 		F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */; };
 		F6A848AB2CB779A300B09AD5 /* SQStravaWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848AA2CB779A300B09AD5 /* SQStravaWorkout.swift */; };
+		F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */; };
+		F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B12CBD8CCE00B09AD5 /* SQError.swift */; };
+		F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -82,6 +85,9 @@
 		F6A848A52CB608D200B09AD5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeepLinkManager.swift; sourceTree = "<group>"; };
 		F6A848AA2CB779A300B09AD5 /* SQStravaWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStravaWorkout.swift; sourceTree = "<group>"; };
+		F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHealthKitManager.swift; sourceTree = "<group>"; };
+		F6A848B12CBD8CCE00B09AD5 /* SQError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQError.swift; sourceTree = "<group>"; };
+		F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -194,6 +200,8 @@
 			isa = PBXGroup;
 			children = (
 				F6A848952CB4ABE300B09AD5 /* SQWorkout.swift */,
+				F6A848AA2CB779A300B09AD5 /* SQStravaWorkout.swift */,
+				F6A848B12CBD8CCE00B09AD5 /* SQError.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -210,7 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */,
-				F6A848AA2CB779A300B09AD5 /* SQStravaWorkout.swift */,
+				F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */,
 			);
 			path = ThirdParty;
 			sourceTree = "<group>";
@@ -270,6 +278,7 @@
 				F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */,
 				F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */,
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
+				F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -434,12 +443,15 @@
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* RootSection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
+				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
+				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
+				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
 				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,
 				F6A848AB2CB779A300B09AD5 /* SQStravaWorkout.swift in Sources */,
