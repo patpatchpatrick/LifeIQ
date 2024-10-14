@@ -13,7 +13,7 @@ struct BeastFitnessApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootView()
+            SQRootView()
         }
     }
 }

@@ -1,5 +1,5 @@
 //
-//  RootViewModel.swift
+//  SQRootViewModel.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 9/30/24.
@@ -10,14 +10,14 @@ import HealthKit
 import SwiftUI
 
 @Observable
-class RootViewModel {
+class SQRootViewModel {
     
     let deepLinkManager = SQDeepLinkManager()
     var navigationPath = NavigationPath()
     
     // MARK: - Vars
 
-    private(set) var activitySection: RootActivitySectionViewModel = .init(
+    private(set) var activitySection: SQRootActivitySectionViewModel = .init(
         isPlaceholder: true,
         title: "Activity Stats",
         workouts: [])

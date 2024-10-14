@@ -1,5 +1,5 @@
 //
-//  RootView.swift
+//  SQRootView.swift
 //  Beast
 //
 //  Created by Patrick Doyle on 9/23/24.
@@ -7,16 +7,17 @@
 
 import SwiftUI
 
-struct RootView: View {
+struct SQRootView: View {
     
-    @State var viewModel = RootViewModel()
+    @State var viewModel = SQRootViewModel()
     
     var homeDashboard: some View {
         List {
-            RootActivitySection(viewModel: viewModel.activitySection)
+            SQRootActivitySection(viewModel: viewModel.activitySection)
         }
         .listStyle(PlainListStyle())
         .sqNavMenu(viewModel.navBarViewModel)
+        .background(SQColor.background.color)
     }
     
     var navigableContent: some View {
@@ -26,9 +27,7 @@ struct RootView: View {
     }
     
     var body: some View {
-        VStack {
-            navigableContent
-        }
+        navigableContent
         .padding()
         .background(SQColor.background.color)
         .onOpenURL(perform: { url in

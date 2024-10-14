@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct RootActivitySectionHeader: View {
+struct SQRootActivitySectionHeader: View {
     let title: String
     
     var mainBody: some View {
@@ -20,14 +20,14 @@ struct RootActivitySectionHeader: View {
     }
 }
 
-struct RootActivitySection: View {
-    var viewModel: RootActivitySectionViewModel
+struct SQRootActivitySection: View {
+    var viewModel: SQRootActivitySectionViewModel
     let headerRowHeight: CGFloat = 25
     let rowHeight: CGFloat = 50
     let rowSpacing: CGFloat = 12
     
     var body: some View {
-        Section(header: RootActivitySectionHeader(title: viewModel.title)) {
+        Section(header: SQRootActivitySectionHeader(title: viewModel.title)) {
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: rowSpacing) {
                     if viewModel.headerRowViewModel != nil {
@@ -50,12 +50,12 @@ struct RootActivitySection: View {
                 ScrollView(.horizontal) {
                     VStack(alignment: .leading, spacing: rowSpacing) {
                         if let headerRowViewModel = viewModel.headerRowViewModel {
-                            RootActivitySectionHeaderRow(viewModel: headerRowViewModel)
+                            SQRootActivitySectionHeaderRow(viewModel: headerRowViewModel)
                                 .frame(height: headerRowHeight)
                         }
                         
                         ForEach(viewModel.rows) {
-                            RootActivitySectionRow(viewModel: $0)
+                            SQRootActivitySectionRow(viewModel: $0)
                                 .frame(height: rowHeight)
                         }
                     }
@@ -80,13 +80,13 @@ struct Item: Identifiable {
     var price: Double = 0
 }
 
-struct RootActivitySectionHeaderRow: View {
-    var viewModel: RootActivitySectionHeaderRowViewModel
+struct SQRootActivitySectionHeaderRow: View {
+    var viewModel: SQRootActivitySectionHeaderRowViewModel
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(viewModel.columns) {
-                RootActivitySectionColumnHeader(viewModel: $0)
+                SQRootActivitySectionColumnHeader(viewModel: $0)
                     .frame(width: $0.columnType.width)
             }
         }
@@ -94,8 +94,8 @@ struct RootActivitySectionHeaderRow: View {
     }
 }
 
-struct RootActivitySectionColumnHeader: View {
-    var viewModel: RootActivitySectionColumnHeaderViewModel
+struct SQRootActivitySectionColumnHeader: View {
+    var viewModel: SQRootActivitySectionColumnHeaderViewModel
     
     var body: some View {
         Text(viewModel.title)
@@ -104,13 +104,13 @@ struct RootActivitySectionColumnHeader: View {
     }
 }
 
-struct RootActivitySectionRow: View {
-    var viewModel: RootActivitySectionRowViewModel
+struct SQRootActivitySectionRow: View {
+    var viewModel: SQRootActivitySectionRowViewModel
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(viewModel.columns) {
-                RootActivitySectionColumn(viewModel: $0)
+                SQRootActivitySectionColumn(viewModel: $0)
                     .frame(width: $0.columnType.width)
             }
         }
@@ -118,8 +118,8 @@ struct RootActivitySectionRow: View {
     }
 }
 
-struct RootActivitySectionColumn: View {
-    var viewModel: RootActivitySectionColumnViewModel
+struct SQRootActivitySectionColumn: View {
+    var viewModel: SQRootActivitySectionColumnViewModel
     
     var body: some View {
         Text(viewModel.title)

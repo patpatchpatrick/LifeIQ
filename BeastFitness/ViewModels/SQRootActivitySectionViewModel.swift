@@ -1,5 +1,5 @@
 //
-//  RootActivitySectionViewModel.swift
+//  SQRootActivitySectionViewModel.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 9/30/24.
@@ -9,12 +9,12 @@ import Foundation
 import HealthKit
 
 @Observable
-class RootActivitySectionViewModel {
+class SQRootActivitySectionViewModel {
     let isPlaceholder: Bool
     let title: String
-    let headerRowViewModel: RootActivitySectionHeaderRowViewModel?
-    let rows: [RootActivitySectionRowViewModel]
-    let columnOrder: [ActivityColumnType] = [
+    let headerRowViewModel: SQRootActivitySectionHeaderRowViewModel?
+    let rows: [SQRootActivitySectionRowViewModel]
+    let columnOrder: [SQActivityColumnType] = [
         .count,
         .output,
         .time,
@@ -28,7 +28,7 @@ class RootActivitySectionViewModel {
         
         let workoutsByType = workouts?.workoutsByActivityType ?? .init()
         
-        var rows = [RootActivitySectionRowViewModel]()
+        var rows = [SQRootActivitySectionRowViewModel]()
         for (workoutType, workouts) in workoutsByType {
             rows.append(.init(columnTypes: columnOrder, workoutType: workoutType, workouts: .init(workouts: workouts)))
         }
@@ -37,7 +37,7 @@ class RootActivitySectionViewModel {
     }
 }
 
-enum ActivityColumnType: String {
+enum SQActivityColumnType: String {
     case count
     case output
     case time
@@ -70,23 +70,23 @@ enum ActivityColumnType: String {
 }
 
 @Observable
-class RootActivitySectionHeaderRowViewModel: Identifiable {
-    let columns: [RootActivitySectionColumnHeaderViewModel]
+class SQRootActivitySectionHeaderRowViewModel: Identifiable {
+    let columns: [SQRootActivitySectionColumnHeaderViewModel]
     
-    init(columns: [RootActivitySectionColumnHeaderViewModel]) {
+    init(columns: [SQRootActivitySectionColumnHeaderViewModel]) {
         self.columns = columns
     }
 }
 
 @Observable
-class RootActivitySectionRowViewModel: Identifiable {
+class SQRootActivitySectionRowViewModel: Identifiable {
     let id = UUID()
-    let columns: [RootActivitySectionColumnViewModel]
+    let columns: [SQRootActivitySectionColumnViewModel]
     let workoutType: HKWorkoutActivityType?
     
-    init(columnTypes: [ActivityColumnType], workoutType: HKWorkoutActivityType, workouts: SQWorkouts) {
+    init(columnTypes: [SQActivityColumnType], workoutType: HKWorkoutActivityType, workouts: SQWorkouts) {
         self.workoutType = workoutType
-        var subRows = [RootActivitySectionColumnViewModel]()
+        var subRows = [SQRootActivitySectionColumnViewModel]()
         for columnType in columnTypes {
             subRows.append(.init(columnType: columnType, workouts: workouts))
         }
@@ -95,12 +95,12 @@ class RootActivitySectionRowViewModel: Identifiable {
 }
 
 @Observable
-class RootActivitySectionColumnViewModel: Identifiable {
+class SQRootActivitySectionColumnViewModel: Identifiable {
     let id = UUID()
     let title: String
-    let columnType: ActivityColumnType
+    let columnType: SQActivityColumnType
     
-    init(columnType: ActivityColumnType, workouts: SQWorkouts) {
+    init(columnType: SQActivityColumnType, workouts: SQWorkouts) {
         self.columnType = columnType
         
         switch columnType {
@@ -119,12 +119,12 @@ class RootActivitySectionColumnViewModel: Identifiable {
 }
 
 @Observable
-class RootActivitySectionColumnHeaderViewModel: Identifiable {
+class SQRootActivitySectionColumnHeaderViewModel: Identifiable {
     let id = UUID()
     let title: String
-    let columnType: ActivityColumnType
+    let columnType: SQActivityColumnType
     
-    init(columnType: ActivityColumnType) {
+    init(columnType: SQActivityColumnType) {
         self.columnType = columnType
         self.title = columnType.title
     }
