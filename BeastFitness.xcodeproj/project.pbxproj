@@ -31,6 +31,10 @@
 		F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */; };
 		F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B12CBD8CCE00B09AD5 /* SQError.swift */; };
 		F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */; };
+		F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B52CBD8F2B00B09AD5 /* SQNavBarViewModel.swift */; };
+		F6A848B82CBD8FE700B09AD5 /* SQNavBarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */; };
+		F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */; };
+		F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -88,6 +92,10 @@
 		F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHealthKitManager.swift; sourceTree = "<group>"; };
 		F6A848B12CBD8CCE00B09AD5 /* SQError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQError.swift; sourceTree = "<group>"; };
 		F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extensions.swift"; sourceTree = "<group>"; };
+		F6A848B52CBD8F2B00B09AD5 /* SQNavBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNavBarViewModel.swift; sourceTree = "<group>"; };
+		F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNavBarButton.swift; sourceTree = "<group>"; };
+		F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButtonViewModel.swift; sourceTree = "<group>"; };
+		F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenuViewModel.swift; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -192,6 +200,7 @@
 			isa = PBXGroup;
 			children = (
 				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
+				F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -239,6 +248,32 @@
 			path = Managers;
 			sourceTree = "<group>";
 		};
+		F6A848B92CBD950400B09AD5 /* NavBar */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848B52CBD8F2B00B09AD5 /* SQNavBarViewModel.swift */,
+			);
+			path = NavBar;
+			sourceTree = "<group>";
+		};
+		F6A848BA2CBD950E00B09AD5 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848BD2CBD959400B09AD5 /* DropDownMenu */,
+				F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */,
+				F6A848B92CBD950400B09AD5 /* NavBar */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		F6A848BD2CBD959400B09AD5 /* DropDownMenu */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */,
+			);
+			path = DropDownMenu;
+			sourceTree = "<group>";
+		};
 		F6F94DFA2CAB992700C2B90B /* Utility */ = {
 			isa = PBXGroup;
 			children = (
@@ -252,6 +287,7 @@
 		F6F94DFD2CAB9A5500C2B90B /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				F6A848BA2CBD950E00B09AD5 /* Shared */,
 				F6F94DFE2CAB9A5D00C2B90B /* RootViewModel.swift */,
 				F6F94E072CAB9D8800C2B90B /* RootActivitySectionViewModel.swift */,
 			);
@@ -448,7 +484,9 @@
 				F6F94DFF2CAB9A5D00C2B90B /* RootViewModel.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
+				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
+				F6A848B82CBD8FE700B09AD5 /* SQNavBarButton.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
@@ -458,6 +496,8 @@
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* RootActivitySectionViewModel.swift in Sources */,
+				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
+				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

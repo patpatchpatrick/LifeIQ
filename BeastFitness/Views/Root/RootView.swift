@@ -11,16 +11,23 @@ struct RootView: View {
     
     @State var viewModel = RootViewModel()
     
-    var content: some View {
+    var homeDashboard: some View {
         List {
             RootActivitySection(viewModel: viewModel.activitySection)
         }
         .listStyle(PlainListStyle())
+        .sqNavMenu(viewModel.navBarViewModel)
+    }
+    
+    var navigableContent: some View {
+        NavigationStack(path: $viewModel.navigationPath) {
+            homeDashboard
+        }
     }
     
     var body: some View {
         VStack {
-            content
+            navigableContent
         }
         .padding()
         .background(SQColor.background.color)
@@ -28,8 +35,4 @@ struct RootView: View {
             viewModel.deepLinkManager.handleUriDeepLink(for: url)
         })
     }
-}
-
-#Preview {
-    RootView()
 }

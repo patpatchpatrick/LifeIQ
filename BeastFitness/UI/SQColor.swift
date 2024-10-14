@@ -198,6 +198,7 @@ enum SQColor {
     case background
     case backgroundContainer
     case backgroundContainerDarkMode
+    case text
     
     var isDarkMode: Bool {
         SQColorManager.shared.isDarkMode
@@ -207,6 +208,8 @@ enum SQColor {
         switch self {
         case .background:
                   return isDarkMode ? .init(red: 23/255, green: 26/255, blue: 35/255, alpha: 1) : .white
+        case .text:
+            return isDarkMode ? .white : .black
         case .backgroundContainer:
             return isDarkMode ? SQColor.backgroundContainerDarkMode.uiColor : UIColor(hexString: "#EAE7E7")!
         case .backgroundContainerDarkMode:
