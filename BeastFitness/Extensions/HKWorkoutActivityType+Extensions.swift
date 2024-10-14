@@ -118,5 +118,136 @@ extension HKWorkoutActivityType {
             return .init(symbol: .questionmarkCircle)
         }
     }
+    
+    // TODO: - PTD finish with all activities
+    var coreOutputQuantityTypeId: SQQuantityType? {
+        switch self {
+        case .running:
+            return .distanceWalkingRunning
+        case .cycling:
+            return .distanceCycling
+        case .pickleball:
+            return .activeEnergyBurned
+        default:
+            return nil
+        }
+    }
+    
+    var coreOutputUnit: SQUnit? {
+        coreOutputQuantityTypeId?.unit
+    }
 }
 
+enum SQQuantityType {
+    case distanceWalkingRunning
+    case distanceCycling
+    case activeEnergyBurned
+    case heartRate
+    
+    var hkQuantityTypeIdentifier: HKQuantityTypeIdentifier? {
+        switch self {
+        case .distanceWalkingRunning:
+            return .distanceWalkingRunning
+        case .distanceCycling:
+            return .distanceCycling
+        case .activeEnergyBurned:
+            return .activeEnergyBurned
+        case .heartRate:
+            return .heartRate
+        }
+    }
+    
+    var unit: SQUnit? {
+        switch self {
+        case .activeEnergyBurned:
+            return .kilocalorie
+        case .distanceWalkingRunning, .distanceCycling:
+            return .mile
+        case .heartRate:
+            return .countPerMinute
+        }
+    }
+}
+
+enum SQUnit: CaseIterable {
+    case kilocalorie
+    case mile
+    case meter
+    case countPerMinute
+    
+    static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
+        guard let value else { return nil }
+        guard fromUnit.unitType == toUnit.unitType else {
+            SQLogger.shared.log("Cannot convert units of different types: \(fromUnit), \(toUnit)", .error)
+            return nil
+        }
+        
+        switch fromUnit {
+        case .kilocalorie:
+            return value
+        case .mile:
+            switch toUnit {
+            case .meter:
+                return value * 1609.344
+            default:
+                return value
+            }
+        case .meter:
+            switch toUnit {
+            case .mile:
+                return value / 1609.344
+            default:
+                return value
+            }
+        case .countPerMinute:
+            return value
+        }
+    }
+    
+    func convert(_ value: Double?, to unit: SQUnit) -> Double? {
+        Self.convert(value, from: self, to: unit)
+    }
+    
+    var unitType: SQUnitType {
+        switch self {
+        case .kilocalorie:
+            return .energy
+        case .mile, .meter:
+            return .distance
+        case .countPerMinute:
+            return .countPerTime
+        }
+    }
+    
+    var hkUnit: HKUnit? {
+        switch self {
+        case .kilocalorie:
+                .kilocalorie()
+        case .mile:
+                .mile()
+        case .meter:
+                .mile()
+        case .countPerMinute:
+                .count().unitDivided(by: .minute())
+        }
+    }
+    
+    var unitString: String? {
+        hkUnit?.unitString
+    }
+}
+
+enum SQUnitType {
+    case time
+    case distance
+    case energy
+    case countPerTime
+}
+
+// TODO: - Figure out the best place to put this
+var SQSupportedQuantityTypes: [HKQuantityTypeIdentifier]  = [
+    .distanceWalkingRunning,
+    .distanceCycling,
+    .activeEnergyBurned,
+    .heartRate
+]

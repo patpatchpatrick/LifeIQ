@@ -13,19 +13,13 @@ final class SQStravaImport {
     
     func getAllStravaActivitiesAndSaveToDocumentsDirectory(userAccessToken: String) async {
         var page = 1
-        var allStravaActivities = [SQStravaActivity]()
+        var allStravaActivities = [SQStravaWorkout]()
         while true {
             let stravaActivities = await getActivities(userAccessToken: userAccessToken, page: page)
             allStravaActivities.append(contentsOf: stravaActivities)
             if stravaActivities.isEmpty { break }
             page += 1
         }
-        
-        func getDocumentsDirectoryUrl() -> URL {
-             let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-             let documentsDirectory = paths[0]
-             return documentsDirectory
-         }
         
         let filePath = getDocumentsDirectoryUrl().appendingPathComponent("beast-fitness-strava-activities-all-2.json")
         do {
@@ -39,7 +33,7 @@ final class SQStravaImport {
     
     /// Returns a list of activities (first 30)
     /// - Parameter userAccessToken: User's strava access token
-    func getActivities(userAccessToken: String, page: Int) async -> [SQStravaActivity] {
+    func getActivities(userAccessToken: String, page: Int) async -> [SQStravaWorkout] {
         var urlComponents = URLComponents(string: "https://www.strava.com/api/v3/athlete/activities")!
 
         let queryItems = [URLQueryItem(name: "access_token", value: userAccessToken),
@@ -55,7 +49,7 @@ final class SQStravaImport {
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            let stravaActivities = try JSONDecoder().decode([SQStravaActivity].self, from: data)
+            let stravaActivities = try JSONDecoder().decode([SQStravaWorkout].self, from: data)
             SQLogger.shared.log("Getting Strava Activities for page: \(page) count: \(stravaActivities.count)", .debug)
             return stravaActivities
         }
@@ -120,5 +114,25 @@ final class SQStravaImport {
                   SQLogger.shared.log("Error requesting access token: \(error)", .error)
               }
           }.resume()
+    }
+    
+    func getDocumentsDirectoryUrl() -> URL {
+         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+         let documentsDirectory = paths[0]
+         return documentsDirectory
+     }
+    
+    // TODO: - PTD remove this method
+    func getSavedStravaWorkouts() -> [SQStravaWorkout]? {
+        let filePath = getDocumentsDirectoryUrl().appendingPathComponent("beast-fitness-strava-activities-all-2.json")
+        
+        do {
+            let data = try Data(contentsOf: filePath)
+            let workouts = try JSONDecoder().decode([SQStravaWorkout].self, from: data)
+            return workouts
+        }
+        catch {
+            return nil
+        }
     }
 }

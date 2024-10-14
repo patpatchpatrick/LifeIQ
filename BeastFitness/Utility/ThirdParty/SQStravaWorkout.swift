@@ -1,5 +1,5 @@
 //
-//  SQStravaActivity.swift
+//  SQStravaWorkout.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 10/9/24.
@@ -8,7 +8,7 @@
 import Foundation
 import HealthKit
 
-struct SQStravaActivity: Codable {
+struct SQStravaWorkout: Codable {
     let id: Double?
     let sport_type: SQStravaSportType
     let elapsed_time: Double? // seconds
@@ -23,6 +23,36 @@ struct SQStravaActivity: Codable {
     let elev_high: Double?
     let distance: Double? // meters
     let map: SQStravaMap?
+    
+    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
+        guard let unit = quantityTypeIdentifier.unit else {
+            SQLogger.shared.log("Missing unit for strava workout sum output", .error)
+            return nil }
+        switch quantityTypeIdentifier {
+        case .distanceWalkingRunning, .distanceCycling:
+            return SQUnit.convert(distance, from: .meter, to: unit)
+        case .activeEnergyBurned:
+            return nil
+        case .heartRate:
+            return nil
+        }
+    }
+    
+    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
+        guard let unit = quantityTypeIdentifier.unit else {
+            SQLogger.shared.log("Missing unit for strava workout avg output", .error)
+            return nil }
+        switch quantityTypeIdentifier {
+        case .heartRate:
+            return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
+        case .distanceCycling, .distanceWalkingRunning, .activeEnergyBurned:
+            return nil
+        }
+    }
+    
+    var activeDuration: Double? {
+        moving_time
+    }
 }
 
 /// https://developers.strava.com/docs/reference/#api-models-SportType

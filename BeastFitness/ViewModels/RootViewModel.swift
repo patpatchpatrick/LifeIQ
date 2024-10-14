@@ -148,8 +148,15 @@ class RootViewModel {
                 print("PTD Sample \(idx)", sample)
             }
             
-            self.refreshUi(with: samplesOrNil?.compactMap { $0 as? HKWorkout }.compactMap { .init($0) } )
+            var allWorkouts = [SQWorkout]()
             
+            let hkWorkouts = samplesOrNil?.compactMap { $0 as? HKWorkout } ?? []
+            let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts() ?? []
+            
+            allWorkouts.append(contentsOf: hkWorkouts.map { .init(.hkWorkout($0)) })
+            allWorkouts.append(contentsOf: stravaWorkouts.map { .init(.stravaWorkout($0)) })
+            
+            self.refreshUi(with: allWorkouts)
         }
         
         Self.healthStore.execute(query)

@@ -9,66 +9,39 @@ import HealthKit
 
 extension HKWorkout {
     
-    // TODO: - PTD finish with all activities
-    var coreOutputQuantityTypeId: HKQuantityTypeIdentifier? {
-        switch self.workoutActivityType {
-        case .running:
-            return .distanceWalkingRunning
-        case .cycling:
-            return .distanceCycling
-        case .pickleball:
-            return .activeEnergyBurned
-        default:
-            return nil
-        }
-    }
-    
-    var coreOutputUnit: HKUnit? {
-        guard let coreOutputQuantityTypeId else { return nil }
-        return unitFor(coreOutputQuantityTypeId)
-    }
-    
     var caloriesBurned: Double? {
         sumOutputFor(.activeEnergyBurned)
     }
     
-    func sumOutputFor(_ quantityTypeIdentifier: HKQuantityTypeIdentifier) -> Double? {
+    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         switch self.workoutActivityType {
         default:
-            guard let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeIdentifier), let unit = unitFor(quantityTypeIdentifier) else {
+            guard let hkUnit = quantityTypeIdentifier.unit?.hkUnit,
+                  let quantityTypeIdentifier = quantityTypeIdentifier.hkQuantityTypeIdentifier,
+                  let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeIdentifier) else {
                 return nil
             }
-            return self.allStatistics[quantityType]?.sumQuantity()?.doubleValue(for: unit)
+            return self.allStatistics[quantityType]?.sumQuantity()?.doubleValue(for: hkUnit)
         }
     }
     
-    func averageOutputFor(_ quantityTypeIdentifier: HKQuantityTypeIdentifier) -> Double? {
+    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         switch self.workoutActivityType {
         default:
-            guard let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeIdentifier), let unit = unitFor(quantityTypeIdentifier) else {
+            guard let hkUnit = quantityTypeIdentifier.unit?.hkUnit,
+                  let quantityTypeIdentifier = quantityTypeIdentifier.hkQuantityTypeIdentifier,
+                  let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeIdentifier)
+            else {
                 return nil
             }
-            return self.allStatistics[quantityType]?.averageQuantity()?.doubleValue(for: unit)
-        }
-    }
-    
-    func unitFor(_ quantityTypeIdentifier: HKQuantityTypeIdentifier) -> HKUnit? {
-        switch quantityTypeIdentifier {
-        case .activeEnergyBurned:
-            return .kilocalorie()
-        case .distanceWalkingRunning, .distanceCycling:
-            return .mile()
-        case .heartRate:
-            return .count().unitDivided(by: .minute())
-        default:
-            return nil
+            return self.allStatistics[quantityType]?.averageQuantity()?.doubleValue(for: hkUnit)
         }
     }
     
     var duration: TimeInterval? {
         switch self.workoutActivityType {
         default:
-            var quantityTypeIdsToCheck: [HKQuantityTypeIdentifier] = [.activeEnergyBurned, .distanceWalkingRunning, .distanceCycling]
+            let quantityTypeIdsToCheck: [HKQuantityTypeIdentifier] = [.activeEnergyBurned, .distanceWalkingRunning, .distanceCycling]
             
             for quantityTypeId in quantityTypeIdsToCheck {
                 guard let quantityType: HKQuantityType = .quantityType(forIdentifier: quantityTypeId) else {

@@ -12,7 +12,7 @@ extension [SQWorkout] {
     var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkout]] {
         var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkout]]()
         for workout in self {
-            workoutsByActivityType[workout.workout.workoutActivityType, default: []].append(workout)
+            workoutsByActivityType[workout.activityType ?? .other, default: []].append(workout)
         }
         return workoutsByActivityType
     }
