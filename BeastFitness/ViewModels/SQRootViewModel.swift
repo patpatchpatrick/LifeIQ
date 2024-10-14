@@ -26,25 +26,11 @@ class SQRootViewModel {
     
     init () {
         Task {
-            let hkWorkouts = await SQHealthKitManager.shared.fetchWorkouts().workouts ?? []
-            let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts() ?? []
-            let allWorkouts = hkWorkouts.appending(contentsOf: stravaWorkouts)
-            refreshUi(with: allWorkouts)
+            await refreshState()
         }
     }
     
     // MARK: - Nav Bar
-    
-    enum SQTimeRange: String {
-        case pastWeek = "Past Week"
-        case pastMonth = "Past Month"
-        case pastYear = "Past Year"
-        case allTime = "All Time"
-        
-        var title: String {
-            self.rawValue
-        }
-    }
     
     var timeRanges: [SQTimeRange] = [
         .pastWeek,
@@ -54,7 +40,15 @@ class SQRootViewModel {
     ]
     
     @ObservationIgnored
-    lazy var currentTimeRange: SQTimeRange = .pastWeek
+    lazy var currentTimeRange: SQTimeRange = .pastWeek {
+        didSet {
+            if oldValue != currentTimeRange {
+                Task {
+                    await refreshState()
+                }
+            }
+        }
+    }
     
     @ObservationIgnored
     lazy var navBarViewModel = SQNavBarViewModel(leadingViewModel: navBarDropDownViewModel)
@@ -73,7 +67,20 @@ class SQRootViewModel {
     
     // MARK: UI
     
+    private func refreshState() async {
+        refreshUi(with: nil)
+        let hkWorkouts = await SQHealthKitManager.shared.fetchWorkouts(currentTimeRange).workouts ?? []
+        let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts() ?? []
+        let allWorkouts = hkWorkouts.appending(contentsOf: stravaWorkouts)
+        refreshUi(with: allWorkouts)
+    }
+    
     private func refreshUi(with workouts: [SQWorkout]?) {
+        guard let workouts else {
+            activitySection = .init(isPlaceholder: true, title: "Activity Stats", workouts: nil)
+            return
+        }
+        
         activitySection = .init(title: "Activity Stats", workouts: workouts)
     }
 }

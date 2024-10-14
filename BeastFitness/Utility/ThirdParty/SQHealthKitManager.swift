@@ -24,8 +24,7 @@ final class SQHealthKitManager {
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
     
-    
-    func fetchWorkouts() async -> WorkoutQueryResult {
+    func fetchWorkouts(_ timeRange: SQTimeRange) async -> WorkoutQueryResult {
         do {
             guard HKHealthStore.isHealthDataAvailable() else {
                 throw SQStandardError.standard
@@ -33,7 +32,7 @@ final class SQHealthKitManager {
             
             try await Self.healthStore.requestAuthorization(toShare: allQuantityTypes, read: allQuantityTypes)
             
-            let predicate = createLastWeekPredicate()
+            let predicate = HKQuery.predicateForSamples(withStart: timeRange.startDate, end: timeRange.endDate)
             let limit = HKObjectQueryNoLimit
             let workoutType: HKSampleType = .workoutType()
             let anchor = getAnchor(for: workoutType)
@@ -43,15 +42,6 @@ final class SQHealthKitManager {
             SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error)
             return .error(error)
         }
-    }
-    
-    private func getLastWeekStartDate(from date: Date = Date()) -> Date {
-        return Calendar.current.date(byAdding: .year, value: -10, to: date)!
-    }
-    
-    private func createLastWeekPredicate(from endDate: Date = Date()) -> NSPredicate {
-        let startDate = getLastWeekStartDate(from: endDate)
-        return HKQuery.predicateForSamples(withStart: startDate, end: endDate)
     }
     
     func anchorKey(for type: HKSampleType) -> String {
