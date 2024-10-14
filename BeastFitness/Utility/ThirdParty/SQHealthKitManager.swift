@@ -118,7 +118,7 @@ final class SQHealthKitManager {
                 self.updateAnchor(newAnchor, from: query)
                 
                 let hkWorkouts = samplesOrNil?.compactMap { $0 as? HKWorkout } ?? []
-                let sqWorkouts: [SQWorkout] = hkWorkouts.map { .init(.hkWorkout($0)) }
+                let sqWorkouts: [SQWorkout] = hkWorkouts.map { .init(.hkWorkout(.init(hkWorkout: $0))) }
                 
                 self.completeQueryResultContinuation(.success(sqWorkouts))
                 return

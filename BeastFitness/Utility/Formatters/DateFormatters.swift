@@ -17,4 +17,10 @@ final class SQDateFormatters {
         formatter.allowedUnits = [.day, .hour, .minute, .second]
         return formatter
     }()
+    
+    lazy var iso8601Formatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = .current
+        return formatter
+    }()
 }

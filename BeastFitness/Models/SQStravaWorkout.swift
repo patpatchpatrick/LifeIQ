@@ -8,7 +8,7 @@
 import Foundation
 import HealthKit
 
-struct SQStravaWorkout: Codable {
+struct SQStravaWorkout: Codable, SQWorkoutable {
     let id: Double?
     let sport_type: SQStravaSportType
     let elapsed_time: Double? // seconds
@@ -52,6 +52,28 @@ struct SQStravaWorkout: Codable {
     
     var activeDuration: Double? {
         moving_time
+    }
+    
+    var activityType: HKWorkoutActivityType {
+        sport_type.activityType
+    }
+    
+    var coreOutputQuantityTypeId: SQQuantityType? {
+        activityType.coreOutputQuantityTypeId
+    }
+    
+    var coreOutputUnit: SQUnit? {
+        activityType.coreOutputUnit
+    }
+    
+    var startDate: Date? {
+        guard let start_date else { return nil }
+        return SQDateFormatters.shared.iso8601Formatter.date(from: start_date)
+    }
+    
+    var endDate: Date? {
+        guard let elapsed_time else { return nil }
+        return startDate?.addingTimeInterval(elapsed_time)
     }
 }
 

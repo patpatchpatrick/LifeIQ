@@ -16,4 +16,9 @@ extension [SQWorkout] {
         }
         return workoutsByActivityType
     }
+    
+    func filterDuplicates() -> [SQWorkout] {
+        // TODO: - PTD filter workouts whose start date and end date are very similar
+        return self
+    }
 }

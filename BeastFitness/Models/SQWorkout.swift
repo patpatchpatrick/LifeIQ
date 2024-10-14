@@ -9,53 +9,26 @@ import Foundation
 import HealthKit
 
 protocol SQWorkoutable {
-    var activityType: HKWorkoutActivityType? { get }
+    var activityType: HKWorkoutActivityType { get }
     var coreOutputQuantityTypeId: SQQuantityType? { get }
     var coreOutputUnit: SQUnit? { get }
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    func unitFor(_ quantityTypeIdentifier: SQQuantityType) -> SQUnit?
     var activeDuration: Double? { get } /// Seconds
+    var startDate: Date? { get }
+    var endDate: Date? { get }
 }
 
 enum SQWorkoutType {
-    case hkWorkout(HKWorkout)
+    case hkWorkout(SQHKWorkout)
     case stravaWorkout(SQStravaWorkout)
     
-    var activityType: HKWorkoutActivityType {
+    var workoutable: SQWorkoutable {
         switch self {
         case .hkWorkout(let workout):
-            workout.workoutActivityType
+            return workout
         case .stravaWorkout(let workout):
-            workout.sport_type.activityType
-        }
-    }
-    
-    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        switch self {
-        case .hkWorkout(let workout):
-            workout.sumOutputFor(quantityTypeIdentifier)
-        case .stravaWorkout(let workout):
-            workout.sumOutputFor(quantityTypeIdentifier)
-        }
-    }
-    
-    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        switch self {
-        case .hkWorkout(let workout):
-            workout.avgOutputFor(quantityTypeIdentifier)
-        case .stravaWorkout(let workout):
-            workout.avgOutputFor(quantityTypeIdentifier)
-        }
-    }
-    
-    // TODO: - PTD, should this be active or total duration?
-    var activeDuration: Double? {
-        switch self {
-        case .hkWorkout(let workout):
-            workout.duration
-        case .stravaWorkout(let workout):
-            workout.activeDuration
+            return workout
         }
     }
 }
@@ -69,39 +42,36 @@ final class SQWorkout: SQWorkoutable {
         self.workoutType = workoutType
     }
     
-    var activityType: HKWorkoutActivityType? {
-        workoutType.activityType
+    var activityType: HKWorkoutActivityType {
+        workoutType.workoutable.activityType
     }
     
     var coreOutputQuantityTypeId: SQQuantityType? {
-        workoutType.activityType.coreOutputQuantityTypeId
+        workoutType.workoutable.activityType.coreOutputQuantityTypeId
     }
     
     var coreOutputUnit: SQUnit? {
-        workoutType.activityType.coreOutputUnit
+        workoutType.workoutable.activityType.coreOutputUnit
     }
     
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        workoutType.sumOutputFor(quantityTypeIdentifier)
+        workoutType.workoutable.sumOutputFor(quantityTypeIdentifier)
     }
     
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        workoutType.avgOutputFor(quantityTypeIdentifier)
+        workoutType.workoutable.avgOutputFor(quantityTypeIdentifier)
     }
     
     var activeDuration: Double? {
-        workoutType.activeDuration
+        workoutType.workoutable.activeDuration
     }
     
-    func unitFor(_ quantityTypeIdentifier: SQQuantityType) -> SQUnit? {
-        switch quantityTypeIdentifier {
-        case .distanceWalkingRunning, .distanceCycling:
-            return .mile
-        case .activeEnergyBurned:
-            return .kilocalorie
-        case .heartRate:
-            return .countPerMinute
-        }
+    var startDate: Date? {
+        workoutType.workoutable.startDate
+    }
+    
+    var endDate: Date? {
+        workoutType.workoutable.endDate
     }
 }
 
@@ -118,7 +88,7 @@ final class SQWorkouts {
     let caloriesString: String?
     let heartRateString: String?
     
-    init(workouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkout]) {
         self.workouts = workouts
         
         var totalOutput = 0.0
@@ -142,7 +112,7 @@ final class SQWorkouts {
         
         sumOutputString = "\(totalOutput.sqShortString) \(firstWorkout?.coreOutputUnit?.unitString ?? "")"
         timeString = SQDateFormatters.shared.durationFormatter.string(from: totalTime)
-        caloriesString = "\(totalCalories.sqShortString) \(firstWorkout?.unitFor(.activeEnergyBurned)?.unitString ?? "")"
-        heartRateString = "\(averageHeartRate.sqShortString) \(firstWorkout?.unitFor(.heartRate)?.unitString ?? "")"
+        caloriesString = "\(totalCalories.sqShortString) \(SQWorkoutConfig.shared.unitFor(.activeEnergyBurned)?.unitString ?? "")"
+        heartRateString = "\(averageHeartRate.sqShortString) \(SQWorkoutConfig.shared.unitFor(.heartRate)?.unitString ?? "")"
     }
 }

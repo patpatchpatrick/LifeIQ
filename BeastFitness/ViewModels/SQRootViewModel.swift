@@ -70,8 +70,11 @@ class SQRootViewModel {
     private func refreshState() async {
         refreshUi(with: nil)
         let hkWorkouts = await SQHealthKitManager.shared.fetchWorkouts(currentTimeRange).workouts ?? []
-        let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts() ?? []
-        let allWorkouts = hkWorkouts.appending(contentsOf: stravaWorkouts)
+        let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts(currentTimeRange) ?? []
+        let allWorkouts = hkWorkouts
+            .appending(contentsOf: stravaWorkouts)
+            .filterDuplicates()
+        
         refreshUi(with: allWorkouts)
     }
     
