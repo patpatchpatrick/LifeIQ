@@ -1,5 +1,5 @@
 //
-//  SQRootView.swift
+//  SQOldRootView.swift
 //  Beast
 //
 //  Created by Patrick Doyle on 9/23/24.
@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct SQRootView: View {
+struct SQOldRootView: View {
     
-    @State var viewModel = SQRootViewModel()
+    @State var viewModel = SQOldRootViewModel()
     
     var homeDashboard: some View {
         List {

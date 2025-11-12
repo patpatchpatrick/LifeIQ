@@ -17,6 +17,10 @@ extension View {
         }
     }
     
+    func sqForegroundColor(_ color: SQColor) -> some View {
+        foregroundColor(color.color)
+    }
+    
     func sqBorder(_ color: SQColor, width: CGFloat) -> some View {
         border(color.color, width: width)
     }

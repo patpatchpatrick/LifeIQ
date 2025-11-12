@@ -14,7 +14,7 @@ struct SQRootLeaderboardSectionHeader: View {
     var mainBody: some View {
         Text(title)
             .sqFont(.title1)
-            .foregroundColor(SQColor.text.color)
+            .foregroundColor(SQColor.textPrimary.color)
             .padding(.bottom, 12)
     }
     
@@ -61,7 +61,7 @@ struct SQRootLeaderboardSection: View {
             .padding(.vertical, 8)
             .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
             .frame(maxWidth: .infinity)
-            .background(SQColor.backgroundContainer.color)
+            .background(SQColor.backgroundSecondary.color)
             .cornerRadius(8)
         }
         .redacted(viewModel.isPlaceholder, reason: .placeholder)
@@ -79,12 +79,12 @@ struct SQRootLeaderboardSectionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.title)
                     .sqFont(.body)
-                    .foregroundColor(SQColor.text.color)
+                    .foregroundColor(SQColor.textPrimary.color)
                     .fixedSize(horizontal: true, vertical: true)
                 
                 Text(viewModel.subtitle)
                     .sqFont(.body)
-                    .foregroundColor(SQColor.textSecondary.color)
+                    .foregroundColor(SQColor.textPrimary.color)
                     .fixedSize(horizontal: true, vertical: true)
             }
             
@@ -92,7 +92,7 @@ struct SQRootLeaderboardSectionRow: View {
             
             Text(viewModel.outputString)
                 .sqFont(.bodyBold)
-                .foregroundColor(SQColor.text.color)
+                .foregroundColor(SQColor.textPrimary.color)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }

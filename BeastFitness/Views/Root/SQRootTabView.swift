@@ -46,6 +46,6 @@ struct SQRootTabView: View {
         mainTabView
             .frame(maxHeight: .infinity)
             .background(Color.purple)
-            .accentColor(SQColor.text.color)
+            .accentColor(SQColor.textPrimary.color)
     }
 }

@@ -14,13 +14,13 @@ struct SQDropDownButton: View {
         HStack(spacing: 4) {
             Text(viewModel.title)
                 .sqFont(.body)
-                .foregroundStyle(SQColor.text.color)
+                .foregroundStyle(SQColor.textPrimary.color)
             
             SQImageView(image: .init(
                 symbol: .chevronDown,
                 symbolStyle: .init(
                     renderingMode: .palette,
-                    multiColor: (.text, .text),
+                    multiColor: (.textPrimary, .textPrimary),
                     font: .init(type: .bodySmall)))
             )
             .frame(width: 10)
@@ -38,6 +38,6 @@ struct SQDropDownButton: View {
     var body: some View {
         button
             .padding(4)
-            .sqBorder(.text, width: 1, cornerRadius: 4)
+            .sqBorder(.textPrimary, width: 1, cornerRadius: 4)
     }
 }

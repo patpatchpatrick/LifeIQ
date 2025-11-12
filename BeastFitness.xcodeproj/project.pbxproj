@@ -15,6 +15,10 @@
 		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
 		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
 		F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA392EC4118600404878 /* SQDashboardView.swift */; };
+		F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */; };
+		F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA3E2EC4EA0A00404878 /* SQDashboardTextRowViewModel.swift */; };
+		F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */; };
+		F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2AA2CA50D7C00E72926 /* SQRootView.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -24,7 +28,6 @@
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
 		F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F665ABF42CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift */; };
 		F665ABF72CC6D94F001904B0 /* SQRootLeaderboardSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F665ABF62CC6D94F001904B0 /* SQRootLeaderboardSection.swift */; };
-		F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
 		F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */; };
@@ -86,6 +89,10 @@
 		F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabViewModel.swift; sourceTree = "<group>"; };
 		F602DA362EC4110D00404878 /* SQRootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabView.swift; sourceTree = "<group>"; };
 		F602DA392EC4118600404878 /* SQDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardView.swift; sourceTree = "<group>"; };
+		F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardRowViewModel.swift; sourceTree = "<group>"; };
+		F602DA3E2EC4EA0A00404878 /* SQDashboardTextRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardTextRowViewModel.swift; sourceTree = "<group>"; };
+		F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardTextRow.swift; sourceTree = "<group>"; };
+		F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGFloat+Extensions.swift"; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
 		F657E2AA2CA50D7C00E72926 /* SQRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootView.swift; sourceTree = "<group>"; };
@@ -99,7 +106,6 @@
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
 		F665ABF42CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootLeaderboardSectionViewModel.swift; sourceTree = "<group>"; };
 		F665ABF62CC6D94F001904B0 /* SQRootLeaderboardSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootLeaderboardSection.swift; sourceTree = "<group>"; };
-		F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
 		F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Extensions.swift"; sourceTree = "<group>"; };
@@ -175,6 +181,7 @@
 		F602DA2D2EC40F9900404878 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA3B2EC4E9F400404878 /* DashboardRows */,
 				F602DA2E2EC40F9D00404878 /* SQDashboardViewModel.swift */,
 			);
 			path = Dashboard;
@@ -199,9 +206,27 @@
 		F602DA382EC4118200404878 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F602DA392EC4118600404878 /* SQDashboardView.swift */,
 			);
 			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		F602DA3B2EC4E9F400404878 /* DashboardRows */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA3E2EC4EA0A00404878 /* SQDashboardTextRowViewModel.swift */,
+				F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */,
+			);
+			path = DashboardRows;
+			sourceTree = "<group>";
+		};
+		F602DA402EC4EAA100404878 /* DashboardRows */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */,
+			);
+			path = DashboardRows;
 			sourceTree = "<group>";
 		};
 		F657E29C2CA50D7C00E72926 = {
@@ -390,13 +415,13 @@
 		F6F94E012CAB9AA100C2B90B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */,
 				F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */,
 				F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */,
 				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
 				F6A8489E2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift */,
 				F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */,
 				F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */,
-				F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */,
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
 				F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */,
 			);
@@ -569,6 +594,7 @@
 				F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
+				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,
 				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
@@ -577,13 +603,15 @@
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
-				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
+				F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */,
 				F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */,
+				F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */,
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
+				F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
 				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,

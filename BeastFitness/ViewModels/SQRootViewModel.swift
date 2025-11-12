@@ -1,5 +1,5 @@
 //
-//  SQRootViewModel.swift
+//  SQOldRootViewModel.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 9/30/24.
@@ -10,7 +10,7 @@ import HealthKit
 import SwiftUI
 
 @Observable
-final class SQRootViewModel {
+final class SQOldRootViewModel {
     
     let deepLinkManager = SQDeepLinkManager()
     var navigationPath = NavigationPath()
