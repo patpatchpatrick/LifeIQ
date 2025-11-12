@@ -23,4 +23,13 @@ final class SQDateFormatters {
         formatter.timeZone = .current
         return formatter
     }()
+    
+    lazy var dateShortFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.locale = Locale.current
+        df.timeZone = .current
+        df.timeStyle = .short
+        df.dateStyle = .short // 1/28/23
+        return df
+    }()
 }

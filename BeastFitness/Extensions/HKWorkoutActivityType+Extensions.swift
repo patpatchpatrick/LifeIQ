@@ -106,9 +106,9 @@ extension HKWorkoutActivityType {
     var image: SQImage {
         // TODO: - PTD add icons for all activity types
         switch self {
-        case .running:
+        case .running, .walking:
             return .init(symbol: .figureWalk)
-        case .functionalStrengthTraining:
+        case .functionalStrengthTraining, .traditionalStrengthTraining:
             return .init(asset: .dumbell)
         case .cycling:
             return .init(symbol: .bicycle)
@@ -122,11 +122,11 @@ extension HKWorkoutActivityType {
     // TODO: - PTD finish with all activities
     var coreOutputQuantityTypeId: SQQuantityType? {
         switch self {
-        case .running:
+        case .running, .walking:
             return .distanceWalkingRunning
         case .cycling:
             return .distanceCycling
-        case .pickleball:
+        case .pickleball, .traditionalStrengthTraining, .functionalStrengthTraining:
             return .activeEnergyBurned
         default:
             return nil

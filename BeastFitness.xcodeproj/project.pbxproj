@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F602DA282EC40EB800404878 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA272EC40EB700404878 /* AppState.swift */; };
+		F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA292EC40EC700404878 /* EventHub.swift */; };
+		F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2B2EC40ED400404878 /* NavigationState.swift */; };
+		F602DA2F2EC40FA100404878 /* SQDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2E2EC40F9D00404878 /* SQDashboardViewModel.swift */; };
+		F602DA312EC40FB800404878 /* DashboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA302EC40FB600404878 /* DashboardState.swift */; };
+		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
+		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
+		F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA392EC4118600404878 /* SQDashboardView.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2AA2CA50D7C00E72926 /* SQRootView.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -14,6 +22,8 @@
 		F657E2BA2CA50D7E00E72926 /* BeastFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2B92CA50D7E00E72926 /* BeastFitnessTests.swift */; };
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
+		F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F665ABF42CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift */; };
+		F665ABF72CC6D94F001904B0 /* SQRootLeaderboardSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F665ABF62CC6D94F001904B0 /* SQRootLeaderboardSection.swift */; };
 		F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
@@ -32,16 +42,18 @@
 		F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B12CBD8CCE00B09AD5 /* SQError.swift */; };
 		F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */; };
 		F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B52CBD8F2B00B09AD5 /* SQNavBarViewModel.swift */; };
-		F6A848B82CBD8FE700B09AD5 /* SQNavBarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */; };
+		F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B72CBD8FE700B09AD5 /* SQDropDownButton.swift */; };
 		F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */; };
 		F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */; };
 		F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */; };
 		F6D232ED2CBDC73A00B84594 /* SQWorkoutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
+		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
+		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* SQRootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* SQRootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
-		F6F94E062CAB9D3400C2B90B /* SQRootSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E052CAB9D3400C2B90B /* SQRootSection.swift */; };
+		F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E052CAB9D3400C2B90B /* SQRootActivitySection.swift */; };
 		F6F94E082CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E072CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift */; };
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
 		F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */; };
@@ -66,6 +78,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F602DA272EC40EB700404878 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		F602DA292EC40EC700404878 /* EventHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHub.swift; sourceTree = "<group>"; };
+		F602DA2B2EC40ED400404878 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
+		F602DA2E2EC40F9D00404878 /* SQDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardViewModel.swift; sourceTree = "<group>"; };
+		F602DA302EC40FB600404878 /* DashboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardState.swift; sourceTree = "<group>"; };
+		F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabViewModel.swift; sourceTree = "<group>"; };
+		F602DA362EC4110D00404878 /* SQRootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabView.swift; sourceTree = "<group>"; };
+		F602DA392EC4118600404878 /* SQDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardView.swift; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
 		F657E2AA2CA50D7C00E72926 /* SQRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootView.swift; sourceTree = "<group>"; };
@@ -77,6 +97,8 @@
 		F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITests.swift; sourceTree = "<group>"; };
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
+		F665ABF42CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootLeaderboardSectionViewModel.swift; sourceTree = "<group>"; };
+		F665ABF62CC6D94F001904B0 /* SQRootLeaderboardSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootLeaderboardSection.swift; sourceTree = "<group>"; };
 		F6A848872CB31A7C00B09AD5 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
@@ -96,16 +118,18 @@
 		F6A848B12CBD8CCE00B09AD5 /* SQError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQError.swift; sourceTree = "<group>"; };
 		F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extensions.swift"; sourceTree = "<group>"; };
 		F6A848B52CBD8F2B00B09AD5 /* SQNavBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNavBarViewModel.swift; sourceTree = "<group>"; };
-		F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNavBarButton.swift; sourceTree = "<group>"; };
+		F6A848B72CBD8FE700B09AD5 /* SQDropDownButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownButton.swift; sourceTree = "<group>"; };
 		F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButtonViewModel.swift; sourceTree = "<group>"; };
 		F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenuViewModel.swift; sourceTree = "<group>"; };
 		F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTimeRange.swift; sourceTree = "<group>"; };
 		F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutConfig.swift; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
+		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
+		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* SQRootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
-		F6F94E052CAB9D3400C2B90B /* SQRootSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootSection.swift; sourceTree = "<group>"; };
+		F6F94E052CAB9D3400C2B90B /* SQRootActivitySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootActivitySection.swift; sourceTree = "<group>"; };
 		F6F94E072CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootActivitySectionViewModel.swift; sourceTree = "<group>"; };
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkout+Extensions.swift"; sourceTree = "<group>"; };
@@ -137,6 +161,49 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F602DA262EC40EB100404878 /* StateManagement */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA302EC40FB600404878 /* DashboardState.swift */,
+				F602DA2B2EC40ED400404878 /* NavigationState.swift */,
+				F602DA292EC40EC700404878 /* EventHub.swift */,
+				F602DA272EC40EB700404878 /* AppState.swift */,
+			);
+			path = StateManagement;
+			sourceTree = "<group>";
+		};
+		F602DA2D2EC40F9900404878 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA2E2EC40F9D00404878 /* SQDashboardViewModel.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		F602DA342EC410F000404878 /* Old Root */ = {
+			isa = PBXGroup;
+			children = (
+				F6F94E042CAB9D1C00C2B90B /* Root */,
+			);
+			path = "Old Root";
+			sourceTree = "<group>";
+		};
+		F602DA352EC4110600404878 /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA362EC4110D00404878 /* SQRootTabView.swift */,
+			);
+			path = Root;
+			sourceTree = "<group>";
+		};
+		F602DA382EC4118200404878 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				F602DA392EC4118600404878 /* SQDashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
 		F657E29C2CA50D7C00E72926 = {
 			isa = PBXGroup;
 			children = (
@@ -160,6 +227,7 @@
 		F657E2A72CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA262EC40EB100404878 /* StateManagement */,
 				F6A848A42CB608C400B09AD5 /* CoreFiles */,
 				F6A848A32CB6066100B09AD5 /* Info.plist */,
 				F6F94E0D2CB3146F00C2B90B /* UI */,
@@ -205,8 +273,9 @@
 		F6A848912CB4A7E900B09AD5 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */,
 				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
-				F6A848B72CBD8FE700B09AD5 /* SQNavBarButton.swift */,
+				F6A848B72CBD8FE700B09AD5 /* SQDropDownButton.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -237,6 +306,7 @@
 			children = (
 				F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */,
 				F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */,
+				F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */,
 			);
 			path = ThirdParty;
 			sourceTree = "<group>";
@@ -296,9 +366,12 @@
 		F6F94DFD2CAB9A5500C2B90B /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */,
+				F602DA2D2EC40F9900404878 /* Dashboard */,
 				F6A848BA2CBD950E00B09AD5 /* Shared */,
 				F6F94DFE2CAB9A5D00C2B90B /* SQRootViewModel.swift */,
 				F6F94E072CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift */,
+				F665ABF42CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -306,8 +379,10 @@
 		F6F94E002CAB9A7B00C2B90B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F602DA382EC4118200404878 /* Dashboard */,
+				F602DA352EC4110600404878 /* Root */,
+				F602DA342EC410F000404878 /* Old Root */,
 				F6A848912CB4A7E900B09AD5 /* Shared */,
-				F6F94E042CAB9D1C00C2B90B /* Root */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -332,7 +407,8 @@
 			isa = PBXGroup;
 			children = (
 				F657E2AA2CA50D7C00E72926 /* SQRootView.swift */,
-				F6F94E052CAB9D3400C2B90B /* SQRootSection.swift */,
+				F6F94E052CAB9D3400C2B90B /* SQRootActivitySection.swift */,
+				F665ABF62CC6D94F001904B0 /* SQRootLeaderboardSection.swift */,
 			);
 			path = Root;
 			sourceTree = "<group>";
@@ -479,15 +555,18 @@
 			files = (
 				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */,
+				F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */,
 				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
+				F665ABF72CC6D94F001904B0 /* SQRootLeaderboardSection.swift in Sources */,
 				F6A848962CB4ABE300B09AD5 /* SQWorkout.swift in Sources */,
+				F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
 				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
 				F6D232ED2CBDC73A00B84594 /* SQWorkoutConfig.swift in Sources */,
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
-				F6F94E062CAB9D3400C2B90B /* SQRootSection.swift in Sources */,
+				F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
@@ -497,20 +576,29 @@
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
+				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F6A848882CB31A7C00B09AD5 /* UIColor+Extensions.swift in Sources */,
-				F6A848B82CBD8FE700B09AD5 /* SQNavBarButton.swift in Sources */,
+				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
+				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
+				F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */,
+				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
 				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,
 				F6A848AB2CB779A300B09AD5 /* SQStravaWorkout.swift in Sources */,
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
+				F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
+				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift in Sources */,
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
+				F602DA282EC40EB800404878 /* AppState.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
+				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,
 				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
+				F602DA2F2EC40FA100404878 /* SQDashboardViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

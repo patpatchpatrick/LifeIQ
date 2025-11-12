@@ -17,6 +17,38 @@ extension View {
         }
     }
     
+    func sqBorder(_ color: SQColor, width: CGFloat) -> some View {
+        border(color.color, width: width)
+    }
+    
+    @ViewBuilder
+    func sqBorder(_ color: SQColor, width: CGFloat, cornerRadius: CGFloat = 0, alignment: Alignment? = nil) -> some View {
+        if let alignment {
+            switch alignment {
+            case .bottom, .bottomLeading, .bottomTrailing, .top, .topLeading, .topTrailing:
+                // Single line top or bottom border
+                overlay (
+                    Rectangle()
+                        .fill(color.color)
+                        .frame(height: width), alignment: alignment)
+            case .leading, .trailing:
+                // Single line leading or trailing border
+                overlay (
+                    Rectangle()
+                        .fill(color.color)
+                        .frame(width: width), alignment: alignment)
+            default:
+                fatalError("Alignment not supported")
+            }
+        }
+        else {
+            // Surrounding border
+            overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(color.color, lineWidth: width)
+            )
+        }
+    }
 }
 
 // MARK: - Nav Bar Menu
@@ -24,7 +56,7 @@ extension View {
 extension View {
     @ViewBuilder
     func sqNavMenu(_ viewModel: SQNavBarViewModel) -> some View {
-        modifier(SQNavigationMenu(viewModel: viewModel))
+        modifier(SQNavBarMenu(viewModel: viewModel))
     }
 }
 
@@ -34,27 +66,12 @@ struct NavMenuStyle : MenuStyle {
     }
 }
 
-struct SQNavigationMenu: ViewModifier {
+struct SQNavBarMenu: ViewModifier {
     @ObservedObject var viewModel: SQNavBarViewModel
     
     @ViewBuilder
-    func menu(for menuViewModel: SQDropDownMenuViewModel) -> some View {
-        Menu {
-            ForEach(menuViewModel.dropDownButtons, id: \.title) { button in
-                Button(role: .cancel) {
-                    button.selected()
-                } label: {
-                    Text(button.title)
-                }
-                .disabled(!viewModel.allButtonsEnabled)
-            }
-        } label: {
-            SQNavBarButton(viewModel: menuViewModel.mainButton)
-                .disabled(!viewModel.allButtonsEnabled)
-                .frame(height: 30)
-        }
-        .menuStyle(NavMenuStyle())
-        .disabled(!viewModel.allButtonsEnabled)
+    var menu: some View {
+        SQDropDownMenu(menuViewModel: viewModel.leadingViewModel, isDisabled: !viewModel.allButtonsEnabled)
     }
     
     func body(content: Content) -> some View {
@@ -62,7 +79,7 @@ struct SQNavigationMenu: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    menu(for: viewModel.leadingViewModel)
+                    menu
                         .opacity(viewModel.isVisible ? 1 : 0)
                         .disabled(!viewModel.isVisible)
                 }

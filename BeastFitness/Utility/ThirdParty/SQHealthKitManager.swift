@@ -12,13 +12,14 @@ final class SQHealthKitManager {
     static let shared = SQHealthKitManager()
     static let healthStore: HKHealthStore = HKHealthStore()
     
-    private let allQuantityTypes: Set = [
+    let allQuantityTypes: Set = [
         HKQuantityType.workoutType(),
         HKQuantityType(.activeEnergyBurned),
         HKQuantityType(.distanceCycling),
         HKQuantityType(.distanceWalkingRunning),
         HKQuantityType(.distanceWheelchair),
-        HKQuantityType(.heartRate)
+        HKQuantityType(.heartRate),
+        HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
     ]
     
     private let userDefaults = UserDefaults.standard
@@ -129,5 +130,13 @@ final class SQHealthKitManager {
         return await withCheckedContinuation { continuation in
             self.queryResultContinuation = continuation
         }
+    }
+    
+    // MARK: - Sleep
+    var sleepQueryResultContinuation: CheckedContinuation<SleepQueryResult, Never>?
+    func completeSleepQueryResultContinuation(_ result: SleepQueryResult) {
+        /// Never execute a continuation twice.  It causes a crash
+        sleepQueryResultContinuation?.resume(returning: result)
+        sleepQueryResultContinuation = nil
     }
 }

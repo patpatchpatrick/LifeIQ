@@ -1,5 +1,5 @@
 //
-//  RootSection.swift
+//  SQRootActivitySection.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 9/30/24.
@@ -12,6 +12,9 @@ struct SQRootActivitySectionHeader: View {
     
     var mainBody: some View {
         Text(title)
+            .sqFont(.title1)
+            .foregroundColor(SQColor.text.color)
+            .padding(.bottom, 12)
     }
     
     var body: some View {
@@ -53,10 +56,17 @@ struct SQRootActivitySection: View {
                             SQRootActivitySectionHeaderRow(viewModel: headerRowViewModel)
                                 .frame(height: headerRowHeight)
                         }
-                        
-                        ForEach(viewModel.rows) {
-                            SQRootActivitySectionRow(viewModel: $0)
-                                .frame(height: rowHeight)
+                        ForEach(Array(viewModel.rows.enumerated()), id: \.1) { (index, rowViewModel) in
+                            
+                            VStack(spacing: 0) {
+                                SQRootActivitySectionRow(viewModel: rowViewModel)
+                                    .frame(height: rowHeight)
+                                
+                                if index < viewModel.rows.count - 1 {
+                                    Color(SQColor.divider.color)
+                                        .frame(height: 1)
+                                }
+                            }
                         }
                     }
                 }.frame(maxHeight: .infinity)
@@ -99,7 +109,8 @@ struct SQRootActivitySectionColumnHeader: View {
     
     var body: some View {
         Text(viewModel.title)
-            .font(.footnote)
+            .sqFont(.bodySmall)
+            .foregroundColor(SQColor.textSecondary.color)
             .frame(width: 100)
     }
 }

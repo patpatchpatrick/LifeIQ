@@ -55,6 +55,7 @@ struct SQImage {
     
     enum ImageSymbol: String {
         case bicycle = "bicycle"
+        case chevronDown = "chevron.down"
         case figureWalk = "figure.walk"
         case questionmarkCircle = "questionmark.circle"
         

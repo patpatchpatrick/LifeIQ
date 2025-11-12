@@ -14,6 +14,8 @@ struct SQRootView: View {
     var homeDashboard: some View {
         List {
             SQRootActivitySection(viewModel: viewModel.activitySection)
+            
+            SQRootLeaderboardSection(viewModel: viewModel.leaderboardSection)
         }
         .listStyle(PlainListStyle())
         .sqNavMenu(viewModel.navBarViewModel)

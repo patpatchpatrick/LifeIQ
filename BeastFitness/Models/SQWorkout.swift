@@ -73,6 +73,23 @@ final class SQWorkout: SQWorkoutable {
     var endDate: Date? {
         workoutType.workoutable.endDate
     }
+    
+    var coreOutput: Double? {
+        guard let coreOutputQuantityTypeId,
+                let coreOutputUnit = activityType.coreOutputUnit
+        else { return nil }
+        
+        let sumOutput = sumOutputFor(coreOutputQuantityTypeId) ?? 0
+        return sumOutput
+    }
+    
+    var outputString: String? {
+        guard let coreOutput,
+                let coreOutputUnit = activityType.coreOutputUnit
+        else { return nil }
+        
+        return "\(coreOutput.sqShortString) \(coreOutputUnit.unitString ?? "")"
+    }
 }
 
 // MARK: - SQWorkouts

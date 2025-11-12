@@ -10,7 +10,7 @@ import HealthKit
 import SwiftUI
 
 @Observable
-class SQRootViewModel {
+final class SQRootViewModel {
     
     let deepLinkManager = SQDeepLinkManager()
     var navigationPath = NavigationPath()
@@ -20,6 +20,11 @@ class SQRootViewModel {
     private(set) var activitySection: SQRootActivitySectionViewModel = .init(
         isPlaceholder: true,
         title: "Activity Stats",
+        workouts: [])
+    
+    private(set) var leaderboardSection: SQRootLeaderboardSectionViewModel = .init(
+        isPlaceholder: true,
+        title: "Leaderboard",
         workouts: [])
     
     // MARK: - Init
@@ -69,11 +74,15 @@ class SQRootViewModel {
     
     private func refreshState() async {
         refreshUi(with: nil)
+        
+        let sleepTime = await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
         let hkWorkouts = await SQHealthKitManager.shared.fetchWorkouts(currentTimeRange).workouts ?? []
         let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts(currentTimeRange) ?? []
         let allWorkouts = hkWorkouts
             .appending(contentsOf: stravaWorkouts)
             .filterDuplicates()
+        
+        print("PTD SLEEP TIME", sleepTime.sleepQueryResult?.totalTime)
         
         refreshUi(with: allWorkouts)
     }
@@ -85,5 +94,6 @@ class SQRootViewModel {
         }
         
         activitySection = .init(title: "Activity Stats", workouts: workouts)
+        leaderboardSection = .init(title: "Leaderboard", workouts: workouts)
     }
 }

@@ -13,7 +13,7 @@ class SQRootActivitySectionViewModel {
     let isPlaceholder: Bool
     let title: String
     let headerRowViewModel: SQRootActivitySectionHeaderRowViewModel?
-    let rows: [SQRootActivitySectionRowViewModel]
+    var rows: [SQRootActivitySectionRowViewModel]
     let columnOrder: [SQActivityColumnType] = [
         .count,
         .output,
@@ -79,7 +79,7 @@ class SQRootActivitySectionHeaderRowViewModel: Identifiable {
 }
 
 @Observable
-class SQRootActivitySectionRowViewModel: Identifiable {
+class SQRootActivitySectionRowViewModel: Identifiable, Hashable, Equatable {
     let id = UUID()
     let columns: [SQRootActivitySectionColumnViewModel]
     let workoutType: HKWorkoutActivityType?
@@ -91,6 +91,14 @@ class SQRootActivitySectionRowViewModel: Identifiable {
             subRows.append(.init(columnType: columnType, workouts: workouts))
         }
         self.columns = subRows
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: SQRootActivitySectionRowViewModel, rhs: SQRootActivitySectionRowViewModel) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
