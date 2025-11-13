@@ -12,12 +12,16 @@ struct SQDashboardView: View {
     
     var mainScroll: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                 ForEach(viewModel.rowViewModels) { rowViewModel in
                     switch rowViewModel.rowType {
                     case .text:
                         if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
                             SQDashboardTextRow(viewModel: textRowViewModel)
+                        }
+                    case .weekSummary:
+                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWeekSummaryRowViewModel {
+                            SQDashboardWeekSummaryRow(viewModel: weekSummaryViewModel)
                         }
                     }
                 }

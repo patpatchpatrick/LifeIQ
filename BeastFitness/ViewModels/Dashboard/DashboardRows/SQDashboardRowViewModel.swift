@@ -9,6 +9,7 @@ import Foundation
 
 enum SQDashboardRowType {
     case text
+    case weekSummary
 }
 
 class SQDashboardRowViewModel: Identifiable {

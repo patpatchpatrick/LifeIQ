@@ -21,9 +21,14 @@ final class SQDashboardViewModel {
     }
     
     func loadUI() async {
+        
+        let sqWorkouts = await SQHealthKitManager.shared.fetchWorkouts(.pastWeek).workouts ?? []
+        
         var dashboardRows = [SQDashboardRowViewModel]()
         
         dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
+        
+        dashboardRows.append(SQDashboardWeekSummaryRowViewModel(workouts: sqWorkouts))
         
         self.rowViewModels = dashboardRows
     }
