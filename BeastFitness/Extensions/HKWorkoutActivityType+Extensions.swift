@@ -103,22 +103,6 @@ extension HKWorkoutActivityType {
     }
   }
     
-    var image: SQImage {
-        // TODO: - PTD add icons for all activity types
-        switch self {
-        case .running, .walking:
-            return .init(symbol: .figureWalk)
-        case .functionalStrengthTraining, .traditionalStrengthTraining:
-            return .init(asset: .dumbell)
-        case .cycling:
-            return .init(symbol: .bicycle)
-        case .pickleball:
-            return .init(asset: .pickleball)
-        default:
-            return .init(symbol: .questionmarkCircle)
-        }
-    }
-    
     // TODO: - PTD finish with all activities
     var coreOutputQuantityTypeId: SQQuantityType? {
         switch self {
@@ -138,116 +122,86 @@ extension HKWorkoutActivityType {
     }
 }
 
-enum SQQuantityType {
-    case distanceWalkingRunning
-    case distanceCycling
-    case activeEnergyBurned
-    case heartRate
-    
-    var hkQuantityTypeIdentifier: HKQuantityTypeIdentifier? {
+// MARK: - Images
+
+extension HKWorkoutActivityType {
+
+    var imageSymbol: SQImageSymbol {
         switch self {
-        case .distanceWalkingRunning:
-            return .distanceWalkingRunning
-        case .distanceCycling:
-            return .distanceCycling
-        case .activeEnergyBurned:
-            return .activeEnergyBurned
-        case .heartRate:
-            return .heartRate
-        }
-    }
-    
-    var unit: SQUnit? {
-        switch self {
-        case .activeEnergyBurned:
-            return .kilocalorie
-        case .distanceWalkingRunning, .distanceCycling:
-            return .mile
-        case .heartRate:
-            return .countPerMinute
+
+        // Movement basics
+        case .running:                          return .figureRun
+        case .walking:                          return .figureWalk
+        case .hiking:                           return .figureHiking
+        case .stairClimbing, .stairs:           return .figureStairs
+
+        // Strength
+        case .functionalStrengthTraining,
+             .traditionalStrengthTraining:      return .figureStrength
+
+        // Cardio machines & mixed
+        case .elliptical:                       return .figureElliptical
+        case .rowing:                           return .figureRowing
+        case .mixedCardio,
+             .mixedMetabolicCardioTraining,
+             .highIntensityIntervalTraining:    return .figureRun
+
+        // Wheels
+        case .cycling, .handCycling:            return .bicycle
+        case .wheelchairWalkPace,
+             .wheelchairRunPace:                return .wheelchairWalkPace
+
+        // Water
+        case .swimming, .waterFitness,
+             .waterSports, .waterPolo:          return .figureSwimming
+        case .sailing:                          return .sailboat
+        case .surfingSports:                    return .surfing
+
+        // Snow & ice
+        case .downhillSkiing, .crossCountrySkiing: return .figureSkiing
+        case .snowboarding:                     return .figureSnowboarding
+        case .skatingSports:                    return .figureSkating
+
+        // Mind & mobility
+        case .yoga:                             return .figureYoga
+        case .pilates:                          return .figurePilates
+        case .flexibility, .mindAndBody:        return .figureYoga
+        case .preparationAndRecovery:           return .figureYoga
+
+        // Field & court sports
+        case .basketball:                       return .basketball
+        case .baseball, .softball:              return .baseball
+        case .soccer:                           return .soccerball
+        case .volleyball:                       return .volleyball
+        case .rugby:                            return .rugbyball
+        case .americanFootball,
+             .australianFootball:               return .football
+        case .tennis, .racquetball, .squash:    return .tennisRacket
+        case .tableTennis:                      return .tableTennisPaddle
+        case .badminton:                        return .badminton
+        case .pickleball:                       return .questionmarkCircle // your pickleball is an asset, not symbol
+        case .golf:                             return .golf
+        case .hockey:                           return .hockeyPuck
+        case .bowling:                          return .bowlingBall
+        case .handball:                         return .handCycling // closest symbol
+
+        // Niche / best-effort
+        case .fencing:                          return .fencing
+        case .boxing, .kickboxing:              return .boxing
+        case .climbing:                         return .climbing
+        case .equestrianSports:                 return .figureWalk
+        case .archery:                          return .questionmarkCircle
+        case .fishing:                          return .questionmarkCircle
+        case .hunting:                          return .questionmarkCircle
+        case .discSports:                       return .questionmarkCircle
+        case .fitnessGaming:                    return .questionmarkCircle
+
+        // Dance & play
+        case .dance, .danceInspiredTraining, .play:
+            return .figureRun
+
+        default:
+            return .questionmarkCircle
         }
     }
 }
-
-enum SQUnit: CaseIterable {
-    case kilocalorie
-    case mile
-    case meter
-    case countPerMinute
-    
-    static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
-        guard let value else { return nil }
-        guard fromUnit.unitType == toUnit.unitType else {
-            SQLogger.shared.log("Cannot convert units of different types: \(fromUnit), \(toUnit)", .error)
-            return nil
-        }
-        
-        switch fromUnit {
-        case .kilocalorie:
-            return value
-        case .mile:
-            switch toUnit {
-            case .meter:
-                return value * 1609.344
-            default:
-                return value
-            }
-        case .meter:
-            switch toUnit {
-            case .mile:
-                return value / 1609.344
-            default:
-                return value
-            }
-        case .countPerMinute:
-            return value
-        }
-    }
-    
-    func convert(_ value: Double?, to unit: SQUnit) -> Double? {
-        Self.convert(value, from: self, to: unit)
-    }
-    
-    var unitType: SQUnitType {
-        switch self {
-        case .kilocalorie:
-            return .energy
-        case .mile, .meter:
-            return .distance
-        case .countPerMinute:
-            return .countPerTime
-        }
-    }
-    
-    var hkUnit: HKUnit? {
-        switch self {
-        case .kilocalorie:
-                .kilocalorie()
-        case .mile:
-                .mile()
-        case .meter:
-                .mile()
-        case .countPerMinute:
-                .count().unitDivided(by: .minute())
-        }
-    }
-    
-    var unitString: String? {
-        hkUnit?.unitString
-    }
-}
-
-enum SQUnitType {
-    case time
-    case distance
-    case energy
-    case countPerTime
-}
-
-// TODO: - Figure out the best place to put this
-var SQSupportedQuantityTypes: [HKQuantityTypeIdentifier]  = [
-    .distanceWalkingRunning,
-    .distanceCycling,
-    .activeEnergyBurned,
-    .heartRate
-]

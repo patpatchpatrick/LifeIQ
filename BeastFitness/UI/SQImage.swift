@@ -15,7 +15,7 @@ struct SQImage {
     let symbolStyle: SymbolStyle?
     let isResizable: Bool
     
-    init(asset: ImageAsset? = nil, symbol: ImageSymbol? = nil, color: SQColor? = nil, symbolStyle: SymbolStyle? = nil, isResizable: Bool = true) {
+    init(asset: ImageAsset? = nil, symbol: SQImageSymbol? = nil, color: SQColor? = nil, symbolStyle: SymbolStyle? = nil, isResizable: Bool = true) {
         self.color = color
         self.symbolStyle = symbolStyle
         self.isResizable = isResizable
@@ -36,7 +36,7 @@ struct SQImage {
     
     enum ImageType {
         case asset(ImageAsset)
-        case symbol(ImageSymbol)
+        case symbol(SQImageSymbol)
         
         var image: UIImage? {
             switch self {
@@ -53,14 +53,6 @@ struct SQImage {
         case pickleball = "pickleball"
     }
     
-    enum ImageSymbol: String {
-        case bicycle = "bicycle"
-        case chevronDown = "chevron.down"
-        case figureWalk = "figure.walk"
-        case questionmarkCircle = "questionmark.circle"
-        
-    }
-    
     struct SymbolStyle {
         let renderingMode: SymbolRenderingMode
         let multiColor: (SQColor, SQColor)
@@ -74,7 +66,57 @@ struct SQImage {
         
         static func colorWithFont(_ color: SQColor, _ color2: SQColor? = nil, font: SQFont.FontType) -> SymbolStyle
         {
-            .init(renderingMode: .multicolor, multiColor: (color, color2 ?? color), font: .init(type: font))
+            .init(renderingMode: .palette, multiColor: (color, color2 ?? color), font: .init(type: font))
         }
     }
+}
+
+/// SF Symbols
+enum SQImageSymbol: String {
+    // General / fitness
+    case questionmarkCircle = "questionmark.circle"
+    case figureWalk          = "figure.walk"
+    case figureRun           = "figure.run"
+    case figureHiking        = "figure.hiking"
+    case figureYoga          = "figure.yoga"
+    case figurePilates       = "figure.pilates"
+    case figureRowing        = "figure.rowing"
+    case figureSwimming      = "figure.swimming"
+    case figureElliptical    = "figure.elliptical"
+    case figureStairs        = "figure.stairs"
+    case figureStrength      = "figure.strengthtraining.traditional"
+
+    // Wheels & boats
+    case bicycle             = "bicycle"
+    case sailboat            = "sailboat"
+
+    // Winter & board sports
+    case figureSkiing        = "figure.skiing.downhill"
+    case figureSnowboarding  = "figure.snowboarding"
+    case figureSkating       = "figure.skating" // if unavailable, will fallback upstream
+
+    // Balls & sticks
+    case soccerball          = "soccerball"
+    case basketball          = "basketball"
+    case baseball            = "baseball"
+    case volleyball          = "volleyball"
+    case football            = "football"          // American football
+    case rugbyball           = "rugbyball"         // if unavailable, we’ll fallback upstream
+    case tennisRacket        = "tennis.racket"
+    case tableTennisPaddle   = "table.tennis.paddle"
+    case badminton           = "figure.badminton"
+    case hockeyPuck          = "hockey.puck"
+    case bowlingBall         = "bowlingball"
+    case golf                = "figure.golf"
+
+    // Misc sports
+    case fencing             = "figure.fencing"
+    case surfing             = "figure.surfing"
+    case climbing            = "figure.climbing"
+    case boxing              = "figure.boxing"
+    case handCycling         = "figure.hand.cycling" // wheelchair hand-cycling alt
+    case wheelchairWalkPace  = "figure.roll"         // generic fallback for wheelchair
+    
+    /// Other
+    case chevronDown         = "chevron.down"
 }

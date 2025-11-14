@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import HealthKit
 
 @Observable @MainActor
 final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
@@ -16,8 +17,8 @@ final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
         self.sectionTitle = "Workouts"
         
         var workoutGroupViewModels = [SQDashboardWorkoutGroupViewModel]()
-        for (activityType, workout) in workouts.workoutsByActivityType {
-            workoutGroupViewModels.append(.init(workouts: .init(workouts: workouts)))
+        for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
+            workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
         }
         self.workoutGroupViewModels = workoutGroupViewModels
         
@@ -27,9 +28,11 @@ final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable {
     let id = UUID()
-    let testTitle: String
+    let title: String
+    let workoutImageSymbol: SQImageSymbol
     
-    init(workouts: SQWorkouts) {
-        testTitle = workouts.sumOutputString ?? "Hello"
+    init(activityType: HKWorkoutActivityType, workouts: SQWorkouts) {
+        title = "\(workouts.workouts.count) \(activityType.name)"
+        workoutImageSymbol = workouts.workouts.compactMap { $0.activityType.imageSymbol }.first ?? .questionmarkCircle
     }
 }

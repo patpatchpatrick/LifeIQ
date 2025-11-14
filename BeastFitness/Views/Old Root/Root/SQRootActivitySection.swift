@@ -39,13 +39,13 @@ struct SQRootActivitySection: View {
                             .frame(height: headerRowHeight)
                     }
                     
-                    ForEach(viewModel.rows) {
-                        SQImageView(image: $0.workoutType?.image ?? .init())
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 20)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                            .frame(height: rowHeight)
-                    }
+//                    ForEach(viewModel.rows) {
+//                        SQImageView(image: .init(symbol: .badminton))
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(height: 20)
+//                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+//                            .frame(height: rowHeight)
+//                    }
                 }
                 .frame(maxHeight: .infinity)
                 .frame(width: 50)

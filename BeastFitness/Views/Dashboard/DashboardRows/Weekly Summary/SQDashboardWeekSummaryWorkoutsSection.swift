@@ -32,14 +32,6 @@ struct SQDashboardWeekSummaryWorkoutsSection: View {
     }
 }
 
-struct SQDashboardWorkoutGroupView: View {
-    let viewModel: SQDashboardWorkoutGroupViewModel
-    
-    var body: some View {
-        Text(viewModel.testTitle)
-    }
-}
-
 #Preview {
     SQDashboardWeekSummaryRowTotalsSection(viewModel: .init(workouts: [SQMockWorkout.mockRun, SQMockWorkout.mockRun]))
         .preferredColorScheme(.dark)
