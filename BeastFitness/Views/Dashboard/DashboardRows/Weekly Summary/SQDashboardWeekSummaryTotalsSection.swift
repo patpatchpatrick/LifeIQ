@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct SQDashboardWeekSummaryRowTotalsSection: View {
+struct SQDashboardWeekSummaryTotalsSection: View {
     let viewModel: SQDashboardWeekSummaryTotalsSectionViewModel
     
     var totalValuesAndTrendsStack: some View {
         VStack(spacing: .SQSpace.m) {
             ForEach(viewModel.totalValuesAndTrends) { valueAndTrend in
-                HStack(alignment: .bottom, spacing: .SQSpace.m) {
-                    Text(valueAndTrend.value)
+                HStack(alignment: .center, spacing: .SQSpace.m) {
+                    SQDashboardWorkoutStatView(attributedTitle: valueAndTrend.value)
                     Text(valueAndTrend.trend)
                 }
             }
@@ -22,9 +22,10 @@ struct SQDashboardWeekSummaryRowTotalsSection: View {
     }
     
     var mainStack: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: 0) {
             
             SQDashboardView.cardTitle(title: viewModel.sectionTitle)
+                .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
             totalValuesAndTrendsStack
         }
@@ -36,6 +37,6 @@ struct SQDashboardWeekSummaryRowTotalsSection: View {
 }
 
 #Preview {
-    SQDashboardWeekSummaryRowTotalsSection(viewModel: .init(workouts: [SQMockWorkout.mockRun, SQMockWorkout.mockRun]))
+    SQDashboardWeekSummaryTotalsSection(viewModel: .init(workouts: .mock, priorWeekWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

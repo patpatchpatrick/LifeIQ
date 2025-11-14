@@ -18,20 +18,18 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
         let trend: AttributedString
     }
     
-    init(workouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkoutable], priorWeekWorkouts: [SQWorkoutable]) {
         self.sectionTitle = "Totals"
         
-        let totalSeconds = workouts.reduce(0) { partial, workout in
-            partial + (workout.activeDuration ?? 0)
-        }
-        
-         let value = Self.formatDuration(seconds: totalSeconds)
-         
-         let trend = AttributedString.build(
-             with: "Up 52% from last week",
-             font: .caption,
-             color: .gray
-         )
+
+        let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
+        let totalSecondsPriorWeek = priorWeekWorkouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
+
+        let value = Self.formatDuration(seconds: totalSeconds)
+        let trend = Self.buildTrend(
+            currentSeconds: totalSeconds,
+            previousSeconds: totalSecondsPriorWeek
+        )
          
          self.totalValuesAndTrends = [TotalValueAndTrend(value: value, trend: trend)]
     }
@@ -71,18 +69,81 @@ private extension SQDashboardWeekSummaryTotalsSectionViewModel {
         // Bold white number
         let numberStr = AttributedString.build(
             with: "\(number)",
-            font: .body.weight(.semibold),
-            color: .white
+            font: SQFont(type: .bodySmallBold).font,
+            color: SQColor.textPrimary.color
         )
         // Regular gray unit (prefixed with space)
         let unitStr = AttributedString.build(
             with: " \(unit)",
-            font: .body,
-            color: .gray
+            font: SQFont(type: .bodySmall).font,
+            color: SQColor.textSecondary.color
         )
         
         result.append(numberStr)
         result.append(unitStr)
+        return result
+    }
+    
+    static func buildTrend(
+        currentSeconds: Double,
+        previousSeconds: Double
+    ) -> AttributedString {
+        // No prior data
+        guard previousSeconds > 0 else {
+            return AttributedString.build(
+                with: "No data from last week",
+                font: SQFont(type: .bodySmall).font,
+                color: SQColor.textSecondary.color
+            )
+        }
+
+        let delta = currentSeconds - previousSeconds
+        let ratio = delta / previousSeconds           // e.g. 0.52 for +52%
+        let percent = ratio
+
+        // If basically flat
+        if abs(percent) < 0.01 {
+            return AttributedString.build(
+                with: "About the same as last week",
+                font: SQFont(type: .bodySmall).font,
+                color: SQColor.textSecondary.color
+            )
+        }
+
+        let direction = percent > 0 ? "Up" : "Down"
+        let percentString = abs(percent).toPercentageString() // e.g. "52.0%"
+
+        // Colors/fonts
+        let baseFont = SQFont(type: .bodySmall).font
+        let baseColor = SQColor.textPrimary.color
+        let pctColor = SQColor.colorGreenRed(percent: percent * 4).color
+        let pctFont = SQFont(type: .bodySmallBold).font
+
+        // Build pieces: "Up " + "52%" + " from last week"
+        var result = AttributedString()
+
+        let prefix = AttributedString.build(
+            with: "\(direction) ",
+            font: baseFont,
+            color: baseColor
+        )
+
+        let percentAttr = AttributedString.build(
+            with: percentString,            // already includes "%"
+            font: pctFont,
+            color: pctColor
+        )
+
+        let suffix = AttributedString.build(
+            with: " from last week",
+            font: baseFont,
+            color: baseColor
+        )
+
+        result.append(prefix)
+        result.append(percentAttr)
+        result.append(suffix)
+
         return result
     }
 }

@@ -14,11 +14,16 @@ struct SQDashboardView: View {
     var mainScroll: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                
+                Spacer()
+                    .frame(height: .SQSpace.l)
+                
                 ForEach(viewModel.rowViewModels) { rowViewModel in
                     switch rowViewModel.rowType {
                     case .text:
                         if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
                             SQDashboardTextRow(viewModel: textRowViewModel)
+                                .padding(.bottom, .SQSpace.xxl)
                         }
                     case .weekSummary:
                         if let weekSummaryViewModel = rowViewModel as? SQDashboardWeekSummaryRowViewModel {
@@ -71,6 +76,8 @@ struct SQDashboardView: View {
 extension SQDashboardView {
     
     struct UIConfig {
+        let cardInnerTitleBottomPadding: CGFloat = .SQSpace.xl
+        let cardSectionSpacing: CGFloat = .SQSpace.xxl
         let sectionHorizPadding: CGFloat = .SQSpace.l
     }
     
@@ -79,6 +86,7 @@ extension SQDashboardView {
         Text(title)
             .sqFont(.title2)
             .sqForegroundColor(.textPrimary)
+            .padding(.bottom, .SQSpace.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
     

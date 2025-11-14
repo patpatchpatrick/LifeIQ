@@ -13,9 +13,9 @@ final class SQDashboardWeekSummaryRowViewModel: SQDashboardRowViewModel {
     let totalsSection: SQDashboardWeekSummaryTotalsSectionViewModel
     let workoutsSection: SQDashboardWeekSummaryWorkoutsSectionViewModel
     
-    init(workouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkoutable], priorWeekWorkouts: [SQWorkoutable]) {
         self.sectionTitle = "This Week"
-        self.totalsSection = .init(workouts: workouts)
+        self.totalsSection = .init(workouts: workouts, priorWeekWorkouts: priorWeekWorkouts)
         self.workoutsSection = .init(workouts: workouts)
         super.init(rowType: .weekSummary)
     }

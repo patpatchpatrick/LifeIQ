@@ -21,6 +21,10 @@ extension View {
         foregroundColor(color.color)
     }
     
+    func sqTintColor(_ color: SQColor) -> some View {
+        tint(color.color)
+    }
+    
     func sqBackgroundColor(_ color: SQColor, opacity: CGFloat = 1) -> some View {
         background(color.color.opacity(opacity))
     }

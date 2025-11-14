@@ -12,7 +12,8 @@ struct SQDashboardWeekSummaryRow: View {
     
     var cardBody: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            SQDashboardWeekSummaryRowTotalsSection(viewModel: viewModel.totalsSection)
+            SQDashboardWeekSummaryTotalsSection(viewModel: viewModel.totalsSection)
+                .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
             
             SQDashboardWeekSummaryWorkoutsSection(viewModel: viewModel.workoutsSection)
         }
@@ -29,6 +30,6 @@ struct SQDashboardWeekSummaryRow: View {
 }
 
 #Preview {
-    SQDashboardWeekSummaryRow(viewModel: .init(workouts: [SQMockWorkout.mockRun, SQMockWorkout.mockRun, SQMockWorkout.mockRun, SQMockWorkout.mockRun, SQMockWorkout.mockRun]))
+    SQDashboardWeekSummaryRow(viewModel: .init(workouts: .mock, priorWeekWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

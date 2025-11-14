@@ -53,3 +53,9 @@ final class SQMockWorkout: SQWorkoutable {
         outputs: [.distanceWalkingRunning : 550]
     )
 }
+
+extension [any SQWorkoutable] {
+    static var mock: [any SQWorkoutable] {
+        [SQMockWorkout.mockRun, SQMockWorkout.mockRun, SQMockWorkout.mockRun]
+    }
+}

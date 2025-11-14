@@ -52,6 +52,6 @@ struct SQDashboardWorkoutGroupView: View {
 }
 
 #Preview {
-    SQDashboardWorkoutGroupView(viewModel: .init(activityType: .running, workouts: .init(workouts: [SQMockWorkout.mockRun, SQMockWorkout.mockRun])))
+    SQDashboardWorkoutGroupView(viewModel: .init(activityType: .running, workouts: .init(workouts: .mock)))
         .preferredColorScheme(.dark)
 }

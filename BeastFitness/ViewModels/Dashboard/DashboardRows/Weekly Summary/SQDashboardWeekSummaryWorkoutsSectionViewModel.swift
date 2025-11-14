@@ -26,7 +26,7 @@ final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
 }
 
 @Observable @MainActor
-final class SQDashboardWorkoutGroupViewModel: Identifiable {
+final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
     let id = UUID()
     let title: String
     let workoutImageSymbol: SQImageSymbol
@@ -34,5 +34,13 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable {
     init(activityType: HKWorkoutActivityType, workouts: SQWorkouts) {
         title = "\(workouts.workouts.count) \(activityType.name)"
         workoutImageSymbol = workouts.workouts.compactMap { $0.activityType.imageSymbol }.first ?? .questionmarkCircle
+    }
+    
+    nonisolated func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    nonisolated static func == (lhs: SQDashboardWorkoutGroupViewModel, rhs: SQDashboardWorkoutGroupViewModel) -> Bool {
+        lhs.id == rhs.id
     }
 }

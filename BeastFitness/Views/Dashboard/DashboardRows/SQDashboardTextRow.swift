@@ -14,5 +14,8 @@ struct SQDashboardTextRow: View {
         Text(viewModel.text)
             .sqFont(.title3)
             .sqForegroundColor(.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, SQDashboardView.uiConfig.sectionHorizPadding)
+        
     }
 }
