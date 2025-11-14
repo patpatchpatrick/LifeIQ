@@ -12,7 +12,7 @@ extension [SQWorkout] {
     var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkout]] {
         var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkout]]()
         for workout in self {
-            workoutsByActivityType[workout.activityType ?? .other, default: []].append(workout)
+            workoutsByActivityType[workout.activityType, default: []].append(workout)
         }
         return workoutsByActivityType
     }
@@ -20,5 +20,16 @@ extension [SQWorkout] {
     func filterDuplicates() -> [SQWorkout] {
         // TODO: - PTD filter workouts whose start date and end date are very similar
         return self
+    }
+}
+
+extension [SQWorkoutable] {
+    
+    var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkoutable]] {
+        var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkoutable]]()
+        for workout in self {
+            workoutsByActivityType[workout.activityType, default: []].append(workout)
+        }
+        return workoutsByActivityType
     }
 }

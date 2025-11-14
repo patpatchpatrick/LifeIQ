@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQDashboardView: View {
     @Bindable var viewModel: SQDashboardViewModel
+    static let uiConfig = UIConfig()
     
     var mainScroll: some View {
         ScrollView {
@@ -62,4 +63,46 @@ struct SQDashboardView: View {
                                }
             .background(SQColor.background.color.ignoresSafeArea())
     }
+}
+
+// MARK: - UI Config
+/// Controls shared UI configuration for the dashboard sub-views
+
+extension SQDashboardView {
+    
+    struct UIConfig {
+        let sectionHorizPadding: CGFloat = .SQSpace.l
+    }
+    
+    @ViewBuilder
+    static func sectionTitle(title: String) -> some View {
+        Text(title)
+            .sqFont(.title2)
+            .sqForegroundColor(.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    @ViewBuilder
+    static func cardTitle(title: String) -> some View {
+        Text(title)
+            .sqFont(.title3)
+            .sqForegroundColor(.textPrimary)
+    }
+    
+    @ViewBuilder
+        static func card<Content: View>(
+            background: SQColor = SQColor.backgroundSecondary,
+            innerHoriz: CGFloat = .SQSpace.l,
+            innerVert: CGFloat = .SQSpace.l,
+            cornerRadius: CGFloat = .SQSpace.m,
+            outerHoriz: CGFloat? = .SQSpace.l,
+            outerVert: CGFloat? = nil,
+            @ViewBuilder content: () -> Content
+        ) -> some View {
+            content()
+                .padding(.horizontal, innerHoriz)
+                .padding(.vertical, innerVert)
+                .sqBackgroundColor(background)
+                .cornerRadius(cornerRadius)
+        }
 }

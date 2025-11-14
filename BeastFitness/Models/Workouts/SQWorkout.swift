@@ -8,31 +8,6 @@
 import Foundation
 import HealthKit
 
-protocol SQWorkoutable {
-    var activityType: HKWorkoutActivityType { get }
-    var coreOutputQuantityTypeId: SQQuantityType? { get }
-    var coreOutputUnit: SQUnit? { get }
-    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    var activeDuration: Double? { get } /// Seconds
-    var startDate: Date? { get }
-    var endDate: Date? { get }
-}
-
-enum SQWorkoutType {
-    case hkWorkout(SQHKWorkout)
-    case stravaWorkout(SQStravaWorkout)
-    
-    var workoutable: SQWorkoutable {
-        switch self {
-        case .hkWorkout(let workout):
-            return workout
-        case .stravaWorkout(let workout):
-            return workout
-        }
-    }
-}
-
 final class SQWorkout: SQWorkoutable {
     let workoutType: SQWorkoutType
     
@@ -73,23 +48,6 @@ final class SQWorkout: SQWorkoutable {
     var endDate: Date? {
         workoutType.workoutable.endDate
     }
-    
-    var coreOutput: Double? {
-        guard let coreOutputQuantityTypeId,
-                let coreOutputUnit = activityType.coreOutputUnit
-        else { return nil }
-        
-        let sumOutput = sumOutputFor(coreOutputQuantityTypeId) ?? 0
-        return sumOutput
-    }
-    
-    var outputString: String? {
-        guard let coreOutput,
-                let coreOutputUnit = activityType.coreOutputUnit
-        else { return nil }
-        
-        return "\(coreOutput.sqShortString) \(coreOutputUnit.unitString ?? "")"
-    }
 }
 
 // MARK: - SQWorkouts
@@ -105,7 +63,7 @@ final class SQWorkouts {
     let caloriesString: String?
     let heartRateString: String?
     
-    init(workouts: [SQWorkout]) {
+    init(workouts: [SQWorkoutable]) {
         self.workouts = workouts
         
         var totalOutput = 0.0
