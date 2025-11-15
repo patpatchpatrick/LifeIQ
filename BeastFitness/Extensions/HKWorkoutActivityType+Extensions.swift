@@ -116,19 +116,144 @@ extension HKWorkoutActivityType {
     }
 
     
-    // TODO: - PTD finish with all activities
+    // TODO: - PTD best-guess mappings for all activities.
+    // You can adjust per activity if you want a different "core" metric.
     var coreOutputQuantityTypeId: SQQuantityType? {
         switch self {
-        case .running, .walking:
+
+        // MARK: - Distance: walking / running–style
+        case .running,
+             .walking,
+             .hiking,
+             .wheelchairWalkPace,
+             .wheelchairRunPace:
             return .distanceWalkingRunning
-        case .cycling:
+
+        // MARK: - Distance: cycling
+        case .cycling,
+             .handCycling:
             return .distanceCycling
-        case .pickleball, .traditionalStrengthTraining, .functionalStrengthTraining:
+
+        // MARK: - Distance: swimming / water cardio
+        case .swimming,
+             .waterFitness,
+             .waterSports:
+            return .distanceSwimming   // add to SQQuantityType if you don't have it
+
+        // MARK: - Distance: rowing
+        case .rowing:
+            return .distanceRowing     // add to SQQuantityType if needed
+
+        // MARK: - Distance: snow sports
+        case .crossCountrySkiing:
+            return .distanceCrossCountrySkiing   // add if needed
+        case .downhillSkiing,
+             .snowboarding,
+             .snowSports:
+            return .distanceDownhillSnowSports   // add if needed
+
+        // MARK: - Stair / step based
+        case .stairClimbing,
+             .stairs:
+            return .flightsClimbed     // or .distanceWalkingRunning if you prefer
+
+        // MARK: - Tri / multi-sport
+        case .swimBikeRun:
+            // Could also choose distanceSwimming or distanceCycling depending on how you aggregate
+            return .distanceWalkingRunning
+
+        // MARK: - Strength / gym / HIIT / cardio machines
+        case .elliptical,
+             .functionalStrengthTraining,
+             .traditionalStrengthTraining,
+             .coreTraining,
+             .highIntensityIntervalTraining,
+             .mixedMetabolicCardioTraining,
+             .mixedCardio,
+             .jumpRope,
+             .stepTraining,
+             .fitnessGaming,
+             .cardioDance,
+             .cooldown,
+             .preparationAndRecovery:
             return .activeKilocaloriesBurned
-        default:
-            return nil
+
+        // MARK: - Team & court / field sports
+        case .americanFootball,
+             .australianFootball,
+             .soccer,
+             .lacrosse,
+             .rugby,
+             .cricket,
+             .basketball,
+             .baseball,
+             .softball,
+             .hockey,
+             .handball,
+             .volleyball,
+             .waterPolo,
+             .pickleball,
+             .discSports,
+             .paddleSports:
+            return .activeKilocaloriesBurned
+
+        // MARK: - Racket & similar
+        case .badminton,
+             .tennis,
+             .tableTennis,
+             .racquetball,
+             .squash:
+            return .activeKilocaloriesBurned
+
+        // MARK: - Combat / martial / boxing
+        case .boxing,
+             .martialArts,
+             .kickboxing,
+             .wrestling:
+            return .activeKilocaloriesBurned
+
+        // MARK: - Dance & mind/body
+        case .dance,
+             .danceInspiredTraining,
+             .socialDance,
+             .yoga,
+             .mindAndBody,
+             .taiChi,
+             .pilates,
+             .flexibility,
+             .barre:
+            return .activeKilocaloriesBurned
+
+        // MARK: - Misc / outdoor activities
+        case .climbing,
+             .fishing,
+             .hunting,
+             .equestrianSports,
+             .golf,
+             .gymnastics,
+             .skatingSports,
+             .surfingSports,
+             .sailing,
+             .trackAndField,
+             .underwaterDiving,
+             .play,
+             .archery,
+             .bowling,
+             .crossTraining,
+             .curling,
+             .fencing,
+             .other:
+            return .activeKilocaloriesBurned
+
+        // MARK: - Newer / catch-all
+        case .transition:
+            return .activeKilocaloriesBurned
+
+        @unknown default:
+            return .activeKilocaloriesBurned
         }
     }
+
     
     var coreOutputUnit: SQUnit? {
         coreOutputQuantityTypeId?.unit
@@ -140,97 +265,169 @@ extension HKWorkoutActivityType {
 extension HKWorkoutActivityType {
 
     var imageSymbol: SQImageSymbol {
-        switch self {
+            switch self {
 
-        // Movement basics
-        case .running:                          return .figureRun
-        case .walking:                          return .figureWalk
-        case .hiking:                           return .figureHiking
-        case .stairClimbing, .stairs:           return .figureStairs
+            // MARK: - Movement basics
+            case .running:
+                return .figureRun
+            case .walking:
+                return .figureWalk
+            case .hiking:
+                return .figureHiking
+            case .stairClimbing, .stairs, .stepTraining:
+                return .figureStairs
 
-        // Strength
-        case .functionalStrengthTraining,
-             .traditionalStrengthTraining:      return .figureStrength
+            // MARK: - Strength / gym
+            case .functionalStrengthTraining,
+                 .traditionalStrengthTraining,
+                 .coreTraining,
+                 .crossTraining:
+                return .figureStrength
 
-        // Cardio machines & mixed
-        case .elliptical:                       return .figureElliptical
-        case .rowing:                           return .figureRowing
-        case .mixedCardio,
-             .mixedMetabolicCardioTraining,
-             .highIntensityIntervalTraining:    return .figureRun
+            // MARK: - Cardio machines & mixed
+            case .elliptical:
+                return .figureElliptical
+            case .rowing:
+                return .figureRowing
+            case .mixedCardio,
+                 .mixedMetabolicCardioTraining,
+                 .highIntensityIntervalTraining,
+                 .jumpRope,
+                 .fitnessGaming:
+                return .figureRun
 
-        // Wheels
-        case .cycling, .handCycling:            return .bicycle
-        case .wheelchairWalkPace,
-             .wheelchairRunPace:                return .wheelchairWalkPace
+            // MARK: - Wheels
+            case .cycling,
+                 .handCycling:
+                return .bicycle
+            case .wheelchairWalkPace,
+                 .wheelchairRunPace:
+                return .wheelchairWalkPace
 
-        // Water
-        case .swimming, .waterFitness,
-             .waterSports, .waterPolo:          return .figureSwimming
-        case .sailing:                          return .sailboat
-        case .surfingSports:                    return .surfing
+            // MARK: - Water
+            case .swimming,
+                 .waterFitness,
+                 .waterSports,
+                 .waterPolo,
+                 .underwaterDiving:
+                return .figureSwimming
+            case .sailing:
+                return .sailboat
+            case .surfingSports:
+                return .surfing
 
-        // Snow & ice
-        case .downhillSkiing, .crossCountrySkiing: return .figureSkiing
-        case .snowboarding:                     return .figureSnowboarding
-        case .skatingSports:                    return .figureSkating
+            // MARK: - Snow & ice
+            case .downhillSkiing,
+                 .crossCountrySkiing,
+                 .snowSports:
+                return .figureSkiing
+            case .snowboarding:
+                return .figureSnowboarding
+            case .skatingSports:
+                return .figureSkating
 
-        // Mind & mobility
-        case .yoga:                             return .figureYoga
-        case .pilates:                          return .figurePilates
-        case .flexibility, .mindAndBody:        return .figureYoga
-        case .preparationAndRecovery:           return .figureYoga
-        case .cooldown:                         return .figureYoga  // closest match
+            // MARK: - Mind & mobility
+            case .yoga,
+                 .mindAndBody,
+                 .flexibility,
+                 .taiChi,
+                 .preparationAndRecovery,
+                 .cooldown:
+                return .figureYoga
+            case .pilates,
+                 .barre:
+                return .figurePilates
 
-        // Field & court sports
-        case .basketball:                       return .basketball
-        case .baseball, .softball:              return .baseball
-        case .soccer:                           return .soccerball
-        case .volleyball:                       return .volleyball
-        case .rugby:                            return .rugbyball
-        case .americanFootball,
-             .australianFootball:               return .football
-        case .tennis, .racquetball, .squash:    return .tennisRacket
-        case .tableTennis:                      return .tableTennisPaddle
-        case .badminton:                        return .badminton
-        case .pickleball:                       return .questionmarkCircle // asset-only type
-        case .golf:                             return .golf
-        case .hockey:                           return .hockeyPuck
-        case .bowling:                          return .bowlingBall
-        case .handball:                         return .handCycling // closest available SF symbol
+            // MARK: - Field & court sports
+            case .basketball:
+                return .basketball
+            case .baseball,
+                 .softball:
+                return .baseball
+            case .soccer:
+                return .soccerball
+            case .volleyball:
+                return .volleyball
+            case .rugby:
+                return .rugbyball
+            case .americanFootball,
+                 .australianFootball:
+                return .football
+            case .tennis,
+                 .racquetball,
+                 .squash,
+                 .paddleSports:
+                return .tennisRacket
+            case .tableTennis:
+                return .tableTennisPaddle
+            case .badminton:
+                return .badminton
+            case .pickleball:
+                return .questionmarkCircle     // no dedicated SF symbol yet
+            case .golf:
+                return .golf
+            case .hockey:
+                return .hockeyPuck
+            case .bowling:
+                return .bowlingBall
+            case .handball:
+                return .questionmarkCircle     // best-effort
 
-        // Niche / best-effort
-        case .fencing:                          return .fencing
-        case .boxing, .kickboxing:              return .boxing
-        case .climbing:                         return .climbing
-        case .equestrianSports:                 return .figureWalk    // no horse icon
-        case .archery:                          return .questionmarkCircle
-        case .fishing:                          return .questionmarkCircle
-        case .hunting:                          return .questionmarkCircle
-        case .discSports:                       return .questionmarkCircle
-        case .fitnessGaming:                    return .questionmarkCircle
+            // MARK: - Combat / martial
+            case .boxing,
+                 .kickboxing,
+                 .martialArts:
+                return .boxing
+            case .wrestling:
+                return .figureStrength
 
-        // Dance-related
-        case .dance, .danceInspiredTraining:    return .figureRun     // closest symbol
-        case .socialDance:                      return .figureRun     // same
-        case .cardioDance:                      return .figureRun
+            // MARK: - Dance-related
+            case .dance,
+                 .danceInspiredTraining,
+                 .socialDance,
+                 .cardioDance:
+                return .figureRun      // closest "active" symbol
 
-        // Multi-stage
-        case .swimBikeRun:                      return .figureRun     // triathlon-like, no symbol exists
-        case .transition:                       return .figureRun     // closest match
+            // MARK: - Outdoor & misc
+            case .climbing:
+                return .climbing
+            case .equestrianSports:
+                return .figureWalk     // no horse SF symbol
+            case .fencing:
+                return .fencing
+            case .fishing,
+                 .hunting,
+                 .cricket,
+                 .discSports:
+                return .questionmarkCircle
+            case .gymnastics:
+                return .figureStrength
+            case .trackAndField:
+                return .figureRun
+            case .play:
+                return .figureRun
 
-        // Cricket
-        case .cricket:                          return .questionmarkCircle  // no cricket SF Symbol
+            // MARK: - Multi-stage
+            case .swimBikeRun,
+                 .transition:
+                return .figureRun
+                
+            case .archery:
+                return .figureArchery
+                
+            case .curling:
+                return .figureCurling
+                
+            case .lacrosse:
+                return .figureLacrosse
 
-        // Underwater / diving
-        case .underwaterDiving:                 return .figureSwimming
+            // MARK: - Catch-all
+            case .other:
+                return .questionmarkCircle
 
-        // Catch-all
-        case .other:                            return .questionmarkCircle
-
-        @unknown default:
-            return .questionmarkCircle
+            @unknown default:
+                return .questionmarkCircle
+            }
         }
-    }
 
 }

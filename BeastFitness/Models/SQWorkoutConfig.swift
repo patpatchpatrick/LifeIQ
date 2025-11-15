@@ -12,12 +12,14 @@ final class SQWorkoutConfig {
     
     func unitFor(_ quantityTypeIdentifier: SQQuantityType) -> SQUnit? {
         switch quantityTypeIdentifier {
-        case .distanceWalkingRunning, .distanceCycling:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
             return .mile
         case .activeKilocaloriesBurned:
             return .kilocalorie
         case .heartRate:
             return .countPerMinute
+        case .flightsClimbed:
+            return .count
         }
     }
 }

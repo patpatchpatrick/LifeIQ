@@ -32,6 +32,8 @@ struct SQDashboardWorkoutGroupView: View {
             Text("Camelback, etc...")
                 .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
+            
+            Text(viewModel.workoutStatsString)
         }
     }
     

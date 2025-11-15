@@ -115,13 +115,13 @@ class SQRootActivitySectionColumnViewModel: Identifiable {
         case .count:
             title = "\(workouts.workouts.count)"
         case .output:
-            title = workouts.sumOutputString ?? ""
+            title = ""
         case .time:
-            title = workouts.timeString ?? ""
+            title = ""
         case .calories:
-            title = workouts.caloriesString ?? ""
+            title = ""
         case .avgHeartRate:
-            title = workouts.heartRateString ?? ""
+            title = ""
         }
     }
 }

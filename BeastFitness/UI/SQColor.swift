@@ -48,6 +48,13 @@ indirect enum SQColor {
     case accent(Double = 1)
     case accentSecondary(Double = 1)
     case defaultAccent
+    
+    // MARK: - Neutral accent colors
+    // Stat / accent neutrals for inline metrics
+    case accentNeutral1   // e.g. time
+    case accentNeutral2   // e.g. calories
+    case accentNeutral3   // e.g. output
+    case accentNeutral4   // e.g. heart rate
 
     // MARK: - Utility & Metrics
     case colorDefaultBlue
@@ -122,6 +129,31 @@ indirect enum SQColor {
             return UIColor(hexString: "#8B5CF6")!.withAlphaComponent(alpha)
         case .defaultAccent:
             return UIColor(hexString: "#4F5DFF")! // default blue accent color
+            
+        // MARK: - Neutral accent colors
+        case .accentNeutral1:
+            // Muted blue
+            return Self.isDarkMode
+                ? UIColor(hexString: "#7FAAFF")!   // soft blue for dark
+                : UIColor(hexString: "#2F5EA8")!   // deeper blue for light
+
+        case .accentNeutral2:
+            // Muted orange
+            return Self.isDarkMode
+                ? UIColor(hexString: "#FFB878")!   // warm soft orange
+                : UIColor(hexString: "#C26A28")!   // richer orange in light
+
+        case .accentNeutral3:
+            // Muted yellow / gold
+            return Self.isDarkMode
+                ? UIColor(hexString: "#FFE38A")!   // soft golden yellow
+                : UIColor(hexString: "#C49526")!   // darker golden in light
+
+        case .accentNeutral4:
+            // Muted teal/green
+            return Self.isDarkMode
+                ? UIColor(hexString: "#7FD8B5")!   // soft teal green
+                : UIColor(hexString: "#2E8F6A")!   // deeper teal green in light
 
         // MARK: - Metrics & Color Utilities
         case .colorDefaultBlue:

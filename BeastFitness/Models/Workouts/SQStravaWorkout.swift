@@ -29,11 +29,13 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
             SQLogger.shared.log("Missing unit for strava workout sum output", .error)
             return nil }
         switch quantityTypeIdentifier {
-        case .distanceWalkingRunning, .distanceCycling:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
             return SQUnit.convert(distance, from: .meter, to: unit)
         case .activeKilocaloriesBurned:
             return nil
         case .heartRate:
+            return nil
+        case .flightsClimbed:
             return nil
         }
     }
@@ -45,7 +47,7 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
         switch quantityTypeIdentifier {
         case .heartRate:
             return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
-        case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned:
+        case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
         }
     }

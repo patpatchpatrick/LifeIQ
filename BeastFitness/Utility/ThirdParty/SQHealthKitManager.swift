@@ -169,7 +169,8 @@ extension SQHealthKitManager {
                 continue
             }
             
-            let isDuplicate = unique.contains { existing in
+            // Find a duplicate instead of just "contains"
+            let duplicateIndex = unique.firstIndex { existing in
                 guard existing.activityType == workout.activityType,
                       let existingStart = existing.startDate,
                       let existingEnd = existing.endDate else {
@@ -202,12 +203,27 @@ extension SQHealthKitManager {
                 return overlapRatio >= overlapThreshold
             }
             
-            if !isDuplicate {
+            if let idx = duplicateIndex {
+                let existing = unique[idx]
+                
+                // Prefer the workout with heart rate data
+                let existingHR = existing.avgOutputFor(.heartRate)
+                let newHR = workout.avgOutputFor(.heartRate)
+                
+                let existingHasHR = (existingHR ?? 0) > 0
+                let newHasHR = (newHR ?? 0) > 0
+                
+                if newHasHR && !existingHasHR {
+                    unique[idx] = workout
+                }
+                // else: keep existing, ignore new
+            } else {
                 unique.append(workout)
             }
         }
         
         return unique
     }
+
 }
 

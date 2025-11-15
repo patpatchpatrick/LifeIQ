@@ -11,6 +11,7 @@ enum SQUnit: CaseIterable {
     case kilocalorie
     case mile
     case meter
+    case count
     case countPerMinute
     
     static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
@@ -37,7 +38,7 @@ enum SQUnit: CaseIterable {
             default:
                 return value
             }
-        case .countPerMinute:
+        case .countPerMinute, .count:
             return value
         }
     }
@@ -54,6 +55,8 @@ enum SQUnit: CaseIterable {
             return .distance
         case .countPerMinute:
             return .countPerTime
+        case .count:
+            return .total
         }
     }
     
@@ -67,6 +70,8 @@ enum SQUnit: CaseIterable {
                 .mile()
         case .countPerMinute:
                 .count().unitDivided(by: .minute())
+        case .count:
+                .count()
         }
     }
     
@@ -80,4 +85,5 @@ enum SQUnitType {
     case distance
     case energy
     case countPerTime
+    case total
 }
