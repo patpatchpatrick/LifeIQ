@@ -10,7 +10,7 @@ import HealthKit
 enum SQQuantityType {
     case distanceWalkingRunning
     case distanceCycling
-    case activeEnergyBurned
+    case activeKilocaloriesBurned
     case heartRate
     
     var hkQuantityTypeIdentifier: HKQuantityTypeIdentifier? {
@@ -19,7 +19,7 @@ enum SQQuantityType {
             return .distanceWalkingRunning
         case .distanceCycling:
             return .distanceCycling
-        case .activeEnergyBurned:
+        case .activeKilocaloriesBurned:
             return .activeEnergyBurned
         case .heartRate:
             return .heartRate
@@ -28,7 +28,7 @@ enum SQQuantityType {
     
     var unit: SQUnit? {
         switch self {
-        case .activeEnergyBurned:
+        case .activeKilocaloriesBurned:
             return .kilocalorie
         case .distanceWalkingRunning, .distanceCycling:
             return .mile

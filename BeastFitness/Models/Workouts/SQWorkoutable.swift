@@ -16,6 +16,7 @@ protocol SQWorkoutable {
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
     var activeDuration: Double? { get } /// Seconds
+    var totalCalories: Double? { get }
     var startDate: Date? { get }
     var endDate: Date? { get }
     var coreOutput: Double? { get }
@@ -38,6 +39,10 @@ extension SQWorkoutable {
         else { return nil }
         
         return "\(coreOutput.sqShortString) \(coreOutputUnit.unitString ?? "")"
+    }
+    
+    var totalCalories: Double? {
+        sumOutputFor(.activeKilocaloriesBurned)
     }
     
 }

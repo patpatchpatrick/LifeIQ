@@ -124,7 +124,7 @@ extension HKWorkoutActivityType {
         case .cycling:
             return .distanceCycling
         case .pickleball, .traditionalStrengthTraining, .functionalStrengthTraining:
-            return .activeEnergyBurned
+            return .activeKilocaloriesBurned
         default:
             return nil
         }

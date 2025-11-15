@@ -10,7 +10,7 @@ import HealthKit
 extension HKWorkout {
     
     var caloriesBurned: Double? {
-        sumOutputFor(.activeEnergyBurned)
+        sumOutputFor(.activeKilocaloriesBurned)
     }
     
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {

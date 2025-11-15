@@ -14,7 +14,7 @@ final class SQWorkoutConfig {
         switch quantityTypeIdentifier {
         case .distanceWalkingRunning, .distanceCycling:
             return .mile
-        case .activeEnergyBurned:
+        case .activeKilocaloriesBurned:
             return .kilocalorie
         case .heartRate:
             return .countPerMinute

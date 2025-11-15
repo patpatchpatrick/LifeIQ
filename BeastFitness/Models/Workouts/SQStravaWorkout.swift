@@ -31,7 +31,7 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
         switch quantityTypeIdentifier {
         case .distanceWalkingRunning, .distanceCycling:
             return SQUnit.convert(distance, from: .meter, to: unit)
-        case .activeEnergyBurned:
+        case .activeKilocaloriesBurned:
             return nil
         case .heartRate:
             return nil
@@ -45,7 +45,7 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
         switch quantityTypeIdentifier {
         case .heartRate:
             return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
-        case .distanceCycling, .distanceWalkingRunning, .activeEnergyBurned:
+        case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned:
             return nil
         }
     }

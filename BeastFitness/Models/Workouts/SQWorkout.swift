@@ -80,14 +80,14 @@ final class SQWorkouts {
             }
             let workoutDuration = $0.activeDuration ?? 0
             totalTime += workoutDuration
-            totalCalories += $0.sumOutputFor(.activeEnergyBurned) ?? 0
+            totalCalories += $0.sumOutputFor(.activeKilocaloriesBurned) ?? 0
             totalAvgHeartRateTimesSeconds += ($0.avgOutputFor(.heartRate) ?? 0) * workoutDuration
         }
         averageHeartRate = totalAvgHeartRateTimesSeconds / totalTime
         
         sumOutputString = "\(totalOutput.sqShortString) \(firstWorkout?.coreOutputUnit?.unitString ?? "")"
         timeString = SQDateFormatters.shared.durationFormatter.string(from: totalTime)
-        caloriesString = "\(totalCalories.sqShortString) \(SQWorkoutConfig.shared.unitFor(.activeEnergyBurned)?.unitString ?? "")"
+        caloriesString = "\(totalCalories.sqShortString) \(SQWorkoutConfig.shared.unitFor(.activeKilocaloriesBurned)?.unitString ?? "")"
         heartRateString = "\(averageHeartRate.sqShortString) \(SQWorkoutConfig.shared.unitFor(.heartRate)?.unitString ?? "")"
     }
 }

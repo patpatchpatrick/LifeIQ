@@ -24,14 +24,26 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
 
         let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
         let totalSecondsPriorWeek = priorWeekWorkouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
+        
+        let totalKilocalories = workouts.reduce(0) { $0 + ($1.totalCalories ?? 0) }
+        let totalKilocaloriesPriorWeek = priorWeekWorkouts.reduce(0) { $0 + ($1.totalCalories ?? 0) }
 
-        let value = Self.formatDuration(seconds: totalSeconds)
-        let trend = Self.buildTrend(
+        let totalTimeValue = Self.formatDuration(seconds: totalSeconds)
+        let totalTimeTrend = Self.buildTrend(
             currentSeconds: totalSeconds,
             previousSeconds: totalSecondsPriorWeek
         )
+        
+        let totalKilocaloriesValue = Self.formatKilocalories(totalKilocalories: totalKilocalories)
+        let totalKilocaliresTrend = Self.buildTrend(
+            currentSeconds: totalKilocalories,
+            previousSeconds: totalKilocaloriesPriorWeek
+        )
          
-         self.totalValuesAndTrends = [TotalValueAndTrend(value: value, trend: trend)]
+         self.totalValuesAndTrends = [
+            TotalValueAndTrend(value: totalTimeValue, trend: totalTimeTrend),
+            TotalValueAndTrend(value: totalKilocaloriesValue, trend: totalKilocaliresTrend)
+         ]
     }
 }
 
@@ -39,7 +51,7 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
 
 private extension SQDashboardWeekSummaryTotalsSectionViewModel {
     static func formatDuration(seconds: Double) -> AttributedString {
-        let total = max(0, Int(seconds.rounded())) // guard negatives
+        let total = max(0, Int(seconds.rounded()))
         let hours = total / 3600
         let minutes = (total % 3600) / 60
         
@@ -47,20 +59,31 @@ private extension SQDashboardWeekSummaryTotalsSectionViewModel {
         if hours > 0 {
             parts.append(numberUnit(number: hours, unit: "hr"))
         }
-        // Show minutes if any, or if hours == 0 (e.g. 0 hr 15 min -> "15 min")
         if minutes > 0 || hours == 0 {
             parts.append(numberUnit(number: minutes, unit: "min"))
         }
         
-        // Join with single space
+        // Styled spacer so it doesn't pull in default line metrics
+        let spacer = AttributedString.build(
+            with: " ",
+            font: SQFont(type: .bodySmall).font,
+            color: SQColor.textSecondary.color
+        )
+        
         return parts.reduce(AttributedString(), { acc, next in
             if acc.characters.isEmpty { return next }
-            var spaced = AttributedString(" ")
-            spaced.append(next)
             var result = acc
-            result.append(spaced)
+            result.append(spacer)
+            result.append(next)
             return result
         })
+    }
+    
+    static func formatKilocalories(totalKilocalories: Double) -> AttributedString {
+        let kcal = max(0, Int(totalKilocalories.rounded())) // guard negatives
+        
+        // Reuse numberUnit for consistent styling: "500 kcal"
+        return numberUnit(number: kcal, unit: "kcal")
     }
     
     static func numberUnit(number: Int, unit: String) -> AttributedString {

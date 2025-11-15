@@ -11,7 +11,7 @@ struct SQDashboardWeekSummaryTotalsSection: View {
     let viewModel: SQDashboardWeekSummaryTotalsSectionViewModel
     
     var totalValuesAndTrendsStack: some View {
-        VStack(spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             ForEach(viewModel.totalValuesAndTrends) { valueAndTrend in
                 HStack(alignment: .center, spacing: .SQSpace.m) {
                     SQDashboardWorkoutStatView(attributedTitle: valueAndTrend.value)

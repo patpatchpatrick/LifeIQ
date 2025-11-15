@@ -12,8 +12,8 @@ struct SQDashboardWorkoutStatView: View {
     
     var body: some View {
         Text(attributedTitle)
-            .padding(.top, .SQSpace.s - 2) /// Subtract a bit to center the text since we typically use 2 different size fonts here which makes the text sit towards the bottom
-            .padding(.bottom, .SQSpace.s)
+            .padding(.top, .SQSpace.m) /// Subtract a bit to center the text since we typically use 2 different size fonts here which makes the text sit towards the bottom
+            .padding(.bottom, .SQSpace.m)
             .padding(.horizontal, .SQSpace.m)
             .sqBackgroundColor(.backgroundTertiaryLight)
             .cornerRadius(.SQSpace.s)
