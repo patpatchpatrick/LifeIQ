@@ -36,7 +36,7 @@ struct SQHKWorkout: SQWorkoutable {
     }
     
     var activeDuration: Double? {
-        hkWorkout.duration
+        workoutActiveDuration(from: hkWorkout)
     }
     
     var startDate: Date? {
@@ -45,5 +45,35 @@ struct SQHKWorkout: SQWorkoutable {
     
     var endDate: Date? {
         hkWorkout.endDate
+    }
+    
+    func workoutActiveDuration(from workout: HKWorkout) -> TimeInterval? {
+        // If there are no events, fall back to total duration
+        guard let events = workout.workoutEvents, !events.isEmpty else {
+            return workout.duration
+        }
+
+        var activeTime: TimeInterval = 0
+        var lastStart = workout.startDate
+
+        for event in events {
+            switch event.type {
+            case .pause:
+                // Add time from lastStart to this pause
+                activeTime += event.dateInterval.start.timeIntervalSince(lastStart)
+            case .resume:
+                // Resume timer from this point
+                lastStart = event.dateInterval.start
+            default:
+                break
+            }
+        }
+
+        // Add any remaining time from lastStart to endDate
+        activeTime += workout.endDate.timeIntervalSince(lastStart)
+
+        if activeTime > 0 { return activeTime}
+        
+        return workout.duration
     }
 }

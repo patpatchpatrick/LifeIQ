@@ -21,7 +21,6 @@ final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
             workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
         }
         self.workoutGroupViewModels = workoutGroupViewModels
-        
     }
 }
 

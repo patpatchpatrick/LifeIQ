@@ -83,22 +83,28 @@ extension SQWorkouts {
             )
         }
 
-        func formattedHeartRate(
-            valueFont: Font = SQFont(type: .bodySmallBold).font,
-            unitFont: Font = SQFont(type: .bodySmall).font,
-            valueColor: Color = SQColor.textPrimary.color,
-            unitColor: Color = SQColor.textSecondary.color
-        ) -> AttributedString? {
-            let (value, unit) = averageHeartRateStrings()
-            return buildValueUnitString(
-                value: value,
-                unit: unit,
-                valueFont: valueFont,
-                unitFont: unitFont,
-                valueColor: valueColor,
-                unitColor: unitColor
-            )
-        }
+    func formattedHeartRate(
+        valueFont: Font = SQFont(type: .bodySmallBold).font,
+        unitFont: Font = SQFont(type: .bodySmall).font,
+        valueColor: Color = SQColor.textPrimary.color,
+        unitColor: Color = SQColor.textSecondary.color
+    ) -> AttributedString? {
+        // We don't actually need the unit from averageHeartRateStrings anymore
+        let (value, _) = averageHeartRateStrings()
+        guard let value, !value.isEmpty else { return nil }
+
+        // Use a heart symbol instead of "count/min" or "bpm"
+        let heartUnit = "♥︎"   // or "❤️" if you prefer the emoji
+
+        return buildValueUnitString(
+            value: value,
+            unit: heartUnit,
+            valueFont: valueFont,
+            unitFont: unitFont,
+            valueColor: valueColor,
+            unitColor: unitColor
+        )
+    }
 }
 
 // MARK: - Formatting (Core)

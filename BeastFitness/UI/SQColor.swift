@@ -150,10 +150,10 @@ indirect enum SQColor {
                 : UIColor(hexString: "#C49526")!   // darker golden in light
 
         case .accentNeutral4:
-            // Muted teal/green
+            // Muted red
             return Self.isDarkMode
-                ? UIColor(hexString: "#7FD8B5")!   // soft teal green
-                : UIColor(hexString: "#2E8F6A")!   // deeper teal green in light
+                ? UIColor(hexString: "#ff8093")!   // soft red
+                : UIColor(hexString: "#ff8093")!
 
         // MARK: - Metrics & Color Utilities
         case .colorDefaultBlue:

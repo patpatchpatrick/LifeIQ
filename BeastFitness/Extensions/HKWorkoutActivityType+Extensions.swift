@@ -363,7 +363,7 @@ extension HKWorkoutActivityType {
             case .badminton:
                 return .badminton
             case .pickleball:
-                return .questionmarkCircle     // no dedicated SF symbol yet
+                return .figurePickleball
             case .golf:
                 return .golf
             case .hockey:
@@ -371,7 +371,7 @@ extension HKWorkoutActivityType {
             case .bowling:
                 return .bowlingBall
             case .handball:
-                return .questionmarkCircle     // best-effort
+                return .figureHandball
 
             // MARK: - Combat / martial
             case .boxing,
@@ -386,20 +386,23 @@ extension HKWorkoutActivityType {
                  .danceInspiredTraining,
                  .socialDance,
                  .cardioDance:
-                return .figureRun      // closest "active" symbol
-
+                return .figureDance
+                
             // MARK: - Outdoor & misc
             case .climbing:
                 return .climbing
             case .equestrianSports:
-                return .figureWalk     // no horse SF symbol
+                return .figureEquestrian
             case .fencing:
                 return .fencing
-            case .fishing,
-                 .hunting,
-                 .cricket,
-                 .discSports:
-                return .questionmarkCircle
+            case .fishing:
+                return .figureFishing
+            case .hunting:
+                return .figureHunting
+            case .cricket:
+                return .figureCricket
+            case .discSports:
+                return .figureDiscSports
             case .gymnastics:
                 return .figureStrength
             case .trackAndField:

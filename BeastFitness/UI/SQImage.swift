@@ -88,6 +88,14 @@ enum SQImageSymbol: String {
     case figureArchery       = "figure.archery"
     case figureCurling       = "figure.curling"
     case figureLacrosse      = "figure.lacrosse"
+    case figurePickleball    = "figure.pickleball"
+    case figureHandball      = "figure.handball"
+    case figureDance         = "figure.dance"
+    case figureEquestrian    = "figure.equestrian.sports"
+    case figureFishing       = "figure.fishing"
+    case figureHunting       = "figure.hunting"
+    case figureCricket       = "figure.cricket"
+    case figureDiscSports    = "figure.disc.sports"
 
     // Wheels & boats
     case bicycle             = "bicycle"
