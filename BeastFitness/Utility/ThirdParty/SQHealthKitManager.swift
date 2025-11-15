@@ -25,25 +25,39 @@ final class SQHealthKitManager {
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
     
-    func fetchWorkouts(_ timeRange: SQTimeRange) async -> WorkoutQueryResult {
-        do {
-            guard HKHealthStore.isHealthDataAvailable() else {
-                throw SQStandardError.standard
-            }
-            
-            try await Self.healthStore.requestAuthorization(toShare: allQuantityTypes, read: allQuantityTypes)
-            
-            let predicate = HKQuery.predicateForSamples(withStart: timeRange.startDate, end: timeRange.endDate)
-            let limit = HKObjectQueryNoLimit
-            let workoutType: HKSampleType = .workoutType()
-            let anchor = getAnchor(for: workoutType)
-            
-            return await self.executeQuery(sampleType: workoutType, predicate: predicate, anchor: nil, limit: limit)
-        } catch {
-            SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error)
-            return .error(error)
+    func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [SQWorkoutable] {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQStandardError.standard
         }
+
+        try await Self.healthStore.requestAuthorization(
+            toShare: allQuantityTypes,
+            read: allQuantityTypes
+        )
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: timeRange.startDate,
+            end: timeRange.endDate
+        )
+        let limit = HKObjectQueryNoLimit
+        let workoutType: HKSampleType = .workoutType()
+        // let anchor = getAnchor(for: workoutType)   // not needed here
+
+        var workouts = try await executeQuery(
+            sampleType: workoutType,
+            predicate: predicate,
+            anchor: nil,   // 👈 force full fetch for the time range PTD TODO: Update to use anchor later
+            limit: limit
+        )
+
+        if filterDuplicates {
+            workouts = Self.filterDuplicateWorkouts(workouts)
+            workouts = workouts.filter { $0.activityType != .other }
+        }
+
+        return workouts
     }
+
     
     func anchorKey(for type: HKSampleType) -> String {
         return anchorKeyPrefix + type.identifier
@@ -80,63 +94,120 @@ final class SQHealthKitManager {
         }
     }
     
-    enum WorkoutQueryResult {
-        case success([SQWorkout])
-        case error(Error)
-        
-        var workouts: [SQWorkout]? {
-            switch self {
-            case .success(let workouts):
-                return workouts
-            case .error:
-                return nil
-            }
-        }
-    }
-    private var queryResultContinuation: CheckedContinuation<WorkoutQueryResult, Never>?
-    private func completeQueryResultContinuation(_ result: WorkoutQueryResult) {
-        /// Never execute a continuation twice.  It causes a crash
-        queryResultContinuation?.resume(returning: result)
-        queryResultContinuation = nil
-    }
-    func executeQuery(sampleType: HKSampleType, predicate: NSPredicate?, anchor: HKQueryAnchor?, limit: Int) async -> WorkoutQueryResult {
-        let query = HKAnchoredObjectQuery(
-            type: sampleType,
-            predicate: predicate,
-            anchor: anchor,
-            limit: limit,
-            resultsHandler: { (query, samplesOrNil, deletedObjectsOrNil, newAnchor, errorOrNil) in
-                // Handle error
+    func executeQuery(
+        sampleType: HKSampleType,
+        predicate: NSPredicate?,
+        anchor: HKQueryAnchor?,
+        limit: Int
+    ) async throws -> [SQWorkoutable] {
+        try await withCheckedThrowingContinuation { continuation in
+            let query = HKAnchoredObjectQuery(
+                type: sampleType,
+                predicate: predicate,
+                anchor: anchor,
+                limit: limit
+            ) { [weak self] query, samplesOrNil, deletedObjectsOrNil, newAnchor, errorOrNil in
+                guard let self = self else { return }
+
                 if let error = errorOrNil {
-                    SQLogger.shared.log("HKAnchoredObjectQuery initialResultsHandler with identifier \(sampleType.identifier) error: \(error.localizedDescription)", .error)
-                    self.completeQueryResultContinuation(.error(error))
+                    SQLogger.shared.log(
+                        "HKAnchoredObjectQuery initialResultsHandler with identifier \(sampleType.identifier) error: \(error.localizedDescription)",
+                        .error
+                    )
+                    continuation.resume(throwing: error)
                     return
                 }
-                
-                SQLogger.shared.log("HKAnchoredObjectQuery initialResultsHandler has returned for \(sampleType.identifier)", .debug)
-                
+
+                SQLogger.shared.log(
+                    "HKAnchoredObjectQuery initialResultsHandler has returned for \(sampleType.identifier)",
+                    .debug
+                )
+
                 // Update anchor for sample type
                 self.updateAnchor(newAnchor, from: query)
-                
+
                 let hkWorkouts = samplesOrNil?.compactMap { $0 as? HKWorkout } ?? []
-                let sqWorkouts: [SQWorkout] = hkWorkouts.map { .init(.hkWorkout(.init(hkWorkout: $0))) }
-                
-                self.completeQueryResultContinuation(.success(sqWorkouts))
-                return
-            })
-        
-        Self.healthStore.execute(query)
-        
-        return await withCheckedContinuation { continuation in
-            self.queryResultContinuation = continuation
+                let sqWorkouts: [SQWorkout] = hkWorkouts.map {
+                    .init(.hkWorkout(.init(hkWorkout: $0)))
+                }
+
+                continuation.resume(returning: sqWorkouts)
+            }
+
+            Self.healthStore.execute(query)
         }
     }
+}
+
+enum SQHealthKitError: Error {
+    case healthDataUnavailable
+    case authorizationFailed
+}
+
+// MARK: - Filter duplicates
+
+extension SQHealthKitManager {
     
-    // MARK: - Sleep
-    var sleepQueryResultContinuation: CheckedContinuation<SleepQueryResult, Never>?
-    func completeSleepQueryResultContinuation(_ result: SleepQueryResult) {
-        /// Never execute a continuation twice.  It causes a crash
-        sleepQueryResultContinuation?.resume(returning: result)
-        sleepQueryResultContinuation = nil
+    /// Filters out likely duplicate workouts.
+    /// Duplicates are defined as workouts with the same activityType whose
+    /// time ranges either:
+    ///  - start & end within a small tolerance, OR
+    ///  - overlap by a large percentage of their duration.
+    static func filterDuplicateWorkouts(_ workouts: [SQWorkoutable]) -> [SQWorkoutable] {
+        // Sort by start date so comparisons are stable and somewhat chronological.
+        let sorted = workouts.sorted { lhs, rhs in
+            (lhs.startDate ?? .distantPast) < (rhs.startDate ?? .distantPast)
+        }
+        
+        var unique: [SQWorkoutable] = []
+        
+        for workout in sorted {
+            guard let start = workout.startDate,
+                  let end = workout.endDate else {
+                // If we don't have times, we can't dedupe reliably; just keep it.
+                unique.append(workout)
+                continue
+            }
+            
+            let isDuplicate = unique.contains { existing in
+                guard existing.activityType == workout.activityType,
+                      let existingStart = existing.startDate,
+                      let existingEnd = existing.endDate else {
+                    return false
+                }
+                
+                // 1) Check near-identical start/end times
+                let startDiff = abs(existingStart.timeIntervalSince(start))
+                let endDiff = abs(existingEnd.timeIntervalSince(end))
+                let timeTolerance: TimeInterval = 10 // seconds
+                
+                if startDiff <= timeTolerance && endDiff <= timeTolerance {
+                    return true
+                }
+                
+                // 2) Check for high overlap ratio
+                let overlap = min(existingEnd, end).timeIntervalSince(max(existingStart, start))
+                if overlap <= 0 {
+                    return false
+                }
+                
+                let existingDuration = existingEnd.timeIntervalSince(existingStart)
+                let workoutDuration = end.timeIntervalSince(start)
+                let minDuration = min(existingDuration, workoutDuration)
+                
+                // How much of the shorter one is overlapped?
+                let overlapRatio = overlap / minDuration
+                let overlapThreshold: Double = 0.9 // 90%+ overlap -> likely duplicate
+                
+                return overlapRatio >= overlapThreshold
+            }
+            
+            if !isDuplicate {
+                unique.append(workout)
+            }
+        }
+        
+        return unique
     }
 }
+

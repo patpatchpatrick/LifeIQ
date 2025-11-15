@@ -22,15 +22,19 @@ final class SQDashboardViewModel {
     
     func loadUI() async {
         
-        let lastWeekWorkouts = await SQHealthKitManager.shared.fetchWorkouts(.pastWeek).workouts ?? []
-        let weekBeforeLastWorkouts = await SQHealthKitManager.shared.fetchWorkouts(.weekBeforeLast).workouts ?? []
-        
-        var dashboardRows = [SQDashboardRowViewModel]()
-        
-        dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
-        
-        dashboardRows.append(SQDashboardWeekSummaryRowViewModel(workouts: lastWeekWorkouts, priorWeekWorkouts: weekBeforeLastWorkouts))
-        
-        self.rowViewModels = dashboardRows
+        do {
+            let lastWeekWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.pastWeek)
+            let weekBeforeLastWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.weekBeforeLast)
+            
+            var dashboardRows = [SQDashboardRowViewModel]()
+            
+            dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
+            
+            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(workouts: lastWeekWorkouts, priorWeekWorkouts: weekBeforeLastWorkouts))
+            
+            self.rowViewModels = dashboardRows
+        } catch {
+            print("PTD Handle Errors here", error)
+        }
     }
 }

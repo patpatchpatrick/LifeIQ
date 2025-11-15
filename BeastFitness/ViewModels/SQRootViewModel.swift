@@ -75,25 +75,24 @@ final class SQOldRootViewModel {
     private func refreshState() async {
         refreshUi(with: nil)
         
-        let sleepTime = await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
-        let hkWorkouts = await SQHealthKitManager.shared.fetchWorkouts(currentTimeRange).workouts ?? []
+        let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
+        let hkWorkouts = (try? await SQHealthKitManager.shared.fetchWorkouts(currentTimeRange)) ?? []
         let stravaWorkouts = SQStravaImport.shared.getSavedStravaWorkouts(currentTimeRange) ?? []
         let allWorkouts = hkWorkouts
             .appending(contentsOf: stravaWorkouts)
-            .filterDuplicates()
         
-        print("PTD SLEEP TIME", sleepTime.sleepQueryResult?.totalTime)
+        print("PTD SLEEP TIME", sleepTime?.totalTime ?? 0)
         
         refreshUi(with: allWorkouts)
     }
     
-    private func refreshUi(with workouts: [SQWorkout]?) {
+    private func refreshUi(with workouts: [SQWorkoutable]?) {
         guard let workouts else {
             activitySection = .init(isPlaceholder: true, title: "Activity Stats", workouts: nil)
             return
         }
         
-        activitySection = .init(title: "Activity Stats", workouts: workouts)
-        leaderboardSection = .init(title: "Leaderboard", workouts: workouts)
+//        activitySection = .init(title: "Activity Stats", workouts: workouts)
+//        leaderboardSection = .init(title: "Leaderboard", workouts: workouts)
     }
 }
