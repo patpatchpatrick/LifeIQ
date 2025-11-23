@@ -14,6 +14,7 @@ enum SQTimeRange: String {
     case weekBeforeLast = "Week Before Last"
     case pastMonth = "Past Month"
     case pastYear = "Past Year"
+    case yearBeforeLast = "Year Before Last"
     case allTime = "All Time"
     
     var title: String {
@@ -28,6 +29,8 @@ enum SQTimeRange: String {
             return Calendar.current.date(byAdding: .month, value: -11, to: endDate)!
         case .pastYear:
             return Calendar.current.date(byAdding: .year, value: -1, to: endDate)!
+        case .yearBeforeLast:
+            return Calendar.current.date(byAdding: .year, value: -2, to: endDate)!
         case .weekBeforeLast:
             return Calendar.current.date(byAdding: .day, value: -14, to: endDate)!
         case .pastWeek:
@@ -45,6 +48,8 @@ enum SQTimeRange: String {
                 .now
         case .weekBeforeLast:
             SQTimeRange.pastWeek.startDate
+        case .yearBeforeLast:
+            SQTimeRange.pastYear.startDate
         case .yesterday:
             SQTimeRange.today.startDate
         }
