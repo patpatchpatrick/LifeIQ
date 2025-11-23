@@ -30,6 +30,6 @@ struct SQDashboardWeekSummaryRow: View {
 }
 
 #Preview {
-    SQDashboardWeekSummaryRow(viewModel: .init(workouts: .mock, priorWeekWorkouts: .mock))
+    SQDashboardWeekSummaryRow(viewModel: .init(timeRange: .pastWeek, workouts: .mock, priorWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

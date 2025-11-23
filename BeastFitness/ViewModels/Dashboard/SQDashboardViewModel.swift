@@ -23,6 +23,9 @@ final class SQDashboardViewModel {
     func loadUI() async {
         
         do {
+            let todaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.today)
+            let yesterdaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.yesterday)
+            
             let lastWeekWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.pastWeek)
             let weekBeforeLastWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.weekBeforeLast)
             
@@ -30,7 +33,9 @@ final class SQDashboardViewModel {
             
             dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
             
-            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(workouts: lastWeekWorkouts, priorWeekWorkouts: weekBeforeLastWorkouts))
+            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(timeRange: .today, workouts: todaysWorkouts, priorWorkouts: yesterdaysWorkouts))
+            
+            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(timeRange: .pastWeek, workouts: lastWeekWorkouts, priorWorkouts: weekBeforeLastWorkouts))
             
             self.rowViewModels = dashboardRows
         } catch {

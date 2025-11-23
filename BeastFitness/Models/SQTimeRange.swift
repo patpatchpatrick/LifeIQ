@@ -8,6 +8,8 @@
 import Foundation
 
 enum SQTimeRange: String {
+    case today = "Today"
+    case yesterday = "Yesterday"
     case pastWeek = "Past Week"
     case weekBeforeLast = "Week Before Last"
     case pastMonth = "Past Month"
@@ -29,16 +31,22 @@ enum SQTimeRange: String {
         case .weekBeforeLast:
             return Calendar.current.date(byAdding: .day, value: -14, to: endDate)!
         case .pastWeek:
-            return Calendar.current.date(byAdding: .day, value: -7, to: endDate)!
+            return Calendar.current.date(byAdding: .day, value: -21, to: endDate)! // PTD set back
+        case .today:
+            return Calendar.current.date(byAdding: .day, value: -1, to: endDate)!
+        case .yesterday:
+            return Calendar.current.date(byAdding: .day, value: -2, to: endDate)!
         }
     }
     
     var endDate: Date {
         switch self {
-        case .pastWeek, .pastMonth, .pastYear, .allTime:
+        case .pastWeek, .pastMonth, .pastYear, .allTime, .today:
                 .now
         case .weekBeforeLast:
             SQTimeRange.pastWeek.startDate
+        case .yesterday:
+            SQTimeRange.today.startDate
         }
     }
 }

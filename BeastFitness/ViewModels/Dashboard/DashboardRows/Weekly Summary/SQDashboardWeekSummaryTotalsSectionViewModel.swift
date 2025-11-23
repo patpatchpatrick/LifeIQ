@@ -18,15 +18,15 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
         let trend: AttributedString
     }
     
-    init(workouts: [SQWorkoutable], priorWeekWorkouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
         self.sectionTitle = "Totals"
         
 
         let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
-        let totalSecondsPriorWeek = priorWeekWorkouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
+        let totalSecondsPriorWeek = priorWorkouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
         
         let totalKilocalories = workouts.reduce(0) { $0 + ($1.totalCalories ?? 0) }
-        let totalKilocaloriesPriorWeek = priorWeekWorkouts.reduce(0) { $0 + ($1.totalCalories ?? 0) }
+        let totalKilocaloriesPriorWeek = priorWorkouts.reduce(0) { $0 + ($1.totalCalories ?? 0) }
 
         let totalTimeValue = Self.formatDuration(seconds: totalSeconds)
         let totalTimeTrend = Self.buildTrend(

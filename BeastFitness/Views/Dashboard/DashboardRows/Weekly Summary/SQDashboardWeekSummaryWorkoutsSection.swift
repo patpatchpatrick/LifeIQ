@@ -44,6 +44,6 @@ struct SQDashboardWeekSummaryWorkoutsSection: View {
 }
 
 #Preview {
-    SQDashboardWeekSummaryTotalsSection(viewModel: .init(workouts: .mock, priorWeekWorkouts: .mock))
+    SQDashboardWeekSummaryTotalsSection(viewModel: .init(workouts: .mock, priorWorkouts: .mock))
         .preferredColorScheme(.dark)
 }
