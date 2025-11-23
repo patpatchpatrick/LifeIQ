@@ -9,7 +9,7 @@ import SwiftUI
 import HealthKit
 
 @Observable @MainActor
-final class SQDashboardWeekSummaryWorkoutsSectionViewModel {
+final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
     let sectionTitle: String
     let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
     

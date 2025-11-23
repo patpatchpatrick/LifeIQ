@@ -33,9 +33,9 @@ final class SQDashboardViewModel {
             
             dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
             
-            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(timeRange: .today, workouts: todaysWorkouts, priorWorkouts: yesterdaysWorkouts))
+            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(config: .init(timeRange: .today, priorTimeRange: .yesterday), workouts: todaysWorkouts, priorWorkouts: yesterdaysWorkouts))
             
-            dashboardRows.append(SQDashboardWeekSummaryRowViewModel(timeRange: .pastWeek, workouts: lastWeekWorkouts, priorWorkouts: weekBeforeLastWorkouts))
+            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(config: .init(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast), workouts: lastWeekWorkouts, priorWorkouts: weekBeforeLastWorkouts))
             
             self.rowViewModels = dashboardRows
         } catch {

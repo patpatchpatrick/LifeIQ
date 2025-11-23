@@ -1,5 +1,5 @@
 //
-//  SQDashboardWeekSummaryRow.swift
+//  SQDashboardWorkoutSummaryRow.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 11/13/25.
@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct SQDashboardWeekSummaryRow: View {
-    @Bindable var viewModel: SQDashboardWeekSummaryRowViewModel
+struct SQDashboardWorkoutSummaryRow: View {
+    @Bindable var viewModel: SQDashboardWorkoutSummaryRowViewModel
     
     var cardBody: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            SQDashboardWeekSummaryTotalsSection(viewModel: viewModel.totalsSection)
+            SQDashboardWorkoutSummaryTotalsSection(viewModel: viewModel.totalsSection)
                 .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
             
-            SQDashboardWeekSummaryWorkoutsSection(viewModel: viewModel.workoutsSection)
+            SQDashboardWorkoutSummaryWorkoutsSection(viewModel: viewModel.workoutsSection)
         }
     }
     
@@ -24,12 +24,13 @@ struct SQDashboardWeekSummaryRow: View {
                     SQDashboardView.sectionTitle(title: viewModel.sectionTitle)
         ) {
             SQDashboardView.card { cardBody }
+                .padding(.bottom, .SQSpace.xxl)
         }
         .padding(.horizontal, SQDashboardView.uiConfig.sectionHorizPadding)
     }
 }
 
 #Preview {
-    SQDashboardWeekSummaryRow(viewModel: .init(timeRange: .pastWeek, workouts: .mock, priorWorkouts: .mock))
+    SQDashboardWorkoutSummaryRow(viewModel: .init(config: .mock, workouts: .mock, priorWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

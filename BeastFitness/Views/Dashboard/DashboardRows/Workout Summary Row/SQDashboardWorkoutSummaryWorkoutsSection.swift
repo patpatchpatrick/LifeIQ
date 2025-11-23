@@ -1,5 +1,5 @@
 //
-//  SQDashboardWeekSummaryWorkoutsSection.swift
+//  SQDashboardWorkoutSummaryWorkoutsSection.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 11/13/25.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct SQDashboardWeekSummaryWorkoutsSection: View {
-    let viewModel: SQDashboardWeekSummaryWorkoutsSectionViewModel
+struct SQDashboardWorkoutSummaryWorkoutsSection: View {
+    let viewModel: SQDashboardWorkoutSummaryWorkoutsSectionViewModel
     
     var workoutsStack: some View {
         VStack(spacing: .SQSpace.m) {
@@ -44,6 +44,6 @@ struct SQDashboardWeekSummaryWorkoutsSection: View {
 }
 
 #Preview {
-    SQDashboardWeekSummaryTotalsSection(viewModel: .init(workouts: .mock, priorWorkouts: .mock))
+    SQDashboardWorkoutSummaryTotalsSection(viewModel: .init(config: .mock, workouts: .mock, priorWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

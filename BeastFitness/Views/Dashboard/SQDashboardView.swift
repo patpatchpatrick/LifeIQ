@@ -26,8 +26,9 @@ struct SQDashboardView: View {
                                 .padding(.bottom, .SQSpace.xxl)
                         }
                     case .weekSummary:
-                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWeekSummaryRowViewModel {
-                            SQDashboardWeekSummaryRow(viewModel: weekSummaryViewModel)
+                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel {
+                            SQDashboardWorkoutSummaryRow(
+                                viewModel: weekSummaryViewModel)
                         }
                     }
                 }

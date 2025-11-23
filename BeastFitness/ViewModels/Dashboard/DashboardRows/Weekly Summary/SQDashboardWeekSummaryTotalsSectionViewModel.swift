@@ -1,5 +1,5 @@
 //
-//  SQDashboardWeekSummaryTotalsSectionViewModel.swift
+//  SQDashboardWorkoutSummaryTotalsSectionViewModel.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 11/13/25.
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @Observable @MainActor
-final class SQDashboardWeekSummaryTotalsSectionViewModel {
+final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
     let sectionTitle: String
     let totalValuesAndTrends: [TotalValueAndTrend]
     
@@ -18,9 +18,8 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
         let trend: AttributedString
     }
     
-    init(workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+    init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
         self.sectionTitle = "Totals"
-        
 
         let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
         let totalSecondsPriorWeek = priorWorkouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }
@@ -30,12 +29,16 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
 
         let totalTimeValue = Self.formatDuration(seconds: totalSeconds)
         let totalTimeTrend = Self.buildTrend(
+            timeRange: config.timeRange,
+            priorTimeRange: config.priorTimeRange,
             currentSeconds: totalSeconds,
             previousSeconds: totalSecondsPriorWeek
         )
         
         let totalKilocaloriesValue = Self.formatKilocalories(totalKilocalories: totalKilocalories)
         let totalKilocaliresTrend = Self.buildTrend(
+            timeRange: config.timeRange,
+            priorTimeRange: config.priorTimeRange,
             currentSeconds: totalKilocalories,
             previousSeconds: totalKilocaloriesPriorWeek
         )
@@ -49,7 +52,7 @@ final class SQDashboardWeekSummaryTotalsSectionViewModel {
 
 // MARK: - Formatting
 
-private extension SQDashboardWeekSummaryTotalsSectionViewModel {
+private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
     static func formatDuration(seconds: Double) -> AttributedString {
         let total = max(0, Int(seconds.rounded()))
         let hours = total / 3600
@@ -108,13 +111,15 @@ private extension SQDashboardWeekSummaryTotalsSectionViewModel {
     }
     
     static func buildTrend(
+        timeRange: SQTimeRange,
+        priorTimeRange: SQTimeRange,
         currentSeconds: Double,
         previousSeconds: Double
     ) -> AttributedString {
         // No prior data
         guard previousSeconds > 0 else {
             return AttributedString.build(
-                with: "No data from last week",
+                with: "No data from \(timeRange.title.lowercased())",
                 font: SQFont(type: .bodySmall).font,
                 color: SQColor.textSecondary.color
             )
@@ -158,7 +163,7 @@ private extension SQDashboardWeekSummaryTotalsSectionViewModel {
         )
 
         let suffix = AttributedString.build(
-            with: " from last week",
+            with: " from \(priorTimeRange.title.lowercased())",
             font: baseFont,
             color: baseColor
         )

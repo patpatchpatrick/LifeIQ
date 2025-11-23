@@ -19,12 +19,12 @@
 		F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA3E2EC4EA0A00404878 /* SQDashboardTextRowViewModel.swift */; };
 		F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */; };
 		F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */; };
-		F602DA482EC633CE00404878 /* SQDashboardWeekSummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA472EC633C400404878 /* SQDashboardWeekSummaryRow.swift */; };
+		F602DA482EC633CE00404878 /* SQDashboardWorkoutSummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA472EC633C400404878 /* SQDashboardWorkoutSummaryRow.swift */; };
 		F602DA4B2EC6A5FC00404878 /* SQWorkoutable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA4A2EC6A5F900404878 /* SQWorkoutable.swift */; };
 		F602DA4D2EC6A61F00404878 /* SQWorkoutable+Mocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA4C2EC6A61B00404878 /* SQWorkoutable+Mocks.swift */; };
 		F602DA4F2EC6A7ED00404878 /* AttributedString+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA4E2EC6A7E800404878 /* AttributedString+Extensions.swift */; };
-		F602DA522EC6A9F900404878 /* SQDashboardWeekSummaryTotalsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA512EC6A9E600404878 /* SQDashboardWeekSummaryTotalsSection.swift */; };
-		F602DA5B2EC6AE6200404878 /* SQDashboardWeekSummaryWorkoutsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA5A2EC6AE5300404878 /* SQDashboardWeekSummaryWorkoutsSection.swift */; };
+		F602DA522EC6A9F900404878 /* SQDashboardWorkoutSummaryTotalsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA512EC6A9E600404878 /* SQDashboardWorkoutSummaryTotalsSection.swift */; };
+		F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA5A2EC6AE5300404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift */; };
 		F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA602EC6B4AD00404878 /* SQDashboardWorkoutGroupView.swift */; };
 		F602DA662EC789FC00404878 /* SQQuantityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA652EC789F900404878 /* SQQuantityType.swift */; };
 		F602DA682EC78A1D00404878 /* SQUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA672EC78A1C00404878 /* SQUnit.swift */; };
@@ -104,12 +104,12 @@
 		F602DA3E2EC4EA0A00404878 /* SQDashboardTextRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardTextRowViewModel.swift; sourceTree = "<group>"; };
 		F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardTextRow.swift; sourceTree = "<group>"; };
 		F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGFloat+Extensions.swift"; sourceTree = "<group>"; };
-		F602DA472EC633C400404878 /* SQDashboardWeekSummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWeekSummaryRow.swift; sourceTree = "<group>"; };
+		F602DA472EC633C400404878 /* SQDashboardWorkoutSummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryRow.swift; sourceTree = "<group>"; };
 		F602DA4A2EC6A5F900404878 /* SQWorkoutable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutable.swift; sourceTree = "<group>"; };
 		F602DA4C2EC6A61B00404878 /* SQWorkoutable+Mocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkoutable+Mocks.swift"; sourceTree = "<group>"; };
 		F602DA4E2EC6A7E800404878 /* AttributedString+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AttributedString+Extensions.swift"; sourceTree = "<group>"; };
-		F602DA512EC6A9E600404878 /* SQDashboardWeekSummaryTotalsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWeekSummaryTotalsSection.swift; sourceTree = "<group>"; };
-		F602DA5A2EC6AE5300404878 /* SQDashboardWeekSummaryWorkoutsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWeekSummaryWorkoutsSection.swift; sourceTree = "<group>"; };
+		F602DA512EC6A9E600404878 /* SQDashboardWorkoutSummaryTotalsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryTotalsSection.swift; sourceTree = "<group>"; };
+		F602DA5A2EC6AE5300404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryWorkoutsSection.swift; sourceTree = "<group>"; };
 		F602DA602EC6B4AD00404878 /* SQDashboardWorkoutGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutGroupView.swift; sourceTree = "<group>"; };
 		F602DA652EC789F900404878 /* SQQuantityType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQQuantityType.swift; sourceTree = "<group>"; };
 		F602DA672EC78A1C00404878 /* SQUnit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUnit.swift; sourceTree = "<group>"; };
@@ -252,7 +252,7 @@
 			isa = PBXGroup;
 			children = (
 				F602DA5F2EC6B4A300404878 /* Workouts */,
-				F602DA502EC6A9DD00404878 /* Weekly Summary */,
+				F602DA502EC6A9DD00404878 /* Workout Summary Row */,
 				F602DA412EC4EAAA00404878 /* SQDashboardTextRow.swift */,
 			);
 			path = DashboardRows;
@@ -272,14 +272,14 @@
 			path = Workouts;
 			sourceTree = "<group>";
 		};
-		F602DA502EC6A9DD00404878 /* Weekly Summary */ = {
+		F602DA502EC6A9DD00404878 /* Workout Summary Row */ = {
 			isa = PBXGroup;
 			children = (
-				F602DA5A2EC6AE5300404878 /* SQDashboardWeekSummaryWorkoutsSection.swift */,
-				F602DA512EC6A9E600404878 /* SQDashboardWeekSummaryTotalsSection.swift */,
-				F602DA472EC633C400404878 /* SQDashboardWeekSummaryRow.swift */,
+				F602DA5A2EC6AE5300404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift */,
+				F602DA512EC6A9E600404878 /* SQDashboardWorkoutSummaryTotalsSection.swift */,
+				F602DA472EC633C400404878 /* SQDashboardWorkoutSummaryRow.swift */,
 			);
-			path = "Weekly Summary";
+			path = "Workout Summary Row";
 			sourceTree = "<group>";
 		};
 		F602DA5F2EC6B4A300404878 /* Workouts */ = {
@@ -667,7 +667,7 @@
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
-				F602DA5B2EC6AE6200404878 /* SQDashboardWeekSummaryWorkoutsSection.swift in Sources */,
+				F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */,
 				F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */,
 				F602DA682EC78A1D00404878 /* SQUnit.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
@@ -682,7 +682,7 @@
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F602DA4D2EC6A61F00404878 /* SQWorkoutable+Mocks.swift in Sources */,
-				F602DA522EC6A9F900404878 /* SQDashboardWeekSummaryTotalsSection.swift in Sources */,
+				F602DA522EC6A9F900404878 /* SQDashboardWorkoutSummaryTotalsSection.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
 				F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */,
@@ -703,7 +703,7 @@
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift in Sources */,
-				F602DA482EC633CE00404878 /* SQDashboardWeekSummaryRow.swift in Sources */,
+				F602DA482EC633CE00404878 /* SQDashboardWorkoutSummaryRow.swift in Sources */,
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
 				F602DA6A2EC7923F00404878 /* SQDashboardWorkoutStatView.swift in Sources */,
 				F602DA282EC40EB800404878 /* AppState.swift in Sources */,
