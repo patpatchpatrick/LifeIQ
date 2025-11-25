@@ -10,7 +10,7 @@ import Combine
 
 @Observable @MainActor
 final class SQDashboardViewModel {
-    private let state: DashboardStating
+    let state: DashboardStating
     private(set) var rowViewModels: [SQDashboardRowViewModel] = []
     
     init(state: DashboardStating) {
@@ -40,7 +40,9 @@ final class SQDashboardViewModel {
                 config: .init(
                     totalsSectionConfig: .init(callToAction: .init(
                         title: "Complete daily check-in",
-                        onTap: { print("PTD Show Daily Check-In") })),
+                        onTap: { [weak self] in
+                            self?.state.toggleDailyCheckInSheetVisibility(true)
+                        })),
                     timeRange: .today,
                     priorTimeRange: .yesterday),
                 workouts: todaysWorkouts,

@@ -10,13 +10,19 @@ import Combine
 
 @MainActor
 protocol DashboardStating: AnyObject {
+    /// State
+    var isDailyCheckInSheetVisible: Bool { get }
+    
+    /// Actions
     func changeTab(to tab: NavigationState.Tab)
+    func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
 }
 
 @MainActor
 @Observable final class DashboardState: DashboardStating {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
+    var isDailyCheckInSheetVisible: Bool = false
     
     init(hub: EventHub) {
         self.hub = hub
@@ -24,5 +30,9 @@ protocol DashboardStating: AnyObject {
     
     func changeTab(to tab: NavigationState.Tab) {
         hub.events.send(.changeTab(tab))
+    }
+    
+    func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {
+        isDailyCheckInSheetVisible = isVisible
     }
 }

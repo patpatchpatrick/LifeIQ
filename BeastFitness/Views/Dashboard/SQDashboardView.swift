@@ -68,6 +68,11 @@ struct SQDashboardView: View {
                                    }
                                }
             .background(SQColor.background.color.ignoresSafeArea())
+            .sheet(isPresented: .init(
+                get: { viewModel.state.isDailyCheckInSheetVisible },
+                set: { isVisible in viewModel.state.toggleDailyCheckInSheetVisibility(isVisible) })) {
+                    Text("Daily Check-in")
+                }
     }
 }
 
