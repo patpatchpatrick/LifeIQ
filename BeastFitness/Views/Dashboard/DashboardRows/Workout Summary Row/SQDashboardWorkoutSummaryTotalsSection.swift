@@ -27,6 +27,11 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
             SQDashboardView.cardTitle(title: viewModel.sectionTitle)
                 .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
+            if let callToActionViewModel = viewModel.callToActionViewModel {
+                SQCallToAction(viewModel: callToActionViewModel)
+                    .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+            }
+            
             totalValuesAndTrendsStack
         }
     }

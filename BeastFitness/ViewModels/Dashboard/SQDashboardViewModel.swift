@@ -36,7 +36,15 @@ final class SQDashboardViewModel {
             
             dashboardRows.append(SQDashboardTextRowViewModel(text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
             
-            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(config: .init(timeRange: .today, priorTimeRange: .yesterday), workouts: todaysWorkouts, priorWorkouts: yesterdaysWorkouts))
+            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(
+                config: .init(
+                    totalsSectionConfig: .init(callToAction: .init(
+                        title: "Complete daily check-in",
+                        onTap: { print("PTD Show Daily Check-In") })),
+                    timeRange: .today,
+                    priorTimeRange: .yesterday),
+                workouts: todaysWorkouts,
+                priorWorkouts: yesterdaysWorkouts))
             
             dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(config: .init(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast), workouts: lastWeekWorkouts, priorWorkouts: weekBeforeLastWorkouts))
             

@@ -9,6 +9,7 @@ import SwiftUI
 
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
+    let callToActionViewModel: SQCallToActionViewModel?
     let sectionTitle: String
     let totalValuesAndTrends: [TotalValueAndTrend]
     
@@ -19,6 +20,7 @@ final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
     }
     
     init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+        self.callToActionViewModel = config.totalsSectionConfig.callToAction
         self.sectionTitle = "Totals"
 
         let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }

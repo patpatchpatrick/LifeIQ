@@ -22,8 +22,23 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
 }
 
 struct SQDashboardWorkoutSummaryRowConfig {
+    let totalsSectionConfig: TotalsSectionConfig
     let timeRange: SQTimeRange
     let priorTimeRange: SQTimeRange
     
-    static let mock = SQDashboardWorkoutSummaryRowConfig(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)
+    init(totalsSectionConfig: TotalsSectionConfig = TotalsSectionConfig(), timeRange: SQTimeRange, priorTimeRange: SQTimeRange) {
+        self.totalsSectionConfig = totalsSectionConfig
+        self.timeRange = timeRange
+        self.priorTimeRange = priorTimeRange
+    }
+    
+    struct TotalsSectionConfig {
+        let callToAction: SQCallToActionViewModel?
+        
+        init(callToAction: SQCallToActionViewModel? = nil) {
+            self.callToAction = callToAction
+        }
+    }
+    
+    static let mock = SQDashboardWorkoutSummaryRowConfig(totalsSectionConfig: .init(callToAction: .init(title: "Complete daily check-in", onTap: nil)), timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)
 }
