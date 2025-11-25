@@ -12,6 +12,7 @@ import Combine
 final class SQDashboardViewModel {
     let state: DashboardStating
     private(set) var rowViewModels: [SQDashboardRowViewModel] = []
+    let dailyCheckInViewModel = SQDailyCheckInViewModel()
     
     init(state: DashboardStating) {
         self.state = state
