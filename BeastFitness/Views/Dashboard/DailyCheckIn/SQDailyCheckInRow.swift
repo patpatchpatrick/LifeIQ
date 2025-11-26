@@ -52,6 +52,9 @@ struct SQDailyCheckInRow: View {
         if let segmentedControlViewModel = viewModel as? SQDailyCheckInRowSegmentedControlViewModel {
             SQDailyCheckInSegmentedControl(viewModel: segmentedControlViewModel)
         }
+        else if let textFieldViewModel = viewModel as? SQDailyCheckInTextEntryViewModel {
+            SQTextField(viewModel: textFieldViewModel.textFieldViewModel)
+        }
     }
     
     @ViewBuilder

@@ -10,11 +10,10 @@ import SwiftUI
 @Observable @MainActor
 class SQDailyCheckInRowViewModel: Identifiable {
     let title: String
-    let number: String
+    var number: String = ""
     var isCompleted = false
     
-    init(title: String, number: String) {
+    init(title: String) {
         self.title = title
-        self.number = number
     }
 }

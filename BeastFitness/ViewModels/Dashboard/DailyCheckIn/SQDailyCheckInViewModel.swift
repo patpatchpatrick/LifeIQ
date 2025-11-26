@@ -18,7 +18,33 @@ final class SQDailyCheckInViewModel {
     func buildRows() -> [SQDailyCheckInRowViewModel] {
         var rows = [SQDailyCheckInRowViewModel]()
         
-        rows.append(SQDailyCheckInRowSegmentedControlViewModel(title: "Mood", number: "1", segments: SQCheckInMoodScale.allCases))
+        rows.append(SQDailyCheckInRowSegmentedControlViewModel(title: "Mood", segments: SQCheckInMoodScale.allCases))
+        
+        let sleepEntryTextField = SQTextFieldViewModel(
+            lineLimit: 1,
+            placeholder: "8 hours",
+            keyboardType: .decimalPad,
+            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: .decimal(maxDecimalPlaces: 1, range: 0...24),
+            errorHandler: { text in
+                guard !text.isEmpty else { return nil }
+                guard let value = Double(text) else {
+                    return nil
+                }
+                
+                if value > 24.0 {
+                    return "Enter a value less than or equal to 24 hours"
+                }
+                
+                return nil
+                })
+        rows.append(SQDailyCheckInTextEntryViewModel(
+            title: "Sleep",
+            textFieldViewModel: sleepEntryTextField))
+        
+        for (idx, row) in rows.enumerated() {
+            row.number = String(idx + 1)
+        }
         
         return rows
     }

@@ -59,32 +59,32 @@ struct SQDailyCheckInSegmentedControl: View {
 }
 
 
-#Preview {
-    enum DailyCheckInSegment: String, CaseIterable, Hashable {
-        case terrible = "😡"
-        case bad      = "😕"
-        case okay     = "3"
-        case good     = "4"
-        case great    = "5"
-    }
-
-    // Map enum → SQSegmentedControlSegment
-    let segments: [SQSegmentedControlSegment] = DailyCheckInSegment.allCases.map {
-        SQSegmentedControlSegment(
-            id: $0.rawValue,
-            title: $0.rawValue   // or a nicer label if you want
-        )
-    }
-
-    let viewModel = SQDailyCheckInRowSegmentedControlViewModel(
-        title: "Mood",
-        number: "1",
-        scaleConfig: .init(minText: "Very low", maxText: "Very high"),
-        segments: segments
-    )
-
-    return SQDailyCheckInRow(viewModel: viewModel)
-        .padding()
-        .preferredColorScheme(.dark)
-}
+//#Preview {
+//    enum DailyCheckInSegment: String, CaseIterable, Hashable {
+//        case terrible = "😡"
+//        case bad      = "😕"
+//        case okay     = "3"
+//        case good     = "4"
+//        case great    = "5"
+//    }
+//
+//    // Map enum → SQSegmentedControlSegment
+//    let segments: [SQSegmentedControlSegment] = DailyCheckInSegment.allCases.map {
+//        SQSegmentedControlSegment(
+//            id: $0.rawValue,
+//            title: $0.rawValue   // or a nicer label if you want
+//        )
+//    }
+//
+//    let viewModel = SQDailyCheckInRowSegmentedControlViewModel(
+//        title: "Mood",
+//        number: "1",
+//        scaleConfig: .init(minText: "Very low", maxText: "Very high"),
+//        segments: segments
+//    )
+//
+//    return SQDailyCheckInRow(viewModel: viewModel)
+//        .padding()
+//        .preferredColorScheme(.dark)
+//}
 

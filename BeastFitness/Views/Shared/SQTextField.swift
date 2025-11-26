@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 struct SQTextField: View {
     
     @ObservedObject var viewModel: SQTextFieldViewModel
@@ -19,7 +20,6 @@ struct SQTextField: View {
     }
     
     var textField: some View {
-        // IF UPDATING THIS, ALSO UPDATE THE SECURETEXTFIELD!!!
         TextField(viewModel.placeholder, text: $viewModel.text, prompt: placeholder, axis: viewModel.axis)
             .font(.sqFont(.body))
             .focused($isTextFieldFocused)
@@ -28,18 +28,16 @@ struct SQTextField: View {
             .lineLimit(viewModel.lineLimit)
             .padding(10)
             .sqForegroundColor(viewModel.uiConfig.textColor)
-            .sqTintColor(viewModel.tintColor)
+            .sqTintColor(viewModel.uiConfig.tintColor)
             .keyboardType(viewModel.keyboardType)
             .onChange(of: viewModel.shouldFocusTextFieldProgramatically) {
                 isTextFieldFocused = true
             }
             .onChange(of: isTextFieldFocused) {
                 if isTextFieldFocused {
-                    // Begin Editing
                     viewModel.focused()
                 }
                 else {
-                    // End Editing
                     viewModel.unfocus(dismissKeyboard: false)
                 }
             }
@@ -52,13 +50,25 @@ struct SQTextField: View {
     }
     
     var body: some View {
-        textField
-        .sqBackgroundColor(viewModel.backgroundColor)
-        .cornerRadius(.SQCornerRadius.m)
-        .sqBorder(viewModel.borderColor ?? .border,
-            width: viewModel.borderColor == nil ? 0 : viewModel.borderWidth,
-            cornerRadius: viewModel.cornerRadius)
-    }
+            VStack(alignment: .leading, spacing: 4) {
+                if let errorText = viewModel.textFieldState.errorText {
+                    Text(errorText)
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.colorErrorRed)
+                        .transition(.opacity)
+                }
+                
+                textField
+                    .sqBackgroundColor(viewModel.uiConfig.backgroundColor)
+                    .cornerRadius(.SQCornerRadius.m)
+                    .sqBorder(
+                        viewModel.borderColor ?? .border,
+                        width: viewModel.borderColor == nil ? 0 : viewModel.uiConfig.borderWidth,
+                        cornerRadius: viewModel.uiConfig.cornerRadius
+                    )
+            }
+            .animation(.easeInOut(duration: 0.2), value: viewModel.textFieldState)
+        }
 }
 
 #Preview {

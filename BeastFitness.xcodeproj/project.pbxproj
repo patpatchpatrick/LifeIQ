@@ -34,6 +34,9 @@
 		F639B7E02ED798E300199C69 /* SQTextFieldViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B7DF2ED798DE00199C69 /* SQTextFieldViewModel.swift */; };
 		F639B7E22ED799E800199C69 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B7E12ED799E600199C69 /* String+Extensions.swift */; };
 		F639B7E42ED79A6200199C69 /* SQDailyCheckInRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B7E32ED79A5C00199C69 /* SQDailyCheckInRow.swift */; };
+		F639B7E62ED79CEA00199C69 /* SQDailyCheckInTextEntryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B7E52ED79CE400199C69 /* SQDailyCheckInTextEntryViewModel.swift */; };
+		F639B8F92ED7A07D00199C69 /* SQTextFieldViewModel+Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B8F82ED7A07600199C69 /* SQTextFieldViewModel+Formatters.swift */; };
+		F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2AA2CA50D7C00E72926 /* SQRootView.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -130,6 +133,9 @@
 		F639B7DF2ED798DE00199C69 /* SQTextFieldViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTextFieldViewModel.swift; sourceTree = "<group>"; };
 		F639B7E12ED799E600199C69 /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F639B7E32ED79A5C00199C69 /* SQDailyCheckInRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInRow.swift; sourceTree = "<group>"; };
+		F639B7E52ED79CE400199C69 /* SQDailyCheckInTextEntryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInTextEntryViewModel.swift; sourceTree = "<group>"; };
+		F639B8F82ED7A07600199C69 /* SQTextFieldViewModel+Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQTextFieldViewModel+Formatters.swift"; sourceTree = "<group>"; };
+		F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTextValidationRule.swift; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
 		F657E2AA2CA50D7C00E72926 /* SQRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootView.swift; sourceTree = "<group>"; };
@@ -324,6 +330,16 @@
 			path = Metrics;
 			sourceTree = "<group>";
 		};
+		F639B8F72ED7A06900199C69 /* TextField */ = {
+			isa = PBXGroup;
+			children = (
+				F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */,
+				F639B8F82ED7A07600199C69 /* SQTextFieldViewModel+Formatters.swift */,
+				F639B7DF2ED798DE00199C69 /* SQTextFieldViewModel.swift */,
+			);
+			path = TextField;
+			sourceTree = "<group>";
+		};
 		F657E29C2CA50D7C00E72926 = {
 			isa = PBXGroup;
 			children = (
@@ -459,7 +475,7 @@
 		F6A848BA2CBD950E00B09AD5 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				F639B7DF2ED798DE00199C69 /* SQTextFieldViewModel.swift */,
+				F639B8F72ED7A06900199C69 /* TextField */,
 				F6A848BD2CBD959400B09AD5 /* DropDownMenu */,
 				F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */,
 				F6A848B92CBD950400B09AD5 /* NavBar */,
@@ -497,6 +513,7 @@
 		F6F4D4142ED61B5900ECE0BC /* DailyCheckIn Rows */ = {
 			isa = PBXGroup;
 			children = (
+				F639B7E52ED79CE400199C69 /* SQDailyCheckInTextEntryViewModel.swift */,
 				F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */,
 				F6F4D4152ED61B6300ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift */,
 			);
@@ -731,6 +748,7 @@
 				F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */,
 				F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */,
 				F602DA682EC78A1D00404878 /* SQUnit.swift in Sources */,
+				F639B8F92ED7A07D00199C69 /* SQTextFieldViewModel+Formatters.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */,
 				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
@@ -750,6 +768,7 @@
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
 				F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */,
 				F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */,
+				F639B7E62ED79CEA00199C69 /* SQDailyCheckInTextEntryViewModel.swift in Sources */,
 				F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */,
 				F6F4D4162ED61B6C00ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift in Sources */,
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
@@ -757,6 +776,7 @@
 				F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */,
 				F602DA4F2EC6A7ED00404878 /* AttributedString+Extensions.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
+				F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */,
 				F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */,
 				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,
 				F6A848AB2CB779A300B09AD5 /* SQStravaWorkout.swift in Sources */,
