@@ -9,12 +9,15 @@ import SwiftUI
 
 @Observable @MainActor
 class SQDailyCheckInRowViewModel: Identifiable {
+    let id = UUID()
+    let field: SQDailyCheckInField
     let title: String
     var number: String = ""
     var isCompleted = false
     let onFocused: ((SQDailyCheckInRowViewModel) -> Void)?
     
-    init(title: String, onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil) {
+    init(field: SQDailyCheckInField, title: String, onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil) {
+        self.field = field
         self.title = title
         self.onFocused = onFocused
     }

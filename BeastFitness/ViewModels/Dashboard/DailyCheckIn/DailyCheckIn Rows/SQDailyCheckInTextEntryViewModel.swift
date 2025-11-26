@@ -14,12 +14,13 @@ final class SQDailyCheckInTextEntryViewModel: SQDailyCheckInRowViewModel {
 
     // Designated init using already-mapped segments
     init(
+        field: SQDailyCheckInField,
         title: String,
         textFieldViewModel: SQTextFieldViewModel,
         onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         self.textFieldViewModel = textFieldViewModel
-        super.init(title: title, onFocused: onFocused)
+        super.init(field: field, title: title, onFocused: onFocused)
         textFieldViewModel.delegate = self
     }
 }

@@ -37,6 +37,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
 
     // Designated init using already-mapped segments
     init(
+        field: SQDailyCheckInField,
         title: String,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [SQSegmentedControlSegment],
@@ -47,11 +48,12 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         self.segments = segments
         self._selectedSegment = initialSelection
         self.scaleConfig = scaleConfig
-        super.init(title: title, onFocused: onFocused)
+        super.init(field: field, title: title, onFocused: onFocused)
     }
 
     // Convenience init from your enum-based segments
     convenience init<Segment: SQCheckInSegmentable & Hashable>(
+        field: SQDailyCheckInField,
         title: String,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [Segment],
@@ -74,6 +76,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         }()
 
         self.init(
+            field: field,
             title: title,
             scaleConfig: scaleConfig,
             segments: mappedSegments,

@@ -7,17 +7,20 @@
 
 import SwiftUI
 
-struct DailyCheckInStats {
-    let moodScore: Float /// Scale out of 10
-    let sleepHours: Float /// Hours per day
+enum SQDailyCheckInField {
+    case mood
+    case sleep
+    // future: case energy, stress, notes, etc.
+}
+
+struct SQDailyCheckInStats {
+    let moodScore: Float? /// Scale out of 10
+    let sleepHours: Float? /// Hours per day
 }
 
 @Observable @MainActor
 final class SQDailyCheckInViewModel {
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
-    
-    private var moodRow: SQDailyCheckInRowSegmentedControlViewModel?
-    private var sleepRow: SQDailyCheckInTextEntryViewModel?
     
     init() {
         self.rows = buildRows()
@@ -27,6 +30,7 @@ final class SQDailyCheckInViewModel {
         var rows = [SQDailyCheckInRowViewModel]()
         
         let moodRow = SQDailyCheckInRowSegmentedControlViewModel(
+            field: .mood,
             title: "Mood",
             segments: SQCheckInMoodScale.allCases,
             onFocused: { [weak self] in
@@ -34,7 +38,6 @@ final class SQDailyCheckInViewModel {
             }
         )
         rows.append(moodRow)
-        self.moodRow = moodRow
         
         let sleepEntryTextField = SQTextFieldViewModel(
             lineLimit: 1,
@@ -56,6 +59,7 @@ final class SQDailyCheckInViewModel {
                 })
         
         let sleepRow = SQDailyCheckInTextEntryViewModel(
+            field: .sleep,
             title: "Sleep",
             textFieldViewModel: sleepEntryTextField,
             onFocused: { [weak self] in
@@ -63,7 +67,6 @@ final class SQDailyCheckInViewModel {
             }
         )
         rows.append(sleepRow)
-        self.sleepRow = sleepRow
         
         for (idx, row) in rows.enumerated() {
             row.number = String(idx + 1)
@@ -96,13 +99,40 @@ final class SQDailyCheckInViewModel {
     }
     
     func submitTapped() {
-        
         guard canSubmit else {
             SQLogger.shared.log("Should not be able to submit check-in if fields aren't valid", .error, context: .dailyCheckIn)
             return
         }
         
-        print("PTD Handle Submission")
+        var moodScore: Float? = nil
+        var sleepHours: Float? = nil
+        
+        for row in rows {
+            switch row.field {
+            case .mood:
+                if
+                    let segmentedRow = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let segment = segmentedRow.selectedSegment,
+                    let mood = SQCheckInMoodScale.fromSegment(segment)
+                {
+                    moodScore = mood.scoreOutOf10
+                }
+                
+            case .sleep:
+                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    let text = textRow.textFieldViewModel.text
+                    sleepHours = Float(text)
+                }
+            }
+        }
+        
+        let stats = SQDailyCheckInStats(
+            moodScore: moodScore,
+            sleepHours: sleepHours
+        )
+        
+        print("PTD Handle Submission", stats.moodScore as Any, stats.sleepHours as Any)
+        // TODO: pass `stats` on to your data layer
     }
 }
 
@@ -136,5 +166,18 @@ enum SQCheckInMoodScale: String, SQCheckInSegmentable, CaseIterable {
         case .seven: return "😄"
         case .eight: return "🤩"
         }
+    }
+    
+    /// Map 1–8 emoji scale to a 0–10 score
+        var scoreOutOf10: Float {
+            // 1 → 1/8 * 10, 8 → 8/8 * 10 = 10
+            let index = Self.allCases.firstIndex(of: self) ?? 0
+            return Float(index + 1) / Float(Self.allCases.count) * 10.0
+        }
+}
+
+extension SQCheckInSegmentable where Self: CaseIterable {
+    static func fromSegment(_ segment: SQSegmentedControlSegment) -> Self? {
+        Self.allCases.first { $0.segmentId == segment.id }
     }
 }
