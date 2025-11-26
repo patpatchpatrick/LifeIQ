@@ -61,6 +61,7 @@ indirect enum SQColor {
     case colorErrorRed
     case colorFadedRed
     case colorFadedGreen
+    case colorGreenDarkBorder
     case colorGreenRed(percent: Double, base: SQColor = .textPrimary)
     case colorGreenPct(percent: Double, base: SQColor = .textPrimary)
     case colorRedPct(percent: Double, base: SQColor = .textPrimary)
@@ -164,6 +165,8 @@ indirect enum SQColor {
             return Self.defaultRed(of: 0.35, base: SQColor.textPrimary.uiColor) // softer red
         case .colorFadedGreen:
             return Self.defaultGreen(of: 0.35, base: SQColor.textPrimary.uiColor) // softer green
+        case .colorGreenDarkBorder:
+            return UIColor(hexString: "#0C500B")!
         case .colorGreenRed(let percent, let base):
             return Self.defaultGreenRed(of: percent, base: base.uiColor)
         case .colorGreenPct(let percent, let base):

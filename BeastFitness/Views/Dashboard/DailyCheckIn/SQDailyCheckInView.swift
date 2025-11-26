@@ -7,24 +7,16 @@
 
 import SwiftUI
 
-@Observable @MainActor
-final class SQDailyCheckInRowViewModel: Identifiable {
-    
-}
-
-@Observable @MainActor
-final class SQDailyCheckInViewModel {
-    let rows: [SQDailyCheckInRowViewModel] = [.init(), .init(), .init()]
-}
-
 struct SQDailyCheckInView: View {
     @Bindable var viewModel: SQDailyCheckInViewModel
     
     @ViewBuilder
     var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xl) {
-            ForEach(viewModel.rows) { _ in
-                Text("Row")
+            ForEach(viewModel.rows) { row in
+                if let segmentedControlViewModel = row as? SQDailyCheckInRowSegmentedControlViewModel {
+                    SQDailyCheckInSegmentedControlRow(viewModel: segmentedControlViewModel)
+                }
             }
         }
     }

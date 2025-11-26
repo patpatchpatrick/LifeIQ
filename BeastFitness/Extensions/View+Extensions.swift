@@ -9,6 +9,11 @@ import SwiftUI
 
 extension View {
     
+    @inline(__always)
+     func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+         condition ? AnyView(transform(self)) : AnyView(self)
+     }
+    
     @ViewBuilder func redacted(_ isRedacted: Bool, reason: RedactionReasons) -> some View {
         if isRedacted {
             self.redacted(reason: reason)

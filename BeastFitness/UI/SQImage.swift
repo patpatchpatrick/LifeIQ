@@ -130,4 +130,5 @@ enum SQImageSymbol: String {
     
     /// Other
     case chevronDown         = "chevron.down"
+    case checkmark           = "checkmark"
 }

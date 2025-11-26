@@ -66,6 +66,11 @@
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
 		F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E909D12ED529D5003441B5 /* SQCallToAction.swift */; };
 		F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */; };
+		F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */; };
+		F6F4D4162ED61B6C00ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4152ED61B6300ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift */; };
+		F6F4D4182ED61B8700ECE0BC /* SQDailyCheckInRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */; };
+		F6F4D41A2ED61D1100ECE0BC /* SQSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4192ED61D0F00ECE0BC /* SQSegmentedControl.swift */; };
+		F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */; };
 		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94DFF2CAB9A5D00C2B90B /* SQRootViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFE2CAB9A5D00C2B90B /* SQRootViewModel.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
@@ -158,6 +163,11 @@
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
 		F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInView.swift; sourceTree = "<group>"; };
+		F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInViewModel.swift; sourceTree = "<group>"; };
+		F6F4D4152ED61B6300ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInRowSegmentedControlViewModel.swift; sourceTree = "<group>"; };
+		F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInRowViewModel.swift; sourceTree = "<group>"; };
+		F6F4D4192ED61D0F00ECE0BC /* SQSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSegmentedControl.swift; sourceTree = "<group>"; };
+		F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInSegmentedControlRow.swift; sourceTree = "<group>"; };
 		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94DFE2CAB9A5D00C2B90B /* SQRootViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootViewModel.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
@@ -211,6 +221,7 @@
 		F602DA2D2EC40F9900404878 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */,
 				F602DA3B2EC4E9F400404878 /* DashboardRows */,
 				F602DA2E2EC40F9D00404878 /* SQDashboardViewModel.swift */,
 			);
@@ -374,6 +385,7 @@
 		F6A848912CB4A7E900B09AD5 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				F6F4D4192ED61D0F00ECE0BC /* SQSegmentedControl.swift */,
 				F6E909D12ED529D5003441B5 /* SQCallToAction.swift */,
 				F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */,
 				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
@@ -456,9 +468,28 @@
 		F6E90B4A2ED55193003441B5 /* DailyCheckIn */ = {
 			isa = PBXGroup;
 			children = (
+				F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */,
 				F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */,
 			);
 			path = DailyCheckIn;
+			sourceTree = "<group>";
+		};
+		F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */ = {
+			isa = PBXGroup;
+			children = (
+				F6F4D4142ED61B5900ECE0BC /* DailyCheckIn Rows */,
+				F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */,
+			);
+			path = DailyCheckIn;
+			sourceTree = "<group>";
+		};
+		F6F4D4142ED61B5900ECE0BC /* DailyCheckIn Rows */ = {
+			isa = PBXGroup;
+			children = (
+				F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */,
+				F6F4D4152ED61B6300ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift */,
+			);
+			path = "DailyCheckIn Rows";
 			sourceTree = "<group>";
 		};
 		F6F94DFA2CAB992700C2B90B /* Utility */ = {
@@ -671,6 +702,7 @@
 				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
 				F665ABF72CC6D94F001904B0 /* SQRootLeaderboardSection.swift in Sources */,
 				F6A848962CB4ABE300B09AD5 /* SQWorkout.swift in Sources */,
+				F6F4D41A2ED61D1100ECE0BC /* SQSegmentedControl.swift in Sources */,
 				F602DA6C2EC92BB100404878 /* SQWorkouts.swift in Sources */,
 				F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */,
 				F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */,
@@ -680,6 +712,7 @@
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */,
+				F6F4D4182ED61B8700ECE0BC /* SQDailyCheckInRowViewModel.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */,
 				F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */,
@@ -703,6 +736,7 @@
 				F602DA422EC4EAB300404878 /* SQDashboardTextRow.swift in Sources */,
 				F665ABF52CC6D6FE001904B0 /* SQRootLeaderboardSectionViewModel.swift in Sources */,
 				F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */,
+				F6F4D4162ED61B6C00ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift in Sources */,
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */,
@@ -718,10 +752,12 @@
 				F602DA4B2EC6A5FC00404878 /* SQWorkoutable.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
+				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
 				F6F94E082CAB9D8800C2B90B /* SQRootActivitySectionViewModel.swift in Sources */,
 				F602DA482EC633CE00404878 /* SQDashboardWorkoutSummaryRow.swift in Sources */,
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
 				F602DA6A2EC7923F00404878 /* SQDashboardWorkoutStatView.swift in Sources */,
+				F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */,
 				F602DA282EC40EB800404878 /* AppState.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,

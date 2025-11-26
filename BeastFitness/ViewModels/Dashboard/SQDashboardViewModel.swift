@@ -12,7 +12,7 @@ import Combine
 final class SQDashboardViewModel {
     let state: DashboardStating
     private(set) var rowViewModels: [SQDashboardRowViewModel] = []
-    let dailyCheckInViewModel = SQDailyCheckInViewModel()
+    private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     
     init(state: DashboardStating) {
         self.state = state
@@ -42,7 +42,9 @@ final class SQDashboardViewModel {
                     totalsSectionConfig: .init(callToAction: .init(
                         title: "Complete daily check-in",
                         onTap: { [weak self] in
-                            self?.state.toggleDailyCheckInSheetVisibility(true)
+                            guard let self else { return }
+                            self.dailyCheckInViewModel = SQDailyCheckInViewModel()
+                            self.state.toggleDailyCheckInSheetVisibility(true)
                         })),
                     timeRange: .today,
                     priorTimeRange: .yesterday),

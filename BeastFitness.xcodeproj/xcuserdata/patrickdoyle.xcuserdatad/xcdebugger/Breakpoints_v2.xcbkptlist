@@ -3,4 +3,22 @@
    uuid = "CED9BCF1-8AB1-48EF-8FE5-3F5FDA7C96AF"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "E7D8EEDF-4B72-4235-A157-E7B049BCB2FA"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "BeastFitness/ViewModels/Dashboard/DailyCheckIn/DailyCheckIn Rows/SQDailyCheckInRowSegmentedControlViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "12"
+            endingLineNumber = "12"
+            landmarkName = "SQDailyCheckInRowSegmentedControlViewModel"
+            landmarkType = "3">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>
