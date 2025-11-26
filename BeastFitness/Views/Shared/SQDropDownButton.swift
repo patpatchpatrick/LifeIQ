@@ -38,6 +38,6 @@ struct SQDropDownButton: View {
     var body: some View {
         button
             .padding(4)
-            .sqBorder(.textPrimary, width: 1, cornerRadius: 4)
+            .sqBorder(.textPrimary, width: 1, cornerRadius: .SQCornerRadius.s)
     }
 }

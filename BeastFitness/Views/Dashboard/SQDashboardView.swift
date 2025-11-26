@@ -110,7 +110,7 @@ extension SQDashboardView {
             background: SQColor = SQColor.backgroundSecondary,
             innerHoriz: CGFloat = .SQSpace.l,
             innerVert: CGFloat = .SQSpace.l,
-            cornerRadius: CGFloat = .SQSpace.m,
+            cornerRadius: CGFloat = .SQCornerRadius.m,
             outerHoriz: CGFloat? = .SQSpace.l,
             outerVert: CGFloat? = nil,
             @ViewBuilder content: () -> Content

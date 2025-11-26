@@ -76,7 +76,7 @@ struct SQRootActivitySection: View {
             .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
             .frame(maxWidth: .infinity)
             .background(SQColor.backgroundSecondary.color)
-            .cornerRadius(8)
+            .cornerRadius(.SQCornerRadius.l)
         }
         .redacted(viewModel.isPlaceholder, reason: .placeholder)
     }

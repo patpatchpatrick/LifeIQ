@@ -14,9 +14,7 @@ struct SQDailyCheckInView: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xl) {
             ForEach(viewModel.rows) { row in
-                if let segmentedControlViewModel = row as? SQDailyCheckInRowSegmentedControlViewModel {
-                    SQDailyCheckInSegmentedControlRow(viewModel: segmentedControlViewModel)
-                }
+                SQDailyCheckInRow(viewModel: row)
             }
         }
     }

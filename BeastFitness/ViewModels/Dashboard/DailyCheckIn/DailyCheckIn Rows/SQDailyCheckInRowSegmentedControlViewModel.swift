@@ -53,7 +53,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
     convenience init<Segment: SQCheckInSegmentable & Hashable>(
         title: String,
         number: String,
-        scaleConfig: ScaleConfig? = nil,
+        scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [Segment],
         initialSelection: Segment? = nil
     ) {

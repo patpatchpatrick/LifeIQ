@@ -66,7 +66,7 @@ struct SQSegmentedControl<Label: View>: View  {
                         .sqBorder(
                             selection == segment ? activeColor : inactiveColor,
                             width: 1,
-                            cornerRadius: .SQSpace.s
+                            cornerRadius: .SQCornerRadius.s
                         )
                 }
                 .buttonStyle(.plain)

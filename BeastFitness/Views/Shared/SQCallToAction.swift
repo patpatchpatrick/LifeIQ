@@ -20,7 +20,7 @@ struct SQCallToAction: View {
                     .sqForegroundColor(.textPrimary)
                     .padding(.SQSpace.l)
                     .sqBackgroundColor(.accent(1))
-                    .cornerRadius(.SQSpace.m)
+                    .cornerRadius(.SQCornerRadius.m)
             })
     }
 }

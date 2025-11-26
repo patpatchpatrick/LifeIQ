@@ -16,7 +16,7 @@ struct SQDashboardWorkoutStatView: View {
             .padding(.bottom, .SQSpace.m)
             .padding(.horizontal, .SQSpace.m)
             .sqBackgroundColor(.backgroundTertiaryLight)
-            .cornerRadius(.SQSpace.s)
+            .cornerRadius(.SQCornerRadius.s)
     }
 }
 

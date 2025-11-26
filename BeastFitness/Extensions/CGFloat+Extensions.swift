@@ -25,3 +25,22 @@ extension CGFloat {
         static let xxl: CGFloat = 24
     }
 }
+
+extension CGFloat {
+    struct SQCornerRadius {
+        /// Extra-small spacing — **4pt**
+        static let s: CGFloat = 4
+        
+        /// Small spacing — **8pt**
+        static let m: CGFloat = 8
+        
+        /// Medium spacing — **12pt**
+        static let l: CGFloat = 12
+        
+        /// Large spacing — **16pt**
+        static let xl: CGFloat = 16
+        
+        /// Extra-large spacing — **24pt**
+        static let xxl: CGFloat = 24
+    }
+}

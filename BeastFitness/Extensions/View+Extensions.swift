@@ -103,3 +103,11 @@ struct SQNavBarMenu: ViewModifier {
             }
     }
 }
+
+#if canImport(UIKit)
+extension View {
+    func sqHideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+#endif
