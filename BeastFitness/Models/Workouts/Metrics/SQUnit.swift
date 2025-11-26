@@ -17,7 +17,7 @@ enum SQUnit: CaseIterable {
     static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
         guard let value else { return nil }
         guard fromUnit.unitType == toUnit.unitType else {
-            SQLogger.shared.log("Cannot convert units of different types: \(fromUnit), \(toUnit)", .error)
+            SQLogger.shared.log("Cannot convert units of different types: \(fromUnit), \(toUnit)", .error, context: .general)
             return nil
         }
         

@@ -27,6 +27,12 @@ struct SQDailyCheckInView: View {
         }
     }
     
+    var submitButton: some View {
+        SQButton(shouldHugContent: false, title: "Submit", isDisabled: !viewModel.canSubmit, action: { viewModel.submitTapped() })
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.bottom, .SQSpace.l)
+    }
+    
     @ViewBuilder
     var navStack: some View {
         NavigationStack {
@@ -35,10 +41,12 @@ struct SQDailyCheckInView: View {
                 .navigationTitle("Daily Check-In")
                 .navigationBarTitleDisplayMode(.inline)
                 .background(SQColor.backgroundSecondary.color)
+                .safeAreaInset(edge: .bottom) {
+                    submitButton
+                }
         }
     }
 
-    
     var body: some View {
         navStack
     }

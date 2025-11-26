@@ -112,7 +112,8 @@ final class SQHealthKitManager {
                 if let error = errorOrNil {
                     SQLogger.shared.log(
                         "HKAnchoredObjectQuery initialResultsHandler with identifier \(sampleType.identifier) error: \(error.localizedDescription)",
-                        .error
+                        .error,
+                        context: .dataProcessing
                     )
                     continuation.resume(throwing: error)
                     return
@@ -120,7 +121,8 @@ final class SQHealthKitManager {
 
                 SQLogger.shared.log(
                     "HKAnchoredObjectQuery initialResultsHandler has returned for \(sampleType.identifier)",
-                    .debug
+                    .debug,
+                    context: .dataProcessing
                 )
 
                 // Update anchor for sample type

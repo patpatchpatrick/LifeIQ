@@ -7,9 +7,17 @@
 
 import SwiftUI
 
+struct DailyCheckInStats {
+    let moodScore: Float /// Scale out of 10
+    let sleepHours: Float /// Hours per day
+}
+
 @Observable @MainActor
 final class SQDailyCheckInViewModel {
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
+    
+    private var moodRow: SQDailyCheckInRowSegmentedControlViewModel?
+    private var sleepRow: SQDailyCheckInTextEntryViewModel?
     
     init() {
         self.rows = buildRows()
@@ -18,7 +26,15 @@ final class SQDailyCheckInViewModel {
     func buildRows() -> [SQDailyCheckInRowViewModel] {
         var rows = [SQDailyCheckInRowViewModel]()
         
-        rows.append(SQDailyCheckInRowSegmentedControlViewModel(title: "Mood", segments: SQCheckInMoodScale.allCases))
+        let moodRow = SQDailyCheckInRowSegmentedControlViewModel(
+            title: "Mood",
+            segments: SQCheckInMoodScale.allCases,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(moodRow)
+        self.moodRow = moodRow
         
         let sleepEntryTextField = SQTextFieldViewModel(
             lineLimit: 1,
@@ -38,15 +54,55 @@ final class SQDailyCheckInViewModel {
                 
                 return nil
                 })
-        rows.append(SQDailyCheckInTextEntryViewModel(
+        
+        let sleepRow = SQDailyCheckInTextEntryViewModel(
             title: "Sleep",
-            textFieldViewModel: sleepEntryTextField))
+            textFieldViewModel: sleepEntryTextField,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(sleepRow)
+        self.sleepRow = sleepRow
         
         for (idx, row) in rows.enumerated() {
             row.number = String(idx + 1)
         }
         
         return rows
+    }
+    
+    private func handleRowFocused(_ row: SQDailyCheckInRowViewModel) {
+        
+        let rowIsTextField = row is SQDailyCheckInTextEntryViewModel
+        if !rowIsTextField {
+            hideKeyboard()
+        }
+        
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
+    // MARK: - Form Submission
+
+    var canSubmit: Bool {
+        var canSubmit = true
+        rows.forEach {
+            canSubmit = canSubmit && $0.isCompleted
+        }
+        return canSubmit
+    }
+    
+    func submitTapped() {
+        
+        guard canSubmit else {
+            SQLogger.shared.log("Should not be able to submit check-in if fields aren't valid", .error, context: .dailyCheckIn)
+            return
+        }
+        
+        print("PTD Handle Submission")
     }
 }
 

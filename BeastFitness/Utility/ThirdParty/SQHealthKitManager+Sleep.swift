@@ -20,7 +20,7 @@ extension SQHealthKitManager {
                    read: allQuantityTypes
                )
            } catch {
-               SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error)
+               SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error, context: .dataProcessing)
                throw error
            }
            
@@ -35,7 +35,7 @@ extension SQHealthKitManager {
            )
            
            guard let categoryType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
-               SQLogger.shared.log("Cannot get sleep category type", .error)
+               SQLogger.shared.log("Cannot get sleep category type", .error, context: .dataProcessing)
                throw SQStandardError.standard
            }
            
@@ -64,7 +64,8 @@ extension SQHealthKitManager {
                     if let error = errorOrNil {
                         SQLogger.shared.log(
                             "HKSampleQuery initialResultsHandler with identifier \(categoryType.identifier) error: \(error.localizedDescription)",
-                            .error
+                            .error,
+                            context: .dataProcessing
                         )
                         continuation.resume(throwing: error)
                         return
@@ -72,7 +73,8 @@ extension SQHealthKitManager {
                     
                     SQLogger.shared.log(
                         "HKSampleQuery initialResultsHandler has returned for \(categoryType.identifier)",
-                        .debug
+                        .debug,
+                        context: .dataProcessing
                     )
                     
                     guard let result = tmpResult else {
@@ -93,7 +95,8 @@ extension SQHealthKitManager {
                             "PTD HKSampleQuery initialResultsHandler has returned \(sleepTimeInHours) " +
                             "\nStartDate \(sleepSample.startDate)" +
                             "\nEndDate \(sleepSample.endDate)",
-                            .debug
+                            .debug,
+                            context: .dataProcessing
                         )
                     }
                     

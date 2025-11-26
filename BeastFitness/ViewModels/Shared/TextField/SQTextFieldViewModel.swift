@@ -146,6 +146,15 @@ final class SQTextFieldViewModel: ObservableObject {
             textFieldState = .focused
         }
     }
+    
+    var isContentValid: Bool {
+            if let rule = validationRule {
+                return rule.isValid(text)
+            } else {
+                // Fallback: if there's no error, treat it as valid
+                return errorHandler(text) == nil
+            }
+        }
 
     
     private func refreshUI(with state: TextFieldState) {

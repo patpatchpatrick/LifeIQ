@@ -22,6 +22,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
 
             // Only react when it actually changes
             if old?.id != newValue?.id {
+                self.onFocused?(self)
                 self.isCompleted = newValue != nil
             }
         }
@@ -39,13 +40,14 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         title: String,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [SQSegmentedControlSegment],
-        initialSelection: SQSegmentedControlSegment? = nil
+        initialSelection: SQSegmentedControlSegment? = nil,
+        onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         precondition(!segments.isEmpty, "segments must not be empty")
         self.segments = segments
         self._selectedSegment = initialSelection
         self.scaleConfig = scaleConfig
-        super.init(title: title)
+        super.init(title: title, onFocused: onFocused)
     }
 
     // Convenience init from your enum-based segments
@@ -53,7 +55,8 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         title: String,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [Segment],
-        initialSelection: Segment? = nil
+        initialSelection: Segment? = nil,
+        onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         let mappedSegments: [SQSegmentedControlSegment] = segments.map { segment in
             SQSegmentedControlSegment(
@@ -74,7 +77,8 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
             title: title,
             scaleConfig: scaleConfig,
             segments: mappedSegments,
-            initialSelection: initialMappedSelection
+            initialSelection: initialMappedSelection,
+            onFocused: onFocused
         )
     }
 }

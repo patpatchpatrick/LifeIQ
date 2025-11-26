@@ -15,10 +15,11 @@ final class SQDailyCheckInTextEntryViewModel: SQDailyCheckInRowViewModel {
     // Designated init using already-mapped segments
     init(
         title: String,
-        textFieldViewModel: SQTextFieldViewModel
+        textFieldViewModel: SQTextFieldViewModel,
+        onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         self.textFieldViewModel = textFieldViewModel
-        super.init(title: title)
+        super.init(title: title, onFocused: onFocused)
         textFieldViewModel.delegate = self
     }
 }
@@ -30,11 +31,11 @@ extension SQDailyCheckInTextEntryViewModel: SQTextFieldViewModelDelegate {
     }
     
     func sqTextFieldViewModelTextChanged(_ viewModel: SQTextFieldViewModel, text: String) {
-        /// no-op
+        isCompleted = viewModel.isContentValid
     }
     
     func sqTextFieldViewModelStateChanged(_ viewModel: SQTextFieldViewModel, state: SQTextFieldViewModel.TextFieldState) {
-        isCompleted = state.isValid
+        isCompleted = viewModel.isContentValid
     }
 }
 

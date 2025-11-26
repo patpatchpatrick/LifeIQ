@@ -15,12 +15,12 @@ class SQDeepLinkManager {
     
     func handleUriDeepLink(for url: URL) {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
-            SQLogger.shared.log("Invalid Deep Link Uri URL: \(url.absoluteString)", .error)
+            SQLogger.shared.log("Invalid Deep Link Uri URL: \(url.absoluteString)", .error, context: .deepLink)
             return
         }
         
         guard let action = components.host else {
-            SQLogger.shared.log("Unknown Deep Link Uri Host", .error)
+            SQLogger.shared.log("Unknown Deep Link Uri Host", .error, context: .deepLink)
             return
         }
         switch action {
@@ -35,7 +35,7 @@ class SQDeepLinkManager {
         guard let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
               let scope =  components.queryItems?.first(where: { $0.name == "scope" })?.value
         else {
-            SQLogger.shared.log("Missing Expected Strava Auth components: code, scope", .error)
+            SQLogger.shared.log("Missing Expected Strava Auth components: code, scope", .error, context: .deepLink)
             return
         }
         

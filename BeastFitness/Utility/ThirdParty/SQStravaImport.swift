@@ -27,7 +27,7 @@ final class SQStravaImport {
             try jsonData.write(to: filePath)
         }
         catch {
-            SQLogger.shared.log("Error Saving All Strava Activities: \(error.localizedDescription)", .error)
+            SQLogger.shared.log("Error Saving All Strava Activities: \(error.localizedDescription)", .error, context: .dataProcessing)
         }
     }
     
@@ -50,11 +50,11 @@ final class SQStravaImport {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             let stravaActivities = try JSONDecoder().decode([SQStravaWorkout].self, from: data)
-            SQLogger.shared.log("Getting Strava Activities for page: \(page) count: \(stravaActivities.count)", .debug)
+            SQLogger.shared.log("Getting Strava Activities for page: \(page) count: \(stravaActivities.count)", .debug, context: .dataProcessing)
             return stravaActivities
         }
         catch {
-            SQLogger.shared.log("Error decoding strava activities", .error)
+            SQLogger.shared.log("Error decoding strava activities", .error, context: .dataProcessing)
             return []
         }
     }
@@ -107,11 +107,11 @@ final class SQStravaImport {
               guard let data = data else { return }
               do {
                   let stravaAuthData = try JSONSerialization.jsonObject(with: data) as? [AnyHashable: Any] ?? [:]
-                  SQLogger.shared.log("Strava Auth Data: \(stravaAuthData)", .debug)
+                  SQLogger.shared.log("Strava Auth Data: \(stravaAuthData)", .debug, context: .dataProcessing)
                   // TODO: - PTD Handle Storing the access token and refresh token in User Defaults and handling them appropriately.  DO NOT LOG Auth DATA IN PROD APP
               } catch let error {
                   // TODO: - PTD Handle errors appropriately
-                  SQLogger.shared.log("Error requesting access token: \(error)", .error)
+                  SQLogger.shared.log("Error requesting access token: \(error)", .error, context: .dataProcessing)
               }
           }.resume()
     }

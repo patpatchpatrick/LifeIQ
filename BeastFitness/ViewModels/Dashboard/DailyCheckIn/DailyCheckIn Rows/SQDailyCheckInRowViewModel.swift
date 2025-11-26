@@ -12,8 +12,10 @@ class SQDailyCheckInRowViewModel: Identifiable {
     let title: String
     var number: String = ""
     var isCompleted = false
+    let onFocused: ((SQDailyCheckInRowViewModel) -> Void)?
     
-    init(title: String) {
+    init(title: String, onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil) {
         self.title = title
+        self.onFocused = onFocused
     }
 }

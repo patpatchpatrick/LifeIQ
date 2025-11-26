@@ -8,6 +8,13 @@
 import Foundation
 import os
 
+enum SQLogContext {
+    case general
+    case dailyCheckIn
+    case deepLink
+    case dataProcessing
+}
+
 final class SQLogger {
     static let shared = SQLogger()
     
@@ -38,7 +45,8 @@ final class SQLogger {
         Logger.general.error("\(message)")
     }
     
-    func log(_ message: String, _ level: Level, isPriority: Bool = false, shouldLog: Bool = true) {
+    // TODO: - PTD do something with this screen data
+    func log(_ message: String, _ level: Level, context: SQLogContext, isPriority: Bool = false, shouldLog: Bool = true) {
         guard shouldLog else { return }
         switch level {
         case .debug:

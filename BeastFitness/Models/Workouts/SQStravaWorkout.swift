@@ -26,7 +26,7 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
     
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         guard let unit = quantityTypeIdentifier.unit else {
-            SQLogger.shared.log("Missing unit for strava workout sum output", .error)
+            SQLogger.shared.log("Missing unit for strava workout sum output", .error, context: .dataProcessing)
             return nil }
         switch quantityTypeIdentifier {
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
@@ -42,7 +42,7 @@ struct SQStravaWorkout: Codable, SQWorkoutable {
     
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         guard let unit = quantityTypeIdentifier.unit else {
-            SQLogger.shared.log("Missing unit for strava workout avg output", .error)
+            SQLogger.shared.log("Missing unit for strava workout avg output", .error, context: .dataProcessing)
             return nil }
         switch quantityTypeIdentifier {
         case .heartRate:
