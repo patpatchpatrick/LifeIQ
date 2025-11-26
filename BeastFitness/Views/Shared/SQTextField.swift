@@ -20,44 +20,49 @@ struct SQTextField: View {
     }
     
     var textField: some View {
-        TextField(viewModel.placeholder, text: $viewModel.text, prompt: placeholder, axis: viewModel.axis)
-            .font(.sqFont(.body))
-            .focused($isTextFieldFocused)
-            .autocorrectionDisabled(!viewModel.autoCorrectionEnabled)
-            .textInputAutocapitalization(viewModel.textAutoCap)
-            .lineLimit(viewModel.lineLimit)
-            .padding(10)
-            .sqForegroundColor(viewModel.uiConfig.textColor)
-            .sqTintColor(viewModel.uiConfig.tintColor)
-            .keyboardType(viewModel.keyboardType)
-            .onChange(of: viewModel.shouldFocusTextFieldProgramatically) {
-                isTextFieldFocused = true
+        TextField(
+            viewModel.placeholder,
+            text: $viewModel.text,
+            prompt: placeholder,
+            axis: viewModel.axis
+        )
+        .font(.sqFont(.body))
+        .focused($isTextFieldFocused)
+        .autocorrectionDisabled(!viewModel.autoCorrectionEnabled)
+        .textInputAutocapitalization(viewModel.textAutoCap)
+        .lineLimit(viewModel.lineLimit)
+        .padding(10)
+        .sqForegroundColor(viewModel.uiConfig.textColor)
+        .sqTintColor(viewModel.uiConfig.tintColor)
+        .keyboardType(viewModel.keyboardType)
+        .onChange(of: viewModel.shouldFocusTextFieldProgramatically) {
+            isTextFieldFocused = true
+        }
+        .onChange(of: isTextFieldFocused) {
+            if isTextFieldFocused {
+                viewModel.focused()
+            } else {
+                viewModel.unfocus(dismissKeyboard: false)
             }
-            .onChange(of: isTextFieldFocused) {
-                if isTextFieldFocused {
-                    viewModel.focused()
-                }
-                else {
-                    viewModel.unfocus(dismissKeyboard: false)
-                }
-            }
-            .onChange(of: viewModel.hideKeyboard) {
-                sqHideKeyboard()
-            }
-            .onChange(of: viewModel.text) {
-                viewModel.textFieldTextChanged(viewModel.text)
-            }
+        }
+        .onChange(of: viewModel.hideKeyboard) {
+            sqHideKeyboard()
+        }
+        .onChange(of: viewModel.text) {
+            viewModel.textFieldTextChanged(viewModel.text)
+        }
     }
     
     var body: some View {
-            VStack(alignment: .leading, spacing: 4) {
-                if let errorText = viewModel.textFieldState.errorText {
-                    Text(errorText)
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(.colorErrorRed)
-                        .transition(.opacity)
-                }
-                
+        VStack(alignment: .leading, spacing: 4) {
+            if let errorText = viewModel.textFieldState.errorText {
+                Text(errorText)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.colorErrorRed)
+                    .transition(.opacity)
+            }
+            
+            ZStack(alignment: .bottomTrailing) {
                 textField
                     .sqBackgroundColor(viewModel.uiConfig.backgroundColor)
                     .cornerRadius(.SQCornerRadius.m)
@@ -66,10 +71,21 @@ struct SQTextField: View {
                         width: viewModel.borderColor == nil ? 0 : viewModel.uiConfig.borderWidth,
                         cornerRadius: viewModel.uiConfig.cornerRadius
                     )
+                
+                if let maxCharacterCountToShow = viewModel.maxCharacterCountToShow {
+                    Text(viewModel.characterCountText)
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textTertiary)
+                        .padding(.trailing, 8)
+                        .padding(.bottom, 6)
+                        .transition(.opacity)
+                }
             }
-            .animation(.easeInOut(duration: 0.2), value: viewModel.textFieldState)
         }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.textFieldState)
+    }
 }
+
 
 #Preview {
     

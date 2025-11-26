@@ -9,13 +9,23 @@ import SwiftUI
 
 enum SQDailyCheckInField {
     case mood
-    case sleep
-    // future: case energy, stress, notes, etc.
+    case mentalClarity
+    case energy
+    case soreness
+    case sleepHours
+    case sleepQuality
+    case notes
+    // future: case tags, photo
 }
 
 struct SQDailyCheckInStats {
-    let moodScore: Float? /// Scale out of 10
-    let sleepHours: Float? /// Hours per day
+    let moodScore: Float?              /// 0–10
+    let mentalClarityScore: Float?     /// 0–10
+    let energyScore: Float?            /// 0–10
+    let sorenessScore: Float?          /// 0–10 (e.g. 0 very sore → 10 fresh)
+    let sleepHours: Float?             /// Hours per day
+    let sleepQualityScore: Float?      /// 1–5
+    let notes: String?                 /// Free text
 }
 
 @Observable @MainActor
@@ -27,8 +37,9 @@ final class SQDailyCheckInViewModel {
     }
     
     func buildRows() -> [SQDailyCheckInRowViewModel] {
-        var rows = [SQDailyCheckInRowViewModel]()
+        var rows: [SQDailyCheckInRowViewModel] = []
         
+        // Mood / feeling
         let moodRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .mood,
             title: "Mood",
@@ -39,6 +50,40 @@ final class SQDailyCheckInViewModel {
         )
         rows.append(moodRow)
         
+        // Mental clarity
+        let clarityRow = SQDailyCheckInRowSegmentedControlViewModel(
+            field: .mentalClarity,
+            title: "Mental Clarity",
+            segments: SQCheckInClarityScale.allCases,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(clarityRow)
+        
+        // Energy
+        let energyRow = SQDailyCheckInRowSegmentedControlViewModel(
+            field: .energy,
+            title: "Energy Level",
+            segments: SQCheckInEnergyScale.allCases,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(energyRow)
+        
+        // Soreness / recovery
+        let sorenessRow = SQDailyCheckInRowSegmentedControlViewModel(
+            field: .soreness,
+            title: "Soreness / Recovery",
+            segments: SQCheckInSorenessScale.allCases,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(sorenessRow)
+        
+        // Sleep hours (numeric)
         let sleepEntryTextField = SQTextFieldViewModel(
             lineLimit: 1,
             placeholder: "8 hours",
@@ -47,27 +92,63 @@ final class SQDailyCheckInViewModel {
             validationRule: .decimal(maxDecimalPlaces: 1, range: 0...24),
             errorHandler: { text in
                 guard !text.isEmpty else { return nil }
-                guard let value = Double(text) else {
-                    return nil
-                }
+                guard let value = Double(text) else { return nil }
                 
                 if value > 24.0 {
                     return "Enter a value less than or equal to 24 hours"
                 }
                 
                 return nil
-                })
+            }
+        )
         
-        let sleepRow = SQDailyCheckInTextEntryViewModel(
-            field: .sleep,
-            title: "Sleep",
+        let sleepHoursRow = SQDailyCheckInTextEntryViewModel(
+            field: .sleepHours,
+            title: "Sleep (hours)",
             textFieldViewModel: sleepEntryTextField,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
         )
-        rows.append(sleepRow)
+        rows.append(sleepHoursRow)
         
+        // Sleep quality (1–5)
+        let sleepQualityRow = SQDailyCheckInRowSegmentedControlViewModel(
+            field: .sleepQuality,
+            title: "Sleep Quality",
+            segments: SQCheckInSleepQualityScale.allCases,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(sleepQualityRow)
+        
+        // Notes (free text)
+        let notesMaxCharacterCount: Int = 2500
+        let notesTextField = SQTextFieldViewModel(
+            uiConfig: .standard,
+            axis: .vertical,
+            lineLimit: 4,
+            placeholder: "Notes (optional: drank, stress, travel, etc.)",
+            keyboardType: .default,
+            textAutoCap: .sentences,
+            autoCorrectionEnabled: true,
+            textChangeFormatter: .maxLength(notesMaxCharacterCount),
+            validationRule: .length(max: notesMaxCharacterCount),
+            errorHandler: { _ in nil } // no validation errors here
+        )
+        
+        let notesRow = SQDailyCheckInTextEntryViewModel(
+            field: .notes,
+            title: "Notes",
+            textFieldViewModel: notesTextField,
+            onFocused: { [weak self] in
+                self?.handleRowFocused($0)
+            }
+        )
+        rows.append(notesRow)
+        
+        // Numbering
         for (idx, row) in rows.enumerated() {
             row.number = String(idx + 1)
         }
@@ -76,36 +157,44 @@ final class SQDailyCheckInViewModel {
     }
     
     private func handleRowFocused(_ row: SQDailyCheckInRowViewModel) {
-        
         let rowIsTextField = row is SQDailyCheckInTextEntryViewModel
         if !rowIsTextField {
             hideKeyboard()
         }
-        
     }
     
     private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
     
     // MARK: - Form Submission
 
     var canSubmit: Bool {
-        var canSubmit = true
-        rows.forEach {
-            canSubmit = canSubmit && $0.isCompleted
-        }
-        return canSubmit
+        rows.allSatisfy { $0.isCompleted }
     }
     
     func submitTapped() {
         guard canSubmit else {
-            SQLogger.shared.log("Should not be able to submit check-in if fields aren't valid", .error, context: .dailyCheckIn)
+            SQLogger.shared.log(
+                "Should not be able to submit check-in if fields aren't valid",
+                .error,
+                context: .dailyCheckIn
+            )
             return
         }
         
         var moodScore: Float? = nil
+        var mentalClarityScore: Float? = nil
+        var energyScore: Float? = nil
+        var sorenessScore: Float? = nil
         var sleepHours: Float? = nil
+        var sleepQualityScore: Float? = nil
+        var notes: String? = nil
         
         for row in rows {
             switch row.field {
@@ -118,23 +207,71 @@ final class SQDailyCheckInViewModel {
                     moodScore = mood.scoreOutOf10
                 }
                 
-            case .sleep:
+            case .mentalClarity:
+                if
+                    let segmentedRow = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let segment = segmentedRow.selectedSegment,
+                    let clarity = SQCheckInClarityScale.fromSegment(segment)
+                {
+                    mentalClarityScore = clarity.scoreOutOf10
+                }
+                
+            case .energy:
+                if
+                    let segmentedRow = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let segment = segmentedRow.selectedSegment,
+                    let energy = SQCheckInEnergyScale.fromSegment(segment)
+                {
+                    energyScore = energy.scoreOutOf10
+                }
+                
+            case .soreness:
+                if
+                    let segmentedRow = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let segment = segmentedRow.selectedSegment,
+                    let soreness = SQCheckInSorenessScale.fromSegment(segment)
+                {
+                    sorenessScore = soreness.scoreOutOf10
+                }
+                
+            case .sleepHours:
                 if let textRow = row as? SQDailyCheckInTextEntryViewModel {
                     let text = textRow.textFieldViewModel.text
                     sleepHours = Float(text)
+                }
+                
+            case .sleepQuality:
+                if
+                    let segmentedRow = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let segment = segmentedRow.selectedSegment,
+                    let quality = SQCheckInSleepQualityScale.fromSegment(segment)
+                {
+                    sleepQualityScore = quality.rating
+                }
+                
+            case .notes:
+                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    let text = textRow.textFieldViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    notes = text.isEmpty ? nil : text
                 }
             }
         }
         
         let stats = SQDailyCheckInStats(
             moodScore: moodScore,
-            sleepHours: sleepHours
+            mentalClarityScore: mentalClarityScore,
+            energyScore: energyScore,
+            sorenessScore: sorenessScore,
+            sleepHours: sleepHours,
+            sleepQualityScore: sleepQualityScore,
+            notes: notes
         )
         
-        print("PTD Handle Submission", stats.moodScore as Any, stats.sleepHours as Any)
-        // TODO: pass `stats` on to your data layer
+        print("PTD Handle Submission", stats)
+        // TODO: hand `stats` off to your data layer / HealthKit sync / analytics
     }
 }
+
 
 // MARK: - Check In Row Enums
 
@@ -143,17 +280,18 @@ protocol SQCheckInSegmentable: Hashable {
     var segmentId: String { get }
 }
 
+extension SQCheckInSegmentable where Self: CaseIterable {
+    static func fromSegment(_ segment: SQSegmentedControlSegment) -> Self? {
+        Self.allCases.first { $0.segmentId == segment.id }
+    }
+}
+
+// MARK: - Mood (1–8 emoji → 0–10)
+
 enum SQCheckInMoodScale: String, SQCheckInSegmentable, CaseIterable {
-    case one
-    case two
-    case three
-    case four
-    case five
-    case six
-    case seven
-    case eight
+    case one, two, three, four, five, six, seven, eight
     
-    var segmentId: String { self.rawValue }
+    var segmentId: String { rawValue }
     
     var segmentTitle: String {
         switch self {
@@ -168,16 +306,113 @@ enum SQCheckInMoodScale: String, SQCheckInSegmentable, CaseIterable {
         }
     }
     
-    /// Map 1–8 emoji scale to a 0–10 score
-        var scoreOutOf10: Float {
-            // 1 → 1/8 * 10, 8 → 8/8 * 10 = 10
-            let index = Self.allCases.firstIndex(of: self) ?? 0
-            return Float(index + 1) / Float(Self.allCases.count) * 10.0
-        }
-}
-
-extension SQCheckInSegmentable where Self: CaseIterable {
-    static func fromSegment(_ segment: SQSegmentedControlSegment) -> Self? {
-        Self.allCases.first { $0.segmentId == segment.id }
+    var scoreOutOf10: Float {
+        let index = Self.allCases.firstIndex(of: self) ?? 0
+        return Float(index + 1) / Float(Self.allCases.count) * 10.0
     }
 }
+
+// MARK: - Mental clarity (1–8, text labels)
+
+enum SQCheckInClarityScale: String, SQCheckInSegmentable, CaseIterable {
+    case one, two, three, four, five, six, seven, eight
+    
+    var segmentId: String { rawValue }
+    
+    var segmentTitle: String {
+            switch self {
+            case .one:   return "😵‍💫"   // Foggy
+            case .two:   return "😕"     // Distracted
+            case .three: return "😐"     // Meh
+            case .four:  return "🙂"     // Okay
+            case .five:  return "🧘"     // Focused
+            case .six:   return "🧠"     // Sharp
+            case .seven: return "⚡️"     // Dialed In
+            case .eight: return "🎯"     // Laser
+            }
+    }
+    
+    var scoreOutOf10: Float {
+        let index = Self.allCases.firstIndex(of: self) ?? 0
+        return Float(index + 1) / Float(Self.allCases.count) * 10.0
+    }
+}
+
+// MARK: - Energy (5-point: Exhausted → Energized)
+
+enum SQCheckInEnergyScale: String, SQCheckInSegmentable, CaseIterable {
+    case exhausted
+    case low
+    case ok
+    case good
+    case energized
+    
+    var segmentId: String { rawValue }
+    
+    var segmentTitle: String {
+            switch self {
+            case .exhausted: return "🥱"
+            case .low:       return "😴"
+            case .ok:        return "😐"
+            case .good:      return "🙂"
+            case .energized: return "⚡️"
+            }
+        }
+    
+    var scoreOutOf10: Float {
+        let index = Self.allCases.firstIndex(of: self) ?? 0
+        return Float(index + 1) / Float(Self.allCases.count) * 10.0
+    }
+}
+
+// MARK: - Soreness / recovery (5-point: Very sore → Fresh)
+
+enum SQCheckInSorenessScale: String, SQCheckInSegmentable, CaseIterable {
+    case verySore
+    case sore
+    case ok
+    case good
+    case fresh
+    
+    var segmentId: String { rawValue }
+    
+    var segmentTitle: String {
+            switch self {
+            case .verySore: return "🤕"
+            case .sore:     return "😣"
+            case .ok:       return "😐"
+            case .good:     return "🙂"
+            case .fresh:    return "💪"
+            }
+        }
+    
+    /// 0 = very sore, 10 = fresh
+    var scoreOutOf10: Float {
+        let index = Self.allCases.firstIndex(of: self) ?? 0
+        return Float(index + 1) / Float(Self.allCases.count) * 10.0
+    }
+}
+
+// MARK: - Sleep quality (1–5)
+
+enum SQCheckInSleepQualityScale: String, SQCheckInSegmentable, CaseIterable {
+    case one, two, three, four, five
+    
+    var segmentId: String { rawValue }
+    
+    var segmentTitle: String {
+            switch self {
+            case .one:   return "💤"
+            case .two:   return "😴"
+            case .three: return "😐"
+            case .four:  return "🙂"
+            case .five:  return "😌"
+            }
+        }
+    
+    var rating: Float {
+        let index = Self.allCases.firstIndex(of: self) ?? 0
+        return Float(index + 1) // 1…5
+    }
+}
+

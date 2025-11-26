@@ -25,6 +25,7 @@ final class SQTextFieldViewModel: ObservableObject {
      let keyboardType: UIKeyboardType
      let textAutoCap: TextInputAutocapitalization?
      let autoCorrectionEnabled: Bool
+    let maxCharacterCountToShow: Int?
      
      let uiConfig: UIConfig
      
@@ -61,7 +62,7 @@ final class SQTextFieldViewModel: ObservableObject {
           autoCorrectionEnabled: Bool = false,
           textChangeFormatter: TextChangeFormatter = .default,
           validationRule: SQTextValidationRule? = nil,
-          errorHandler: @escaping (String) -> String? = { _ in nil }
+          errorHandler: @escaping (String) -> String? = { _ in nil },
       ) {
           self.uiConfig = uiConfig
           self.axis = axis
@@ -75,6 +76,7 @@ final class SQTextFieldViewModel: ObservableObject {
           self.validationRule = validationRule
           self.textFieldState = .unfocused
           self.borderColor = uiConfig.unfocusedBorderColor
+          self.maxCharacterCountToShow = textChangeFormatter.maxLengthLimit
       }
     
     func focusProgramatically() {
@@ -155,6 +157,14 @@ final class SQTextFieldViewModel: ObservableObject {
                 return errorHandler(text) == nil
             }
         }
+    
+    var characterCountText: String {
+           if let max = maxCharacterCountToShow {
+               return "\(text.count)/\(max)"
+           } else {
+               return "\(text.count)"
+           }
+       }
 
     
     private func refreshUI(with state: TextFieldState) {
