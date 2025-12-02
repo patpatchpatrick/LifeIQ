@@ -18,7 +18,8 @@ enum SQDailyCheckInField {
     // future: case tags, photo
 }
 
-struct SQDailyCheckInStats {
+struct SQDailyCheckInStats: Codable {
+    let date: Date
     let moodScore: Float?              /// 0–10
     let mentalClarityScore: Float?     /// 0–10
     let energyScore: Float?            /// 0–10
@@ -30,9 +31,11 @@ struct SQDailyCheckInStats {
 
 @Observable @MainActor
 final class SQDailyCheckInViewModel {
+    private let dailyCheckInService: SQDailyCheckInServicing.Type
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     
-    init() {
+    init(dailyCheckInService: SQDailyCheckInServicing.Type = SQDailyCheckInService.self) {
+        self.dailyCheckInService = dailyCheckInService
         self.rows = buildRows()
     }
     
@@ -258,6 +261,7 @@ final class SQDailyCheckInViewModel {
         }
         
         let stats = SQDailyCheckInStats(
+            date: .now,
             moodScore: moodScore,
             mentalClarityScore: mentalClarityScore,
             energyScore: energyScore,
@@ -267,7 +271,19 @@ final class SQDailyCheckInViewModel {
             notes: notes
         )
         
+        SQLogger.shared.log("Submitting daily stats: \(stats)", .debug, context: .dailyCheckIn)
+        
         print("PTD Handle Submission", stats)
+        
+        Task {
+            do {
+                try await dailyCheckInService.saveDailyCheckInStats(stats)
+            } catch {
+                
+                SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
+            }
+        }
+        
         // TODO: hand `stats` off to your data layer / HealthKit sync / analytics
     }
 }

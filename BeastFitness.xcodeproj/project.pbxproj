@@ -68,6 +68,16 @@
 		F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */; };
 		F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */; };
 		F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */; };
+		F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */; };
+		F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2602EDE54C900D3E679 /* FirebaseAnalytics */; };
+		F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2622EDE54C900D3E679 /* FirebaseAuth */; };
+		F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2642EDE54C900D3E679 /* FirebaseFirestore */; };
+		F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3562EDE58B800D3E679 /* SQRouter.swift */; };
+		F6ABC35D2EDE594C00D3E679 /* SQNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */; };
+		F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */; };
+		F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3612EDE654500D3E679 /* SQUser.swift */; };
+		F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */; };
+		F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */; };
 		F6D232ED2CBDC73A00B84594 /* SQWorkoutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
@@ -173,6 +183,13 @@
 		F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButtonViewModel.swift; sourceTree = "<group>"; };
 		F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenuViewModel.swift; sourceTree = "<group>"; };
 		F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTimeRange.swift; sourceTree = "<group>"; };
+		F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F6ABC3562EDE58B800D3E679 /* SQRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRouter.swift; sourceTree = "<group>"; };
+		F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNetworkService.swift; sourceTree = "<group>"; };
+		F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInService.swift; sourceTree = "<group>"; };
+		F6ABC3612EDE654500D3E679 /* SQUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUser.swift; sourceTree = "<group>"; };
+		F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckinRoute.swift; sourceTree = "<group>"; };
+		F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutConfig.swift; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
@@ -203,6 +220,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */,
+				F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */,
+				F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -365,9 +385,11 @@
 		F657E2A72CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXGroup;
 			children = (
+				F6ABC3552EDE58AE00D3E679 /* Networking */,
 				F602DA262EC40EB100404878 /* StateManagement */,
 				F6A848A42CB608C400B09AD5 /* CoreFiles */,
 				F6A848A32CB6066100B09AD5 /* Info.plist */,
+				F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */,
 				F6F94E0D2CB3146F00C2B90B /* UI */,
 				F6F94E012CAB9AA100C2B90B /* Extensions */,
 				F6F94E002CAB9A7B00C2B90B /* Views */,
@@ -425,6 +447,7 @@
 		F6A848942CB4ABCF00B09AD5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F6ABC3602EDE654200D3E679 /* User */,
 				F602DA492EC6A5EF00404878 /* Workouts */,
 				F6A848B12CBD8CCE00B09AD5 /* SQError.swift */,
 				F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */,
@@ -494,6 +517,41 @@
 			path = DropDownMenu;
 			sourceTree = "<group>";
 		};
+		F6ABC3552EDE58AE00D3E679 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC35B2EDE592A00D3E679 /* Services */,
+				F6ABC3582EDE58FF00D3E679 /* Routers */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		F6ABC3582EDE58FF00D3E679 /* Routers */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */,
+				F6ABC3562EDE58B800D3E679 /* SQRouter.swift */,
+			);
+			path = Routers;
+			sourceTree = "<group>";
+		};
+		F6ABC35B2EDE592A00D3E679 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */,
+				F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		F6ABC3602EDE654200D3E679 /* User */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC3612EDE654500D3E679 /* SQUser.swift */,
+			);
+			path = User;
+			sourceTree = "<group>";
+		};
 		F6E90B4A2ED55193003441B5 /* DailyCheckIn */ = {
 			isa = PBXGroup;
 			children = (
@@ -560,6 +618,7 @@
 		F6F94E012CAB9AA100C2B90B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */,
 				F639B7E12ED799E600199C69 /* String+Extensions.swift */,
 				F602DA4E2EC6A7E800404878 /* AttributedString+Extensions.swift */,
 				F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */,
@@ -686,6 +745,9 @@
 				Base,
 			);
 			mainGroup = F657E29C2CA50D7C00E72926;
+			packageReferences = (
+				F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = F657E2A62CA50D7C00E72926 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -704,6 +766,7 @@
 			files = (
 				F657E2B02CA50D7E00E72926 /* Preview Assets.xcassets in Resources */,
 				F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */,
+				F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -730,6 +793,7 @@
 			files = (
 				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */,
+				F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */,
 				F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */,
 				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
 				F639B7E42ED79A6200199C69 /* SQDailyCheckInRow.swift in Sources */,
@@ -743,6 +807,7 @@
 				F639B7E22ED799E800199C69 /* String+Extensions.swift in Sources */,
 				F6D232ED2CBDC73A00B84594 /* SQWorkoutConfig.swift in Sources */,
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
+				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F6F94E062CAB9D3400C2B90B /* SQRootActivitySection.swift in Sources */,
@@ -751,6 +816,7 @@
 				F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */,
 				F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */,
 				F602DA682EC78A1D00404878 /* SQUnit.swift in Sources */,
+				F6ABC35D2EDE594C00D3E679 /* SQNetworkService.swift in Sources */,
 				F639B8F92ED7A07D00199C69 /* SQTextFieldViewModel+Formatters.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */,
@@ -787,7 +853,9 @@
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */,
 				F602DA662EC789FC00404878 /* SQQuantityType.swift in Sources */,
+				F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */,
 				F602DA4B2EC6A5FC00404878 /* SQWorkoutable.swift in Sources */,
+				F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
@@ -799,6 +867,7 @@
 				F602DA282EC40EB800404878 /* AppState.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,
+				F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */,
 				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,
 				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
 				F639B7E02ED798E300199C69 /* SQTextFieldViewModel.swift in Sources */,
@@ -1144,6 +1213,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F6ABC2602EDE54C900D3E679 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		F6ABC2622EDE54C900D3E679 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		F6ABC2642EDE54C900D3E679 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F657E29D2CA50D7C00E72926 /* Project object */;
 }
