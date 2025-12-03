@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct BeastFitnessApp: App {
@@ -15,5 +16,8 @@ struct BeastFitnessApp: App {
         WindowGroup {
             SQRootTabView(appState: .init())
         }
+        .modelContainer(for: [
+            SQDailyCheckInEntity.self
+        ])
     }
 }

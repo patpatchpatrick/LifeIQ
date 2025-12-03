@@ -23,7 +23,7 @@ extension SQDailyCheckInRoute: SQFirestoreRoute {
     func reference(in db: Firestore) -> SQFirestoreReference {
         switch self {
         case .saveDailyCheckIn(let stats, let user):
-                .documentWrite(db.collection("users").document(user.id).collection("daily-check-in-summaries").document(stats.date.firebaseKey))
+                .documentWrite(db.collection("users").document(user.id).collection("daily-check-in-summaries").document(stats.date.firebaseDailyDateKey))
         }
     }
 }

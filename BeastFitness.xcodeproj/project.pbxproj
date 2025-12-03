@@ -78,6 +78,8 @@
 		F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3612EDE654500D3E679 /* SQUser.swift */; };
 		F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */; };
 		F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */; };
+		F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */; };
+		F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */; };
 		F6D232ED2CBDC73A00B84594 /* SQWorkoutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
@@ -190,6 +192,8 @@
 		F6ABC3612EDE654500D3E679 /* SQUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUser.swift; sourceTree = "<group>"; };
 		F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckinRoute.swift; sourceTree = "<group>"; };
 		F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInStats.swift; sourceTree = "<group>"; };
+		F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInEntity.swift; sourceTree = "<group>"; };
 		F6D232EC2CBDC73A00B84594 /* SQWorkoutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutConfig.swift; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
@@ -447,6 +451,7 @@
 		F6A848942CB4ABCF00B09AD5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F6ABC3F52EDFBED000D3E679 /* DailyCheckIn */,
 				F6ABC3602EDE654200D3E679 /* User */,
 				F602DA492EC6A5EF00404878 /* Workouts */,
 				F6A848B12CBD8CCE00B09AD5 /* SQError.swift */,
@@ -550,6 +555,15 @@
 				F6ABC3612EDE654500D3E679 /* SQUser.swift */,
 			);
 			path = User;
+			sourceTree = "<group>";
+		};
+		F6ABC3F52EDFBED000D3E679 /* DailyCheckIn */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */,
+				F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */,
+			);
+			path = DailyCheckIn;
 			sourceTree = "<group>";
 		};
 		F6E90B4A2ED55193003441B5 /* DailyCheckIn */ = {
@@ -793,6 +807,7 @@
 			files = (
 				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F657E2AB2CA50D7C00E72926 /* SQRootView.swift in Sources */,
+				F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */,
 				F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */,
 				F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */,
 				F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */,
@@ -872,6 +887,7 @@
 				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
 				F639B7E02ED798E300199C69 /* SQTextFieldViewModel.swift in Sources */,
 				F602DA2F2EC40FA100404878 /* SQDashboardViewModel.swift in Sources */,
+				F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

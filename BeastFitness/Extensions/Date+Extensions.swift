@@ -9,7 +9,7 @@ import Foundation
 
 extension Date {
 
-    var firebaseKey: String {
+    var firebaseDailyDateKey: String {
         SQDateFormatters.shared.string(from: self, style: .firebaseDayKey)
     }
 }

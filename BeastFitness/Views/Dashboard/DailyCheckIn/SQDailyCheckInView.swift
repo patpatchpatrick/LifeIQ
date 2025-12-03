@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQDailyCheckInView: View {
     @Bindable var viewModel: SQDailyCheckInViewModel
+    @Environment(\.modelContext) private var modelContext
     
     @ViewBuilder
     var mainStack: some View {
@@ -28,7 +29,7 @@ struct SQDailyCheckInView: View {
     }
     
     var submitButton: some View {
-        SQButton(shouldHugContent: false, title: "Submit", isDisabled: !viewModel.canSubmit, action: { viewModel.submitTapped() })
+        SQButton(shouldHugContent: false, title: "Submit", isDisabled: !viewModel.canSubmit, action: { viewModel.submitTapped(modelContext: modelContext) })
             .padding(.horizontal, .SQSpace.xl)
             .padding(.bottom, .SQSpace.l)
     }

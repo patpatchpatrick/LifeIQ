@@ -6,28 +6,7 @@
 //
 
 import SwiftUI
-
-enum SQDailyCheckInField {
-    case mood
-    case mentalClarity
-    case energy
-    case soreness
-    case sleepHours
-    case sleepQuality
-    case notes
-    // future: case tags, photo
-}
-
-struct SQDailyCheckInStats: Codable {
-    let date: Date
-    let moodScore: Float?              /// 0–10
-    let mentalClarityScore: Float?     /// 0–10
-    let energyScore: Float?            /// 0–10
-    let sorenessScore: Float?          /// 0–10 (e.g. 0 very sore → 10 fresh)
-    let sleepHours: Float?             /// Hours per day
-    let sleepQualityScore: Float?      /// 1–5
-    let notes: String?                 /// Free text
-}
+import SwiftData
 
 @Observable @MainActor
 final class SQDailyCheckInViewModel {
@@ -181,7 +160,7 @@ final class SQDailyCheckInViewModel {
         rows.allSatisfy { $0.isCompleted }
     }
     
-    func submitTapped() {
+    func submitTapped(modelContext: ModelContext) {
         guard canSubmit else {
             SQLogger.shared.log(
                 "Should not be able to submit check-in if fields aren't valid",
@@ -273,7 +252,15 @@ final class SQDailyCheckInViewModel {
         
         SQLogger.shared.log("Submitting daily stats: \(stats)", .debug, context: .dailyCheckIn)
         
-        print("PTD Handle Submission", stats)
+        do {
+            try SQDailyCheckInEntity.upsert(stats: stats, in: modelContext)
+        } catch {
+            SQLogger.shared.log(
+                "Saving daily stats to SwiftData failed: \(error)",
+                .error,
+                context: .dailyCheckIn
+            )
+        }
         
         Task {
             do {
