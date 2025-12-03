@@ -43,7 +43,7 @@ final class SQDashboardViewModel {
                         title: "Complete daily check-in",
                         onTap: { [weak self] in
                             guard let self else { return }
-                            self.dailyCheckInViewModel = SQDailyCheckInViewModel()
+                            self.dailyCheckInViewModel = SQDailyCheckInViewModel(onDismiss: { [weak self] in self?.state.toggleDailyCheckInSheetVisibility(false) })
                             self.state.toggleDailyCheckInSheetVisibility(true)
                         })),
                     timeRange: .today,

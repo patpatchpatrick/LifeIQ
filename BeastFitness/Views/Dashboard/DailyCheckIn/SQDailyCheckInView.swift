@@ -16,6 +16,8 @@ struct SQDailyCheckInView: View {
         VStack(alignment: .leading, spacing: .SQSpace.xl) {
             ForEach(viewModel.rows) { row in
                 SQDailyCheckInRow(viewModel: row)
+                    .disabled(row.isDisabled)
+                    .opacity(row.isDisabled ? 0.5 : 1)
             }
         }
     }
@@ -29,7 +31,12 @@ struct SQDailyCheckInView: View {
     }
     
     var submitButton: some View {
-        SQButton(shouldHugContent: false, title: "Submit", isDisabled: !viewModel.canSubmit, action: { viewModel.submitTapped(modelContext: modelContext) })
+        SQButton(
+            shouldHugContent: false,
+            title: "Submit",
+            isDisabled: !viewModel.canSubmit,
+            isLoading: viewModel.isLoading,
+            action: { Task { await viewModel.submitTapped(modelContext: modelContext) } })
             .padding(.horizontal, .SQSpace.xl)
             .padding(.bottom, .SQSpace.l)
     }

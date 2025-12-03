@@ -12,9 +12,12 @@ import SwiftData
 final class SQDailyCheckInViewModel {
     private let dailyCheckInService: SQDailyCheckInServicing.Type
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
+    let onDismiss: () -> Void
+    private(set) var isLoading: Bool = false
     
-    init(dailyCheckInService: SQDailyCheckInServicing.Type = SQDailyCheckInService.self) {
+    init(dailyCheckInService: SQDailyCheckInServicing.Type = SQDailyCheckInService.self, onDismiss: @escaping () -> Void) {
         self.dailyCheckInService = dailyCheckInService
+        self.onDismiss = onDismiss
         self.rows = buildRows()
     }
     
@@ -160,7 +163,15 @@ final class SQDailyCheckInViewModel {
         rows.allSatisfy { $0.isCompleted }
     }
     
-    func submitTapped(modelContext: ModelContext) {
+    func submitTapped(modelContext: ModelContext) async {
+        isLoading = true
+        rows.forEach { $0.isDisabled = true }
+        
+        defer {
+            isLoading = false
+            rows.forEach { $0.isDisabled = false }
+        }
+        
         guard canSubmit else {
             SQLogger.shared.log(
                 "Should not be able to submit check-in if fields aren't valid",
@@ -260,18 +271,17 @@ final class SQDailyCheckInViewModel {
                 .error,
                 context: .dailyCheckIn
             )
+            // TODO: PTD Error - throw check in error here and don't let the user continue to save to Firebase
         }
         
-        Task {
-            do {
-                try await dailyCheckInService.saveDailyCheckInStats(stats)
-            } catch {
-                
-                SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
-            }
+        do {
+            try await dailyCheckInService.saveDailyCheckInStats(stats)
+        } catch {
+            SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
+            // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
         }
         
-        // TODO: hand `stats` off to your data layer / HealthKit sync / analytics
+        onDismiss()
     }
 }
 
