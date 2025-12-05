@@ -91,8 +91,9 @@ final class SQDateFormatters {
         case .firebaseDayKey:
             baseFormatter.dateStyle = .none
             baseFormatter.timeStyle = .none
-            baseFormatter.locale = Locale(identifier: "en_US_POSIX")  // 🔥 important
-            baseFormatter.timeZone = TimeZone(identifier: "UTC")
+            baseFormatter.locale = .current
+            baseFormatter.calendar = .current
+            baseFormatter.timeZone = .current
             baseFormatter.dateFormat = "yyyy-MM-dd"
         }
     }

@@ -72,7 +72,7 @@ final class SQDashboardController: SQDashboardInterface {
         
         if let dailyWorkoutSummaryRow = currentViewModels.first(where: { $0.rowId == .dailySummary }) as? SQDashboardWorkoutSummaryRowViewModel {
             let config = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
-            dailyWorkoutSummaryRow.refreshConfig(config: config)
+            dailyWorkoutSummaryRow.refresh(config: config)
         }
     }
     
@@ -81,12 +81,12 @@ final class SQDashboardController: SQDashboardInterface {
         state.displayDailyCheckInSheet(with: dailyCheckInStats)
     }
     
-    private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId,  for context: ModelContext) async -> SQDashboardWorkoutSummaryRowConfig {
+    private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId,  for context: ModelContext) async -> SQDashboardWorkoutSummaryRowConfig{
         
-        let totalsSectionConfig: SQDashboardWorkoutSummaryRowConfig.TotalsSectionConfig? = await {
+        let dailyCheckInViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = await {
             guard workoutSummaryRowId == .daily else { return nil }
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
-            let dailyCheckInStatsSummaryConfig: SQDashboardWorkoutSummaryRowConfig.DailyCheckInStatsSummaryConfig? = {
+            let dailyCheckInStatsSummaryConfig: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel.DailyCheckInStatsSummaryConfig? = {
                 guard let dailyCheckInStats else { return nil }
                 return .init(
                     title: "Daily check-in",
@@ -107,6 +107,6 @@ final class SQDashboardController: SQDashboardInterface {
                 dailyCheckInSummaryConfig: dailyCheckInStatsSummaryConfig)
         }()
         
-        return .init(totalsSectionConfig: totalsSectionConfig ?? .init(), timeRange: workoutSummaryRowId.timeRange, priorTimeRange: workoutSummaryRowId.priorTimeRange)
+        return .init(timeRange: workoutSummaryRowId.timeRange, priorTimeRange: workoutSummaryRowId.priorTimeRange, dailyCheckInSummarySectionViewModel: dailyCheckInViewModel)
     }
 }

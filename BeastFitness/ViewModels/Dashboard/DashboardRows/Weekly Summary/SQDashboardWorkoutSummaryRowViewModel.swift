@@ -9,8 +9,9 @@ import SwiftUI
 
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
-    private(set) var sectionTitle: String = ""
-    private(set) var totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel? = nil
+    let sectionTitle: String
+    private(set) var dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil
+    let totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel
     let workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel
     
     let workouts: [SQWorkoutable]
@@ -19,14 +20,15 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
+        self.sectionTitle = config.timeRange.title
         self.workoutsSection = .init(workouts: workouts)
+        self.totalsSection = .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
         super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
-        refreshConfig(config: config)
+        refresh(config: config)
     }
     
-    func refreshConfig(config: SQDashboardWorkoutSummaryRowConfig) {
-        self.sectionTitle = config.timeRange.title
-        self.totalsSection = .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
+    func refresh(config: SQDashboardWorkoutSummaryRowConfig) {
+        self.dailyCheckInSummarySectionViewModel = config.dailyCheckInSummarySectionViewModel
     }
 }
 
@@ -72,39 +74,15 @@ extension SQDashboardWorkoutSummaryRowViewModel {
 }
 
 struct SQDashboardWorkoutSummaryRowConfig {
-    let totalsSectionConfig: TotalsSectionConfig
     let timeRange: SQTimeRange
     let priorTimeRange: SQTimeRange
+    let dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel?
     
-    init(totalsSectionConfig: TotalsSectionConfig = TotalsSectionConfig(), timeRange: SQTimeRange, priorTimeRange: SQTimeRange) {
-        self.totalsSectionConfig = totalsSectionConfig
+    init(timeRange: SQTimeRange, priorTimeRange: SQTimeRange, dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil) {
         self.timeRange = timeRange
         self.priorTimeRange = priorTimeRange
+        self.dailyCheckInSummarySectionViewModel = dailyCheckInSummarySectionViewModel
     }
     
-    struct TotalsSectionConfig {
-        let callToAction: SQCallToActionViewModel?
-        let dailyCheckInSummaryConfig: DailyCheckInStatsSummaryConfig?
-        
-        init(callToAction: SQCallToActionViewModel? = nil, dailyCheckInSummaryConfig: DailyCheckInStatsSummaryConfig? = nil) {
-            self.callToAction = callToAction
-            self.dailyCheckInSummaryConfig = dailyCheckInSummaryConfig
-        }
-    }
-    
-    struct DailyCheckInStatsSummaryConfig {
-        let title: String
-        let subtitle: String
-        let icon: SQImageSymbol?
-        let onTap: (() -> Void)?
-        
-        init(title: String, subtitle: String, icon: SQImageSymbol? = nil, onTap: (() -> Void)? = nil) {
-            self.title = title
-            self.subtitle = subtitle
-            self.icon = icon
-            self.onTap = onTap
-        }
-    }
-    
-    static let mock = SQDashboardWorkoutSummaryRowConfig(totalsSectionConfig: .init(callToAction: .init(title: "Complete daily check-in", onTap: nil)), timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)
+    static let mock = SQDashboardWorkoutSummaryRowConfig(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)
 }

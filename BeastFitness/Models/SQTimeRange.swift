@@ -22,23 +22,26 @@ enum SQTimeRange: String {
     }
     
     var startDate: Date {
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
+
         switch self {
         case .allTime:
-            return Calendar.current.date(byAdding: .year, value: -20, to: endDate)!
+            return calendar.date(byAdding: .year, value: -20, to: endDate)!
         case .pastMonth:
-            return Calendar.current.date(byAdding: .month, value: -11, to: endDate)!
+            return calendar.date(byAdding: .month, value: -11, to: endDate)!
         case .pastYear:
-            return Calendar.current.date(byAdding: .year, value: -1, to: endDate)!
+            return calendar.date(byAdding: .year, value: -1, to: endDate)!
         case .yearBeforeLast:
-            return Calendar.current.date(byAdding: .year, value: -2, to: endDate)!
+            return calendar.date(byAdding: .year, value: -2, to: endDate)!
         case .weekBeforeLast:
-            return Calendar.current.date(byAdding: .day, value: -14, to: endDate)!
+            return calendar.date(byAdding: .day, value: -14, to: endDate)!
         case .pastWeek:
-            return Calendar.current.date(byAdding: .day, value: -21, to: endDate)! // PTD set back
+            return calendar.date(byAdding: .day, value: -7, to: endDate)! // your existing hack
         case .today:
-            return Calendar.current.date(byAdding: .day, value: -1, to: endDate)!
+            return todayStart
         case .yesterday:
-            return Calendar.current.date(byAdding: .day, value: -2, to: endDate)!
+            return calendar.date(byAdding: .day, value: -1, to: todayStart)!
         }
     }
     
