@@ -12,6 +12,8 @@ import Combine
 @MainActor
 @Observable
 final class AppState {
+    static let shared = AppState()
+    
     let hub = EventHub()
 
     let navigationState: NavigationState

@@ -14,7 +14,7 @@ struct BeastFitnessApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SQRootTabView(appState: .init())
+            SQRootTabView(appState: .shared)
         }
         .modelContainer(for: [
             SQDailyCheckInEntity.self

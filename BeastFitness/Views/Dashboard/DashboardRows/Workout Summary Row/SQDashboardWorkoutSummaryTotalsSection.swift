@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SQDashboardWorkoutSummaryTotalsSection: View {
-    let viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
+    @Bindable var viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
     
     var totalValuesAndTrendsStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
@@ -18,6 +18,27 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
                     Text(valueAndTrend.trend)
                 }
             }
+        }
+    }
+    
+    @ViewBuilder
+    func checkInStatsSummaryView(for checkInStatsSummaryConfig:  SQDashboardWorkoutSummaryRowConfig.DailyCheckInStatsSummaryConfig) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            HStack(alignment: .center, spacing: .SQSpace.m) {
+                Text("\(checkInStatsSummaryConfig.title)")
+                    .sqFont(.bodyBold)
+                    .foregroundColor(SQColor.textPrimary.color)
+                
+                if let icon = checkInStatsSummaryConfig.icon {
+                    SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(.accent(1), font: .body)))
+                        .frame(width: 20)
+                }
+            }
+            
+            Text(checkInStatsSummaryConfig.subtitle)
+               .sqFont(.body)
+               .foregroundColor(SQColor.textSecondary.color)
+               .multilineTextAlignment(.leading)
         }
     }
     
@@ -31,6 +52,22 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
                 SQCallToAction(viewModel: callToActionViewModel)
                     .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             }
+            
+            if let checkInStatsSummaryConfig = viewModel.checkInStatsSummaryConfig {
+                if let onTap = checkInStatsSummaryConfig.onTap {
+                    Button(
+                        action: {
+                            print("PTD On Tap")
+                            onTap()
+                        },
+                        label: { checkInStatsSummaryView(for: checkInStatsSummaryConfig) })
+                        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+                } else {
+                    checkInStatsSummaryView(for: checkInStatsSummaryConfig)
+                        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+                }
+            }
+
             
             totalValuesAndTrendsStack
         }

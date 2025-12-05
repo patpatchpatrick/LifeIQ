@@ -12,8 +12,10 @@ struct SQDashboardWorkoutSummaryRow: View {
     
     var cardBody: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            SQDashboardWorkoutSummaryTotalsSection(viewModel: viewModel.totalsSection)
-                .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
+            if let totalsSection = viewModel.totalsSection {
+                SQDashboardWorkoutSummaryTotalsSection(viewModel: totalsSection)
+                    .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
+            }
             
             SQDashboardWorkoutSummaryWorkoutsSection(viewModel: viewModel.workoutsSection)
         }
@@ -31,6 +33,6 @@ struct SQDashboardWorkoutSummaryRow: View {
 }
 
 #Preview {
-    SQDashboardWorkoutSummaryRow(viewModel: .init(config: .mock, workouts: .mock, priorWorkouts: .mock))
+    SQDashboardWorkoutSummaryRow(viewModel: .init(rowId: .daily, config: .mock, workouts: .mock, priorWorkouts: .mock))
         .preferredColorScheme(.dark)
 }

@@ -12,11 +12,20 @@ enum SQDashboardRowType {
     case weekSummary
 }
 
+enum SQDashboardRowIdentifier {
+    case motiviationalQuote
+    case dailySummary
+    case weeklySummary
+    case yearlySummary
+}
+
 class SQDashboardRowViewModel: Identifiable {
     let id = UUID()
+    let rowId: SQDashboardRowIdentifier
     let rowType: SQDashboardRowType
     
-    init(rowType: SQDashboardRowType) {
+    init(rowId: SQDashboardRowIdentifier, rowType: SQDashboardRowType) {
+        self.rowId = rowId
         self.rowType = rowType
     }
 }

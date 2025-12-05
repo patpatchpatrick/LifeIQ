@@ -9,15 +9,65 @@ import SwiftUI
 
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
-    let sectionTitle: String
-    let totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel
+    private(set) var sectionTitle: String = ""
+    private(set) var totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel? = nil
     let workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel
     
-    init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+    let workouts: [SQWorkoutable]
+    let priorWorkouts: [SQWorkoutable]
+    
+    init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+        self.workouts = workouts
+        self.priorWorkouts = priorWorkouts
+        self.workoutsSection = .init(workouts: workouts)
+        super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
+        refreshConfig(config: config)
+    }
+    
+    func refreshConfig(config: SQDashboardWorkoutSummaryRowConfig) {
         self.sectionTitle = config.timeRange.title
         self.totalsSection = .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
-        self.workoutsSection = .init(workouts: workouts)
-        super.init(rowType: .weekSummary)
+    }
+}
+
+extension SQDashboardWorkoutSummaryRowViewModel {
+    enum WorkoutSummaryRowId {
+        case daily
+        case weekly
+        case yearly
+        
+        var dashboardRowId: SQDashboardRowIdentifier {
+            switch self {
+            case .daily:
+                    .dailySummary
+            case .weekly:
+                    .weeklySummary
+            case .yearly:
+                    .yearlySummary
+            }
+        }
+        
+        var timeRange: SQTimeRange {
+            switch self {
+            case .daily:
+                    .today
+            case .weekly:
+                    .pastWeek
+            case .yearly:
+                    .pastYear
+            }
+        }
+        
+        var priorTimeRange: SQTimeRange {
+            switch self {
+            case .daily:
+                    .yesterday
+            case .weekly:
+                    .weekBeforeLast
+            case .yearly:
+                    .yearBeforeLast
+            }
+        }
     }
 }
 
@@ -34,9 +84,25 @@ struct SQDashboardWorkoutSummaryRowConfig {
     
     struct TotalsSectionConfig {
         let callToAction: SQCallToActionViewModel?
+        let dailyCheckInSummaryConfig: DailyCheckInStatsSummaryConfig?
         
-        init(callToAction: SQCallToActionViewModel? = nil) {
+        init(callToAction: SQCallToActionViewModel? = nil, dailyCheckInSummaryConfig: DailyCheckInStatsSummaryConfig? = nil) {
             self.callToAction = callToAction
+            self.dailyCheckInSummaryConfig = dailyCheckInSummaryConfig
+        }
+    }
+    
+    struct DailyCheckInStatsSummaryConfig {
+        let title: String
+        let subtitle: String
+        let icon: SQImageSymbol?
+        let onTap: (() -> Void)?
+        
+        init(title: String, subtitle: String, icon: SQImageSymbol? = nil, onTap: (() -> Void)? = nil) {
+            self.title = title
+            self.subtitle = subtitle
+            self.icon = icon
+            self.onTap = onTap
         }
     }
     

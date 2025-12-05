@@ -59,6 +59,21 @@ final class SQDailyCheckInEntity {
 }
 
 extension SQDailyCheckInEntity {
+    
+    static func get(for date: Date, context: ModelContext) throws -> SQDailyCheckInStats? {
+        let dateKey = SQDailyCheckInStats.getUniqueDateKey(for: date)
+
+        let descriptor = FetchDescriptor<SQDailyCheckInEntity>(
+            predicate: #Predicate { $0.dateKey == dateKey }
+        )
+
+        if let existing = try context.fetch(descriptor).first {
+            return existing.toStats()
+        }
+        
+        return nil
+    }
+    
     static func upsert(
         stats: SQDailyCheckInStats,
         in context: ModelContext

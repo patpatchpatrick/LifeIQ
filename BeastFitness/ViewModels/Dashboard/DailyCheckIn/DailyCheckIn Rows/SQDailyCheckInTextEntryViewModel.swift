@@ -23,6 +23,13 @@ final class SQDailyCheckInTextEntryViewModel: SQDailyCheckInRowViewModel {
         super.init(field: field, title: title, onFocused: onFocused)
         textFieldViewModel.delegate = self
     }
+    
+    func initialize(with text: String?) {
+        guard let text else { return }
+        /// Call the textChanged function to trigger the validation handler when the textField is initialized
+        textFieldViewModel.text = text
+        sqTextFieldViewModelTextChanged(textFieldViewModel, text: text)
+    }
 }
 
 extension SQDailyCheckInTextEntryViewModel: SQTextFieldViewModelDelegate {

@@ -11,8 +11,8 @@ import SwiftUI
 final class SQDashboardTextRowViewModel: SQDashboardRowViewModel {
     let text: String
     
-    init(text: String) {
+    init(rowId: SQDashboardRowIdentifier, text: String) {
         self.text = text
-        super.init(rowType: .text)
+        super.init(rowId: rowId, rowType: .text)
     }
 }

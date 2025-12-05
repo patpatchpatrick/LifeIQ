@@ -9,26 +9,30 @@ import SwiftUI
 import SwiftData
 
 @Observable @MainActor
-final class SQDailyCheckInViewModel {
-    private let dailyCheckInService: SQDailyCheckInServicing.Type
+final class SQDailyCheckInViewModel: Identifiable {
+    let id = UUID()
+    let dashboardInterface: SQDashboardInterface = SQDashboardController.default
+    private let dailyCheckInManager: SQDailyCheckInManaging
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     let onDismiss: () -> Void
     private(set) var isLoading: Bool = false
     
-    init(dailyCheckInService: SQDailyCheckInServicing.Type = SQDailyCheckInService.self, onDismiss: @escaping () -> Void) {
-        self.dailyCheckInService = dailyCheckInService
+    init(stats: SQDailyCheckInStats?, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), onDismiss: @escaping () -> Void) {
+        self.dailyCheckInManager = dailyCheckInManager
         self.onDismiss = onDismiss
-        self.rows = buildRows()
+        self.rows = buildRows(for: stats)
     }
     
-    func buildRows() -> [SQDailyCheckInRowViewModel] {
+    func buildRows(for stats: SQDailyCheckInStats?) -> [SQDailyCheckInRowViewModel] {
         var rows: [SQDailyCheckInRowViewModel] = []
         
         // Mood / feeling
+        let initialMood = Self.moodSegment(for: stats)
         let moodRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .mood,
             title: "Mood",
             segments: SQCheckInMoodScale.allCases,
+            initialSelection: initialMood,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
@@ -36,10 +40,12 @@ final class SQDailyCheckInViewModel {
         rows.append(moodRow)
         
         // Mental clarity
+        let initialClarity = Self.claritySegment(for: stats)
         let clarityRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .mentalClarity,
             title: "Mental Clarity",
             segments: SQCheckInClarityScale.allCases,
+            initialSelection: initialClarity,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
@@ -47,10 +53,12 @@ final class SQDailyCheckInViewModel {
         rows.append(clarityRow)
         
         // Energy
+        let initialEnergy = Self.energySegment(for: stats)
         let energyRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .energy,
             title: "Energy Level",
             segments: SQCheckInEnergyScale.allCases,
+            initialSelection: initialEnergy,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
@@ -58,10 +66,12 @@ final class SQDailyCheckInViewModel {
         rows.append(energyRow)
         
         // Soreness / recovery
+        let initialSoreness = Self.sorenessSegment(for: stats)
         let sorenessRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .soreness,
             title: "Soreness / Recovery",
             segments: SQCheckInSorenessScale.allCases,
+            initialSelection: initialSoreness,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
@@ -95,13 +105,18 @@ final class SQDailyCheckInViewModel {
                 self?.handleRowFocused($0)
             }
         )
+        if let sleepHours = stats?.sleepHours {
+            sleepHoursRow.initialize(with: String(format: "%.1f", sleepHours))
+        }
         rows.append(sleepHoursRow)
         
         // Sleep quality (1–5)
+        let initialSleepQuality = Self.sleepQualitySegment(for: stats)
         let sleepQualityRow = SQDailyCheckInRowSegmentedControlViewModel(
             field: .sleepQuality,
             title: "Sleep Quality",
             segments: SQCheckInSleepQualityScale.allCases,
+            initialSelection: initialSleepQuality,
             onFocused: { [weak self] in
                 self?.handleRowFocused($0)
             }
@@ -120,7 +135,7 @@ final class SQDailyCheckInViewModel {
             autoCorrectionEnabled: true,
             textChangeFormatter: .maxLength(notesMaxCharacterCount),
             validationRule: .length(max: notesMaxCharacterCount),
-            errorHandler: { _ in nil } // no validation errors here
+            errorHandler: { _ in nil }
         )
         
         let notesRow = SQDailyCheckInTextEntryViewModel(
@@ -131,6 +146,7 @@ final class SQDailyCheckInViewModel {
                 self?.handleRowFocused($0)
             }
         )
+        notesRow.initialize(with: stats?.notes)
         rows.append(notesRow)
         
         // Numbering
@@ -264,22 +280,13 @@ final class SQDailyCheckInViewModel {
         SQLogger.shared.log("Submitting daily stats: \(stats)", .debug, context: .dailyCheckIn)
         
         do {
-            try SQDailyCheckInEntity.upsert(stats: stats, in: modelContext)
+            try await dailyCheckInManager.saveDailyCheckInStats(stats: stats, to: modelContext)
         } catch {
-            SQLogger.shared.log(
-                "Saving daily stats to SwiftData failed: \(error)",
-                .error,
-                context: .dailyCheckIn
-            )
-            // TODO: PTD Error - throw check in error here and don't let the user continue to save to Firebase
+            print("PTD Surface this error", error)
         }
         
-        do {
-            try await dailyCheckInService.saveDailyCheckInStats(stats)
-        } catch {
-            SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
-            // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
-        }
+        /// Refresh the dashboard data
+        await dashboardInterface.refreshUI(for: modelContext)
         
         onDismiss()
     }
@@ -429,3 +436,62 @@ enum SQCheckInSleepQualityScale: String, SQCheckInSegmentable, CaseIterable {
     }
 }
 
+// MARK: - Initial value helpers
+
+private extension SQDailyCheckInViewModel {
+    
+    /// Returns the mood segment whose `scoreOutOf10` is closest to the stored mood score.
+    ///
+    /// Concept:
+    /// - Each mood enum case has a numeric value (`scoreOutOf10`).
+    /// - The saved `moodScore` (0–10) may not match an exact segment.
+    /// - We compute the absolute difference between the saved score and every segment.
+    /// - `min(by:)` picks the segment with the smallest difference → the closest match.
+    static func moodSegment(for stats: SQDailyCheckInStats?) -> SQCheckInMoodScale? {
+        guard let score = stats?.moodScore else { return nil }
+        return SQCheckInMoodScale.allCases.min {
+            abs($0.scoreOutOf10 - score) < abs($1.scoreOutOf10 - score)
+        }
+    }
+    
+    /// Same logic as `moodSegment`: finds the clarity segment whose `scoreOutOf10`
+    /// is numerically closest to the saved mental clarity score.
+    static func claritySegment(for stats: SQDailyCheckInStats?) -> SQCheckInClarityScale? {
+        guard let score = stats?.mentalClarityScore else { return nil }
+        return SQCheckInClarityScale.allCases.min {
+            abs($0.scoreOutOf10 - score) < abs($1.scoreOutOf10 - score)
+        }
+    }
+    
+    /// Finds the energy segment whose `scoreOutOf10` is closest to the stored energy score.
+    ///
+    /// This allows partial scores (e.g., 6.7/10) to map naturally back
+    /// to the nearest discrete UI segment.
+    static func energySegment(for stats: SQDailyCheckInStats?) -> SQCheckInEnergyScale? {
+        guard let score = stats?.energyScore else { return nil }
+        return SQCheckInEnergyScale.allCases.min {
+            abs($0.scoreOutOf10 - score) < abs($1.scoreOutOf10 - score)
+        }
+    }
+    
+    /// Finds the soreness segment whose `scoreOutOf10` is closest to the stored soreness score.
+    ///
+    /// The same nearest-value comparison is used to restore the user’s previous selection.
+    static func sorenessSegment(for stats: SQDailyCheckInStats?) -> SQCheckInSorenessScale? {
+        guard let score = stats?.sorenessScore else { return nil }
+        return SQCheckInSorenessScale.allCases.min {
+            abs($0.scoreOutOf10 - score) < abs($1.scoreOutOf10 - score)
+        }
+    }
+    
+    /// Maps the saved sleep quality (1–5) back to the nearest enum case.
+    ///
+    /// `SQCheckInSleepQualityScale` uses an integer `rating` rather than a 0–10 scale,
+    /// but the same distance-minimization logic applies.
+    static func sleepQualitySegment(for stats: SQDailyCheckInStats?) -> SQCheckInSleepQualityScale? {
+        guard let rating = stats?.sleepQualityScore else { return nil }
+        return SQCheckInSleepQualityScale.allCases.min {
+            abs(Float($0.rating) - rating) < abs(Float($1.rating) - rating)
+        }
+    }
+}

@@ -49,6 +49,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         self._selectedSegment = initialSelection
         self.scaleConfig = scaleConfig
         super.init(field: field, title: title, onFocused: onFocused)
+        self.isCompleted = initialSelection != nil
     }
 
     // Convenience init from your enum-based segments
@@ -85,4 +86,3 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         )
     }
 }
-

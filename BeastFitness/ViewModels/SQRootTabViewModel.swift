@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 @MainActor
 final class SQRootTabViewModel {
-    private(set) var dashboardViewModel: SQDashboardViewModel
+    private(set) var dashboardViewModel: SQDashboardController
     var dashboardNavigationPath = NavigationPath()
     
     // MARK: - Init

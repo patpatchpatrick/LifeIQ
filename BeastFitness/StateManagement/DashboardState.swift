@@ -12,10 +12,14 @@ import Combine
 protocol DashboardStating: AnyObject {
     /// State
     var isDailyCheckInSheetVisible: Bool { get }
+    var rowViewModels: [SQDashboardRowViewModel] { get }
+    var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     
     /// Actions
-    func changeTab(to tab: NavigationState.Tab)
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
+    func changeTab(to tab: NavigationState.Tab)
+    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?)
+    func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel])
 }
 
 @MainActor
@@ -23,6 +27,9 @@ protocol DashboardStating: AnyObject {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
     var isDailyCheckInSheetVisible: Bool = false
+    
+    private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
+    private(set) var rowViewModels: [SQDashboardRowViewModel] = []
     
     init(hub: EventHub) {
         self.hub = hub
@@ -32,7 +39,21 @@ protocol DashboardStating: AnyObject {
         hub.events.send(.changeTab(tab))
     }
     
+    func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel]) {
+        self.rowViewModels = rowViewModels
+    }
+    
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {
         isDailyCheckInSheetVisible = isVisible
+    }
+    
+    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?) {
+        dailyCheckInViewModel = .init(
+            stats: stats,
+            onDismiss: { [weak self] in
+                self?.toggleDailyCheckInSheetVisibility(false)
+            })
+        
+        toggleDailyCheckInSheetVisibility(true)
     }
 }
