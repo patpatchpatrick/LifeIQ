@@ -49,7 +49,9 @@ struct SQDashboardWorkoutGroupView: View {
     }
     
     var body: some View {
-        mainHStack
+        Button(
+            action: viewModel.displayWorkoutsSheet,
+            label: { mainHStack })
     }
 }
 

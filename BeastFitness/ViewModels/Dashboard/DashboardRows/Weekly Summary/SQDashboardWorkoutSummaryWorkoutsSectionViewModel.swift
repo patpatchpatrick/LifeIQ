@@ -26,12 +26,15 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
 
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
+    let dashboardState = AppState.shared.dashboardState
+    let workouts: SQWorkouts
     let id = UUID()
     let title: String
     let workoutImageSymbol: SQImageSymbol
     let workoutStatsString: AttributedString
     
     init(activityType: HKWorkoutActivityType, workouts: SQWorkouts) {
+        self.workouts = workouts
         title = "\(workouts.workouts.count) \(activityType.name)"
         workoutImageSymbol = workouts.workouts.compactMap { $0.activityType.imageSymbol }.first ?? .questionmarkCircle
         
@@ -63,6 +66,10 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
         }
         
         self.workoutStatsString = combined
+    }
+    
+    func displayWorkoutsSheet() {
+        dashboardState.displayWorkoutsListSheet(with: workouts.workouts)
     }
     
     nonisolated func hash(into hasher: inout Hasher) {

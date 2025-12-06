@@ -11,25 +11,38 @@ import Combine
 @MainActor
 protocol DashboardStating: AnyObject {
     /// State
-    var isDailyCheckInSheetVisible: Bool { get }
+    ///
     var rowViewModels: [SQDashboardRowViewModel] { get }
+    
+    var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     
+    var isWorkoutListSheetVisible: Bool { get }
+    var workoutsListController: SQWorkoutsListController? { get }
+    
     /// Actions
-    func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func changeTab(to tab: NavigationState.Tab)
+    
+    func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?)
+    
     func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel])
+    
+    func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
+    func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 }
 
 @MainActor
 @Observable final class DashboardState: DashboardStating {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
-    var isDailyCheckInSheetVisible: Bool = false
+    private(set) var isDailyCheckInSheetVisible: Bool = false
+    private(set) var isWorkoutListSheetVisible: Bool = false
     
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var rowViewModels: [SQDashboardRowViewModel] = []
+    
+    private(set) var workoutsListController: SQWorkoutsListController?
     
     init(hub: EventHub) {
         self.hub = hub
@@ -55,5 +68,14 @@ protocol DashboardStating: AnyObject {
             })
         
         toggleDailyCheckInSheetVisibility(true)
+    }
+    
+    func toggleWorkoutListSheetVisibility(_ isVisible: Bool) {
+        isWorkoutListSheetVisible = isVisible
+    }
+    
+    func displayWorkoutsListSheet(with workouts: [any SQWorkoutSessionable]) {
+        workoutsListController = .init(state: AppState.shared.workoutsListState, workouts: workouts)
+        toggleWorkoutListSheetVisibility(true)
     }
 }

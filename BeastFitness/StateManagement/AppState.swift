@@ -19,10 +19,12 @@ final class AppState {
     let navigationState: NavigationState
     let dashboardState: DashboardState
     let workoutScreenState: WorkoutsLandingState
+    let workoutsListState: WorkoutsListState
 
     init() {
         self.navigationState = .init(hub: hub)
         self.dashboardState = .init(hub: hub)
         self.workoutScreenState = .init(hub: hub)
+        self.workoutsListState = .init(hub: hub)
     }
 }
