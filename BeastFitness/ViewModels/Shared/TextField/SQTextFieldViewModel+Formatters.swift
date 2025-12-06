@@ -12,6 +12,7 @@ extension SQTextFieldViewModel {
         case numeric
         case decimal(maxDecimalPlaces: Int)
         case maxLength(Int)
+        case integer
         
         var formatter: (String, String) -> String {
             switch self {
@@ -31,6 +32,9 @@ extension SQTextFieldViewModel {
                 
             case .maxLength(let limit):
                 return maxLengthFormatter(limit: limit)
+                
+            case .integer:
+                    return integerFormatter
             }
         }
     }
@@ -72,6 +76,12 @@ extension SQTextFieldViewModel.TextChangeFormatter {
             guard newText.count > limit else { return newText }
             let idx = newText.index(newText.startIndex, offsetBy: limit)
             return String(newText[..<idx])
+        }
+    }
+    
+    fileprivate var integerFormatter: (String, String) -> String {
+        { _, newText in
+            newText.filter { $0.isWholeNumber }
         }
     }
     

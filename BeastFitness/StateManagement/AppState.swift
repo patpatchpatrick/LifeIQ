@@ -18,7 +18,7 @@ final class AppState {
 
     let navigationState: NavigationState
     let dashboardState: DashboardState
-    let workoutScreenState: WorkoutsScreenState
+    let workoutScreenState: WorkoutsLandingState
 
     init() {
         self.navigationState = .init(hub: hub)

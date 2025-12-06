@@ -14,7 +14,7 @@ final class SQRootTabViewModel {
     private(set) var dashboardViewModel: SQDashboardController
     var dashboardNavigationPath = NavigationPath()
     
-    private(set) var workoutsScreenController: SQWorkoutsScreenController
+    private(set) var workoutsScreenController: SQWorkoutsLandingController
     var workoutsNavigationPath = NavigationPath()
     
     // MARK: - Init

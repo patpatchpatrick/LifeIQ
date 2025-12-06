@@ -1,5 +1,5 @@
 //
-//  WorkoutsScreenState.swift
+//  WorkoutsLandingState.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 12/5/25.
@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 @MainActor
-protocol WorkoutsScreenStating: AnyObject {
+protocol WorkoutsLandingStating: AnyObject {
     /// State
     var isWorkoutSessionSheetVisible: Bool { get }
     var workoutSessionViewModel: SQWorkoutSessionViewModel? { get }
@@ -21,7 +21,7 @@ protocol WorkoutsScreenStating: AnyObject {
 }
 
 @MainActor
-@Observable final class WorkoutsScreenState: WorkoutsScreenStating {
+@Observable final class WorkoutsLandingState: WorkoutsLandingStating {
     private let hub: EventHub
     var isWorkoutSessionSheetVisible: Bool = false
     private(set) var workoutSessionViewModel: SQWorkoutSessionViewModel?

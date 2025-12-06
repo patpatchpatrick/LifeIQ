@@ -1,5 +1,5 @@
 //
-//  SQWorkoutsScreenView.swift
+//  SQWorkoutsLandingView.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 12/5/25.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct SQWorkoutsScreenView: View {
-    @Bindable var controller: SQWorkoutsScreenController
+struct SQWorkoutsLandingView: View {
+    @Bindable var controller: SQWorkoutsLandingController
     
     var startWorkoutButton: some View {
         Button("Start Workout", action: { Task { await controller.displayWorkoutSessionSheet() } })

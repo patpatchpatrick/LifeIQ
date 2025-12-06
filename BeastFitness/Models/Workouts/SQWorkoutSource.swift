@@ -63,12 +63,15 @@ extension SQWorkoutSourcable {
 enum SQWorkoutSource {
     case hkWorkout(SQHKWorkout)
     case stravaWorkout(SQStravaWorkout)
+    case manual(SQManualWorkout)
     
     var sourcableData: SQWorkoutSourcable {
         switch self {
         case .hkWorkout(let workout):
             return workout
         case .stravaWorkout(let workout):
+            return workout
+        case .manual(let workout):
             return workout
         }
     }

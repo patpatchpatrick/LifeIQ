@@ -9,6 +9,7 @@ enum SQTextValidationRule {
     case none
     case decimal(maxDecimalPlaces: Int, range: ClosedRange<Double>)
     case length(max: Int, includingWhitespace: Bool = true)
+    case integer(range: ClosedRange<Int> = 0...999_999)
     case custom((String) -> Bool)
 }
 
@@ -45,6 +46,14 @@ extension SQTextValidationRule {
             
         case .custom(let block):
             return block(text)
+            
+        case .integer(let range):
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return false }
+            guard trimmed.allSatisfy({ $0.isWholeNumber }) else { return false }
+            guard let value = Int(trimmed) else { return false }
+            return range.contains(value)
+
         }
     }
     

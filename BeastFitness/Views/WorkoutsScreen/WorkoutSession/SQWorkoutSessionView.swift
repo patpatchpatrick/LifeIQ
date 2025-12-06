@@ -7,11 +7,53 @@
 
 import SwiftUI
 
+import SwiftUI
 
 struct SQWorkoutSessionView: View {
     @Bindable var viewModel: SQWorkoutSessionViewModel
     
+    @ViewBuilder
+    var mainStack: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xl) {
+            if viewModel.exercises.isEmpty {
+                Text("Add an exercise to get started.")
+                    .sqFont(.body)
+                    .sqForegroundColor(.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, .SQSpace.xl)
+            } else {
+                ForEach(viewModel.exercises) { exerciseVM in
+                    SQWorkoutSessionExerciseRow(viewModel: exerciseVM)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var mainScroll: some View {
+        ScrollView {
+            mainStack
+                .padding(.SQSpace.xl)
+        }
+    }
+    
     var body: some View {
-        Text("Workout Session")
+        NavigationStack {
+            mainScroll
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .navigationTitle("Workout")
+                .navigationBarTitleDisplayMode(.inline)
+                .background(SQColor.backgroundSecondary.color)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            viewModel.addExercise()
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+        }
     }
 }
+

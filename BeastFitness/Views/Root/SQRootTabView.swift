@@ -32,7 +32,7 @@ struct SQRootTabView: View {
                 .tag(NavigationState.Tab.home)
             
                 NavigationStack(path: $viewModel.workoutsNavigationPath) {
-                    SQWorkoutsScreenView(controller: viewModel.workoutsScreenController)
+                    SQWorkoutsLandingView(controller: viewModel.workoutsScreenController)
                 }
                 .tabItem {
                     Image(systemName: "plus")

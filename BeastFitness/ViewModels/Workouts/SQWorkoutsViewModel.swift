@@ -8,18 +8,18 @@
 import SwiftUI
 
 @MainActor
-protocol SQWorkoutsScreenInterface {
+protocol SQWorkoutsLandingInterface {
     func displayWorkoutSessionSheet() async
 }
 
 @Observable @MainActor
-final class SQWorkoutsScreenController: SQWorkoutsScreenInterface {
+final class SQWorkoutsLandingController: SQWorkoutsLandingInterface {
     
     @MainActor
-    static var `default` = SQWorkoutsScreenController(state: AppState.shared.workoutScreenState)
-    let state: WorkoutsScreenStating
+    static var `default` = SQWorkoutsLandingController(state: AppState.shared.workoutScreenState)
+    let state: WorkoutsLandingStating
     
-    init(state: WorkoutsScreenStating) {
+    init(state: WorkoutsLandingStating) {
         self.state = state
     }
     
