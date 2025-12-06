@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SQDashboardView: View {
-    @Bindable var viewModel: SQDashboardController
+    @Bindable var controller: SQDashboardController
     @Environment(\.modelContext) private var modelContext
     static let uiConfig = UIConfig()
     
@@ -19,7 +19,7 @@ struct SQDashboardView: View {
                 Spacer()
                     .frame(height: .SQSpace.l)
                 
-                ForEach(viewModel.state.rowViewModels) { rowViewModel in
+                ForEach(controller.state.rowViewModels) { rowViewModel in
                     switch rowViewModel.rowType {
                     case .text:
                         if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
@@ -70,12 +70,12 @@ struct SQDashboardView: View {
                                }
             .background(SQColor.background.color.ignoresSafeArea())
             .task {
-                await viewModel.loadUI(for: modelContext)
+                await controller.loadUI(for: modelContext)
             }
             .sheet(isPresented: .init(
-                get: { viewModel.state.isDailyCheckInSheetVisible },
-                set: { isVisible in viewModel.state.toggleDailyCheckInSheetVisibility(isVisible) })) {
-                    if let dailyCheckInViewModel = viewModel.state.dailyCheckInViewModel {
+                get: { controller.state.isDailyCheckInSheetVisible },
+                set: { isVisible in controller.state.toggleDailyCheckInSheetVisibility(isVisible) })) {
+                    if let dailyCheckInViewModel = controller.state.dailyCheckInViewModel {
                         SQDailyCheckInView(viewModel: dailyCheckInViewModel)
                     }
                 }

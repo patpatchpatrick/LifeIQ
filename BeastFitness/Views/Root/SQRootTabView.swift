@@ -23,7 +23,7 @@ struct SQRootTabView: View {
             set: { navigationState.changeTab(to: $0) })) {
                 
                 NavigationStack(path: $viewModel.dashboardNavigationPath) {
-                    SQDashboardView(viewModel: viewModel.dashboardViewModel)
+                    SQDashboardView(controller: viewModel.dashboardViewModel)
                 }
                 .tabItem {
                     Image(systemName: "house")
@@ -31,14 +31,14 @@ struct SQRootTabView: View {
                 }
                 .tag(NavigationState.Tab.home)
             
-//                NavigationStack {
-//                    SQSimulatorView(viewModel: viewModel.simulatorViewModel)
-//                }
-//                .tabItem {
-//                    Image(systemName: "gamecontroller")
-//                    Text("Old Root")
-//                }
-//                .tag(NavigationState.Tab.simulator)
+                NavigationStack(path: $viewModel.workoutsNavigationPath) {
+                    SQWorkoutsScreenView(controller: viewModel.workoutsScreenController)
+                }
+                .tabItem {
+                    Image(systemName: "plus")
+                    Text("Workouts")
+                }
+                .tag(NavigationState.Tab.workouts)
         }
     }
     

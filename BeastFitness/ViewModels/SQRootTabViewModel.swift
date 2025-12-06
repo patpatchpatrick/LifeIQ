@@ -14,9 +14,13 @@ final class SQRootTabViewModel {
     private(set) var dashboardViewModel: SQDashboardController
     var dashboardNavigationPath = NavigationPath()
     
+    private(set) var workoutsScreenController: SQWorkoutsScreenController
+    var workoutsNavigationPath = NavigationPath()
+    
     // MARK: - Init
     
     init(appState: AppState) {
         self.dashboardViewModel = .init(state: appState.dashboardState)
+        self.workoutsScreenController = .init(state: appState.workoutScreenState)
     }
 }
