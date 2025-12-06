@@ -14,12 +14,12 @@ class SQRootLeaderboardSectionViewModel: NSObject {
     let title: String
     var rows: [SQRootLeaderboardSectionRowViewModel]
     
-    let workouts: [SQWorkout]?
+    let workouts: [SQWorkoutSession]?
     
     var activityTypeDropDownMenuViewModel:SQDropDownMenuViewModel?
     var selectedActivityType: HKWorkoutActivityType?
     
-    init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkout]?) {
+    init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkoutSession]?) {
         self.isPlaceholder = isPlaceholder
         self.title = title
         
@@ -75,14 +75,14 @@ class SQRootLeaderboardSectionViewModel: NSObject {
 class SQRootLeaderboardSectionRowViewModel: Identifiable, Hashable, Equatable {
 
     let id = UUID()
-    let workout: SQWorkout
+    let workout: SQWorkoutSession
     
     let rankString: String
     let title: String
     let subtitle: String
     let outputString: String
     
-    init(workout: SQWorkout, rank: Int) {
+    init(workout: SQWorkoutSession, rank: Int) {
         self.workout = workout
         
         self.rankString = "\(rank)"

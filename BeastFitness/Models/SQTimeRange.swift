@@ -10,7 +10,7 @@ import Foundation
 enum SQTimeRange: String {
     case today = "Today"
     case yesterday = "Yesterday"
-    case pastWeek = "Past Week"
+    case pastWeek = "Past 7 Days"
     case weekBeforeLast = "Week Before Last"
     case pastMonth = "Past Month"
     case pastYear = "Past Year"

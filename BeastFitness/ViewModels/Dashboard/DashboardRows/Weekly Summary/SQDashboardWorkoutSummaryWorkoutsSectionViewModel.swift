@@ -13,7 +13,7 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
     let sectionTitle: String
     let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
     
-    init(workouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkoutSessionable]) {
         self.sectionTitle = "Workouts"
         
         var workoutGroupViewModels = [SQDashboardWorkoutGroupViewModel]()

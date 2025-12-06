@@ -25,7 +25,7 @@ final class SQHealthKitManager {
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
     
-    func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [SQWorkoutable] {
+    func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [SQWorkoutSessionable] {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQStandardError.standard
         }
@@ -99,7 +99,7 @@ final class SQHealthKitManager {
         predicate: NSPredicate?,
         anchor: HKQueryAnchor?,
         limit: Int
-    ) async throws -> [SQWorkoutable] {
+    ) async throws -> [SQWorkoutSessionable] {
         try await withCheckedThrowingContinuation { continuation in
             let query = HKAnchoredObjectQuery(
                 type: sampleType,
@@ -129,8 +129,8 @@ final class SQHealthKitManager {
                 self.updateAnchor(newAnchor, from: query)
 
                 let hkWorkouts = samplesOrNil?.compactMap { $0 as? HKWorkout } ?? []
-                let sqWorkouts: [SQWorkout] = hkWorkouts.map {
-                    .init(.hkWorkout(.init(hkWorkout: $0)))
+                let sqWorkouts: [SQWorkoutSessionable] = hkWorkouts.map {
+                    SQWorkoutSource.hkWorkout(.init(hkWorkout: $0)).buildWorkout()
                 }
 
                 continuation.resume(returning: sqWorkouts)
@@ -155,13 +155,13 @@ extension SQHealthKitManager {
     /// time ranges either:
     ///  - start & end within a small tolerance, OR
     ///  - overlap by a large percentage of their duration.
-    static func filterDuplicateWorkouts(_ workouts: [SQWorkoutable]) -> [SQWorkoutable] {
+    static func filterDuplicateWorkouts(_ workouts: [SQWorkoutSessionable]) -> [SQWorkoutSessionable] {
         // Sort by start date so comparisons are stable and somewhat chronological.
         let sorted = workouts.sorted { lhs, rhs in
             (lhs.startDate ?? .distantPast) < (rhs.startDate ?? .distantPast)
         }
         
-        var unique: [SQWorkoutable] = []
+        var unique: [SQWorkoutSessionable] = []
         
         for workout in sorted {
             guard let start = workout.startDate,

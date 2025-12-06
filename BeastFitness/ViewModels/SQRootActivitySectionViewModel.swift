@@ -22,7 +22,7 @@ class SQRootActivitySectionViewModel {
         .avgHeartRate
     ]
     
-    init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkout]?) {
+    init(isPlaceholder: Bool = false, title: String, workouts: [SQWorkoutSession]?) {
         self.isPlaceholder = isPlaceholder
         self.title = title
         

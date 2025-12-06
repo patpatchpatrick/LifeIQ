@@ -8,7 +8,7 @@
 import Foundation
 import HealthKit
 
-struct SQStravaWorkout: Codable, SQWorkoutable {
+struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     let id: Double?
     let sport_type: SQStravaSportType
     let elapsed_time: Double? // seconds

@@ -86,7 +86,7 @@ final class SQOldRootViewModel {
         refreshUi(with: allWorkouts)
     }
     
-    private func refreshUi(with workouts: [SQWorkoutable]?) {
+    private func refreshUi(with workouts: [SQWorkoutSessionable]?) {
         guard let workouts else {
             activitySection = .init(isPlaceholder: true, title: "Activity Stats", workouts: nil)
             return

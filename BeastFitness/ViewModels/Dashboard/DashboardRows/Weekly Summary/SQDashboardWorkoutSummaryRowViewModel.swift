@@ -14,10 +14,10 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     let totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel
     let workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel
     
-    let workouts: [SQWorkoutable]
-    let priorWorkouts: [SQWorkoutable]
+    let workouts: [SQWorkoutSessionable]
+    let priorWorkouts: [SQWorkoutSessionable]
     
-    init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+    init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
         self.sectionTitle = config.timeRange.title

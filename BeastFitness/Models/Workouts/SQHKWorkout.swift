@@ -8,7 +8,7 @@
 import Foundation
 import HealthKit
 
-struct SQHKWorkout: SQWorkoutable {
+struct SQHKWorkout: SQWorkoutSourcable {
     let hkWorkout: HKWorkout
     
     init(hkWorkout: HKWorkout) {

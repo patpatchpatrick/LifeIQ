@@ -7,13 +7,17 @@
 
 import HealthKit
 
-final class SQMockWorkout: SQWorkoutable {
+final class SQMockWorkout: SQWorkoutSessionable {
+    var totalCalories: Double?
     var activityType: HKWorkoutActivityType
     var coreOutputQuantityTypeId: SQQuantityType?
     var coreOutputUnit: SQUnit?
     var activeDuration: Double?
     var startDate: Date?
     var endDate: Date?
+    var coreOutput: Double?
+    var outputString: String?
+    var details: SQWorkoutDetails?
     
     private var outputs: [SQQuantityType: Double]
     
@@ -24,6 +28,10 @@ final class SQMockWorkout: SQWorkoutable {
         activeDuration: Double? = nil,
         startDate: Date? = nil,
         endDate: Date? = nil,
+        totalCalories: Double? = nil,
+        coreOutput: Double? = nil,
+        outputString: String? = nil,
+        details: SQWorkoutDetails? = nil,
         outputs: [SQQuantityType: Double] = [:]
     ) {
         self.activityType = activityType
@@ -32,7 +40,9 @@ final class SQMockWorkout: SQWorkoutable {
         self.activeDuration = activeDuration
         self.startDate = startDate
         self.endDate = endDate
+        self.totalCalories = totalCalories
         self.outputs = outputs
+        self.details = details
     }
     
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
@@ -54,8 +64,8 @@ final class SQMockWorkout: SQWorkoutable {
     )
 }
 
-extension [any SQWorkoutable] {
-    static var mock: [any SQWorkoutable] {
+extension [any SQWorkoutSessionable] {
+    static var mock: [any SQWorkoutSessionable] {
         [SQMockWorkout.mockRun, SQMockWorkout.mockRun, SQMockWorkout.mockRun]
     }
 }

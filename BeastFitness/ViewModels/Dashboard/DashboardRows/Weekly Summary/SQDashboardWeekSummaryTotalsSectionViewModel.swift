@@ -18,7 +18,7 @@ final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
         let trend: AttributedString
     }
     
-    init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutable], priorWorkouts: [SQWorkoutable]) {
+    init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
         self.sectionTitle = "Totals"
 
         let totalSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) }

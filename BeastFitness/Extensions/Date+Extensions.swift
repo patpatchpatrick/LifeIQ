@@ -10,8 +10,6 @@ import Foundation
 extension Date {
 
     var firebaseDailyDateKey: String {
-        let dateKey = SQDateFormatters.shared.string(from: self, style: .firebaseDayKey)
-        print("PTD Date Key", dateKey)
-        return dateKey
+        SQDateFormatters.shared.string(from: self, style: .firebaseDayKey)
     }
 }

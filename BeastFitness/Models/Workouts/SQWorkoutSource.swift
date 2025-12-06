@@ -1,5 +1,5 @@
 //
-//  SQWorkoutable.swift
+//  SQWorkoutSource.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 11/13/25.
@@ -8,8 +8,7 @@
 import Foundation
 import HealthKit
 
-
-protocol SQWorkoutable {
+protocol SQWorkoutSourcable {
     var activityType: HKWorkoutActivityType { get }
     var coreOutputQuantityTypeId: SQQuantityType? { get }
     var coreOutputUnit: SQUnit? { get }
@@ -23,7 +22,7 @@ protocol SQWorkoutable {
     var outputString: String? { get }
 }
 
-extension SQWorkoutable {
+extension SQWorkoutSourcable {
     
     var coreOutput: Double? {
         guard let coreOutputQuantityTypeId
@@ -45,19 +44,37 @@ extension SQWorkoutable {
         sumOutputFor(.activeKilocaloriesBurned)
     }
     
+    // Default mapper: sourcable → session (source-agnostic)
+    func buildWorkout(id: UUID = UUID(), source: SQWorkoutSource) -> SQWorkoutSessionable {
+        SQWorkoutSession(
+            id: id,
+            workoutSource: source,
+            activityType: activityType,
+            coreOutputQuantityTypeId: coreOutputQuantityTypeId,
+            coreOutputUnit: coreOutputUnit,
+            activeDuration: activeDuration,
+            startDate: startDate,
+            endDate: endDate,
+            totalCalories: totalCalories
+        )
+    }
 }
 
-enum SQWorkoutType {
+enum SQWorkoutSource {
     case hkWorkout(SQHKWorkout)
     case stravaWorkout(SQStravaWorkout)
     
-    var workoutable: SQWorkoutable {
+    var sourcableData: SQWorkoutSourcable {
         switch self {
         case .hkWorkout(let workout):
             return workout
         case .stravaWorkout(let workout):
             return workout
         }
+    }
+    
+    func buildWorkout(id: UUID = UUID()) -> SQWorkoutSessionable {
+        sourcableData.buildWorkout(id: id, source: self)
     }
 }
 

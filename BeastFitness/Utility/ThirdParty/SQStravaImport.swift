@@ -123,7 +123,7 @@ final class SQStravaImport {
      }
     
     // TODO: - PTD remove this method
-    func getSavedStravaWorkouts(_ timeRange: SQTimeRange) -> [SQWorkout]? {
+    func getSavedStravaWorkouts(_ timeRange: SQTimeRange) -> [SQWorkoutSessionable]? {
         let filePath = getDocumentsDirectoryUrl().appendingPathComponent("beast-fitness-strava-activities-all-2.json")
         
         do {
@@ -133,7 +133,7 @@ final class SQStravaImport {
                 return workout.endDate != nil && workout.endDate! > timeRange.startDate
             }
             return filteredWorkouts
-                .map { .init(.stravaWorkout($0)) }
+                .map { SQWorkoutSource.stravaWorkout($0).buildWorkout() }
         }
         catch {
             return nil

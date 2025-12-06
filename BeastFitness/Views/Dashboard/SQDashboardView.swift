@@ -103,10 +103,17 @@ extension SQDashboardView {
     }
     
     @ViewBuilder
-    static func cardTitle(title: String) -> some View {
-        Text(title)
-            .sqFont(.title3)
-            .sqForegroundColor(.textPrimary)
+    static func cardTitle(title: String, icon: SQImageSymbol? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .sqFont(.title3)
+                .sqForegroundColor(.textPrimary)
+            
+            if let icon {
+                SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(.textPrimary, font: .body)))
+                    .frame(width: 20)
+            }
+        }
     }
     
     @ViewBuilder

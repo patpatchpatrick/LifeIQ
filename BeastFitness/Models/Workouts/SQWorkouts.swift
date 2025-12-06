@@ -12,13 +12,13 @@ import SwiftUI
 // MARK: - SQWorkouts
 // Used to group workouts of the SAME type
 final class SQWorkouts {
-    let workouts: [SQWorkoutable]
+    let workouts: [SQWorkoutSessionable]
     
     var activityType: HKWorkoutActivityType? {
         workouts.first?.activityType
     }
     
-    init(workouts: [SQWorkoutable]) {
+    init(workouts: [SQWorkoutSessionable]) {
         self.workouts = workouts
     }
 }

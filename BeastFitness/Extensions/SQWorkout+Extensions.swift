@@ -7,10 +7,10 @@
 
 import HealthKit
 
-extension [SQWorkout] {
+extension [SQWorkoutSession] {
     
-    var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkout]] {
-        var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkout]]()
+    var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkoutSession]] {
+        var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkoutSession]]()
         for workout in self {
             workoutsByActivityType[workout.activityType, default: []].append(workout)
         }
@@ -18,10 +18,10 @@ extension [SQWorkout] {
     }
 }
 
-extension [SQWorkoutable] {
+extension [SQWorkoutSessionable] {
     
-    var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkoutable]] {
-        var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkoutable]]()
+    var workoutsByActivityType: [HKWorkoutActivityType : [SQWorkoutSessionable]] {
+        var workoutsByActivityType = [HKWorkoutActivityType : [SQWorkoutSessionable]]()
         for workout in self {
             workoutsByActivityType[workout.activityType, default: []].append(workout)
         }

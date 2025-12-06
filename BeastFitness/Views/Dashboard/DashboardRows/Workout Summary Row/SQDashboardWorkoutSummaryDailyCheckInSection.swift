@@ -21,34 +21,28 @@ struct SQDashboardWorkoutSummaryDailyCheckInSection: View {
         }
     }
     
+    var dailyCheckInTitle: some View {
+        SQDashboardView.cardTitle(title: "Daily Check-In", icon: viewModel.dailyCheckInSummaryConfig?.icon)
+            .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+    }
+    
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            SQDashboardView.cardTitle(title: "Daily Check-In")
-                .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+            if let onTap = viewModel.dailyCheckInSummaryConfig?.onTap {
+                Button(action: onTap, label: { dailyCheckInTitle })
+            } else {
+                dailyCheckInTitle
+            }
             
             if let callToActionViewModel = viewModel.callToAction {
                 SQCallToAction(viewModel: callToActionViewModel)
                     .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             }
             
-            if let icon = viewModel.dailyCheckInSummaryConfig?.icon {
-                SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(.accent(1), font: .body)))
-                    .frame(width: 20)
-            }
-            
             if let checkInStatsSummaryConfig = viewModel.dailyCheckInSummaryConfig{
-                if let onTap = checkInStatsSummaryConfig.onTap {
-                    Button(
-                        action: {
-                            onTap()
-                        },
-                        label: { checkInStatsSummaryView(for: checkInStatsSummaryConfig) })
-                        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
-                } else {
-                    checkInStatsSummaryView(for: checkInStatsSummaryConfig)
-                        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
-                }
+                checkInStatsSummaryView(for: checkInStatsSummaryConfig)
+                    .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             }
         }
     }
