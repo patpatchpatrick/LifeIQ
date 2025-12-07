@@ -8,6 +8,7 @@
 import HealthKit
 
 final class SQMockWorkout: SQWorkoutSessionable {
+    let id = UUID()
     var totalCalories: Double?
     var activityType: HKWorkoutActivityType
     var coreOutputQuantityTypeId: SQQuantityType?

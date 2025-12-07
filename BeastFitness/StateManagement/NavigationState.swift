@@ -49,3 +49,23 @@ protocol NavigationStating: AnyObject {
         hub.events.send(.changeTab(tab))
     }
 }
+
+struct SQNavRoute {
+    enum WorkoutsList: Hashable {
+        case workoutView(workout: SQWorkoutSessionable)
+        
+        func hash(into hasher: inout Hasher) {
+            switch self {
+            case .workoutView(let workout):
+                hasher.combine("workoutView-\(workout.id)")
+            }
+        }
+        
+        static func == (lhs: WorkoutsList, rhs: WorkoutsList) -> Bool {
+            switch (lhs, rhs) {
+            case (.workoutView(let lhs), .workoutView(let rhs)):
+                return lhs.id == rhs.id
+            }
+        }
+    }
+}

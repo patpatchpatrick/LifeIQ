@@ -10,11 +10,13 @@ import SwiftUI
 @Observable @MainActor
 final class SQWorkoutsListItemViewModel: Identifiable, Hashable, Equatable {
     let id = UUID()
+    let workout: SQWorkoutSessionable
     let title: String
     let workoutImageSymbol: SQImageSymbol
     let workoutStatsString: AttributedString
     
     init(workout: SQWorkoutSessionable) {
+        self.workout = workout
         let activityType = workout.activityType
         title = "\(activityType.name)"
         workoutImageSymbol = activityType.imageSymbol

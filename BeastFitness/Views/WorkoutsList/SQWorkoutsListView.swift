@@ -14,7 +14,9 @@ struct SQWorkoutsListView: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xl) {
             ForEach(controller.rows) { row in
-                SQWorkoutsListItem(viewModel: row)
+                Button(
+                    action: { controller.displayWorkoutSummary(for: row) },
+                    label: { SQWorkoutsListItem(viewModel: row) })
             }
         }
     }
@@ -27,14 +29,24 @@ struct SQWorkoutsListView: View {
         }
     }
     
+    var navView: some View {
+        mainScroll
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .navigationTitle("Workouts")
+            .navigationBarTitleDisplayMode(.inline)
+            .background(SQColor.backgroundSecondary.color)
+    }
+    
     @ViewBuilder
     var navStack: some View {
-        NavigationStack {
-            mainScroll
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle("Workouts")
-                .navigationBarTitleDisplayMode(.inline)
-                .background(SQColor.backgroundSecondary.color)
+        NavigationStack(path: $controller.navigationPath) {
+            navView
+                .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
+                    switch route {
+                    case .workoutView(let workout):
+                        SQWorkoutSummaryView(controller: .init(workout: workout))
+                    }
+                }
         }
     }
 

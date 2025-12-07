@@ -9,6 +9,7 @@ import Foundation
 import HealthKit
 
 protocol SQWorkoutSessionable {
+    var id: UUID { get }
     // Core identifying info
     var activityType: HKWorkoutActivityType { get set }
     var coreOutputQuantityTypeId: SQQuantityType? { get set }
