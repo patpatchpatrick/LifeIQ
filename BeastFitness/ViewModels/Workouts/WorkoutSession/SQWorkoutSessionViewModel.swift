@@ -11,7 +11,7 @@ import SwiftUI
 @MainActor
 final class SQWorkoutSessionViewModel: Identifiable {
     let id = UUID()
-    
+    let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     
     private(set) var exercises: [SQWorkoutSessionExerciseViewModel] = []
@@ -19,7 +19,11 @@ final class SQWorkoutSessionViewModel: Identifiable {
     // Optional base session if you're editing
     private let baseSession: SQWorkoutSession?
     
-    init(session: SQWorkoutSession? = nil) {
+    @MainActor
+    static var `default` = SQWorkoutSessionViewModel(state: AppState.shared.workoutSessionState)
+    
+    init(state: WorkoutSessionStating, session: SQWorkoutSession? = nil) {
+        self.state = state
         self.baseSession = session
         
         if

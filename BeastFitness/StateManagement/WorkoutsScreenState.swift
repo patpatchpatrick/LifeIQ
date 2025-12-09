@@ -39,7 +39,7 @@ protocol WorkoutsLandingStating: AnyObject {
     }
     
     func displayWorkoutSessionSheet() {
-        workoutSessionViewModel = .init()
+        workoutSessionViewModel = .init(state: AppState.shared.workoutSessionState)
         isWorkoutSessionSheetVisible = true
     }
 }

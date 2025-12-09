@@ -47,12 +47,19 @@ struct SQWorkoutSessionView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            viewModel.addExercise()
+                            // PTD add back addExercise() functionality
+//                            viewModel.addExercise()
+                            viewModel.state.displayAddExerciseListSheet()
                         } label: {
                             Image(systemName: "plus")
                         }
                     }
                 }
+                .sheet(isPresented: .init(
+                    get: { viewModel.state.isAddExerciseListSheetVisible },
+                    set: { isVisible in viewModel.state.toggleAddExerciseListSheetVisibility(isVisible)})) {
+                        SQExercisesListView(controller: .init(state: AppState.shared.exercisesListState))
+                    }
         }
     }
 }
