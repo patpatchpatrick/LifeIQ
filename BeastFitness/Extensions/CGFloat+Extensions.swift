@@ -9,6 +9,9 @@ import Foundation
 
 extension CGFloat {
     struct SQSpace {
+        /// Extra-small spacing — **2pt**
+        static let xs: CGFloat = 2
+        
         /// Extra-small spacing — **4pt**
         static let s: CGFloat = 4
         

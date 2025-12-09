@@ -9,11 +9,21 @@ import SwiftUI
 
 @MainActor
 protocol SQWorkoutSummaryInterface {
+    func load(workout: SQWorkoutSessionable)
 }
 
 @Observable @MainActor
-final class SQWorkoutSummaryController: SQWorkoutsListInterface {
+final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
+    let state: WorkoutSummaryStating
+    
+    @MainActor
+    static var `default` = SQWorkoutSummaryController(state: AppState.shared.workoutSummaryState)
 
-    init(workout: SQWorkoutSessionable) {
+    init(state: WorkoutSummaryStating) {
+        self.state = state
+    }
+    
+    func load(workout: any SQWorkoutSessionable) {
+        state.load(workout: workout)
     }
 }

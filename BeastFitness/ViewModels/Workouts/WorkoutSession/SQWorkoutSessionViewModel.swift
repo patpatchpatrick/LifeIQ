@@ -50,7 +50,7 @@ final class SQWorkoutSessionViewModel: Identifiable {
     
     func addExercise(
         name: String = "New Exercise",
-        muscleGroup: SQMuscleGroup = .other
+        muscleGroup: SQMuscleGroup = .unknown
     ) {
         let vm = SQWorkoutSessionExerciseViewModel(
             name: name,

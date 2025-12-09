@@ -37,6 +37,12 @@ struct SQWorkoutsListView: View {
             .background(SQColor.backgroundSecondary.color)
     }
     
+    private func buildController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {
+        let controller = SQWorkoutSummaryController.default
+        controller.load(workout: workout)
+        return controller
+    }
+    
     @ViewBuilder
     var navStack: some View {
         NavigationStack(path: $controller.navigationPath) {
@@ -44,7 +50,7 @@ struct SQWorkoutsListView: View {
                 .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
                     switch route {
                     case .workoutView(let workout):
-                        SQWorkoutSummaryView(controller: .init(workout: workout))
+                        SQWorkoutSummaryView(controller: buildController(for: workout))
                     }
                 }
         }

@@ -12,4 +12,8 @@ extension Date {
     var firebaseDailyDateKey: String {
         SQDateFormatters.shared.string(from: self, style: .firebaseDayKey)
     }
+    
+    func formattedString(with style: SQDateFormatters.FormattedDateStyle) -> String {
+        SQDateFormatters.shared.string(from: self, style: style)
+    }
 }

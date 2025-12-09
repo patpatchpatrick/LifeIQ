@@ -45,14 +45,10 @@ struct SQDashboardView: View {
             .navigationBarTitleDisplayMode(.inline)
                                .toolbar {
                                    ToolbarItem(placement: .topBarLeading) {
-                                       HStack(spacing: 12) {
-                                           // Profile icon
-                                           ZStack {
-                                               Circle()
-                                                   .fill(Color(.systemGray5))
-                                               Text("P") // or an SF Symbol / image
-                                                   .font(.system(size: 16, weight: .semibold))
-                                           }
+                                       HStack(spacing: .SQSpace.l) {
+                                           
+                                           // TODO: Remove mock
+                                           SQUserIcon(user: .mock)
                                            .frame(width: 34, height: 34)
                                            
                                            // Multiline welcome text
@@ -61,7 +57,8 @@ struct SQDashboardView: View {
                                                    .font(.system(size: 13, weight: .medium))
                                                    .foregroundStyle(Color.secondary)
                                                
-                                               Text("Patrick Doyle")
+                                               // TODO: - Replace with actual user
+                                               Text(SQUser.mock.name)
                                                    .font(.system(size: 17, weight: .semibold))
                                                    .foregroundStyle(Color.primary)
                                            }
