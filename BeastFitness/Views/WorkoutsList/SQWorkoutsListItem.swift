@@ -29,18 +29,19 @@ struct SQWorkoutsListItem: View {
                 .sqFont(.bodyBold)
                 .sqForegroundColor(.textPrimary)
             
-            Text("Camelback, etc...")
-                .sqFont(.body)
-                .sqForegroundColor(.textSecondary)
-            
-            Text(viewModel.workoutStatsString)
+            if let subtitle = viewModel.subtitle {
+                Text(subtitle)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
         }
     }
     
     var mainHStack: some View {
-        HStack(alignment: .top, spacing: .SQSpace.m) {
+        HStack(alignment: .top, spacing: 0) {
             
             workoutImage
+                .padding(.horizontal, .SQSpace.m)
             
             workoutTitleAndDescription
             

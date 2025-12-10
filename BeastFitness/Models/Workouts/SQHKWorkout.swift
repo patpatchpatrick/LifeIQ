@@ -47,6 +47,11 @@ struct SQHKWorkout: SQWorkoutSourcable {
         hkWorkout.endDate
     }
     
+    var device: SQWorkoutDevice? {
+        guard let device = hkWorkout.device else { return nil }
+        return .init(name: device.friendlyDescription)
+    }
+    
     func workoutActiveDuration(from workout: HKWorkout) -> TimeInterval? {
         // If there are no events, fall back to total duration
         guard let events = workout.workoutEvents, !events.isEmpty else {

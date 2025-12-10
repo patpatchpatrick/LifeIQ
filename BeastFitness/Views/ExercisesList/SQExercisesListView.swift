@@ -8,23 +8,36 @@
 import SwiftUI
 
 struct SQExercisesListView: View {
-    @Bindable var controller: SQExercisesListController
-    
-    @ViewBuilder
-    var mainStack: some View {
-        ForEach(controller.rows) { row in
-            Button(
-                action: { print("PTD Exercise Tapped", row.title) },
-                label: { SQExercisesListItem(viewModel: row) })
-        }
-    }
+    @State var controller: SQExercisesListController
     
     @ViewBuilder
     var mainScroll: some View {
         List {
-            mainStack
-                .padding(.SQSpace.xl)
+            ForEach(Array(controller.rows.enumerated()), id: \.1) { (index, row) in
+                
+                VStack(spacing: 0) {
+                    Button(
+                        action: { controller.exerciseSelected(row.rawExercise) },
+                        label: { SQExercisesListItem(viewModel: row) })
+                    .padding(.top, index == 0 ? .SQSpace.s : 0)
+                    .padding(.bottom, index == controller.rows.count - 1 ? .SQSpace.xl : 0)
+                    .padding(.horizontal, .SQSpace.l)
+                    
+                    if index != controller.rows.count - 1 {
+                        Divider()
+                            .sqTintColor(.divider)
+                            .padding(.top, .SQSpace.xl)
+                            .padding(.bottom, .SQSpace.xl)
+                            .background(SQColor.background.color)
+                    }
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     var navView: some View {
@@ -32,7 +45,10 @@ struct SQExercisesListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Add Exercises")
             .navigationBarTitleDisplayMode(.inline)
-            .background(SQColor.backgroundSecondary.color)
+            .background(SQColor.background.color)
+            .searchable(text: $controller.searchText,
+                        placement: .navigationBarDrawer(displayMode: .automatic),
+                        prompt: "Search exercises")
     }
     
     @ViewBuilder

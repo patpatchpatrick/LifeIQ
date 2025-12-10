@@ -23,7 +23,9 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     
     init(state: WorkoutsListStating, workouts: [SQWorkoutSessionable] = []) {
         self.state = state
-        self.rows = workouts.map { .init(workout: $0) }
+        self.rows = workouts
+            .sorted(by: { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) })
+            .map { .init(workout: $0) }
     }
     
     func displayWorkoutSummary(for row: SQWorkoutsListItemViewModel) {

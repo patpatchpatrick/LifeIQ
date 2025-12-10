@@ -12,6 +12,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
     // Core identity
     var id: UUID
     var activityType: HKWorkoutActivityType
+    var device: SQWorkoutDevice?
 
     // Time (seconds)
     var elapsedTime: Double?      // total duration

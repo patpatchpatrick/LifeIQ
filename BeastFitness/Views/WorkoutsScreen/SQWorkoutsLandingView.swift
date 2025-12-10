@@ -20,7 +20,7 @@ struct SQWorkoutsLandingView: View {
                 get: { controller.state.isWorkoutSessionSheetVisible},
                 set: { isVisible in controller.state.toggleWorkoutSessionSheetVisibility(isVisible) })) {
                     if let workoutSessionViewModel = controller.state.workoutSessionViewModel {
-                        SQWorkoutSessionView(viewModel: workoutSessionViewModel)
+                        SQWorkoutSessionView(controller: workoutSessionViewModel)
                     }
                 }
     }

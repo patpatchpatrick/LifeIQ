@@ -10,6 +10,7 @@ import HealthKit
 final class SQMockWorkout: SQWorkoutSessionable {
     let id = UUID()
     var totalCalories: Double?
+    var device: SQWorkoutDevice?
     var activityType: HKWorkoutActivityType
     var coreOutputQuantityTypeId: SQQuantityType?
     var coreOutputUnit: SQUnit?
@@ -24,6 +25,7 @@ final class SQMockWorkout: SQWorkoutSessionable {
     
     init(
         activityType: HKWorkoutActivityType,
+        device: SQWorkoutDevice? = nil,
         coreOutputQuantityTypeId: SQQuantityType? = nil,
         coreOutputUnit: SQUnit? = nil,
         activeDuration: Double? = nil,
@@ -36,6 +38,7 @@ final class SQMockWorkout: SQWorkoutSessionable {
         outputs: [SQQuantityType: Double] = [:]
     ) {
         self.activityType = activityType
+        self.device = device
         self.coreOutputQuantityTypeId = coreOutputQuantityTypeId
         self.coreOutputUnit = coreOutputUnit
         self.activeDuration = activeDuration

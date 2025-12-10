@@ -77,6 +77,11 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
         guard let elapsed_time else { return nil }
         return startDate?.addingTimeInterval(elapsed_time)
     }
+    
+    var device: SQWorkoutDevice? {
+        // TODO: - Can we pull in device from strava workouts?
+        nil
+    }
 }
 
 /// https://developers.strava.com/docs/reference/#api-models-SportType

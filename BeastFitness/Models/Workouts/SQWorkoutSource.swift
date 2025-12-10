@@ -20,6 +20,7 @@ protocol SQWorkoutSourcable {
     var endDate: Date? { get }
     var coreOutput: Double? { get }
     var outputString: String? { get }
+    var device: SQWorkoutDevice? { get }
 }
 
 extension SQWorkoutSourcable {
@@ -49,6 +50,7 @@ extension SQWorkoutSourcable {
         SQWorkoutSession(
             id: id,
             workoutSource: source,
+            device: device,
             activityType: activityType,
             coreOutputQuantityTypeId: coreOutputQuantityTypeId,
             coreOutputUnit: coreOutputUnit,

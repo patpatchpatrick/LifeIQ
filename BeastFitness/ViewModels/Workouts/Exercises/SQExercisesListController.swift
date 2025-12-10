@@ -13,16 +13,44 @@ protocol SQExercisesListInterface {
 
 @Observable @MainActor
 final class SQExercisesListController: SQExercisesListInterface {
+    var searchText = "" {
+        didSet {
+            searchTextUpdated(searchText)
+        }
+    }
     var navigationPath = NavigationPath()
     let state: ExercisesListStating
     private(set) var hasLoadedUI = false
     private(set) var rows: [SQExercisesListItemViewModel]
+    private(set) var allRows: [SQExercisesListItemViewModel]
+    private(set) var onExerciseSelected: ((SQRawStrengthExercise) -> Void)? = nil
     
     @MainActor
     static var `default` = SQWorkoutsListController(state: AppState.shared.workoutsListState)
     
-    init(state: ExercisesListStating) {
+    init(state: ExercisesListStating, onExerciseSelected: ((SQRawStrengthExercise) -> Void)? = nil) {
         self.state = state
-        self.rows = SQExercisesManager.shared.exercises.map { .init(rawExercise: $0) }
+        let allRows: [SQExercisesListItemViewModel] = SQExercisesManager.shared.exercises
+            .sorted { $0.name < $1.name }
+            .map { .init(rawExercise: $0) }
+        self.rows = allRows
+        self.allRows = allRows
+        self.onExerciseSelected = onExerciseSelected
+    }
+    
+    private func searchTextUpdated(_ searchText: String) {
+        guard !searchText.isEmpty else {
+            rows = allRows
+            return
+        }
+        
+        rows = allRows.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText)
+            || $0.subtitle.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    func exerciseSelected(_ exercise: SQRawStrengthExercise) {
+        onExerciseSelected?(exercise)
     }
 }

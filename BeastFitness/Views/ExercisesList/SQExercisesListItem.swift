@@ -29,7 +29,7 @@ struct SQExercisesListItem: View {
                 .sqFont(.bodyBold)
                 .sqForegroundColor(.textPrimary)
             
-            Text("Camelback, etc...")
+            Text(viewModel.subtitle)
                 .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
         }
@@ -48,5 +48,6 @@ struct SQExercisesListItem: View {
     
     var body: some View {
         mainHStack
+            .background(SQColor.background.color)
     }
 }

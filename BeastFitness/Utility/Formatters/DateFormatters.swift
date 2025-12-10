@@ -28,6 +28,9 @@ final class SQDateFormatters {
         /// Example: "Saturday, January 28, 2023 at 3:42 PM"
         case full
         
+        /// Example: "January 28, 2023 at 3:42 PM"
+        case fullWithoutDayName
+        
         /// Example: "3:42 PM"
         case timeOnly
         
@@ -84,6 +87,19 @@ final class SQDateFormatters {
         case .full:
             baseFormatter.dateStyle = .full
             baseFormatter.timeStyle = .short
+            
+        case .fullWithoutDayName:
+            let locale = baseFormatter.locale ?? .current
+            if let format = DateFormatter.dateFormat(
+                fromTemplate: "yMMMMdjm",
+                options: 0,
+                locale: locale
+            ) {
+                baseFormatter.dateStyle = .none
+                baseFormatter.timeStyle = .none
+                baseFormatter.dateFormat = format
+            }
+            
         case .timeOnly:
             baseFormatter.dateStyle = .none
             baseFormatter.timeStyle = .short
@@ -105,8 +121,23 @@ final class SQDateFormatters {
         baseFormatter.timeZone = .current
 
         updateFormatter(with: style)
-        return baseFormatter.string(from: date)
+        let raw = baseFormatter.string(from: date)
+
+        guard style == .fullWithoutDayName else {
+            return raw
+        }
+
+        // Locale-aware weekday removal:
+        if let weekday = baseFormatter.weekdaySymbols.first(where: { raw.hasPrefix($0) }) {
+            let trimmed = raw.dropFirst(weekday.count).trimmingCharacters(in: .whitespaces)
+            // Remove leading comma if needed
+            return trimmed.trimmingCharacters(in: CharacterSet(charactersIn: ", ").union(.whitespaces))
+        }
+
+        // Fallback if weekday detection fails
+        return raw
     }
+
 
     /// Parses a date string like `MM/dd/yy` (or equivalent for the style/locale)
     /// into a `Date` by trying the preferred style first, then all others.

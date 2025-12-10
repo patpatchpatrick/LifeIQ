@@ -12,7 +12,7 @@ import Combine
 protocol WorkoutsLandingStating: AnyObject {
     /// State
     var isWorkoutSessionSheetVisible: Bool { get }
-    var workoutSessionViewModel: SQWorkoutSessionViewModel? { get }
+    var workoutSessionViewModel: SQWorkoutSessionController? { get }
     
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
@@ -24,7 +24,7 @@ protocol WorkoutsLandingStating: AnyObject {
 @Observable final class WorkoutsLandingState: WorkoutsLandingStating {
     private let hub: EventHub
     var isWorkoutSessionSheetVisible: Bool = false
-    private(set) var workoutSessionViewModel: SQWorkoutSessionViewModel?
+    private(set) var workoutSessionViewModel: SQWorkoutSessionController?
     
     init(hub: EventHub) {
         self.hub = hub

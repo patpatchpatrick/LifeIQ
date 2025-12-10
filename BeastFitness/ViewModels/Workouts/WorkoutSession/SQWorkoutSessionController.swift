@@ -9,18 +9,16 @@ import SwiftUI
 
 @Observable
 @MainActor
-final class SQWorkoutSessionViewModel: Identifiable {
+final class SQWorkoutSessionController: Identifiable {
     let id = UUID()
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
-    
-    private(set) var exercises: [SQWorkoutSessionExerciseViewModel] = []
     
     // Optional base session if you're editing
     private let baseSession: SQWorkoutSession?
     
     @MainActor
-    static var `default` = SQWorkoutSessionViewModel(state: AppState.shared.workoutSessionState)
+    static var `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState)
     
     init(state: WorkoutSessionStating, session: SQWorkoutSession? = nil) {
         self.state = state
@@ -30,51 +28,47 @@ final class SQWorkoutSessionViewModel: Identifiable {
             let session,
             case let .strength(details) = session.details
         {
-            self.exercises = details.exercises.map { SQWorkoutSessionExerciseViewModel(from: $0) }
+            let exercises = details.exercises.map { SQWorkoutSessionExerciseViewModel(from: $0) }
+            self.state.updateExercises(to: exercises)
         } else {
-            self.exercises = []
+            self.state.updateExercises(to: [])
         }
     }
     
     // MARK: - Derived
     
     var totalVolume: Double {
-        exercises.reduce(0) { $0 + $1.totalVolume }
+        state.exercises.reduce(0) { $0 + $1.totalVolume }
     }
     
     var isEmpty: Bool {
-        exercises.isEmpty
+        state.exercises.isEmpty
     }
     
     var allCompleted: Bool {
-        !exercises.isEmpty && exercises.allSatisfy { $0.isCompleted }
+        !state.exercises.isEmpty && state.exercises.allSatisfy { $0.isCompleted }
     }
     
     // MARK: - Exercise management
     
     func addExercise(
-        name: String = "New Exercise",
-        muscleGroup: SQMuscleGroup = .unknown
+        rawExercise: SQRawStrengthExercise
     ) {
         let vm = SQWorkoutSessionExerciseViewModel(
-            name: name,
-            muscleGroup: muscleGroup
+            name: rawExercise.name,
+            muscleGroup: rawExercise.primaryMuscles.first ?? .unknown
         )
-        exercises.append(vm)
+        state.appendExercises([vm])
     }
     
     func removeExercise(_ exercise: SQWorkoutSessionExerciseViewModel) {
-        exercises.removeAll { $0.id == exercise.id }
-    }
-    
-    func moveExercise(fromOffsets: IndexSet, toOffset: Int) {
-        exercises.move(fromOffsets: fromOffsets, toOffset: toOffset)
+        state.removeExercises([exercise])
     }
     
     // MARK: - Build domain models
     
     func buildStrengthDetails() -> SQStrengthDetails {
-        let models = exercises.map { $0.asModel() }
+        let models = state.exercises.map { $0.asModel() }
         let groups = Array(Set(models.map { $0.muscleGroup }))
         
         return SQStrengthDetails(
@@ -96,6 +90,7 @@ final class SQWorkoutSessionViewModel: Identifiable {
                 workoutSource: .manual(.init(
                     id: UUID(),
                     activityType: .functionalStrengthTraining)),
+                device: nil,
                 activityType: .functionalStrengthTraining,
                 coreOutputQuantityTypeId: nil,
                 coreOutputUnit: nil,

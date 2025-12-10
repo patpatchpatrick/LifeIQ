@@ -23,10 +23,29 @@ struct SQWorkoutsListView: View {
     
     @ViewBuilder
     var mainScroll: some View {
-        ScrollView {
-            mainStack
-                .padding(.SQSpace.xl)
+        List {
+            ForEach(Array(controller.rows.enumerated()), id: \.1) { (index, row) in
+                
+                VStack(spacing: 0) {
+                    Button(
+                        action: { controller.displayWorkoutSummary(for: row) },
+                        label: { SQWorkoutsListItem(viewModel: row) })
+                    
+                    if index != controller.rows.count - 1 {
+                        Divider()
+                            .sqTintColor(.divider)
+                            .padding(.top, .SQSpace.xl)
+                            .padding(.bottom, .SQSpace.xl)
+                            .background(SQColor.background.color)
+                    }
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     var navView: some View {
@@ -34,7 +53,7 @@ struct SQWorkoutsListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Workouts")
             .navigationBarTitleDisplayMode(.inline)
-            .background(SQColor.backgroundSecondary.color)
+            .background(SQColor.background.color)
     }
     
     private func buildController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {

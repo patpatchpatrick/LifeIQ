@@ -14,6 +14,7 @@ protocol SQWorkoutSessionable {
     var activityType: HKWorkoutActivityType { get set }
     var coreOutputQuantityTypeId: SQQuantityType? { get set }
     var coreOutputUnit: SQUnit? { get set }
+    var device: SQWorkoutDevice? { get }
     
     // Time
     var activeDuration: Double? { get set }
@@ -39,6 +40,7 @@ protocol SQWorkoutSessionable {
 struct SQWorkoutSession: SQWorkoutSessionable {
     let id: UUID
     let workoutSource: SQWorkoutSource
+    let device: SQWorkoutDevice?
     
     // Stored properties required by SQWorkoutable
     var activityType: HKWorkoutActivityType
