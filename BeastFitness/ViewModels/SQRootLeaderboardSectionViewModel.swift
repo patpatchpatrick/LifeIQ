@@ -93,7 +93,7 @@ class SQRootLeaderboardSectionRowViewModel: Identifiable, Hashable, Equatable {
             subtitle = ""
         }
         
-        self.outputString = workout.outputString ?? ""
+        self.outputString = workout.outputAndUnitString ?? ""
     }
     
     func hash(into hasher: inout Hasher) {

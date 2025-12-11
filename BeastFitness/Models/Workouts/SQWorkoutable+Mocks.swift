@@ -18,7 +18,7 @@ final class SQMockWorkout: SQWorkoutSessionable {
     var startDate: Date?
     var endDate: Date?
     var coreOutput: Double?
-    var outputString: String?
+    var outputAndUnitString: String?
     var details: SQWorkoutDetails?
     
     private var outputs: [SQQuantityType: Double]

@@ -65,3 +65,36 @@ extension Double {
         return "\(prefix)\(valueString)%"
     }
 }
+
+extension Double {
+    
+    /// Converts a duration (in seconds) into a compact readable string.
+    /// Example: 165432308 → "5y 3d 22h 5m 8s"
+    func readableTime() -> String {
+        var remaining = Int(self)
+
+        let years   = remaining / (60 * 60 * 24 * 365)
+        remaining  %= (60 * 60 * 24 * 365)
+
+        let days    = remaining / (60 * 60 * 24)
+        remaining  %= (60 * 60 * 24)
+
+        let hours   = remaining / (60 * 60)
+        remaining  %= (60 * 60)
+
+        let minutes = remaining / 60
+        let seconds = remaining % 60
+
+        var parts: [String] = []
+
+        if years   > 0 { parts.append("\(years)y") }
+        if days    > 0 { parts.append("\(days)d") }
+        if hours   > 0 { parts.append("\(hours)h") }
+        if minutes > 0 { parts.append("\(minutes)m") }
+        if seconds > 0 || parts.isEmpty {
+            parts.append("\(seconds)s")
+        }
+
+        return parts.joined(separator: " ")
+    }
+}

@@ -33,7 +33,7 @@ protocol SQWorkoutSessionable {
     
     // Derived properties (still fine as computed)
     var coreOutput: Double? { get }
-    var outputString: String? { get }
+    var outputAndUnitString: String? { get }
 }
 
 // TODO: - Rename to SQWorkoutSession
@@ -66,7 +66,7 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         return sumOutputFor(coreOutputQuantityTypeId)
     }
     
-    var outputString: String? {
+    var outputAndUnitString: String? {
         guard let coreOutput,
               let coreOutputUnit else { return nil }
         

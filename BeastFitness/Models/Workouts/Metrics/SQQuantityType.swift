@@ -92,6 +92,19 @@ extension SQQuantityType {
             return .countPerMinute
         }
     }
+    
+    var displayTitle: String {
+            switch self {
+            case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
+                return "Distance"
+            case .flightsClimbed:
+                return "Flights Climbed" // ← UI-friendly version
+            case .activeKilocaloriesBurned:
+                return "Calories"
+            case .heartRate:
+                return "Heart Rate"
+            }
+        }
 }
 
 

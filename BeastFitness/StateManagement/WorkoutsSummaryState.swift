@@ -14,6 +14,7 @@ protocol WorkoutSummaryStating: AnyObject {
     var userFullName: String? { get }
     var workoutStartDate: Date? { get }
     var workoutTitle: String? { get }
+    var workoutStatsRows: [SQWorkoutSummaryStatRow] { get }
     
     func load(workout: SQWorkoutSessionable)
 }
@@ -24,6 +25,7 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var userFullName: String?
     private(set) var workoutStartDate: Date?
     private(set) var workoutTitle: String?
+    private(set) var workoutStatsRows: [SQWorkoutSummaryStatRow] = []
     
     private let hub: EventHub
     
@@ -36,5 +38,17 @@ protocol WorkoutSummaryStating: AnyObject {
         userFullName = SQUser.mock.name // PTD replace with user's name
         workoutStartDate = workout.startDate
         workoutTitle = workout.activityType.name
+        
+        let visibleStats = workout.visibleStats ?? []
+        let visibleStatsChunks = visibleStats.chunked(into: 3)
+        
+        workoutStatsRows = visibleStatsChunks.map {
+            .init(visibleStats: $0)
+        }
     }
+}
+
+struct SQWorkoutSummaryStatRow: Identifiable {
+    let id = UUID()
+    let visibleStats: [SQWorkoutSessionVisibleStat]
 }

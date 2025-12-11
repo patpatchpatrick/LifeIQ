@@ -43,6 +43,14 @@ struct SQWorkoutSummaryView: View {
                 .sqFont(.title3)
                 .sqForegroundColor(.textPrimary)
                 .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
+                .padding(.bottom, .SQSpace.xl)
+            
+            VStack(spacing: .SQSpace.m) {
+                ForEach(controller.state.workoutStatsRows) { row in
+                    SQWorkoutSummaryStatsRow(row: row)
+                }
+            }
+            .padding(.horizontal, .SQSpace.xxl)
         }
     }
     
@@ -55,6 +63,37 @@ struct SQWorkoutSummaryView: View {
     }
     var body: some View {
         mainScroll
+            .background(SQColor.background.color)
             .navigationTitle("Workout summary")
+    }
+}
+
+struct SQWorkoutSummaryStatsRow: View {
+    let row: SQWorkoutSummaryStatRow
+    
+    @ViewBuilder
+    func buildStat(_ stat: SQWorkoutSessionVisibleStat) -> some View {
+        VStack(spacing: .SQSpace.s) {
+            Text(stat.title)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+            
+            Text(stat.value)
+                .sqFont(.bodySmallBold)
+                .sqForegroundColor(.textPrimary)
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(row.visibleStats.enumerated()), id: \.1) { (index, visibleStat) in
+                
+                buildStat(visibleStat)
+                
+                if index != row.visibleStats.count - 1 {
+                    Spacer()
+                }
+            }
+        }
     }
 }
