@@ -253,11 +253,6 @@ extension HKWorkoutActivityType {
             return .activeKilocaloriesBurned
         }
     }
-
-    
-    var coreOutputUnit: SQUnit? {
-        coreOutputQuantityTypeId?.unit
-    }
 }
 
 // MARK: - Images

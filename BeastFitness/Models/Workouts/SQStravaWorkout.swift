@@ -37,6 +37,8 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return nil
         case .flightsClimbed:
             return nil
+        case .sqPaceRunning:
+            return nil
         }
     }
     
@@ -49,6 +51,9 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
+        case .sqPaceRunning:
+            // TODO: - PTD support strave running pace
+            return nil
         }
     }
     
@@ -58,14 +63,6 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     
     var activityType: HKWorkoutActivityType {
         sport_type.activityType
-    }
-    
-    var coreOutputQuantityTypeId: SQQuantityType? {
-        activityType.coreOutputQuantityTypeId
-    }
-    
-    var coreOutputUnit: SQUnit? {
-        activityType.coreOutputUnit
     }
     
     var startDate: Date? {
@@ -81,6 +78,11 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     var device: SQWorkoutDevice? {
         // TODO: - Can we pull in device from strava workouts?
         nil
+    }
+    
+    // TODO: - Pass details from existing strava workouts if they exist
+    var details: SQWorkoutDetails? {
+        return nil
     }
 }
 

@@ -15,6 +15,8 @@ enum SQQuantityType {
     case distanceRowing
     case distanceDownhillSnowSports
     case distanceCrossCountrySkiing
+    
+    case sqPaceRunning
 
     // Stairs / elevation
     case flightsClimbed
@@ -24,6 +26,11 @@ enum SQQuantityType {
 
     // Health metrics
     case heartRate
+}
+
+enum SQOutputCalculationType {
+    case sum
+    case average
 }
 
 extension SQQuantityType {
@@ -55,6 +62,20 @@ extension SQQuantityType {
 
         case .heartRate:
             return .heartRate
+            
+        case .sqPaceRunning:
+            /// Custom quantity type
+            return nil
+        }
+    }
+    
+    var outputCalculationType: SQOutputCalculationType {
+        switch self {
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned:
+            return .sum
+            
+        case .sqPaceRunning, .heartRate:
+            return .average
         }
     }
 
@@ -90,6 +111,9 @@ extension SQQuantityType {
         // Heart rate
         case .heartRate:
             return .countPerMinute
+            
+        case .sqPaceRunning:
+            return .secondsPerMile
         }
     }
     
@@ -103,6 +127,8 @@ extension SQQuantityType {
                 return "Calories"
             case .heartRate:
                 return "Heart Rate"
+            case .sqPaceRunning:
+                return "Pace"
             }
         }
 }

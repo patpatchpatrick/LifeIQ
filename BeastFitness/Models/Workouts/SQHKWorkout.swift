@@ -19,20 +19,33 @@ struct SQHKWorkout: SQWorkoutSourcable {
         hkWorkout.workoutActivityType
     }
     
-    var coreOutputQuantityTypeId: SQQuantityType? {
-        activityType.coreOutputQuantityTypeId
-    }
-    
-    var coreOutputUnit: SQUnit? {
-        activityType.coreOutputUnit
-    }
-    
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        hkWorkout.sumOutputFor(quantityTypeIdentifier)
+        
+        switch quantityTypeIdentifier {
+        case .sqPaceRunning:
+            return nil
+            
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate:
+            /// Continue below since these are all supported in HealhKit
+            break
+        }
+        
+        return hkWorkout.sumOutputFor(quantityTypeIdentifier)
     }
     
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        hkWorkout.avgOutputFor(quantityTypeIdentifier)
+        
+        switch quantityTypeIdentifier {
+        case .sqPaceRunning:
+            guard  let totalDistance = sumOutputFor(.distanceWalkingRunning), let activeDuration else { return nil }
+            return activeDuration / totalDistance
+            
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate:
+            /// Continue below since these are all supported in HealhKit
+            break
+        }
+        
+        return hkWorkout.avgOutputFor(quantityTypeIdentifier)
     }
     
     var activeDuration: Double? {
@@ -50,6 +63,11 @@ struct SQHKWorkout: SQWorkoutSourcable {
     var device: SQWorkoutDevice? {
         guard let device = hkWorkout.device else { return nil }
         return .init(name: device.friendlyDescription)
+    }
+
+    // TODO: - Pass workout details for existing HK workouts if they exist
+    var details: SQWorkoutDetails? {
+        nil
     }
     
     func workoutActiveDuration(from workout: HKWorkout) -> TimeInterval? {

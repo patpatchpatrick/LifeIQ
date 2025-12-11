@@ -35,18 +35,18 @@ extension SQWorkoutSessionable {
                 value: endDate.timeIntervalSince(startDate).readableTime()))
         }
         
-        if let outputAndUnitString, let coreOutputQuantityTypeId {
+        if let coreMetric {
             stats.append(.init(
-                title: coreOutputQuantityTypeId.displayTitle,
-                value: outputAndUnitString))
+                title: coreMetric.displayName,
+                value: coreMetric.outputAndUnitString))
         }
         
-//        if let details {
-//            switch details {
-//            case .strength(let strengthDetails):
-//                <#code#>
-//            }
-//        }
+        if let pace = getMetric(for: .sqPaceRunning) {
+            print("PTD pace metric", pace)
+            stats.append(.init(
+                title: pace.displayName,
+                value: pace.outputAndUnitString))
+        }
         
         return stats.isEmpty ? nil : stats
     }

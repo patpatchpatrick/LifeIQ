@@ -8,69 +8,111 @@
 import Foundation
 import HealthKit
 
+struct SQWorkoutMetric {
+    let quantityType: SQQuantityType
+    let displayName: String
+    let unit: SQUnit
+    let value: Double
+    
+    var outputAndUnitString: String {
+        "\(value.sqShortString) \(unit.unitString ?? "")"
+    }
+}
+
 protocol SQWorkoutSessionable {
     var id: UUID { get }
     // Core identifying info
-    var activityType: HKWorkoutActivityType { get set }
-    var coreOutputQuantityTypeId: SQQuantityType? { get set }
-    var coreOutputUnit: SQUnit? { get set }
+    var activityType: HKWorkoutActivityType { get }
+    var coreMetric: SQWorkoutMetric? { get }
     var device: SQWorkoutDevice? { get }
     
     // Time
-    var activeDuration: Double? { get set }
-    var startDate: Date? { get set }
-    var endDate: Date? { get set }
+    var activeDuration: Double? { get }
+    var startDate: Date? { get }
+    var endDate: Date? { get  }
     
     // Summary values
-    var totalCalories: Double? { get set }
+    var totalCalories: Double? { get  }
+    var averageHeartRate: Double? { get }
     
     // Workout specific Details
     var details: SQWorkoutDetails? { get set }
     
-    // Required function hooks
-    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    
-    // Derived properties (still fine as computed)
-    var coreOutput: Double? { get }
-    var outputAndUnitString: String? { get }
+    func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric?
 }
 
 // TODO: - Rename to SQWorkoutSession
 struct SQWorkoutSession: SQWorkoutSessionable {
     let id: UUID
+    let coreMetric: SQWorkoutMetric?
     let workoutSource: SQWorkoutSource
     let device: SQWorkoutDevice?
     
     // Stored properties required by SQWorkoutable
-    var activityType: HKWorkoutActivityType
-    var coreOutputQuantityTypeId: SQQuantityType?
-    var coreOutputUnit: SQUnit?
+    let activityType: HKWorkoutActivityType
     
-    var activeDuration: Double?
-    var startDate: Date?
-    var endDate: Date?
-    var totalCalories: Double?
+    let activeDuration: Double?
+    let startDate: Date?
+    let endDate: Date?
+    let totalCalories: Double?
+    let averageHeartRate: Double?
     var details: SQWorkoutDetails?
     
-    func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        workoutSource.sourcableData.sumOutputFor(quantityTypeIdentifier)
-    }
-    
-    func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        workoutSource.sourcableData.avgOutputFor(quantityTypeIdentifier)
-    }
-    
-    var coreOutput: Double? {
-        guard let coreOutputQuantityTypeId else { return nil }
-        return sumOutputFor(coreOutputQuantityTypeId)
-    }
-    
-    var outputAndUnitString: String? {
-        guard let coreOutput,
-              let coreOutputUnit else { return nil }
+    init(id: UUID, workoutSource: SQWorkoutSource, device: SQWorkoutDevice?, activityType: HKWorkoutActivityType, activeDuration: Double?, startDate: Date?, endDate: Date?, totalCalories: Double?, averageHeartRate: Double?) {
+        self.id = id
+        self.workoutSource = workoutSource
+        self.device = device
+        self.activityType = activityType
+        self.activeDuration = activeDuration
+        self.startDate = startDate
+        self.endDate = endDate
+        self.totalCalories = totalCalories
+        self.averageHeartRate = averageHeartRate
+        self.details = workoutSource.sourcableData.details
         
-        return "\(coreOutput.sqShortString) \(coreOutputUnit.unitString ?? "")"
+        if let coreOutputQuantityTypeId = activityType.coreOutputQuantityTypeId {
+            self.coreMetric = Self.getMetric(for: coreOutputQuantityTypeId, workoutSource: workoutSource)
+        } else {
+            self.coreMetric = nil
+        }
+    }
+    
+    func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric? {
+        Self.getMetric(for: quantityType, workoutSource: workoutSource)
+    }
+}
+
+// MARK: - SQWorkoutSession Build Metrics
+
+extension SQWorkoutSession {
+    
+    static func getMetric(for quantityType: SQQuantityType, workoutSource: SQWorkoutSource) -> SQWorkoutMetric? {
+        guard let unit = quantityType.unit
+        else {
+            return nil
+        }
+        
+        switch quantityType.outputCalculationType {
+        case .sum:
+            
+            guard let output = workoutSource.sourcableData.sumOutputFor(quantityType) else { return nil }
+            
+            return .init(
+                quantityType: quantityType,
+                displayName: quantityType.displayTitle,
+                unit: unit,
+                value: output)
+            
+        case .average:
+            
+            guard let output = workoutSource.sourcableData.avgOutputFor(quantityType) else { return nil }
+            
+            return .init(
+                quantityType: quantityType,
+                displayName: quantityType.displayTitle,
+                unit: unit,
+                value: output)
+        }
     }
 }
 

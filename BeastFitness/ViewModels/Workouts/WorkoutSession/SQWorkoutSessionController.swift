@@ -81,6 +81,7 @@ final class SQWorkoutSessionController: Identifiable {
         let details = SQWorkoutDetails.strength(buildStrengthDetails())
         
         if var baseSession {
+            // TODO: - PTD should we rebuild the entire workout?
             baseSession.details = details
             return baseSession
         } else {
@@ -89,16 +90,21 @@ final class SQWorkoutSessionController: Identifiable {
                 // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
                 workoutSource: .manual(.init(
                     id: UUID(),
-                    activityType: .functionalStrengthTraining)),
+                    activityType: .functionalStrengthTraining,
+                    device: nil,
+                    startDate: nil,
+                    endDate: nil,
+                    activeDuration: nil,
+                    averageHeartRate: nil,
+                    totalCalories: nil,
+                    details: details)),
                 device: nil,
                 activityType: .functionalStrengthTraining,
-                coreOutputQuantityTypeId: nil,
-                coreOutputUnit: nil,
                 activeDuration: nil,
                 startDate: Date(),
                 endDate: nil,
                 totalCalories: nil,
-                details: details
+                averageHeartRate: nil
             )
         }
     }

@@ -13,6 +13,7 @@ enum SQUnit: CaseIterable {
     case meter
     case count
     case countPerMinute
+    case secondsPerMile
     
     static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
         guard let value else { return nil }
@@ -40,6 +41,8 @@ enum SQUnit: CaseIterable {
             }
         case .countPerMinute, .count:
             return value
+        case .secondsPerMile:
+            return value
         }
     }
     
@@ -57,6 +60,8 @@ enum SQUnit: CaseIterable {
             return .countPerTime
         case .count:
             return .total
+        case .secondsPerMile:
+            return .timePerDistance
         }
     }
     
@@ -72,6 +77,8 @@ enum SQUnit: CaseIterable {
                 .count().unitDivided(by: .minute())
         case .count:
                 .count()
+        case .secondsPerMile:
+                .second().unitDivided(by: .mile())
         }
     }
     
@@ -85,5 +92,6 @@ enum SQUnitType {
     case distance
     case energy
     case countPerTime
+    case timePerDistance
     case total
 }

@@ -209,8 +209,8 @@ extension SQHealthKitManager {
                 let existing = unique[idx]
                 
                 // Prefer the workout with heart rate data
-                let existingHR = existing.avgOutputFor(.heartRate)
-                let newHR = workout.avgOutputFor(.heartRate)
+                let existingHR = existing.averageHeartRate
+                let newHR = workout.averageHeartRate
                 
                 let existingHasHR = (existingHR ?? 0) > 0
                 let newHasHR = (newHR ?? 0) > 0

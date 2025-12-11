@@ -143,15 +143,14 @@ private extension SQWorkouts {
 
     func totalOutputStrings() -> (String?, String?) {
         guard
-            let first = workouts.first,
-            let coreOutputId = first.coreOutputQuantityTypeId
+            let first = workouts.first
         else {
             return (nil, nil)
         }
 
         var totalOutput = 0.0
         workouts.forEach { workout in
-            totalOutput += workout.sumOutputFor(coreOutputId) ?? 0
+            totalOutput += workout.coreMetric?.value ?? 0
         }
 
         // If there's no meaningful output, return nil so nothing gets rendered
@@ -160,7 +159,7 @@ private extension SQWorkouts {
         }
 
         let value = totalOutput.sqShortString
-        let unit = first.coreOutputUnit?.unitString
+        let unit = first.coreMetric?.unit.unitString
         return (value, unit)
     }
 
@@ -177,7 +176,7 @@ private extension SQWorkouts {
     func totalCaloriesStrings() -> (String?, String?) {
         var totalCalories = 0.0
         workouts.forEach { workout in
-            totalCalories += workout.sumOutputFor(.activeKilocaloriesBurned) ?? 0
+            totalCalories += workout.totalCalories ?? 0
         }
 
         // No calories → no stat
@@ -186,7 +185,7 @@ private extension SQWorkouts {
         }
 
         let value = totalCalories.sqShortString
-        let unit = SQWorkoutConfig.shared.unitFor(.activeKilocaloriesBurned)?.unitString
+        let unit = SQQuantityType.activeKilocaloriesBurned.unit?.unitString
         return (value, unit)
     }
     
@@ -236,7 +235,7 @@ private extension SQWorkouts {
         workouts.forEach { workout in
             let duration = workout.activeDuration ?? 0
             totalTime += duration
-            let avgHR = workout.avgOutputFor(.heartRate) ?? 0
+            let avgHR = workout.averageHeartRate ?? 0
             totalAvgHeartRateTimesSeconds += avgHR * duration
         }
 
@@ -253,7 +252,7 @@ private extension SQWorkouts {
         }
 
         let value = averageHeartRate.sqShortString
-        let unit = SQWorkoutConfig.shared.unitFor(.heartRate)?.unitString
+        let unit = SQQuantityType.heartRate.unit?.unitString
         return (value, unit)
     }
 

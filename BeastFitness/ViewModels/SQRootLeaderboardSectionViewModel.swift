@@ -62,7 +62,7 @@ class SQRootLeaderboardSectionViewModel: NSObject {
     
     private func refreshLeaderboard(_ activityType: HKWorkoutActivityType) {
         let workoutsByType = workouts?.workoutsByActivityType ?? .init()
-        let workoutsForActivityType = (workoutsByType[activityType] ?? []).sorted { $0.coreOutput ?? 0 > $1.coreOutput ?? 0 }
+        let workoutsForActivityType = (workoutsByType[activityType] ?? [])
         var rows = [SQRootLeaderboardSectionRowViewModel]()
         for (rank, workout) in workoutsForActivityType.enumerated() {
             rows.append(.init(workout: workout, rank: rank+1))
@@ -93,7 +93,7 @@ class SQRootLeaderboardSectionRowViewModel: Identifiable, Hashable, Equatable {
             subtitle = ""
         }
         
-        self.outputString = workout.outputAndUnitString ?? ""
+        self.outputString = ""
     }
     
     func hash(into hasher: inout Hasher) {
