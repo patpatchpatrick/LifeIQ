@@ -47,5 +47,8 @@ struct SQRootTabView: View {
             .frame(maxHeight: .infinity)
             .background(Color.purple)
             .accentColor(SQColor.textPrimary.color)
+            .onOpenURL(perform: { url in
+                viewModel.deepLinkManager.handleUriDeepLink(for: url)
+            })
     }
 }

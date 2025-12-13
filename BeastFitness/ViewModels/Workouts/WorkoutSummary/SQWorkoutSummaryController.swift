@@ -43,7 +43,6 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             return
         }
         
-        print("PTD Push Edit Workout View", onPushEditWorkoutView)
         onPushEditWorkoutView(baseWorkout)
     }
 }

@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SQWorkoutsListView: View {
-    @State private var summaryControllers: [UUID: SQWorkoutSummaryController] = [:]
     @Bindable var controller: SQWorkoutsListController
     
     @ViewBuilder
@@ -57,12 +56,10 @@ struct SQWorkoutsListView: View {
             .background(SQColor.background.color)
     }
     
-    private func summaryController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {
-        if let existing = summaryControllers[workout.id] { return existing }
+    private func buildController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {
         let created = SQWorkoutSummaryController.default(workout: workout, onPushEditWorkoutView: { workout in
             self.controller.pushEditWorkoutView(for: workout)
         })
-        summaryControllers[workout.id] = created
         return created
     }
     
@@ -73,7 +70,7 @@ struct SQWorkoutsListView: View {
                 .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
                     switch route {
                     case .workoutView(let workout):
-                        SQWorkoutSummaryView(controller: summaryController(for: workout))
+                        SQWorkoutSummaryView(controller: buildController(for: workout))
                     case .editWorkout(workout: let workout):
                         SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout))
                     }

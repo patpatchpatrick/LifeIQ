@@ -12,6 +12,7 @@ import SwiftUI
 @MainActor
 final class SQRootTabViewModel {
     private(set) var dashboardViewModel: SQDashboardController
+    let deepLinkManager = SQDeepLinkManager()
     var dashboardNavigationPath = NavigationPath()
     
     private(set) var workoutsScreenController: SQWorkoutsLandingController

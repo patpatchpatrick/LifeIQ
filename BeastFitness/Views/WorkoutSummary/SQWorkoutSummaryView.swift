@@ -72,7 +72,6 @@ struct SQWorkoutSummaryView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
-                            print("PTD push edit workout view 1")
                             controller.pushEditWorkoutView()
                         } label: {
                             Label("Edit workout", systemImage: "pencil")

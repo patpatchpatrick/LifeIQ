@@ -35,6 +35,9 @@ final class SQDashboardController: SQDashboardInterface {
         hasLoadedUI = true
         
         do {
+            
+            // TODO: - PTD Handle Sleep
+//            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
             let todaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.today)
             let yesterdaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.yesterday)
             

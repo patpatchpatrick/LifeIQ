@@ -30,11 +30,9 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     
     func displayWorkoutSummary(for row: SQWorkoutsListItemViewModel) {
         navigationPath.append(SQNavRoute.WorkoutsList.workoutView(workout: row.workout))
-        print("PTD updated nav path work", navigationPath.count, navigationPath)
     }
     
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
         navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: workout))
-        print("PTD updated nav path edit", navigationPath.count, navigationPath)
     }
 }
