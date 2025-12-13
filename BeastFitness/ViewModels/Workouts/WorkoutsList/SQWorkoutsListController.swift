@@ -19,7 +19,7 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     private(set) var rows: [SQWorkoutsListItemViewModel]
     
     @MainActor
-    static var `default` = SQWorkoutsListController(state: AppState.shared.workoutsListState)
+    static let `default` = SQWorkoutsListController(state: AppState.shared.workoutsListState)
     
     init(state: WorkoutsListStating, workouts: [SQWorkoutSessionable] = []) {
         self.state = state
@@ -30,5 +30,11 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     
     func displayWorkoutSummary(for row: SQWorkoutsListItemViewModel) {
         navigationPath.append(SQNavRoute.WorkoutsList.workoutView(workout: row.workout))
+        print("PTD updated nav path work", navigationPath.count, navigationPath)
+    }
+    
+    func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
+        navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: workout))
+        print("PTD updated nav path edit", navigationPath.count, navigationPath)
     }
 }

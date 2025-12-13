@@ -37,7 +37,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return nil
         case .flightsClimbed:
             return nil
-        case .sqPaceRunning:
+        case .sqPaceRunning, .sqTotalVolumeLifted:
             return nil
         }
     }
@@ -51,7 +51,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
-        case .sqPaceRunning:
+        case .sqPaceRunning, .sqTotalVolumeLifted:
             // TODO: - PTD support strave running pace
             return nil
         }

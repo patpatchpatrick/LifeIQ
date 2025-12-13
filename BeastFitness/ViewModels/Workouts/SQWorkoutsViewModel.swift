@@ -16,7 +16,7 @@ protocol SQWorkoutsLandingInterface {
 final class SQWorkoutsLandingController: SQWorkoutsLandingInterface {
     
     @MainActor
-    static var `default` = SQWorkoutsLandingController(state: AppState.shared.workoutScreenState)
+    static let `default` = SQWorkoutsLandingController(state: AppState.shared.workoutScreenState)
     let state: WorkoutsLandingStating
     
     init(state: WorkoutsLandingStating) {

@@ -51,13 +51,16 @@ protocol NavigationStating: AnyObject {
 }
 
 struct SQNavRoute {
-    enum WorkoutsList: Hashable {
+    enum WorkoutsList: Hashable, Equatable {
         case workoutView(workout: SQWorkoutSessionable)
+        case editWorkout(workout: SQWorkoutSessionable)
         
         func hash(into hasher: inout Hasher) {
             switch self {
             case .workoutView(let workout):
                 hasher.combine("workoutView-\(workout.id)")
+            case .editWorkout(let workout):
+                hasher.combine("editWorkout-\(workout.id)")
             }
         }
         
@@ -65,6 +68,10 @@ struct SQNavRoute {
             switch (lhs, rhs) {
             case (.workoutView(let lhs), .workoutView(let rhs)):
                 return lhs.id == rhs.id
+            case (.editWorkout(let lhs), .editWorkout(let rhs)):
+                return lhs.id == rhs.id
+            default:
+                return false
             }
         }
     }

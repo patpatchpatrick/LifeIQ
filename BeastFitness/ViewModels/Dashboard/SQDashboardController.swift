@@ -23,7 +23,7 @@ final class SQDashboardController: SQDashboardInterface {
     private(set) var hasLoadedUI = false
     
     @MainActor
-    static var `default` = SQDashboardController(state: AppState.shared.dashboardState)
+    static let `default` = SQDashboardController(state: AppState.shared.dashboardState)
     
     init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager()) {
         self.state = state

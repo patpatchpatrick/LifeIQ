@@ -164,8 +164,6 @@ extension HKWorkoutActivityType {
 
         // MARK: - Strength / gym / HIIT / cardio machines
         case .elliptical,
-             .functionalStrengthTraining,
-             .traditionalStrengthTraining,
              .coreTraining,
              .highIntensityIntervalTraining,
              .mixedMetabolicCardioTraining,
@@ -176,7 +174,11 @@ extension HKWorkoutActivityType {
              .cardioDance,
              .cooldown,
              .preparationAndRecovery:
-            return .activeKilocaloriesBurned
+            return nil
+            
+        case .functionalStrengthTraining,
+             .traditionalStrengthTraining:
+            return .sqTotalVolumeLifted
 
         // MARK: - Team & court / field sports
         case .americanFootball,
@@ -195,7 +197,7 @@ extension HKWorkoutActivityType {
              .pickleball,
              .discSports,
              .paddleSports:
-            return .activeKilocaloriesBurned
+            return nil
 
         // MARK: - Racket & similar
         case .badminton,
@@ -203,14 +205,14 @@ extension HKWorkoutActivityType {
              .tableTennis,
              .racquetball,
              .squash:
-            return .activeKilocaloriesBurned
+            return nil
 
         // MARK: - Combat / martial / boxing
         case .boxing,
              .martialArts,
              .kickboxing,
              .wrestling:
-            return .activeKilocaloriesBurned
+            return nil
 
         // MARK: - Dance & mind/body
         case .dance,
@@ -222,7 +224,7 @@ extension HKWorkoutActivityType {
              .pilates,
              .flexibility,
              .barre:
-            return .activeKilocaloriesBurned
+            return nil
 
         // MARK: - Misc / outdoor activities
         case .climbing,
@@ -243,14 +245,14 @@ extension HKWorkoutActivityType {
              .curling,
              .fencing,
              .other:
-            return .activeKilocaloriesBurned
+            return nil
 
         // MARK: - Newer / catch-all
         case .transition:
-            return .activeKilocaloriesBurned
+            return nil
 
         @unknown default:
-            return .activeKilocaloriesBurned
+            return nil
         }
     }
 }

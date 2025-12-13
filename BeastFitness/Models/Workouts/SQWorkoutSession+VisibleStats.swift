@@ -42,7 +42,6 @@ extension SQWorkoutSessionable {
         }
         
         if let pace = getMetric(for: .sqPaceRunning) {
-            print("PTD pace metric", pace)
             stats.append(.init(
                 title: pace.displayName,
                 value: pace.outputAndUnitString))

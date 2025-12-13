@@ -133,4 +133,6 @@ enum SQImageSymbol: String {
     case checkmark           = "checkmark"
     case edit                = "square.and.pencil"
     case plus                = "plus"
+    case ellipsisCircle      = "ellipsis.circle"
+    case minusCircle         = "minus.circle"
 }

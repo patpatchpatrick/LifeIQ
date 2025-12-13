@@ -124,7 +124,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         rows.append(sleepQualityRow)
         
         // Notes (free text)
-        let notesMaxCharacterCount: Int = 2500
+        let notesMaxCharacterCount: Int = SQDailyCheckInStats.notesMaxChars
         let notesTextField = SQTextFieldViewModel(
             uiConfig: .standard,
             axis: .vertical,

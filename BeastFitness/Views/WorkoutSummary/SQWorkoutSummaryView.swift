@@ -8,7 +8,11 @@
 import SwiftUI
 
 struct SQWorkoutSummaryView: View {
-    @State var controller: SQWorkoutSummaryController
+    @Bindable var controller: SQWorkoutSummaryController
+    
+    var screenWidth: CGFloat { UIScreen.main.bounds.width }
+    let mainStackHorizPadding: CGFloat = .SQSpace.xxl
+    var statColumnWidth: CGFloat { (screenWidth - mainStackHorizPadding * 2.0) / CGFloat(controller.state.workoutStatRowColumnCount) }
     
     @ViewBuilder
     var userNameAndDateRow: some View {
@@ -24,7 +28,7 @@ struct SQWorkoutSummaryView: View {
                     .redacted(controller.state.userFullName == nil, reason: .placeholder)
                 
                 Text(controller.state.workoutStartDate?.formattedString(with: .full) ?? Date.now.formattedString(with: .full))
-                    .sqFont(.body)
+                    .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .redacted(controller.state.workoutStartDate == nil, reason: .placeholder)
             }
@@ -45,12 +49,11 @@ struct SQWorkoutSummaryView: View {
                 .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
                 .padding(.bottom, .SQSpace.xl)
             
-            VStack(spacing: .SQSpace.m) {
+            VStack(spacing: .SQSpace.l) {
                 ForEach(controller.state.workoutStatsRows) { row in
-                    SQWorkoutSummaryStatsRow(row: row)
+                    SQWorkoutSummaryStatsRow(row: row, columnWidth: statColumnWidth)
                 }
             }
-            .padding(.horizontal, .SQSpace.xxl)
         }
     }
     
@@ -58,22 +61,38 @@ struct SQWorkoutSummaryView: View {
     var mainScroll: some View {
         ScrollView {
             mainStack
-                .padding(.SQSpace.xl)
+                .padding(mainStackHorizPadding)
         }
     }
     var body: some View {
         mainScroll
             .background(SQColor.background.color)
             .navigationTitle("Workout summary")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            print("PTD push edit workout view 1")
+                            controller.pushEditWorkoutView()
+                        } label: {
+                            Label("Edit workout", systemImage: "pencil")
+                        }
+                    } label: {
+                        Image(systemName: SQImageSymbol.ellipsisCircle.rawValue)
+                            .imageScale(.large)
+                    }
+                }
+            }
     }
 }
 
 struct SQWorkoutSummaryStatsRow: View {
     let row: SQWorkoutSummaryStatRow
+    let columnWidth: CGFloat
     
     @ViewBuilder
     func buildStat(_ stat: SQWorkoutSessionVisibleStat) -> some View {
-        VStack(spacing: .SQSpace.s) {
+        VStack(alignment: .center, spacing: .SQSpace.s) {
             Text(stat.title)
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
@@ -82,17 +101,18 @@ struct SQWorkoutSummaryStatsRow: View {
                 .sqFont(.bodySmallBold)
                 .sqForegroundColor(.textPrimary)
         }
+        .frame(width: columnWidth)
     }
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(row.visibleStats.enumerated()), id: \.1) { (index, visibleStat) in
-                
                 buildStat(visibleStat)
-                
-                if index != row.visibleStats.count - 1 {
-                    Spacer()
-                }
+            }
+            
+            /// Left align the stats iif there aren't exactly 3
+            if row.visibleStats.count < 3 {
+                Spacer()
             }
         }
     }

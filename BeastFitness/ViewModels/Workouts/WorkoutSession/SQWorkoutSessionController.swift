@@ -14,25 +14,22 @@ final class SQWorkoutSessionController: Identifiable {
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     
-    // Optional base session if you're editing
-    private let baseSession: SQWorkoutSession?
+    @MainActor
+    static func `default`(for workout: SQWorkoutSessionable?) -> SQWorkoutSessionController {
+        Self.default.reset(with: workout)
+        return Self.default
+    }
     
     @MainActor
-    static var `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState)
+    static let `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState)
     
-    init(state: WorkoutSessionStating, session: SQWorkoutSession? = nil) {
+    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil) {
         self.state = state
-        self.baseSession = session
-        
-        if
-            let session,
-            case let .strength(details) = session.details
-        {
-            let exercises = details.exercises.map { SQWorkoutSessionExerciseViewModel(from: $0) }
-            self.state.updateExercises(to: exercises)
-        } else {
-            self.state.updateExercises(to: [])
-        }
+        reset(with: session)
+    }
+    
+    private func reset(with workout: SQWorkoutSessionable?) {
+        state.load(workout: workout)
     }
     
     // MARK: - Derived
@@ -56,12 +53,15 @@ final class SQWorkoutSessionController: Identifiable {
     ) {
         let vm = SQWorkoutSessionExerciseViewModel(
             name: rawExercise.name,
-            muscleGroup: rawExercise.primaryMuscles.first ?? .unknown
+            muscleGroup: rawExercise.primaryMuscles.first ?? .unknown,
+            onRemoveExercise: { [weak self] exerciseId in
+                self?.removeExercise(exerciseId)
+            }
         )
         state.appendExercises([vm])
     }
     
-    func removeExercise(_ exercise: SQWorkoutSessionExerciseViewModel) {
+    func removeExercise(_ exercise: UUID) {
         state.removeExercises([exercise])
     }
     
@@ -80,33 +80,31 @@ final class SQWorkoutSessionController: Identifiable {
     func buildSession() -> SQWorkoutSession {
         let details = SQWorkoutDetails.strength(buildStrengthDetails())
         
-        if var baseSession {
-            // TODO: - PTD should we rebuild the entire workout?
-            baseSession.details = details
-            return baseSession
-        } else {
-            return SQWorkoutSession(
+        let baseWorkout = state.baseWorkout
+        let title = state.titleTextField?.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
+        return SQWorkoutSession(
+            id: baseWorkout?.id ?? UUID(),
+            title: title,
+            workoutSource: .manual(.init(
                 id: UUID(),
-                // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
-                workoutSource: .manual(.init(
-                    id: UUID(),
-                    activityType: .functionalStrengthTraining,
-                    device: nil,
-                    startDate: nil,
-                    endDate: nil,
-                    activeDuration: nil,
-                    averageHeartRate: nil,
-                    totalCalories: nil,
-                    details: details)),
-                device: nil,
                 activityType: .functionalStrengthTraining,
-                activeDuration: nil,
-                startDate: Date(),
-                endDate: nil,
-                totalCalories: nil,
-                averageHeartRate: nil
-            )
-        }
+                device: nil,
+                startDate: baseWorkout?.startDate,
+                endDate: baseWorkout?.endDate,
+                activeDuration: baseWorkout?.activeDuration,
+                averageHeartRate: baseWorkout?.averageHeartRate,
+                totalCalories: baseWorkout?.totalCalories,
+                details: details)),
+            device: baseWorkout?.device,
+            activityType: baseWorkout?.activityType ?? .functionalStrengthTraining,
+            activeDuration: baseWorkout?.activeDuration,
+            startDate: baseWorkout?.startDate,
+            endDate: baseWorkout?.endDate,
+            totalCalories: baseWorkout?.totalCalories,
+            averageHeartRate: baseWorkout?.averageHeartRate
+        )
     }
 }
 
@@ -118,18 +116,21 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     
     var name: String
     var muscleGroup: SQMuscleGroup
+    let onRemoveExercise: ((UUID) -> Void)?
     private(set) var sets: [SQWorkoutSessionSetViewModel]
     
     init(
         id: UUID = UUID(),
         name: String,
         muscleGroup: SQMuscleGroup,
-        sets: [SQWorkoutSessionSetViewModel]
+        sets: [SQWorkoutSessionSetViewModel],
+        onRemoveExercise: ((UUID) -> Void)?
     ) {
         self.id = id
         self.name = name
         self.muscleGroup = muscleGroup
         self.sets = sets
+        self.onRemoveExercise = onRemoveExercise
         renumberSets()
     }
     
@@ -139,7 +140,8 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         muscleGroup: SQMuscleGroup,
         defaultSetCount: Int = 3,
         defaultReps: Int = 8,
-        defaultWeight: Double = 50
+        defaultWeight: Double = 50,
+        onRemoveExercise: ((UUID) -> Void)?
     ) {
         let setVMs = (1...defaultSetCount).map { index in
             SQWorkoutSessionSetViewModel(
@@ -152,11 +154,12 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         self.init(
             name: name,
             muscleGroup: muscleGroup,
-            sets: setVMs
+            sets: setVMs,
+            onRemoveExercise: onRemoveExercise
         )
     }
     
-    convenience init(from model: SQStrengthExercise) {
+    convenience init(from model: SQStrengthExercise, onRemoveExercise: ((UUID) -> Void)?) {
         let setVMs = model.sets
             .sorted { $0.setIndex < $1.setIndex }
             .map { SQWorkoutSessionSetViewModel(from: $0) }
@@ -165,7 +168,8 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
             id: model.id,
             name: model.name,
             muscleGroup: model.muscleGroup,
-            sets: setVMs
+            sets: setVMs,
+            onRemoveExercise: onRemoveExercise
         )
     }
     
@@ -223,6 +227,10 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
                 .sorted { $0.setIndex < $1.setIndex }
                 .map { $0.asModel() }
         )
+    }
+    
+    func deleteExercise() {
+        onRemoveExercise?(self.id)
     }
 }
 

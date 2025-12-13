@@ -18,7 +18,7 @@ final class SQWorkoutsListItemViewModel: Identifiable, Hashable, Equatable {
     init(workout: SQWorkoutSessionable) {
         self.workout = workout
         let activityType = workout.activityType
-        title = "\(activityType.name)"
+        title = workout.title
         
         let subtitle: String? = {
             var subtitleComponents = [String]()

@@ -30,6 +30,7 @@ extension SQWorkoutSourcable {
     func buildWorkout(id: UUID = UUID(), source: SQWorkoutSource) -> SQWorkoutSessionable {
         SQWorkoutSession(
             id: id,
+            title: nil,
             workoutSource: source,
             device: device,
             activityType: activityType,

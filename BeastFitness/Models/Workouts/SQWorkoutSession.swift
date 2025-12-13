@@ -15,7 +15,18 @@ struct SQWorkoutMetric {
     let value: Double
     
     var outputAndUnitString: String {
-        "\(value.sqShortString) \(unit.unitString ?? "")"
+        "\(displayableValue(for: quantityType, value: value)) \(unit.unitString ?? "")"
+    }
+    
+    func displayableValue(for quantityType: SQQuantityType, value: Double) -> String {
+        switch quantityType {
+            
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate, .sqTotalVolumeLifted:
+            return value.sqShortString
+            
+        case .sqPaceRunning:
+            return value.timeCode() /// eg 7:43
+        }
     }
 }
 
@@ -26,10 +37,12 @@ protocol SQWorkoutSessionable {
     var coreMetric: SQWorkoutMetric? { get }
     var device: SQWorkoutDevice? { get }
     
+    var title: String { get }
+    
     // Time
     var activeDuration: Double? { get }
     var startDate: Date? { get }
-    var endDate: Date? { get  }
+    var endDate: Date? { get }
     
     // Summary values
     var totalCalories: Double? { get  }
@@ -44,6 +57,7 @@ protocol SQWorkoutSessionable {
 // TODO: - Rename to SQWorkoutSession
 struct SQWorkoutSession: SQWorkoutSessionable {
     let id: UUID
+    let title: String
     let coreMetric: SQWorkoutMetric?
     let workoutSource: SQWorkoutSource
     let device: SQWorkoutDevice?
@@ -58,8 +72,9 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     let averageHeartRate: Double?
     var details: SQWorkoutDetails?
     
-    init(id: UUID, workoutSource: SQWorkoutSource, device: SQWorkoutDevice?, activityType: HKWorkoutActivityType, activeDuration: Double?, startDate: Date?, endDate: Date?, totalCalories: Double?, averageHeartRate: Double?) {
+    init(id: UUID, title: String?, workoutSource: SQWorkoutSource, device: SQWorkoutDevice?, activityType: HKWorkoutActivityType, activeDuration: Double?, startDate: Date?, endDate: Date?, totalCalories: Double?, averageHeartRate: Double?) {
         self.id = id
+        self.title = title ?? activityType.name
         self.workoutSource = workoutSource
         self.device = device
         self.activityType = activityType
@@ -80,6 +95,13 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric? {
         Self.getMetric(for: quantityType, workoutSource: workoutSource)
     }
+}
+
+// MARK: - Workout Session Limits
+
+extension SQWorkoutSession {
+    /// Limits
+    static let titleMaxChars: Int = 500
 }
 
 // MARK: - SQWorkoutSession Build Metrics

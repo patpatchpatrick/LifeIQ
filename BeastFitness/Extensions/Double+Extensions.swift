@@ -72,21 +72,21 @@ extension Double {
     /// Example: 165432308 → "5y 3d 22h 5m 8s"
     func readableTime() -> String {
         var remaining = Int(self)
-
+        
         let years   = remaining / (60 * 60 * 24 * 365)
         remaining  %= (60 * 60 * 24 * 365)
-
+        
         let days    = remaining / (60 * 60 * 24)
         remaining  %= (60 * 60 * 24)
-
+        
         let hours   = remaining / (60 * 60)
         remaining  %= (60 * 60)
-
+        
         let minutes = remaining / 60
         let seconds = remaining % 60
-
+        
         var parts: [String] = []
-
+        
         if years   > 0 { parts.append("\(years)y") }
         if days    > 0 { parts.append("\(days)d") }
         if hours   > 0 { parts.append("\(hours)h") }
@@ -94,7 +94,35 @@ extension Double {
         if seconds > 0 || parts.isEmpty {
             parts.append("\(seconds)s")
         }
-
+        
         return parts.joined(separator: " ")
     }
+    
+    /// Converts a duration into a human-friendly time code:
+        /// - Days > 0  →  "D:HH:MM:SS"  (fully padded)
+        /// - Hours > 0 →  "H:M:SS"      (H and M not padded)
+        /// - Hours = 0 →  "M:SS"        (M not padded)
+        func timeCode() -> String {
+            let total = Int(self)
+            
+            let days = total / 86_400
+            let hours = (total % 86_400) / 3600
+            let minutes = (total % 3600) / 60
+            let seconds = total % 60
+            
+            if days > 0 {
+                // D:HH:MM:SS — fully padded for readability
+                return "\(days):" +
+                    String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+            }
+            
+            if hours > 0 {
+                // H:M:SS — no leading zeros on hours or minutes
+                return "\(hours):\(minutes):" +
+                    String(format: "%02d", seconds)
+            }
+            
+            // M:SS — minutes unpadded, seconds padded
+            return "\(minutes):" + String(format: "%02d", seconds)
+        }
 }

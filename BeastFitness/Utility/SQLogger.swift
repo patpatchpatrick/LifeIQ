@@ -13,6 +13,8 @@ enum SQLogContext {
     case dailyCheckIn
     case deepLink
     case dataProcessing
+    case workoutSession
+    case workoutSummary
 }
 
 final class SQLogger {

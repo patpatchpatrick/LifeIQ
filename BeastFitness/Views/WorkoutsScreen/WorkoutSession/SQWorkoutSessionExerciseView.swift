@@ -7,77 +7,130 @@
 
 import SwiftUI
 
+/// Emits multiple rows into the parent List:
+/// - Exercise header
+/// - Set rows (with swipe to delete)
+/// - "Add Set" row
 struct SQWorkoutSessionExerciseRow: View {
     @Bindable var viewModel: SQWorkoutSessionExerciseViewModel
-    
+
+    // MARK: - Styling
+
+    private var headerInsets: EdgeInsets {
+        .init(top: .SQSpace.m, leading: .SQSpace.xl, bottom: .SQSpace.s, trailing: .SQSpace.xl)
+    }
+
+    private var setInsets: EdgeInsets {
+        .init(top: .SQSpace.s, leading: .SQSpace.xl, bottom: .SQSpace.s, trailing: .SQSpace.xl)
+    }
+
+    private var addSetInsets: EdgeInsets {
+        .init(top: .SQSpace.s, leading: .SQSpace.xl, bottom: .SQSpace.m, trailing: .SQSpace.xl)
+    }
+
+    // MARK: - Body
+
     var body: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            // Header
-            HStack {
-                Text(viewModel.name)
-                    .sqFont(.title3)
-                    .sqForegroundColor(.textPrimary)
-                
-                Spacer()
-                
-                if viewModel.isCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(SQColor.colorGreenDarkBorder.color)
-                }
-            }
-            
-            // Sets
-            VStack(spacing: .SQSpace.s) {
-                ForEach(viewModel.sets) { setVM in
-                    HStack(spacing: .SQSpace.s) {
-                        Text("#\(setVM.setIndex)")
-                            .sqFont(.bodySmallBold)
-                            .sqForegroundColor(.textSecondary)
-                            .frame(width: 28, alignment: .leading)
-                        
-                        // Reps
-                        SQTextField(viewModel: setVM.repsTextFieldViewModel)
-                            .frame(width: 60)
-                        
-                        // Weight
-                        SQTextField(viewModel: setVM.weightTextFieldViewModel)
-                            .frame(width: 80)
-                        
-                        Text("lbs")
-                            .sqFont(.bodySmall)
-                            .sqForegroundColor(.textSecondary)
-                        
-                        Spacer()
-                        
-                        Button {
-                            setVM.isCompleted.toggle()
-                        } label: {
-                            Image(systemName: setVM.isCompleted ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(
-                                    setVM.isCompleted
-                                    ? SQColor.colorGreenDarkBorder.color
-                                    : SQColor.textSecondary.color
-                                )
+        // Header row
+        headerRow
+            .listRowInsets(headerInsets)
+            .listRowBackground(SQColor.background.color)
+
+        // Set rows
+        ForEach(viewModel.sets) { setVM in
+            setRow(setVM)
+                .listRowInsets(setInsets)
+                .listRowBackground(SQColor.backgroundSecondary.color)
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        withAnimation {
+                            viewModel.removeSet(setVM)
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
                 }
+        }
+
+        // Add set row
+        addSetRow
+            .listRowInsets(addSetInsets)
+            .listRowBackground(SQColor.background.color)
+    }
+
+    // MARK: - Rows
+
+    private var headerRow: some View {
+        HStack {
+            Text(viewModel.name)
+                .sqFont(.title3)
+                .sqForegroundColor(.textPrimary)
+
+            Spacer()
+
+            Menu {
+                Button(role: .destructive) {
+                    viewModel.deleteExercise()
+                } label: {
+                    Label("Delete exercise", systemImage: SQImageSymbol.minusCircle.rawValue)
+                }
+            } label: {
+                Image(systemName: SQImageSymbol.ellipsisCircle.rawValue)
+                    .imageScale(.large)
             }
-            .padding(.SQSpace.m)
-            .sqBackgroundColor(.backgroundSecondary)
-            .cornerRadius(12)
-            
+        }
+    }
+
+    private func setRow(_ setVM: SQWorkoutSessionSetViewModel) -> some View {
+        HStack(spacing: .SQSpace.s) {
+            Text("#\(setVM.setIndex)")
+                .sqFont(.bodySmallBold)
+                .sqForegroundColor(.textSecondary)
+                .frame(width: 28, alignment: .leading)
+
+            // Reps
+            SQTextField(viewModel: setVM.repsTextFieldViewModel)
+                .frame(width: 60)
+
+            // Weight
+            SQTextField(viewModel: setVM.weightTextFieldViewModel)
+                .frame(width: 80)
+
+            Text("lbs")
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textSecondary)
+
+            Spacer()
+
+            Button {
+                setVM.isCompleted.toggle()
+            } label: {
+                Image(systemName: setVM.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(
+                        setVM.isCompleted
+                        ? SQColor.colorGreenDarkBorder.color
+                        : SQColor.textSecondary.color
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .contentShape(Rectangle()) // keeps swipes + taps reliable around textfields
+    }
+
+    private var addSetRow: some View {
+        HStack {
             SQButton(
                 style: .secondary,
-                shouldHugContent: true,
+                shouldHugContent: false,
                 title: "Add Set",
-                icon: .plus) {
+                icon: .plus
+            ) {
+                withAnimation {
                     viewModel.addSet()
                 }
+            }
+
+            Spacer()
         }
-        .padding(.SQSpace.m)
-        .sqBackgroundColor(.background)
-        .cornerRadius(16)
     }
 }
-

@@ -26,7 +26,7 @@ final class SQExercisesListController: SQExercisesListInterface {
     private(set) var onExerciseSelected: ((SQRawStrengthExercise) -> Void)? = nil
     
     @MainActor
-    static var `default` = SQWorkoutsListController(state: AppState.shared.workoutsListState)
+    static let `default` = SQExercisesListController(state: AppState.shared.exercisesListState)
     
     init(state: ExercisesListStating, onExerciseSelected: ((SQRawStrengthExercise) -> Void)? = nil) {
         self.state = state

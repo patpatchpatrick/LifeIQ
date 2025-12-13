@@ -20,6 +20,9 @@ struct SQDailyCheckInStats: Codable {
     let sleepHours: Float?             /// Hours per day
     let sleepQualityScore: Float?      /// 1–5
     let notes: String?                 /// Free text
+    
+    /// Limits
+    static let notesMaxChars: Int = 2500
 }
 
 enum SQDailyCheckInField {
