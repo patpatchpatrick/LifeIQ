@@ -22,7 +22,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         
         switch quantityTypeIdentifier {
-        case .sqPaceRunning, .sqTotalVolumeLifted:
+        case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
             return nil
             
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate:
@@ -36,7 +36,12 @@ struct SQHKWorkout: SQWorkoutSourcable {
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         
         switch quantityTypeIdentifier {
+            
+        case .unknown:
+            return nil
+            
         case .sqPaceRunning, .sqTotalVolumeLifted:
+            
             guard  let totalDistance = sumOutputFor(.distanceWalkingRunning), let activeDuration else { return nil }
             return activeDuration / totalDistance
             

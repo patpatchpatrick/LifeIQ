@@ -5,6 +5,6 @@
 //  Created by Patrick Doyle on 12/9/25.
 //
 
-struct SQWorkoutDevice {
+struct SQWorkoutDevice: Codable {
     let name: String
 }

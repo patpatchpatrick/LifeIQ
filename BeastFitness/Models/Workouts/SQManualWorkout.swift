@@ -32,7 +32,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
         case .activeKilocaloriesBurned:
             return totalCalories
             
-        case .sqPaceRunning:
+        case .sqPaceRunning, .unknown:
             return nil
             
         case .sqTotalVolumeLifted:
@@ -48,7 +48,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         // TODO: - Implement this for all Quantity Types that are supported with manual workouts
         switch quantityTypeIdentifier {
-        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .sqPaceRunning:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .sqPaceRunning, .unknown:
             return nil
         case .heartRate:
             return averageHeartRate

@@ -33,6 +33,9 @@
 		F61591F72EE8F00F00223A63 /* HKDevice+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61591F62EE8F00C00223A63 /* HKDevice+Extensions.swift */; };
 		F61591F92EE9D98F00223A63 /* SQWorkoutSession+VisibleStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61591F82EE9D98A00223A63 /* SQWorkoutSession+VisibleStats.swift */; };
 		F61591FB2EEA48E100223A63 /* SQWorkoutSession+Mocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61591FA2EEA48DE00223A63 /* SQWorkoutSession+Mocks.swift */; };
+		F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592042EEE16AA00223A63 /* SQWorkoutManager.swift */; };
+		F61592072EEE179200223A63 /* SQWorkoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592062EEE179000223A63 /* SQWorkoutService.swift */; };
+		F615920D2EEE19C100223A63 /* SQWorkoutSessionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F615920C2EEE19BD00223A63 /* SQWorkoutSessionEntity.swift */; };
 		F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */; };
 		F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */; };
 		F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */; };
@@ -169,6 +172,9 @@
 		F61591F62EE8F00C00223A63 /* HKDevice+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKDevice+Extensions.swift"; sourceTree = "<group>"; };
 		F61591F82EE9D98A00223A63 /* SQWorkoutSession+VisibleStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkoutSession+VisibleStats.swift"; sourceTree = "<group>"; };
 		F61591FA2EEA48DE00223A63 /* SQWorkoutSession+Mocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkoutSession+Mocks.swift"; sourceTree = "<group>"; };
+		F61592042EEE16AA00223A63 /* SQWorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutManager.swift; sourceTree = "<group>"; };
+		F61592062EEE179000223A63 /* SQWorkoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutService.swift; sourceTree = "<group>"; };
+		F615920C2EEE19BD00223A63 /* SQWorkoutSessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionEntity.swift; sourceTree = "<group>"; };
 		F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsViewModel.swift; sourceTree = "<group>"; };
 		F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsScreenState.swift; sourceTree = "<group>"; };
 		F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsLandingView.swift; sourceTree = "<group>"; };
@@ -265,6 +271,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F602DA532EC6ADA300404878 /* Weekly Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Weekly Summary"; sourceTree = "<group>"; };
+		F61592082EEE18D800223A63 /* Firestore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Firestore; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -362,6 +369,7 @@
 		F602DA492EC6A5EF00404878 /* Workouts */ = {
 			isa = PBXGroup;
 			children = (
+				F615920C2EEE19BD00223A63 /* SQWorkoutSessionEntity.swift */,
 				F61591FA2EEA48DE00223A63 /* SQWorkoutSession+Mocks.swift */,
 				F602DA6B2EC92BAF00404878 /* SQWorkouts.swift */,
 				F602DA642EC789F300404878 /* Metrics */,
@@ -608,6 +616,7 @@
 		F6A848942CB4ABCF00B09AD5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F61592082EEE18D800223A63 /* Firestore */,
 				F679BDD12EE7C0B200A2F249 /* Shared */,
 				F6ABC3F52EDFBED000D3E679 /* DailyCheckIn */,
 				F6ABC3602EDE654200D3E679 /* User */,
@@ -647,6 +656,7 @@
 		F6A848A72CB619E900B09AD5 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				F61592042EEE16AA00223A63 /* SQWorkoutManager.swift */,
 				F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */,
 				F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */,
 				F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */,
@@ -702,6 +712,7 @@
 		F6ABC35B2EDE592A00D3E679 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F61592062EEE179000223A63 /* SQWorkoutService.swift */,
 				F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */,
 				F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */,
 			);
@@ -837,6 +848,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				F602DA532EC6ADA300404878 /* Weekly Summary */,
+				F61592082EEE18D800223A63 /* Firestore */,
 			);
 			name = BeastFitness;
 			productName = BeastFitness;
@@ -1009,6 +1021,8 @@
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F602DA522EC6A9F900404878 /* SQDashboardWorkoutSummaryTotalsSection.swift in Sources */,
 				F679BA492EE4F3ED00A2F249 /* SQWorkoutsListItem.swift in Sources */,
+				F615920D2EEE19C100223A63 /* SQWorkoutSessionEntity.swift in Sources */,
+				F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F679BDD92EE7D49500A2F249 /* SQExercisesListController.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
@@ -1018,6 +1032,7 @@
 				F639B7E62ED79CEA00199C69 /* SQDailyCheckInTextEntryViewModel.swift in Sources */,
 				F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */,
 				F6F4D4162ED61B6C00ECE0BC /* SQDailyCheckInRowSegmentedControlViewModel.swift in Sources */,
+				F61592072EEE179200223A63 /* SQWorkoutService.swift in Sources */,
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */,

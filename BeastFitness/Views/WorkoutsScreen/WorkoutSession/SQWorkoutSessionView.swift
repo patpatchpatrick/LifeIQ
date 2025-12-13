@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SQWorkoutSessionView: View {
     let isBeingDisplayedWithinNavStack: Bool
     @Bindable var controller: SQWorkoutSessionController
+    @Environment(\.modelContext) private var modelContext
 
     // MARK: - Sections
 
@@ -70,8 +72,10 @@ struct SQWorkoutSessionView: View {
     // MARK: - Actions
 
     private func finishWorkout() {
-        print("PTD Funish workout")
-        // PTD: Save workout to CoreData + Firestore later
+        print("PTD Finish workout")
+        Task {
+            await controller.saveWorkout(to: modelContext)
+        }
     }
 
     // MARK: - Body

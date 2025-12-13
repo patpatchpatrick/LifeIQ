@@ -7,7 +7,7 @@
 
 import HealthKit
 
-enum SQUnit: CaseIterable {
+enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case kilocalorie
     case mile
     case meter
@@ -15,6 +15,7 @@ enum SQUnit: CaseIterable {
     case countPerMinute
     case secondsPerMile
     case pound
+    case unknown
     
     static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
         guard let value else { return nil }
@@ -46,6 +47,8 @@ enum SQUnit: CaseIterable {
             return value
         case .pound:
             return value
+        case .unknown:
+            return value
         }
     }
     
@@ -67,6 +70,8 @@ enum SQUnit: CaseIterable {
             return .timePerDistance
         case .pound:
             return .weight
+        case .unknown:
+            return .unknown
         }
     }
     
@@ -86,6 +91,8 @@ enum SQUnit: CaseIterable {
                 .second().unitDivided(by: .mile())
         case .pound:
                 .pound()
+        case .unknown:
+            nil
         }
     }
     
@@ -95,11 +102,13 @@ enum SQUnit: CaseIterable {
             return hkUnit?.unitString
         case .secondsPerMile:
             return "/mi"
+        case .unknown:
+            return nil
         }
     }
 }
 
-enum SQUnitType {
+enum SQUnitType: String, Codable, UnfrozenEnum {
     case time
     case distance
     case energy
@@ -107,4 +116,5 @@ enum SQUnitType {
     case timePerDistance
     case total
     case weight
+    case unknown
 }

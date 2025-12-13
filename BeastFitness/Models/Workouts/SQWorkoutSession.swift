@@ -8,7 +8,7 @@
 import Foundation
 import HealthKit
 
-struct SQWorkoutMetric {
+struct SQWorkoutMetric: Codable {
     let quantityType: SQQuantityType
     let displayName: String
     let unit: SQUnit
@@ -21,7 +21,7 @@ struct SQWorkoutMetric {
     func displayableValue(for quantityType: SQQuantityType, value: Double) -> String {
         switch quantityType {
             
-        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate, .sqTotalVolumeLifted:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate, .sqTotalVolumeLifted, .unknown:
             return value.sqShortString
             
         case .sqPaceRunning:
@@ -32,11 +32,11 @@ struct SQWorkoutMetric {
 
 protocol SQWorkoutSessionable {
     var id: UUID { get }
-    // Core identifying info
+    
+    // Identifying / display
     var activityType: HKWorkoutActivityType { get }
     var coreMetric: SQWorkoutMetric? { get }
     var device: SQWorkoutDevice? { get }
-    
     var title: String { get }
     
     // Time
@@ -44,15 +44,24 @@ protocol SQWorkoutSessionable {
     var startDate: Date? { get }
     var endDate: Date? { get }
     
-    // Summary values
-    var totalCalories: Double? { get  }
+    // Summary
+    var totalCalories: Double? { get }
     var averageHeartRate: Double? { get }
     
-    // Workout specific Details
+    // Details
     var details: SQWorkoutDetails? { get set }
-    
     func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric?
+    
+    // 🔥 Firestore sync fields
+    var createdAt: Date? { get set }
+    var updatedAt: Date? { get set }
+    var deletedAt: Date? { get set }     // soft delete
+    var syncStatus: SQSyncStatus { get set }
+    
+    /// Optional Firestore document id if you ever diverge from UUID string.
+    var remoteId: String? { get set }
 }
+
 
 // TODO: - Rename to SQWorkoutSession
 struct SQWorkoutSession: SQWorkoutSessionable {
@@ -62,7 +71,6 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     let workoutSource: SQWorkoutSource
     let device: SQWorkoutDevice?
     
-    // Stored properties required by SQWorkoutable
     let activityType: HKWorkoutActivityType
     
     let activeDuration: Double?
@@ -72,7 +80,30 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     let averageHeartRate: Double?
     var details: SQWorkoutDetails?
     
-    init(id: UUID, title: String?, workoutSource: SQWorkoutSource, device: SQWorkoutDevice?, activityType: HKWorkoutActivityType, activeDuration: Double?, startDate: Date?, endDate: Date?, totalCalories: Double?, averageHeartRate: Double?) {
+    // 🔥 Sync fields
+    var createdAt: Date?
+    var updatedAt: Date?
+    var deletedAt: Date?
+    var syncStatus: SQSyncStatus
+    var remoteId: String?
+    
+    init(
+        id: UUID,
+        title: String? = nil,
+        workoutSource: SQWorkoutSource,
+        device: SQWorkoutDevice?,
+        activityType: HKWorkoutActivityType,
+        activeDuration: Double?,
+        startDate: Date?,
+        endDate: Date?,
+        totalCalories: Double?,
+        averageHeartRate: Double?,
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil,
+        deletedAt: Date? = nil,
+        syncStatus: SQSyncStatus = .pendingUpload,
+        remoteId: String? = nil
+    ) {
         self.id = id
         self.title = title ?? activityType.name
         self.workoutSource = workoutSource
@@ -85,6 +116,12 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         self.averageHeartRate = averageHeartRate
         self.details = workoutSource.sourcableData.details
         
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.syncStatus = syncStatus
+        self.remoteId = remoteId
+        
         if let coreOutputQuantityTypeId = activityType.coreOutputQuantityTypeId {
             self.coreMetric = Self.getMetric(for: coreOutputQuantityTypeId, workoutSource: workoutSource)
         } else {
@@ -96,6 +133,7 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         Self.getMetric(for: quantityType, workoutSource: workoutSource)
     }
 }
+
 
 // MARK: - Workout Session Limits
 
@@ -138,13 +176,34 @@ extension SQWorkoutSession {
     }
 }
 
-enum SQWorkoutDetails {
+enum SQWorkoutDetails: Codable {
     case strength(SQStrengthDetails)
-    /// Add more activtiies
-    // case other(... ) if you want
+
+    private enum CodingKeys: String, CodingKey { case type, payload }
+    private enum Kind: String, Codable { case strength }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(Kind.self, forKey: .type)
+        switch type {
+        case .strength:
+            let payload = try container.decode(SQStrengthDetails.self, forKey: .payload)
+            self = .strength(payload)
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .strength(let details):
+            try container.encode(Kind.strength, forKey: .type)
+            try container.encode(details, forKey: .payload)
+        }
+    }
 }
 
-struct SQStrengthDetails: Hashable {
+
+struct SQStrengthDetails: Codable, Hashable {
     var muscleGroups: [SQMuscleGroup]
     var exercises: [SQStrengthExercise]
 
@@ -153,7 +212,7 @@ struct SQStrengthDetails: Hashable {
     }
 }
 
-struct SQStrengthExercise: Identifiable, Hashable {
+struct SQStrengthExercise: Codable, Identifiable, Hashable {
     let id: UUID
     var name: String
     var muscleGroup: SQMuscleGroup
@@ -164,7 +223,7 @@ struct SQStrengthExercise: Identifiable, Hashable {
     }
 }
 
-struct SQStrengthSet: Identifiable, Hashable {
+struct SQStrengthSet: Codable, Identifiable, Hashable {
     let id: UUID
     var setIndex: Int       // 1, 2, 3...
     var reps: Int

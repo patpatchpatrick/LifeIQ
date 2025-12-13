@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @Observable
 @MainActor
 final class SQWorkoutSessionController: Identifiable {
     let id = UUID()
+    private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     
@@ -23,8 +25,9 @@ final class SQWorkoutSessionController: Identifiable {
     @MainActor
     static let `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState)
     
-    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil) {
+    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
         self.state = state
+        self.workoutManager = workoutManager
         reset(with: session)
     }
     
@@ -105,6 +108,17 @@ final class SQWorkoutSessionController: Identifiable {
             totalCalories: baseWorkout?.totalCalories,
             averageHeartRate: baseWorkout?.averageHeartRate
         )
+    }
+    
+    func saveWorkout(to modelContext: ModelContext) async {
+        print("PTD workout controller save workout")
+        let workout = buildSession()
+        do {
+            try await workoutManager.saveWorkout(workout: workout, to: modelContext)
+        } catch {
+            // TODO: - PTD Display modal error when saving workout
+            SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
+        }
     }
 }
 

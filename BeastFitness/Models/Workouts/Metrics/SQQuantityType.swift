@@ -7,7 +7,7 @@
 
 import HealthKit
 
-enum SQQuantityType {
+enum SQQuantityType: String, Codable, UnfrozenEnum {
     // Distance types
     case distanceWalkingRunning
     case distanceCycling
@@ -26,6 +26,7 @@ enum SQQuantityType {
 
     // Health metrics
     case heartRate
+    case unknown
 }
 
 enum SQOutputCalculationType {
@@ -63,7 +64,7 @@ extension SQQuantityType {
         case .heartRate:
             return .heartRate
             
-        case .sqPaceRunning, .sqTotalVolumeLifted:
+        case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
             /// Custom quantity type
             return nil
             
@@ -72,7 +73,7 @@ extension SQQuantityType {
     
     var outputCalculationType: SQOutputCalculationType {
         switch self {
-        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .unknown:
             return .sum
             
         case .sqPaceRunning, .heartRate:
@@ -118,6 +119,9 @@ extension SQQuantityType {
             
         case .sqTotalVolumeLifted:
             return .pound
+            
+        case .unknown:
+            return .unknown
         }
     }
     
@@ -135,6 +139,8 @@ extension SQQuantityType {
                 return "Pace"
             case .sqTotalVolumeLifted:
                 return "Volume"
+            case .unknown:
+                return "Unknown"
             }
         }
 }
