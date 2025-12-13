@@ -87,11 +87,13 @@ final class SQWorkoutSessionController: Identifiable {
         let title = state.titleTextField?.text.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
+        let workoutId = baseWorkout?.id ?? UUID().uuidString
+        print("PTD Saving workout with title", title, baseWorkout?.id)
+        
         return SQWorkoutSession(
-            id: baseWorkout?.id ?? UUID(),
             title: title,
             workoutSource: .manual(.init(
-                id: UUID(),
+                sourceId: workoutId,
                 activityType: .functionalStrengthTraining,
                 device: nil,
                 startDate: baseWorkout?.startDate,

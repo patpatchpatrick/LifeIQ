@@ -40,7 +40,7 @@ final class SQWorkoutSessionEntity {
     var remoteId: String?
     
     init(from session: SQWorkoutSessionable) {
-        self.workoutId = session.id.uuidString
+        self.workoutId = session.id
         self.title = session.title
         self.activityTypeRaw = Int(session.activityType.rawValue)
         
@@ -82,16 +82,44 @@ final class SQWorkoutSessionEntity {
         remoteId = session.remoteId
     }
     
-    func toSession(workoutSource: SQWorkoutSource) -> SQWorkoutSession {
+    func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
+        print("PTD workout to session", workoutSource?.sourcableData.sourceId)
         let activityType = HKWorkoutActivityType(rawValue: UInt(activityTypeRaw)) ?? .other
         
+        let device = SQWorkoutDevice(name: deviceRaw ?? "")
         let details = Self.decodeDetails(detailsData)
         
+        var workoutSource = workoutSource
+        
+        if workoutSource == nil {
+            guard let details else {
+                /// If we aren't given the 3rd party workout source data, then we expect the workout to have manual details saved. If both are missing, then something went wrong.
+                SQLogger.shared.log("Missing both workout source and details when attempting to decode workout.", .error, context: .workoutSession)
+                throw SQStandardError.standard
+            }
+            
+            workoutSource = .manual(.init(
+                sourceId: workoutId,
+                activityType: activityType,
+                device: device,
+                startDate: startDate,
+                endDate: endDate,
+                activeDuration: activeDuration,
+                averageHeartRate: averageHeartRate,
+                totalCalories: totalCalories,
+                details: details))
+        }
+        
+        guard let workoutSource else {
+            assertionFailure("We always expect a workout source here. Something went wrong.")
+            SQLogger.shared.log("Workout source required to get workout", .error, context: .workoutSession)
+            throw SQStandardError.standard
+        }
+        
         return SQWorkoutSession(
-            id: UUID(uuidString: workoutId) ?? UUID(),
             title: title,
             workoutSource: workoutSource,
-            device: SQWorkoutDevice(name: deviceRaw ?? ""), // adjust init to your enum
+            device: device,
             activityType: activityType,
             activeDuration: activeDuration,
             startDate: startDate,
@@ -123,26 +151,35 @@ extension SQWorkoutSessionEntity {
 
 
 extension SQWorkoutSessionEntity {
-    static func get(id: UUID, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
-        let key = id.uuidString
+    static func get(id: String, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
+        let key = id
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
             predicate: #Predicate { $0.workoutId == key }
         )
-        return try context.fetch(descriptor).first?.toSession(workoutSource: workoutSource)
+        
+        let firstItem = try context.fetch(descriptor).first
+        
+        print("PTD CORE Getting ID", id, firstItem)
+        
+        return try firstItem?.toSession(workoutSource: workoutSource)
     }
     
     static func upsert(session: SQWorkoutSessionable, in context: ModelContext) throws {
-        let key = session.id.uuidString
+        let key = session.id
+        print("PTD CORE Saving ID", key)
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
             predicate: #Predicate { $0.workoutId == key }
         )
         
         if let existing = try context.fetch(descriptor).first {
+            print("PTD CORE Saving ID exists", key)
             existing.update(from: session)
         } else {
+            print("PTD CORE Saving ID does not exists", key)
             context.insert(SQWorkoutSessionEntity(from: session))
         }
         
         try context.save()
+        print("PTD CORE Upsert success", key)
     }
 }

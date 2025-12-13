@@ -9,6 +9,7 @@ import Foundation
 import HealthKit
 
 protocol SQWorkoutSourcable {
+    var sourceId: String { get }
     var activityType: HKWorkoutActivityType { get }
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
@@ -27,9 +28,8 @@ extension SQWorkoutSourcable {
     }
     
     // Default mapper: sourcable → session (source-agnostic)
-    func buildWorkout(id: UUID = UUID(), source: SQWorkoutSource) -> SQWorkoutSessionable {
+    func buildWorkout(source: SQWorkoutSource) -> SQWorkoutSessionable {
         SQWorkoutSession(
-            id: id,
             title: nil,
             workoutSource: source,
             device: device,
@@ -59,8 +59,8 @@ enum SQWorkoutSource {
         }
     }
     
-    func buildWorkout(id: UUID = UUID()) -> SQWorkoutSessionable {
-        sourcableData.buildWorkout(id: id, source: self)
+    func buildWorkout() -> SQWorkoutSessionable {
+        sourcableData.buildWorkout(source: self)
     }
 }
 

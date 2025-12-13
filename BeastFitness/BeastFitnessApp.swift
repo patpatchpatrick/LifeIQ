@@ -17,7 +17,8 @@ struct BeastFitnessApp: App {
             SQRootTabView(appState: .shared)
         }
         .modelContainer(for: [
-            SQDailyCheckInEntity.self
+            SQDailyCheckInEntity.self,
+            SQWorkoutSessionEntity.self
         ])
     }
 }

@@ -10,7 +10,7 @@ import HealthKit
 
 struct SQManualWorkout: SQWorkoutSourcable {
     // Core identity
-    let id: UUID
+    let sourceId: String
     let activityType: HKWorkoutActivityType
     let device: SQWorkoutDevice?
     let startDate: Date?
@@ -68,7 +68,7 @@ extension SQManualWorkout {
         let activeDuration: Double = 3600
         
         return SQManualWorkout(
-            id: UUID(),
+            sourceId: UUID().uuidString,
             activityType: .running,
             device: SQWorkoutDevice(name: "iPhone Mock"),
             startDate: now.addingTimeInterval(-activeDuration),

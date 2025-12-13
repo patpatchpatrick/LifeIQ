@@ -20,14 +20,16 @@ protocol SQDashboardInterface {
 final class SQDashboardController: SQDashboardInterface {
     let state: DashboardStating
     let dailyCheckInManager: SQDailyCheckInManaging
+    let workoutManager: SQWorkoutManaging
     private(set) var hasLoadedUI = false
     
     @MainActor
     static let `default` = SQDashboardController(state: AppState.shared.dashboardState)
     
-    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager()) {
+    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
         self.state = state
         self.dailyCheckInManager = dailyCheckInManager
+        self.workoutManager = workoutManager
     }
     
     func loadUI(for context: ModelContext) async {
@@ -38,14 +40,14 @@ final class SQDashboardController: SQDashboardInterface {
             
             // TODO: - PTD Handle Sleep
 //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
-            let todaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.today)
-            let yesterdaysWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.yesterday)
+            let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
+            let yesterdaysWorkouts = try await workoutManager.getWorkouts(for: .yesterday, modelContext: context)
             
-            let lastWeekWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.pastWeek)
-            let weekBeforeLastWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.weekBeforeLast)
+            let lastWeekWorkouts = try await workoutManager.getWorkouts(for: .pastWeek, modelContext: context)
+            let weekBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .weekBeforeLast, modelContext: context)
             
-            let lastYearWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.pastYear)
-            let yearBeforeLastWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(.yearBeforeLast)
+            let lastYearWorkouts = try await workoutManager.getWorkouts(for: .pastYear, modelContext: context)
+            let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             
             var dashboardRows = [SQDashboardRowViewModel]()
             

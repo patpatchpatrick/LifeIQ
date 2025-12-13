@@ -10,7 +10,8 @@ import Foundation
 
 protocol SQWorkoutManaging {
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws
-    func getWorkout(id: UUID, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
+    func getWorkout(id: String, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
+    func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
@@ -18,6 +19,31 @@ final class SQWorkoutManager: SQWorkoutManaging {
     
     init(workoutService: SQWorkoutServicing.Type = SQWorkoutService.self) {
         self.workoutService = workoutService
+    }
+    
+    func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
+        let healthKitWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(timeRange)
+        
+        // TODO: - PTD Update this system to gracefully handle errors and properly sync with cloud
+        var allWorkouts = [SQWorkoutSessionable]()
+        for hkWorkout in healthKitWorkouts {
+            do {
+                print("PTD HK Workout Id", hkWorkout.uuid.uuidString)
+                let savedWorkout = try getWorkout(id: hkWorkout.uuid.uuidString, workoutSource: .hkWorkout(.init(hkWorkout: hkWorkout)), modelContext: modelContext)
+                print("PTD Get workout successful", savedWorkout == nil)
+                if let savedWorkout {
+                    print("PTD Get workout non-nil, appending saved workout", savedWorkout)
+                    allWorkouts.append(savedWorkout)
+                } else {
+                    allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
+                }
+            } catch {
+                print("PTD Get workout failed, appending hk workout")
+                allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
+            }
+        }
+        
+        return allWorkouts
     }
     
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws {
@@ -42,7 +68,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         }
     }
     
-    func getWorkout(id: UUID, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
+    func getWorkout(id: String, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
         return try SQWorkoutSessionEntity.get(id: id, context: modelContext, workoutSource: workoutSource)
     }
 }

@@ -9,6 +9,12 @@ import Foundation
 import HealthKit
 
 struct SQStravaWorkout: Codable, SQWorkoutSourcable {
+    var sourceId: String {
+        guard let id else {
+            return "strava-unknown"
+        }
+        return "\(id)"
+    }
     let id: Double?
     let sport_type: SQStravaSportType
     let elapsed_time: Double? // seconds
@@ -52,7 +58,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
         case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
-            // TODO: - PTD support strava running pace
+            // TODO: - PTD support strave running pace
             return nil
         }
     }

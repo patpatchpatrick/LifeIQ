@@ -31,7 +31,7 @@ struct SQWorkoutMetric: Codable {
 }
 
 protocol SQWorkoutSessionable {
-    var id: UUID { get }
+    var id: String { get }
     
     // Identifying / display
     var activityType: HKWorkoutActivityType { get }
@@ -65,7 +65,7 @@ protocol SQWorkoutSessionable {
 
 // TODO: - Rename to SQWorkoutSession
 struct SQWorkoutSession: SQWorkoutSessionable {
-    let id: UUID
+    let id: String
     let title: String
     let coreMetric: SQWorkoutMetric?
     let workoutSource: SQWorkoutSource
@@ -88,7 +88,6 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     var remoteId: String?
     
     init(
-        id: UUID,
         title: String? = nil,
         workoutSource: SQWorkoutSource,
         device: SQWorkoutDevice?,
@@ -104,7 +103,7 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         syncStatus: SQSyncStatus = .pendingUpload,
         remoteId: String? = nil
     ) {
-        self.id = id
+        self.id = workoutSource.sourcableData.sourceId
         self.title = title ?? activityType.name
         self.workoutSource = workoutSource
         self.device = device

@@ -9,9 +9,11 @@ import Foundation
 import HealthKit
 
 struct SQHKWorkout: SQWorkoutSourcable {
+    let sourceId: String
     let hkWorkout: HKWorkout
     
     init(hkWorkout: HKWorkout) {
+        self.sourceId = hkWorkout.uuid.uuidString
         self.hkWorkout = hkWorkout
     }
     
