@@ -15,23 +15,27 @@ final class SQWorkoutSessionController: Identifiable {
     private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
+    var onDismiss: () -> Void
     
     @MainActor
-    static func `default`(for workout: SQWorkoutSessionable?) -> SQWorkoutSessionController {
+    static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
+        Self.default.onDismiss = onDismiss
         Self.default.reset(with: workout)
         return Self.default
     }
     
     @MainActor
-    static let `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState)
+    static let `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState, onDismiss: {})
     
-    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
+    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager(), onDismiss: @escaping () -> Void) {
         self.state = state
         self.workoutManager = workoutManager
+        self.onDismiss = onDismiss
         reset(with: session)
     }
     
     private func reset(with workout: SQWorkoutSessionable?) {
+        print("PTD Resetting workout session with workout", workout)
         state.load(workout: workout)
     }
     
@@ -88,7 +92,6 @@ final class SQWorkoutSessionController: Identifiable {
         
         // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
         let workoutId = baseWorkout?.id ?? UUID().uuidString
-        print("PTD Saving workout with title", title, baseWorkout?.id)
         
         return SQWorkoutSession(
             title: title,
@@ -117,6 +120,8 @@ final class SQWorkoutSessionController: Identifiable {
         let workout = buildSession()
         do {
             try await workoutManager.saveWorkout(workout: workout, to: modelContext)
+            state.workoutUpdated(workout: workout)
+            onDismiss()
         } catch {
             // TODO: - PTD Display modal error when saving workout
             SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)

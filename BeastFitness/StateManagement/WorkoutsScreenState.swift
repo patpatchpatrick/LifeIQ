@@ -31,7 +31,7 @@ protocol WorkoutsLandingStating: AnyObject {
     }
     
     func changeTab(to tab: NavigationState.Tab) {
-        hub.events.send(.changeTab(tab))
+        hub.domainEvents.send(.changeTab(tab))
     }
     
     func toggleWorkoutSessionSheetVisibility(_ isVisible: Bool) {
@@ -39,7 +39,13 @@ protocol WorkoutsLandingStating: AnyObject {
     }
     
     func displayWorkoutSessionSheet() {
-        workoutSessionViewModel = .init(state: AppState.shared.workoutSessionState)
+        workoutSessionViewModel = .init(
+            state: AppState.shared.workoutSessionState,
+            onDismiss: { [weak self] in
+                guard let self else { return }
+                self.toggleWorkoutSessionSheetVisibility(false)
+                
+            })
         isWorkoutSessionSheetVisible = true
     }
 }

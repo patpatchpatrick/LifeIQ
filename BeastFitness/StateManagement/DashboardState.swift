@@ -49,7 +49,7 @@ protocol DashboardStating: AnyObject {
     }
     
     func changeTab(to tab: NavigationState.Tab) {
-        hub.events.send(.changeTab(tab))
+        hub.domainEvents.send(.changeTab(tab))
     }
     
     func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel]) {

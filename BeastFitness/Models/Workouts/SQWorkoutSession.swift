@@ -97,6 +97,7 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         endDate: Date?,
         totalCalories: Double?,
         averageHeartRate: Double?,
+        details: SQWorkoutDetails? = nil,
         createdAt: Date? = nil,
         updatedAt: Date? = nil,
         deletedAt: Date? = nil,
@@ -113,7 +114,7 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         self.endDate = endDate
         self.totalCalories = totalCalories
         self.averageHeartRate = averageHeartRate
-        self.details = workoutSource.sourcableData.details
+        self.details = details ?? workoutSource.sourcableData.details
         
         self.createdAt = createdAt
         self.updatedAt = updatedAt

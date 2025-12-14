@@ -33,7 +33,7 @@ protocol NavigationStating: AnyObject {
         self.hub = hub
         self.selectedTab = .home
         
-        hub.events.sink { [weak self] event in
+        hub.domainEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
             case .changeTab(let tab):
@@ -46,7 +46,7 @@ protocol NavigationStating: AnyObject {
     }
     
     func changeTab(to tab: Tab) {
-        hub.events.send(.changeTab(tab))
+        hub.domainEvents.send(.changeTab(tab))
     }
 }
 

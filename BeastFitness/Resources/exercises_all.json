@@ -5600,6 +5600,26 @@
     ]
   },
   {
+    "category" : "strength",
+    "equipment" : "other",
+    "force" : "pull",
+    "id" : "BodyWeight_Pull_Ups",
+    "instructions" : [
+      "Start by gripping the bar slightly wider than shoulder-width with your palms facing away. Hang fully with straight arms, shoulders relaxed, and legs still. Before pulling, engage your shoulders by pulling them down and back (think “put your shoulder blades in your back pockets”). Keep your core tight and avoid swinging or kipping.",
+      "Pull your chest toward the bar by driving your elbows down and back, not by yanking with your arms. Aim to bring your chin over the bar while keeping your neck neutral (don’t crane it forward). Lower yourself under control until your arms are fully straight again—this completes one clean rep. Quality matters more than speed or reps."
+    ],
+    "level" : "intermediate",
+    "mechanic" : "compound",
+    "name" : "Pull Ups",
+    "primaryMuscles" : [
+      "lats"
+    ],
+    "secondaryMuscles" : [
+      "biceps",
+      "middle back"
+    ]
+  },
+  {
     "category" : "stretching",
     "equipment" : "body only",
     "force" : "pull",
@@ -6352,6 +6372,34 @@
       "biceps",
       "middle back",
       "shoulders"
+    ]
+  },
+  {
+    "category": "strength",
+    "equipment": "cable",
+    "force": "pull",
+    "id": "Lat_Pulldown",
+    "images": [
+      "Lat_Pulldown/0.jpg",
+      "Lat_Pulldown/1.jpg"
+    ],
+    "instructions": [
+      "Sit at a lat pulldown machine and adjust the thigh pad so it secures your legs firmly. Grab the bar with a shoulder-width grip, palms facing forward, and start with your arms fully extended overhead.",
+      "Brace your core and pull your shoulder blades down and back to initiate the movement. Pull the bar down toward your upper chest by driving your elbows down.",
+      "Pause briefly at the bottom while squeezing your lats, keeping your chest tall and torso mostly upright.",
+      "Slowly return the bar to the starting position with control until your arms are fully extended, allowing the lats to stretch.",
+      "Repeat for the desired number of repetitions without using momentum."
+    ],
+    "level": "beginner",
+    "mechanic": "compound",
+    "name": "Lat Pulldown",
+    "primaryMuscles": [
+      "lats"
+    ],
+    "secondaryMuscles": [
+        "biceps",
+        "middle back",
+        "shoulders"
     ]
   },
   {

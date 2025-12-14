@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQWorkoutsListView: View {
     @Bindable var controller: SQWorkoutsListController
+    @State private var summaryControllerCache: [String: SQWorkoutSummaryController] = [:]
     
     @ViewBuilder
     var mainStack: some View {
@@ -56,12 +57,27 @@ struct SQWorkoutsListView: View {
             .background(SQColor.background.color)
     }
     
-    private func buildController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {
-        let created = SQWorkoutSummaryController.default(workout: workout, onPushEditWorkoutView: { workout in
-            self.controller.pushEditWorkoutView(for: workout)
-        })
-        return created
-    }
+    private func cachedSummaryController(
+            for workout: SQWorkoutSessionable
+        ) -> SQWorkoutSummaryController {
+            let key = workout.id
+
+            if let cached = summaryControllerCache[key] {
+                return cached
+            }
+
+            print("PTD Build Controller (view cache miss): \(key)")
+
+            let created = SQWorkoutSummaryController.default(
+                workout: workout,
+                onPushEditWorkoutView: { workout in
+                    controller.pushEditWorkoutView(for: workout)
+                }
+            )
+
+            summaryControllerCache[key] = created
+            return created
+        }
     
     @ViewBuilder
     var navStack: some View {
@@ -70,9 +86,9 @@ struct SQWorkoutsListView: View {
                 .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
                     switch route {
                     case .workoutView(let workout):
-                        SQWorkoutSummaryView(controller: buildController(for: workout))
+                        SQWorkoutSummaryView(controller: cachedSummaryController(for: workout))
                     case .editWorkout(workout: let workout):
-                        SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout))
+                        SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout, onDismiss: { self.controller.popView() }))
                     }
                 }
         }

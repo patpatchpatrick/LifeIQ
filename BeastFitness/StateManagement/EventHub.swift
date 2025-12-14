@@ -12,7 +12,12 @@ enum DomainEvent {
     case changeTab(NavigationState.Tab)
 }
 
+enum WorkoutEvent {
+    case workoutUpdated(SQWorkoutSessionable)
+}
+
 @MainActor
 final class EventHub {
-    let events = PassthroughSubject<DomainEvent, Never>()
+    let domainEvents = PassthroughSubject<DomainEvent, Never>()
+    let workoutEvents = PassthroughSubject<WorkoutEvent, Never>()
 }

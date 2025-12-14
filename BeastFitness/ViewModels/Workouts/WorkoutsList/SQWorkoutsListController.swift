@@ -35,4 +35,10 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
         navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: workout))
     }
+    
+    func popView() {
+        if !navigationPath.isEmpty {
+            navigationPath.removeLast()
+        }
+    }
 }

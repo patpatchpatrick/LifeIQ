@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import Combine
 
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {
@@ -23,6 +24,9 @@ protocol WorkoutSummaryStating: AnyObject {
 
 @MainActor
 @Observable final class WorkoutSummaryState: WorkoutSummaryStating {
+    private let hub: EventHub
+    private var cancellables = Set<AnyCancellable>()
+    
     private(set) var currentWorkout: (any SQWorkoutSessionable)?
     private(set) var user: SQUser?
     private(set) var userFullName: String?
@@ -31,13 +35,27 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var workoutStatsRows: [SQWorkoutSummaryStatRow] = []
     private(set) var workoutStatRowColumnCount: Int = 3
     
-    private let hub: EventHub
-    
     init(hub: EventHub) {
         self.hub = hub
+        handleEventSubscriptions()
+    }
+    
+    private func handleEventSubscriptions() {
+        hub.workoutEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .workoutUpdated(let workout):
+                if workout.id == currentWorkout?.id {
+                    SQLogger.shared.log("Refreshing workout with id: \(workout.id) and title: \(workout.title)", .debug, context: .workoutSummary)
+                    self.load(workout: workout)
+                }
+            }
+            
+        }.store(in: &cancellables)
     }
     
     func load(workout: any SQWorkoutSessionable) {
+        SQLogger.shared.log("Refreshing workout 2 with id: \(workout.id) and title: \(workout.title)", .debug, context: .workoutSummary)
         currentWorkout = workout
         user = SQUser.mock
         userFullName = SQUser.mock.name // PTD replace with user's name

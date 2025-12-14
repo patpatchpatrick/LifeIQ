@@ -24,6 +24,7 @@ protocol WorkoutSessionStating: AnyObject {
     func removeExercises(_ exercises: Set<UUID>)
     
     func load(workout: SQWorkoutSessionable?)
+    func workoutUpdated(workout: SQWorkoutSessionable)
 }
 
 @MainActor
@@ -94,5 +95,9 @@ protocol WorkoutSessionStating: AnyObject {
         withAnimation {
             self.exercises.removeAll(where: { exercises.contains($0.id) })
         }
+    }
+    
+    func workoutUpdated(workout: any SQWorkoutSessionable) {
+        hub.workoutEvents.send(.workoutUpdated(workout))
     }
 }
