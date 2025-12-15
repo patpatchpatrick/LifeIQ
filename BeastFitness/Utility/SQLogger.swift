@@ -15,6 +15,8 @@ enum SQLogContext {
     case dataProcessing
     case workoutSession
     case workoutSummary
+    case workoutList
+    case dashboard
 }
 
 final class SQLogger {

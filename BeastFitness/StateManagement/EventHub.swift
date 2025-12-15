@@ -13,7 +13,7 @@ enum DomainEvent {
 }
 
 enum WorkoutEvent {
-    case workoutUpdated(SQWorkoutSessionable)
+    case workoutsUpdated([String: SQWorkoutSessionable]) /// [Workout ID : Workout]
 }
 
 @MainActor

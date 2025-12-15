@@ -98,6 +98,6 @@ protocol WorkoutSessionStating: AnyObject {
     }
     
     func workoutUpdated(workout: any SQWorkoutSessionable) {
-        hub.workoutEvents.send(.workoutUpdated(workout))
+        hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
     }
 }

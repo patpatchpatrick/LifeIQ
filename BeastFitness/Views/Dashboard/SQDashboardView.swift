@@ -69,6 +69,7 @@ struct SQDashboardView: View {
             .task {
                 await controller.loadUI(for: modelContext)
             }
+            .task { controller.attach(context: modelContext) }
             .sheet(isPresented: .init(
                 get: { controller.state.isDailyCheckInSheetVisible },
                 set: { isVisible in controller.state.toggleDailyCheckInSheetVisibility(isVisible) })) {

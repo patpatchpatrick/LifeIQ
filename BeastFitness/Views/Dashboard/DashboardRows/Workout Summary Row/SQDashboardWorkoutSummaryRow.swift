@@ -17,10 +17,14 @@ struct SQDashboardWorkoutSummaryRow: View {
                 SQDashboardWorkoutSummaryDailyCheckInSection(viewModel: dailyCheckInSummarySectionViewModel)
             }
             
-            SQDashboardWorkoutSummaryTotalsSection(viewModel: viewModel.totalsSection)
-                .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
+            if let totalsSection = viewModel.totalsSection {
+                SQDashboardWorkoutSummaryTotalsSection(viewModel: totalsSection)
+                    .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)
+            }
             
-            SQDashboardWorkoutSummaryWorkoutsSection(viewModel: viewModel.workoutsSection)
+            if let workoutsSection = viewModel.workoutsSection {
+                SQDashboardWorkoutSummaryWorkoutsSection(viewModel: workoutsSection)
+            }
         }
     }
     

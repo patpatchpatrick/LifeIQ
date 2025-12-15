@@ -83,7 +83,6 @@ final class SQWorkoutSessionEntity {
     }
     
     func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
-        print("PTD workout to session", workoutSource?.sourcableData.sourceId)
         let activityType = HKWorkoutActivityType(rawValue: UInt(activityTypeRaw)) ?? .other
         
         let device = SQWorkoutDevice(name: deviceRaw ?? "")
@@ -160,37 +159,24 @@ extension SQWorkoutSessionEntity {
         
         let firstItem = try context.fetch(descriptor).first
         
-        if let workoutItem = firstItem {
-            print("PTD CORE Getting ID", id, firstItem)
-        }
-        
         let workoutSession = try firstItem?.toSession(workoutSource: workoutSource)
-        
-        if workoutSession != nil {
-            print("PTD Has Workout Session", workoutSession?.details)
-        }
         
         return workoutSession
     }
     
     static func upsert(session: SQWorkoutSessionable, in context: ModelContext) throws {
         let key = session.id
-        print("PTD CORE Saving ID", key)
+        
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
             predicate: #Predicate { $0.workoutId == key }
         )
         
         if let existing = try context.fetch(descriptor).first {
-            print("PTD CORE Saving ID exists", key)
-
             existing.update(from: session)
         } else {
-            print("PTD CORE Saving ID does not exists", key)
-            print("PTD SAVING WORKOUT", session)
             context.insert(SQWorkoutSessionEntity(from: session))
         }
         
         try context.save()
-        print("PTD CORE Upsert success", key)
     }
 }

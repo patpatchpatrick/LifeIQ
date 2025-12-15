@@ -9,12 +9,12 @@ import SwiftUI
 
 @MainActor
 protocol WorkoutsListStating: AnyObject {
-
+    var hub: EventHub { get }
 }
 
 @MainActor
 @Observable final class WorkoutsListState: WorkoutsListStating {
-    private let hub: EventHub
+    let hub: EventHub
     
     init(hub: EventHub) {
         self.hub = hub

@@ -66,8 +66,6 @@ struct SQWorkoutsListView: View {
                 return cached
             }
 
-            print("PTD Build Controller (view cache miss): \(key)")
-
             let created = SQWorkoutSummaryController.default(
                 workout: workout,
                 onPushEditWorkoutView: { workout in

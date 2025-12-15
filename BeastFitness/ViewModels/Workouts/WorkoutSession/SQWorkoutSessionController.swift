@@ -35,7 +35,6 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     private func reset(with workout: SQWorkoutSessionable?) {
-        print("PTD Resetting workout session with workout", workout)
         state.load(workout: workout)
     }
     
@@ -84,7 +83,7 @@ final class SQWorkoutSessionController: Identifiable {
         )
     }
     
-    func buildSession() -> SQWorkoutSession {
+    func buildSession() -> SQWorkoutSessionable {
         let details = SQWorkoutDetails.strength(buildStrengthDetails())
         
         let baseWorkout = state.baseWorkout
@@ -93,30 +92,21 @@ final class SQWorkoutSessionController: Identifiable {
         // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
         let workoutId = baseWorkout?.id ?? UUID().uuidString
         
-        return SQWorkoutSession(
-            title: title,
-            workoutSource: .manual(.init(
-                sourceId: workoutId,
-                activityType: .functionalStrengthTraining,
-                device: nil,
-                startDate: baseWorkout?.startDate,
-                endDate: baseWorkout?.endDate,
-                activeDuration: baseWorkout?.activeDuration,
-                averageHeartRate: baseWorkout?.averageHeartRate,
-                totalCalories: baseWorkout?.totalCalories,
-                details: details)),
-            device: baseWorkout?.device,
+        let manualWorkout = SQManualWorkout(
+            sourceId: workoutId,
             activityType: baseWorkout?.activityType ?? .functionalStrengthTraining,
-            activeDuration: baseWorkout?.activeDuration,
+            device: baseWorkout?.device,
             startDate: baseWorkout?.startDate,
             endDate: baseWorkout?.endDate,
+            activeDuration: baseWorkout?.activeDuration,
+            averageHeartRate: baseWorkout?.averageHeartRate,
             totalCalories: baseWorkout?.totalCalories,
-            averageHeartRate: baseWorkout?.averageHeartRate
-        )
+            details: details)
+        
+        return SQWorkoutSource.manual(manualWorkout).buildWorkout()
     }
     
     func saveWorkout(to modelContext: ModelContext) async {
-        print("PTD workout controller save workout")
         let workout = buildSession()
         do {
             try await workoutManager.saveWorkout(workout: workout, to: modelContext)

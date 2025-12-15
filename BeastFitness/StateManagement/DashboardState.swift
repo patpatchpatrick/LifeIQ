@@ -10,6 +10,8 @@ import Combine
 
 @MainActor
 protocol DashboardStating: AnyObject {
+    var hub: EventHub { get }
+    
     /// State
     ///
     var rowViewModels: [SQDashboardRowViewModel] { get }
@@ -34,7 +36,7 @@ protocol DashboardStating: AnyObject {
 
 @MainActor
 @Observable final class DashboardState: DashboardStating {
-    private let hub: EventHub
+    let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
     private(set) var isDailyCheckInSheetVisible: Bool = false
     private(set) var isWorkoutListSheetVisible: Bool = false

@@ -44,10 +44,10 @@ protocol WorkoutSummaryStating: AnyObject {
         hub.workoutEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .workoutUpdated(let workout):
-                if workout.id == currentWorkout?.id {
-                    SQLogger.shared.log("Refreshing workout with id: \(workout.id) and title: \(workout.title)", .debug, context: .workoutSummary)
-                    self.load(workout: workout)
+            case .workoutsUpdated(let workoutMap):
+                if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap [currentWorkoutId] {
+                    SQLogger.shared.log("Refreshing workout with id: \(updatedWorkout.id) and title: \(updatedWorkout.title)", .debug, context: .workoutSummary)
+                    self.load(workout: updatedWorkout)
                 }
             }
             

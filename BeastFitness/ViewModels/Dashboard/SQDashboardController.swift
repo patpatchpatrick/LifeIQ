@@ -11,17 +11,23 @@ import SwiftData
 
 @MainActor
 protocol SQDashboardInterface {
-    func loadUI(for context: ModelContext) async
+    func loadUI(for context: ModelContext, shouldForceRefresh: Bool) async
     func refreshUI(for context: ModelContext) async
     func displayDailyCheckInSheet(for context: ModelContext) async
 }
 
 @Observable @MainActor
 final class SQDashboardController: SQDashboardInterface {
+    private var cancellables = Set<AnyCancellable>()
     let state: DashboardStating
     let dailyCheckInManager: SQDailyCheckInManaging
     let workoutManager: SQWorkoutManaging
     private(set) var hasLoadedUI = false
+    /// A context-bound refresh callback installed by `attach(context:)`.
+       ///
+       /// This is intentionally optional: if the controller is not attached yet,
+       /// event-driven refreshes become a no-op rather than trying to guess a context.
+    private(set) var refreshUiWithContext: (() -> Void)?
     
     @MainActor
     static let `default` = SQDashboardController(state: AppState.shared.dashboardState)
@@ -30,10 +36,32 @@ final class SQDashboardController: SQDashboardInterface {
         self.state = state
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
+        self.handleEventSubscriptions(hub: state.hub)
     }
     
-    func loadUI(for context: ModelContext) async {
-        guard !hasLoadedUI else { return }
+    private func handleEventSubscriptions(hub: EventHub) {
+        hub.workoutEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .workoutsUpdated:
+                self.refreshUiWithContext?()
+            }
+        }.store(in: &cancellables)
+    }
+    
+    /// Attaches the controller to a `ModelContext` so event-driven refreshes can reload the dashboard.
+       ///
+       /// Call this from the view layer once you have access to `@Environment(\.modelContext)`.
+       /// You may call it multiple times (e.g., if the environment changes); the latest context wins.
+    func attach(context: ModelContext) {
+        refreshUiWithContext = { [weak self] in
+            guard let self else { return }
+            Task { await self.loadUI(for: context, shouldForceRefresh: true) }
+        }
+    }
+    
+    func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
+        guard !hasLoadedUI || shouldForceRefresh else { return }
         hasLoadedUI = true
         
         do {
@@ -73,12 +101,8 @@ final class SQDashboardController: SQDashboardInterface {
     }
     
     func refreshUI(for context: ModelContext) async {
-        let currentViewModels = state.rowViewModels
-        
-        if let dailyWorkoutSummaryRow = currentViewModels.first(where: { $0.rowId == .dailySummary }) as? SQDashboardWorkoutSummaryRowViewModel {
-            let config = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
-            dailyWorkoutSummaryRow.refresh(config: config)
-        }
+        SQLogger.shared.log("Refreshing dashboard", .debug, context: .dashboard)
+        refreshUiWithContext?()
     }
     
     func displayDailyCheckInSheet(for context: ModelContext) async {

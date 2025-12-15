@@ -28,17 +28,17 @@ final class SQWorkoutManager: SQWorkoutManaging {
         var allWorkouts = [SQWorkoutSessionable]()
         for hkWorkout in healthKitWorkouts {
             do {
-                print("PTD HK Workout Id", hkWorkout.uuid.uuidString)
+                
                 let savedWorkout = try getWorkout(id: hkWorkout.uuid.uuidString, workoutSource: .hkWorkout(.init(hkWorkout: hkWorkout)), modelContext: modelContext)
-                print("PTD Get workout successful", savedWorkout == nil)
+                
                 if let savedWorkout {
-                    print("PTD Get workout non-nil, appending saved workout", savedWorkout)
                     allWorkouts.append(savedWorkout)
                 } else {
                     allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
                 }
+                
             } catch {
-                print("PTD Get workout failed, appending hk workout")
+                
                 allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
             }
         }
@@ -49,7 +49,6 @@ final class SQWorkoutManager: SQWorkoutManaging {
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws {
         
         do {
-            print("PTD attempt save workout Swift Data")
             try SQWorkoutSessionEntity.upsert(session: workout, in: modelContext)
         } catch {
             SQLogger.shared.log(

@@ -85,11 +85,8 @@ extension SQDailyCheckInEntity {
         )
 
         if let existing = try context.fetch(descriptor).first {
-            print("PTD Update Existing entity")
             existing.update(from: stats)
         } else {
-            print("PTD Insert new entity")
-            // ✅ Create new entry
             let entity = SQDailyCheckInEntity(from: stats)
             context.insert(entity)
         }

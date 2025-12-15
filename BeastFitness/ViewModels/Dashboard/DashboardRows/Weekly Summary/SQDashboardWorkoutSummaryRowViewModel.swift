@@ -9,26 +9,25 @@ import SwiftUI
 
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
-    let sectionTitle: String
+    private(set) var sectionTitle: String = ""
     private(set) var dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil
-    let totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel
-    let workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel
-    
-    let workouts: [SQWorkoutSessionable]
-    let priorWorkouts: [SQWorkoutSessionable]
+    private(set) var totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel? = nil
+    private(set) var workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel? = nil
+    private(set) var workouts: [SQWorkoutSessionable] = []
+    private(set) var priorWorkouts: [SQWorkoutSessionable] = []
     
     init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
+        super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
+        refresh(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
+    }
+    
+    func refresh(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
+        self.dailyCheckInSummarySectionViewModel = config.dailyCheckInSummarySectionViewModel
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
         self.sectionTitle = config.timeRange.title
         self.workoutsSection = .init(workouts: workouts)
         self.totalsSection = .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
-        super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
-        refresh(config: config)
-    }
-    
-    func refresh(config: SQDashboardWorkoutSummaryRowConfig) {
-        self.dailyCheckInSummarySectionViewModel = config.dailyCheckInSummarySectionViewModel
     }
 }
 

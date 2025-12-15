@@ -62,8 +62,6 @@ protocol SQWorkoutSessionable {
     var remoteId: String? { get set }
 }
 
-
-// TODO: - Rename to SQWorkoutSession
 struct SQWorkoutSession: SQWorkoutSessionable {
     let id: String
     let title: String
@@ -131,6 +129,14 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     
     func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric? {
         Self.getMetric(for: quantityType, workoutSource: workoutSource)
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: SQWorkoutSession, rhs: SQWorkoutSession) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

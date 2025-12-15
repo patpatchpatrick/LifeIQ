@@ -72,7 +72,6 @@ struct SQWorkoutSessionView: View {
     // MARK: - Actions
 
     private func finishWorkout() {
-        print("PTD Finish workout")
         Task {
             await controller.saveWorkout(to: modelContext)
         }

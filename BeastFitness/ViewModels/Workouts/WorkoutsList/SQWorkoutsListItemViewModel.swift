@@ -10,13 +10,21 @@ import SwiftUI
 @Observable @MainActor
 final class SQWorkoutsListItemViewModel: Identifiable, Hashable, Equatable {
     let id = UUID()
-    let workout: SQWorkoutSessionable
-    let title: String
-    let subtitle: String?
-    let workoutImageSymbol: SQImageSymbol
+    var workout: SQWorkoutSessionable {
+        didSet {
+            refreshUI(with: workout)
+        }
+    }
+    private(set) var title: String = ""
+    private(set) var subtitle: String?
+    private(set) var workoutImageSymbol: SQImageSymbol? = nil
     
     init(workout: SQWorkoutSessionable) {
         self.workout = workout
+        refreshUI(with: workout)
+    }
+    
+    private func refreshUI(with workout: SQWorkoutSessionable) {
         let activityType = workout.activityType
         title = workout.title
         
