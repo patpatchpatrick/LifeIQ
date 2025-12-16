@@ -26,6 +26,7 @@ final class SQWorkoutSessionController: Identifiable {
 
     var isTimerRunning: Bool = false
 
+    private var workoutStartDate: Date?
     private var runningStartDate: Date?          // when the current "segment" began
     private var accumulatedElapsed: TimeInterval = 0  // total elapsed excluding current segment
 
@@ -40,6 +41,7 @@ final class SQWorkoutSessionController: Identifiable {
     func startTimerIfNeeded() {
         guard runningStartDate == nil, accumulatedElapsed == 0 else { return }
 
+        workoutStartDate = Date()
         accumulatedElapsed = 0
         elapsedTime = 0
         resumeTimer()
@@ -82,6 +84,7 @@ final class SQWorkoutSessionController: Identifiable {
     }
 
     func stopTimer() {
+        workoutStartDate = nil
         runningStartDate = nil
         accumulatedElapsed = 0
         elapsedTime = 0
@@ -89,6 +92,14 @@ final class SQWorkoutSessionController: Identifiable {
 
         timer?.invalidate()
         timer = nil
+    }
+    
+    private func currentActiveDuration(at now: Date = Date()) -> TimeInterval {
+        if isTimerRunning, let start = runningStartDate {
+            return accumulatedElapsed + now.timeIntervalSince(start)
+        } else {
+            return accumulatedElapsed
+        }
     }
     
     var elapsedTimeString: String {
@@ -177,14 +188,20 @@ final class SQWorkoutSessionController: Identifiable {
         // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
         let workoutId = baseWorkout?.id ?? UUID().uuidString
         
+        /// ✅ Snapshot time once so all fields are consistent
+        let now = Date()
+        let startDate = workoutStartDate
+        let activeDuration = hasTimerStarted ? currentActiveDuration(at: now) : nil
+        let endDate: Date? = now
+        
         let workoutSource = baseWorkout?.workoutSource
         ?? .manual(SQManualWorkout(
             sourceId: workoutId,
             activityType: .functionalStrengthTraining,
             device: nil,
-            startDate: nil,
-            endDate: nil,
-            activeDuration: nil,
+            startDate: startDate,
+            endDate: endDate,
+            activeDuration: activeDuration,
             averageHeartRate: nil,
             totalCalories: nil,
             details: details))
