@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
 
 @Observable
 @MainActor
@@ -16,6 +17,89 @@ final class SQWorkoutSessionController: Identifiable {
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     var onDismiss: () -> Void
+    
+    // MARK: - Timer
+
+    // MARK: - Timer
+
+    private var timer: Timer?
+
+    var isTimerRunning: Bool = false
+
+    private var runningStartDate: Date?          // when the current "segment" began
+    private var accumulatedElapsed: TimeInterval = 0  // total elapsed excluding current segment
+
+    var elapsedTime: TimeInterval = 0            // derived / published for UI
+    var hasTimerStarted: Bool {
+        accumulatedElapsed > 0 || runningStartDate != nil
+    }
+    
+
+    // MARK: - Timer controls
+
+    func startTimerIfNeeded() {
+        guard runningStartDate == nil, accumulatedElapsed == 0 else { return }
+
+        accumulatedElapsed = 0
+        elapsedTime = 0
+        resumeTimer()
+    }
+
+    func resumeTimer() {
+        guard !isTimerRunning else { return }
+
+        // Start a new running segment from "now"
+        runningStartDate = Date()
+        isTimerRunning = true
+
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard self.isTimerRunning else { return }
+                let now = Date()
+                let segment = now.timeIntervalSince(self.runningStartDate ?? now)
+                self.elapsedTime = self.accumulatedElapsed + segment
+            }
+        }
+    }
+
+    func pauseTimer() {
+        guard isTimerRunning else { return }
+
+        let now = Date()
+        if let start = runningStartDate {
+            accumulatedElapsed += now.timeIntervalSince(start)
+        }
+
+        // Freeze
+        elapsedTime = accumulatedElapsed
+        runningStartDate = nil
+        isTimerRunning = false
+
+        timer?.invalidate()
+        timer = nil
+    }
+
+    func stopTimer() {
+        runningStartDate = nil
+        accumulatedElapsed = 0
+        elapsedTime = 0
+        isTimerRunning = false
+
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    var elapsedTimeString: String {
+        let total = max(0, Int(elapsedTime))
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        let s = total % 60
+        return h > 0
+            ? String(format: "%d:%02d:%02d", h, m, s)
+            : String(format: "%d:%02d", m, s)
+    }
     
     @MainActor
     static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
@@ -36,6 +120,7 @@ final class SQWorkoutSessionController: Identifiable {
     
     private func reset(with workout: SQWorkoutSessionable?) {
         state.load(workout: workout)
+        startTimerIfNeeded()
     }
     
     // MARK: - Derived
@@ -84,7 +169,7 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     func buildSession() -> SQWorkoutSessionable {
-        let details = SQWorkoutDetails.strength(buildStrengthDetails())
+        let details = SQWorkoutActivityDetails.strength(buildStrengthDetails())
         
         let baseWorkout = state.baseWorkout
         let title = state.titleTextField?.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -92,18 +177,19 @@ final class SQWorkoutSessionController: Identifiable {
         // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
         let workoutId = baseWorkout?.id ?? UUID().uuidString
         
-        let manualWorkout = SQManualWorkout(
+        let workoutSource = baseWorkout?.workoutSource
+        ?? .manual(SQManualWorkout(
             sourceId: workoutId,
-            activityType: baseWorkout?.activityType ?? .functionalStrengthTraining,
-            device: baseWorkout?.device,
-            startDate: baseWorkout?.startDate,
-            endDate: baseWorkout?.endDate,
-            activeDuration: baseWorkout?.activeDuration,
-            averageHeartRate: baseWorkout?.averageHeartRate,
-            totalCalories: baseWorkout?.totalCalories,
-            details: details)
+            activityType: .functionalStrengthTraining,
+            device: nil,
+            startDate: nil,
+            endDate: nil,
+            activeDuration: nil,
+            averageHeartRate: nil,
+            totalCalories: nil,
+            details: details))
         
-        return SQWorkoutSource.manual(manualWorkout).buildWorkout()
+        return workoutSource.buildWorkout(withOverrideData: SQConcreteWorkoutSessionOverridableData(title: title, details: details))
     }
     
     func saveWorkout(to modelContext: ModelContext) async {
@@ -116,211 +202,5 @@ final class SQWorkoutSessionController: Identifiable {
             // TODO: - PTD Display modal error when saving workout
             SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
         }
-    }
-}
-
-
-@Observable
-@MainActor
-final class SQWorkoutSessionExerciseViewModel: Identifiable {
-    let id: UUID
-    
-    var name: String
-    var muscleGroup: SQMuscleGroup
-    let onRemoveExercise: ((UUID) -> Void)?
-    private(set) var sets: [SQWorkoutSessionSetViewModel]
-    
-    init(
-        id: UUID = UUID(),
-        name: String,
-        muscleGroup: SQMuscleGroup,
-        sets: [SQWorkoutSessionSetViewModel],
-        onRemoveExercise: ((UUID) -> Void)?
-    ) {
-        self.id = id
-        self.name = name
-        self.muscleGroup = muscleGroup
-        self.sets = sets
-        self.onRemoveExercise = onRemoveExercise
-        renumberSets()
-    }
-    
-    /// New exercise with 3 default sets
-    convenience init(
-        name: String,
-        muscleGroup: SQMuscleGroup,
-        defaultSetCount: Int = 3,
-        defaultReps: Int = 8,
-        defaultWeight: Double = 50,
-        onRemoveExercise: ((UUID) -> Void)?
-    ) {
-        let setVMs = (1...defaultSetCount).map { index in
-            SQWorkoutSessionSetViewModel(
-                setIndex: index,
-                initialReps: defaultReps,
-                initialWeight: defaultWeight
-            )
-        }
-        
-        self.init(
-            name: name,
-            muscleGroup: muscleGroup,
-            sets: setVMs,
-            onRemoveExercise: onRemoveExercise
-        )
-    }
-    
-    convenience init(from model: SQStrengthExercise, onRemoveExercise: ((UUID) -> Void)?) {
-        let setVMs = model.sets
-            .sorted { $0.setIndex < $1.setIndex }
-            .map { SQWorkoutSessionSetViewModel(from: $0) }
-        
-        self.init(
-            id: model.id,
-            name: model.name,
-            muscleGroup: model.muscleGroup,
-            sets: setVMs,
-            onRemoveExercise: onRemoveExercise
-        )
-    }
-    
-    // MARK: - Derived
-    
-    var isCompleted: Bool {
-        !sets.isEmpty && sets.allSatisfy { $0.isCompleted }
-    }
-    
-    var totalVolume: Double {
-        sets.reduce(0) { $0 + $1.volume }
-    }
-    
-    // MARK: - Mutations
-    
-    func addSet(copyLast: Bool = true) {
-        let nextIndex = sets.count + 1
-        
-        if copyLast, let last = sets.last {
-            let newSet = SQWorkoutSessionSetViewModel(
-                setIndex: nextIndex,
-                initialReps: last.reps,
-                initialWeight: last.weight
-            )
-            sets.append(newSet)
-        } else {
-            let newSet = SQWorkoutSessionSetViewModel(
-                setIndex: nextIndex,
-                initialReps: 8,
-                initialWeight: 50
-            )
-            sets.append(newSet)
-        }
-        
-        renumberSets()
-    }
-    
-    func removeSet(_ set: SQWorkoutSessionSetViewModel) {
-        sets.removeAll { $0.id == set.id }
-        renumberSets()
-    }
-    
-    private func renumberSets() {
-        for (idx, vm) in sets.enumerated() {
-            vm.setIndex = idx + 1
-        }
-    }
-    
-    func asModel() -> SQStrengthExercise {
-        SQStrengthExercise(
-            id: id,
-            name: name,
-            muscleGroup: muscleGroup,
-            sets: sets
-                .sorted { $0.setIndex < $1.setIndex }
-                .map { $0.asModel() }
-        )
-    }
-    
-    func deleteExercise() {
-        onRemoveExercise?(self.id)
-    }
-}
-
-@Observable
-@MainActor
-final class SQWorkoutSessionSetViewModel: Identifiable {
-    let id: UUID
-    var setIndex: Int
-    
-    let repsTextFieldViewModel: SQTextFieldViewModel
-    let weightTextFieldViewModel: SQTextFieldViewModel
-    
-    var isCompleted: Bool = false
-    
-    init(
-        id: UUID = UUID(),
-        setIndex: Int,
-        initialReps: Int = 8,
-        initialWeight: Double = 50
-    ) {
-        self.id = id
-        self.setIndex = setIndex
-        
-        // Reps: integer, 1...1000
-        let repsVM = SQTextFieldViewModel(
-            lineLimit: 1,
-            placeholder: "Reps",
-            keyboardType: .numberPad,
-            textChangeFormatter: .integer,
-            validationRule: .integer(range: 1...1000),
-            errorHandler: { _ in nil }
-        )
-        repsVM.text = "\(initialReps)"
-        self.repsTextFieldViewModel = repsVM
-        
-        // Weight: decimal, 0...2000
-        let weightVM = SQTextFieldViewModel(
-            lineLimit: 1,
-            placeholder: "lbs",
-            keyboardType: .decimalPad,
-            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
-            validationRule: .decimal(maxDecimalPlaces: 1, range: 0...2000),
-            errorHandler: { _ in nil }
-        )
-        weightVM.text = String(format: "%.1f", initialWeight)
-        self.weightTextFieldViewModel = weightVM
-    }
-    
-    convenience init(from model: SQStrengthSet) {
-        self.init(
-            id: model.id,
-            setIndex: model.setIndex,
-            initialReps: model.reps,
-            initialWeight: model.weight
-        )
-        // rpe / isWarmup not surfaced in UI yet; easy to add later.
-    }
-    
-    // Derived values from text
-    var reps: Int {
-        Int(repsTextFieldViewModel.text) ?? 0
-    }
-    
-    var weight: Double {
-        Double(weightTextFieldViewModel.text) ?? 0
-    }
-    
-    var volume: Double {
-        Double(reps) * weight
-    }
-    
-    func asModel() -> SQStrengthSet {
-        SQStrengthSet(
-            id: id,
-            setIndex: setIndex,
-            reps: reps,
-            weight: weight,
-            rpe: nil,
-            isWarmup: false
-        )
     }
 }

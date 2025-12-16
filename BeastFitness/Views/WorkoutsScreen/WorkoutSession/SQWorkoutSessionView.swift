@@ -89,7 +89,11 @@ struct SQWorkoutSessionView: View {
         .scrollContentBackground(.hidden)
         .sqBackgroundColor(.background)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle("Workout")
+        .navigationTitle(
+            controller.hasTimerStarted
+            ? "Workout · \(controller.elapsedTimeString)"
+            : "Workout"
+        )
         .navigationBarTitleDisplayMode(.inline)
         .background(SQColor.backgroundSecondary.color)
         .toolbar {
@@ -98,6 +102,26 @@ struct SQWorkoutSessionView: View {
                     finishWorkout()
                 } label: {
                     Image(systemName: "checkmark")
+                }
+            }
+
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    if !controller.hasTimerStarted {
+                        controller.startTimerIfNeeded()
+                    } else if controller.isTimerRunning {
+                        controller.pauseTimer()
+                    } else {
+                        controller.resumeTimer()
+                    }
+                } label: {
+                    if !controller.hasTimerStarted {
+                        Image(systemName: "play.fill")
+                    } else if controller.isTimerRunning {
+                        Image(systemName: "pause.fill")
+                    } else {
+                        Image(systemName: "play.fill")
+                    }
                 }
             }
         }

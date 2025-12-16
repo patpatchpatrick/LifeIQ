@@ -26,7 +26,7 @@ final class SQWorkoutsListItemViewModel: Identifiable, Hashable, Equatable {
     
     private func refreshUI(with workout: SQWorkoutSessionable) {
         let activityType = workout.activityType
-        title = workout.title
+        title = workout.visibleTitle
         
         let subtitle: String? = {
             var subtitleComponents = [String]()

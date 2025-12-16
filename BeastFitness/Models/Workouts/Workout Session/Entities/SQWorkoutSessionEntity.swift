@@ -12,7 +12,7 @@ import HealthKit
 @Model
 final class SQWorkoutSessionEntity {
     @Attribute(.unique) var workoutId: String     // UUID string
-    var title: String
+    var title: String?
     
     /// Store rawValue for HKWorkoutActivityType since HKWorkoutActivityType isn't Codable.
     var activityTypeRaw: Int
@@ -36,7 +36,7 @@ final class SQWorkoutSessionEntity {
     var createdAt: Date?
     var updatedAt: Date?
     var deletedAt: Date?
-    var syncStatusRaw: String
+    var syncStatusRaw: String?
     var remoteId: String?
     
     init(from session: SQWorkoutSessionable) {
@@ -54,15 +54,15 @@ final class SQWorkoutSessionEntity {
         
         self.detailsData = Self.encodeDetails(session.details)
         
-        self.createdAt = session.createdAt
-        self.updatedAt = session.updatedAt
-        self.deletedAt = session.deletedAt
-        self.syncStatusRaw = session.syncStatus.rawValue
-        self.remoteId = session.remoteId
+        self.createdAt = session.updateMetadata?.createdAt
+        self.updatedAt = session.updateMetadata?.updatedAt
+        self.deletedAt = session.updateMetadata?.deletedAt
+        self.syncStatusRaw = session.updateMetadata?.syncStatus?.rawValue
+        self.remoteId = session.updateMetadata?.remoteId
     }
     
     func update(from session: SQWorkoutSessionable) {
-        title = session.title
+        title = session.visibleTitle
         activityTypeRaw = Int(session.activityType.rawValue)
         
         deviceRaw = session.device?.name
@@ -75,11 +75,11 @@ final class SQWorkoutSessionEntity {
         
         detailsData = Self.encodeDetails(session.details)
         
-        createdAt = session.createdAt
-        updatedAt = session.updatedAt
-        deletedAt = session.deletedAt
-        syncStatusRaw = session.syncStatus.rawValue
-        remoteId = session.remoteId
+        createdAt = session.updateMetadata?.createdAt
+        updatedAt = session.updateMetadata?.updatedAt
+        deletedAt = session.updateMetadata?.deletedAt
+        syncStatusRaw = session.updateMetadata?.syncStatus?.rawValue
+        remoteId = session.updateMetadata?.remoteId
     }
     
     func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
@@ -115,42 +115,44 @@ final class SQWorkoutSessionEntity {
             throw SQStandardError.standard
         }
         
+        var syncStatus: SQSyncStatus?
+        if let rawSyncData = self.syncStatusRaw {
+            syncStatus = .init(rawValue: rawSyncData)
+        }
+        
         return SQWorkoutSession(
-            title: title,
             workoutSource: workoutSource,
-            device: device,
-            activityType: activityType,
-            activeDuration: activeDuration,
-            startDate: startDate,
-            endDate: endDate,
-            totalCalories: totalCalories,
-            averageHeartRate: averageHeartRate,
-            details: details,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            deletedAt: deletedAt,
-            syncStatus: SQSyncStatus(rawValue: syncStatusRaw) ?? .pendingUpload,
-            remoteId: remoteId
+            overrideData: SQConcreteWorkoutSessionOverridableData(
+                title: title,
+                details: details),
+            updateMetadata: .init(
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                syncStatus: syncStatus,
+                remoteId: remoteId)
         )
     }
 }
 
 extension SQWorkoutSessionEntity {
-    private static func encodeDetails(_ details: SQWorkoutDetails?) -> Data? {
+    
+    private static func encodeDetails(_ details: SQWorkoutActivityDetails?) -> Data? {
         guard let details else { return nil }
         do { return try JSONEncoder().encode(details) }
         catch { return nil }
     }
 
-    private static func decodeDetails(_ data: Data?) -> SQWorkoutDetails? {
+    
+    private static func decodeDetails(_ data: Data?) -> SQWorkoutActivityDetails? {
         guard let data else { return nil }
-        do { return try JSONDecoder().decode(SQWorkoutDetails.self, from: data) }
+        do { return try JSONDecoder().decode(SQWorkoutActivityDetails.self, from: data) }
         catch { return nil }
     }
 }
 
-
 extension SQWorkoutSessionEntity {
+    
     static func get(id: String, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
         let key = id
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(

@@ -9,7 +9,6 @@ import Foundation
 import HealthKit
 
 struct SQManualWorkout: SQWorkoutSourcable {
-    // Core identity
     let sourceId: String
     let activityType: HKWorkoutActivityType
     let device: SQWorkoutDevice?
@@ -19,7 +18,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
     let averageHeartRate: Double?
     let totalCalories: Double?
     
-    let details: SQWorkoutDetails?
+    let details: SQWorkoutActivityDetails?
 
     // MARK: - SQWorkoutSourcable
     

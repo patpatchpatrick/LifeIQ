@@ -27,7 +27,7 @@ final class SQDashboardController: SQDashboardInterface {
        ///
        /// This is intentionally optional: if the controller is not attached yet,
        /// event-driven refreshes become a no-op rather than trying to guess a context.
-    private(set) var refreshUiWithContext: (() -> Void)?
+    private(set) var refreshUiWithContext: ((ModelContext?) -> Void)?
     
     @MainActor
     static let `default` = SQDashboardController(state: AppState.shared.dashboardState)
@@ -44,7 +44,7 @@ final class SQDashboardController: SQDashboardInterface {
             guard let self else { return }
             switch event {
             case .workoutsUpdated:
-                self.refreshUiWithContext?()
+                self.refreshUiWithContext?(nil)
             }
         }.store(in: &cancellables)
     }
@@ -54,9 +54,9 @@ final class SQDashboardController: SQDashboardInterface {
        /// Call this from the view layer once you have access to `@Environment(\.modelContext)`.
        /// You may call it multiple times (e.g., if the environment changes); the latest context wins.
     func attach(context: ModelContext) {
-        refreshUiWithContext = { [weak self] in
+        refreshUiWithContext = { [weak self] modelContext in
             guard let self else { return }
-            Task { await self.loadUI(for: context, shouldForceRefresh: true) }
+            Task { await self.loadUI(for: modelContext ?? context, shouldForceRefresh: true) }
         }
     }
     
@@ -82,6 +82,7 @@ final class SQDashboardController: SQDashboardInterface {
             dashboardRows.append(SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
             
             let dailySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
+            print("PTD Reload Daily Config", dailySectionConfig.dailyCheckInSummarySectionViewModel?.dailyCheckInSummaryConfig)
             dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .daily,
                 config: dailySectionConfig,
@@ -102,7 +103,7 @@ final class SQDashboardController: SQDashboardInterface {
     
     func refreshUI(for context: ModelContext) async {
         SQLogger.shared.log("Refreshing dashboard", .debug, context: .dashboard)
-        refreshUiWithContext?()
+        refreshUiWithContext?(context)
     }
     
     func displayDailyCheckInSheet(for context: ModelContext) async {

@@ -73,7 +73,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
     }
 
     // TODO: - Pass workout details for existing HK workouts if they exist
-    var details: SQWorkoutDetails? {
+    var details: SQWorkoutActivityDetails? {
         nil
     }
     

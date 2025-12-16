@@ -23,6 +23,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
         let healthKitWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(timeRange)
+        // TODO: - Fetch manual workouts within the same time range and de-dup
         
         // TODO: - PTD Update this system to gracefully handle errors and properly sync with cloud
         var allWorkouts = [SQWorkoutSessionable]()
@@ -34,12 +35,11 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 if let savedWorkout {
                     allWorkouts.append(savedWorkout)
                 } else {
-                    allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
+                    allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout(withOverrideData: nil))
                 }
                 
             } catch {
-                
-                allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout())
+                allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout(withOverrideData: nil))
             }
         }
         

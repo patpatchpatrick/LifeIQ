@@ -18,28 +18,13 @@ protocol SQWorkoutSourcable {
     var startDate: Date? { get }
     var endDate: Date? { get }
     var device: SQWorkoutDevice? { get }
-    var details: SQWorkoutDetails? { get }
+    var details: SQWorkoutActivityDetails? { get }
 }
 
 extension SQWorkoutSourcable {
     
     var totalCalories: Double? {
         sumOutputFor(.activeKilocaloriesBurned)
-    }
-    
-    // Default mapper: sourcable → session (source-agnostic)
-    func buildWorkout(source: SQWorkoutSource) -> SQWorkoutSessionable {
-        SQWorkoutSession(
-            title: nil,
-            workoutSource: source,
-            device: device,
-            activityType: activityType,
-            activeDuration: activeDuration,
-            startDate: startDate,
-            endDate: endDate,
-            totalCalories: sumOutputFor(.activeKilocaloriesBurned),
-            averageHeartRate: avgOutputFor(.heartRate)
-        )
     }
 }
 
@@ -59,8 +44,14 @@ enum SQWorkoutSource {
         }
     }
     
-    func buildWorkout() -> SQWorkoutSessionable {
-        sourcableData.buildWorkout(source: self)
+    func buildWorkout(withOverrideData overrideData: SQWorkoutSessionOverridableData?) -> SQWorkoutSessionable {
+        SQWorkoutSession(workoutSource: self, overrideData: overrideData)
     }
 }
 
+enum SQWorkoutSourceProvider: String, UnfrozenEnum {
+    case hkWorkout
+    case stravaWorkout
+    case manual
+    case unknown
+}

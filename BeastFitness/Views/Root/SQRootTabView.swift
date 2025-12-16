@@ -23,7 +23,7 @@ struct SQRootTabView: View {
             set: { navigationState.changeTab(to: $0) })) {
                 
                 NavigationStack(path: $viewModel.dashboardNavigationPath) {
-                    SQDashboardView(controller: viewModel.dashboardViewModel)
+                    SQDashboardView(controller: viewModel.dashboardController)
                 }
                 .tabItem {
                     Image(systemName: "house")

@@ -87,7 +87,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     }
     
     // TODO: - Pass details from existing strava workouts if they exist
-    var details: SQWorkoutDetails? {
+    var details: SQWorkoutActivityDetails? {
         return nil
     }
 }
