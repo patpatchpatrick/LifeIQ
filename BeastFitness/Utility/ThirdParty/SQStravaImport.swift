@@ -133,7 +133,7 @@ final class SQStravaImport {
                 return workout.endDate != nil && workout.endDate! > timeRange.startDate
             }
             return filteredWorkouts
-                .map { SQWorkoutSource.stravaWorkout($0).buildWorkout(withOverrideData: nil) }
+                .map { SQWorkoutSession(workoutSource: SQWorkoutSource.stravaWorkout($0), overrideData: nil, hkWorkoutId: nil) }
         }
         catch {
             return nil

@@ -135,4 +135,6 @@ enum SQImageSymbol: String {
     case plus                = "plus"
     case ellipsisCircle      = "ellipsis.circle"
     case minusCircle         = "minus.circle"
+    case play                = "play.fill"
+    case pause               = "pause.fill"
 }

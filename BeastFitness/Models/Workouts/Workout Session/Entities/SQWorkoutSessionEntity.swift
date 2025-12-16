@@ -8,10 +8,15 @@
 import SwiftData
 import Foundation
 import HealthKit
+import SwiftUI
 
 @Model
 final class SQWorkoutSessionEntity {
+    #Index<SQWorkoutSessionEntity>([\.hkWorkoutId])
+    
     @Attribute(.unique) var workoutId: String     // UUID string
+    var hkWorkoutId: String?
+
     var title: String?
     
     /// Store rawValue for HKWorkoutActivityType since HKWorkoutActivityType isn't Codable.
@@ -42,6 +47,7 @@ final class SQWorkoutSessionEntity {
     init(from session: SQWorkoutSessionable) {
         self.workoutId = session.id
         self.title = session.title
+        self.hkWorkoutId = session.hkWorkoutId
         self.activityTypeRaw = Int(session.activityType.rawValue)
         
         self.deviceRaw = session.device?.name
@@ -62,6 +68,8 @@ final class SQWorkoutSessionEntity {
     }
     
     func update(from session: SQWorkoutSessionable) {
+        hkWorkoutId = session.hkWorkoutId
+        
         title = session.visibleTitle
         activityTypeRaw = Int(session.activityType.rawValue)
         
@@ -125,6 +133,7 @@ final class SQWorkoutSessionEntity {
             overrideData: SQConcreteWorkoutSessionOverridableData(
                 title: title,
                 details: details),
+            hkWorkoutId: hkWorkoutId,
             updateMetadata: .init(
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -162,6 +171,26 @@ extension SQWorkoutSessionEntity {
         let firstItem = try context.fetch(descriptor).first
         
         let workoutSession = try firstItem?.toSession(workoutSource: workoutSource)
+        
+        return workoutSession
+    }
+    
+    /// Fetch the workout using the HealthKit workout
+    static func getFromHkWorkout(
+        source: SQWorkoutSource,
+        hkWorkoutId: String?,
+        context: ModelContext
+    ) throws -> SQWorkoutSessionable? {
+        
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+                predicate: #Predicate<SQWorkoutSessionEntity> {
+                    $0.hkWorkoutId == hkWorkoutId
+                }
+            )
+        
+        let firstItem = try context.fetch(descriptor).first
+        
+        let workoutSession = try firstItem?.toSession(workoutSource: source)
         
         return workoutSession
     }

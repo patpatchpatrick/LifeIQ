@@ -12,6 +12,7 @@ import Combine
 @MainActor
 protocol WorkoutSessionStating: AnyObject {
     var isAddExerciseListSheetVisible: Bool { get }
+    var isRestTimerSheetVisible: Bool { get }
     var baseWorkout: SQWorkoutSessionable? { get }
     var exercises: [SQWorkoutSessionExerciseViewModel] { get }
     
@@ -19,6 +20,8 @@ protocol WorkoutSessionStating: AnyObject {
     
     func toggleAddExerciseListSheetVisibility(_ isVisible: Bool)
     func displayAddExerciseListSheet()
+    func toggleRestTimerSheetVisibility(_ isVisible: Bool)
+    func displayRestTimerSheet()
     func updateExercises(to exercises: [SQWorkoutSessionExerciseViewModel])
     func appendExercises(_ exercises: [SQWorkoutSessionExerciseViewModel])
     func removeExercises(_ exercises: Set<UUID>)
@@ -34,6 +37,7 @@ protocol WorkoutSessionStating: AnyObject {
     private(set) var baseWorkout: SQWorkoutSessionable?
     
     private(set) var isAddExerciseListSheetVisible: Bool = false
+    private(set) var isRestTimerSheetVisible: Bool = false
     private(set) var exercises: [SQWorkoutSessionExerciseViewModel] = []
     private(set) var titleTextField: SQTextFieldViewModel?
     
@@ -81,6 +85,14 @@ protocol WorkoutSessionStating: AnyObject {
     
     func displayAddExerciseListSheet() {
         isAddExerciseListSheetVisible = true
+    }
+    
+    func toggleRestTimerSheetVisibility(_ isVisible: Bool) {
+        isRestTimerSheetVisible = isVisible
+    }
+    
+    func displayRestTimerSheet() {
+        isRestTimerSheetVisible = true
     }
     
     func updateExercises(to exercises: [SQWorkoutSessionExerciseViewModel]) {

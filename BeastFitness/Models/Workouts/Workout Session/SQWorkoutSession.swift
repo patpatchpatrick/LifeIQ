@@ -21,6 +21,8 @@ struct SQConcreteWorkoutSessionOverridableData: SQWorkoutSessionOverridableData 
 
 protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
     var id: String { get }
+    var hkWorkoutId: String? { get }
+    func updateHkWorkoutId(_ hkWorkoutId: String?)
     
     /// Identifying / display
     var visibleTitle: String { get }
@@ -53,10 +55,14 @@ struct SQWorkoutUpdateMetadata: Codable {
     var remoteId: String?
 }
 
-struct SQWorkoutSession: SQWorkoutSessionable {
+class SQWorkoutSession: SQWorkoutSessionable {
     let id: String
     let title: String?
     let coreMetric: SQWorkoutMetric?
+    private(set) var hkWorkoutId: String?
+    func updateHkWorkoutId(_ hkWorkoutId: String?) {
+        self.hkWorkoutId = hkWorkoutId
+    }
     let workoutSource: SQWorkoutSource
     let device: SQWorkoutDevice?
     
@@ -72,7 +78,9 @@ struct SQWorkoutSession: SQWorkoutSessionable {
     let updateMetadata: SQWorkoutUpdateMetadata?
     
     init(
+        id: String,
         title: String?,
+        hkWorkoutId: String?,
         workoutSource: SQWorkoutSource,
         device: SQWorkoutDevice?,
         activityType: HKWorkoutActivityType,
@@ -84,7 +92,8 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         details: SQWorkoutActivityDetails?,
         updateMetadata: SQWorkoutUpdateMetadata?
     ) {
-        self.id = workoutSource.sourcableData.sourceId
+        self.id = id
+        self.hkWorkoutId = hkWorkoutId
         self.title = title
         self.workoutSource = workoutSource
         self.device = device
@@ -104,10 +113,12 @@ struct SQWorkoutSession: SQWorkoutSessionable {
         }
     }
     
-    init(workoutSource: SQWorkoutSource, overrideData: SQWorkoutSessionOverridableData?, updateMetadata: SQWorkoutUpdateMetadata? = nil) {
+    convenience init(workoutSource: SQWorkoutSource, overrideData: SQWorkoutSessionOverridableData?, hkWorkoutId: String?, updateMetadata: SQWorkoutUpdateMetadata? = nil) {
         let data = workoutSource.sourcableData
         self.init(
+            id: workoutSource.sourcableData.sourceId,
             title: overrideData?.title,
+            hkWorkoutId: hkWorkoutId ?? workoutSource.hkWorkoutId,
             workoutSource: workoutSource,
             device: data.device,
             activityType: data.activityType,

@@ -8,7 +8,12 @@
 import Foundation
 import HealthKit
 
-final class SQHealthKitManager {
+protocol SQHealthKitManaging {
+    @discardableResult
+    func saveWorkout(workout: SQWorkoutSessionable) async throws -> HKWorkout?
+}
+
+final class SQHealthKitManager: SQHealthKitManaging {
     static let shared = SQHealthKitManager()
     static let healthStore: HKHealthStore = HKHealthStore()
     
@@ -24,6 +29,75 @@ final class SQHealthKitManager {
     
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
+    
+    @MainActor @discardableResult
+    func saveWorkout(
+        workout: SQWorkoutSessionable
+    ) async throws -> HKWorkout? {
+        
+        guard let startDate = workout.startDate else {
+               // You need a start date for HealthKit
+               return nil
+           }
+
+        let endDate = workout.endDate ?? .now
+        
+        try await Self.healthStore.requestAuthorization(
+            toShare: allQuantityTypes,
+            read: allQuantityTypes
+        )
+
+        // TODO: - Finish configuration, add calories, heartRate, locationType, etc..
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = workout.activityType
+
+        let builder = HKWorkoutBuilder(
+            healthStore: Self.healthStore,
+            configuration: configuration,
+            device: .local()
+        )
+        
+        try await builder.beginCollection(at: startDate)
+        
+        try await builder.addWorkoutActivity(.init(
+            workoutConfiguration: configuration,
+            start: startDate,
+            end: endDate,
+            metadata: nil))
+        
+        // TODO: - Hack to add inactive time for now, update later to properly use workout events
+        if
+            let startDate = workout.startDate,
+            let endDate = workout.endDate,
+            let activeDuration = workout.activeDuration
+        {
+            let approxPauseDate = startDate.addingTimeInterval(activeDuration)
+
+            if approxPauseDate < endDate {
+                // Pause at approxPauseDate, resume at endDate (or omit resume since workout ends)
+                try await builder.addWorkoutEvents([
+                    HKWorkoutEvent(
+                        type: .pause,
+                        dateInterval: DateInterval(start: approxPauseDate, end: approxPauseDate),
+                        metadata: nil
+                    )
+                ])
+            }
+        }
+        
+        try await builder.endCollection(at: endDate)
+
+        SQLogger.shared.log("Attempting to save workout to HealthKit", .debug, context: .healthKit)
+        
+        do {
+            let workout = try await builder.finishWorkout()
+            SQLogger.shared.log("Save workout to HealthKit success!", .debug, context: .healthKit)
+            return workout
+        } catch {
+            SQLogger.shared.log("Save workout to HealthKit failed with error: \(error)", .debug, context: .healthKit)
+            throw error
+        }
+    }
     
     func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [HKWorkout] {
         guard HKHealthStore.isHealthDataAvailable() else {

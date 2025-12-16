@@ -82,7 +82,7 @@ final class SQDashboardController: SQDashboardInterface {
             dashboardRows.append(SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
             
             let dailySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
-            print("PTD Reload Daily Config", dailySectionConfig.dailyCheckInSummarySectionViewModel?.dailyCheckInSummaryConfig)
+            
             dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .daily,
                 config: dailySectionConfig,

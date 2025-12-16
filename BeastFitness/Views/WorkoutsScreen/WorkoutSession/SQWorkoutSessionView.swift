@@ -12,6 +12,7 @@ struct SQWorkoutSessionView: View {
     let isBeingDisplayedWithinNavStack: Bool
     @Bindable var controller: SQWorkoutSessionController
     @Environment(\.modelContext) private var modelContext
+    @State private var isRestTimerPresented: Bool = false
 
     // MARK: - Sections
 
@@ -90,9 +91,7 @@ struct SQWorkoutSessionView: View {
         .sqBackgroundColor(.background)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(
-            controller.hasTimerStarted
-            ? "Workout · \(controller.elapsedTimeString)"
-            : "Workout"
+            controller.navBarTimeString
         )
         .navigationBarTitleDisplayMode(.inline)
         .background(SQColor.backgroundSecondary.color)
@@ -107,21 +106,17 @@ struct SQWorkoutSessionView: View {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    if !controller.hasTimerStarted {
-                        controller.startTimerIfNeeded()
-                    } else if controller.isTimerRunning {
-                        controller.pauseTimer()
-                    } else {
-                        controller.resumeTimer()
-                    }
+                    controller.timerViewModel.workoutTimerButtonConfig.action()
                 } label: {
-                    if !controller.hasTimerStarted {
-                        Image(systemName: "play.fill")
-                    } else if controller.isTimerRunning {
-                        Image(systemName: "pause.fill")
-                    } else {
-                        Image(systemName: "play.fill")
-                    }
+                    Image(systemName: controller.timerViewModel.workoutTimerButtonConfig.icon?.rawValue ?? "")
+                }
+            }
+            
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    controller.state.displayRestTimerSheet()
+                } label: {
+                    Text("Rest")
                 }
             }
         }
@@ -139,6 +134,16 @@ struct SQWorkoutSessionView: View {
                 }
             ))
         }
+        .sheet(isPresented: .init(
+            get: { controller.state.isRestTimerSheetVisible },
+            set: { isVisible in
+                controller.state.toggleRestTimerSheetVisibility(isVisible)
+            }
+        )) {
+            SQRestTimerView(viewModel: controller.restTimerViewModel)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     var body: some View {
@@ -150,5 +155,27 @@ struct SQWorkoutSessionView: View {
                 mainList
             }
         }
+    }
+}
+
+private struct SQRestTimerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var viewModel: SQWorkoutSessionRestTimerViewModel
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(viewModel.remainingString)
+                .font(.headline)
+                .monospacedDigit()
+
+            Button(viewModel.buttonConfig.text) {
+                viewModel.buttonConfig.action()
+            }
+
+            Button("Close") { dismiss() }
+        }
+        .frame(width: 260, height: 260)
+        .background(SQColor.background.color)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }

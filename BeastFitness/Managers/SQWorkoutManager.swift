@@ -7,18 +7,21 @@
 
 import SwiftData
 import Foundation
+import HealthKit
 
 protocol SQWorkoutManaging {
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws
-    func getWorkout(id: String, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
+    func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
     private let workoutService: SQWorkoutServicing.Type
+    private let healthKitManager: SQHealthKitManaging
     
-    init(workoutService: SQWorkoutServicing.Type = SQWorkoutService.self) {
+    init(workoutService: SQWorkoutServicing.Type = SQWorkoutService.self, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared) {
         self.workoutService = workoutService
+        self.healthKitManager = healthKitManager
     }
     
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
@@ -29,17 +32,18 @@ final class SQWorkoutManager: SQWorkoutManaging {
         var allWorkouts = [SQWorkoutSessionable]()
         for hkWorkout in healthKitWorkouts {
             do {
-                
-                let savedWorkout = try getWorkout(id: hkWorkout.uuid.uuidString, workoutSource: .hkWorkout(.init(hkWorkout: hkWorkout)), modelContext: modelContext)
+                let savedWorkout = try getWorkout(withHkWorkoutId: hkWorkout.uuid.uuidString, workoutSource: .hkWorkout(.init(hkWorkout: hkWorkout)), modelContext: modelContext)
                 
                 if let savedWorkout {
                     allWorkouts.append(savedWorkout)
                 } else {
-                    allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout(withOverrideData: nil))
+                    let workoutSource = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
+                    allWorkouts.append(SQWorkoutSession(workoutSource: workoutSource, overrideData: nil, hkWorkoutId: nil))
                 }
                 
             } catch {
-                allWorkouts.append(SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout)).buildWorkout(withOverrideData: nil))
+                let workoutSource = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
+                allWorkouts.append(SQWorkoutSession(workoutSource: workoutSource, overrideData: nil, hkWorkoutId: nil))
             }
         }
         
@@ -47,6 +51,20 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws {
+        
+        /// If the workout doesn't have a health kit ID, let's attempt to save it to healthKit
+        if workout.hkWorkoutId == nil {
+            do {
+                SQLogger.shared.log("Attempting to save workout to HealthKit", .debug, context: .healthKit)
+                // TODO: - PTD do we want to always require workouts to be saved to healthkit?
+                let hkWorkout = try await healthKitManager.saveWorkout(workout: workout)
+                /// Set the ID on the workout so that it can be referenced from SwiftData using the hkWorkoutId
+                workout.updateHkWorkoutId(hkWorkout?.uuid.uuidString)
+                
+            } catch {
+                throw SQStandardError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
+            }
+        }
         
         do {
             try SQWorkoutSessionEntity.upsert(session: workout, in: modelContext)
@@ -67,7 +85,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         }
     }
     
-    func getWorkout(id: String, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
-        return try SQWorkoutSessionEntity.get(id: id, context: modelContext, workoutSource: workoutSource)
+    func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
+        return try SQWorkoutSessionEntity.getFromHkWorkout(source: workoutSource, hkWorkoutId: hkWorkoutId, context: modelContext)
     }
 }

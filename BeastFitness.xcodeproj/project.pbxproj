@@ -41,6 +41,8 @@
 		F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592202EF0C75800223A63 /* SQWorkoutStrengthDetails.swift */; };
 		F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592222EF0F08800223A63 /* SQWorkoutSessionExerciseViewModel.swift */; };
 		F61592252EF0F0B100223A63 /* SQWorkoutSessionSetViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592242EF0F0AE00223A63 /* SQWorkoutSessionSetViewModel.swift */; };
+		F61592292EF1CA2200223A63 /* SQWorkoutSessionTimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592282EF1CA1B00223A63 /* SQWorkoutSessionTimerViewModel.swift */; };
+		F615922B2EF1D14900223A63 /* SQWorkoutSessionRestTimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F615922A2EF1D14200223A63 /* SQWorkoutSessionRestTimerViewModel.swift */; };
 		F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */; };
 		F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */; };
 		F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */; };
@@ -185,6 +187,8 @@
 		F61592202EF0C75800223A63 /* SQWorkoutStrengthDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutStrengthDetails.swift; sourceTree = "<group>"; };
 		F61592222EF0F08800223A63 /* SQWorkoutSessionExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseViewModel.swift; sourceTree = "<group>"; };
 		F61592242EF0F0AE00223A63 /* SQWorkoutSessionSetViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionSetViewModel.swift; sourceTree = "<group>"; };
+		F61592282EF1CA1B00223A63 /* SQWorkoutSessionTimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionTimerViewModel.swift; sourceTree = "<group>"; };
+		F615922A2EF1D14200223A63 /* SQWorkoutSessionRestTimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionRestTimerViewModel.swift; sourceTree = "<group>"; };
 		F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsViewModel.swift; sourceTree = "<group>"; };
 		F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsScreenState.swift; sourceTree = "<group>"; };
 		F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsLandingView.swift; sourceTree = "<group>"; };
@@ -491,6 +495,8 @@
 		F629CE6B2EE3B8AF0002330C /* WorkoutSession */ = {
 			isa = PBXGroup;
 			children = (
+				F615922A2EF1D14200223A63 /* SQWorkoutSessionRestTimerViewModel.swift */,
+				F61592282EF1CA1B00223A63 /* SQWorkoutSessionTimerViewModel.swift */,
 				F61592242EF0F0AE00223A63 /* SQWorkoutSessionSetViewModel.swift */,
 				F61592222EF0F08800223A63 /* SQWorkoutSessionExerciseViewModel.swift */,
 				F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */,
@@ -1052,6 +1058,7 @@
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
 				F602DA5B2EC6AE6200404878 /* SQDashboardWorkoutSummaryWorkoutsSection.swift in Sources */,
 				F602DA612EC6B4B300404878 /* SQDashboardWorkoutGroupView.swift in Sources */,
+				F615922B2EF1D14900223A63 /* SQWorkoutSessionRestTimerViewModel.swift in Sources */,
 				F602DA682EC78A1D00404878 /* SQUnit.swift in Sources */,
 				F6ABC35D2EDE594C00D3E679 /* SQNetworkService.swift in Sources */,
 				F639B8F92ED7A07D00199C69 /* SQTextFieldViewModel+Formatters.swift in Sources */,
@@ -1064,6 +1071,7 @@
 				F639B7DE2ED798BD00199C69 /* SQTextField.swift in Sources */,
 				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
+				F61592292EF1CA2200223A63 /* SQWorkoutSessionTimerViewModel.swift in Sources */,
 				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,

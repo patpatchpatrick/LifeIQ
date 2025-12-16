@@ -15,5 +15,5 @@ extension [any SQWorkoutSessionable] {
 
 extension SQWorkoutSession {
     
-    static let mockRun = SQWorkoutSession(title: nil, workoutSource: .manual(.mock), device: nil, activityType: .running, activeDuration: nil, startDate: .now, endDate: .now, totalCalories: nil, averageHeartRate: nil, details: nil, updateMetadata: nil)
+    static let mockRun = SQWorkoutSession(id: "test", title: nil, hkWorkoutId: "test", workoutSource: .manual(.mock), device: nil, activityType: .running, activeDuration: nil, startDate: .now, endDate: .now, totalCalories: nil, averageHeartRate: nil, details: nil, updateMetadata: nil)
 }

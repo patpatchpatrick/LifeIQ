@@ -28,6 +28,13 @@ extension SQWorkoutSourcable {
     }
 }
 
+enum SQWorkoutSourceRaw: String, Codable, UnfrozenEnum {
+    case hkWorkout
+    case stravaWorkout
+    case manual
+    case unknown
+}
+
 enum SQWorkoutSource {
     case hkWorkout(SQHKWorkout)
     case stravaWorkout(SQStravaWorkout)
@@ -44,8 +51,35 @@ enum SQWorkoutSource {
         }
     }
     
-    func buildWorkout(withOverrideData overrideData: SQWorkoutSessionOverridableData?) -> SQWorkoutSessionable {
-        SQWorkoutSession(workoutSource: self, overrideData: overrideData)
+    var rawSource: SQWorkoutSourceRaw {
+        switch self {
+        case .hkWorkout:
+                .hkWorkout
+        case .stravaWorkout:
+                .stravaWorkout
+        case .manual:
+                .manual
+        }
+    }
+    
+    var hkWorkoutId: String? {
+        switch self {
+            
+        case .hkWorkout(let hkWorkout):
+            return hkWorkout.sourceId
+            
+        case .stravaWorkout, .manual:
+            return nil
+        }
+    }
+    
+    var isHealthKit: Bool {
+        switch self {
+        case .hkWorkout:
+            true
+        case .stravaWorkout, .manual:
+            false
+        }
     }
 }
 
