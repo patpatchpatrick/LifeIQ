@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQWorkoutSummaryView: View {
     @Bindable var controller: SQWorkoutSummaryController
+    @Environment(\.modelContext) private var modelContext
     
     var screenWidth: CGFloat { UIScreen.main.bounds.width }
     let mainStackHorizPadding: CGFloat = .SQSpace.xxl
@@ -74,7 +75,14 @@ struct SQWorkoutSummaryView: View {
                         Button {
                             controller.pushEditWorkoutView()
                         } label: {
-                            Label("Edit workout", systemImage: "pencil")
+                            Label("Edit workout", systemImage: SQImageSymbol.pencil.rawValue)
+                        }
+                        Button {
+                            Task {
+                              await controller.deleteWorkout(from: modelContext)
+                            }
+                        } label: {
+                            Label("Delete workout", systemImage: SQImageSymbol.xCircle.rawValue)
                         }
                     } label: {
                         Image(systemName: SQImageSymbol.ellipsisCircle.rawValue)

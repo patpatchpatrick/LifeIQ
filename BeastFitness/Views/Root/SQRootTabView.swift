@@ -9,10 +9,9 @@ import SwiftUI
 
 struct SQRootTabView: View {
     @State private var viewModel: SQRootTabViewModel
-    let navigationState: NavigationState
+    var navigationState: NavigationStating { viewModel.navigationState }
     
     init(appState: AppState) {
-        self.navigationState = appState.navigationState
         _viewModel = .init(initialValue: .init(appState: appState))
     }
     
@@ -42,13 +41,23 @@ struct SQRootTabView: View {
         }
     }
     
-    var body: some View {
+    var mainTabViewWithSheets: some View {
         mainTabView
+            .sheet(isPresented: .init(
+                get: { navigationState.isSettingsSheetVisible },
+                set: { isVisible in navigationState.toggleSettingsSheetVisibility(isVisible) })) {
+                    SQSettingsView(controller: .default)
+                }
+    }
+    
+    var body: some View {
+        mainTabViewWithSheets
             .frame(maxHeight: .infinity)
             .background(Color.purple)
             .accentColor(SQColor.textPrimary.color)
             .onOpenURL(perform: { url in
                 viewModel.deepLinkManager.handleUriDeepLink(for: url)
             })
+            .sqAlertHost()
     }
 }

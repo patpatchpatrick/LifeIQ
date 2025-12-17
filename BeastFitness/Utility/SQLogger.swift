@@ -15,6 +15,7 @@ enum SQLogContext {
     case dataProcessing
     case workoutSession
     case workoutSummary
+    case workoutManager
     case workoutList
     case dashboard
     case healthKit

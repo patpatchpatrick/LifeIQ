@@ -45,6 +45,8 @@ final class SQDashboardController: SQDashboardInterface {
             switch event {
             case .workoutsUpdated:
                 self.refreshUiWithContext?(nil)
+            case .workoutsDeleted:
+                self.refreshUiWithContext?(nil)
             }
         }.store(in: &cancellables)
     }
@@ -130,7 +132,9 @@ final class SQDashboardController: SQDashboardInterface {
             let dailyCheckInCta: SQCallToActionViewModel? = dailyCheckInStats != nil ? nil : .init(
                 title: "Complete daily check-in",
                 /// It's important to not use weak self here.  because the dashboard controller could be deallocated if it's being initialize temporarily to trigger an action
-                onTap: { Task { await SQDashboardController.default.displayDailyCheckInSheet(for: context) }})
+                onTap: {
+                    Task { await SQDashboardController.default.displayDailyCheckInSheet(for: context) }
+                })
             
             return .init(
                 callToAction: dailyCheckInCta,

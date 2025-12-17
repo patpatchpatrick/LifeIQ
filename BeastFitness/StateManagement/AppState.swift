@@ -26,6 +26,8 @@ final class AppState {
     let workoutSummaryState: WorkoutSummaryState
     
     let exercisesListState: ExercisesListState
+    let alertState: SQAlertState
+    let settingsState: SettingsState
 
     init() {
         self.navigationState = .init(hub: hub)
@@ -35,5 +37,7 @@ final class AppState {
         self.workoutsListState = .init(hub: hub)
         self.workoutSummaryState = .init(hub: hub)
         self.exercisesListState = .init(hub: hub)
+        self.alertState = .init(hub: hub)
+        self.settingsState = .init(hub: hub)
     }
 }

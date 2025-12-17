@@ -10,14 +10,23 @@ import Combine
 enum DomainEvent {
     /// Navigation
     case changeTab(NavigationState.Tab)
+    case displaySettings
 }
 
 enum WorkoutEvent {
     case workoutsUpdated([String: SQWorkoutSessionable]) /// [Workout ID : Workout]
+    case workoutsDeleted([String: SQWorkoutSessionable]) /// [Workout ID : Workout]
+}
+
+enum AlertEvent {
+    case present(_ alert: SQAlertViewModel)
+    case dismiss(_ alert: SQAlertViewModel)
+    case dismissCurrent
 }
 
 @MainActor
 final class EventHub {
     let domainEvents = PassthroughSubject<DomainEvent, Never>()
     let workoutEvents = PassthroughSubject<WorkoutEvent, Never>()
+    let alertEvents = PassthroughSubject<AlertEvent, Never>()
 }

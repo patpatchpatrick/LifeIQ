@@ -13,12 +13,17 @@ protocol NavigationStating: AnyObject {
     var selectedTab: NavigationState.Tab { get }
     var selectedTabPublisher: AnyPublisher<NavigationState.Tab, Never> { get }
     func changeTab(to tab: NavigationState.Tab)
+    
+    var isSettingsSheetVisible: Bool { get }
+    func toggleSettingsSheetVisibility(_ isVisible: Bool)
 }
 
 @MainActor
 @Observable final class NavigationState: NavigationStating {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
+    
+    private(set) var isSettingsSheetVisible: Bool = false
     
     enum Tab: Hashable {
         case home
@@ -40,6 +45,8 @@ protocol NavigationStating: AnyObject {
                 if tab != self.selectedTab {
                     self.selectedTab = tab
                 }
+            case .displaySettings:
+                toggleSettingsSheetVisibility(true)
             }
             
         }.store(in: &cancellables)
@@ -47,6 +54,10 @@ protocol NavigationStating: AnyObject {
     
     func changeTab(to tab: Tab) {
         hub.domainEvents.send(.changeTab(tab))
+    }
+    
+    func toggleSettingsSheetVisibility(_ isVisible: Bool) {
+        isSettingsSheetVisible = isVisible
     }
 }
 
@@ -74,5 +85,9 @@ struct SQNavRoute {
                 return false
             }
         }
+    }
+    
+    enum Settings: Hashable {
+        case nested
     }
 }

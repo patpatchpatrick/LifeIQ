@@ -70,6 +70,9 @@ struct SQWorkoutsListView: View {
                 workout: workout,
                 onPushEditWorkoutView: { workout in
                     controller.pushEditWorkoutView(for: workout)
+                },
+                onDismiss: {
+                    controller.popView()
                 }
             )
 

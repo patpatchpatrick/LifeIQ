@@ -64,6 +64,13 @@ struct SQDashboardView: View {
                                            }
                                        }
                                    }
+                                   ToolbarItem(placement: .topBarTrailing) {
+                                       Button {
+                                           controller.state.hub.domainEvents.send(.displaySettings)
+                                       } label: {
+                                           Image(systemName: SQImageSymbol.gear.rawValue)
+                                       }
+                                   }
                                }
             .background(SQColor.background.color.ignoresSafeArea())
             .task {
@@ -82,6 +89,7 @@ struct SQDashboardView: View {
                 set: { isVisible in controller.state.toggleWorkoutListSheetVisibility(isVisible) })) {
                     if let workoutListController = controller.state.workoutsListController {
                         SQWorkoutsListView(controller: workoutListController)
+                            .sqAlertHost()
                     }
                 }
     }

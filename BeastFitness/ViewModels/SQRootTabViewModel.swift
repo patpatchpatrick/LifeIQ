@@ -11,6 +11,8 @@ import SwiftUI
 @Observable
 @MainActor
 final class SQRootTabViewModel {
+    let navigationState: NavigationStating
+    
     private(set) var dashboardController: SQDashboardController
     let deepLinkManager = SQDeepLinkManager()
     var dashboardNavigationPath = NavigationPath()
@@ -21,6 +23,7 @@ final class SQRootTabViewModel {
     // MARK: - Init
     
     init(appState: AppState) {
+        self.navigationState = appState.navigationState
         self.dashboardController = .default
         self.workoutsScreenController = .default
     }

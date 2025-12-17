@@ -165,7 +165,7 @@ extension SQWorkoutSessionEntity {
     static func get(id: String, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
         let key = id
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == key }
+            predicate: #Predicate { $0.workoutId == key && $0.deletedAt == nil }
         )
         
         let firstItem = try context.fetch(descriptor).first
@@ -185,6 +185,7 @@ extension SQWorkoutSessionEntity {
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
                 predicate: #Predicate<SQWorkoutSessionEntity> {
                     $0.hkWorkoutId == hkWorkoutId
+                    && $0.deletedAt == nil
                 }
             )
         
@@ -211,3 +212,83 @@ extension SQWorkoutSessionEntity {
         try context.save()
     }
 }
+
+// MARK: - Deletion
+
+extension SQWorkoutSessionEntity {
+
+    enum DeleteMode {
+        /// Keeps the entity for syncing; marks deletedAt + syncStatus = deleted
+        case soft
+        /// Removes the row from SwiftData immediately
+        case hard
+    }
+
+    /// Deletes (soft or hard) by domain model.
+    static func delete(
+        workoutSession: SQWorkoutSessionable,
+        in context: ModelContext,
+        mode: DeleteMode = .soft
+    ) throws {
+        try delete(workoutId: workoutSession.id, in: context, mode: mode)
+    }
+
+    /// Deletes (soft or hard) by workoutId.
+    static func delete(
+        workoutId: String,
+        in context: ModelContext,
+        mode: DeleteMode = .soft
+    ) throws {
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate { $0.workoutId == workoutId }
+        )
+
+        guard let existing = try context.fetch(descriptor).first else {
+            return // nothing to delete
+        }
+
+        switch mode {
+        case .soft:
+            let now = Date()
+            existing.deletedAt = now
+            existing.updatedAt = now
+
+            // Mark as deleted for your sync pipeline.
+            // If SQSyncStatus is optional, write its raw value as a String.
+            existing.syncStatusRaw = SQSyncStatus.pendingDelete.rawValue
+
+        case .hard:
+            context.delete(existing)
+        }
+
+        try context.save()
+    }
+
+    /// Convenience: delete by hkWorkoutId (useful when you delete from HealthKit first)
+    static func deleteFromHkWorkoutId(
+        _ hkWorkoutId: String,
+        in context: ModelContext,
+        mode: DeleteMode = .soft
+    ) throws {
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate<SQWorkoutSessionEntity> { $0.hkWorkoutId == hkWorkoutId }
+        )
+
+        guard let existing = try context.fetch(descriptor).first else {
+            return
+        }
+
+        switch mode {
+        case .soft:
+            let now = Date()
+            existing.deletedAt = now
+            existing.updatedAt = now
+            existing.syncStatusRaw = SQSyncStatus.pendingDelete.rawValue
+        case .hard:
+            context.delete(existing)
+        }
+
+        try context.save()
+    }
+}
+

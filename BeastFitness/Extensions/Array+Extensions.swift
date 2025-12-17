@@ -30,4 +30,10 @@ extension Array {
         
         return result
     }
+    
+    mutating func appendIfNotNil(_ newElement: Element?) {
+        if let newElement {
+            self.append(newElement)
+        }
+    }
 }

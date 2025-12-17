@@ -11,6 +11,7 @@ import Combine
 
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {
+    var hub: EventHub { get }
     var user: SQUser? { get }
     var userFullName: String? { get }
     var workoutStartDate: Date? { get }
@@ -20,11 +21,12 @@ protocol WorkoutSummaryStating: AnyObject {
     
     var currentWorkout: SQWorkoutSessionable? { get }
     func load(workout: SQWorkoutSessionable)
+    func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable)
 }
 
 @MainActor
 @Observable final class WorkoutSummaryState: WorkoutSummaryStating {
-    private let hub: EventHub
+    let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
     
     private(set) var currentWorkout: (any SQWorkoutSessionable)?
@@ -46,16 +48,19 @@ protocol WorkoutSummaryStating: AnyObject {
             switch event {
             case .workoutsUpdated(let workoutMap):
                 if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap [currentWorkoutId] {
-                    SQLogger.shared.log("Refreshing workout with id: \(updatedWorkout.id) and title: \(updatedWorkout.title)", .debug, context: .workoutSummary)
+                    SQLogger.shared.log("Refreshing workout with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
                     self.load(workout: updatedWorkout)
                 }
+            case .workoutsDeleted:
+                return
+                // No-op
             }
             
         }.store(in: &cancellables)
     }
     
     func load(workout: any SQWorkoutSessionable) {
-        SQLogger.shared.log("Refreshing workout 2 with id: \(workout.id) and title: \(workout.title)", .debug, context: .workoutSummary)
+        SQLogger.shared.log("Refreshing workout 2 with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
         currentWorkout = workout
         user = SQUser.mock
         userFullName = SQUser.mock.name // PTD replace with user's name
@@ -68,6 +73,10 @@ protocol WorkoutSummaryStating: AnyObject {
         workoutStatsRows = visibleStatsChunks.map {
             .init(visibleStats: $0)
         }
+    }
+    
+    func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable) {
+        hub.workoutEvents.send(.workoutsDeleted([workout.id: workout]))
     }
 }
 
