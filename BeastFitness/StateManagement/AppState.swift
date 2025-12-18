@@ -28,6 +28,7 @@ final class AppState {
     let exercisesListState: ExercisesListState
     let alertState: SQAlertState
     let settingsState: SettingsState
+    let toastState: SQToastManager
 
     init() {
         self.navigationState = .init(hub: hub)
@@ -39,5 +40,8 @@ final class AppState {
         self.exercisesListState = .init(hub: hub)
         self.alertState = .init(hub: hub)
         self.settingsState = .init(hub: hub)
+        self.toastState = .init(hub: hub)
+        
+        SQToastOverlayWindow.shared.attachIfNeeded(toasts: toastState)
     }
 }

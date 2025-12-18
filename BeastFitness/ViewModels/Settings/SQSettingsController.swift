@@ -35,8 +35,8 @@ final class SQSettingsController: SQSettingsInterface {
             ) { [weak self] in
                 guard let self else { return }
                 SQUserDefaults.shared.clearHiddenWorkouts()
-                print("PTD Hidden Workouts Cleared!")
                 self.state.hub.workoutEvents.send(.workoutsUpdated([:]))
+                self.state.hub.toastEvents.send(.present(.init(title: "Hidden workouts cleared", style: .success)))
                 // Optional: show your custom alert here later
                 // AppState.shared.alertState.present(...)
             },

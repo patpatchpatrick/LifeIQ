@@ -24,9 +24,14 @@ enum AlertEvent {
     case dismissCurrent
 }
 
+enum ToastEvent {
+    case present(_ toast: SQToastViewModel)
+}
+
 @MainActor
 final class EventHub {
     let domainEvents = PassthroughSubject<DomainEvent, Never>()
     let workoutEvents = PassthroughSubject<WorkoutEvent, Never>()
     let alertEvents = PassthroughSubject<AlertEvent, Never>()
+    let toastEvents = PassthroughSubject<ToastEvent, Never>()
 }
