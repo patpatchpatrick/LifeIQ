@@ -58,6 +58,5 @@ struct SQRootTabView: View {
             .onOpenURL(perform: { url in
                 viewModel.deepLinkManager.handleUriDeepLink(for: url)
             })
-            .sqAlertHost()
     }
 }

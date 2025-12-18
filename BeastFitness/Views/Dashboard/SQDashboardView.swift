@@ -89,7 +89,6 @@ struct SQDashboardView: View {
                 set: { isVisible in controller.state.toggleWorkoutListSheetVisibility(isVisible) })) {
                     if let workoutListController = controller.state.workoutsListController {
                         SQWorkoutsListView(controller: workoutListController)
-                            .sqAlertHost()
                     }
                 }
     }

@@ -55,7 +55,8 @@
 		F61593BD2EF376A700223A63 /* SQToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BC2EF376A400223A63 /* SQToastView.swift */; };
 		F61593BF2EF37A3400223A63 /* SQToastOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */; };
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
-		F61593C52EF37A8B00223A63 /* SQToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C42EF37A8900223A63 /* SQToastManager.swift */; };
+		F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C42EF37A8900223A63 /* SQToastState.swift */; };
+		F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */; };
 		F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */; };
 		F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */; };
 		F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */; };
@@ -214,7 +215,8 @@
 		F61593BC2EF376A400223A63 /* SQToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastView.swift; sourceTree = "<group>"; };
 		F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastOverlayWindow.swift; sourceTree = "<group>"; };
 		F61593C12EF37A7100223A63 /* SQToastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastViewModel.swift; sourceTree = "<group>"; };
-		F61593C42EF37A8900223A63 /* SQToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastManager.swift; sourceTree = "<group>"; };
+		F61593C42EF37A8900223A63 /* SQToastState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastState.swift; sourceTree = "<group>"; };
+		F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOverlayRootView.swift; sourceTree = "<group>"; };
 		F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsViewModel.swift; sourceTree = "<group>"; };
 		F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsScreenState.swift; sourceTree = "<group>"; };
 		F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsLandingView.swift; sourceTree = "<group>"; };
@@ -543,9 +545,17 @@
 		F61593C32EF37A8600223A63 /* Toast */ = {
 			isa = PBXGroup;
 			children = (
-				F61593C42EF37A8900223A63 /* SQToastManager.swift */,
+				F61593C42EF37A8900223A63 /* SQToastState.swift */,
 			);
 			path = Toast;
+			sourceTree = "<group>";
+		};
+		F61593C62EF4B81400223A63 /* OverlayWindow */ = {
+			isa = PBXGroup;
+			children = (
+				F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */,
+			);
+			path = OverlayWindow;
 			sourceTree = "<group>";
 		};
 		F629CE602EE3B6560002330C /* Workouts */ = {
@@ -934,6 +944,7 @@
 		F6F94E002CAB9A7B00C2B90B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F61593C62EF4B81400223A63 /* OverlayWindow */,
 				F61593BB2EF3769F00223A63 /* Toasts */,
 				F61593B12EF3726A00223A63 /* Settings */,
 				F61592352EF3636800223A63 /* Alerts */,
@@ -1180,7 +1191,7 @@
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F602DA522EC6A9F900404878 /* SQDashboardWorkoutSummaryTotalsSection.swift in Sources */,
 				F679BA492EE4F3ED00A2F249 /* SQWorkoutsListItem.swift in Sources */,
-				F61593C52EF37A8B00223A63 /* SQToastManager.swift in Sources */,
+				F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */,
 				F615920D2EEE19C100223A63 /* SQWorkoutSessionEntity.swift in Sources */,
 				F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */,
 				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
@@ -1197,6 +1208,7 @@
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
 				F61592372EF3637000223A63 /* SQAlertHost.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
+				F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */,
 				F602DA3F2EC4EA1100404878 /* SQDashboardTextRowViewModel.swift in Sources */,
 				F615921F2EF0C74C00223A63 /* SQWorkoutActivityDetails.swift in Sources */,
 				F602DA4F2EC6A7ED00404878 /* AttributedString+Extensions.swift in Sources */,

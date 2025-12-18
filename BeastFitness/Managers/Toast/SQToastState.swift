@@ -12,7 +12,7 @@ import Combine
 
 @MainActor
 @Observable
-final class SQToastManager {
+final class SQToastState {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
     private(set) var queue: [SQToastViewModel] = [] {
@@ -27,7 +27,6 @@ final class SQToastManager {
     
     init(hub: EventHub) {
         self.hub = hub
-        print("PTD Setup Alert")
         handleEventSubscriptions(hub: hub)
     }
     
@@ -38,7 +37,6 @@ final class SQToastManager {
             
             switch event {
             case .present(let toast):
-                print("PTD RECEIVED TOAST")
                 self.show(toast)
             }
         }.store(in: &cancellables)

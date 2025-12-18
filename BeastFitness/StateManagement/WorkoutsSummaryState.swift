@@ -65,7 +65,7 @@ protocol WorkoutSummaryStating: AnyObject {
         user = SQUser.mock
         userFullName = SQUser.mock.name // PTD replace with user's name
         workoutStartDate = workout.startDate
-        workoutTitle = workout.title
+        workoutTitle = workout.visibleTitle
         
         let visibleStats = workout.visibleStats ?? []
         let visibleStatsChunks = visibleStats.chunked(into: workoutStatRowColumnCount)

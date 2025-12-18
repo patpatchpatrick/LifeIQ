@@ -14,16 +14,16 @@ import Combine
 final class SQAlertState {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
-    private(set) var queue: [SQAlertViewModel] = []
-    // Track which host is topmost
-    private var hostStack: [UUID] = []
+    private(set) var queue: [SQAlertViewModel] = [] {
+        didSet { onVisibilityChanged?(isPresented) }
+    }
 
+    var onVisibilityChanged: ((Bool) -> Void)?
     var current: SQAlertViewModel? { queue.first }
     var isPresented: Bool { current != nil }
     
     init(hub: EventHub) {
         self.hub = hub
-        print("PTD Setup Alert")
         handleEventSubscriptions(hub: hub)
     }
     
@@ -34,7 +34,6 @@ final class SQAlertState {
             
             switch event {
             case .present(let alertViewModel):
-                print("PTD Received ALERT2")
                 present(alertViewModel)
                 
             case .dismiss(let alertViewModel):
@@ -45,23 +44,6 @@ final class SQAlertState {
                 
             }
         }.store(in: &cancellables)
-    }
-    
-    // MARK: Host registration - ensures that only the top level View will display alerts
-
-    func pushHost(_ id: UUID) {
-        hostStack.append(id)
-    }
-
-    func popHost(_ id: UUID) {
-        // remove last occurrence (safe if out-of-order)
-        if let idx = hostStack.lastIndex(of: id) {
-            hostStack.remove(at: idx)
-        }
-    }
-
-    func isTopHost(_ id: UUID) -> Bool {
-        hostStack.last == id
     }
     
     // MARK: - Alert Actions

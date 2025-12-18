@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftUI
 
 struct SQToastHostView: View {
-    @Bindable var toasts: SQToastManager
+    @Bindable var toasts: SQToastState
 
     var body: some View {
         ZStack(alignment: .bottom) {

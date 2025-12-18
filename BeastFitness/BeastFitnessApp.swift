@@ -15,6 +15,12 @@ struct BeastFitnessApp: App {
     var body: some Scene {
         WindowGroup {
             SQRootTabView(appState: .shared)
+                .task { @MainActor in
+                   SQOverlayWindow.shared.attachIfNeeded(
+                    alerts: AppState.shared.alertState,
+                    toasts: AppState.shared.toastState
+                   )
+               }
         }
         .modelContainer(for: [
             SQDailyCheckInEntity.self,
