@@ -98,6 +98,7 @@
 		F679BDDC2EE7D4DC00A2F249 /* SQExercisesListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDDB2EE7D4D600A2F249 /* SQExercisesListItemViewModel.swift */; };
 		F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDDE2EE7D54100A2F249 /* SQExercisesListItem.swift */; };
 		F679BDE12EE7D66B00A2F249 /* WorkoutSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDE02EE7D66800A2F249 /* WorkoutSessionState.swift */; };
+		F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A401112EF5B920002BC997 /* SQLaunchManager.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
 		F6A8488E2CB324A800B09AD5 /* Text+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */; };
@@ -301,6 +302,7 @@
 		F679BDDB2EE7D4D600A2F249 /* SQExercisesListItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesListItemViewModel.swift; sourceTree = "<group>"; };
 		F679BDDE2EE7D54100A2F249 /* SQExercisesListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesListItem.swift; sourceTree = "<group>"; };
 		F679BDE02EE7D66800A2F249 /* WorkoutSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionState.swift; sourceTree = "<group>"; };
+		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
 		F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Extensions.swift"; sourceTree = "<group>"; };
@@ -884,6 +886,7 @@
 		F6A848A72CB619E900B09AD5 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
 				F61593C32EF37A8600223A63 /* Toast */,
 				F61592302EF3628800223A63 /* SQAlertState.swift */,
@@ -1443,6 +1446,7 @@
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
+				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
 				F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */,
 				F679BC502EE4FC1D00A2F249 /* SQWorkoutSummaryView.swift in Sources */,
 				F61591F72EE8F00F00223A63 /* HKDevice+Extensions.swift in Sources */,
@@ -1530,9 +1534,13 @@
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Beast Fitness";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1563,9 +1571,13 @@
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Beast Fitness";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1801,7 +1813,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1837,7 +1849,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

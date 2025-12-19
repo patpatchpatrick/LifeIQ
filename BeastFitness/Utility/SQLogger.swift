@@ -19,6 +19,7 @@ enum SQLogContext {
     case workoutList
     case dashboard
     case healthKit
+    case watchInterface
 }
 
 final class SQLogger {

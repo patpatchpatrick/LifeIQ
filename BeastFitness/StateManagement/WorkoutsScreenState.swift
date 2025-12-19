@@ -39,13 +39,9 @@ protocol WorkoutsLandingStating: AnyObject {
     }
     
     func displayWorkoutSessionSheet() {
-        workoutSessionViewModel = .init(
-            state: AppState.shared.workoutSessionState,
-            onDismiss: { [weak self] in
-                guard let self else { return }
-                self.toggleWorkoutSessionSheetVisibility(false)
-                
-            })
+        workoutSessionViewModel = .default(for: nil, onDismiss: { [weak self] in
+            self?.toggleWorkoutSessionSheetVisibility(false)
+        })
         isWorkoutSessionSheetVisible = true
     }
 }

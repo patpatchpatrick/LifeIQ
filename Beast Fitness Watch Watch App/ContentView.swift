@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Bindable var state = SQWatchAppState.shared
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Beast fitness!")
-        }
+        VStack(spacing: 8) {
+              Text("Beast Fitness")
+              Text(state.lastLaunchMessage)
+                  .font(.footnote)
+          }
         .padding()
     }
 }

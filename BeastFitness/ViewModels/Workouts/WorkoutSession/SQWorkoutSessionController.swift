@@ -34,6 +34,8 @@ final class SQWorkoutSessionController: Identifiable {
     static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
         Self.default.onDismiss = onDismiss
         Self.default.reset(with: workout)
+        print("PTD Default Session Controller")
+        self.default.startWorkout(displayWatchPrompt: true)
         return Self.default
     }
     
@@ -53,7 +55,7 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     private func startWorkout(displayWatchPrompt: Bool = false) {
-        
+        print("PTD Starting workout", displayWatchPrompt)
         if displayWatchPrompt {
             state.hub.alertEvents.send(.present(.init(
                 title: "Start workout on Apple Watch to track metrics?",

@@ -16,10 +16,13 @@ struct BeastFitnessApp: App {
         WindowGroup {
             SQRootTabView(appState: .shared)
                 .task { @MainActor in
-                   SQOverlayWindow.shared.attachIfNeeded(
-                    alerts: AppState.shared.alertState,
-                    toasts: AppState.shared.toastState
-                   )
+                    
+                    SQLaunchManager.shared.performLaunchTasks()
+                    
+                    SQOverlayWindow.shared.attachIfNeeded(
+                        alerts: AppState.shared.alertState,
+                        toasts: AppState.shared.toastState
+                    )
                }
         }
         .modelContainer(for: [
