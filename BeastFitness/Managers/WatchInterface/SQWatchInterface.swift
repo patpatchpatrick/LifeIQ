@@ -6,6 +6,7 @@
 //
 
 import HealthKit
+import BeastFitnessCore
 
 final class SQWatchInterface: NSObject {
     private let healthStore = HKHealthStore()

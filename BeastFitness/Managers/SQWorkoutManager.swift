@@ -8,6 +8,7 @@
 import SwiftData
 import Foundation
 import HealthKit
+import BeastFitnessCore
 
 protocol SQWorkoutManaging {
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws

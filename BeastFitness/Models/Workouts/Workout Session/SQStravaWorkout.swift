@@ -7,6 +7,7 @@
 
 import Foundation
 import HealthKit
+import BeastFitnessCore
 
 struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     var sourceId: String {

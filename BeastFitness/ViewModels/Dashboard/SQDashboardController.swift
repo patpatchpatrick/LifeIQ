@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import SwiftData
+import BeastFitnessCore
 
 @MainActor
 protocol SQDashboardInterface {

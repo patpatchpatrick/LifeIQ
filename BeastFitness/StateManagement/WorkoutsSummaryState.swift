@@ -8,6 +8,7 @@
 
 import SwiftUI
 import Combine
+import BeastFitnessCore
 
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {

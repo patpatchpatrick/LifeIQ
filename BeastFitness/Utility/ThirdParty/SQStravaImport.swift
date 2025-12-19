@@ -7,6 +7,7 @@
 
 import Foundation
 import SafariServices
+import BeastFitnessCore
 
 final class SQStravaImport {
     static let shared = SQStravaImport()

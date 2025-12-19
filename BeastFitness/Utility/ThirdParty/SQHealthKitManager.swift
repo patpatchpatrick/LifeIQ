@@ -7,6 +7,7 @@
 
 import Foundation
 import HealthKit
+import BeastFitnessCore
 
 protocol SQHealthKitManaging {
     @discardableResult

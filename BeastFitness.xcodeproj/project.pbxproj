@@ -98,6 +98,7 @@
 		F679BDDC2EE7D4DC00A2F249 /* SQExercisesListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDDB2EE7D4D600A2F249 /* SQExercisesListItemViewModel.swift */; };
 		F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDDE2EE7D54100A2F249 /* SQExercisesListItem.swift */; };
 		F679BDE12EE7D66B00A2F249 /* WorkoutSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDE02EE7D66800A2F249 /* WorkoutSessionState.swift */; };
+		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
 		F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A401112EF5B920002BC997 /* SQLaunchManager.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
@@ -145,7 +146,6 @@
 		F6F4D4182ED61B8700ECE0BC /* SQDailyCheckInRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */; };
 		F6F4D41A2ED61D1100ECE0BC /* SQSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4192ED61D0F00ECE0BC /* SQSegmentedControl.swift */; };
 		F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */; };
-		F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94DFB2CAB993900C2B90B /* SQLogger.swift */; };
 		F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */; };
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
 		F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */; };
@@ -347,7 +347,6 @@
 		F6F4D4172ED61B8100ECE0BC /* SQDailyCheckInRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInRowViewModel.swift; sourceTree = "<group>"; };
 		F6F4D4192ED61D0F00ECE0BC /* SQSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSegmentedControl.swift; sourceTree = "<group>"; };
 		F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInSegmentedControlRow.swift; sourceTree = "<group>"; };
-		F6F94DFB2CAB993900C2B90B /* SQLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLogger.swift; sourceTree = "<group>"; };
 		F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkoutActivityType+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkout+Extensions.swift"; sourceTree = "<group>"; };
@@ -360,6 +359,7 @@
 		F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch App"; sourceTree = "<group>"; };
 		F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppTests"; sourceTree = "<group>"; };
 		F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppUITests"; sourceTree = "<group>"; };
+		F6A311F02EF6079B00A2E5F7 /* Packages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Packages; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -388,6 +388,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */,
 				F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */,
 				F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */,
 				F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */,
@@ -688,6 +689,7 @@
 		F657E29C2CA50D7C00E72926 = {
 			isa = PBXGroup;
 			children = (
+				F6A311F02EF6079B00A2E5F7 /* Packages */,
 				F657E2A72CA50D7C00E72926 /* BeastFitness */,
 				F657E2B82CA50D7E00E72926 /* BeastFitnessTests */,
 				F657E2C22CA50D7E00E72926 /* BeastFitnessUITests */,
@@ -1005,7 +1007,6 @@
 				F615922E2EF35E2500223A63 /* SQUserDefaults.swift */,
 				F6A848A22CB6033100B09AD5 /* ThirdParty */,
 				F6A8489B2CB4DD5400B09AD5 /* Formatters */,
-				F6F94DFB2CAB993900C2B90B /* SQLogger.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -1090,6 +1091,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */,
+				F6A311F02EF6079B00A2E5F7 /* Packages */,
 			);
 			name = "Beast Fitness Watch Watch App";
 			packageProductDependencies = (
@@ -1248,6 +1250,7 @@
 			mainGroup = F657E29C2CA50D7C00E72926;
 			packageReferences = (
 				F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				F6A311F32EF6084300A2E5F7 /* XCLocalSwiftPackageReference "Packages/BeastFitnessCore" */,
 			);
 			productRefGroup = F657E2A62CA50D7C00E72926 /* Products */;
 			projectDirPath = "";
@@ -1394,7 +1397,6 @@
 				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F61592292EF1CA2200223A63 /* SQWorkoutSessionTimerViewModel.swift in Sources */,
-				F6F94DFC2CAB993900C2B90B /* SQLogger.swift in Sources */,
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */,
@@ -2008,6 +2010,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		F6A311F32EF6084300A2E5F7 /* XCLocalSwiftPackageReference "Packages/BeastFitnessCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/BeastFitnessCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -2020,6 +2029,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BeastFitnessCore;
+		};
 		F6ABC2602EDE54C900D3E679 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

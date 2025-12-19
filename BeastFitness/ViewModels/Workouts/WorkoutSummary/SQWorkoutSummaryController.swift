@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import BeastFitnessCore
 
 @MainActor
 protocol SQWorkoutSummaryInterface {

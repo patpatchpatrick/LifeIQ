@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import BeastFitnessCore
 
 @MainActor
 protocol SQWorkoutsListInterface {

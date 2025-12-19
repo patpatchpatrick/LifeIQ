@@ -7,6 +7,7 @@
 
 import SwiftData
 import Foundation
+import BeastFitnessCore
 
 protocol SQDailyCheckInManaging {
     /// Saves a daily check in locally and to the server

@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 import HealthKit
-
+import BeastFitnessCore
 
 @Observable
 @MainActor

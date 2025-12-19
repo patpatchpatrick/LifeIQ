@@ -6,6 +6,7 @@
 //
 
 import HealthKit
+import BeastFitnessCore
 
 enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case kilocalorie

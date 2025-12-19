@@ -6,6 +6,7 @@
 //
 import Foundation
 import HealthKit
+import BeastFitnessCore
 
 extension SQHealthKitManager {
     

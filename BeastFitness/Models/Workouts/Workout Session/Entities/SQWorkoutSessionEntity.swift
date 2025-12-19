@@ -9,6 +9,7 @@ import SwiftData
 import Foundation
 import HealthKit
 import SwiftUI
+import BeastFitnessCore
 
 @Model
 final class SQWorkoutSessionEntity {

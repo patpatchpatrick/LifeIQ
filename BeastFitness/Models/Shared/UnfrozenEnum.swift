@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import BeastFitnessCore
 
 public protocol UnfrozenEnum: RawRepresentable, Codable where RawValue: Codable {
     static var unknown: Self { get }
