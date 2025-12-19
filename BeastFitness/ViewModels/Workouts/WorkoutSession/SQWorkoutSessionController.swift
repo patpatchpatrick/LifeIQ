@@ -14,6 +14,7 @@ import BeastFitnessCore
 @MainActor
 final class SQWorkoutSessionController: Identifiable {
     let id = UUID()
+    static let defaultStrengthActivity: HKWorkoutActivityType = .traditionalStrengthTraining
     private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
@@ -142,7 +143,7 @@ final class SQWorkoutSessionController: Identifiable {
         let workoutSource = baseWorkout?.workoutSource
         ?? .manual(SQManualWorkout(
             sourceId: workoutId,
-            activityType: .traditionalStrengthTraining,
+            activityType: Self.defaultStrengthActivity,
             device: nil,
             startDate: startDate,
             endDate: endDate,

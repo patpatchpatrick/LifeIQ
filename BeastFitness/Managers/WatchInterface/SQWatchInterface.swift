@@ -17,7 +17,7 @@ final class SQWatchInterface: NSObject {
 
     func startStrengthWorkoutOnWatch() {
         var config = HKWorkoutConfiguration()
-        config.activityType = .functionalStrengthTraining
+        config.activityType = SQWorkoutSessionController.defaultStrengthActivity
         config.locationType = .indoor
 
         healthStore.startWatchApp(with: config) { success, error in
@@ -30,9 +30,9 @@ final class SQWatchInterface: NSObject {
             onStart: @escaping @MainActor (HKWorkoutSession) -> Void
         ) {
             
-            SQLogger.shared.log("Starting Watch Mirror Handler", .debug, context: .watchInterface)
+//            SQLogger.shared.log("Starting Watch Mirror Handler", .debug, context: .workoutSes)
             healthStore.workoutSessionMirroringStartHandler = { mirroredSession in
-                SQLogger.shared.log("Received mirrored session: \(mirroredSession.activityType)", .debug, context: .watchInterface)
+//                SQLogger.shared.log("Received mirrored session: \(mirroredSession.activityType)", .debug, context: .watchInterface)
                         // Set the delegate for the session
                         mirroredSession.delegate = self
                         

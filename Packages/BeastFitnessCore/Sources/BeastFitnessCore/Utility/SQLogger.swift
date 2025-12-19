@@ -8,7 +8,10 @@
 import Foundation
 import os
 
-public enum SQLogContext {
+// MARK: - Platform contexts
+
+#if os(iOS)
+public enum SQiOSLogContext: Sendable {
     case general
     case dailyCheckIn
     case deepLink
@@ -19,32 +22,46 @@ public enum SQLogContext {
     case workoutList
     case dashboard
     case healthKit
-    case watchInterface
 }
+#endif
+
+#if os(watchOS)
+public enum SQWatchLogContext: Sendable {
+    case general
+    case watchInterface
+    case healthKit
+    case workoutSession
+}
+#endif
+
+// MARK: - Logger
 
 /// Non-async, thread-safe logger usable from iOS + watch targets and from a Swift Package.
 public final class SQLogger: @unchecked Sendable {
 
     public static let shared = SQLogger()
 
-    public enum Level {
+    public enum Level: Sendable {
         case debug
         case info
         case log
         case error
     }
 
-    // Serial queue guarantees ordering + thread-safety without requiring `await`.
-    private let queue = DispatchQueue(label: "io.github.patpatchpatrick.BeastFitness.SQLogger", qos: .utility)
+    private let queue = DispatchQueue(
+        label: "io.github.patpatchpatrick.BeastFitness.SQLogger",
+        qos: .utility
+    )
 
     public init() {}
 
-    // MARK: - Public API
+    // MARK: - iOS-only API
 
+    #if os(iOS)
     public func log(
         _ message: String,
         _ level: Level,
-        context: SQLogContext,
+        context: SQiOSLogContext,
         isPriority: Bool = false,
         shouldLog: Bool = true
     ) {
@@ -53,20 +70,28 @@ public final class SQLogger: @unchecked Sendable {
         let finalMessage = isPriority ? priorityMessage(message) : message
         let logger = Logger.logger(for: context)
 
-        // Make logging thread-safe + ordered, but caller doesn't need `await`.
-        queue.async {
-            switch level {
-            case .debug:
-                logger.debug("\(finalMessage)")
-            case .info:
-                logger.info("\(finalMessage)")
-            case .log:
-                logger.log("\(finalMessage)")
-            case .error:
-                logger.error("\(finalMessage)")
-            }
-        }
+        queue.async { logger.write(finalMessage, level: level) }
     }
+    #endif
+
+    // MARK: - watchOS-only API
+
+    #if os(watchOS)
+    public func logW(
+        _ message: String,
+        _ level: Level,
+        context: SQWatchLogContext,
+        isPriority: Bool = false,
+        shouldLog: Bool = true
+    ) {
+        guard shouldLog else { return }
+
+        let finalMessage = isPriority ? priorityMessage(message) : message
+        let logger = Logger.logger(for: context)
+
+        queue.async { logger.write(finalMessage, level: level) }
+    }
+    #endif
 
     // MARK: - Private helpers
 
@@ -75,11 +100,30 @@ public final class SQLogger: @unchecked Sendable {
     }
 }
 
-// MARK: - OSLog categories per context (no mutable state)
+// MARK: - Logger helpers
 
 fileprivate extension Logger {
 
-    static func logger(for context: SQLogContext) -> Logger {
+    func write(_ message: String, level: SQLogger.Level) {
+        switch level {
+        case .debug:
+            debug("\(message)")
+        case .info:
+            info("\(message)")
+        case .log:
+            log("\(message)")
+        case .error:
+            error("\(message)")
+        }
+    }
+}
+
+// MARK: - OSLog categories per platform
+
+#if os(iOS)
+fileprivate extension Logger {
+
+    static func logger(for context: SQiOSLogContext) -> Logger {
         switch context {
         case .general:         return .general
         case .dailyCheckIn:    return .dailyCheckIn
@@ -91,11 +135,10 @@ fileprivate extension Logger {
         case .workoutList:     return .workoutList
         case .dashboard:       return .dashboard
         case .healthKit:       return .healthKit
-        case .watchInterface:  return .watchInterface
         }
     }
 
-    static let subsystem = "io.github.patpatchpatrick.TheSquad"
+    static let subsystem = "io.github.patpatchpatrick.BeastFitness"
 
     static let general        = Logger(subsystem: subsystem, category: "General")
     static let dailyCheckIn   = Logger(subsystem: subsystem, category: "DailyCheckIn")
@@ -107,5 +150,26 @@ fileprivate extension Logger {
     static let workoutList    = Logger(subsystem: subsystem, category: "WorkoutList")
     static let dashboard      = Logger(subsystem: subsystem, category: "Dashboard")
     static let healthKit      = Logger(subsystem: subsystem, category: "HealthKit")
-    static let watchInterface = Logger(subsystem: subsystem, category: "WatchInterface")
 }
+#endif
+
+#if os(watchOS)
+fileprivate extension Logger {
+
+    static func logger(for context: SQWatchLogContext) -> Logger {
+        switch context {
+        case .general:        return .general
+        case .watchInterface: return .watchInterface
+        case .healthKit:      return .healthKit
+        case .workoutSession: return .workoutSession
+        }
+    }
+
+    static let subsystem = "io.github.patpatchpatrick.BeastFitness"
+
+    static let general        = Logger(subsystem: subsystem, category: "General")
+    static let watchInterface = Logger(subsystem: subsystem, category: "WatchInterface")
+    static let healthKit      = Logger(subsystem: subsystem, category: "HealthKit")
+    static let workoutSession = Logger(subsystem: subsystem, category: "WorkoutSession")
+}
+#endif
