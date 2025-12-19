@@ -48,7 +48,32 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     private func reset(with workout: SQWorkoutSessionable?) {
+        timerViewModel.stop()
         state.load(workout: workout)
+    }
+    
+    private func startWorkout(displayWatchPrompt: Bool = false) {
+        
+        if displayWatchPrompt {
+            state.hub.alertEvents.send(.present(.init(
+                title: "Start workout on Apple Watch to track metrics?",
+                primary: .init(
+                    title: "Start on Apple Watch",
+                    handler: { [weak self] in
+                        guard let self else { return }
+                        SQWatchInterface.shared.startStrengthWorkoutOnWatch()
+                        self.startWorkout()
+                    }),
+                secondary: .init(
+                    title: "Start without Apple Watch",
+                    handler: { [weak self] in
+                        guard let self else { return }
+                        self.startWorkout()
+                    })
+            )))
+            return
+        }
+        
         timerViewModel.start()
     }
     

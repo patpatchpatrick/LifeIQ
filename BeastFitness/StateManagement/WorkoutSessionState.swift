@@ -11,6 +11,7 @@ import Combine
 
 @MainActor
 protocol WorkoutSessionStating: AnyObject {
+    var hub: EventHub { get }
     var isAddExerciseListSheetVisible: Bool { get }
     var isRestTimerSheetVisible: Bool { get }
     var baseWorkout: SQWorkoutSessionable? { get }
@@ -32,7 +33,7 @@ protocol WorkoutSessionStating: AnyObject {
 
 @MainActor
 @Observable final class WorkoutSessionState: WorkoutSessionStating {
-    private let hub: EventHub
+    let hub: EventHub
 
     private(set) var baseWorkout: SQWorkoutSessionable?
     

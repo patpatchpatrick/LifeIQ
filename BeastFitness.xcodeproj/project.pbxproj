@@ -57,6 +57,8 @@
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
 		F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C42EF37A8900223A63 /* SQToastState.swift */; };
 		F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */; };
+		F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */; };
 		F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */; };
 		F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */; };
 		F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */; };
@@ -150,6 +152,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		F61593DA2EF4BD8400223A63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F61593CC2EF4BD8200223A63;
+			remoteInfo = "Beast Fitness Watch Watch App";
+		};
+		F61593E42EF4BD8400223A63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F61593CC2EF4BD8200223A63;
+			remoteInfo = "Beast Fitness Watch Watch App";
+		};
+		F61593EB2EF4BD8400223A63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F61593CC2EF4BD8200223A63;
+			remoteInfo = "Beast Fitness Watch Watch App";
+		};
 		F657E2B62CA50D7E00E72926 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
@@ -165,6 +188,20 @@
 			remoteInfo = BeastFitness;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F61593F12EF4BD8400223A63 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F602DA272EC40EB700404878 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -217,6 +254,10 @@
 		F61593C12EF37A7100223A63 /* SQToastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastViewModel.swift; sourceTree = "<group>"; };
 		F61593C42EF37A8900223A63 /* SQToastState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastState.swift; sourceTree = "<group>"; };
 		F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOverlayRootView.swift; sourceTree = "<group>"; };
+		F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Beast Fitness Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F61593D92EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Beast Fitness Watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F61593E32EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Beast Fitness Watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWatchInterface.swift; sourceTree = "<group>"; };
 		F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsViewModel.swift; sourceTree = "<group>"; };
 		F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsScreenState.swift; sourceTree = "<group>"; };
 		F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsLandingView.swift; sourceTree = "<group>"; };
@@ -314,9 +355,33 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F602DA532EC6ADA300404878 /* Weekly Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Weekly Summary"; sourceTree = "<group>"; };
 		F61592082EEE18D800223A63 /* Firestore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Firestore; sourceTree = "<group>"; };
+		F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch App"; sourceTree = "<group>"; };
+		F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppTests"; sourceTree = "<group>"; };
+		F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppUITests"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		F61593CA2EF4BD8200223A63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593D62EF4BD8400223A63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593E02EF4BD8400223A63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F657E2A22CA50D7C00E72926 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -558,6 +623,14 @@
 			path = OverlayWindow;
 			sourceTree = "<group>";
 		};
+		F61593F92EF4BEB800223A63 /* WatchInterface */ = {
+			isa = PBXGroup;
+			children = (
+				F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */,
+			);
+			path = WatchInterface;
+			sourceTree = "<group>";
+		};
 		F629CE602EE3B6560002330C /* Workouts */ = {
 			isa = PBXGroup;
 			children = (
@@ -616,6 +689,9 @@
 				F657E2A72CA50D7C00E72926 /* BeastFitness */,
 				F657E2B82CA50D7E00E72926 /* BeastFitnessTests */,
 				F657E2C22CA50D7E00E72926 /* BeastFitnessUITests */,
+				F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */,
+				F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */,
+				F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */,
 				F657E2A62CA50D7C00E72926 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -626,6 +702,9 @@
 				F657E2A52CA50D7C00E72926 /* BeastFitness.app */,
 				F657E2B52CA50D7E00E72926 /* BeastFitnessTests.xctest */,
 				F657E2BF2CA50D7E00E72926 /* BeastFitnessUITests.xctest */,
+				F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */,
+				F61593D92EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests.xctest */,
+				F61593E32EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -805,6 +884,7 @@
 		F6A848A72CB619E900B09AD5 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				F61593F92EF4BEB800223A63 /* WatchInterface */,
 				F61593C32EF37A8600223A63 /* Toast */,
 				F61592302EF3628800223A63 /* SQAlertState.swift */,
 				F61592042EEE16AA00223A63 /* SQWorkoutManager.swift */,
@@ -993,6 +1073,74 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F61593EE2EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch App" */;
+			buildPhases = (
+				F61593C92EF4BD8200223A63 /* Sources */,
+				F61593CA2EF4BD8200223A63 /* Frameworks */,
+				F61593CB2EF4BD8200223A63 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */,
+			);
+			name = "Beast Fitness Watch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "Beast Fitness Watch Watch App";
+			productReference = F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F61593D82EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F61593F22EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch AppTests" */;
+			buildPhases = (
+				F61593D52EF4BD8400223A63 /* Sources */,
+				F61593D62EF4BD8400223A63 /* Frameworks */,
+				F61593D72EF4BD8400223A63 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F61593DB2EF4BD8400223A63 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */,
+			);
+			name = "Beast Fitness Watch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "Beast Fitness Watch Watch AppTests";
+			productReference = F61593D92EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F61593E22EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F61593F52EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch AppUITests" */;
+			buildPhases = (
+				F61593DF2EF4BD8400223A63 /* Sources */,
+				F61593E02EF4BD8400223A63 /* Frameworks */,
+				F61593E12EF4BD8400223A63 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F61593E52EF4BD8400223A63 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */,
+			);
+			name = "Beast Fitness Watch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "Beast Fitness Watch Watch AppUITests";
+			productReference = F61593E32EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		F657E2A42CA50D7C00E72926 /* BeastFitness */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F657E2C92CA50D7E00E72926 /* Build configuration list for PBXNativeTarget "BeastFitness" */;
@@ -1000,10 +1148,12 @@
 				F657E2A12CA50D7C00E72926 /* Sources */,
 				F657E2A22CA50D7C00E72926 /* Frameworks */,
 				F657E2A32CA50D7C00E72926 /* Resources */,
+				F61593F12EF4BD8400223A63 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F61593EC2EF4BD8400223A63 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F602DA532EC6ADA300404878 /* Weekly Summary */,
@@ -1057,9 +1207,20 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1530;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1530;
 				TargetAttributes = {
+					F61593CC2EF4BD8200223A63 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					F61593D82EF4BD8400223A63 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = F61593CC2EF4BD8200223A63;
+					};
+					F61593E22EF4BD8400223A63 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = F61593CC2EF4BD8200223A63;
+					};
 					F657E2A42CA50D7C00E72926 = {
 						CreatedOnToolsVersion = 15.3;
 					};
@@ -1092,11 +1253,35 @@
 				F657E2A42CA50D7C00E72926 /* BeastFitness */,
 				F657E2B42CA50D7E00E72926 /* BeastFitnessTests */,
 				F657E2BE2CA50D7E00E72926 /* BeastFitnessUITests */,
+				F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */,
+				F61593D82EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */,
+				F61593E22EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F61593CB2EF4BD8200223A63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593D72EF4BD8400223A63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593E12EF4BD8400223A63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F657E2A32CA50D7C00E72926 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1125,6 +1310,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		F61593C92EF4BD8200223A63 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593D52EF4BD8400223A63 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F61593DF2EF4BD8400223A63 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F657E2A12CA50D7C00E72926 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1134,6 +1340,7 @@
 				F615922F2EF35E2800223A63 /* SQUserDefaults.swift in Sources */,
 				F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */,
 				F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */,
+				F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */,
 				F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */,
 				F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */,
 				F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */,
@@ -1282,6 +1489,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		F61593DB2EF4BD8400223A63 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
+			targetProxy = F61593DA2EF4BD8400223A63 /* PBXContainerItemProxy */;
+		};
+		F61593E52EF4BD8400223A63 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
+			targetProxy = F61593E42EF4BD8400223A63 /* PBXContainerItemProxy */;
+		};
+		F61593EC2EF4BD8400223A63 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
+			targetProxy = F61593EB2EF4BD8400223A63 /* PBXContainerItemProxy */;
+		};
 		F657E2B72CA50D7E00E72926 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F657E2A42CA50D7C00E72926 /* BeastFitness */;
@@ -1295,6 +1517,150 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		F61593EF2EF4BD8400223A63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Beast Fitness";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		F61593F02EF4BD8400223A63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Beast Fitness";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		F61593F32EF4BD8400223A63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.patpatchpatrick.BeastFitness.Beast-Fitness-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Beast Fitness Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Beast Fitness Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		F61593F42EF4BD8400223A63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.patpatchpatrick.BeastFitness.Beast-Fitness-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Beast Fitness Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Beast Fitness Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		F61593F62EF4BD8400223A63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.patpatchpatrick.BeastFitness.Beast-Fitness-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Beast Fitness Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		F61593F72EF4BD8400223A63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.patpatchpatrick.BeastFitness.Beast-Fitness-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Beast Fitness Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
 		F657E2C72CA50D7E00E72926 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1420,6 +1786,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
@@ -1427,8 +1794,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeastFitness/Info.plist;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1443,6 +1809,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1455,6 +1822,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
@@ -1462,8 +1830,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeastFitness/Info.plist;
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Allow this app to read your Health data";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to read your Health data";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1478,6 +1845,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1563,6 +1931,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F61593EE2EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F61593EF2EF4BD8400223A63 /* Debug */,
+				F61593F02EF4BD8400223A63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F61593F22EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F61593F32EF4BD8400223A63 /* Debug */,
+				F61593F42EF4BD8400223A63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F61593F52EF4BD8400223A63 /* Build configuration list for PBXNativeTarget "Beast Fitness Watch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F61593F62EF4BD8400223A63 /* Debug */,
+				F61593F72EF4BD8400223A63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F657E2A02CA50D7C00E72926 /* Build configuration list for PBXProject "BeastFitness" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
