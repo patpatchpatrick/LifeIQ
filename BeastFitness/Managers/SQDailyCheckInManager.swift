@@ -33,12 +33,14 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .error,
                 context: .dailyCheckIn
             )
-            // TODO: PTD Error - throw check in error here and don't let the user continue to save to Firebase
+            
+            throw error
         }
         
         do {
             try await dailyCheckInService.saveDailyCheckInStats(stats)
         } catch {
+            
             SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
             // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
         }

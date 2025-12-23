@@ -12,13 +12,15 @@ import BeastFitnessCore
 @Observable @MainActor
 final class SQDailyCheckInViewModel: Identifiable {
     let id = UUID()
+    let eventHub: EventHub
     let dashboardInterface: SQDashboardInterface = SQDashboardController.default
     private let dailyCheckInManager: SQDailyCheckInManaging
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     let onDismiss: () -> Void
     private(set) var isLoading: Bool = false
     
-    init(stats: SQDailyCheckInStats?, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), onDismiss: @escaping () -> Void) {
+    init(eventHub: EventHub, stats: SQDailyCheckInStats?, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), onDismiss: @escaping () -> Void) {
+        self.eventHub = eventHub
         self.dailyCheckInManager = dailyCheckInManager
         self.onDismiss = onDismiss
         self.rows = buildRows(for: stats)
@@ -282,14 +284,12 @@ final class SQDailyCheckInViewModel: Identifiable {
         
         do {
             try await dailyCheckInManager.saveDailyCheckInStats(stats: stats, to: modelContext)
+            /// Refresh the dashboard data
+            await dashboardInterface.refreshUI(for: modelContext)
+            onDismiss()
         } catch {
-            print("PTD Surface this error", error)
+            eventHub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Error saving check in data: \(error.localizedDescription)."))))
         }
-        
-        /// Refresh the dashboard data
-        await dashboardInterface.refreshUI(for: modelContext)
-        
-        onDismiss()
     }
 }
 

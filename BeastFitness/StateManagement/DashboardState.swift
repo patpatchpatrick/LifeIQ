@@ -64,6 +64,7 @@ protocol DashboardStating: AnyObject {
     
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?) {
         dailyCheckInViewModel = .init(
+            eventHub: AppState.shared.hub,
             stats: stats,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)

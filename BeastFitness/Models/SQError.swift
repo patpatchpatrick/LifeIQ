@@ -9,6 +9,8 @@ import Foundation
 
 struct SQError: SQUserFacingError {
     static let genericErrorTitle: String = "Error"
+    static let genericErrorDescription: String = "Something went wrong."
+    static let supportEmail = "support@beastfitness.com" //TODO: - PTD update this to be actual support email
     let title: String
     let description: String
     let underylingError: Error?
@@ -22,13 +24,10 @@ struct SQError: SQUserFacingError {
     var userFacingTitle: String { title }
     var userFacingDescription: String { description }
     
-    static let standard = SQError(title: Self.genericErrorTitle, description: "Something went wrong.")
+    static let standard = SQError(title: Self.genericErrorTitle, description: Self.genericErrorDescription)
     static let standardConnection = SQError(title: Self.genericErrorTitle, description: "Something went wrong. Please check connection or try again later.")
     static func standard(withDescription description: String) -> SQError {
         .init(title: Self.standard.title, description: description)
-    }
-    static func buildWith(_ error: Error) -> SQError {
-        .init(title: Self.genericErrorTitle, description: error.localizedDescription, underylingError: error)
     }
 }
 

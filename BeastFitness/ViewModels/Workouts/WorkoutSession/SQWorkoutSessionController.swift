@@ -164,7 +164,7 @@ final class SQWorkoutSessionController: Identifiable {
             state.workoutUpdated(workout: workout)
             onDismiss()
         } catch {
-            state.hub.alertEvents.send(.present(.init(SQError.buildWith(error))))
+            state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Error saving workout: \(error.localizedDescription)."))))
             SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
         }
     }
