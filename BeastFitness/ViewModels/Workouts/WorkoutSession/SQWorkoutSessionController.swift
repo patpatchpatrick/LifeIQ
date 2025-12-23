@@ -35,7 +35,6 @@ final class SQWorkoutSessionController: Identifiable {
     static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
         Self.default.onDismiss = onDismiss
         Self.default.reset(with: workout)
-        print("PTD Default Session Controller")
         self.default.startWorkout(displayWatchPrompt: true)
         return Self.default
     }
