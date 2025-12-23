@@ -19,15 +19,55 @@ final class SQWorkoutSessionController: Identifiable {
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     var onDismiss: () -> Void
+    private(set) var shouldDisplayTimer: Bool = true
+    private(set) var workoutTitle: String = "Workout"
+    private(set) var displayDiscardButton: Bool = false
+    private(set) var workoutMode: WorkoutMode = .new
+    private var hasStartedWorkout: Bool = false
+    enum WorkoutMode {
+        case new
+        case existing
+        
+        var shouldDisplayTimer: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+        
+        var shouldStartWorkoutOnLaunch: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+        
+        var shouldDisplayDiscardButton: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+    }
     
     // MARK: - Timer
     let timerViewModel = SQWorkoutSessionTimerViewModel()
     let restTimerViewModel = SQWorkoutSessionRestTimerViewModel()
     var navBarTimeString: String {
-        if restTimerViewModel.isPresentedAsActive {
-            return "Rest · \(restTimerViewModel.remainingString)"
+        if workoutMode.shouldDisplayTimer {
+            if restTimerViewModel.isPresentedAsActive {
+                return "Rest · \(restTimerViewModel.remainingString)"
+            } else {
+                return "Workout · \(timerViewModel.visibleTimeString)"
+            }
         } else {
-            return "Workout · \(timerViewModel.visibleTimeString)"
+            return "Workout"
         }
     }
     
@@ -35,7 +75,6 @@ final class SQWorkoutSessionController: Identifiable {
     static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
         Self.default.onDismiss = onDismiss
         Self.default.reset(with: workout)
-        self.default.startWorkout(displayWatchPrompt: true)
         return Self.default
     }
     
@@ -50,8 +89,22 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     private func reset(with workout: SQWorkoutSessionable?) {
+        hasStartedWorkout = false
         timerViewModel.stop()
         state.load(workout: workout)
+        
+        let workoutMode: WorkoutMode = workout == nil ? .new : .existing
+        self.workoutMode = workoutMode
+        shouldDisplayTimer = workoutMode.shouldDisplayTimer
+        displayDiscardButton = workoutMode.shouldDisplayDiscardButton
+    }
+    
+    func onAppear() {
+        guard !hasStartedWorkout else { return }
+        hasStartedWorkout = true
+        if workoutMode.shouldStartWorkoutOnLaunch {
+            startWorkout(displayWatchPrompt: true)
+        }
     }
     
     private func startWorkout(displayWatchPrompt: Bool = false) {
@@ -169,7 +222,7 @@ final class SQWorkoutSessionController: Identifiable {
         }
     }
     
-    func exitWorkout() {
+    func discardWorkout() {
         state.hub.alertEvents.send(.present(.init(
             title: "Dismiss workout?",
             subtitle: "Workout data will be discarded",

@@ -50,16 +50,18 @@ struct SQWorkoutSessionView: View {
     @ViewBuilder
     private var addExerciseRow: some View {
         HStack {
+            Spacer()
+            
             SQButton(
                 style: .secondary,
-                shouldHugContent: false,
+                shouldHugContent: true,
                 title: "Add Exercise",
                 icon: .plus
             ) {
                 controller.state.displayAddExerciseListSheet()
             }
 
-            Spacer(minLength: 0)
+            Spacer()
         }
         .listRowInsets(EdgeInsets(
             top: .SQSpace.m,
@@ -99,11 +101,14 @@ struct SQWorkoutSessionView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 0) {
-                    Button {
-                        controller.exitWorkout()
-                    } label: {
-                        Image(systemName: SQImageSymbol.xCircle.rawValue)
+                    if controller.displayDiscardButton {
+                        Button {
+                            controller.discardWorkout()
+                        } label: {
+                            Image(systemName: SQImageSymbol.xCircle.rawValue)
+                        }
                     }
+                    
                     Button {
                         finishWorkout()
                     } label: {
@@ -112,21 +117,26 @@ struct SQWorkoutSessionView: View {
                 }
             }
 
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    controller.timerViewModel.workoutTimerButtonConfig.action()
-                } label: {
-                    Image(systemName: controller.timerViewModel.workoutTimerButtonConfig.icon?.rawValue ?? "")
+            if controller.workoutMode.shouldDisplayTimer {
+                ToolbarItem(placement: .topBarLeading) {
+                    HStack(spacing: 0) {
+                        Button {
+                            controller.timerViewModel.workoutTimerButtonConfig.action()
+                        } label: {
+                            Image(systemName: controller.timerViewModel.workoutTimerButtonConfig.icon?.rawValue ?? "")
+                        }
+                        
+                        Button {
+                            controller.state.displayRestTimerSheet()
+                        } label: {
+                            Text("Rest")
+                        }
+                    }
                 }
             }
-            
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    controller.state.displayRestTimerSheet()
-                } label: {
-                    Text("Rest")
-                }
-            }
+        }
+        .onAppear {
+            controller.onAppear()
         }
         .sheet(isPresented: .init(
             get: { controller.state.isAddExerciseListSheetVisible },

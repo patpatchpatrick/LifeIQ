@@ -45,7 +45,7 @@ struct SQButton: View {
     // MARK: - Content (hidden when loading)
     @ViewBuilder
     var buttonStack: some View {
-        HStack(spacing: .SQSpace.s) {
+        HStack(spacing: .SQSpace.m) {
             if let title {
                 Text(title)
                     .multilineTextAlignment(.leading)
@@ -54,7 +54,8 @@ struct SQButton: View {
             }
             
             if let icon {
-                SQImageView(image: .init(symbol: icon))
+                SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(.textPrimary, font: .body)))
+                    .frame(height: 15)
             }
         }
         .opacity(isLoading ? 0 : 1)        // 👈 hide while loading
