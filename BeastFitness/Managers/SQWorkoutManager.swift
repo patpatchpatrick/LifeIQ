@@ -79,7 +79,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 workout.updateHkWorkoutId(hkWorkout?.uuid.uuidString)
                 
             } catch {
-                throw SQStandardError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
+                throw SQError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
             }
         }
         

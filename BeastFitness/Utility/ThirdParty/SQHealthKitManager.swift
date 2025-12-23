@@ -106,7 +106,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         
         guard let uuid = UUID(uuidString: healthKitId) else {
             SQLogger.shared.log("Unexpected UUID format when deleting workout with hkId: \(healthKitId)", .error, context: .healthKit)
-            throw SQStandardError.standard(withDescription: "Unexpected UUID format")
+            throw SQError.standard(withDescription: "Unexpected UUID format")
         }
 
         let predicate = HKQuery.predicateForObject(with: uuid)
@@ -129,7 +129,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         }
 
         guard let workout = workouts.first else {
-            throw SQStandardError.standard(withDescription: "HealthKit workout not found")
+            throw SQError.standard(withDescription: "HealthKit workout not found")
         }
 
         try await healthStore.delete(workout)
@@ -137,7 +137,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
     
     func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [HKWorkout] {
         guard HKHealthStore.isHealthDataAvailable() else {
-            throw SQStandardError.standard
+            throw SQError.standard
         }
 
         try await Self.healthStore.requestAuthorization(

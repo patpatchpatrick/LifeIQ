@@ -84,7 +84,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
                         state.notifyAppOfWorkoutDeletion(workout: baseWorkout)
                         onDismiss()
                     } catch {
-                        state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQStandardError.standard)))
+                        state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
                     }
                 }
             }),

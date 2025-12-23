@@ -95,12 +95,20 @@ struct SQWorkoutSessionView: View {
         )
         .navigationBarTitleDisplayMode(.inline)
         .background(SQColor.backgroundSecondary.color)
+        .interactiveDismissDisabled()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    finishWorkout()
-                } label: {
-                    Image(systemName: "checkmark")
+                HStack(spacing: 0) {
+                    Button {
+                        controller.exitWorkout()
+                    } label: {
+                        Image(systemName: SQImageSymbol.xCircle.rawValue)
+                    }
+                    Button {
+                        finishWorkout()
+                    } label: {
+                        Image(systemName: SQImageSymbol.checkmark.rawValue)
+                    }
                 }
             }
 

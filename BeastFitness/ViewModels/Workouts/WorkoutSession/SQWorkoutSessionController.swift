@@ -164,8 +164,25 @@ final class SQWorkoutSessionController: Identifiable {
             state.workoutUpdated(workout: workout)
             onDismiss()
         } catch {
-            // TODO: - PTD Display modal error when saving workout
+            state.hub.alertEvents.send(.present(.init(SQError.buildWith(error))))
             SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
         }
+    }
+    
+    func exitWorkout() {
+        state.hub.alertEvents.send(.present(.init(
+            title: "Dismiss workout?",
+            subtitle: "Workout data will be discarded",
+            primary: .init(
+                title: "Dismiss",
+                role: .destructive,
+                handler: { [weak self] in
+                    guard let self else { return }
+                    self.onDismiss()
+                }),
+            secondary: .init(
+                title: "Cancel",
+                role: .cancel)
+        )))
     }
 }

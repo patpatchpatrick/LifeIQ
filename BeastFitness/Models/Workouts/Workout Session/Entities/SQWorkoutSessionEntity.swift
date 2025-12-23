@@ -103,7 +103,7 @@ final class SQWorkoutSessionEntity {
             guard let details else {
                 /// If we aren't given the 3rd party workout source data, then we expect the workout to have manual details saved. If both are missing, then something went wrong.
                 SQLogger.shared.log("Missing both workout source and details when attempting to decode workout.", .error, context: .workoutSession)
-                throw SQStandardError.standard
+                throw SQError.standard
             }
             
             workoutSource = .manual(.init(
@@ -121,7 +121,7 @@ final class SQWorkoutSessionEntity {
         guard let workoutSource else {
             assertionFailure("We always expect a workout source here. Something went wrong.")
             SQLogger.shared.log("Workout source required to get workout", .error, context: .workoutSession)
-            throw SQStandardError.standard
+            throw SQError.standard
         }
         
         var syncStatus: SQSyncStatus?

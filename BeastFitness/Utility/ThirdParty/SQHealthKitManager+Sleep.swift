@@ -12,7 +12,7 @@ extension SQHealthKitManager {
     
     func fetchSleep(_ timeRange: SQTimeRange) async throws -> SQSleepQueryResult? {
            guard HKHealthStore.isHealthDataAvailable() else {
-               throw SQStandardError.standard   // or SQHealthKitError.healthDataUnavailable
+               throw SQError.standard   // or SQHealthKitError.healthDataUnavailable
            }
            
            do {
@@ -37,7 +37,7 @@ extension SQHealthKitManager {
            
            guard let categoryType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
                SQLogger.shared.log("Cannot get sleep category type", .error, context: .dataProcessing)
-               throw SQStandardError.standard
+               throw SQError.standard
            }
            
            return try await executeSleepQuery(
