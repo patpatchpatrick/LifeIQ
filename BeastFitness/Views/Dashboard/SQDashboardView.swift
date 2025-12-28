@@ -43,35 +43,36 @@ struct SQDashboardView: View {
     var body: some View {
         mainScroll
             .navigationBarTitleDisplayMode(.inline)
-                               .toolbar {
-                                   ToolbarItem(placement: .topBarLeading) {
-                                       HStack(spacing: .SQSpace.l) {
-                                           
-                                           // TODO: Remove mock
-                                           SQUserIcon(user: .mock)
-                                           .frame(width: 34, height: 34)
-                                           
-                                           // Multiline welcome text
-                                           VStack(alignment: .leading, spacing: 2) {
-                                               Text("Welcome back! 👋🏻")
-                                                   .font(.system(size: 13, weight: .medium))
-                                                   .foregroundStyle(Color.secondary)
-                                               
-                                               // TODO: - Replace with actual user
-                                               Text(SQUser.mock.name)
-                                                   .font(.system(size: 17, weight: .semibold))
-                                                   .foregroundStyle(Color.primary)
-                                           }
-                                       }
-                                   }
-                                   ToolbarItem(placement: .topBarTrailing) {
-                                       Button {
-                                           controller.state.hub.domainEvents.send(.displaySettings)
-                                       } label: {
-                                           Image(systemName: SQImageSymbol.gear.rawValue)
-                                       }
-                                   }
-                               }
+           .toolbar {
+               ToolbarItem(placement: .topBarLeading) {
+                   HStack(spacing: .SQSpace.l) {
+                       // TODO: Remove mock
+                       SQUserIcon(user: .mock)
+                       .frame(width: 34, height: 34)
+                       
+                       // Multiline welcome text
+                       VStack(alignment: .leading, spacing: 2) {
+                           Text("Welcome back! 👋🏻")
+                               .font(.system(size: 13, weight: .medium))
+                               .foregroundStyle(Color.secondary)
+                           
+                           // TODO: - Replace with actual user
+                           Text(SQUser.mock.name)
+                               .font(.system(size: 17, weight: .semibold))
+                               .foregroundStyle(Color.primary)
+                       }
+                       .fixedSize(horizontal: true, vertical: false)
+                   }
+                   .padding(.SQSpace.l)
+               }
+               ToolbarItem(placement: .topBarTrailing) {
+                   Button {
+                       controller.state.hub.domainEvents.send(.displaySettings)
+                   } label: {
+                       Image(systemName: SQImageSymbol.gear.rawValue)
+                   }
+               }
+           }
             .background(SQColor.background.color.ignoresSafeArea())
             .task {
                 await controller.loadUI(for: modelContext)

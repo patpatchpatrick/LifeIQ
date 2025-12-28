@@ -89,26 +89,30 @@ indirect enum SQColor {
 
         // MARK: - Backgrounds
         case .background:
-            return Self.isDarkMode ? UIColor(hexString: "#000000")! : .white // deep black for dark mode
+            return Self.isDarkMode
+                ? UIColor(hexString: "#13151F")!
+                : .white
+
         case .backgroundSecondary:
-            return Self.isDarkMode ? UIColor(hexString: "#171717")! : UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1) // subtle dark gray for secondary bg
+            return Self.isDarkMode
+                ? UIColor(hexString: "#1F2130")!
+                : UIColor(hexString: "#F3F4F6")!
+
         case .backgroundSecondaryLight:
-            // Lighter than secondary in both modes.
             return Self.isDarkMode
-                ? UIColor(hexString: "#1F1F1F")!
-                : UIColor(hexString: "#FAFAFA")!
+                ? UIColor(hexString: "#27293A")!
+                : UIColor(hexString: "#F6F7F9")!
+
         case .backgroundTertiaryDark:
-            // Darker than secondary, lighter than background (dark mode).
-            // Darker than secondary (light mode).
             return Self.isDarkMode
-                ? UIColor(hexString: "#0D0D0D")!
-                : UIColor(hexString: "#EDEDED")!
+                ? UIColor(hexString: "#2F3144")!
+                : UIColor(hexString: "#ECEEF2")!
 
         case .backgroundTertiaryLight:
-            // Lighter than secondary in both modes.
             return Self.isDarkMode
-                ? UIColor(hexString: "#2E2E2E")!
-                : UIColor(hexString: "#FAFAFA")!
+                ? UIColor(hexString: "#37394F")!
+                : UIColor(hexString: "#FAFBFC")!
+
             
 
         // MARK: - Alert Backgrounds

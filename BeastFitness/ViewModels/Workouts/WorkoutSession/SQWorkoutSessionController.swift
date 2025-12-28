@@ -153,6 +153,7 @@ final class SQWorkoutSessionController: Identifiable {
     ) {
         let vm = SQWorkoutSessionExerciseViewModel(
             name: rawExercise.name,
+            rawExerciseId: rawExercise.id,
             muscleGroup: rawExercise.primaryMuscles.first ?? .unknown,
             onRemoveExercise: { [weak self] exerciseId in
                 self?.removeExercise(exerciseId)

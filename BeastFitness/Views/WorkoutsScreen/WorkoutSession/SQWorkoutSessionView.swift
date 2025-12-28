@@ -79,16 +79,25 @@ struct SQWorkoutSessionView: View {
             await controller.saveWorkout(to: modelContext)
         }
     }
+    
+    @ViewBuilder
+    var scrollContent: some View {
+        VStack(spacing: 0) {
+            workoutHeaderSection
+            exercisesSection
+            addExerciseRow
+            
+            Spacer()
+        }
+        .padding(.horizontal, .SQSpace.xl)
+    }
 
     // MARK: - Body
     
     private var mainList: some View {
-        List {
-            workoutHeaderSection
-            exercisesSection
-            addExerciseRow // bottom of list
+        ScrollView {
+            scrollContent
         }
-        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .sqBackgroundColor(.background)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

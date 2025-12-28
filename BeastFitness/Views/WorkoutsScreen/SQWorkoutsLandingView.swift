@@ -16,6 +16,7 @@ struct SQWorkoutsLandingView: View {
     
     var body: some View {
         startWorkoutButton
+            .sqBackgroundColor(.background)
             .sheet(isPresented: .init(
                 get: { controller.state.isWorkoutSessionSheetVisible},
                 set: { isVisible in controller.state.toggleWorkoutSessionSheetVisibility(isVisible) })) {

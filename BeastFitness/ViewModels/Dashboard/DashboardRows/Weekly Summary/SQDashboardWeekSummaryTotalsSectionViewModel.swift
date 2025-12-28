@@ -118,8 +118,9 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
     ) -> AttributedString {
         // No prior data
         guard previousSeconds > 0 else {
+            /// Return an empty string if we don't have previous day's data
             return AttributedString.build(
-                with: "No data from \(timeRange.title.lowercased())",
+                with: "",
                 font: SQFont(type: .bodySmall).font,
                 color: SQColor.textSecondary.color
             )

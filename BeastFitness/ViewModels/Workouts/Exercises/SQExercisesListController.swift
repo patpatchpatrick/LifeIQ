@@ -39,15 +39,32 @@ final class SQExercisesListController: SQExercisesListInterface {
     }
     
     private func searchTextUpdated(_ searchText: String) {
-        guard !searchText.isEmpty else {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             rows = allRows
             return
         }
-        
-        rows = allRows.filter {
-            $0.title.localizedCaseInsensitiveContains(searchText)
-            || $0.subtitle.localizedCaseInsensitiveContains(searchText)
-        }
+
+        let tokens = trimmed
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+
+        rows = allRows
+            .filter { row in
+                let searchableText = [
+                    row.title,
+                    row.subtitle
+                ]
+                    .joined(separator: " ")
+                    .lowercased()
+                
+                // ✅ All tokens must be present somewhere
+                return tokens.allSatisfy { searchableText.contains($0) }
+            }
+            .sorted {
+                $0.title < $1.title
+            }
     }
     
     func exerciseSelected(_ exercise: SQRawStrengthExercise) {

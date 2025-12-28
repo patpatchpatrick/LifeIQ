@@ -132,7 +132,14 @@ class SQWorkoutSession: SQWorkoutSessionable {
         )
     }
     
-    var visibleTitle: String { title ?? activityType.name }
+    var visibleTitle: String {
+        let backupName = activityType.name
+        guard title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else {
+            return backupName
+        }
+        
+        return title ?? backupName
+    }
     
     func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric? {
         Self.getMetric(for: quantityType, workoutSource: workoutSource)

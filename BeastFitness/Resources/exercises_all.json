@@ -13232,7 +13232,7 @@
     "category" : "strength",
     "equipment" : "dumbbell",
     "force" : "push",
-    "id" : "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+    "id" : "Incline_Dumbbell_Bench_Press",
     "images" : [
       "Incline_Dumbbell_Bench_With_Palms_Facing_In\/0.jpg",
       "Incline_Dumbbell_Bench_With_Palms_Facing_In\/1.jpg"
@@ -13248,7 +13248,7 @@
     ],
     "level" : "beginner",
     "mechanic" : "compound",
-    "name" : "Incline Dumbbell Bench With Palms Facing In",
+    "name" : "Incline Dumbbell Bench Press",
     "primaryMuscles" : [
       "chest"
     ],

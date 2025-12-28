@@ -18,6 +18,7 @@ struct SQStrengthDetails: Codable, Hashable {
 
 struct SQStrengthExercise: Codable, Identifiable, Hashable {
     let id: UUID
+    let rawExerciseId: String
     var name: String
     var muscleGroup: SQMuscleGroup
     var sets: [SQStrengthSet]

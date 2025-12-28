@@ -12,7 +12,7 @@ import SwiftUI
 @MainActor
 final class SQWorkoutSessionExerciseViewModel: Identifiable {
     let id: UUID
-    
+    let rawExerciseId: String
     var name: String
     var muscleGroup: SQMuscleGroup
     let onRemoveExercise: ((UUID) -> Void)?
@@ -20,12 +20,14 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     
     init(
         id: UUID = UUID(),
+        rawExerciseId: String,
         name: String,
         muscleGroup: SQMuscleGroup,
         sets: [SQWorkoutSessionSetViewModel],
         onRemoveExercise: ((UUID) -> Void)?
     ) {
         self.id = id
+        self.rawExerciseId = rawExerciseId
         self.name = name
         self.muscleGroup = muscleGroup
         self.sets = sets
@@ -36,6 +38,7 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     /// New exercise with 3 default sets
     convenience init(
         name: String,
+        rawExerciseId: String,
         muscleGroup: SQMuscleGroup,
         defaultSetCount: Int = 3,
         defaultReps: Int = 8,
@@ -51,6 +54,7 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         }
         
         self.init(
+            rawExerciseId: rawExerciseId,
             name: name,
             muscleGroup: muscleGroup,
             sets: setVMs,
@@ -65,6 +69,7 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         
         self.init(
             id: model.id,
+            rawExerciseId: model.rawExerciseId,
             name: model.name,
             muscleGroup: model.muscleGroup,
             sets: setVMs,
@@ -120,6 +125,7 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     func asModel() -> SQStrengthExercise {
         SQStrengthExercise(
             id: id,
+            rawExerciseId: rawExerciseId,
             name: name,
             muscleGroup: muscleGroup,
             sets: sets
