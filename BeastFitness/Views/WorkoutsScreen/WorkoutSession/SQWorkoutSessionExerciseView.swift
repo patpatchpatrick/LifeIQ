@@ -39,22 +39,26 @@ struct SQWorkoutSessionExerciseRow: View {
                 .padding(.bottom, .SQSpace.l)
 
             // Set rows
-            VStack(spacing: .SQSpace.l) {
+            List {
                 ForEach(viewModel.sets) { setVM in
                     setRow(setVM)
-                        .listRowInsets(setInsets)
-                        .listRowBackground(SQColor.backgroundSecondary.color)
+                        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                withAnimation {
-                                    viewModel.removeSet(setVM)
-                                }
+                                withAnimation { viewModel.removeSet(setVM) }
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
                         }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
+            .scrollDisabled(true)
+            .frame(height: CGFloat(viewModel.sets.count) * 56) // crude; can measure instead
             .padding(.bottom, .SQSpace.l)
 
             // Add set row
