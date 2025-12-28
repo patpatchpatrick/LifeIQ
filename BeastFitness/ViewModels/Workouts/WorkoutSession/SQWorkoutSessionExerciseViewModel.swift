@@ -90,6 +90,9 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     // MARK: - Mutations
     
     func addSet(copyLast: Bool = true) {
+        
+        print("ADD SET on exerciseVM:", id, "instance:", ObjectIdentifier(self), "oldCount:", sets.count)
+        
         let nextIndex = sets.count + 1
         
         if copyLast, let last = sets.last {
@@ -109,6 +112,9 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         }
         
         renumberSets()
+        
+        // ... append ...
+        print("newCount:", sets.count)
     }
     
     func removeSet(_ set: SQWorkoutSessionSetViewModel) {

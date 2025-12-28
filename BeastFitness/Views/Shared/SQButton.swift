@@ -125,7 +125,7 @@ struct SQButton: View {
         var innerPadding: CGFloat {
             switch self {
             case .primary, .secondary:
-                .SQSpace.xl
+                .SQSpace.l
             case .primarySmall:
                 .SQSpace.m
             }

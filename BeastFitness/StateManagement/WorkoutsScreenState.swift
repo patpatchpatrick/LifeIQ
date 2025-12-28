@@ -12,7 +12,7 @@ import Combine
 protocol WorkoutsLandingStating: AnyObject {
     /// State
     var isWorkoutSessionSheetVisible: Bool { get }
-    var workoutSessionViewModel: SQWorkoutSessionController? { get }
+    var workoutSessionController: SQWorkoutSessionController? { get }
     
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
@@ -24,7 +24,7 @@ protocol WorkoutsLandingStating: AnyObject {
 @Observable final class WorkoutsLandingState: WorkoutsLandingStating {
     private let hub: EventHub
     var isWorkoutSessionSheetVisible: Bool = false
-    private(set) var workoutSessionViewModel: SQWorkoutSessionController?
+    private(set) var workoutSessionController: SQWorkoutSessionController?
     
     init(hub: EventHub) {
         self.hub = hub
@@ -39,9 +39,10 @@ protocol WorkoutsLandingStating: AnyObject {
     }
     
     func displayWorkoutSessionSheet() {
-        workoutSessionViewModel = .default(for: nil, onDismiss: { [weak self] in
+        workoutSessionController = .default(for: nil, onDismiss: { [weak self] in
             self?.toggleWorkoutSessionSheetVisibility(false)
         })
+        workoutSessionController?.willAppear(with: nil)
         isWorkoutSessionSheetVisible = true
     }
 }

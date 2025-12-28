@@ -54,6 +54,7 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     }
     
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
+        SQWorkoutSessionController.default.willAppear(with: workout)
         navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: workout))
     }
     

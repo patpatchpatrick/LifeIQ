@@ -14,7 +14,7 @@ struct SQFont {
     var uiFont: UIFont {
         switch type {
         case .title1, .title2, .title3, .title4,
-             .body, .bodyBold, .bodySemiBold, .bodyItalic,
+                .body, .bodyLarge, .bodyBold, .bodySemiBold, .bodyItalic,
              .bodySmall, .bodySmallSemiBold, .bodySmallBold,
              .bodyExtraSmall, .buttonTitle, .faded,
              .headerSmall, .emojiLarge, .emojiToolbar, .emojiFeed:
@@ -40,6 +40,8 @@ struct SQFont {
 
         /// **14pt Regular**
         case body
+        /// **16pt Regular**
+        case bodyLarge
         /// **14pt Italic**
         case bodyItalic
         /// **14pt Bold**
@@ -74,7 +76,7 @@ struct SQFont {
             switch self {
             case .title1: 22
             case .title2: 18
-            case .title3: 16
+            case .title3, .bodyLarge: 16
             case .title4: 14
             case .headerSmall: 11
 

@@ -73,8 +73,8 @@ final class SQWorkoutSessionController: Identifiable {
     
     @MainActor
     static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
+        print("PTD Reset from default")
         Self.default.onDismiss = onDismiss
-        Self.default.reset(with: workout)
         return Self.default
     }
     
@@ -85,10 +85,17 @@ final class SQWorkoutSessionController: Identifiable {
         self.state = state
         self.workoutManager = workoutManager
         self.onDismiss = onDismiss
+        print("PTD Reset from init")
         reset(with: session)
     }
     
+    /// Should be called everytime before the view will appear
+    func willAppear(with workout: SQWorkoutSessionable?) {
+        reset(with: workout)
+    }
+    
     private func reset(with workout: SQWorkoutSessionable?) {
+        SQLogger.shared.log("Resetting workout: \(workout?.id ?? "nil")", .debug, context: .workoutSession)
         hasStartedWorkout = false
         timerViewModel.stop()
         state.load(workout: workout)

@@ -88,6 +88,7 @@ indirect enum SQColor {
             return UIColor(red: 60/255, green: 115/255, blue: 175/255, alpha: 1) // info blue
 
         // MARK: - Backgrounds
+            
         case .background:
             return Self.isDarkMode
                 ? UIColor(hexString: "#13151F")!

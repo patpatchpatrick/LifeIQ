@@ -11,7 +11,9 @@ import SwiftUI
 struct SQTextField: View {
     
     @ObservedObject var viewModel: SQTextFieldViewModel
+    
     @FocusState var isTextFieldFocused: Bool
+    @State var borderWidth: CGFloat = 0
     
     var placeholder: Text {
         Text(viewModel.placeholder)
@@ -44,6 +46,10 @@ struct SQTextField: View {
             } else {
                 viewModel.unfocus(dismissKeyboard: false)
             }
+            
+            withAnimation {
+                borderWidth = isTextFieldFocused ? (viewModel.borderColor == nil ? 0 : viewModel.uiConfig.borderWidth) : 0
+            }
         }
         .onChange(of: viewModel.hideKeyboard) {
             sqHideKeyboard()
@@ -68,7 +74,7 @@ struct SQTextField: View {
                     .cornerRadius(.SQCornerRadius.m)
                     .sqBorder(
                         viewModel.borderColor ?? .border,
-                        width: viewModel.borderColor == nil ? 0 : viewModel.uiConfig.borderWidth,
+                        width: borderWidth,
                         cornerRadius: viewModel.uiConfig.cornerRadius
                     )
                 

@@ -20,7 +20,7 @@ struct SQWorkoutsLandingView: View {
             .sheet(isPresented: .init(
                 get: { controller.state.isWorkoutSessionSheetVisible},
                 set: { isVisible in controller.state.toggleWorkoutSessionSheetVisibility(isVisible) })) {
-                    if let workoutSessionViewModel = controller.state.workoutSessionViewModel {
+                    if let workoutSessionViewModel = controller.state.workoutSessionController {
                         SQWorkoutSessionView(isBeingDisplayedWithinNavStack: false, controller: workoutSessionViewModel)
                     }
                 }

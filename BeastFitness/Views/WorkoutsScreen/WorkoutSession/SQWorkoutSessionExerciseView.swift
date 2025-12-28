@@ -31,31 +31,37 @@ struct SQWorkoutSessionExerciseRow: View {
     // MARK: - Body
 
     var body: some View {
-        // Header row
-        headerRow
-            .listRowInsets(headerInsets)
-            .listRowBackground(SQColor.background.color)
+        VStack(spacing: 0) {
+            // Header row
+            headerRow
+                .listRowInsets(headerInsets)
+                .listRowBackground(SQColor.background.color)
+                .padding(.bottom, .SQSpace.l)
 
-        // Set rows
-        ForEach(viewModel.sets) { setVM in
-            setRow(setVM)
-                .listRowInsets(setInsets)
-                .listRowBackground(SQColor.backgroundSecondary.color)
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        withAnimation {
-                            viewModel.removeSet(setVM)
+            // Set rows
+            VStack(spacing: .SQSpace.l) {
+                ForEach(viewModel.sets) { setVM in
+                    setRow(setVM)
+                        .listRowInsets(setInsets)
+                        .listRowBackground(SQColor.backgroundSecondary.color)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    viewModel.removeSet(setVM)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
                 }
-        }
+            }
+            .padding(.bottom, .SQSpace.l)
 
-        // Add set row
-        addSetRow
-            .listRowInsets(addSetInsets)
-            .listRowBackground(SQColor.background.color)
+            // Add set row
+            addSetRow
+                .listRowInsets(addSetInsets)
+                .listRowBackground(SQColor.background.color)
+        }
     }
 
     // MARK: - Rows
@@ -63,7 +69,7 @@ struct SQWorkoutSessionExerciseRow: View {
     private var headerRow: some View {
         HStack {
             Text(viewModel.name)
-                .sqFont(.title3)
+                .sqFont(.bodyLarge)
                 .sqForegroundColor(.textPrimary)
 
             Spacer()
@@ -118,19 +124,15 @@ struct SQWorkoutSessionExerciseRow: View {
     }
 
     private var addSetRow: some View {
-        HStack {
-            SQButton(
-                style: .secondary,
-                shouldHugContent: false,
-                title: "Add Set",
-                icon: .plus
-            ) {
-                withAnimation {
-                    viewModel.addSet()
-                }
+        SQButton(
+            style: .secondary,
+            shouldHugContent: false,
+            title: "Add Set",
+            icon: .plus
+        ) {
+            withAnimation {
+                viewModel.addSet()
             }
-
-            Spacer()
         }
     }
 }

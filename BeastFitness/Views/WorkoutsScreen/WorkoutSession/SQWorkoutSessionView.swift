@@ -41,8 +41,10 @@ struct SQWorkoutSessionView: View {
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
         } else {
-            ForEach(controller.state.exercises) { exerciseVM in
-                SQWorkoutSessionExerciseRow(viewModel: exerciseVM)
+            VStack(spacing: .SQSpace.xl) {
+                ForEach(controller.state.exercises) { exerciseVM in
+                    SQWorkoutSessionExerciseRow(viewModel: exerciseVM)
+                }
             }
         }
     }
@@ -83,8 +85,12 @@ struct SQWorkoutSessionView: View {
     @ViewBuilder
     var scrollContent: some View {
         VStack(spacing: 0) {
+            
             workoutHeaderSection
+                .padding(.bottom, .SQSpace.xl)
+            
             exercisesSection
+            
             addExerciseRow
             
             Spacer()

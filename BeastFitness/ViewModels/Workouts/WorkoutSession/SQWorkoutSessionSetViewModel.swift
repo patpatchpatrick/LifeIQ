@@ -35,7 +35,6 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
             placeholder: "Reps",
             keyboardType: .numberPad,
             textChangeFormatter: .integer,
-            validationRule: .integer(range: 1...1000),
             errorHandler: { _ in nil }
         )
         repsVM.text = "\(initialReps)"
@@ -47,7 +46,6 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
             placeholder: "lbs",
             keyboardType: .decimalPad,
             textChangeFormatter: .decimal(maxDecimalPlaces: 1),
-            validationRule: .decimal(maxDecimalPlaces: 1, range: 0...2000),
             errorHandler: { _ in nil }
         )
         weightVM.text = String(format: "%.1f", initialWeight)
