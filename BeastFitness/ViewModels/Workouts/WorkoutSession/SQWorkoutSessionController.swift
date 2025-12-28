@@ -24,37 +24,6 @@ final class SQWorkoutSessionController: Identifiable {
     private(set) var displayDiscardButton: Bool = false
     private(set) var workoutMode: WorkoutMode = .new
     private var hasStartedWorkout: Bool = false
-    enum WorkoutMode {
-        case new
-        case existing
-        
-        var shouldDisplayTimer: Bool {
-            switch self {
-            case .new:
-                return true
-            case .existing:
-                return false
-            }
-        }
-        
-        var shouldStartWorkoutOnLaunch: Bool {
-            switch self {
-            case .new:
-                return true
-            case .existing:
-                return false
-            }
-        }
-        
-        var shouldDisplayDiscardButton: Bool {
-            switch self {
-            case .new:
-                return true
-            case .existing:
-                return false
-            }
-        }
-    }
     
     // MARK: - Timer
     let timerViewModel = SQWorkoutSessionTimerViewModel()
@@ -121,14 +90,14 @@ final class SQWorkoutSessionController: Identifiable {
                 title: "Start workout on Apple Watch to track metrics?",
                 primary: .init(
                     title: "Start on Apple Watch",
-                    handler: { [weak self] in
+                    handler: { [weak self] _ in
                         guard let self else { return }
                         SQWatchInterface.shared.startStrengthWorkoutOnWatch()
                         self.startWorkout()
                     }),
                 secondary: .init(
                     title: "Start without Apple Watch",
-                    handler: { [weak self] in
+                    handler: { [weak self] _ in
                         guard let self else { return }
                         self.startWorkout()
                     })
@@ -219,14 +188,48 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     func saveWorkout(to modelContext: ModelContext) async {
-        let workout = buildSession()
-        do {
-            try await workoutManager.saveWorkout(workout: workout, to: modelContext)
-            state.workoutUpdated(workout: workout)
-            onDismiss()
-        } catch {
-            state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Error saving workout: \(error.localizedDescription)."))))
-            SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
+        
+        func finishWorkout() async {
+            let workout = buildSession()
+            do {
+                try await workoutManager.saveWorkout(workout: workout, to: modelContext)
+                state.workoutUpdated(workout: workout)
+                onDismiss()
+            } catch {
+                state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Error saving workout: \(error.localizedDescription)."))))
+                SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
+            }
+        }
+        
+        let hasIncompleteExercises = state.exercises.contains(where: { $0.isCompleted == false })
+        if hasIncompleteExercises {
+            state.hub.alertEvents.send(.present(.init(
+                title: "Save Workout",
+                subtitle: "There are some incomplete exercises. How would you like to handle them?",
+                primary: .init(
+                    title: "Save",
+                    role: .normal,
+                    handler: { context in
+                        Task { [weak self] in
+                            guard let self else { return }
+                            
+                            if context?.selectedDropDownId == WorkoutSaveOptions.markAllExerciseCompleted.id {
+                                print("PTD Marking all exercises completed ")
+                                self.state.exercises.forEach { $0.sets.forEach { $0.isCompleted = true } }
+                            }
+                            
+                            await finishWorkout()
+                        }
+                    }),
+                secondary: .init(
+                    title: "Cancel",
+                    role: .cancel),
+                dropDown: .init(
+                    options: WorkoutSaveOptions.allCases.map { .init(id: $0.id, title: $0.title) },
+                    defaultSelectedOptionId: WorkoutSaveOptions.markAllExerciseCompleted.id))
+            ))
+        } else {
+            await finishWorkout()
         }
     }
     
@@ -237,7 +240,7 @@ final class SQWorkoutSessionController: Identifiable {
             primary: .init(
                 title: "Dismiss",
                 role: .destructive,
-                handler: { [weak self] in
+                handler: { [weak self] _ in
                     guard let self else { return }
                     self.onDismiss()
                 }),
@@ -245,5 +248,64 @@ final class SQWorkoutSessionController: Identifiable {
                 title: "Cancel",
                 role: .cancel)
         )))
+    }
+    
+    // MARK: - Workout Mode
+    
+    enum WorkoutMode {
+        case new
+        case existing
+        
+        var shouldDisplayTimer: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+        
+        var shouldStartWorkoutOnLaunch: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+        
+        var shouldDisplayDiscardButton: Bool {
+            switch self {
+            case .new:
+                return true
+            case .existing:
+                return false
+            }
+        }
+    }
+    
+    // MARK: - Workout Save Options
+    
+    enum WorkoutSaveOptions: CaseIterable {
+        case markAllExerciseCompleted
+        case leaveExercisesAsIs
+        
+        var id: String {
+            switch self {
+            case .markAllExerciseCompleted:
+                "all-complete"
+            case .leaveExercisesAsIs:
+                "leave"
+            }
+        }
+        
+        var title: String {
+            switch self {
+            case .markAllExerciseCompleted:
+                "Mark all exercises as completed"
+            case .leaveExercisesAsIs:
+                "Leave exercises incomplete"
+            }
+        }
     }
 }

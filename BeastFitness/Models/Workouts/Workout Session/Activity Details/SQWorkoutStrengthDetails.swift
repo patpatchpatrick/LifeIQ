@@ -30,6 +30,7 @@ struct SQStrengthExercise: Codable, Identifiable, Hashable {
 
 struct SQStrengthSet: Codable, Identifiable, Hashable {
     let id: UUID
+    let isCompleted: Bool?
     var setIndex: Int       // 1, 2, 3...
     var reps: Int
     var weight: Double      // you can pair this with a unit if needed

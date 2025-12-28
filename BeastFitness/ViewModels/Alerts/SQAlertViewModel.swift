@@ -8,23 +8,20 @@
 import Foundation
 
 struct SQAlertViewModel: Identifiable, Equatable {
+
     struct Action {
         let title: String
         let role: Role?
         let shouldDismissOnTap: Bool
-        let handler: (@MainActor () -> Void)?
+        let handler: (@MainActor (SQAlertContext?) -> Void)?  // ✅ pass context
 
-        enum Role: Equatable {
-            case normal
-            case destructive
-            case cancel
-        }
+        enum Role: Equatable { case normal, destructive, cancel }
 
         init(
             title: String,
             role: Role? = nil,
             shouldDismissOnTap: Bool = true,
-            handler: (@MainActor () -> Void)? = nil
+            handler: (@MainActor (SQAlertContext?) -> Void)? = nil
         ) {
             self.title = title
             self.role = role
@@ -38,33 +35,47 @@ struct SQAlertViewModel: Identifiable, Equatable {
     let subtitle: String?
     let primary: Action
     let secondary: Action?
+    let canDismiss: Bool
+    let dropDown: SQAlertDropDownViewModel?
+    
+    @MainActor
+    func buildContext() -> SQAlertContext? {
+        .init(selectedDropDownId: dropDown?.selectedOptionId)
+    }
 
     init(
         id: UUID = UUID(),
         title: String,
         subtitle: String? = nil,
         primary: Action,
-        secondary: Action? = nil
+        secondary: Action? = nil,
+        canDismiss: Bool = false,
+        dropDown: SQAlertDropDownViewModel? = nil
     ) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.primary = primary
         self.secondary = secondary
+        self.canDismiss = canDismiss
+        self.dropDown = dropDown
     }
     
-    init(_ sqError: SQUserFacingError) {
-        self.init(title: sqError.userFacingTitle, subtitle: sqError.userFacingDescription, primary: .init(title: "Got it", role: .cancel))
-    }
+    init(_ sqError: SQUserFacingError) { self.init(title: sqError.userFacingTitle, subtitle: sqError.userFacingDescription, primary: .init(title: "Got it", role: .cancel)) }
 
     static func == (lhs: SQAlertViewModel, rhs: SQAlertViewModel) -> Bool {
-        // Avoid comparing handlers
+        // NOTE: dropDown is a reference type; don't include in Equatable
         lhs.id == rhs.id &&
         lhs.title == rhs.title &&
         lhs.subtitle == rhs.subtitle &&
         lhs.primary.title == rhs.primary.title &&
         lhs.primary.role == rhs.primary.role &&
         lhs.secondary?.title == rhs.secondary?.title &&
-        lhs.secondary?.role == rhs.secondary?.role
+        lhs.secondary?.role == rhs.secondary?.role &&
+        lhs.canDismiss == rhs.canDismiss
     }
+}
+
+struct SQAlertContext {
+    let selectedDropDownId: String?
 }

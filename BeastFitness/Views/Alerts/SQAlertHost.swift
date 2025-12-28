@@ -24,7 +24,8 @@ struct SQAlertHost: View {
                 SQAlertCard(
                     alert: alert,
                     onPrimary: { handlePrimary(alert) },
-                    onSecondary: { handleSecondary(alert) }
+                    onSecondary: { handleSecondary(alert) },
+                    onDismiss: { alerts.dismiss(alert) }
                 )
                 .transition(.scale(scale: 0.97).combined(with: .opacity))
             }
@@ -37,13 +38,13 @@ struct SQAlertHost: View {
         if alert.primary.shouldDismissOnTap {
             alerts.dismiss(alert)
         }
-        alert.primary.handler?()
+        alert.primary.handler?(alert.buildContext())
     }
 
     private func handleSecondary(_ alert: SQAlertViewModel) {
         if alert.secondary?.shouldDismissOnTap == true {
             alerts.dismiss(alert)
         }
-        alert.secondary?.handler?()
+        alert.secondary?.handler?(alert.buildContext())
     }
 }

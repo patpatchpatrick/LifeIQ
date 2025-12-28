@@ -22,12 +22,14 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
     
     init(
         id: UUID = UUID(),
+        isCompleted: Bool = false,
         setIndex: Int,
         initialReps: Int = 8,
         initialWeight: Double = 50
     ) {
         self.id = id
         self.setIndex = setIndex
+        self.isCompleted = isCompleted
         
         // Reps: integer, 1...1000
         let repsVM = SQTextFieldViewModel(
@@ -55,6 +57,7 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
     convenience init(from model: SQStrengthSet) {
         self.init(
             id: model.id,
+            isCompleted: model.isCompleted ?? false,
             setIndex: model.setIndex,
             initialReps: model.reps,
             initialWeight: model.weight
@@ -78,6 +81,7 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
     func asModel() -> SQStrengthSet {
         SQStrengthSet(
             id: id,
+            isCompleted: isCompleted,
             setIndex: setIndex,
             reps: reps,
             weight: weight,

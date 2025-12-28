@@ -76,7 +76,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.hub.alertEvents.send(.present(.init(
             title: title,
             subtitle: subtitle,
-            primary: .init(title: "Delete workout?", handler: {
+            primary: .init(title: "Delete workout?", handler: { _ in
                 Task { [weak self] in
                     guard let self else { return }
                     do {

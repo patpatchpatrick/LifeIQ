@@ -39,7 +39,7 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
             case .workoutsUpdated(let workoutMap):
                 rows.forEach { row in
                     if let updatedWorkout = workoutMap[row.workout.id] {
-                        SQLogger.shared.log("Refreshing list workout with id: \(updatedWorkout.id) and title: \(updatedWorkout.title)", .debug, context: .workoutList)
+                        SQLogger.shared.log("Refreshing list workout with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutList)
                         row.workout = updatedWorkout
                     }
                 }
