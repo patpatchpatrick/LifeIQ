@@ -22,6 +22,7 @@ final class SQTextFieldViewModel: ObservableObject {
      let id = UUID()
      
      let placeholder: String
+    let font: SQFont
      let keyboardType: UIKeyboardType
      let textAutoCap: TextInputAutocapitalization?
      let autoCorrectionEnabled: Bool
@@ -52,6 +53,7 @@ final class SQTextFieldViewModel: ObservableObject {
      let lineLimit: Int
     
     init(
+        font: SQFont = .init(type: .body),
           uiConfig: UIConfig = .standard,
           axis: Axis = .horizontal,
           lineLimit: Int = 0,
@@ -64,6 +66,7 @@ final class SQTextFieldViewModel: ObservableObject {
           validationRule: SQTextValidationRule? = nil,
           errorHandler: @escaping (String) -> String? = { _ in nil },
       ) {
+          self.font = font
           self.uiConfig = uiConfig
           self.axis = axis
           self.lineLimit = lineLimit

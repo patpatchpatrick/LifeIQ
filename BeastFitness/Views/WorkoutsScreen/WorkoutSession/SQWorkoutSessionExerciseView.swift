@@ -87,6 +87,7 @@ struct SQWorkoutSessionExerciseRow: View {
             } label: {
                 Image(systemName: SQImageSymbol.ellipsisCircle.rawValue)
                     .imageScale(.large)
+                    .tint(SQColor.textPrimary.color)
             }
         }
     }

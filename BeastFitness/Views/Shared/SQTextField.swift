@@ -28,7 +28,7 @@ struct SQTextField: View {
             prompt: placeholder,
             axis: viewModel.axis
         )
-        .font(.sqFont(.body))
+        .font(viewModel.font.font)
         .focused($isTextFieldFocused)
         .autocorrectionDisabled(!viewModel.autoCorrectionEnabled)
         .textInputAutocapitalization(viewModel.textAutoCap)

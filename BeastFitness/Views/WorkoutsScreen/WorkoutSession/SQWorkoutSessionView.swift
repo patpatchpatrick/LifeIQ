@@ -51,19 +51,13 @@ struct SQWorkoutSessionView: View {
 
     @ViewBuilder
     private var addExerciseRow: some View {
-        HStack {
-            Spacer()
-            
-            SQButton(
-                style: .secondary,
-                shouldHugContent: true,
-                title: "Add Exercise",
-                icon: .plus
-            ) {
-                controller.state.displayAddExerciseListSheet()
-            }
-
-            Spacer()
+        SQButton(
+            style: .secondary,
+            shouldHugContent: false,
+            title: "Add Exercise",
+            icon: .plus
+        ) {
+            controller.state.displayAddExerciseListSheet()
         }
         .listRowInsets(EdgeInsets(
             top: .SQSpace.m,
@@ -90,6 +84,7 @@ struct SQWorkoutSessionView: View {
                 .padding(.bottom, .SQSpace.xl)
             
             exercisesSection
+                .padding(.bottom, .SQSpace.xl)
             
             addExerciseRow
             

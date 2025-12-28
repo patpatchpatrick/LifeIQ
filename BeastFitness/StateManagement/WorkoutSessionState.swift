@@ -50,13 +50,13 @@ protocol WorkoutSessionStating: AnyObject {
         baseWorkout = workout
         
         let titleTextField = SQTextFieldViewModel(
+            font: .init(type: .title3),
             uiConfig: .standard,
             placeholder: "Saturday Morning Weight Training",
             keyboardType: .default,
             textAutoCap: .sentences,
             autoCorrectionEnabled: false,
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars),
-            validationRule: .length(max: SQWorkoutSession.titleMaxChars),
             errorHandler: { _ in nil }
         )
         if let title = workout?.title {
