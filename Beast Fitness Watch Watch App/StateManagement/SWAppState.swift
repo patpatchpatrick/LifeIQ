@@ -14,7 +14,7 @@ import Combine
 final class SWAppState {
     static let shared = SWAppState()
     
-    let useMockData: Bool = false
+    let useMockData: Bool = true
     
     let hub = SWEventHub()
     

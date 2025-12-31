@@ -42,25 +42,6 @@ final class SWWorkoutManager: NSObject, SWWorkoutManaging {
     }
 
     private func handle(_ event: SQWorkoutEngineEvent) {
-        switch event {
-        case .didStart:
-            SQLogger.shared.logW("Engine started", .debug, context: .workoutSession)
-
-        case .didChangeState(let from, let to, _):
-            SQLogger.shared.logW("State \(from.rawValue) → \(to.rawValue)", .debug, context: .workoutSession)
-
-        case .heartRate(let bpm, _):
-            lastBPM = bpm
-            SWAppState.shared.rootState.updateHeartRate(to: "Heart Rate: \(bpm) bpm")
-
-        case .activeEnergy(_, _):
-            break
-
-        case .didStop:
-            SQLogger.shared.logW("Engine stopped", .info, context: .workoutSession)
-
-        case .didFail(let message):
-            SQLogger.shared.logW("Engine error: \(message)", .error, context: .workoutSession, isPriority: true)
-        }
+        SWAppState.shared.hub.workoutEngineEvents.send(event)
     }
 }

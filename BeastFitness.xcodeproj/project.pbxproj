@@ -110,7 +110,6 @@
 		F6A848902CB4A55700B09AD5 /* SQImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488F2CB4A55700B09AD5 /* SQImage.swift */; };
 		F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848922CB4A7F000B09AD5 /* SQImageView.swift */; };
 		F6A848962CB4ABE300B09AD5 /* SQWorkoutSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848952CB4ABE300B09AD5 /* SQWorkoutSession.swift */; };
-		F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */; };
 		F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */; };
 		F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8489E2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift */; };
 		F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */; };
@@ -317,7 +316,6 @@
 		F6A8488F2CB4A55700B09AD5 /* SQImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQImage.swift; sourceTree = "<group>"; };
 		F6A848922CB4A7F000B09AD5 /* SQImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQImageView.swift; sourceTree = "<group>"; };
 		F6A848952CB4ABE300B09AD5 /* SQWorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSession.swift; sourceTree = "<group>"; };
-		F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+Extensions.swift"; sourceTree = "<group>"; };
 		F6A8489C2CB4DD5C00B09AD5 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
 		F6A8489E2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HKWorkout+Extensions.swift"; sourceTree = "<group>"; };
 		F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStravaImport.swift; sourceTree = "<group>"; };
@@ -1083,7 +1081,6 @@
 				F639B7E12ED799E600199C69 /* String+Extensions.swift */,
 				F602DA4E2EC6A7E800404878 /* AttributedString+Extensions.swift */,
 				F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */,
-				F6A848972CB4B01B00B09AD5 /* Double+Extensions.swift */,
 				F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */,
 				F6F94E022CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift */,
 				F61591F62EE8F00C00223A63 /* HKDevice+Extensions.swift */,
@@ -1441,7 +1438,6 @@
 				F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */,
 				F615920D2EEE19C100223A63 /* SQWorkoutSessionEntity.swift in Sources */,
 				F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */,
-				F6A848982CB4B01B00B09AD5 /* Double+Extensions.swift in Sources */,
 				F679BDD92EE7D49500A2F249 /* SQExercisesListController.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
 				F61592252EF0F0B100223A63 /* SQWorkoutSessionSetViewModel.swift in Sources */,

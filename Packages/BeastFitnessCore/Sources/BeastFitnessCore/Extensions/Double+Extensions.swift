@@ -1,15 +1,16 @@
 //
 //  Double+Extensions.swift
-//  BeastFitness
+//  BeastFitnessCore
 //
-//  Created by Patrick Doyle on 10/7/24.
+//  Created by Patrick Doyle on 12/30/25.
 //
 
 import Foundation
 
 // MARK: - Optional Double helpers
 
-extension Double? {
+public extension Optional where Wrapped == Double {
+    
     /// Short string for optional doubles. Returns "N/A" if nil.
     var sqShortString: String {
         guard let value = self else {
@@ -21,7 +22,7 @@ extension Double? {
 
 // MARK: - Core Double formatting
 
-extension Double {
+public extension Double {
     
     /// Core rounding to a given number of decimal places as a Double.
     /// e.g. 1.23456.sqRounded(to: 2) -> 1.23
@@ -55,18 +56,23 @@ extension Double {
     }
     
     /// Converts a decimal double (e.g. 0.53123) into a percentage string (e.g. "53.1%").
-    /// - Parameter decimals: Number of digits after the decimal point.
-    /// - Parameter showPositiveSign: If true, prefixes "+" for positive values.
-    func toPercentageString(decimals: Int = 1, showPositiveSign: Bool = false) -> String {
+    /// - Parameters:
+    ///   - decimals: Number of digits after the decimal point.
+    ///   - showPositiveSign: If true, prefixes "+" for positive values.
+    func toPercentageString(
+        decimals: Int = 1,
+        showPositiveSign: Bool = false
+    ) -> String {
         let percentageValue = self * 100
         let prefix = showPositiveSign && percentageValue > 0 ? "+" : ""
-        // Reuse roundedString for consistent formatting
         let valueString = percentageValue.roundedString(decimals: decimals)
         return "\(prefix)\(valueString)%"
     }
 }
 
-extension Double {
+// MARK: - Time Formatting
+
+public extension Double {
     
     /// Converts a duration (in seconds) into a compact readable string.
     /// Example: 165432308 → "5y 3d 22h 5m 8s"
@@ -99,30 +105,30 @@ extension Double {
     }
     
     /// Converts a duration into a human-friendly time code:
-        /// - Days > 0  →  "D:HH:MM:SS"  (fully padded)
-        /// - Hours > 0 →  "H:M:SS"      (H and M not padded)
-        /// - Hours = 0 →  "M:SS"        (M not padded)
-        func timeCode() -> String {
-            let total = Int(self)
-            
-            let days = total / 86_400
-            let hours = (total % 86_400) / 3600
-            let minutes = (total % 3600) / 60
-            let seconds = total % 60
-            
-            if days > 0 {
-                // D:HH:MM:SS — fully padded for readability
-                return "\(days):" +
-                    String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-            }
-            
-            if hours > 0 {
-                // H:M:SS — no leading zeros on hours or minutes
-                return "\(hours):\(minutes):" +
-                    String(format: "%02d", seconds)
-            }
-            
-            // M:SS — minutes unpadded, seconds padded
-            return "\(minutes):" + String(format: "%02d", seconds)
+    /// - Days > 0  →  "D:HH:MM:SS"  (fully padded)
+    /// - Hours > 0 →  "H:M:SS"      (H and M not padded)
+    /// - Hours = 0 →  "M:SS"        (M not padded)
+    func timeCode() -> String {
+        let total = Int(self)
+        
+        let days = total / 86_400
+        let hours = (total % 86_400) / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        
+        if days > 0 {
+            // D:HH:MM:SS — fully padded
+            return "\(days):" +
+                String(format: "%02d:%02d:%02d", hours, minutes, seconds)
         }
+        
+        if hours > 0 {
+            // H:M:SS — hours & minutes unpadded
+            return "\(hours):\(minutes):" +
+                String(format: "%02d", seconds)
+        }
+        
+        // M:SS — minutes unpadded, seconds padded
+        return "\(minutes):" + String(format: "%02d", seconds)
+    }
 }
