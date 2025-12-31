@@ -142,7 +142,7 @@ protocol WorkoutSessionStating: AnyObject {
                 guard let idx = exercise.sets.firstIndex(where: { !$0.isCompleted }) else {
                     return nil
                 }
-                return (exercise, idx) // ← 0-based index
+                return (exercise, idx)
             }
             .first
 

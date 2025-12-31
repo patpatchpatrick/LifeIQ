@@ -155,7 +155,7 @@ struct SQWorkoutSessionView: View {
             }
         )) {
             SQExercisesListView(controller: .init(
-                state: AppState.shared.exercisesListState,
+                state: SQAppState.shared.exercisesListState,
                 onExerciseSelected: { rawExercise in
                     controller.addExercise(rawExercise: rawExercise)
                     controller.state.toggleAddExerciseListSheetVisibility(false)

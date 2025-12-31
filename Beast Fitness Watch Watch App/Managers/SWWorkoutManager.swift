@@ -10,18 +10,21 @@ import HealthKit
 import BeastFitnessCore
 
 @MainActor
-final class SWWorkoutManager: NSObject {
+protocol SWWorkoutManaging {
+    func startWorkout(with config: HKWorkoutConfiguration)
+}
+
+@MainActor
+final class SWWorkoutManager: NSObject, SWWorkoutManaging {
     static let shared = SWWorkoutManager()
 
     private var engine: SQWorkoutSessionEngine?
-    private var watchConnectivityManager: SWWatchConnectivityManager?
     private var lastBPM: Double = 0
 
     func startWorkout(with config: HKWorkoutConfiguration) {
         SWAppState.shared.rootState.updateTitle(to: "Workout Started ✅")
         let engine = SQWorkoutSessionEngineFactory.make(config: .init(useMockData: SWAppState.shared.useMockData))
         self.engine = engine
-        self.watchConnectivityManager = .init()
 
         SQLogger.shared.logW("Starting workout (mock=\(SWAppState.shared.useMockData))", .info, context: .workoutSession)
 
@@ -50,7 +53,7 @@ final class SWWorkoutManager: NSObject {
             lastBPM = bpm
             SWAppState.shared.rootState.updateHeartRate(to: "Heart Rate: \(bpm) bpm")
 
-        case .activeEnergy(let kcal, _):
+        case .activeEnergy(_, _):
             break
 
         case .didStop:

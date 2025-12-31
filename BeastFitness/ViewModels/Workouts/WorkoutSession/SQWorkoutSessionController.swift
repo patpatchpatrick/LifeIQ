@@ -51,7 +51,7 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     @MainActor
-    static let `default` = SQWorkoutSessionController(state: AppState.shared.workoutSessionState, onDismiss: {})
+    static let `default` = SQWorkoutSessionController(state: SQAppState.shared.workoutSessionState, onDismiss: {})
     
     init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager(), onDismiss: @escaping () -> Void) {
         self.state = state

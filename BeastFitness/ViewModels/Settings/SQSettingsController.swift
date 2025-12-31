@@ -19,7 +19,7 @@ final class SQSettingsController: SQSettingsInterface {
     private(set) var rows: [SQSettingsRowViewModel] = []
 
     @MainActor
-    static let `default` = SQSettingsController(state: AppState.shared.settingsState)
+    static let `default` = SQSettingsController(state: SQAppState.shared.settingsState)
 
     init(state: SettingsStating) {
         self.state = state

@@ -1,5 +1,5 @@
 //
-//  AppState.swift
+//  SQAppState.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 11/11/25.
@@ -11,8 +11,8 @@ import Combine
 
 @MainActor
 @Observable
-final class AppState {
-    static let shared = AppState()
+final class SQAppState {
+    static let shared = SQAppState()
     
     let hub = EventHub()
 

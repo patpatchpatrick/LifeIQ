@@ -22,7 +22,7 @@ final class SQRootTabViewModel {
     
     // MARK: - Init
     
-    init(appState: AppState) {
+    init(appState: SQAppState) {
         self.navigationState = appState.navigationState
         self.dashboardController = .default
         self.workoutsScreenController = .default

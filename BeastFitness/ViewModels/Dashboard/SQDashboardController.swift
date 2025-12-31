@@ -31,7 +31,7 @@ final class SQDashboardController: SQDashboardInterface {
     private(set) var refreshUiWithContext: ((ModelContext?) -> Void)?
     
     @MainActor
-    static let `default` = SQDashboardController(state: AppState.shared.dashboardState)
+    static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState)
     
     init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
         self.state = state

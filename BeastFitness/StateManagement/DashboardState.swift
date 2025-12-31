@@ -64,7 +64,7 @@ protocol DashboardStating: AnyObject {
     
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?) {
         dailyCheckInViewModel = .init(
-            eventHub: AppState.shared.hub,
+            eventHub: SQAppState.shared.hub,
             stats: stats,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
@@ -78,7 +78,7 @@ protocol DashboardStating: AnyObject {
     }
     
     func displayWorkoutsListSheet(with workouts: [any SQWorkoutSessionable]) {
-        workoutsListController = .init(state: AppState.shared.workoutsListState, workouts: workouts)
+        workoutsListController = .init(state: SQAppState.shared.workoutsListState, workouts: workouts)
         toggleWorkoutListSheetVisibility(true)
     }
 }

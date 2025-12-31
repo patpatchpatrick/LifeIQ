@@ -22,7 +22,7 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     private(set) var rows: [SQWorkoutsListItemViewModel]
     
     @MainActor
-    static let `default` = SQWorkoutsListController(state: AppState.shared.workoutsListState)
+    static let `default` = SQWorkoutsListController(state: SQAppState.shared.workoutsListState)
     
     init(state: WorkoutsListStating, workouts: [SQWorkoutSessionable] = []) {
         self.state = state

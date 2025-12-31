@@ -26,7 +26,7 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
 
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
-    let dashboardState = AppState.shared.dashboardState
+    let dashboardState = SQAppState.shared.dashboardState
     let workouts: SQWorkouts
     let id = UUID()
     let title: String

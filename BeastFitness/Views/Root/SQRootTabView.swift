@@ -11,7 +11,7 @@ struct SQRootTabView: View {
     @State private var viewModel: SQRootTabViewModel
     var navigationState: NavigationStating { viewModel.navigationState }
     
-    init(appState: AppState) {
+    init(appState: SQAppState) {
         _viewModel = .init(initialValue: .init(appState: appState))
     }
     

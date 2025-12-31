@@ -8,8 +8,12 @@
 import WatchConnectivity
 import BeastFitnessCore
 
-final class SWWatchConnectivityManager: NSObject, ObservableObject {
+protocol SWWatchConnectivityManaging {}
+
+final class SWWatchConnectivityManager: NSObject, ObservableObject, SWWatchConnectivityManaging {
     @Published var workoutPayload: SQWatchWorkoutPayload? = nil
+    
+    static let shared = SWWatchConnectivityManager()
 
     override init() {
         super.init()

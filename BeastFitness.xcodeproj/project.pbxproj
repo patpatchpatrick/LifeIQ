@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F602DA282EC40EB800404878 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA272EC40EB700404878 /* AppState.swift */; };
+		F602DA282EC40EB800404878 /* SQAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA272EC40EB700404878 /* SQAppState.swift */; };
 		F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA292EC40EC700404878 /* EventHub.swift */; };
 		F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2B2EC40ED400404878 /* NavigationState.swift */; };
 		F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */; };
@@ -211,7 +211,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F602DA272EC40EB700404878 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		F602DA272EC40EB700404878 /* SQAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppState.swift; sourceTree = "<group>"; };
 		F602DA292EC40EC700404878 /* EventHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHub.swift; sourceTree = "<group>"; };
 		F602DA2B2EC40ED400404878 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardController.swift; sourceTree = "<group>"; };
@@ -436,7 +436,7 @@
 				F602DA302EC40FB600404878 /* DashboardState.swift */,
 				F602DA2B2EC40ED400404878 /* NavigationState.swift */,
 				F602DA292EC40EC700404878 /* EventHub.swift */,
-				F602DA272EC40EB700404878 /* AppState.swift */,
+				F602DA272EC40EB700404878 /* SQAppState.swift */,
 			);
 			path = StateManagement;
 			sourceTree = "<group>";
@@ -1493,7 +1493,7 @@
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
 				F602DA6A2EC7923F00404878 /* SQDashboardWorkoutStatView.swift in Sources */,
 				F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */,
-				F602DA282EC40EB800404878 /* AppState.swift in Sources */,
+				F602DA282EC40EB800404878 /* SQAppState.swift in Sources */,
 				F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,

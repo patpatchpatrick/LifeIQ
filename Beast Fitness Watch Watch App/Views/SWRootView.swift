@@ -10,7 +10,7 @@ import HealthKit
 import BeastFitnessCore
 
 struct SWRootView: View {
-    @State var viewModel: SWRootViewModel
+    @State var viewModel: SWRootController
     
     init(appState: SWAppState) {
         _viewModel = .init(initialValue: .init(appState: appState))
