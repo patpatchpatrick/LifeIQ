@@ -143,6 +143,8 @@
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
+		F6E058932F04961C006C1CE0 /* SQActiveWorkoutSessionPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E058922F049618006C1CE0 /* SQActiveWorkoutSessionPayload.swift */; };
+		F6E058992F049940006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E058982F049937006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift */; };
 		F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E909D12ED529D5003441B5 /* SQCallToAction.swift */; };
 		F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */; };
 		F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */; };
@@ -346,6 +348,8 @@
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
+		F6E058922F049618006C1CE0 /* SQActiveWorkoutSessionPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActiveWorkoutSessionPayload.swift; sourceTree = "<group>"; };
+		F6E058982F049937006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWatchWorkoutPayload+Extensions.swift"; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
 		F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInView.swift; sourceTree = "<group>"; };
 		F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInViewModel.swift; sourceTree = "<group>"; };
@@ -533,6 +537,7 @@
 				F61591F42EE8EF6E00223A63 /* SQWorkoutDevice.swift */,
 				F602DA4A2EC6A5F900404878 /* SQWorkoutSource.swift */,
 				F6A848952CB4ABE300B09AD5 /* SQWorkoutSession.swift */,
+				F6E058922F049618006C1CE0 /* SQActiveWorkoutSessionPayload.swift */,
 				F61591F82EE9D98A00223A63 /* SQWorkoutSession+VisibleStats.swift */,
 				F6A848AA2CB779A300B09AD5 /* SQStravaWorkout.swift */,
 				F629CE702EE49AAB0002330C /* SQManualWorkout.swift */,
@@ -866,6 +871,7 @@
 		F6A848942CB4ABCF00B09AD5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F6E058952F04981C006C1CE0 /* WatchInterface */,
 				F61592082EEE18D800223A63 /* Firestore */,
 				F679BDD12EE7C0B200A2F249 /* Shared */,
 				F6ABC3F52EDFBED000D3E679 /* DailyCheckIn */,
@@ -990,6 +996,13 @@
 			path = DailyCheckIn;
 			sourceTree = "<group>";
 		};
+		F6E058952F04981C006C1CE0 /* WatchInterface */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = WatchInterface;
+			sourceTree = "<group>";
+		};
 		F6E90B4A2ED55193003441B5 /* DailyCheckIn */ = {
 			isa = PBXGroup;
 			children = (
@@ -1064,6 +1077,7 @@
 		F6F94E012CAB9AA100C2B90B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				F6E058982F049937006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift */,
 				F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */,
 				F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */,
 				F639B7E12ED799E600199C69 /* String+Extensions.swift */,
@@ -1398,6 +1412,7 @@
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F679BDE12EE7D66B00A2F249 /* WorkoutSessionState.swift in Sources */,
+				F6E058932F04961C006C1CE0 /* SQActiveWorkoutSessionPayload.swift in Sources */,
 				F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */,
 				F6F4D4182ED61B8700ECE0BC /* SQDailyCheckInRowViewModel.swift in Sources */,
 				F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */,
@@ -1454,6 +1469,7 @@
 				F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */,
 				F61592312EF3628E00223A63 /* SQAlertState.swift in Sources */,
 				F68D702D2F01D86900543561 /* SQPicker.swift in Sources */,
+				F6E058992F049940006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift in Sources */,
 				F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */,
 				F679BA442EE4F1A000A2F249 /* WorkoutsListState.swift in Sources */,
 				F6ABC4EC2EE1DEDB00D3E679 /* SQDailyCheckInManager.swift in Sources */,

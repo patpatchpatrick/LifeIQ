@@ -6,17 +6,32 @@
 //
 
 import HealthKit
+import WatchConnectivity
 import BeastFitnessCore
 
-final class SQWatchInterface: NSObject {
+@MainActor
+protocol SQWatchInterfacing {
+    func startStrengthWorkoutOnWatch()
+    func sendActiveWorkoutPayloadToWatch(_ workout: SQActiveWorkoutSessionPayload) throws
+}
+
+final class SQWatchInterface: NSObject, SQWatchInterfacing {
     private let healthStore = HKHealthStore()
     
     static let shared = SQWatchInterface()
     private var activeBuilder: HKLiveWorkoutBuilder?
     private var activeWorkoutSession: HKWorkoutSession?
+    
+    override init() {
+        super.init()
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        session.delegate = self
+        session.activate()
+    }
 
     func startStrengthWorkoutOnWatch() {
-        var config = HKWorkoutConfiguration()
+        let config = HKWorkoutConfiguration()
         config.activityType = SQWorkoutSessionController.defaultStrengthActivity
         config.locationType = .indoor
 
@@ -56,7 +71,40 @@ final class SQWatchInterface: NSObject {
                         
                     }
         }
+    
+    func sendActiveWorkoutPayloadToWatch(_ workout: SQActiveWorkoutSessionPayload) throws {
+        
+        let payload = try SQWatchWorkoutPayload.build(activeExercise: workout.activeExercise, activeSetIndex: workout.activeSetIndex).wcMessage()
+        
+        SQLogger.shared.log("Sending active workout payload to watch: \(payload)", .debug, context: .watchInterface)
+
+         do {
+             try WCSession.default.updateApplicationContext(payload)
+         } catch {
+             SQLogger.shared.log("Error sending payload to watch: \(error)", .error, context: .watchInterface)
+             throw error
+         }
+    }
 }
+
+// MARK: - WCSessionDelegate
+
+extension SQWatchInterface: WCSessionDelegate {
+    
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    
+       func sessionDidBecomeInactive(_ session: WCSession) {
+           SQLogger.shared.log("Watch connectivity session did become inactive", .debug, context: .watchInterface)
+       }
+    
+    /// Reconnects the session after the old pairing is deactivated, this can happen when user switches the paired watch to another phone
+    func sessionDidDeactivate(_ session: WCSession) {
+        SQLogger.shared.log("Watch connectivity session did deactivate. Attemptiong to reactivate.", .debug, context: .watchInterface)
+        WCSession.default.activate()
+    }
+}
+
+// MARK: - HKWorkoutSessionDelegate
 
 extension SQWatchInterface: HKWorkoutSessionDelegate {
     

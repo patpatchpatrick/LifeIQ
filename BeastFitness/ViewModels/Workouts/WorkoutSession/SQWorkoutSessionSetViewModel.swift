@@ -18,18 +18,27 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
     let repsTextFieldViewModel: SQTextFieldViewModel
     let weightTextFieldViewModel: SQTextFieldViewModel
     
-    var isCompleted: Bool = false
+    var isCompleted: Bool = false {
+        didSet {
+            onChanged()
+        }
+    }
+    
+    /// Called whenever the data is changed.  And update will be sent out to sync data with DB + watch
+    let onChanged: () -> Void
     
     init(
         id: UUID = UUID(),
         isCompleted: Bool = false,
         setIndex: Int,
         initialReps: Int = 8,
-        initialWeight: Double = 50
+        initialWeight: Double = 50,
+        onChanged: @escaping () -> Void
     ) {
         self.id = id
         self.setIndex = setIndex
         self.isCompleted = isCompleted
+        self.onChanged = onChanged
         
         // Reps: integer, 1...1000
         let repsVM = SQTextFieldViewModel(
@@ -54,13 +63,14 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
         self.weightTextFieldViewModel = weightVM
     }
     
-    convenience init(from model: SQStrengthSet) {
+    convenience init(from model: SQStrengthSet, onChanged: @escaping () -> Void) {
         self.init(
             id: model.id,
             isCompleted: model.isCompleted ?? false,
             setIndex: model.setIndex,
             initialReps: model.reps,
-            initialWeight: model.weight
+            initialWeight: model.weight,
+            onChanged: onChanged
         )
         // rpe / isWarmup not surfaced in UI yet; easy to add later.
     }

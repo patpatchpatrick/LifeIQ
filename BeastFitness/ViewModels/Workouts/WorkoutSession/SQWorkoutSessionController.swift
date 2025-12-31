@@ -9,15 +9,18 @@ import SwiftUI
 import SwiftData
 import HealthKit
 import BeastFitnessCore
+import Combine
 
 @Observable
 @MainActor
 final class SQWorkoutSessionController: Identifiable {
     let id = UUID()
+    private var cancellables = Set<AnyCancellable>()
     static let defaultStrengthActivity: HKWorkoutActivityType = .traditionalStrengthTraining
     private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
+    let watchInterface: SQWatchInterfacing = SQWatchInterface.shared
     var onDismiss: () -> Void
     private(set) var shouldDisplayTimer: Bool = true
     private(set) var workoutTitle: String = "Workout"
@@ -56,6 +59,7 @@ final class SQWorkoutSessionController: Identifiable {
         self.onDismiss = onDismiss
         print("PTD Reset from init")
         reset(with: session)
+        handleEventSubscriptions(hub: state.hub)
     }
     
     /// Should be called everytime before the view will appear
@@ -83,8 +87,32 @@ final class SQWorkoutSessionController: Identifiable {
         }
     }
     
+    // MARK: - Subscriptions
+    
+    private func handleEventSubscriptions(hub: EventHub) {
+        hub.workoutEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .workoutsUpdated, .workoutsDeleted:
+                /// No-op
+                break
+                
+            case .activeWorkoutUpdate(let payload):
+                do {
+                    try watchInterface.sendActiveWorkoutPayloadToWatch(payload)
+                } catch {
+                    // TODO: - PTD should we surface an error to user when active workout data fails to sync with the watch? Maybe after a few failures in a row, we show some type of warning
+                }
+            }
+        }.store(in: &cancellables)
+    }
+    
+    // MARK: - Start workout
+    
     private func startWorkout(displayWatchPrompt: Bool = false) {
-        print("PTD Starting workout", displayWatchPrompt)
+        
+        SQLogger.shared.log("Starting workout. Display watch prompt: \(displayWatchPrompt)", .debug, context: .workoutSession)
+        
         if displayWatchPrompt {
             state.hub.alertEvents.send(.present(.init(
                 title: "Start workout on Apple Watch to track metrics?",
@@ -92,7 +120,7 @@ final class SQWorkoutSessionController: Identifiable {
                     title: "Start on Apple Watch",
                     handler: { [weak self] _ in
                         guard let self else { return }
-                        SQWatchInterface.shared.startStrengthWorkoutOnWatch()
+                        watchInterface.startStrengthWorkoutOnWatch()
                         self.startWorkout()
                     }),
                 secondary: .init(
@@ -127,19 +155,16 @@ final class SQWorkoutSessionController: Identifiable {
     func addExercise(
         rawExercise: SQRawStrengthExercise
     ) {
-        let vm = SQWorkoutSessionExerciseViewModel(
-            name: rawExercise.name,
-            rawExerciseId: rawExercise.id,
-            muscleGroup: rawExercise.primaryMuscles.first ?? .unknown,
-            onRemoveExercise: { [weak self] exerciseId in
-                self?.removeExercise(exerciseId)
-            }
-        )
-        state.appendExercises([vm])
+        state.appendExercises([rawExercise])
     }
     
     func removeExercise(_ exercise: UUID) {
         state.removeExercises([exercise])
+    }
+    
+    // MARK: - Workout Data Handling (CRUD)
+    func workoutChanged() {
+        
     }
     
     // MARK: - Build domain models

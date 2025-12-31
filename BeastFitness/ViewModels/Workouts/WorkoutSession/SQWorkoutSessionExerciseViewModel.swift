@@ -16,7 +16,14 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     var name: String
     var muscleGroup: SQMuscleGroup
     let onRemoveExercise: ((UUID) -> Void)?
-    private(set) var sets: [SQWorkoutSessionSetViewModel]
+    private(set) var sets: [SQWorkoutSessionSetViewModel] {
+        didSet {
+            onChanged()
+        }
+    }
+    
+    /// Called whenever the data is changed.  And update will be sent out to sync data with DB + watch
+    let onChanged: () -> Void
     
     init(
         id: UUID = UUID(),
@@ -24,7 +31,8 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         name: String,
         muscleGroup: SQMuscleGroup,
         sets: [SQWorkoutSessionSetViewModel],
-        onRemoveExercise: ((UUID) -> Void)?
+        onRemoveExercise: ((UUID) -> Void)?,
+        onChanged: @escaping () -> Void
     ) {
         self.id = id
         self.rawExerciseId = rawExerciseId
@@ -32,6 +40,7 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         self.muscleGroup = muscleGroup
         self.sets = sets
         self.onRemoveExercise = onRemoveExercise
+        self.onChanged = onChanged
         renumberSets()
     }
     
@@ -43,13 +52,15 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
         defaultSetCount: Int = 3,
         defaultReps: Int = 8,
         defaultWeight: Double = 50,
-        onRemoveExercise: ((UUID) -> Void)?
+        onRemoveExercise: ((UUID) -> Void)?,
+        onChanged: @escaping () -> Void
     ) {
         let setVMs = (1...defaultSetCount).map { index in
             SQWorkoutSessionSetViewModel(
                 setIndex: index,
                 initialReps: defaultReps,
-                initialWeight: defaultWeight
+                initialWeight: defaultWeight,
+                onChanged: onChanged
             )
         }
         
@@ -58,14 +69,16 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
             name: name,
             muscleGroup: muscleGroup,
             sets: setVMs,
-            onRemoveExercise: onRemoveExercise
+            onRemoveExercise: onRemoveExercise,
+            onChanged: onChanged
         )
     }
     
-    convenience init(from model: SQStrengthExercise, onRemoveExercise: ((UUID) -> Void)?) {
+    convenience init(from model: SQStrengthExercise, onRemoveExercise: ((UUID) -> Void)?,         onChanged: @escaping () -> Void) {
         let setVMs = model.sets
             .sorted { $0.setIndex < $1.setIndex }
-            .map { SQWorkoutSessionSetViewModel(from: $0) }
+            .map { SQWorkoutSessionSetViewModel(from: $0,
+                                                onChanged: onChanged) }
         
         self.init(
             id: model.id,
@@ -73,7 +86,8 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
             name: model.name,
             muscleGroup: model.muscleGroup,
             sets: setVMs,
-            onRemoveExercise: onRemoveExercise
+            onRemoveExercise: onRemoveExercise,
+            onChanged: onChanged
         )
     }
     
@@ -91,30 +105,27 @@ final class SQWorkoutSessionExerciseViewModel: Identifiable {
     
     func addSet(copyLast: Bool = true) {
         
-        print("ADD SET on exerciseVM:", id, "instance:", ObjectIdentifier(self), "oldCount:", sets.count)
-        
         let nextIndex = sets.count + 1
         
         if copyLast, let last = sets.last {
             let newSet = SQWorkoutSessionSetViewModel(
                 setIndex: nextIndex,
                 initialReps: last.reps,
-                initialWeight: last.weight
+                initialWeight: last.weight,
+                onChanged: onChanged
             )
             sets.append(newSet)
         } else {
             let newSet = SQWorkoutSessionSetViewModel(
                 setIndex: nextIndex,
                 initialReps: 8,
-                initialWeight: 50
+                initialWeight: 50,
+                onChanged: onChanged
             )
             sets.append(newSet)
         }
         
         renumberSets()
-        
-        // ... append ...
-        print("newCount:", sets.count)
     }
     
     func removeSet(_ set: SQWorkoutSessionSetViewModel) {

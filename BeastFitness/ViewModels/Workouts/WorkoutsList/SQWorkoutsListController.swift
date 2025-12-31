@@ -45,6 +45,8 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
                 }
             case .workoutsDeleted(let workoutMap):
                 rows = rows.filter { workoutMap[$0.workout.id] == nil }
+            case .activeWorkoutUpdate:
+                break
             }
         }.store(in: &cancellables)
     }

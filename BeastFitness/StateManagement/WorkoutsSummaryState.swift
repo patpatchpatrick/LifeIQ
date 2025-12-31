@@ -52,7 +52,7 @@ protocol WorkoutSummaryStating: AnyObject {
                     SQLogger.shared.log("Refreshing workout with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
                     self.load(workout: updatedWorkout)
                 }
-            case .workoutsDeleted:
+            case .workoutsDeleted, .activeWorkoutUpdate:
                 return
                 // No-op
             }

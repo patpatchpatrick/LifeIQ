@@ -14,12 +14,14 @@ final class SWWorkoutManager: NSObject {
     static let shared = SWWorkoutManager()
 
     private var engine: SQWorkoutSessionEngine?
+    private var watchConnectivityManager: SWWatchConnectivityManager?
     private var lastBPM: Double = 0
 
     func startWorkout(with config: HKWorkoutConfiguration) {
         SWAppState.shared.rootState.updateTitle(to: "Workout Started ✅")
         let engine = SQWorkoutSessionEngineFactory.make(config: .init(useMockData: SWAppState.shared.useMockData))
         self.engine = engine
+        self.watchConnectivityManager = .init()
 
         SQLogger.shared.logW("Starting workout (mock=\(SWAppState.shared.useMockData))", .info, context: .workoutSession)
 

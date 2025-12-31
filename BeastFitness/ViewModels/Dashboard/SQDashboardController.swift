@@ -48,6 +48,8 @@ final class SQDashboardController: SQDashboardInterface {
                 self.refreshUiWithContext?(nil)
             case .workoutsDeleted:
                 self.refreshUiWithContext?(nil)
+            case .activeWorkoutUpdate:
+                break
             }
         }.store(in: &cancellables)
     }

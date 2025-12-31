@@ -23,6 +23,9 @@ struct SWRootView: View {
             
             Text(viewModel.rootState.heartRateTitle)
                 .font(.footnote)
+            
+            Text(viewModel.rootState.activeWorkoutDescription)
+                .font(.footnote)
           }
         .padding()
     }

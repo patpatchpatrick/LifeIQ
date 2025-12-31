@@ -24,7 +24,7 @@ protocol WorkoutSessionStating: AnyObject {
     func toggleRestTimerSheetVisibility(_ isVisible: Bool)
     func displayRestTimerSheet()
     func updateExercises(to exercises: [SQWorkoutSessionExerciseViewModel])
-    func appendExercises(_ exercises: [SQWorkoutSessionExerciseViewModel])
+    func appendExercises(_ exercises: [SQRawStrengthExercise])
     func removeExercises(_ exercises: Set<UUID>)
     
     func load(workout: SQWorkoutSessionable?)
@@ -39,7 +39,11 @@ protocol WorkoutSessionStating: AnyObject {
     
     private(set) var isAddExerciseListSheetVisible: Bool = false
     private(set) var isRestTimerSheetVisible: Bool = false
-    private(set) var exercises: [SQWorkoutSessionExerciseViewModel] = []
+    private(set) var exercises: [SQWorkoutSessionExerciseViewModel] = [] {
+        didSet {
+            workoutChanged()
+        }
+    }
     private(set) var titleTextField: SQTextFieldViewModel?
     
     init(hub: EventHub) {
@@ -48,20 +52,22 @@ protocol WorkoutSessionStating: AnyObject {
     
     func load(workout: SQWorkoutSessionable?) {
         baseWorkout = workout
+        let placeholderTitle = "\(Date.now.dayAndTimeTitle()) Weight Training"
+        let initialText = workout?.title ?? placeholderTitle
         
         let titleTextField = SQTextFieldViewModel(
             font: .init(type: .title3),
             uiConfig: .standard,
-            placeholder: "Saturday Morning Weight Training",
+            placeholder: placeholderTitle,
             keyboardType: .default,
             textAutoCap: .sentences,
             autoCorrectionEnabled: false,
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars),
             errorHandler: { _ in nil }
         )
-        if let title = workout?.title {
-            titleTextField.initializeText(title)
-        }
+    
+        titleTextField.initializeText(initialText)
+    
         self.titleTextField = titleTextField
         
         switch workout?.details {
@@ -71,6 +77,9 @@ protocol WorkoutSessionStating: AnyObject {
                 from: $0,
                 onRemoveExercise: { [weak self] exerciseId in
                     self?.removeExercises(.init([exerciseId]))
+                },
+                onChanged: { [weak self] in
+                    self?.workoutChanged()
                 }) }
             self.updateExercises(to: exercises)
             
@@ -100,8 +109,24 @@ protocol WorkoutSessionStating: AnyObject {
         self.exercises = exercises
     }
     
-    func appendExercises(_ exercises: [SQWorkoutSessionExerciseViewModel]) {
-        self.exercises.append(contentsOf: exercises)
+    func appendExercises(_ exercises: [SQRawStrengthExercise]) {
+        
+        let viewModels = exercises.map { rawExercise in
+            return SQWorkoutSessionExerciseViewModel(
+                name: rawExercise.name,
+                rawExerciseId: rawExercise.id,
+                muscleGroup: rawExercise.primaryMuscles.first ?? .unknown,
+                onRemoveExercise: { [weak self] exerciseId in
+                    self?.removeExercises([exerciseId])
+                },
+                onChanged: {
+                    [weak self] in
+                    self?.workoutChanged()
+                }
+            )
+        }
+        
+        self.exercises.append(contentsOf: viewModels)
     }
     
     func removeExercises(_ exercises: Set<UUID>) {
@@ -109,6 +134,31 @@ protocol WorkoutSessionStating: AnyObject {
             self.exercises.removeAll(where: { exercises.contains($0.id) })
         }
     }
+    
+    private func workoutChanged() {
+
+        let current = exercises
+            .compactMap { exercise -> (SQWorkoutSessionExerciseViewModel, Int)? in
+                guard let idx = exercise.sets.firstIndex(where: { !$0.isCompleted }) else {
+                    return nil
+                }
+                return (exercise, idx) // ← 0-based index
+            }
+            .first
+
+        let exercise = current?.0
+        let setIndex = current?.1
+
+        hub.workoutEvents.send(
+            .activeWorkoutUpdate(
+                .init(
+                    activeExercise: exercise,
+                    activeSetIndex: setIndex
+                )
+            )
+        )
+    }
+
     
     func workoutUpdated(workout: any SQWorkoutSessionable) {
         hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))

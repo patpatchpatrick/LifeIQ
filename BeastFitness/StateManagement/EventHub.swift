@@ -16,6 +16,7 @@ enum DomainEvent {
 enum WorkoutEvent {
     case workoutsUpdated([String: SQWorkoutSessionable]) /// [Workout ID : Workout]
     case workoutsDeleted([String: SQWorkoutSessionable]) /// [Workout ID : Workout]
+    case activeWorkoutUpdate(SQActiveWorkoutSessionPayload)
 }
 
 enum AlertEvent {
