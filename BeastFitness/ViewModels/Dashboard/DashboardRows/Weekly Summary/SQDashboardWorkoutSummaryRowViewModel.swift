@@ -17,6 +17,10 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     private(set) var priorWorkouts: [SQWorkoutSessionable] = []
 
     var isExpanded: Bool = true
+    
+    var isEmpty: Bool {
+        totalsSection == nil && workoutsSection == nil
+    }
 
     init(
         rowId: WorkoutSummaryRowId,
@@ -24,7 +28,7 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable]
     ) {
-        super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
+        super.init(rowId: rowId.dashboardRowId, rowType: .workoutSummary)
         refresh(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
     }
 
@@ -41,8 +45,13 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
         self.sectionTitle = config.timeRange.title
-        self.workoutsSection = .init(workouts: workouts)
-        self.totalsSection = .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
+        if config.timeRange != .today && workouts.isEmpty {
+            /// Don't show the workouts section if workouts are empty. However, we'll still show the workouts section if the time range is today and workouts are empty, because we'll display a CTA to start a workout in that case
+            self.workoutsSection = nil
+        } else {
+            self.workoutsSection = .init(workouts: workouts)
+        }
+        self.totalsSection = workouts.isEmpty ? nil : .init(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
     }
 }
 

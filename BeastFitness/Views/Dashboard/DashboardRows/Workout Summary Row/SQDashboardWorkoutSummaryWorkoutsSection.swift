@@ -36,6 +36,10 @@ struct SQDashboardWorkoutSummaryWorkoutsSection: View {
                 .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
             workoutsStack
+            
+            if let ctaViewModel = viewModel.ctaViewModel {
+                SQCallToAction(viewModel: ctaViewModel)
+            }
         }
     }
     

@@ -12,6 +12,7 @@ import HealthKit
 final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
     let sectionTitle: String
     let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
+    let ctaViewModel: SQCallToActionViewModel?
     
     init(workouts: [SQWorkoutSessionable]) {
         self.sectionTitle = "Workouts"
@@ -21,6 +22,16 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
             workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
         }
         self.workoutGroupViewModels = workoutGroupViewModels
+        
+        if workoutGroupViewModels.isEmpty {
+            ctaViewModel = .init(
+                title: "Start workout",
+                onTap: {
+                    SQAppState.shared.hub.domainEvents.send(.changeTab(.workouts))
+            })
+        } else {
+            ctaViewModel = nil
+        }
     }
 }
 

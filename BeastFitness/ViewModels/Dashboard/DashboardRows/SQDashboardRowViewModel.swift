@@ -9,7 +9,7 @@ import Foundation
 
 enum SQDashboardRowType {
     case text
-    case weekSummary
+    case workoutSummary
 }
 
 enum SQDashboardRowIdentifier {

@@ -26,8 +26,8 @@ struct SQDashboardView: View {
                             SQDashboardTextRow(viewModel: textRowViewModel)
                                 .padding(.bottom, .SQSpace.xxl)
                         }
-                    case .weekSummary:
-                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel {
+                    case .workoutSummary:
+                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel, !weekSummaryViewModel.isEmpty {
                             SQDashboardWorkoutSummaryRow(
                                 viewModel: weekSummaryViewModel)
                         }
