@@ -29,3 +29,20 @@ class SQDashboardRowViewModel: Identifiable {
         self.rowType = rowType
     }
 }
+
+@Observable @MainActor
+final class SQDashboardSectionViewModel: Identifiable {
+    let id = UUID()
+    let title: String?
+    let rows: [SQDashboardRowViewModel]
+    
+    var isExpanded: Bool = true
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
+    
+    init(title: String? = nil, rows: [SQDashboardRowViewModel]) {
+        self.title = title
+        self.rows = rows
+    }
+}

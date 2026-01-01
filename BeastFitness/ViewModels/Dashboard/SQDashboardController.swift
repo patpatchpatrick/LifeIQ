@@ -82,25 +82,49 @@ final class SQDashboardController: SQDashboardInterface {
             let lastYearWorkouts = try await workoutManager.getWorkouts(for: .pastYear, modelContext: context)
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             
-            var dashboardRows = [SQDashboardRowViewModel]()
+            var dashboardSections = [SQDashboardSectionViewModel]()
             
-            dashboardRows.append(SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥"))
+            dashboardSections.append(.init(rows: [
+                SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥")
+            ]))
             
             let dailySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
             
-            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(
-                rowId: .daily,
-                config: dailySectionConfig,
-                workouts: todaysWorkouts,
-                priorWorkouts: yesterdaysWorkouts))
-            
+            dashboardSections.append(.init(
+                title: dailySectionConfig.timeRange.title,
+                rows: [
+                    SQDashboardWorkoutSummaryRowViewModel(
+                        rowId: .daily,
+                        config: dailySectionConfig,
+                        workouts: todaysWorkouts,
+                        priorWorkouts: yesterdaysWorkouts)
+                ]))
+
             let weeklySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .weekly, for: context)
-            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(rowId: .weekly, config: weeklySectionConfig, workouts: lastWeekWorkouts, priorWorkouts: weekBeforeLastWorkouts))
+            
+            dashboardSections.append(.init(
+                title: weeklySectionConfig.timeRange.title,
+                rows: [
+                    SQDashboardWorkoutSummaryRowViewModel(
+                        rowId: .weekly,
+                        config: weeklySectionConfig,
+                        workouts: lastWeekWorkouts,
+                        priorWorkouts: weekBeforeLastWorkouts)
+                ]))
             
             let yearlySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .yearly, for: context)
-            dashboardRows.append(SQDashboardWorkoutSummaryRowViewModel(rowId: .yearly, config: yearlySectionConfig, workouts: lastYearWorkouts, priorWorkouts: yearBeforeLastWorkouts))
             
-            state.updateRowViewModels(to: dashboardRows)
+            dashboardSections.append(.init(
+                title: yearlySectionConfig.timeRange.title,
+                rows: [
+                    SQDashboardWorkoutSummaryRowViewModel(
+                        rowId: .yearly,
+                        config: yearlySectionConfig,
+                        workouts: lastYearWorkouts,
+                        priorWorkouts: yearBeforeLastWorkouts)
+                ]))
+            
+            state.updateSectionViewModels(to: dashboardSections)
         } catch {
             print("PTD Handle Errors here", error)
         }

@@ -19,19 +19,9 @@ struct SQDashboardView: View {
                 Spacer()
                     .frame(height: .SQSpace.l)
                 
-                ForEach(controller.state.rowViewModels) { rowViewModel in
-                    switch rowViewModel.rowType {
-                    case .text:
-                        if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
-                            SQDashboardTextRow(viewModel: textRowViewModel)
-                                .padding(.bottom, .SQSpace.xxl)
-                        }
-                    case .workoutSummary:
-                        if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel, !weekSummaryViewModel.isEmpty {
-                            SQDashboardWorkoutSummaryRow(
-                                viewModel: weekSummaryViewModel)
-                        }
-                    }
+                ForEach(controller.state.sectionViewModels) { sectionViewModel in
+                    
+                    SQDashboardSection(viewModel: sectionViewModel)
                 }
                 
                 Spacer()

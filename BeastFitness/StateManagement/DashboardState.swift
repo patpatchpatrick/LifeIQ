@@ -14,7 +14,7 @@ protocol DashboardStating: AnyObject {
     
     /// State
     ///
-    var rowViewModels: [SQDashboardRowViewModel] { get }
+    var sectionViewModels: [SQDashboardSectionViewModel] { get }
     
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
@@ -28,7 +28,7 @@ protocol DashboardStating: AnyObject {
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?)
     
-    func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel])
+    func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel])
     
     func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
@@ -42,7 +42,7 @@ protocol DashboardStating: AnyObject {
     private(set) var isWorkoutListSheetVisible: Bool = false
     
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
-    private(set) var rowViewModels: [SQDashboardRowViewModel] = []
+    private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
     
     private(set) var workoutsListController: SQWorkoutsListController?
     
@@ -54,8 +54,8 @@ protocol DashboardStating: AnyObject {
         hub.domainEvents.send(.changeTab(tab))
     }
     
-    func updateRowViewModels(to rowViewModels: [SQDashboardRowViewModel]) {
-        self.rowViewModels = rowViewModels
+    func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel]) {
+        self.sectionViewModels = sectionViewModels
     }
     
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {
