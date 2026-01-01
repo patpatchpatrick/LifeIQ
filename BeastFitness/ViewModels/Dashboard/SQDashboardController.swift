@@ -88,11 +88,14 @@ final class SQDashboardController: SQDashboardInterface {
                 SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥")
             ]))
             
-            let dailySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily, for: context)
+            let dailySectionConfig =  buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily)
+            
+            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
             
             dashboardSections.append(.init(
                 title: dailySectionConfig.timeRange.title,
                 rows: [
+                    SQDashboardDailyCheckInRowViewModel(dailyCheckInStats: dailyCheckInStats, context: context),
                     SQDashboardWorkoutSummaryRowViewModel(
                         rowId: .daily,
                         config: dailySectionConfig,
@@ -100,29 +103,41 @@ final class SQDashboardController: SQDashboardInterface {
                         priorWorkouts: yesterdaysWorkouts)
                 ]))
 
-            let weeklySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .weekly, for: context)
+            let weeklySectionConfig = buildConfigTotalsSectionConfig(workoutSummaryRowId: .weekly)
             
-            dashboardSections.append(.init(
-                title: weeklySectionConfig.timeRange.title,
-                rows: [
-                    SQDashboardWorkoutSummaryRowViewModel(
-                        rowId: .weekly,
-                        config: weeklySectionConfig,
-                        workouts: lastWeekWorkouts,
-                        priorWorkouts: weekBeforeLastWorkouts)
-                ]))
+            let weeklyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
+                rowId: .weekly,
+                config: weeklySectionConfig,
+                workouts: lastWeekWorkouts,
+                priorWorkouts: weekBeforeLastWorkouts)
             
-            let yearlySectionConfig = await buildConfigTotalsSectionConfig(workoutSummaryRowId: .yearly, for: context)
+            if !weeklyWorkoutSummaryRowViewModel.isEmpty {
+                dashboardSections.append(.init(
+                    title: weeklySectionConfig.timeRange.title,
+                    rows: [
+                        weeklyWorkoutSummaryRowViewModel
+                    ]))
+            }
             
-            dashboardSections.append(.init(
-                title: yearlySectionConfig.timeRange.title,
-                rows: [
-                    SQDashboardWorkoutSummaryRowViewModel(
-                        rowId: .yearly,
-                        config: yearlySectionConfig,
-                        workouts: lastYearWorkouts,
-                        priorWorkouts: yearBeforeLastWorkouts)
-                ]))
+            let yearlySectionConfig =  buildConfigTotalsSectionConfig(workoutSummaryRowId: .yearly)
+            
+            let yearlyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
+                rowId: .yearly,
+                config: yearlySectionConfig,
+                workouts: lastYearWorkouts,
+                priorWorkouts: yearBeforeLastWorkouts)
+            
+            if !yearlyWorkoutSummaryRowViewModel.isEmpty {
+                dashboardSections.append(.init(
+                    title: yearlySectionConfig.timeRange.title,
+                    rows: [
+                        SQDashboardWorkoutSummaryRowViewModel(
+                            rowId: .yearly,
+                            config: yearlySectionConfig,
+                            workouts: lastYearWorkouts,
+                            priorWorkouts: yearBeforeLastWorkouts)
+                    ]))
+            }
             
             state.updateSectionViewModels(to: dashboardSections)
         } catch {
@@ -140,34 +155,8 @@ final class SQDashboardController: SQDashboardInterface {
         state.displayDailyCheckInSheet(with: dailyCheckInStats)
     }
     
-    private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId,  for context: ModelContext) async -> SQDashboardWorkoutSummaryRowConfig{
+    private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId) -> SQDashboardWorkoutSummaryRowConfig{
         
-        let dailyCheckInViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = await {
-            guard workoutSummaryRowId == .daily else { return nil }
-            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
-            let dailyCheckInStatsSummaryConfig: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel.DailyCheckInStatsSummaryConfig? = {
-                guard let dailyCheckInStats else { return nil }
-                return .init(
-                    title: "Daily check-in",
-                    subtitle: dailyCheckInStats.summaryString,
-                    icon: .edit,
-                    /// It's important to not use weak self here.  because the dashboard controller could be deallocated if it's being initialize temporarily to trigger an action
-                    onTap: { Task { await SQDashboardController.default.displayDailyCheckInSheet(for: context) } }
-                )
-            }()
-            
-            let dailyCheckInCta: SQCallToActionViewModel? = dailyCheckInStats != nil ? nil : .init(
-                title: "Complete daily check-in",
-                /// It's important to not use weak self here.  because the dashboard controller could be deallocated if it's being initialize temporarily to trigger an action
-                onTap: {
-                    Task { await SQDashboardController.default.displayDailyCheckInSheet(for: context) }
-                })
-            
-            return .init(
-                callToAction: dailyCheckInCta,
-                dailyCheckInSummaryConfig: dailyCheckInStatsSummaryConfig)
-        }()
-        
-        return .init(timeRange: workoutSummaryRowId.timeRange, priorTimeRange: workoutSummaryRowId.priorTimeRange, dailyCheckInSummarySectionViewModel: dailyCheckInViewModel)
+        return .init(timeRange: workoutSummaryRowId.timeRange, priorTimeRange: workoutSummaryRowId.priorTimeRange)
     }
 }

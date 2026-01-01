@@ -10,7 +10,6 @@ import SwiftUI
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     private(set) var sectionTitle: String = ""
-    private(set) var dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil
     private(set) var totalsSection: SQDashboardWorkoutSummaryTotalsSectionViewModel? = nil
     private(set) var workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel? = nil
     private(set) var workouts: [SQWorkoutSessionable] = []
@@ -35,7 +34,6 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable]
     ) {
-        self.dailyCheckInSummarySectionViewModel = config.dailyCheckInSummarySectionViewModel
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
         self.sectionTitle = config.timeRange.title
@@ -84,16 +82,13 @@ extension SQDashboardWorkoutSummaryRowViewModel {
 struct SQDashboardWorkoutSummaryRowConfig {
     let timeRange: SQTimeRange
     let priorTimeRange: SQTimeRange
-    let dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel?
 
     init(
         timeRange: SQTimeRange,
-        priorTimeRange: SQTimeRange,
-        dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil
+        priorTimeRange: SQTimeRange
     ) {
         self.timeRange = timeRange
         self.priorTimeRange = priorTimeRange
-        self.dailyCheckInSummarySectionViewModel = dailyCheckInSummarySectionViewModel
     }
 
     static let mock = SQDashboardWorkoutSummaryRowConfig(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)

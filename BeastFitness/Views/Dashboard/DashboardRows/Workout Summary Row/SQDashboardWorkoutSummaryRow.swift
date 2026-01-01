@@ -12,9 +12,6 @@ struct SQDashboardWorkoutSummaryRow: View {
 
     private var cardBody: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            if let vm = viewModel.dailyCheckInSummarySectionViewModel {
-                SQDashboardWorkoutSummaryDailyCheckInSection(viewModel: vm)
-            }
             if let totals = viewModel.totalsSection {
                 SQDashboardWorkoutSummaryTotalsSection(viewModel: totals)
                     .padding(.bottom, SQDashboardView.uiConfig.cardSectionSpacing)

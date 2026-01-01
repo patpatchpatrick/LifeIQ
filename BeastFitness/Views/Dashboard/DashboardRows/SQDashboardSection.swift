@@ -23,6 +23,11 @@ struct SQDashboardSection: View {
                     SQDashboardWorkoutSummaryRow(
                         viewModel: weekSummaryViewModel)
                 }
+                
+            case .dailyCheckInStats:
+                if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel {
+                    SQDashboardWorkoutSummaryDailyCheckInSection(viewModel: dailyCheckInRowViewModel)
+                }
             }
         }
     }
