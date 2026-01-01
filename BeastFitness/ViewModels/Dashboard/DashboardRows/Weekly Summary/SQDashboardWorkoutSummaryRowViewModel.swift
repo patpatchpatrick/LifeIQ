@@ -15,13 +15,28 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     private(set) var workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel? = nil
     private(set) var workouts: [SQWorkoutSessionable] = []
     private(set) var priorWorkouts: [SQWorkoutSessionable] = []
-    
-    init(rowId: WorkoutSummaryRowId, config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
+
+    var isExpanded: Bool = true
+
+    init(
+        rowId: WorkoutSummaryRowId,
+        config: SQDashboardWorkoutSummaryRowConfig,
+        workouts: [SQWorkoutSessionable],
+        priorWorkouts: [SQWorkoutSessionable]
+    ) {
         super.init(rowId: rowId.dashboardRowId, rowType: .weekSummary)
         refresh(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
     }
-    
-    func refresh(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
+
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
+
+    func refresh(
+        config: SQDashboardWorkoutSummaryRowConfig,
+        workouts: [SQWorkoutSessionable],
+        priorWorkouts: [SQWorkoutSessionable]
+    ) {
         self.dailyCheckInSummarySectionViewModel = config.dailyCheckInSummarySectionViewModel
         self.workouts = workouts
         self.priorWorkouts = priorWorkouts
@@ -36,37 +51,28 @@ extension SQDashboardWorkoutSummaryRowViewModel {
         case daily
         case weekly
         case yearly
-        
+
         var dashboardRowId: SQDashboardRowIdentifier {
             switch self {
-            case .daily:
-                    .dailySummary
-            case .weekly:
-                    .weeklySummary
-            case .yearly:
-                    .yearlySummary
+            case .daily:  .dailySummary
+            case .weekly: .weeklySummary
+            case .yearly: .yearlySummary
             }
         }
-        
+
         var timeRange: SQTimeRange {
             switch self {
-            case .daily:
-                    .today
-            case .weekly:
-                    .pastWeek
-            case .yearly:
-                    .pastYear
+            case .daily:  .today
+            case .weekly: .pastWeek
+            case .yearly: .pastYear
             }
         }
-        
+
         var priorTimeRange: SQTimeRange {
             switch self {
-            case .daily:
-                    .yesterday
-            case .weekly:
-                    .weekBeforeLast
-            case .yearly:
-                    .yearBeforeLast
+            case .daily:  .yesterday
+            case .weekly: .weekBeforeLast
+            case .yearly: .yearBeforeLast
             }
         }
     }
@@ -76,12 +82,16 @@ struct SQDashboardWorkoutSummaryRowConfig {
     let timeRange: SQTimeRange
     let priorTimeRange: SQTimeRange
     let dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel?
-    
-    init(timeRange: SQTimeRange, priorTimeRange: SQTimeRange, dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil) {
+
+    init(
+        timeRange: SQTimeRange,
+        priorTimeRange: SQTimeRange,
+        dailyCheckInSummarySectionViewModel: SQDashboardWorkoutSummaryDailyCheckInSectionViewModel? = nil
+    ) {
         self.timeRange = timeRange
         self.priorTimeRange = priorTimeRange
         self.dailyCheckInSummarySectionViewModel = dailyCheckInSummarySectionViewModel
     }
-    
+
     static let mock = SQDashboardWorkoutSummaryRowConfig(timeRange: .pastWeek, priorTimeRange: .weekBeforeLast)
 }
