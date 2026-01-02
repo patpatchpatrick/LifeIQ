@@ -84,10 +84,6 @@ final class SQDashboardController: SQDashboardInterface {
             
             var dashboardSections = [SQDashboardSectionViewModel]()
             
-            dashboardSections.append(.init(rows: [
-                SQDashboardTextRowViewModel(rowId: .motiviationalQuote, text: "You’ve hit 4/5 of your workouts this week.\nKeep your streak up! 🔥")
-            ]))
-            
             let dailySectionConfig =  buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily)
             
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)

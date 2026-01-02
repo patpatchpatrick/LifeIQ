@@ -14,7 +14,6 @@ struct SQMetricChip: View {
         let systemImage: String
         let value: Double?
         let maxValue: Double
-        let delta: Double?
 
         init(
             id: String,
@@ -22,14 +21,12 @@ struct SQMetricChip: View {
             systemImage: String,
             value: Double?,
             maxValue: Double = 10,
-            delta: Double? = nil
         ) {
             self.id = id
             self.title = title
             self.systemImage = systemImage
             self.value = value
             self.maxValue = maxValue
-            self.delta = delta
         }
     }
 
@@ -53,93 +50,73 @@ struct SQMetricChip: View {
         if abs(v.rounded() - v) < 0.0001 { return "\(Int(v))" }
         return String(format: "%.1f", v)
     }
+    
+    var trailingBarStack: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            GeometryReader { geo in
+                let w = geo.size.width
 
-    private var deltaText: String? {
-        guard let d = model.delta else { return nil }
-        let sign = d > 0 ? "+" : (d < 0 ? "−" : "")
-        let absVal = abs(d)
-        let formatted: String = abs(absVal.rounded() - absVal) < 0.0001
-            ? "\(Int(absVal))"
-            : String(format: "%.1f", absVal)
-        return "\(sign)\(formatted)"
+                Capsule()
+                    .fill(SQColor.textPrimary.color.opacity(0.10))
+                    .frame(height: 6)
+                    .overlay(alignment: .leading) {
+                        Capsule()
+                            .fill(SQColor.textPrimary.color.opacity(model.value == nil ? 0.12 : 0.40))
+                            .frame(width: w * progress, height: 6)
+                    }
+            }
+            .frame(height: 6)
+
+            Text(model.value == nil ? "Check-in" : "Today")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .lineLimit(1)
+        }
+        .frame(width: 64)
+        .layoutPriority(0)
+    }
+    
+    var titleAndScore: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            Text(model.title)
+                .sqFont(.bodySmallSemiBold)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            HStack(spacing: .SQSpace.s) {
+                Text(valueText)
+                    .sqFont(.bodyBold)
+                    .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+
+                Text("/\(Int(model.maxValue))")
+                    .sqFont(.bodySemiBold)
+                    .sqForegroundColor(.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .layoutPriority(10)
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
     }
 
     var body: some View {
         Button { onTap?() } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: .SQSpace.l) {
 
-                // Icon bubble (fixed)
-                ZStack {
-                    Circle().fill(.thinMaterial)
-                    Image(systemName: model.systemImage)
-                        .font(.system(size: 15, weight: .semibold))
-                }
-                .frame(width: 28, height: 28)
+                Image(systemName: model.systemImage)
+                    .font(.system(size: 15, weight: .semibold))
                 .layoutPriority(0)
 
-                // Text (HIGH PRIORITY)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(model.title)
-                        .font(.system(size: 12, weight: .semibold))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                titleAndScore
 
-                    HStack(spacing: 5) {
-                        Text(valueText)
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .lineLimit(1)
-
-                        Text("/\(Int(model.maxValue))")
-                            .font(.system(size: 12, weight: .semibold))
-                            .opacity(0.6)
-                            .lineLimit(1)
-
-                        if let deltaText {
-                            Text(deltaText)
-                                .font(.system(size: 12, weight: .semibold))
-                                .opacity(0.8)
-                                .lineLimit(1)
-                                .padding(.leading, 2)
-                        }
-                    }
-                }
-                .layoutPriority(10) // <- makes this win
-                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-
-                // Trailing mini-bar (predictable, shrinkable)
-                VStack(alignment: .trailing, spacing: 6) {
-                    GeometryReader { geo in
-                        let w = geo.size.width
-
-                        Capsule()
-                            .fill(.primary.opacity(0.10))
-                            .frame(height: 6)
-                            .overlay(alignment: .leading) {
-                                Capsule()
-                                    .fill(.primary.opacity(model.value == nil ? 0.12 : 0.40))
-                                    .frame(width: w * progress, height: 6)
-                            }
-                    }
-                    .frame(height: 6)
-
-                    Text(model.value == nil ? "Check-in" : "Today")
-                        .font(.system(size: 10, weight: .semibold))
-                        .opacity(0.55)
-                        .lineLimit(1)
-                }
-                .frame(width: 64)          // <- fixed width so it won't steal space
-                .layoutPriority(0)
+                trailingBarStack
             }
             .padding(.horizontal, horizPadding)
             .padding(.vertical, vertPadding)
             .frame(height: height)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(.thinMaterial)
-            )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(.primary.opacity(0.10), lineWidth: 1)
+                    .stroke(SQColor.textPrimary.color.opacity(0.1), lineWidth: 1)
             )
             .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
@@ -159,7 +136,6 @@ struct SQMetricChipStrip: View {
                     SQMetricChip(model: chip) {
                         onTap(chip)
                     }
-                    .frame(width: 185) // tune for your layout
                 }
             }
             .padding(.horizontal, 2)

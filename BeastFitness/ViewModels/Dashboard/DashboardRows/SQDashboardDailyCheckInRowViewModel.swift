@@ -43,8 +43,7 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
 fileprivate extension SQMetricChip.Model {
     
     static func chips(
-        from stats: SQDailyCheckInStats,
-        deltas: [String: Double] = [:] // optional: keyed by metric id
+        from stats: SQDailyCheckInStats
     ) -> [SQMetricChip.Model] {
         
         [
@@ -53,8 +52,7 @@ fileprivate extension SQMetricChip.Model {
                 title: "Mood",
                 systemImage: "face.smiling",
                 value: stats.moodScore.map(Double.init),
-                maxValue: 10,
-                delta: deltas["mood"]
+                maxValue: 10
             ),
             
             .init(
@@ -62,8 +60,7 @@ fileprivate extension SQMetricChip.Model {
                 title: "Energy",
                 systemImage: "bolt.fill",
                 value: stats.energyScore.map(Double.init),
-                maxValue: 10,
-                delta: deltas["energy"]
+                maxValue: 10
             ),
             
             .init(
@@ -71,8 +68,7 @@ fileprivate extension SQMetricChip.Model {
                 title: "Clarity",
                 systemImage: "brain.head.profile",
                 value: stats.mentalClarityScore.map(Double.init),
-                maxValue: 10,
-                delta: deltas["clarity"]
+                maxValue: 10
             ),
             
             .init(
@@ -80,8 +76,7 @@ fileprivate extension SQMetricChip.Model {
                 title: "Soreness",
                 systemImage: "figure.strengthtraining.traditional",
                 value: stats.sorenessScore.map(Double.init),
-                maxValue: 10,
-                delta: deltas["soreness"]
+                maxValue: 10
             ),
             
             .init(
@@ -91,8 +86,7 @@ fileprivate extension SQMetricChip.Model {
                 value: stats.sleepHours.map {
                     SQDailyCheckInStats.normalizedSleepScore(hours: $0)
                 },
-                maxValue: 10,
-                delta: deltas["sleep"]
+                maxValue: 10
             )
         ]
     }
