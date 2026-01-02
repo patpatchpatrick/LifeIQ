@@ -11,10 +11,13 @@ enum SQDashboardRowType {
     case text
     case workoutSummary
     case dailyCheckInStats
+    case performance
 }
 
 enum SQDashboardRowIdentifier {
     case motiviationalQuote
+    case dailyCheckInStats
+    case dailyPerformance
     case dailySummary
     case weeklySummary
     case yearlySummary

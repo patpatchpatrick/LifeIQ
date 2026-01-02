@@ -19,6 +19,10 @@ enum WorkoutEvent {
     case activeWorkoutUpdate(SQActiveWorkoutSessionPayload)
 }
 
+enum MetricEvent {
+    case metricsUpdated
+}
+
 enum AlertEvent {
     case present(_ alert: SQAlertViewModel)
     case dismiss(_ alert: SQAlertViewModel)
@@ -33,6 +37,7 @@ enum ToastEvent {
 final class EventHub {
     let domainEvents = PassthroughSubject<DomainEvent, Never>()
     let workoutEvents = PassthroughSubject<WorkoutEvent, Never>()
+    let metricEvents = PassthroughSubject<MetricEvent, Never>()
     let alertEvents = PassthroughSubject<AlertEvent, Never>()
     let toastEvents = PassthroughSubject<ToastEvent, Never>()
 }

@@ -26,7 +26,12 @@ struct SQDashboardSection: View {
                 
             case .dailyCheckInStats:
                 if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel {
-                    SQDashboardWorkoutSummaryDailyCheckInSection(viewModel: dailyCheckInRowViewModel)
+                    SQDashboardWorkoutSummaryDailyCheckInRow(viewModel: dailyCheckInRowViewModel)
+                }
+                
+            case .performance:
+                if let dailyPerformanceRowViewModel = rowViewModel as? SQDashboardDailyPerformanceRowViewModel {
+                    SQDashboardPerformanceRow(viewModel: dailyPerformanceRowViewModel)
                 }
             }
         }

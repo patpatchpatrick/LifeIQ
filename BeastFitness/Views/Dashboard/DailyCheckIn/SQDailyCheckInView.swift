@@ -48,14 +48,33 @@ struct SQDailyCheckInView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .navigationTitle("Daily Check-In")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            viewModel.addMetricTapped()
+                        } label: {
+                            HStack(spacing: .SQSpace.m) {
+                                Image(systemName: SQImageSymbol.plus.rawValue)
+                                Text("Add Metric")
+                            }
+                        }
+                    }
+                }
                 .background(SQColor.backgroundSecondary.color)
                 .safeAreaInset(edge: .bottom) {
                     submitButton
                 }
+                .sheet(isPresented: $viewModel.isAddMetricSheetDisplayed) {
+                    SQMetricsListView(controller: viewModel.metricsListController)
+                    }
         }
     }
 
     var body: some View {
         navStack
+            .task {
+                /// TODO: - Don't refresh for every appear, only the first time the view appears
+                viewModel.refreshRows(stats: viewModel.stats, modelContext: modelContext)
+            }
     }
 }

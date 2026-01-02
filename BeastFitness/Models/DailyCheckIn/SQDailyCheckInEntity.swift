@@ -12,79 +12,123 @@ import Foundation
 final class SQDailyCheckInEntity {
     @Attribute(.unique) var dateKey: String
     var date: Date
-    var moodScore: Float?
-    var mentalClarityScore: Float?
-    var energyScore: Float?
-    var sorenessScore: Float?
-    var sleepHours: Float?
-    var sleepQualityScore: Float?
     var notes: String?
 
+    /// Persist daily values reliably (instead of a dictionary)
+    @Relationship(deleteRule: .cascade)
+    var metricValues: [SQDailyMetricValueEntity] = []
+
+    // MARK: - Init
+
     init(from stats: SQDailyCheckInStats) {
-        self.dateKey = stats.uniqueDateKey
-        self.date = stats.date
-        self.moodScore = stats.moodScore
-        self.mentalClarityScore = stats.mentalClarityScore
-        self.energyScore = stats.energyScore
-        self.sorenessScore = stats.sorenessScore
-        self.sleepHours = stats.sleepHours
-        self.sleepQualityScore = stats.sleepQualityScore
+        let normalized = Calendar.current.startOfDay(for: stats.date)
+
+        self.dateKey = SQDailyCheckInStats.getUniqueDateKey(for: normalized)
+        self.date = normalized
         self.notes = stats.notes
+
+        self.metricValues = stats.values.map { (metricId, value) in
+            SQDailyMetricValueEntity(metricId: metricId, value: value)
+        }
     }
 
+    // MARK: - Mapping
+
     func toStats() -> SQDailyCheckInStats {
-        SQDailyCheckInStats(
+        let valuesDict: [String: Float] = Dictionary(
+            uniqueKeysWithValues: metricValues.compactMap { entry in
+                guard let v = entry.value else { return nil }
+                return (entry.metricId, v)
+            }
+        )
+
+        return SQDailyCheckInStats(
             date: date,
-            moodScore: moodScore,
-            mentalClarityScore: mentalClarityScore,
-            energyScore: energyScore,
-            sorenessScore: sorenessScore,
-            sleepHours: sleepHours,
-            sleepQualityScore: sleepQualityScore,
+            values: valuesDict,
             notes: notes
         )
     }
-    
+
     func update(from stats: SQDailyCheckInStats) {
-            let normalized = Calendar.current.startOfDay(for: stats.date)
-            self.date = normalized
-            self.moodScore = stats.moodScore
-            self.mentalClarityScore = stats.mentalClarityScore
-            self.energyScore = stats.energyScore
-            self.sorenessScore = stats.sorenessScore
-            self.sleepHours = stats.sleepHours
-            self.sleepQualityScore = stats.sleepQualityScore
-            self.notes = stats.notes
+        let normalized = Calendar.current.startOfDay(for: stats.date)
+
+        self.date = normalized
+        self.dateKey = SQDailyCheckInStats.getUniqueDateKey(for: normalized)
+        self.notes = stats.notes
+
+        applyMetricValues(stats.values)
+    }
+
+    // MARK: - Private
+
+    /// Overwrite this day's metric values to match `incoming`.
+    /// - Adds new metricIds
+    /// - Updates existing metricIds
+    /// - Removes metricIds not present in incoming (keeps model clean)
+    private func applyMetricValues(_ incoming: [String: Float]) {
+        // Index existing by metricId
+        var existingById: [String: SQDailyMetricValueEntity] =
+            Dictionary(uniqueKeysWithValues: metricValues.map { ($0.metricId, $0) })
+
+        // Update/add
+        for (metricId, value) in incoming {
+            if let existing = existingById[metricId] {
+                existing.value = value
+            } else {
+                metricValues.append(.init(metricId: metricId, value: value))
+            }
         }
+
+        // Remove ones not present anymore
+        if incoming.isEmpty {
+            metricValues.removeAll()
+        } else {
+            metricValues.removeAll { incoming.keys.contains($0.metricId) == false }
+        }
+    }
 }
 
+@Model
+final class SQDailyMetricValueEntity {
+    /// Metric definition id (e.g. "metric.mood", "metric.alcohol", "metric.custom.<uuid>")
+    var metricId: String
+
+    /// Stored as Float for everything (binary uses 0/1)
+    var value: Float?
+
+    init(metricId: String, value: Float?) {
+        self.metricId = metricId
+        self.value = value
+    }
+}
+
+
 extension SQDailyCheckInEntity {
-    
+
     static func get(for date: Date, context: ModelContext) throws -> SQDailyCheckInStats? {
-        let dateKey = SQDailyCheckInStats.getUniqueDateKey(for: date)
+        let normalized = Calendar.current.startOfDay(for: date)
+        let dateKey = SQDailyCheckInStats.getUniqueDateKey(for: normalized)
 
         let descriptor = FetchDescriptor<SQDailyCheckInEntity>(
             predicate: #Predicate { $0.dateKey == dateKey }
         )
 
-        if let existing = try context.fetch(descriptor).first {
-            return existing.toStats()
-        }
-        
-        return nil
+        return try context.fetch(descriptor).first?.toStats()
     }
-    
+
     static func upsert(
         stats: SQDailyCheckInStats,
         in context: ModelContext
     ) throws {
-        let dateKey = stats.uniqueDateKey
+        let normalized = Calendar.current.startOfDay(for: stats.date)
+        let dateKey = SQDailyCheckInStats.getUniqueDateKey(for: normalized)
 
         let descriptor = FetchDescriptor<SQDailyCheckInEntity>(
             predicate: #Predicate { $0.dateKey == dateKey }
         )
 
         if let existing = try context.fetch(descriptor).first {
+            // Ensure stored dateKey/date are normalized and values match
             existing.update(from: stats)
         } else {
             let entity = SQDailyCheckInEntity(from: stats)

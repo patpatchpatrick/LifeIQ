@@ -66,6 +66,7 @@ protocol DashboardStating: AnyObject {
         dailyCheckInViewModel = .init(
             eventHub: SQAppState.shared.hub,
             stats: stats,
+            metricsManager: SQMetricsManager.shared,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
             })

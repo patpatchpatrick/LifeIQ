@@ -23,6 +23,7 @@ final class SQDashboardController: SQDashboardInterface {
     let state: DashboardStating
     let dailyCheckInManager: SQDailyCheckInManaging
     let workoutManager: SQWorkoutManaging
+    let healthKitManager: SQHealthKitManaging
     private(set) var hasLoadedUI = false
     /// A context-bound refresh callback installed by `attach(context:)`.
        ///
@@ -33,10 +34,11 @@ final class SQDashboardController: SQDashboardInterface {
     @MainActor
     static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState)
     
-    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
+    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager(), healthKitManager: SQHealthKitManaging = SQHealthKitManager()) {
         self.state = state
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
+        self.healthKitManager = healthKitManager
         self.handleEventSubscriptions(hub: state.hub)
     }
     
@@ -73,6 +75,15 @@ final class SQDashboardController: SQDashboardInterface {
             
             // TODO: - PTD Handle Sleep
 //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
+            
+            var dailyRows: [SQDashboardRowViewModel] = []
+            
+            let vo2MaxData = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+            if let latestVo2Max = vo2MaxData.last {
+                print("PTD Hook Up Vo2Max Row")
+                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(latestVO2Max: latestVo2Max))
+            }
+            
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
             let yesterdaysWorkouts = try await workoutManager.getWorkouts(for: .yesterday, modelContext: context)
             
@@ -88,16 +99,18 @@ final class SQDashboardController: SQDashboardInterface {
             
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
             
+            dailyRows.append(contentsOf: [
+                SQDashboardDailyCheckInRowViewModel(dailyCheckInStats: dailyCheckInStats, context: context),
+                SQDashboardWorkoutSummaryRowViewModel(
+                    rowId: .daily,
+                    config: dailySectionConfig,
+                    workouts: todaysWorkouts,
+                    priorWorkouts: yesterdaysWorkouts)
+            ])
+            
             dashboardSections.append(.init(
                 title: dailySectionConfig.timeRange.title,
-                rows: [
-                    SQDashboardDailyCheckInRowViewModel(dailyCheckInStats: dailyCheckInStats, context: context),
-                    SQDashboardWorkoutSummaryRowViewModel(
-                        rowId: .daily,
-                        config: dailySectionConfig,
-                        workouts: todaysWorkouts,
-                        priorWorkouts: yesterdaysWorkouts)
-                ]))
+                rows: dailyRows))
 
             let weeklySectionConfig = buildConfigTotalsSectionConfig(workoutSummaryRowId: .weekly)
             
@@ -138,6 +151,9 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateSectionViewModels(to: dashboardSections)
         } catch {
             print("PTD Handle Errors here", error)
+            SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
+            // TODO: - PTD allow refreshes if there is an error here
+            state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: error.localizedDescription))))
         }
     }
     

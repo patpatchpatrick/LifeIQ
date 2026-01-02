@@ -27,7 +27,8 @@ struct BeastFitnessApp: App {
         }
         .modelContainer(for: [
             SQDailyCheckInEntity.self,
-            SQWorkoutSessionEntity.self
+            SQWorkoutSessionEntity.self,
+            SQMetricDefinitionEntity.self
         ])
     }
 }

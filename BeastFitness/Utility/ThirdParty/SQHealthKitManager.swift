@@ -13,7 +13,14 @@ protocol SQHealthKitManaging {
     @discardableResult
     func saveWorkout(workout: SQWorkoutSessionable) async throws -> HKWorkout?
     func deleteWorkout(with healthKitId: String) async throws
+
+    /// Latest available VO₂ max sample (ml/kg/min). Returns nil if the user has no samples.
+    func fetchLatestVO2Max() async throws -> SQVO2MaxSample?
+
+    /// VO₂ max samples in a time range (ascending by date).
+    func fetchVO2MaxSamples(_ timeRange: SQTimeRange) async throws -> [SQVO2MaxSample]
 }
+
 
 final class SQHealthKitManager: SQHealthKitManaging {
     static let shared = SQHealthKitManager()
@@ -26,6 +33,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         HKQuantityType(.distanceWalkingRunning),
         HKQuantityType(.distanceWheelchair),
         HKQuantityType(.heartRate),
+        HKQuantityType(.vo2Max),
         HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
     ]
     

@@ -14,6 +14,7 @@ import os
 public enum SQiOSLogContext: Sendable {
     case general
     case dailyCheckIn
+    case metricsManager
     case deepLink
     case dataProcessing
     case workoutSession
@@ -137,6 +138,7 @@ fileprivate extension Logger {
         case .dashboard:       return .dashboard
         case .healthKit:       return .healthKit
         case .watchInterface:  return .watchInterface
+        case .metricsManager:  return .metricsManager
         }
     }
 
@@ -153,6 +155,7 @@ fileprivate extension Logger {
     static let dashboard      = Logger(subsystem: subsystem, category: "Dashboard")
     static let healthKit      = Logger(subsystem: subsystem, category: "HealthKit")
     static let watchInterface = Logger(subsystem: subsystem, category: "WatchInterface")
+    static let metricsManager = Logger(subsystem: subsystem, category: "MetricsManager")
 }
 #endif
 

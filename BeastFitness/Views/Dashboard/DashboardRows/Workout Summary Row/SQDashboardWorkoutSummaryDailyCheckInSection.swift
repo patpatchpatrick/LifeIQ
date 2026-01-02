@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SQDashboardWorkoutSummaryDailyCheckInSection: View {
+struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
     @Bindable var viewModel: SQDashboardDailyCheckInRowViewModel
     
     var dailyCheckInTitle: some View {
@@ -42,9 +42,4 @@ struct SQDashboardWorkoutSummaryDailyCheckInSection: View {
     var body: some View {
         SQDashboardView.card { mainStack }
     }
-}
-
-#Preview {
-    SQDashboardWorkoutSummaryTotalsSection(viewModel: .init(config: .mock, workouts: .mock, priorWorkouts: .mock))
-        .preferredColorScheme(.dark)
 }
