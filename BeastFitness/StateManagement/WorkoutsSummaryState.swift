@@ -9,6 +9,7 @@
 import SwiftUI
 import Combine
 import BeastFitnessCore
+import CoreLocation
 
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {
@@ -22,7 +23,15 @@ protocol WorkoutSummaryStating: AnyObject {
     
     var currentWorkout: SQWorkoutSessionable? { get }
     func load(workout: SQWorkoutSessionable)
+    func reset()
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable)
+    
+    var isLoadingRoute: Bool { get set  }
+    var routeLocations: [CLLocation] { get set }
+    var routeLoadErrorMessage: String? { get set }
+    var shouldShowRouteView: Bool { get }
+
+    var hasRoute: Bool { get }
 }
 
 @MainActor
@@ -37,6 +46,11 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var workoutTitle: String?
     private(set) var workoutStatsRows: [SQWorkoutSummaryStatRow] = []
     private(set) var workoutStatRowColumnCount: Int = 3
+    
+    var isLoadingRoute: Bool = false
+    var routeLocations: [CLLocation] = []
+    var routeLoadErrorMessage: String? = nil
+    var hasRoute: Bool { !routeLocations.isEmpty }
     
     init(hub: EventHub) {
         self.hub = hub
@@ -76,8 +90,47 @@ protocol WorkoutSummaryStating: AnyObject {
         }
     }
     
+    func reset() {
+        routeLocations = []
+        isLoadingRoute = false
+        currentWorkout = nil
+        userFullName = nil
+        workoutStartDate = nil
+        workoutTitle = nil
+        workoutStatsRows = []
+    }
+    
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable) {
         hub.workoutEvents.send(.workoutsDeleted([workout.id: workout]))
+    }
+    
+    
+    /// Whether the summary UI should include the route map section.
+    /// We only show this for HK workouts, and only when it is relevant
+    /// (loading, has data, or an error occurred).
+    var shouldShowRouteView: Bool {
+        guard let workout = currentWorkout else { return false }
+
+        // Only HealthKit workouts can have HKWorkoutRoute
+        guard case .hkWorkout = workout.workoutSource else { return false }
+
+        // Don’t show an empty “No route” card for workouts where route is irrelevant,
+        // unless we’re actively loading or we already know there is a route/error.
+        if isLoadingRoute || hasRoute || routeLoadErrorMessage != nil {
+            return true
+        }
+
+        // Optional: show proactively for common outdoor route activities,
+        // so the map appears (with loading) when the user opens the screen.
+        //
+        // If you don't have access to HKWorkoutActivityType here, use your app’s
+        // own activityType enum if it exists on SQWorkoutSessionable.
+        switch workout.activityType {
+        case .running, .walking, .cycling, .hiking:
+            return true
+        default:
+            return false
+        }
     }
 }
 

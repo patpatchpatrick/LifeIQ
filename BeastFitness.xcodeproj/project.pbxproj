@@ -113,6 +113,7 @@
 		F67F0A0B2F087A0D00D7BB90 /* SQMetricsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0A2F087A0A00D7BB90 /* SQMetricsListView.swift */; };
 		F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */; };
 		F67F0A102F087C1400D7BB90 /* SQMetricsListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */; };
+		F67F0A122F09DC8600D7BB90 /* SQWorkoutRouteMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */; };
 		F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */; };
 		F68D702D2F01D86900543561 /* SQPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702C2F01D86700543561 /* SQPicker.swift */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -337,6 +338,7 @@
 		F67F0A0A2F087A0A00D7BB90 /* SQMetricsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListView.swift; sourceTree = "<group>"; };
 		F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItem.swift; sourceTree = "<group>"; };
 		F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItemViewModel.swift; sourceTree = "<group>"; };
+		F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutRouteMapView.swift; sourceTree = "<group>"; };
 		F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertDropDownViewModel.swift; sourceTree = "<group>"; };
 		F68D702C2F01D86700543561 /* SQPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPicker.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
@@ -841,6 +843,7 @@
 		F679BC4E2EE4FC1400A2F249 /* WorkoutSummary */ = {
 			isa = PBXGroup;
 			children = (
+				F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */,
 				F679BC4F2EE4FC1900A2F249 /* SQWorkoutSummaryView.swift */,
 			);
 			path = WorkoutSummary;
@@ -1553,6 +1556,7 @@
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F67F09C82F072E1200D7BB90 /* SQDashboardDailyCheckInRowViewModel.swift in Sources */,
 				F67F09FE2F085F3B00D7BB90 /* SQDashboardPerformanceRow.swift in Sources */,
+				F67F0A122F09DC8600D7BB90 /* SQWorkoutRouteMapView.swift in Sources */,
 				F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */,
 				F602DA662EC789FC00404878 /* SQQuantityType.swift in Sources */,
 				F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */,

@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import BeastFitnessCore
+import CoreLocation
 
 @MainActor
 protocol SQWorkoutSummaryInterface {
@@ -19,6 +20,7 @@ protocol SQWorkoutSummaryInterface {
 final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     let state: WorkoutSummaryStating
     private let workoutManager: SQWorkoutManaging
+    private let healthKitManager: SQHealthKitManaging
     var onPushEditWorkoutView: (SQWorkoutSessionable) -> Void
     var onDismiss: () -> Void
     
@@ -33,15 +35,20 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     @MainActor
     static let `default`: SQWorkoutSummaryController = SQWorkoutSummaryController(state: SQAppState.shared.workoutSummaryState, onPushEditWorkoutView: { _ in }, onDismiss: {})
 
-    init(state: WorkoutSummaryStating, workoutManager: SQWorkoutManaging = SQWorkoutManager(), onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) {
+    init(state: WorkoutSummaryStating, workoutManager: SQWorkoutManaging = SQWorkoutManager(), healthKitManager: SQHealthKitManaging = SQHealthKitManager(), onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) {
         self.state = state
         self.workoutManager = workoutManager
+        self.healthKitManager = healthKitManager
         self.onPushEditWorkoutView = onPushEditWorkoutView
         self.onDismiss = onDismiss
     }
     
     func load(workout: any SQWorkoutSessionable) {
+        state.reset()
         state.load(workout: workout)
+        Task {
+            await loadRouteIfNeeded()
+        }
     }
     
     func pushEditWorkoutView() {
@@ -89,5 +96,41 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
                 }
             }),
             secondary: .init(title: "Cancel", role: .cancel))))
+    }
+}
+
+// MARK: - Route Handling
+
+extension SQWorkoutSummaryController {
+    
+    func loadRouteIfNeeded() async {
+        guard !state.isLoadingRoute, state.routeLocations.isEmpty else { return }
+        guard case .hkWorkout(let hk) = state.currentWorkout?.workoutSource else { return }
+
+        state.isLoadingRoute = true
+        state.routeLoadErrorMessage = nil
+
+        do {
+            let raw = try await healthKitManager.fetchRouteLocations(for: hk.hkWorkout)
+
+            // Do reduction off-main (cheap, but keep it off your UI actor anyway)
+            let reduced = downsample(raw, maxPoints: 1500).sorted { $0.timestamp < $1.timestamp }
+
+            state.routeLocations = reduced
+        } catch {
+            state.routeLoadErrorMessage = error.localizedDescription
+            state.routeLocations = []
+        }
+
+        state.isLoadingRoute = false
+    }
+
+    
+    private func downsample(_ locations: [CLLocation], maxPoints: Int = 1500) -> [CLLocation] {
+        guard locations.count > maxPoints else { return locations }
+        let stride = max(1, locations.count / maxPoints)
+        return locations.enumerated().compactMap { (i, loc) in
+            (i % stride == 0) ? loc : nil
+        }
     }
 }

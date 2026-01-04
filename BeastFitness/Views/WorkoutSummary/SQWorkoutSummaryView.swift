@@ -50,6 +50,15 @@ struct SQWorkoutSummaryView: View {
                 .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
                 .padding(.bottom, .SQSpace.xl)
             
+            if controller.state.shouldShowRouteView {
+                SQWorkoutRouteMapView(
+                    isLoading: controller.state.isLoadingRoute,
+                    locations: controller.state.routeLocations,
+                    errorMessage: controller.state.routeLoadErrorMessage
+                )
+                .padding(.bottom, .SQSpace.xl)
+            }
+            
             VStack(spacing: .SQSpace.l) {
                 ForEach(controller.state.workoutStatsRows) { row in
                     SQWorkoutSummaryStatsRow(row: row, columnWidth: statColumnWidth)
@@ -78,7 +87,7 @@ struct SQWorkoutSummaryView: View {
                             Label("Edit workout", systemImage: SQImageSymbol.pencil.rawValue)
                         }
                         Button {
-                            Task {
+                            Task { @MainActor in
                               await controller.deleteWorkout(from: modelContext)
                             }
                         } label: {

@@ -17,8 +17,8 @@ extension SQHealthKitManager {
            
            do {
                try await Self.healthStore.requestAuthorization(
-                   toShare: allQuantityTypes,
-                   read: allQuantityTypes
+                   toShare: allTypesToReadWrite,
+                   read: allTypesToReadWrite
                )
            } catch {
                SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error, context: .dataProcessing)

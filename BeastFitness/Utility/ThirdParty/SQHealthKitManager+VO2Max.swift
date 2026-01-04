@@ -24,8 +24,8 @@ extension SQHealthKitManager {
         }
 
         try await Self.healthStore.requestAuthorization(
-            toShare: allQuantityTypes,
-            read: allQuantityTypes
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
         )
 
         let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max)!
@@ -63,8 +63,8 @@ extension SQHealthKitManager {
         }
 
         try await Self.healthStore.requestAuthorization(
-            toShare: allQuantityTypes,
-            read: allQuantityTypes
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
         )
 
         let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max)!

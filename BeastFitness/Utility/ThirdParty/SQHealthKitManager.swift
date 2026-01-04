@@ -8,6 +8,7 @@
 import Foundation
 import HealthKit
 import BeastFitnessCore
+import CoreLocation
 
 protocol SQHealthKitManaging {
     @discardableResult
@@ -19,6 +20,12 @@ protocol SQHealthKitManaging {
 
     /// VO₂ max samples in a time range (ascending by date).
     func fetchVO2MaxSamples(_ timeRange: SQTimeRange) async throws -> [SQVO2MaxSample]
+    
+    /// Returns all route points for a workout (may be empty if no GPS).
+    func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation]
+
+    /// Same, but you pass your saved HealthKit UUID string.
+    func fetchRouteLocations(for healthKitId: String) async throws -> [CLLocation]
 }
 
 
@@ -26,16 +33,20 @@ final class SQHealthKitManager: SQHealthKitManaging {
     static let shared = SQHealthKitManager()
     static let healthStore: HKHealthStore = HKHealthStore()
     
-    let allQuantityTypes: Set = [
-        HKQuantityType.workoutType(),
+    let allTypesToReadWrite: Set<HKSampleType> = [
+        HKObjectType.workoutType(),
+        HKSeriesType.workoutRoute(),
+
         HKQuantityType(.activeEnergyBurned),
         HKQuantityType(.distanceCycling),
         HKQuantityType(.distanceWalkingRunning),
         HKQuantityType(.distanceWheelchair),
         HKQuantityType(.heartRate),
         HKQuantityType(.vo2Max),
-        HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
+
+        HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
     ]
+
     
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
@@ -53,8 +64,8 @@ final class SQHealthKitManager: SQHealthKitManaging {
         let endDate = workout.endDate ?? .now
         
         try await Self.healthStore.requestAuthorization(
-            toShare: allQuantityTypes,
-            read: allQuantityTypes
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
         )
 
         // TODO: - Finish configuration, add calories, heartRate, locationType, etc..
@@ -149,8 +160,8 @@ final class SQHealthKitManager: SQHealthKitManaging {
         }
 
         try await Self.healthStore.requestAuthorization(
-            toShare: allQuantityTypes,
-            read: allQuantityTypes
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
         )
 
         let predicate = HKQuery.predicateForSamples(
@@ -248,6 +259,105 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
             Self.healthStore.execute(query)
         }
+    }
+}
+
+// MARK: - Routes
+
+extension SQHealthKitManager {
+    
+    private func fetchRoutes(for workout: HKWorkout) async throws -> [HKWorkoutRoute] {
+        let routeType = HKSeriesType.workoutRoute()
+        let predicate = HKQuery.predicateForObjects(from: workout)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let q = HKSampleQuery(
+                sampleType: routeType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                continuation.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+
+            Self.healthStore.execute(q)
+        }
+    }
+    
+    private func readLocations(for route: HKWorkoutRoute) async throws -> [CLLocation] {
+        try await withCheckedThrowingContinuation { continuation in
+            var all: [CLLocation] = []
+
+            let q = HKWorkoutRouteQuery(route: route) { _, locations, done, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                if let locations {
+                    all.append(contentsOf: locations)
+                }
+
+                if done {
+                    continuation.resume(returning: all)
+                }
+            }
+
+            Self.healthStore.execute(q)
+        }
+    }
+    
+    func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation] {
+        try await Self.healthStore.requestAuthorization(
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
+        )
+
+        let routes = try await fetchRoutes(for: workout)
+        guard routes.isEmpty == false else { return [] }
+
+        var allLocations: [CLLocation] = []
+        allLocations.reserveCapacity(2048)
+
+        for route in routes {
+            let locations = try await readLocations(for: route)
+            allLocations.append(contentsOf: locations)
+        }
+
+        // Ensure chronological order for drawing polylines / distance calc
+        allLocations.sort { $0.timestamp < $1.timestamp }
+        return allLocations
+    }
+    
+    func fetchRouteLocations(for healthKitId: String) async throws -> [CLLocation] {
+        guard let uuid = UUID(uuidString: healthKitId) else {
+            throw SQError.standard(withDescription: "Unexpected UUID format")
+        }
+
+        let workoutType = HKObjectType.workoutType()
+        let predicate = HKQuery.predicateForObject(with: uuid)
+
+        let workouts: [HKWorkout] = try await withCheckedThrowingContinuation { continuation in
+            let q = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: 1, sortDescriptors: nil) {
+                _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: (samples as? [HKWorkout]) ?? [])
+                }
+            }
+            Self.healthStore.execute(q)
+        }
+
+        guard let workout = workouts.first else {
+            throw SQError.standard(withDescription: "HealthKit workout not found")
+        }
+
+        return try await fetchRouteLocations(for: workout)
     }
 }
 
