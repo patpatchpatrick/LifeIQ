@@ -114,6 +114,7 @@
 		F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */; };
 		F67F0A102F087C1400D7BB90 /* SQMetricsListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */; };
 		F67F0A122F09DC8600D7BB90 /* SQWorkoutRouteMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */; };
+		F67F0A422F0D827700D7BB90 /* SQTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A412F0D827500D7BB90 /* SQTag.swift */; };
 		F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */; };
 		F68D702D2F01D86900543561 /* SQPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702C2F01D86700543561 /* SQPicker.swift */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -339,6 +340,7 @@
 		F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItem.swift; sourceTree = "<group>"; };
 		F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItemViewModel.swift; sourceTree = "<group>"; };
 		F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutRouteMapView.swift; sourceTree = "<group>"; };
+		F67F0A412F0D827500D7BB90 /* SQTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTag.swift; sourceTree = "<group>"; };
 		F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertDropDownViewModel.swift; sourceTree = "<group>"; };
 		F68D702C2F01D86700543561 /* SQPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPicker.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
@@ -920,6 +922,7 @@
 		F6A848912CB4A7E900B09AD5 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				F67F0A412F0D827500D7BB90 /* SQTag.swift */,
 				F68D702C2F01D86700543561 /* SQPicker.swift */,
 				F679BC532EE7321100A2F249 /* SQUserIcon.swift */,
 				F639B9842ED7BBFD00199C69 /* SQButton.swift */,
@@ -1539,6 +1542,7 @@
 				F615921F2EF0C74C00223A63 /* SQWorkoutActivityDetails.swift in Sources */,
 				F602DA4F2EC6A7ED00404878 /* AttributedString+Extensions.swift in Sources */,
 				F629CE712EE49AAF0002330C /* SQManualWorkout.swift in Sources */,
+				F67F0A422F0D827700D7BB90 /* SQTag.swift in Sources */,
 				F615921C2EF0C71F00223A63 /* SQWorkoutMetric.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */,

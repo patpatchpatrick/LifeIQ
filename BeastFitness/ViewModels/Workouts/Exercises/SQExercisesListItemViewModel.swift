@@ -13,6 +13,7 @@ final class SQExercisesListItemViewModel: Identifiable, Hashable, Equatable {
     let rawExercise: SQRawStrengthExercise
     let title: String
     let subtitle: String
+    var tag: String? = nil
     
     init(rawExercise: SQRawStrengthExercise) {
         self.rawExercise = rawExercise

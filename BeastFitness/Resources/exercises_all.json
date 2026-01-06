@@ -5600,26 +5600,6 @@
     ]
   },
   {
-    "category" : "strength",
-    "equipment" : "other",
-    "force" : "pull",
-    "id" : "BodyWeight_Pull_Ups",
-    "instructions" : [
-      "Start by gripping the bar slightly wider than shoulder-width with your palms facing away. Hang fully with straight arms, shoulders relaxed, and legs still. Before pulling, engage your shoulders by pulling them down and back (think “put your shoulder blades in your back pockets”). Keep your core tight and avoid swinging or kipping.",
-      "Pull your chest toward the bar by driving your elbows down and back, not by yanking with your arms. Aim to bring your chin over the bar while keeping your neck neutral (don’t crane it forward). Lower yourself under control until your arms are fully straight again—this completes one clean rep. Quality matters more than speed or reps."
-    ],
-    "level" : "intermediate",
-    "mechanic" : "compound",
-    "name" : "Pull Ups",
-    "primaryMuscles" : [
-      "lats"
-    ],
-    "secondaryMuscles" : [
-      "biceps",
-      "middle back"
-    ]
-  },
-  {
     "category" : "stretching",
     "equipment" : "body only",
     "force" : "pull",
@@ -11703,7 +11683,7 @@
     ],
     "level" : "beginner",
     "mechanic" : "compound",
-    "name" : "Pullups",
+    "name" : "Pull-Ups",
     "primaryMuscles" : [
       "lats"
     ],

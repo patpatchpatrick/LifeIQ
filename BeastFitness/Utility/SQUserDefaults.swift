@@ -16,7 +16,10 @@ final class SQUserDefaults {
     /// Set of workout IDs that should be hidden from the UI
     private static let keyHiddenWorkouts = "workouts.hidden-list"
 
-    // MARK: - Private helpers
+    /// Map: exerciseId -> lastUsedAtEpochSeconds
+    private static let keyRecentExercisesLastUsedAt = "exercises.recents.last-used-at"
+
+    // MARK: - Private helpers (Workouts)
 
     private var hiddenWorkoutIds: Set<String> {
         get {
@@ -28,7 +31,18 @@ final class SQUserDefaults {
         }
     }
 
-    // MARK: - Public API
+    // MARK: - Private helpers (Exercises Recents)
+
+    private var recentExercisesLastUsedAtEpochById: [String: Double] {
+        get {
+            (UserDefaults.standard.dictionary(forKey: Self.keyRecentExercisesLastUsedAt) as? [String: Double]) ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.keyRecentExercisesLastUsedAt)
+        }
+    }
+
+    // MARK: - Public API (Workouts)
 
     /// Returns true if the workout should be hidden from the UI
     func isWorkoutHidden(_ id: String) -> Bool {
@@ -60,4 +74,22 @@ final class SQUserDefaults {
         set.formUnion(ids)
         hiddenWorkoutIds = set
     }
+
+    // MARK: - Public API (Exercises Recents)
+
+    /// Returns a map of exerciseId -> lastUsedAt date
+    func recentExercisesLastUsedAtById() -> [String: Date] {
+        recentExercisesLastUsedAtEpochById.mapValues { Date(timeIntervalSince1970: $0) }
+    }
+
+    /// Overwrite the map of exerciseId -> lastUsedAt date
+    func setRecentExercisesLastUsedAtById(_ map: [String: Date]) {
+        recentExercisesLastUsedAtEpochById = map.mapValues { $0.timeIntervalSince1970 }
+    }
+
+    /// Clear all recent exercises
+    func clearRecentExercises() {
+        UserDefaults.standard.removeObject(forKey: Self.keyRecentExercisesLastUsedAt)
+    }
 }
+

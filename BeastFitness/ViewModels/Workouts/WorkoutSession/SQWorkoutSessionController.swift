@@ -17,6 +17,7 @@ final class SQWorkoutSessionController: Identifiable {
     let id = UUID()
     private var cancellables = Set<AnyCancellable>()
     static let defaultStrengthActivity: HKWorkoutActivityType = .traditionalStrengthTraining
+    private let exercisesManager: SQExercisesManaging
     private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
     let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
@@ -56,6 +57,7 @@ final class SQWorkoutSessionController: Identifiable {
     init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager(), onDismiss: @escaping () -> Void) {
         self.state = state
         self.workoutManager = workoutManager
+        self.exercisesManager = SQExercisesManager.shared
         self.onDismiss = onDismiss
         print("PTD Reset from init")
         reset(with: session)
@@ -155,6 +157,7 @@ final class SQWorkoutSessionController: Identifiable {
     func addExercise(
         rawExercise: SQRawStrengthExercise
     ) {
+        exercisesManager.markExerciseUsed(id: rawExercise.id)
         state.appendExercises([rawExercise])
     }
     
