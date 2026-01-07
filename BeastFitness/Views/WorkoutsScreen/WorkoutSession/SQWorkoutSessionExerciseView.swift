@@ -45,6 +45,7 @@ struct SQWorkoutSessionExerciseRow: View {
                         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
+                        .padding(.bottom, 10)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 withAnimation { viewModel.removeSet(setVM) }
@@ -100,11 +101,11 @@ struct SQWorkoutSessionExerciseRow: View {
                 .frame(width: 28, alignment: .leading)
 
             // Reps
-            SQTextField(viewModel: setVM.repsTextFieldViewModel)
+            SQUITextField(viewModel: setVM.repsTextFieldViewModel)
                 .frame(width: 60)
 
             // Weight
-            SQTextField(viewModel: setVM.weightTextFieldViewModel)
+            SQUITextField(viewModel: setVM.weightTextFieldViewModel)
                 .frame(width: 80)
 
             Text("lbs")

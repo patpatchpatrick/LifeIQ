@@ -74,17 +74,22 @@ final class SQDashboardController: SQDashboardInterface {
         do {
             
             // TODO: - PTD Handle Sleep
-//            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
+            //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
             
             var dailyRows: [SQDashboardRowViewModel] = []
             
             let vo2MaxData = try await healthKitManager.fetchVO2MaxSamples(.allTime)
             if let latestVo2Max = vo2MaxData.last {
-                print("PTD Hook Up Vo2Max Row")
                 dailyRows.append(SQDashboardDailyPerformanceRowViewModel(latestVO2Max: latestVo2Max))
             }
             
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
+            
+            SQLogger.shared.log("Reloading today's workouts", .debug, context: .dashboard)
+            for workout in todaysWorkouts {
+                SQLogger.shared.log("Workout: \(workout.prettyDescription)", .debug, context: .dashboard)
+            }
+            
             let yesterdaysWorkouts = try await workoutManager.getWorkouts(for: .yesterday, modelContext: context)
             
             let lastWeekWorkouts = try await workoutManager.getWorkouts(for: .pastWeek, modelContext: context)

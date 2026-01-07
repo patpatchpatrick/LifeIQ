@@ -31,4 +31,11 @@ enum SQWorkoutActivityDetails: Codable {
             try container.encode(details, forKey: .payload)
         }
     }
+    
+    var strengthDetails: SQStrengthDetails? {
+        switch self {
+        case .strength(let sQStrengthDetails):
+            return sQStrengthDetails
+        }
+    }
 }

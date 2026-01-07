@@ -85,6 +85,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         
         do {
             try SQWorkoutSessionEntity.upsert(session: workout, in: modelContext)
+            SQLogger.shared.log("Successfully saved workout: \(workout.prettyDescription)", .debug, context: .workoutManager)
         } catch {
             SQLogger.shared.log(
                 "Saving workout to SwiftData failed: \(error)",

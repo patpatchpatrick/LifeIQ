@@ -63,7 +63,7 @@ protocol WorkoutSummaryStating: AnyObject {
             switch event {
             case .workoutsUpdated(let workoutMap):
                 if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap [currentWorkoutId] {
-                    SQLogger.shared.log("Refreshing workout with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
+                    SQLogger.shared.log("Refreshing workout summary with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
                     self.load(workout: updatedWorkout)
                 }
             case .workoutsDeleted, .activeWorkoutUpdate:
@@ -75,7 +75,7 @@ protocol WorkoutSummaryStating: AnyObject {
     }
     
     func load(workout: any SQWorkoutSessionable) {
-        SQLogger.shared.log("Refreshing workout 2 with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
+        SQLogger.shared.log("Loading workout summary with workout with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
         currentWorkout = workout
         user = SQUser.mock
         userFullName = SQUser.mock.name // PTD replace with user's name

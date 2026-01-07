@@ -130,6 +130,7 @@ final class SQWorkoutSessionEntity {
         }
         
         return SQWorkoutSession(
+            id: workoutId,
             workoutSource: workoutSource,
             overrideData: SQConcreteWorkoutSessionOverridableData(
                 title: title,
@@ -205,6 +206,7 @@ extension SQWorkoutSessionEntity {
         )
         
         if let existing = try context.fetch(descriptor).first {
+            SQLogger.shared.log("Updating Existing Workout with session: \(session.prettyDescription)", .debug, context: .workoutSession)
             existing.update(from: session)
         } else {
             context.insert(SQWorkoutSessionEntity(from: session))

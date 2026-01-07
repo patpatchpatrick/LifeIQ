@@ -7,62 +7,86 @@
 
 import SwiftUI
 import Foundation
-
+import UIKit
 
 @Observable
 @MainActor
 final class SQWorkoutSessionSetViewModel: Identifiable {
+
     let id: UUID
     var setIndex: Int
-    
-    let repsTextFieldViewModel: SQTextFieldViewModel
-    let weightTextFieldViewModel: SQTextFieldViewModel
-    
+
+    let repsTextFieldViewModel: SQUITextFieldViewModel
+    let weightTextFieldViewModel: SQUITextFieldViewModel
+
     var isCompleted: Bool = false {
-        didSet {
-            onChanged()
-        }
+        didSet { onChanged() }
     }
-    
-    /// Called whenever the data is changed.  And update will be sent out to sync data with DB + watch
+
+    /// Called whenever the data is changed. An update will be sent out to sync data with DB + watch.
     let onChanged: () -> Void
-    
+
     init(
         id: UUID = UUID(),
         isCompleted: Bool = false,
         setIndex: Int,
         initialReps: Int = 8,
-        initialWeight: Double = 50,
+        initialWeight: Double? = 50,
         onChanged: @escaping () -> Void
     ) {
         self.id = id
         self.setIndex = setIndex
         self.isCompleted = isCompleted
         self.onChanged = onChanged
-        
+
         // Reps: integer, 1...1000
-        let repsVM = SQTextFieldViewModel(
-            lineLimit: 1,
+        let repsVM = SQUITextFieldViewModel(
             placeholder: "Reps",
+            font: SQFont(type: .body).uiFont,                // ✅ UIKit font
+            uiConfig: .standard,
             keyboardType: .numberPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            isSecureTextEntry: false,
+            returnKeyType: .done,
+            selectAllOnFocus: true,
             textChangeFormatter: .integer,
+            validationRule: nil,
             errorHandler: { _ in nil }
         )
-        repsVM.text = "\(initialReps)"
-        self.repsTextFieldViewModel = repsVM
-        
-        // Weight: decimal, 0...2000
-        let weightVM = SQTextFieldViewModel(
-            lineLimit: 1,
+
+        // Weight: decimal, 0...2000 (1 decimal place)
+        let weightVM = SQUITextFieldViewModel(
             placeholder: "lbs",
+            font: SQFont(type: .body).uiFont,                // ✅ UIKit font
+            uiConfig: .standard,
             keyboardType: .decimalPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            isSecureTextEntry: false,
+            returnKeyType: .done,
+            selectAllOnFocus: true,
             textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: nil,
             errorHandler: { _ in nil }
         )
-        weightVM.text = String(format: "%.1f", initialWeight)
+
+        // Set initial values using the VM API (text is private(set))
+        repsVM.setText("\(initialReps)")
+        if let initialWeight {
+            weightVM.setText(String(format: "%.1f", initialWeight))
+        }
+
+        self.repsTextFieldViewModel = repsVM
         self.weightTextFieldViewModel = weightVM
+
+        // Wire change notifications to onChanged()
+        let delegate = DelegateProxy(owner: self)
+        repsVM.delegate = delegate
+        weightVM.delegate = delegate
+        self.delegateProxy = delegate
     }
-    
+
     convenience init(from model: SQStrengthSet, onChanged: @escaping () -> Void) {
         self.init(
             id: model.id,
@@ -72,22 +96,21 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
             initialWeight: model.weight,
             onChanged: onChanged
         )
-        // rpe / isWarmup not surfaced in UI yet; easy to add later.
     }
-    
+
     // Derived values from text
     var reps: Int {
         Int(repsTextFieldViewModel.text) ?? 0
     }
-    
-    var weight: Double {
-        Double(weightTextFieldViewModel.text) ?? 0
+
+    var weight: Double? {
+        Double(weightTextFieldViewModel.text)
     }
-    
+
     var volume: Double {
-        Double(reps) * weight
+        Double(reps) * (weight ?? 0)
     }
-    
+
     func asModel() -> SQStrengthSet {
         SQStrengthSet(
             id: id,
@@ -99,5 +122,29 @@ final class SQWorkoutSessionSetViewModel: Identifiable {
             isWarmup: false
         )
     }
-}
 
+    // MARK: - Delegate proxy (keeps VM -> onChanged stable)
+
+    private var delegateProxy: DelegateProxy?
+
+    private final class DelegateProxy: NSObject, SQUITextFieldViewModelDelegate {
+        weak var owner: SQWorkoutSessionSetViewModel?
+
+        init(owner: SQWorkoutSessionSetViewModel) {
+            self.owner = owner
+        }
+
+        func squiTextFieldFocused(_ viewModel: SQUITextFieldViewModel) {
+            // Optional: do nothing
+        }
+
+        func squiTextFieldTextChanged(_ viewModel: SQUITextFieldViewModel, text: String) {
+            owner?.onChanged()
+        }
+
+        func squiTextFieldStateChanged(_ viewModel: SQUITextFieldViewModel, state: SQUITextFieldViewModel.TextFieldState) {
+            // Optional: if you want DB sync on validation changes too:
+            // owner?.onChanged()
+        }
+    }
+}

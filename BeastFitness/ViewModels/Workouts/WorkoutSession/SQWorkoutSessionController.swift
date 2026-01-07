@@ -210,6 +210,7 @@ final class SQWorkoutSessionController: Identifiable {
             details: details))
         
         return SQWorkoutSession(
+            id: workoutId,
             workoutSource: workoutSource,
             overrideData: SQConcreteWorkoutSessionOverridableData(title: title, details: details),
             hkWorkoutId: nil)

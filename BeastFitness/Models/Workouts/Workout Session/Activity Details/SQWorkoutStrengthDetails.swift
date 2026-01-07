@@ -24,7 +24,7 @@ struct SQStrengthExercise: Codable, Identifiable, Hashable {
     var sets: [SQStrengthSet]
 
     var totalVolume: Double {
-        sets.reduce(0) { $0 + ($1.weight * Double($1.reps)) }
+        sets.reduce(0) { $0 + (($1.weight ?? 0) * Double($1.reps)) }
     }
 }
 
@@ -33,7 +33,7 @@ struct SQStrengthSet: Codable, Identifiable, Hashable {
     let isCompleted: Bool?
     var setIndex: Int       // 1, 2, 3...
     var reps: Int
-    var weight: Double      // you can pair this with a unit if needed
+    var weight: Double?      // you can pair this with a unit if needed
     var rpe: Double?        // optional: perceived exertion
     var isWarmup: Bool
 }

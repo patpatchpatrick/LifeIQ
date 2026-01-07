@@ -55,13 +55,13 @@ public extension SQWatchWorkoutPayload {
         /// 1-based index (matches your VM)
         public let setNumber: Int
         public let reps: Int
-        public let weight: Double
+        public let weight: Double?
         public let isCompleted: Bool
 
         public init(
             setNumber: Int,
             reps: Int,
-            weight: Double,
+            weight: Double?,
             isCompleted: Bool
         ) {
             self.setNumber = setNumber
@@ -128,7 +128,9 @@ public extension SQWatchWorkoutPayload {
 
     // MARK: - Formatting helpers
 
-    private func formatWeight(_ weight: Double) -> String {
+    private func formatWeight(_ weight: Double?) -> String {
+        
+        guard let weight else { return "" }
         // Avoid trailing .0 when possible
         if weight.truncatingRemainder(dividingBy: 1) == 0 {
             return "\(Int(weight)) lb"

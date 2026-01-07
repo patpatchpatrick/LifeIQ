@@ -113,10 +113,10 @@ class SQWorkoutSession: SQWorkoutSessionable {
         }
     }
     
-    convenience init(workoutSource: SQWorkoutSource, overrideData: SQWorkoutSessionOverridableData?, hkWorkoutId: String?, updateMetadata: SQWorkoutUpdateMetadata? = nil) {
+    convenience init(id: String? = nil, workoutSource: SQWorkoutSource, overrideData: SQWorkoutSessionOverridableData?, hkWorkoutId: String?, updateMetadata: SQWorkoutUpdateMetadata? = nil) {
         let data = workoutSource.sourcableData
         self.init(
-            id: workoutSource.sourcableData.sourceId,
+            id: id ?? workoutSource.sourcableData.sourceId,
             title: overrideData?.title,
             hkWorkoutId: hkWorkoutId ?? workoutSource.hkWorkoutId,
             workoutSource: workoutSource,
