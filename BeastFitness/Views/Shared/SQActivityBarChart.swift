@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+import CoolCharts
 
+/// Wrapper around CoolCharts BarChartView with BeastFitness styling
 struct SQActivityBarChart: View {
     let dataPoints: [DataPoint]
     let maxHeight: CGFloat
@@ -14,48 +16,23 @@ struct SQActivityBarChart: View {
     struct DataPoint: Identifiable {
         let id = UUID()
         let label: String
-        let value: Double // Duration in seconds or other metric
+        let value: Double
         let color: Color
     }
     
-    private var maxValue: Double {
-        dataPoints.map(\.value).max() ?? 1
-    }
-    
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            ForEach(dataPoints) { point in
-                VStack(spacing: 4) {
-                    // Bar
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(point.color)
-                        .frame(
-                            width: barWidth,
-                            height: barHeight(for: point.value)
-                        )
-                        .frame(maxHeight: maxHeight, alignment: .bottom)
-                    
-                    // Label
-                    Text(point.label)
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(.textTertiary)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-    
-    private var barWidth: CGFloat {
-        // Distribute available width among bars, accounting for spacing
-        let totalSpacing = CGFloat(dataPoints.count - 1) * 8
-        let availableWidth = UIScreen.main.bounds.width - (.SQSpace.l * 2) - totalSpacing
-        return max(12, availableWidth / CGFloat(dataPoints.count))
-    }
-    
-    private func barHeight(for value: Double) -> CGFloat {
-        guard maxValue > 0 else { return 2 }
-        let ratio = value / maxValue
-        return max(2, ratio * maxHeight) // Minimum 2pt height for visibility
+        BarChartView(
+            dataPoints: dataPoints.map { point in
+                BarChartView.DataPoint(
+                    label: point.label,
+                    value: point.value,
+                    color: point.color
+                )
+            },
+            maxHeight: maxHeight,
+            labelFont: SQFont(type: .bodySmall).font,
+            labelColor: SQColor.textTertiary.color
+        )
     }
 }
 

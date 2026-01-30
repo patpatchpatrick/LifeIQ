@@ -29,6 +29,7 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 
 - We use a shared module called **BeastFitnessCore**.
 - Shared code such as extensions, utilities (e.g., logging), and reusable business logic should generally live in **BeastFitnessCore** so it can be reused across app targets/modules.
+- We use a local package called **CoolCharts** for all chart/graph components. Any chart visualizations should be added to or used from CoolCharts.
 
 ## UI conventions
 
