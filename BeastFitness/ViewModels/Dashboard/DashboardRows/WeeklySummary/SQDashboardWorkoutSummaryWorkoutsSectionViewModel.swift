@@ -14,6 +14,11 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
     let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
     let ctaViewModel: SQCallToActionViewModel?
     
+    var isExpanded: Bool = true
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
+    
     init(workouts: [SQWorkoutSessionable]) {
         self.sectionTitle = "Workouts"
         

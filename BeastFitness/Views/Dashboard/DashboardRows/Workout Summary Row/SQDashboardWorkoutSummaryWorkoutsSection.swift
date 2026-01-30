@@ -32,13 +32,22 @@ struct SQDashboardWorkoutSummaryWorkoutsSection: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            SQDashboardView.cardTitle(title: viewModel.sectionTitle)
-                .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+            Button(action: { viewModel.toggleExpanded() }) {
+                HStack {
+                    SQDashboardView.cardTitle(title: viewModel.sectionTitle)
+                    Spacer()
+                    Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
+                        .sqForegroundColor(.textTertiary)
+                }
+            }
+            .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
-            workoutsStack
-            
-            if let ctaViewModel = viewModel.ctaViewModel {
-                SQCallToAction(viewModel: ctaViewModel)
+            if viewModel.isExpanded {
+                workoutsStack
+                
+                if let ctaViewModel = viewModel.ctaViewModel {
+                    SQCallToAction(viewModel: ctaViewModel)
+                }
             }
         }
     }

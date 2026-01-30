@@ -16,6 +16,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     let metricChips: [SQMetricChip.Model]?
     let vitalRows: [SQDailyCheckInVitalRow.Model]?
     let summaryText: String?
+    
+    var isExpanded: Bool = true
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
 
     init(dailyCheckInStats: SQDailyCheckInStats?, context: ModelContext) {
         self.context = context

@@ -11,8 +11,15 @@ struct SQDashboardPerformanceRow: View {
     @Bindable var viewModel: SQDashboardDailyPerformanceRowViewModel
     
     var title: some View {
-        SQDashboardView.cardTitle(title: "Performance", icon: nil)
-            .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+        Button(action: { viewModel.toggleExpanded() }) {
+            HStack {
+                SQDashboardView.cardTitle(title: "Performance", icon: nil)
+                Spacer()
+                Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
+                    .sqForegroundColor(.textTertiary)
+            }
+        }
+        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
     }
     
     var mainStack: some View {
@@ -20,12 +27,14 @@ struct SQDashboardPerformanceRow: View {
             
             title
             
-            SQMetricChipStrip(
-                chips: [
-                viewModel.metricChipModel],
-                onTap: { _ in
-                    print("PTD Vo2 Max Tapped")
-                })
+            if viewModel.isExpanded {
+                SQMetricChipStrip(
+                    chips: [
+                    viewModel.metricChipModel],
+                    onTap: { _ in
+                        print("PTD Vo2 Max Tapped")
+                    })
+            }
         }
         .frame(maxWidth: .infinity)
     }

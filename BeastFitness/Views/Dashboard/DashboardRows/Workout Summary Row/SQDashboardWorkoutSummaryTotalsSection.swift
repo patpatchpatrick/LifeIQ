@@ -20,32 +20,44 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            HStack {
-                SQDashboardView.cardTitle(title: viewModel.sectionTitle)
-                Spacer()
-                SQDropDownMenu(
-                    menuViewModel: viewModel.metricDropdownViewModel,
-                    isDisabled: false
-                )
+            Button(action: { viewModel.toggleExpanded() }) {
+                HStack {
+                    SQDashboardView.cardTitle(title: viewModel.sectionTitle)
+                    Spacer()
+                    Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
+                        .sqForegroundColor(.textTertiary)
+                }
             }
             .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
-            // Activity bar chart
-            if !viewModel.currentChartDataPoints.isEmpty {
-                SQActivityBarChart(
-                    dataPoints: viewModel.currentChartDataPoints.map { point in
-                        SQActivityBarChart.DataPoint(
-                            label: point.label,
-                            value: point.value,
-                            color: SQColor.accent(1).color
-                        )
-                    },
-                    maxHeight: 60
-                )
-                .padding(.bottom, .SQSpace.xl)
+            if viewModel.isExpanded {
+                // Metric dropdown
+                HStack {
+                    Spacer()
+                    SQDropDownMenu(
+                        menuViewModel: viewModel.metricDropdownViewModel,
+                        isDisabled: false
+                    )
+                }
+                .padding(.bottom, .SQSpace.m)
+                
+                // Activity bar chart
+                if !viewModel.currentChartDataPoints.isEmpty {
+                    SQActivityBarChart(
+                        dataPoints: viewModel.currentChartDataPoints.map { point in
+                            SQActivityBarChart.DataPoint(
+                                label: point.label,
+                                value: point.value,
+                                color: SQColor.accent(1).color
+                            )
+                        },
+                        maxHeight: 60
+                    )
+                    .padding(.bottom, .SQSpace.xl)
+                }
+                
+                totalValuesAndTrendsStack
             }
-            
-            totalValuesAndTrendsStack
         }
     }
     

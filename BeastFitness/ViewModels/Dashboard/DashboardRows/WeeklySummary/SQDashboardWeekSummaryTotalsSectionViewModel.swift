@@ -10,11 +10,39 @@ import SwiftUI
 @Observable @MainActor
 final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
     let sectionTitle: String
-    let totalValuesAndTrends: [TotalValueAndTrend]
-    let chartDataPoints: [ChartDataPoint]
+    let metricDropdownViewModel: SQDropDownMenuViewModel
     
-    struct TotalValueAndTrend: Identifiable {
-        let id = UUID()
+    var isExpanded: Bool = true
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
+    
+    // Metric selection
+    enum MetricType: String, CaseIterable {
+        case workoutTime = "Workout Time"
+        case kilocalories = "Kilocalories"
+    }
+    
+    var selectedMetric: MetricType = .workoutTime {
+        didSet {
+            updateCurrentData()
+        }
+    }
+    
+    // Stored data for each metric type
+    private let timeData: MetricData
+    private let caloriesData: MetricData
+    
+    // Current displayed data (updated when metric changes)
+    var currentValueAndTrend: TotalValueAndTrend
+    var currentChartDataPoints: [ChartDataPoint]
+    
+    struct MetricData {
+        let valueAndTrend: TotalValueAndTrend
+        let chartDataPoints: [ChartDataPoint]
+    }
+    
+    struct TotalValueAndTrend {
         let value: AttributedString
         let trend: AttributedString
     }
@@ -22,7 +50,7 @@ final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
     struct ChartDataPoint: Identifiable {
         let id = UUID()
         let label: String
-        let value: Double // Duration in seconds
+        let value: Double
     }
     
     init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
@@ -49,17 +77,55 @@ final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
             currentSeconds: totalKilocalories,
             previousSeconds: totalKilocaloriesPriorWeek
         )
-         
-         self.totalValuesAndTrends = [
-            TotalValueAndTrend(value: totalTimeValue, trend: totalTimeTrend),
-            TotalValueAndTrend(value: totalKilocaloriesValue, trend: totalKilocaliresTrend)
-         ]
         
-        // Build chart data points based on time range
-        self.chartDataPoints = Self.buildChartDataPoints(
-            timeRange: config.timeRange,
-            workouts: workouts
+        // Store data for both metrics
+        self.timeData = MetricData(
+            valueAndTrend: TotalValueAndTrend(value: totalTimeValue, trend: totalTimeTrend),
+            chartDataPoints: Self.buildChartDataPoints(timeRange: config.timeRange, workouts: workouts, metric: .workoutTime)
         )
+        
+        self.caloriesData = MetricData(
+            valueAndTrend: TotalValueAndTrend(value: totalKilocaloriesValue, trend: totalKilocaliresTrend),
+            chartDataPoints: Self.buildChartDataPoints(timeRange: config.timeRange, workouts: workouts, metric: .kilocalories)
+        )
+        
+        // Initialize current data with time metric
+        self.currentValueAndTrend = timeData.valueAndTrend
+        self.currentChartDataPoints = timeData.chartDataPoints
+        
+        // Create dropdown menu
+        let dropdownItems = MetricType.allCases.map { SQDropDownMenuViewModel.Item(title: $0.rawValue) }
+        let defaultItem = SQDropDownMenuViewModel.Item(title: MetricType.workoutTime.rawValue)
+        
+        var tempViewModel: SQDropDownMenuViewModel? = nil
+        tempViewModel = SQDropDownMenuViewModel(
+            defaultItem: defaultItem,
+            items: dropdownItems,
+            itemSelectionHandler: { [weak tempViewModel] selectedItem in
+                guard let viewModel = tempViewModel,
+                      let metric = MetricType.allCases.first(where: { $0.rawValue == selectedItem }) else { return }
+                // This will be set up properly after initialization
+            }
+        )
+        self.metricDropdownViewModel = tempViewModel!
+        
+        // Now set up the actual selection handler
+        self.metricDropdownViewModel.itemSelectionHandler = { [weak self] selectedItem in
+            guard let self = self,
+                  let metric = MetricType.allCases.first(where: { $0.rawValue == selectedItem }) else { return }
+            self.selectedMetric = metric
+        }
+    }
+    
+    private func updateCurrentData() {
+        switch selectedMetric {
+        case .workoutTime:
+            currentValueAndTrend = timeData.valueAndTrend
+            currentChartDataPoints = timeData.chartDataPoints
+        case .kilocalories:
+            currentValueAndTrend = caloriesData.valueAndTrend
+            currentChartDataPoints = caloriesData.chartDataPoints
+        }
     }
 }
 
@@ -191,7 +257,8 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
     
     static func buildChartDataPoints(
         timeRange: SQTimeRange,
-        workouts: [SQWorkoutSessionable]
+        workouts: [SQWorkoutSessionable],
+        metric: MetricType
     ) -> [ChartDataPoint] {
         let calendar = Calendar.current
         let now = Date()
@@ -199,12 +266,16 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
         switch timeRange {
         case .today:
             // For "today" just show a single bar or return empty
-            let totalDuration = workouts.reduce(0.0) { $0 + ($1.activeDuration ?? 0) }
-            return [ChartDataPoint(label: "Today", value: totalDuration)]
+            let totalValue = workouts.reduce(0.0) { total, workout in
+                total + (metric == .workoutTime ? (workout.activeDuration ?? 0) : (workout.totalCalories ?? 0))
+            }
+            return [ChartDataPoint(label: "Today", value: totalValue)]
             
         case .yesterday:
-            let totalDuration = workouts.reduce(0.0) { $0 + ($1.activeDuration ?? 0) }
-            return [ChartDataPoint(label: "Yest.", value: totalDuration)]
+            let totalValue = workouts.reduce(0.0) { total, workout in
+                total + (metric == .workoutTime ? (workout.activeDuration ?? 0) : (workout.totalCalories ?? 0))
+            }
+            return [ChartDataPoint(label: "Yest.", value: totalValue)]
             
         case .pastWeek:
             // Last 7 days: M T W T F S S
@@ -220,10 +291,10 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
             
             // Aggregate workouts by day
             for workout in workouts {
-                guard let startDate = workout.startDate,
-                      let duration = workout.activeDuration else { continue }
+                guard let startDate = workout.startDate else { continue }
+                let value = metric == .workoutTime ? (workout.activeDuration ?? 0) : (workout.totalCalories ?? 0)
                 let dayStart = calendar.startOfDay(for: startDate)
-                dayTotals[dayStart, default: 0] += duration
+                dayTotals[dayStart, default: 0] += value
             }
             
             // Sort by date and map to chart points
@@ -250,10 +321,10 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
             
             // Aggregate workouts by month
             for workout in workouts {
-                guard let startDate = workout.startDate,
-                      let duration = workout.activeDuration else { continue }
+                guard let startDate = workout.startDate else { continue }
+                let value = metric == .workoutTime ? (workout.activeDuration ?? 0) : (workout.totalCalories ?? 0)
                 let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: startDate))!
-                monthTotals[monthStart, default: 0] += duration
+                monthTotals[monthStart, default: 0] += value
             }
             
             // Sort by date and map to chart points

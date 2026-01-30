@@ -14,6 +14,8 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     private(set) var workoutsSection: SQDashboardWorkoutSummaryWorkoutsSectionViewModel? = nil
     private(set) var workouts: [SQWorkoutSessionable] = []
     private(set) var priorWorkouts: [SQWorkoutSessionable] = []
+
+    var isExpanded: Bool = true
     
     var isEmpty: Bool {
         totalsSection == nil && workoutsSection == nil
@@ -27,6 +29,10 @@ final class SQDashboardWorkoutSummaryRowViewModel: SQDashboardRowViewModel {
     ) {
         super.init(rowId: rowId.dashboardRowId, rowType: .workoutSummary)
         refresh(config: config, workouts: workouts, priorWorkouts: priorWorkouts)
+    }
+
+    func toggleExpanded() {
+        isExpanded.toggle()
     }
 
     func refresh(

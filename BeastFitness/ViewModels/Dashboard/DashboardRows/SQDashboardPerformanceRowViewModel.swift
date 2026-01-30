@@ -10,6 +10,11 @@ import SwiftUI
 @Observable @MainActor
 final class SQDashboardDailyPerformanceRowViewModel: SQDashboardRowViewModel {
     let metricChipModel: SQMetricChip.Model
+    
+    var isExpanded: Bool = true
+    func toggleExpanded() {
+        isExpanded.toggle()
+    }
 
     init(latestVO2Max: SQVO2MaxSample) {
         self.metricChipModel = .vo2MaxChip(value: latestVO2Max.value, lastUpdatedText: nil)
