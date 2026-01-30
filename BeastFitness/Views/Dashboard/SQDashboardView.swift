@@ -12,6 +12,13 @@ struct SQDashboardView: View {
     @Environment(\.modelContext) private var modelContext
     static let uiConfig = UIConfig()
     
+    private var filteredSections: [SQDashboardSectionViewModel] {
+        controller.state.sectionViewModels.filter { section in
+            guard let title = section.title else { return true }
+            return title == controller.state.selectedTimeRange.rawValue
+        }
+    }
+    
     var mainScroll: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
@@ -19,9 +26,51 @@ struct SQDashboardView: View {
                 Spacer()
                     .frame(height: .SQSpace.l)
                 
-                ForEach(controller.state.sectionViewModels) { sectionViewModel in
+                // Time range selector
+                HStack {
+                    Text("Time Range")
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textSecondary)
                     
-                    SQDashboardSection(viewModel: sectionViewModel)
+                    Spacer()
+                    
+                    SQDropDownMenu(
+                        menuViewModel: controller.timeRangeMenuViewModel,
+                        isDisabled: false
+                    )
+                }
+                .padding(.horizontal, .SQSpace.l)
+                .padding(.bottom, .SQSpace.xl)
+                
+                ForEach(filteredSections) { sectionViewModel in
+                    VStack(spacing: 0) {
+                        ForEach(sectionViewModel.rows) { rowViewModel in
+                            switch rowViewModel.rowType {
+                            case .text:
+                                if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
+                                    SQDashboardTextRow(viewModel: textRowViewModel)
+                                        .padding(.bottom, .SQSpace.xxl)
+                                }
+                            case .workoutSummary:
+                                if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel, !weekSummaryViewModel.isEmpty {
+                                    SQDashboardWorkoutSummaryRow(
+                                        viewModel: weekSummaryViewModel)
+                                }
+                                
+                            case .dailyCheckInStats:
+                                if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel {
+                                    SQDashboardWorkoutSummaryDailyCheckInRow(viewModel: dailyCheckInRowViewModel)
+                                }
+                                
+                            case .performance:
+                                if let dailyPerformanceRowViewModel = rowViewModel as? SQDashboardDailyPerformanceRowViewModel {
+                                    SQDashboardPerformanceRow(viewModel: dailyPerformanceRowViewModel)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, SQDashboardView.uiConfig.sectionHorizPadding)
+                    .padding(.bottom, .SQSpace.xxl)
                 }
                 
                 Spacer()

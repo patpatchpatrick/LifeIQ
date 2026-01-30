@@ -8,6 +8,12 @@
 import SwiftUI
 import Combine
 
+enum DashboardTimeRange: String, CaseIterable {
+    case today = "Today"
+    case pastSevenDays = "Past 7 Days"
+    case pastYear = "Past Year"
+}
+
 @MainActor
 protocol DashboardStating: AnyObject {
     var hub: EventHub { get }
@@ -15,6 +21,7 @@ protocol DashboardStating: AnyObject {
     /// State
     ///
     var sectionViewModels: [SQDashboardSectionViewModel] { get }
+    var selectedTimeRange: DashboardTimeRange { get set }
     
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
@@ -43,6 +50,7 @@ protocol DashboardStating: AnyObject {
     
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
+    var selectedTimeRange: DashboardTimeRange = .today
     
     private(set) var workoutsListController: SQWorkoutsListController?
     

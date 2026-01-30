@@ -25,6 +25,8 @@ final class SQDashboardController: SQDashboardInterface {
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
     private(set) var hasLoadedUI = false
+    let timeRangeMenuViewModel: SQDropDownMenuViewModel
+    
     /// A context-bound refresh callback installed by `attach(context:)`.
        ///
        /// This is intentionally optional: if the controller is not attached yet,
@@ -39,6 +41,20 @@ final class SQDashboardController: SQDashboardInterface {
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        
+        let items = DashboardTimeRange.allCases.map {
+            SQDropDownMenuViewModel.Item(title: $0.rawValue)
+        }
+        self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: state.selectedTimeRange.rawValue),
+            items: items
+        ) { [weak state] selectedTitle in
+            guard let state else { return }
+            if let selectedRange = DashboardTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
+                state.selectedTimeRange = selectedRange
+            }
+        }
+        
         self.handleEventSubscriptions(hub: state.hub)
     }
     
