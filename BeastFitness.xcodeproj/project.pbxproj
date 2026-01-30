@@ -122,6 +122,7 @@
 		F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */; };
 		F68D702D2F01D86900543561 /* SQPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702C2F01D86700543561 /* SQPicker.swift */; };
 		F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */; };
+		F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */ = {isa = PBXBuildFile; productRef = F6993E012F2BFD9800B5FF81 /* CoolCharts */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
 		F6A3120E2EF60E4500A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120D2EF60E4500A2E5F7 /* BeastFitnessCore */; };
 		F6A312102EF60F2D00A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120F2EF60F2D00A2E5F7 /* BeastFitnessCore */; };
@@ -405,13 +406,36 @@
 		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F6993DFF2F2BFD5D00B5FF81 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CoolCharts/Package.swift,
+				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/FocusedLineViewModel.swift,
+				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/LineChartModel.swift,
+				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/FocusedLineView.swift,
+				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/GridBackgroundView.swift,
+				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/LineChartView.swift,
+				CoolCharts/Sources/CoolCharts/Charts/PieChart/Models/PieChartModel.swift,
+				CoolCharts/Sources/CoolCharts/Charts/PieChart/Models/PieChartSection.swift,
+				CoolCharts/Sources/CoolCharts/Charts/PieChart/Views/PieChartSectionView.swift,
+				CoolCharts/Sources/CoolCharts/Charts/PieChart/Views/PieChartView.swift,
+				CoolCharts/Sources/CoolCharts/CoolCharts.swift,
+				"CoolCharts/Sources/CoolCharts/General/Extensions/CGFloat+Extensions.swift",
+				CoolCharts/Sources/CoolCharts/General/Utilities/SQColorManager.swift,
+				CoolCharts/Tests/CoolChartsTests/CoolChartsTests.swift,
+			);
+			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F602DA532EC6ADA300404878 /* Weekly Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Weekly Summary"; sourceTree = "<group>"; };
 		F61592082EEE18D800223A63 /* Firestore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Firestore; sourceTree = "<group>"; };
 		F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch App"; sourceTree = "<group>"; };
 		F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppTests"; sourceTree = "<group>"; };
 		F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppUITests"; sourceTree = "<group>"; };
-		F6A311F02EF6079B00A2E5F7 /* Packages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Packages; sourceTree = "<group>"; };
+		F6A311F02EF6079B00A2E5F7 /* Packages */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F6993DFF2F2BFD5D00B5FF81 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Packages; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -445,6 +469,7 @@
 				F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */,
 				F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */,
 				F6A3120E2EF60E4500A2E5F7 /* BeastFitnessCore in Frameworks */,
+				F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */,
 				F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1379,6 +1404,7 @@
 			packageReferences = (
 				F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				F6A3120C2EF60E4500A2E5F7 /* XCLocalSwiftPackageReference "Packages/BeastFitnessCore" */,
+				F6993E002F2BFD9800B5FF81 /* XCLocalSwiftPackageReference "Packages/CoolCharts" */,
 			);
 			productRefGroup = F657E2A62CA50D7C00E72926 /* Products */;
 			projectDirPath = "";
@@ -2164,6 +2190,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		F6993E002F2BFD9800B5FF81 /* XCLocalSwiftPackageReference "Packages/CoolCharts" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CoolCharts;
+		};
 		F6A3120C2EF60E4500A2E5F7 /* XCLocalSwiftPackageReference "Packages/BeastFitnessCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/BeastFitnessCore;
@@ -2182,6 +2212,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F6993E012F2BFD9800B5FF81 /* CoolCharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CoolCharts;
+		};
 		F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BeastFitnessCore;
