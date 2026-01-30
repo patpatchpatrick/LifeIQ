@@ -30,6 +30,12 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 - We use a shared module called **BeastFitnessCore**.
 - Shared code such as extensions, utilities (e.g., logging), and reusable business logic should generally live in **BeastFitnessCore** so it can be reused across app targets/modules.
 
+## UI conventions
+
+- **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.
+- **Always use `SQFont` for fonts** — Never use SwiftUI's `Font` directly. Use `.sqFont()` modifier.
+- These wrappers ensure consistent theming and styling across the app.
+
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:
