@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SQDashboardPerformanceRow: View {
     @Bindable var viewModel: SQDashboardDailyPerformanceRowViewModel
-    
+
     var title: some View {
         SQCollapsibleSectionHeader(
             title: "Performance",
@@ -17,24 +17,23 @@ struct SQDashboardPerformanceRow: View {
             action: { viewModel.toggleExpanded() }
         )
     }
-    
+
     var mainStack: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            
+
             title
-            
+
             if viewModel.isExpanded {
-                SQMetricChipStrip(
-                    chips: [
-                    viewModel.metricChipModel],
-                    onTap: { _ in
-                        print("PTD Vo2 Max Tapped")
-                    })
+                if let vitalRow = viewModel.vitalRow {
+                    SQDailyCheckInVitalRow(model: vitalRow) {
+                        print("PTD VO2 Max Tapped")
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity)
     }
-    
+
     var body: some View {
         SQDashboardView.card { mainStack }
     }

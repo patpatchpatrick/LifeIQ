@@ -93,10 +93,10 @@ final class SQDashboardController: SQDashboardInterface {
             //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
             
             var dailyRows: [SQDashboardRowViewModel] = []
-            
+
             let vo2MaxData = try await healthKitManager.fetchVO2MaxSamples(.allTime)
-            if let latestVo2Max = vo2MaxData.last {
-                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(latestVO2Max: latestVo2Max))
+            if !vo2MaxData.isEmpty {
+                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(vo2MaxSamples: vo2MaxData))
             }
             
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
