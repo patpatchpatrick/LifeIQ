@@ -12,6 +12,17 @@ enum DashboardTimeRange: String, CaseIterable {
     case today = "Today"
     case pastSevenDays = "Past 7 Days"
     case pastYear = "Past Year"
+
+    func toSQTimeRange() -> SQTimeRange {
+        switch self {
+        case .today:
+            return .today
+        case .pastSevenDays:
+            return .pastWeek
+        case .pastYear:
+            return .pastYear
+        }
+    }
 }
 
 @MainActor
@@ -22,6 +33,7 @@ protocol DashboardStating: AnyObject {
     ///
     var sectionViewModels: [SQDashboardSectionViewModel] { get }
     var selectedTimeRange: DashboardTimeRange { get set }
+    var isLoading: Bool { get }
 
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
@@ -38,6 +50,7 @@ protocol DashboardStating: AnyObject {
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
 
     func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel])
+    func setLoading(_ isLoading: Bool)
 
     func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
@@ -53,6 +66,7 @@ protocol DashboardStating: AnyObject {
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
     var selectedTimeRange: DashboardTimeRange = .today
+    private(set) var isLoading: Bool = false
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
     private(set) var workoutsListController: SQWorkoutsListController?
@@ -71,6 +85,10 @@ protocol DashboardStating: AnyObject {
 
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?) {
         self.dailyCheckInCtaViewModel = viewModel
+    }
+
+    func setLoading(_ isLoading: Bool) {
+        self.isLoading = isLoading
     }
 
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {

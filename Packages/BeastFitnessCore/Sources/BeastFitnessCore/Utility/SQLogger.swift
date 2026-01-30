@@ -47,6 +47,7 @@ public final class SQLogger: @unchecked Sendable {
         case debug
         case info
         case log
+        case warning
         case error
     }
 
@@ -114,6 +115,8 @@ fileprivate extension Logger {
             info("\(message)")
         case .log:
             log("\(message)")
+        case .warning:
+            warning("\(message)")
         case .error:
             error("\(message)")
         }

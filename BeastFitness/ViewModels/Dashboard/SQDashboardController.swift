@@ -86,12 +86,27 @@ final class SQDashboardController: SQDashboardInterface {
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
         guard !hasLoadedUI || shouldForceRefresh else { return }
         hasLoadedUI = true
-        
+
+        // Set loading state
+        state.setLoading(true)
+
         do {
-            
+            // Sync daily check-ins from Firestore
+            let timeRange = state.selectedTimeRange.toSQTimeRange()
+            let syncResult = try await dailyCheckInManager.syncDailyCheckInsIfNeeded(
+                for: timeRange,
+                context: context
+            )
+
+            SQLogger.shared.log(
+                "Sync result: \(syncResult)",
+                .debug,
+                context: .dashboard
+            )
+
             // TODO: - PTD Handle Sleep
             //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
-            
+
             var dailyRows: [SQDashboardRowViewModel] = []
 
             let vo2MaxData = try await healthKitManager.fetchVO2MaxSamples(.allTime)
@@ -183,9 +198,16 @@ final class SQDashboardController: SQDashboardInterface {
             }
             
             state.updateSectionViewModels(to: dashboardSections)
+
+            // Clear loading state
+            state.setLoading(false)
         } catch {
             print("PTD Handle Errors here", error)
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
+
+            // Clear loading state on error
+            state.setLoading(false)
+
             // TODO: - PTD allow refreshes if there is an error here
             state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: error.localizedDescription))))
         }

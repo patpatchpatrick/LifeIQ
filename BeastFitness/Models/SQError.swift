@@ -36,3 +36,21 @@ protocol SQUserFacingError: Error {
     var userFacingDescription: String { get }
 }
 
+enum SQNetworkError: SQUserFacingError {
+    case invalidResponseType(expected: String, got: String)
+    case decodingFailed(underlying: Error)
+
+    var userFacingTitle: String {
+        "Network Error"
+    }
+
+    var userFacingDescription: String {
+        switch self {
+        case .invalidResponseType(let expected, let got):
+            return "Invalid response type: expected \(expected), got \(got)"
+        case .decodingFailed(let error):
+            return "Failed to decode response: \(error.localizedDescription)"
+        }
+    }
+}
+

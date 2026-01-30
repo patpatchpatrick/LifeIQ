@@ -22,25 +22,44 @@ struct SQDashboardView: View {
     var mainScroll: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                
+
                 Spacer()
                     .frame(height: .SQSpace.l)
-                
-                // Time range selector
-                HStack {
-                    Text("Time Range")
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(.textSecondary)
 
-                    Spacer()
+                // Loading indicator
+                if controller.state.isLoading {
+                    VStack(spacing: .SQSpace.xl) {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .scaleEffect(1.5)
+                            .padding(.top, 100)
 
-                    SQDropDownMenu(
-                        menuViewModel: controller.timeRangeMenuViewModel,
-                        isDisabled: false
-                    )
+                        Text("Syncing daily check-ins...")
+                            .sqFont(.bodySmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.SQSpace.xxl)
                 }
-                .padding(.horizontal, .SQSpace.l)
-                .padding(.bottom, .SQSpace.xl)
+
+                // Content - only show when not loading
+                if !controller.state.isLoading {
+                    // Time range selector
+                    HStack {
+                        Text("Time Range")
+                            .sqFont(.bodySmall)
+                            .sqForegroundColor(.textSecondary)
+                        
+                        Spacer()
+                        
+                        SQDropDownMenu(
+                            menuViewModel: controller.timeRangeMenuViewModel,
+                            isDisabled: false
+                        )
+                    }
+                    .padding(.horizontal, .SQSpace.l)
+                    .padding(.bottom, .SQSpace.xl)
+                }
 
                 // Daily Check-In CTA Banner
                 if let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {

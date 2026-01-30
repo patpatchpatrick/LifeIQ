@@ -61,15 +61,17 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
 
     // MARK: - Smart Sync
 
+    @MainActor
     func syncDailyCheckInsIfNeeded(
         for timeRange: SQTimeRange,
         context: ModelContext
     ) async throws -> SyncResult {
 
         SQLogger.shared.log(
-            "Starting sync check for time range: \(timeRange)",
-            .debug,
-            context: .dailyCheckIn
+            "📊 Starting sync check for time range: \(timeRange) (\(timeRange.startDate.formatted()) to \(timeRange.endDate.formatted()))",
+            .info,
+            context: .dailyCheckIn,
+            isPriority: true
         )
 
         // 1. Check what data we have locally
@@ -80,38 +82,65 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         )
 
         SQLogger.shared.log(
-            "Found \(localData.count) local check-ins in Core Data for time range",
-            .debug,
-            context: .dailyCheckIn
+            "📦 Found \(localData.count) local check-ins in SwiftData for this time range",
+            .info,
+            context: .dailyCheckIn,
+            isPriority: true
+        )
+
+        // Check sync metadata
+        let lastSync = getLastSyncDate(context: context)
+        let lastSyncInfo = lastSync.map { "Last sync: \($0.formatted())" } ?? "Never synced"
+        SQLogger.shared.log(
+            "🕐 \(lastSyncInfo)",
+            .info,
+            context: .dailyCheckIn,
+            isPriority: true
         )
 
         // 2. Determine sync strategy
         if localData.isEmpty {
             // No local data - need full sync
             SQLogger.shared.log(
-                "No local data found. Initiating full sync from Firestore...",
+                "⚠️ No local data found. Initiating full sync from Firestore...",
                 .info,
-                context: .dailyCheckIn
+                context: .dailyCheckIn,
+                isPriority: true
             )
             try await performFullSync(for: timeRange, context: context)
             return .fullSyncCompleted
 
-        } else {
-            // Have local data - check if we should refresh
-            if shouldRefresh(context: context) {
-                SQLogger.shared.log(
-                    "Local data exists but refresh needed (>6h since last sync). Initiating incremental sync...",
-                    .info,
-                    context: .dailyCheckIn
-                )
-                try await performIncrementalSync(context: context)
-                return .refreshCompleted
-            }
-
+        } else if lastSync == nil {
+            // Have local data but never synced - need full sync to ensure we have everything from Firestore
             SQLogger.shared.log(
-                "Local data is fresh. No sync needed.",
-                .debug,
-                context: .dailyCheckIn
+                "⚠️ Local data exists but never synced. Initiating full sync from Firestore...",
+                .info,
+                context: .dailyCheckIn,
+                isPriority: true
+            )
+            try await performFullSync(for: timeRange, context: context)
+            return .fullSyncCompleted
+
+        } else if shouldRefresh(context: context) {
+            // Have local data and it's been >6h since last sync - do incremental refresh
+            let hoursSinceSync = Date().timeIntervalSince(lastSync!) / 3600
+            SQLogger.shared.log(
+                "🔄 Local data exists but refresh needed (\(String(format: "%.1f", hoursSinceSync))h since last sync). Initiating incremental sync...",
+                .info,
+                context: .dailyCheckIn,
+                isPriority: true
+            )
+            try await performIncrementalSync(context: context)
+            return .refreshCompleted
+
+        } else {
+            // Local data is fresh - no sync needed
+            let hoursSinceSync = Date().timeIntervalSince(lastSync!) / 3600
+            SQLogger.shared.log(
+                "✅ Local data is fresh (\(String(format: "%.1f", hoursSinceSync))h since last sync). No sync needed.",
+                .info,
+                context: .dailyCheckIn,
+                isPriority: true
             )
             return .noSyncNeeded
         }
@@ -119,6 +148,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
 
     // MARK: - Private Sync Helpers
 
+    @MainActor
     private func performFullSync(
         for timeRange: SQTimeRange,
         context: ModelContext
@@ -156,6 +186,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         )
     }
 
+    @MainActor
     private func performIncrementalSync(
         context: ModelContext
     ) async throws {
@@ -194,6 +225,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         )
     }
 
+    @MainActor
     private func shouldRefresh(context: ModelContext) -> Bool {
         guard let lastSync = getLastSyncDate(context: context) else {
             return true
@@ -206,27 +238,104 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
 
     // MARK: - Sync Metadata
 
+    @MainActor
     private func getLastSyncDate(context: ModelContext) -> Date? {
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == "daily-check-in-sync" }
         )
 
-        return try? context.fetch(descriptor).first?.lastSyncDate
+        do {
+            let results = try context.fetch(descriptor)
+            SQLogger.shared.log(
+                "🔍 Fetched \(results.count) sync metadata records",
+                .debug,
+                context: .dailyCheckIn
+            )
+
+            if let metadata = results.first {
+                SQLogger.shared.log(
+                    "📅 Found sync metadata: lastSyncDate = \(metadata.lastSyncDate?.formatted() ?? "nil")",
+                    .debug,
+                    context: .dailyCheckIn
+                )
+                return metadata.lastSyncDate
+            } else {
+                SQLogger.shared.log(
+                    "⚠️ No sync metadata found in database",
+                    .debug,
+                    context: .dailyCheckIn
+                )
+                return nil
+            }
+        } catch {
+            SQLogger.shared.log(
+                "❌ Error fetching sync metadata: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            return nil
+        }
     }
 
+    @MainActor
     private func updateLastSyncDate(to date: Date, context: ModelContext) {
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == "daily-check-in-sync" }
         )
 
-        if let existing = try? context.fetch(descriptor).first {
-            existing.lastSyncDate = date
-        } else {
-            let metadata = SQSyncMetadataEntity(id: "daily-check-in-sync")
-            metadata.lastSyncDate = date
-            context.insert(metadata)
-        }
+        do {
+            if let existing = try context.fetch(descriptor).first {
+                existing.lastSyncDate = date
+                SQLogger.shared.log(
+                    "💾 Updating existing sync metadata: lastSyncDate = \(date.formatted())",
+                    .info,
+                    context: .dailyCheckIn,
+                    isPriority: true
+                )
+            } else {
+                let metadata = SQSyncMetadataEntity(id: "daily-check-in-sync")
+                metadata.lastSyncDate = date
+                context.insert(metadata)
+                SQLogger.shared.log(
+                    "💾 Creating new sync metadata: lastSyncDate = \(date.formatted())",
+                    .info,
+                    context: .dailyCheckIn,
+                    isPriority: true
+                )
+            }
 
-        try? context.save()
+            try context.save()
+            SQLogger.shared.log(
+                "✅ Sync metadata saved to SwiftData successfully",
+                .info,
+                context: .dailyCheckIn,
+                isPriority: true
+            )
+
+            // Verify it was saved by fetching it again
+            let verification = try context.fetch(descriptor)
+            if let verified = verification.first {
+                SQLogger.shared.log(
+                    "✓ Verified sync metadata in database: \(verified.lastSyncDate?.formatted() ?? "nil")",
+                    .info,
+                    context: .dailyCheckIn,
+                    isPriority: true
+                )
+            } else {
+                SQLogger.shared.log(
+                    "⚠️ WARNING: Sync metadata not found after save!",
+                    .error,
+                    context: .dailyCheckIn,
+                    isPriority: true
+                )
+            }
+        } catch {
+            SQLogger.shared.log(
+                "❌ Failed to save sync metadata: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn,
+                isPriority: true
+            )
+        }
     }
 }
