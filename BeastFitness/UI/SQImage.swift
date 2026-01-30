@@ -130,6 +130,7 @@ enum SQImageSymbol: String {
     
     /// Other
     case chevronDown         = "chevron.down"
+    case chevronUp           = "chevron.up"
     case checkmark           = "checkmark"
     case edit                = "square.and.pencil"
     case plus                = "plus"

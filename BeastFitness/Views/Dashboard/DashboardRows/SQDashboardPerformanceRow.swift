@@ -11,15 +11,11 @@ struct SQDashboardPerformanceRow: View {
     @Bindable var viewModel: SQDashboardDailyPerformanceRowViewModel
     
     var title: some View {
-        Button(action: { viewModel.toggleExpanded() }) {
-            HStack {
-                SQDashboardView.cardTitle(title: "Performance", icon: nil)
-                Spacer()
-                Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
-                    .sqForegroundColor(.textTertiary)
-            }
-        }
-        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+        SQCollapsibleSectionHeader(
+            title: "Performance",
+            isExpanded: viewModel.isExpanded,
+            action: { viewModel.toggleExpanded() }
+        )
     }
     
     var mainStack: some View {

@@ -19,16 +19,12 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
     
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
-            
-            Button(action: { viewModel.toggleExpanded() }) {
-                HStack {
-                    SQDashboardView.cardTitle(title: viewModel.sectionTitle)
-                    Spacer()
-                    Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
-                        .sqForegroundColor(.textTertiary)
-                }
-            }
-            .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+
+            SQCollapsibleSectionHeader(
+                title: viewModel.sectionTitle,
+                isExpanded: viewModel.isExpanded,
+                action: { viewModel.toggleExpanded() }
+            )
             
             if viewModel.isExpanded {
                 // Metric dropdown

@@ -35,6 +35,10 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 
 - **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.
 - **Always use `SQFont` for fonts** — Never use SwiftUI's `Font` directly. Use `.sqFont()` modifier.  Example: (SQFont(type: .bodySmall).font)
+- **Always use `SQImageSymbol` for SF Symbols** — Never use hardcoded string literals in `Image(systemName:)`. All SF Symbols must be defined in the `SQImageSymbol` enum (found in `BeastFitness/UI/SQImage.swift`) to ensure we track all icons centrally. If a symbol you need doesn't exist in the enum, add it there first before using it.
+  - Use `SQImageView` with `SQImage(symbol: .symbolName)` for rendering symbols with proper styling
+  - Example: `SQImageView(image: .init(symbol: .chevronUp, symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)))`
+- **Use shared components for common UI patterns** — For collapsible section headers, use `SQCollapsibleSectionHeader` to ensure consistent styling across dashboard sections.
 - These wrappers ensure consistent theming and styling across the app.
 ## Coding style
 

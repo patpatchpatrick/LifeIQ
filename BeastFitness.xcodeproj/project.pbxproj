@@ -167,6 +167,7 @@
 		F6ABC4EA2EDFCE5500D3E679 /* Int+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */; };
 		F6ABC4EC2EE1DEDB00D3E679 /* SQDailyCheckInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */; };
 		F6ABC6682EE2953F00D3E679 /* SQDashboardWorkoutSummaryDailyCheckInSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC6672EE2953500D3E679 /* SQDashboardWorkoutSummaryDailyCheckInSection.swift */; };
+		F6C5FCE32F2C1ED900BF1022 /* SQCollapsibleSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE22F2C1ED900BF1022 /* SQCollapsibleSectionHeader.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
@@ -398,6 +399,7 @@
 		F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Extensions.swift"; sourceTree = "<group>"; };
 		F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInManager.swift; sourceTree = "<group>"; };
 		F6ABC6672EE2953500D3E679 /* SQDashboardWorkoutSummaryDailyCheckInSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryDailyCheckInSection.swift; sourceTree = "<group>"; };
+		F6C5FCE22F2C1ED900BF1022 /* SQCollapsibleSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCollapsibleSectionHeader.swift; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
@@ -976,6 +978,7 @@
 				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
 				F6A848B72CBD8FE700B09AD5 /* SQDropDownButton.swift */,
 				F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */,
+				F6C5FCE22F2C1ED900BF1022 /* SQCollapsibleSectionHeader.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1528,6 +1531,7 @@
 				F639B7E22ED799E800199C69 /* String+Extensions.swift in Sources */,
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */,
+				F6C5FCE32F2C1ED900BF1022 /* SQCollapsibleSectionHeader.swift in Sources */,
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
 				F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */,
 				F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */,

@@ -11,28 +11,27 @@ struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
     @Bindable var viewModel: SQDashboardDailyCheckInRowViewModel
     
     var dailyCheckInTitle: some View {
-        HStack {
-            SQDashboardView.cardTitle(title: "Daily Check-In", icon: viewModel.canEditDailyStats ? .edit : nil)
-            Spacer()
-            Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
-                .sqForegroundColor(.textTertiary)
+        SQCollapsibleSectionHeader(
+            title: "Daily Check-In",
+            isExpanded: viewModel.isExpanded,
+            action: { viewModel.toggleExpanded() }
+        ) {
+            if viewModel.canEditDailyStats {
+                Button(action: {
+                    Task { await viewModel.editDailyCheckInStats() }
+                }) {
+                    SQImageView(image: .init(symbol: .edit, symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)))
+                        .frame(width: 14)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
     }
-    
+
     var mainStack: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
-            
-            Button(
-                action: { 
-                    if viewModel.canEditDailyStats {
-                        Task { await viewModel.editDailyCheckInStats() }
-                    } else {
-                        viewModel.toggleExpanded()
-                    }
-                },
-                label: { dailyCheckInTitle }
-            )
+
+            dailyCheckInTitle
             
             if viewModel.isExpanded {
                 if let callToActionViewModel = viewModel.callToAction {
