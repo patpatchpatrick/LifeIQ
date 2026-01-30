@@ -11,11 +11,18 @@ import SwiftUI
 final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
     let sectionTitle: String
     let totalValuesAndTrends: [TotalValueAndTrend]
+    let chartDataPoints: [ChartDataPoint]
     
     struct TotalValueAndTrend: Identifiable {
         let id = UUID()
         let value: AttributedString
         let trend: AttributedString
+    }
+    
+    struct ChartDataPoint: Identifiable {
+        let id = UUID()
+        let label: String
+        let value: Double // Duration in seconds
     }
     
     init(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) {
@@ -47,6 +54,12 @@ final class SQDashboardWorkoutSummaryTotalsSectionViewModel {
             TotalValueAndTrend(value: totalTimeValue, trend: totalTimeTrend),
             TotalValueAndTrend(value: totalKilocaloriesValue, trend: totalKilocaliresTrend)
          ]
+        
+        // Build chart data points based on time range
+        self.chartDataPoints = Self.buildChartDataPoints(
+            timeRange: config.timeRange,
+            workouts: workouts
+        )
     }
 }
 
@@ -174,5 +187,87 @@ private extension SQDashboardWorkoutSummaryTotalsSectionViewModel {
         result.append(suffix)
 
         return result
+    }
+    
+    static func buildChartDataPoints(
+        timeRange: SQTimeRange,
+        workouts: [SQWorkoutSessionable]
+    ) -> [ChartDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        switch timeRange {
+        case .today:
+            // For "today" just show a single bar or return empty
+            let totalDuration = workouts.reduce(0.0) { $0 + ($1.activeDuration ?? 0) }
+            return [ChartDataPoint(label: "Today", value: totalDuration)]
+            
+        case .yesterday:
+            let totalDuration = workouts.reduce(0.0) { $0 + ($1.activeDuration ?? 0) }
+            return [ChartDataPoint(label: "Yest.", value: totalDuration)]
+            
+        case .pastWeek:
+            // Last 7 days: M T W T F S S
+            var dayTotals: [Date: Double] = [:]
+            
+            // Initialize last 7 days with 0
+            for dayOffset in 0..<7 {
+                if let day = calendar.date(byAdding: .day, value: -dayOffset, to: now) {
+                    let dayStart = calendar.startOfDay(for: day)
+                    dayTotals[dayStart] = 0
+                }
+            }
+            
+            // Aggregate workouts by day
+            for workout in workouts {
+                guard let startDate = workout.startDate,
+                      let duration = workout.activeDuration else { continue }
+                let dayStart = calendar.startOfDay(for: startDate)
+                dayTotals[dayStart, default: 0] += duration
+            }
+            
+            // Sort by date and map to chart points
+            let sortedDays = dayTotals.keys.sorted()
+            return sortedDays.map { day in
+                let weekdaySymbol = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: day) - 1].prefix(1)
+                return ChartDataPoint(
+                    label: String(weekdaySymbol),
+                    value: dayTotals[day] ?? 0
+                )
+            }
+            
+        case .pastYear:
+            // Last 12 months: J F M A M J J A S O N D
+            var monthTotals: [Date: Double] = [:]
+            
+            // Initialize last 12 months with 0
+            for monthOffset in 0..<12 {
+                if let month = calendar.date(byAdding: .month, value: -monthOffset, to: now) {
+                    let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: month))!
+                    monthTotals[monthStart] = 0
+                }
+            }
+            
+            // Aggregate workouts by month
+            for workout in workouts {
+                guard let startDate = workout.startDate,
+                      let duration = workout.activeDuration else { continue }
+                let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: startDate))!
+                monthTotals[monthStart, default: 0] += duration
+            }
+            
+            // Sort by date and map to chart points
+            let sortedMonths = monthTotals.keys.sorted()
+            return sortedMonths.map { month in
+                let monthSymbol = calendar.shortMonthSymbols[calendar.component(.month, from: month) - 1].prefix(1)
+                return ChartDataPoint(
+                    label: String(monthSymbol),
+                    value: monthTotals[month] ?? 0
+                )
+            }
+            
+        default:
+            return []
+        }
     }
 }

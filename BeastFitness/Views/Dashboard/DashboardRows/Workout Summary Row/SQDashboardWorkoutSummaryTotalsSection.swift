@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SQDashboardWorkoutSummaryTotalsSection: View {
-    @Bindable var viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
+    let viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
     
     var totalValuesAndTrendsStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
@@ -26,6 +26,21 @@ struct SQDashboardWorkoutSummaryTotalsSection: View {
             
             SQDashboardView.cardTitle(title: viewModel.sectionTitle)
                 .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+            
+            // Activity bar chart
+            if !viewModel.chartDataPoints.isEmpty {
+                SQActivityBarChart(
+                    dataPoints: viewModel.chartDataPoints.map { point in
+                        SQActivityBarChart.DataPoint(
+                            label: point.label,
+                            value: point.value,
+                            color: SQColor.accent(1).color
+                        )
+                    },
+                    maxHeight: 60
+                )
+                .padding(.bottom, .SQSpace.xl)
+            }
             
             totalValuesAndTrendsStack
         }
