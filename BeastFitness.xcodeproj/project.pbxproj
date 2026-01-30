@@ -411,6 +411,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				CoolCharts/Package.swift,
+				CoolCharts/Sources/CoolCharts/Charts/BarChart/BarChartView.swift,
 				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/FocusedLineViewModel.swift,
 				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/LineChartModel.swift,
 				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/FocusedLineView.swift,

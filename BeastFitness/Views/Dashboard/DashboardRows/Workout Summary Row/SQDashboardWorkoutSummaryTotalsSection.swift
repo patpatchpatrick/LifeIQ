@@ -8,29 +8,32 @@
 import SwiftUI
 
 struct SQDashboardWorkoutSummaryTotalsSection: View {
-    let viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
+    @Bindable var viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel
     
     var totalValuesAndTrendsStack: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.l) {
-            ForEach(viewModel.totalValuesAndTrends) { valueAndTrend in
-                HStack(alignment: .center, spacing: .SQSpace.m) {
-                    SQDashboardWorkoutStatView(attributedTitle: valueAndTrend.value)
-                    Text(valueAndTrend.trend)
-                }
-            }
+        HStack(alignment: .center, spacing: .SQSpace.m) {
+            SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
+            Text(viewModel.currentValueAndTrend.trend)
         }
     }
     
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            SQDashboardView.cardTitle(title: viewModel.sectionTitle)
-                .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
+            HStack {
+                SQDashboardView.cardTitle(title: viewModel.sectionTitle)
+                Spacer()
+                SQDropDownMenu(
+                    menuViewModel: viewModel.metricDropdownViewModel,
+                    isDisabled: false
+                )
+            }
+            .padding(.bottom, SQDashboardView.uiConfig.cardInnerTitleBottomPadding)
             
             // Activity bar chart
-            if !viewModel.chartDataPoints.isEmpty {
+            if !viewModel.currentChartDataPoints.isEmpty {
                 SQActivityBarChart(
-                    dataPoints: viewModel.chartDataPoints.map { point in
+                    dataPoints: viewModel.currentChartDataPoints.map { point in
                         SQActivityBarChart.DataPoint(
                             label: point.label,
                             value: point.value,

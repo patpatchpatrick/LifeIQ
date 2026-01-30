@@ -34,9 +34,11 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 ## UI conventions
 
 - **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.
-- **Always use `SQFont` for fonts** — Never use SwiftUI's `Font` directly. Use `.sqFont()` modifier.
+- **Always use `SQFont` for fonts** — Never use SwiftUI's `Font` directly. Use `.sqFont()` modifier.  Example: (SQFont(type: .bodySmall).font)
 - These wrappers ensure consistent theming and styling across the app.
+## Coding style
 
+- **Prefer stored properties over computed properties** — When a value can be calculated once and stored, use a stored property with `didSet` observers to update it when dependencies change, rather than recalculating via computed properties on every access.
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:
