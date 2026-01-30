@@ -33,6 +33,7 @@ protocol DashboardStating: AnyObject {
     ///
     var sectionViewModels: [SQDashboardSectionViewModel] { get }
     var selectedTimeRange: DashboardTimeRange { get set }
+    var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> { get }
     var isLoading: Bool { get }
 
     var isDailyCheckInSheetVisible: Bool { get }
@@ -65,12 +66,23 @@ protocol DashboardStating: AnyObject {
 
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
-    var selectedTimeRange: DashboardTimeRange = .today
+
+    private let selectedTimeRangeSubject = PassthroughSubject<DashboardTimeRange, Never>()
+    var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> {
+        selectedTimeRangeSubject.eraseToAnyPublisher()
+    }
+
+    var selectedTimeRange: DashboardTimeRange = .today {
+        didSet {
+            selectedTimeRangeSubject.send(selectedTimeRange)
+        }
+    }
+
     private(set) var isLoading: Bool = false
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
     private(set) var workoutsListController: SQWorkoutsListController?
-    
+
     init(hub: EventHub) {
         self.hub = hub
     }

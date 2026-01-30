@@ -70,6 +70,19 @@ final class SQDashboardController: SQDashboardInterface {
                 break
             }
         }.store(in: &cancellables)
+
+        // Watch for time range changes and reload dashboard
+        state.selectedTimeRangePublisher
+            .sink { [weak self] _ in
+                guard let self else { return }
+                SQLogger.shared.log(
+                    "Time range changed, reloading dashboard",
+                    .debug,
+                    context: .dashboard
+                )
+                self.refreshUiWithContext?(nil)
+            }
+            .store(in: &cancellables)
     }
     
     /// Attaches the controller to a `ModelContext` so event-driven refreshes can reload the dashboard.

@@ -234,6 +234,49 @@ Always use `afterDate` parameters for syncing to minimize Firestore reads:
 - First sync: `fetchAllDailyCheckIns(for: user, afterDate: nil)` fetches all
 - Subsequent syncs: `fetchAllDailyCheckIns(for: user, afterDate: lastSyncDate)` fetches only new data
 
+### Firestore Metrics Tracking
+
+**IMPORTANT**: All Firestore reads and writes must be tracked using `SQFirestoreMetricsManager` for cost monitoring.
+
+#### Usage
+
+Call `recordReads()` after fetching documents from Firestore:
+```swift
+let documents = try await fetchFromFirestore()
+
+// Track the reads
+Task { @MainActor in
+    SQFirestoreMetricsManager.shared.recordReads(
+        documents.count,
+        operation: "Fetch daily check-ins"
+    )
+}
+```
+
+This logs:
+- Number of reads for this operation
+- Cumulative session total
+- Session duration
+
+Example log output:
+```
+📊 Firestore: 7 reads for 'Fetch daily check-ins' | Session total: 15 reads (3m)
+```
+
+#### Where to Add Tracking
+
+- **Network Service Layer**: Already integrated in `SQNetworkService.decodeTypedArray()` for collection/query fetches
+- **New Firestore Operations**: Add tracking immediately after any new Firestore read/write operations
+- **Custom Queries**: Track reads when using Firestore directly outside the standard network layer
+
+#### Why This Matters
+
+Firestore charges per document read/write. Tracking metrics helps:
+- Monitor costs during development
+- Identify expensive operations
+- Optimize sync strategies
+- Catch accidental over-fetching
+
 ## UI conventions
 
 - **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.

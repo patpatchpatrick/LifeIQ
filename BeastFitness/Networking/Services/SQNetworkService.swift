@@ -106,6 +106,15 @@ extension SQNetworkService {
                     return nil
                 }
             }
+
+            // Track Firestore reads
+            Task { @MainActor in
+                SQFirestoreMetricsManager.shared.recordReads(
+                    documents.count,
+                    operation: "Fetch daily check-ins"
+                )
+            }
+
             return decoded
         }
 

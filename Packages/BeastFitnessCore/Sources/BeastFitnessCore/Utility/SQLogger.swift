@@ -24,6 +24,7 @@ public enum SQiOSLogContext: Sendable {
     case watchInterface
     case dashboard
     case healthKit
+    case network
 }
 #endif
 
@@ -142,6 +143,7 @@ fileprivate extension Logger {
         case .healthKit:       return .healthKit
         case .watchInterface:  return .watchInterface
         case .metricsManager:  return .metricsManager
+        case .network:         return .network
         }
     }
 
@@ -159,6 +161,7 @@ fileprivate extension Logger {
     static let healthKit      = Logger(subsystem: subsystem, category: "HealthKit")
     static let watchInterface = Logger(subsystem: subsystem, category: "WatchInterface")
     static let metricsManager = Logger(subsystem: subsystem, category: "MetricsManager")
+    static let network        = Logger(subsystem: subsystem, category: "Network")
 }
 #endif
 
