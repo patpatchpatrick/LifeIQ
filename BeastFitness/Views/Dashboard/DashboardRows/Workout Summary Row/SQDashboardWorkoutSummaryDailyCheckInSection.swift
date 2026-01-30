@@ -30,10 +30,30 @@ struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
                 SQCallToAction(viewModel: callToActionViewModel)
             }
             
-            if let metricChips = viewModel.metricChips {
-                SQMetricChipStrip(chips: metricChips, onTap: { chip in
-                    print("PTD Chip Tapped", chip)
-                })
+            // Summary text
+            if let summaryText = viewModel.summaryText {
+                Text(summaryText)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(SQColor.textTertiary)
+                    .padding(.bottom, .SQSpace.m)
+            }
+            
+            // Vertical vitals list
+            if let vitalRows = viewModel.vitalRows {
+                LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
+                    ForEach(vitalRows) { row in
+                        SQDailyCheckInVitalRow(model: row) {
+                            print("PTD Vital Row Tapped:", row.title)
+                        }
+                        
+                        // Divider between rows
+                        if row.id != vitalRows.last?.id {
+                            Divider()
+                                .sqBackgroundColor(SQColor.border)
+                                .padding(.vertical, .SQSpace.xs)
+                        }
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity)

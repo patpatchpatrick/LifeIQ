@@ -81,6 +81,8 @@
 		F657E2BA2CA50D7E00E72926 /* BeastFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2B92CA50D7E00E72926 /* BeastFitnessTests.swift */; };
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
+		F65E77FB2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F65E77FA2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift */; };
+		F65E77FD2F2C0DFA005050B2 /* SQSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */; };
 		F679BA422EE4F14800A2F249 /* SQWorkoutsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA412EE4F14400A2F249 /* SQWorkoutsListController.swift */; };
 		F679BA442EE4F1A000A2F249 /* WorkoutsListState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA432EE4F19C00A2F249 /* WorkoutsListState.swift */; };
 		F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA462EE4F36B00A2F249 /* SQWorkoutsListView.swift */; };
@@ -313,6 +315,8 @@
 		F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITests.swift; sourceTree = "<group>"; };
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
+		F65E77FA2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInVitalRow.swift; sourceTree = "<group>"; };
+		F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSparkline.swift; sourceTree = "<group>"; };
 		F679BA412EE4F14400A2F249 /* SQWorkoutsListController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListController.swift; sourceTree = "<group>"; };
 		F679BA432EE4F19C00A2F249 /* WorkoutsListState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsListState.swift; sourceTree = "<group>"; };
 		F679BA462EE4F36B00A2F249 /* SQWorkoutsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListView.swift; sourceTree = "<group>"; };
@@ -406,37 +410,13 @@
 		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		F6993DFF2F2BFD5D00B5FF81 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				CoolCharts/Package.swift,
-				CoolCharts/Sources/CoolCharts/Charts/BarChart/BarChartView.swift,
-				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/FocusedLineViewModel.swift,
-				CoolCharts/Sources/CoolCharts/Charts/LineChart/Models/LineChartModel.swift,
-				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/FocusedLineView.swift,
-				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/GridBackgroundView.swift,
-				CoolCharts/Sources/CoolCharts/Charts/LineChart/Views/LineChartView.swift,
-				CoolCharts/Sources/CoolCharts/Charts/PieChart/Models/PieChartModel.swift,
-				CoolCharts/Sources/CoolCharts/Charts/PieChart/Models/PieChartSection.swift,
-				CoolCharts/Sources/CoolCharts/Charts/PieChart/Views/PieChartSectionView.swift,
-				CoolCharts/Sources/CoolCharts/Charts/PieChart/Views/PieChartView.swift,
-				CoolCharts/Sources/CoolCharts/CoolCharts.swift,
-				"CoolCharts/Sources/CoolCharts/General/Extensions/CGFloat+Extensions.swift",
-				CoolCharts/Sources/CoolCharts/General/Utilities/SQColorManager.swift,
-				CoolCharts/Tests/CoolChartsTests/CoolChartsTests.swift,
-			);
-			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F602DA532EC6ADA300404878 /* Weekly Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Weekly Summary"; sourceTree = "<group>"; };
 		F61592082EEE18D800223A63 /* Firestore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Firestore; sourceTree = "<group>"; };
 		F61593CE2EF4BD8200223A63 /* Beast Fitness Watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch App"; sourceTree = "<group>"; };
 		F61593DC2EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppTests"; sourceTree = "<group>"; };
 		F61593E62EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Beast Fitness Watch Watch AppUITests"; sourceTree = "<group>"; };
-		F6A311F02EF6079B00A2E5F7 /* Packages */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F6993DFF2F2BFD5D00B5FF81 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Packages; sourceTree = "<group>"; };
+		F6A311F02EF6079B00A2E5F7 /* Packages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Packages; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -928,6 +908,7 @@
 			children = (
 				F67F09F92F085CE100D7BB90 /* SQMetricChip+Builders.swift */,
 				F67F09942F07294300D7BB90 /* SQMetricChip.swift */,
+				F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */,
 			);
 			path = Charts;
 			sourceTree = "<group>";
@@ -1130,6 +1111,7 @@
 				F639B7E32ED79A5C00199C69 /* SQDailyCheckInRow.swift */,
 				F6F4D50A2ED673ED00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift */,
 				F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */,
+				F65E77FA2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift */,
 			);
 			path = DailyCheckIn;
 			sourceTree = "<group>";
@@ -1558,6 +1540,7 @@
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */,
 				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
+				F65E77FB2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift in Sources */,
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,
 				F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */,
@@ -1640,6 +1623,7 @@
 				F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,
+				F65E77FD2F2C0DFA005050B2 /* SQSparkline.swift in Sources */,
 				F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */,
 				F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */,
 				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,
