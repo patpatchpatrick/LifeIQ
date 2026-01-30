@@ -17,26 +17,28 @@ enum DashboardTimeRange: String, CaseIterable {
 @MainActor
 protocol DashboardStating: AnyObject {
     var hub: EventHub { get }
-    
+
     /// State
     ///
     var sectionViewModels: [SQDashboardSectionViewModel] { get }
     var selectedTimeRange: DashboardTimeRange { get set }
-    
+
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
-    
+    var dailyCheckInCtaViewModel: SQCallToActionViewModel? { get }
+
     var isWorkoutListSheetVisible: Bool { get }
     var workoutsListController: SQWorkoutsListController? { get }
     
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
-    
+
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?)
-    
+    func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
+
     func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel])
-    
+
     func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 }
@@ -47,11 +49,12 @@ protocol DashboardStating: AnyObject {
     private var cancellables = Set<AnyCancellable>()
     private(set) var isDailyCheckInSheetVisible: Bool = false
     private(set) var isWorkoutListSheetVisible: Bool = false
-    
+
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
     var selectedTimeRange: DashboardTimeRange = .today
-    
+    private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
+
     private(set) var workoutsListController: SQWorkoutsListController?
     
     init(hub: EventHub) {
@@ -65,7 +68,11 @@ protocol DashboardStating: AnyObject {
     func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel]) {
         self.sectionViewModels = sectionViewModels
     }
-    
+
+    func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?) {
+        self.dailyCheckInCtaViewModel = viewModel
+    }
+
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {
         isDailyCheckInSheetVisible = isVisible
     }

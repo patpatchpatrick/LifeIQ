@@ -22,11 +22,18 @@ enum SQMetricUnit: String, Codable, CaseIterable {
     case percent
 }
 
+enum SQMetricGroup: String, Codable, CaseIterable {
+    case state       // Physical/mental state: mood, energy, clarity, soreness, sleep
+    case habits      // Behavioral tracking: alcohol, weed, porn, caffeine, meditation
+    case custom      // User-created metrics
+}
+
 struct SQMetricDefinition: Identifiable, Codable, Hashable {
     let id: String               // stable preset IDs + UUIDs for custom
     var title: String            // "Mood", "Sleep Hours", "Alcohol", "Weed", "Custom X"
     var kind: SQMetricKind
     var unit: SQMetricUnit
+    var group: SQMetricGroup     // category: state, habits, or custom
     var min: Float?              // for scale/number
     var max: Float?
     var step: Float?             // slider granularity

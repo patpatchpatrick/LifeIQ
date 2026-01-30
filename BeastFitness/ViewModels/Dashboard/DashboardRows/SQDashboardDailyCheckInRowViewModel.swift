@@ -14,12 +14,23 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     let context: ModelContext
     let canEditDailyStats: Bool
     let metricChips: [SQMetricChip.Model]?
-    let vitalRows: [SQDailyCheckInVitalRow.Model]?
-    let summaryText: String?
-    
-    var isExpanded: Bool = true
-    func toggleExpanded() {
-        isExpanded.toggle()
+    let stateRows: [SQDailyCheckInVitalRow.Model]?
+    let habitRows: [SQDailyCheckInVitalRow.Model]?
+
+    var isStateExpanded: Bool = true
+    var isHabitsExpanded: Bool = true
+
+    /// Only show the section if there's actual data to display
+    var shouldShow: Bool {
+        (stateRows?.isEmpty == false) || (habitRows?.isEmpty == false)
+    }
+
+    func toggleStateExpanded() {
+        isStateExpanded.toggle()
+    }
+
+    func toggleHabitsExpanded() {
+        isHabitsExpanded.toggle()
     }
 
     init(dailyCheckInStats: SQDailyCheckInStats?, context: ModelContext) {
@@ -29,15 +40,16 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
             canEditDailyStats = true
             callToAction = nil
             metricChips = SQMetricChip.Model.chips(from: dailyCheckInStats)
-            
-            // Build vital rows from stats
-            vitalRows = Self.buildVitalRows(from: dailyCheckInStats)
-            summaryText = Self.buildSummaryText(from: dailyCheckInStats)
+
+            // Build vital rows from stats, separated by group
+            let rows = Self.buildVitalRows(from: dailyCheckInStats)
+            stateRows = rows.state
+            habitRows = rows.habits
         } else {
             canEditDailyStats = false
             metricChips = nil
-            vitalRows = nil
-            summaryText = nil
+            stateRows = nil
+            habitRows = nil
             callToAction = .init(
                 title: "Complete daily check-in",
                 /// Don't use weak self here; controller can be temporary.
@@ -55,13 +67,20 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     }
     
     // MARK: - Private Helpers
-    
-    private static func buildVitalRows(from stats: SQDailyCheckInStats) -> [SQDailyCheckInVitalRow.Model] {
-        var rows: [SQDailyCheckInVitalRow.Model] = []
-        
+
+    private struct VitalRowGroups {
+        let state: [SQDailyCheckInVitalRow.Model]
+        let habits: [SQDailyCheckInVitalRow.Model]
+    }
+
+    private static func buildVitalRows(from stats: SQDailyCheckInStats) -> VitalRowGroups {
+        var stateRows: [SQDailyCheckInVitalRow.Model] = []
+        var habitRows: [SQDailyCheckInVitalRow.Model] = []
+
+        // State metrics
         // Mood
         if let moodValue = stats.values[SQMetricId.mood] {
-            rows.append(.init(
+            stateRows.append(.init(
                 id: SQMetricId.mood,
                 emoji: "🙂",
                 title: "Mood",
@@ -69,10 +88,10 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 sparklineData: generateMockSparkline(currentValue: Double(moodValue))
             ))
         }
-        
+
         // Energy
         if let energyValue = stats.values[SQMetricId.energy] {
-            rows.append(.init(
+            stateRows.append(.init(
                 id: SQMetricId.energy,
                 emoji: "⚡️",
                 title: "Energy",
@@ -80,10 +99,10 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 sparklineData: generateMockSparkline(currentValue: Double(energyValue))
             ))
         }
-        
+
         // Mental Clarity (Focus)
         if let clarityValue = stats.values[SQMetricId.mentalClarity] {
-            rows.append(.init(
+            stateRows.append(.init(
                 id: SQMetricId.mentalClarity,
                 emoji: "🧠",
                 title: "Focus",
@@ -91,10 +110,10 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 sparklineData: generateMockSparkline(currentValue: Double(clarityValue))
             ))
         }
-        
+
         // Soreness (inverted scale - 0=sore, 10=fresh)
         if let sorenessValue = stats.values[SQMetricId.soreness] {
-            rows.append(.init(
+            stateRows.append(.init(
                 id: SQMetricId.soreness,
                 emoji: "💪",
                 title: "Recovery",
@@ -102,10 +121,10 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 sparklineData: generateMockSparkline(currentValue: Double(sorenessValue))
             ))
         }
-        
+
         // Sleep
         if let sleepHours = stats.values[SQMetricId.sleepHours] {
-            rows.append(.init(
+            stateRows.append(.init(
                 id: SQMetricId.sleepHours,
                 emoji: "😴",
                 title: "Sleep",
@@ -113,38 +132,53 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 sparklineData: generateMockSparkline(currentValue: Double(sleepHours), range: 4...9)
             ))
         }
-        
-        // Alcohol (if tracked)
+
+        // Habit metrics
+        // Alcohol
         if let alcoholValue = stats.values[SQMetricId.alcohol] {
-            rows.append(.init(
+            habitRows.append(.init(
                 id: SQMetricId.alcohol,
                 emoji: "🍷",
                 title: "Alcohol",
                 value: "\(Int(alcoholValue))",
-                sparklineData: generateMockSparkline(currentValue: Double(alcoholValue), range: 0...5)
+                sparklineData: generateMockSparkline(currentValue: Double(alcoholValue), range: 0...1)
             ))
         }
-        
-        return rows
-    }
-    
-    private static func buildSummaryText(from stats: SQDailyCheckInStats) -> String? {
-        // Simple heuristic based on average of mood, energy, focus
-        let mood = stats.values[SQMetricId.mood].map(Double.init) ?? 5
-        let energy = stats.values[SQMetricId.energy].map(Double.init) ?? 5
-        let focus = stats.values[SQMetricId.mentalClarity].map(Double.init) ?? 5
-        
-        let average = (mood + energy + focus) / 3
-        
-        if average >= 7.5 {
-            return "Feeling strong today"
-        } else if average >= 6 {
-            return "Steady progress"
-        } else if average >= 4 {
-            return "Taking it easy"
-        } else {
-            return "Recovery mode"
+
+        // Weed
+        if let weedValue = stats.values[SQMetricId.weed] {
+            habitRows.append(.init(
+                id: SQMetricId.weed,
+                emoji: "🌿",
+                title: "Weed",
+                value: "\(Int(weedValue))",
+                sparklineData: generateMockSparkline(currentValue: Double(weedValue), range: 0...1)
+            ))
         }
+
+        // Porn
+        if let pornValue = stats.values[SQMetricId.porn] {
+            habitRows.append(.init(
+                id: SQMetricId.porn,
+                emoji: "📵",
+                title: "Porn",
+                value: "\(Int(pornValue))",
+                sparklineData: generateMockSparkline(currentValue: Double(pornValue), range: 0...1)
+            ))
+        }
+
+        // Caffeine
+        if let caffeineValue = stats.values[SQMetricId.caffeine] {
+            habitRows.append(.init(
+                id: SQMetricId.caffeine,
+                emoji: "☕️",
+                title: "Caffeine",
+                value: "\(Int(caffeineValue))",
+                sparklineData: generateMockSparkline(currentValue: Double(caffeineValue), range: 0...1)
+            ))
+        }
+
+        return VitalRowGroups(state: stateRows, habits: habitRows)
     }
     
     /// Generates mock sparkline data with realistic variation

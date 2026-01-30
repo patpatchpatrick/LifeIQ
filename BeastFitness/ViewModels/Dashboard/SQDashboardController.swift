@@ -117,9 +117,22 @@ final class SQDashboardController: SQDashboardInterface {
             var dashboardSections = [SQDashboardSectionViewModel]()
             
             let dailySectionConfig =  buildConfigTotalsSectionConfig(workoutSummaryRowId: .daily)
-            
+
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
-            
+
+            // Set the daily check-in CTA view model if no stats exist
+            if dailyCheckInStats == nil {
+                state.updateDailyCheckInCtaViewModel(.init(
+                    icon: .init(symbol: .checkmark),
+                    title: "Complete your daily check-in",
+                    onTap: {
+                        Task { await self.displayDailyCheckInSheet(for: context) }
+                    }
+                ))
+            } else {
+                state.updateDailyCheckInCtaViewModel(nil)
+            }
+
             dailyRows.append(contentsOf: [
                 SQDashboardDailyCheckInRowViewModel(dailyCheckInStats: dailyCheckInStats, context: context),
                 SQDashboardWorkoutSummaryRowViewModel(
@@ -128,7 +141,7 @@ final class SQDashboardController: SQDashboardInterface {
                     workouts: todaysWorkouts,
                     priorWorkouts: yesterdaysWorkouts)
             ])
-            
+
             dashboardSections.append(.init(
                 title: dailySectionConfig.timeRange.title,
                 rows: dailyRows))

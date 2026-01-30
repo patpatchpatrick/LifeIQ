@@ -25,6 +25,16 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 - **Workouts** history and summaries
 - **Daily stats/habits** that we track ourselves (e.g., mood, alcohol use, energy levels, etc.)
 
+### Daily Check-In Metrics Organization
+
+Daily check-in metrics are organized into groups using the `SQMetricGroup` enum (defined in `BeastFitness/Models/DailyCheckIn/SQMetric.swift`):
+
+- **State** (.state) — Physical and mental state metrics: mood, energy, mental clarity, soreness/recovery, sleep hours, sleep quality
+- **Habits** (.habits) — Behavioral tracking metrics: alcohol, weed, porn, caffeine, meditation
+- **Custom** (.custom) — User-created metrics
+
+All metrics must have a `group` property assigned in their `SQMetricDefinition`. The dashboard displays these groups as separate collapsible sections for better organization.
+
 ## Shared module
 
 - We use a shared module called **BeastFitnessCore**.

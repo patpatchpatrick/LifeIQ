@@ -67,6 +67,7 @@ final class SQMetricsManager: SQMetricsManaging {
                         title: def.title,
                         kind: def.kind,
                         unit: def.unit,
+                        group: def.group,
                         min: def.min,
                         max: def.max,
                         step: def.step,
@@ -194,33 +195,39 @@ final class SQMetricsManager: SQMetricsManaging {
         func next() -> Int { defer { order += 1 }; return order }
 
         return [
-            // Core defaults (enabled)
-            .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none,
+            // State metrics (enabled)
+            .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none, group: .state,
                   min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.mentalClarity, title: "Mental Clarity", kind: .scale, unit: .none,
+            .init(id: SQMetricId.mentalClarity, title: "Mental Clarity", kind: .scale, unit: .none, group: .state,
                   min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none,
+            .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none, group: .state,
                   min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none,
+            .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none, group: .state,
                   min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.sleepHours, title: "Sleep (hours)", kind: .number, unit: .hours,
+            .init(id: SQMetricId.sleepHours, title: "Sleep (hours)", kind: .number, unit: .hours, group: .state,
                   min: 0, max: 24, step: 0.5, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
+            .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none, group: .state,
                   min: 1, max: 5, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false),
 
-            // Optional presets (disabled)
-            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .binary, unit: .none,
+            // Habit metrics (disabled by default)
+            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .binary, unit: .none, group: .habits,
                   min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.weed, title: "Weed", kind: .binary, unit: .none,
+            .init(id: SQMetricId.weed, title: "Weed", kind: .binary, unit: .none, group: .habits,
                   min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
 
-            .init(id: SQMetricId.porn, title: "Porn", kind: .binary, unit: .none,
+            .init(id: SQMetricId.porn, title: "Porn", kind: .binary, unit: .none, group: .habits,
+                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
+
+            .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .binary, unit: .none, group: .habits,
+                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
+
+            .init(id: SQMetricId.meditation, title: "Meditation", kind: .binary, unit: .none, group: .habits,
                   min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
         ]
     }

@@ -9,53 +9,44 @@ import SwiftUI
 
 struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
     @Bindable var viewModel: SQDashboardDailyCheckInRowViewModel
-    
-    var dailyCheckInTitle: some View {
-        SQCollapsibleSectionHeader(
-            title: "Daily Check-In",
-            isExpanded: viewModel.isExpanded,
-            action: { viewModel.toggleExpanded() }
-        ) {
-            if viewModel.canEditDailyStats {
-                Button(action: {
-                    Task { await viewModel.editDailyCheckInStats() }
-                }) {
-                    SQImageView(image: .init(symbol: .edit, symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)))
-                        .frame(width: 14)
-                }
-                .buttonStyle(.plain)
-            }
+
+    var editButton: some View {
+        Button(action: {
+            Task { await viewModel.editDailyCheckInStats() }
+        }) {
+            SQImageView(image: .init(symbol: .edit, symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)))
+                .frame(width: 14)
         }
+        .buttonStyle(.plain)
     }
 
-    var mainStack: some View {
+    var stateSection: some View {
         LazyVStack(alignment: .leading, spacing: 0) {
+            SQCollapsibleSectionHeader(
+                title: "State",
+                isExpanded: viewModel.isStateExpanded,
+                action: { viewModel.toggleStateExpanded() }
+            ) {
+                if viewModel.canEditDailyStats {
+                    editButton
+                }
+            }
 
-            dailyCheckInTitle
-            
-            if viewModel.isExpanded {
+            if viewModel.isStateExpanded {
                 if let callToActionViewModel = viewModel.callToAction {
                     SQCallToAction(viewModel: callToActionViewModel)
                 }
-                
-                // Summary text
-                if let summaryText = viewModel.summaryText {
-                    Text(summaryText)
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(SQColor.textTertiary)
-                        .padding(.bottom, .SQSpace.m)
-                }
-                
-                // Vertical vitals list
-                if let vitalRows = viewModel.vitalRows {
+
+                // State vital rows
+                if let stateRows = viewModel.stateRows {
                     LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
-                        ForEach(vitalRows) { row in
+                        ForEach(stateRows) { row in
                             SQDailyCheckInVitalRow(model: row) {
-                                print("PTD Vital Row Tapped:", row.title)
+                                print("PTD State Row Tapped:", row.title)
                             }
-                            
+
                             // Divider between rows
-                            if row.id != vitalRows.last?.id {
+                            if row.id != stateRows.last?.id {
                                 Divider()
                                     .sqBackgroundColor(SQColor.border)
                                     .padding(.vertical, .SQSpace.xs)
@@ -67,7 +58,52 @@ struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
         }
         .frame(maxWidth: .infinity)
     }
-    
+
+    var habitsSection: some View {
+        LazyVStack(alignment: .leading, spacing: 0) {
+            SQCollapsibleSectionHeader(
+                title: "Habits",
+                isExpanded: viewModel.isHabitsExpanded,
+                action: { viewModel.toggleHabitsExpanded() }
+            ) {
+                if viewModel.canEditDailyStats {
+                    editButton
+                }
+            }
+
+            if viewModel.isHabitsExpanded {
+                // Habit vital rows
+                if let habitRows = viewModel.habitRows {
+                    LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
+                        ForEach(habitRows) { row in
+                            SQDailyCheckInVitalRow(model: row) {
+                                print("PTD Habit Row Tapped:", row.title)
+                            }
+
+                            // Divider between rows
+                            if row.id != habitRows.last?.id {
+                                Divider()
+                                    .sqBackgroundColor(SQColor.border)
+                                    .padding(.vertical, .SQSpace.xs)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    var mainStack: some View {
+        VStack(spacing: .SQSpace.l) {
+            stateSection
+
+            if viewModel.habitRows?.isEmpty == false {
+                habitsSection
+            }
+        }
+    }
+
     var body: some View {
         SQDashboardView.card { mainStack }
     }

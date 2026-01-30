@@ -31,9 +31,9 @@ struct SQDashboardView: View {
                     Text("Time Range")
                         .sqFont(.bodySmall)
                         .sqForegroundColor(.textSecondary)
-                    
+
                     Spacer()
-                    
+
                     SQDropDownMenu(
                         menuViewModel: controller.timeRangeMenuViewModel,
                         isDisabled: false
@@ -41,7 +41,14 @@ struct SQDashboardView: View {
                 }
                 .padding(.horizontal, .SQSpace.l)
                 .padding(.bottom, .SQSpace.xl)
-                
+
+                // Daily Check-In CTA Banner
+                if let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
+                    SQCallToAction(viewModel: dailyCheckInCtaViewModel)
+                        .padding(.horizontal, .SQSpace.l)
+                        .padding(.bottom, .SQSpace.xl)
+                }
+
                 ForEach(filteredSections) { sectionViewModel in
                     VStack(spacing: 0) {
                         ForEach(sectionViewModel.rows) { rowViewModel in
@@ -58,7 +65,8 @@ struct SQDashboardView: View {
                                 }
                                 
                             case .dailyCheckInStats:
-                                if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel {
+                                if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel,
+                                   dailyCheckInRowViewModel.shouldShow {
                                     SQDashboardWorkoutSummaryDailyCheckInRow(viewModel: dailyCheckInRowViewModel)
                                 }
                                 

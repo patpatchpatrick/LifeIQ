@@ -15,6 +15,7 @@ final class SQMetricDefinitionEntity {
     var title: String
     var kindRaw: String
     var unitRaw: String
+    var groupRaw: String
 
     var minValue: Float?
     var maxValue: Float?
@@ -33,6 +34,7 @@ final class SQMetricDefinitionEntity {
         title: String,
         kind: SQMetricKind,
         unit: SQMetricUnit,
+        group: SQMetricGroup,
         min: Float? = nil,
         max: Float? = nil,
         step: Float? = nil,
@@ -45,6 +47,7 @@ final class SQMetricDefinitionEntity {
         self.title = title
         self.kindRaw = kind.rawValue
         self.unitRaw = unit.rawValue
+        self.groupRaw = group.rawValue
         self.minValue = min
         self.maxValue = max
         self.stepValue = step
@@ -59,6 +62,7 @@ final class SQMetricDefinitionEntity {
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(rawValue: kindRaw) ?? .number }
     var unit: SQMetricUnit { SQMetricUnit(rawValue: unitRaw) ?? .none }
+    var group: SQMetricGroup { SQMetricGroup(rawValue: groupRaw) ?? .custom }
 
     func toDefinition() -> SQMetricDefinition {
         .init(
@@ -66,6 +70,7 @@ extension SQMetricDefinitionEntity {
             title: title,
             kind: kind,
             unit: unit,
+            group: group,
             min: minValue,
             max: maxValue,
             step: stepValue,
@@ -80,6 +85,7 @@ extension SQMetricDefinitionEntity {
         title = def.title
         kindRaw = def.kind.rawValue
         unitRaw = def.unit.rawValue
+        groupRaw = def.group.rawValue
         minValue = def.min
         maxValue = def.max
         stepValue = def.step
