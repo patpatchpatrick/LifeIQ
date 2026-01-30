@@ -116,6 +116,25 @@ extension SQDailyCheckInEntity {
         return try context.fetch(descriptor).first?.toStats()
     }
 
+    /// Fetches all daily check-in stats within a date range
+    static func getAll(
+        from startDate: Date,
+        to endDate: Date,
+        context: ModelContext
+    ) throws -> [SQDailyCheckInStats] {
+        let normalizedStart = Calendar.current.startOfDay(for: startDate)
+        let normalizedEnd = Calendar.current.startOfDay(for: endDate)
+
+        let descriptor = FetchDescriptor<SQDailyCheckInEntity>(
+            predicate: #Predicate { entity in
+                entity.date >= normalizedStart && entity.date <= normalizedEnd
+            },
+            sortBy: [SortDescriptor(\.date, order: .forward)]
+        )
+
+        return try context.fetch(descriptor).map { $0.toStats() }
+    }
+
     static func upsert(
         stats: SQDailyCheckInStats,
         in context: ModelContext

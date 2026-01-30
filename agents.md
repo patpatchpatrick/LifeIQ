@@ -41,6 +41,199 @@ All metrics must have a `group` property assigned in their `SQMetricDefinition`.
 - Shared code such as extensions, utilities (e.g., logging), and reusable business logic should generally live in **BeastFitnessCore** so it can be reused across app targets/modules.
 - We use a local package called **CoolCharts** for all chart/graph components. Any chart visualizations should be added to or used from CoolCharts.
 
+## State Management Architecture
+
+All application state is centralized in **SQAppState** (singleton: `SQAppState.shared`):
+
+```swift
+@MainActor
+@Observable final class SQAppState {
+    let hub: EventHub               // Event bus for cross-component communication
+
+    let userState: SQUserState      // User authentication state
+    let navigationState: NavigationState
+    let dashboardState: DashboardState
+    let workoutSessionState: WorkoutSessionState
+    // ... etc
+}
+```
+
+### Creating New State Objects
+
+Follow this pattern (see `SQUserState` or `SettingsState` for examples):
+
+1. **Create protocol** defining the state interface:
+```swift
+@MainActor
+protocol MyFeatureStating: AnyObject {
+    var hub: EventHub { get }
+    // Add your state properties/methods here
+}
+```
+
+2. **Create state class** implementing the protocol:
+```swift
+@MainActor
+@Observable final class MyFeatureState: MyFeatureStating {
+    let hub: EventHub
+
+    // Your state properties
+    var someValue: String = ""
+
+    init(hub: EventHub) {
+        self.hub = hub
+    }
+}
+```
+
+3. **Add to SQAppState**:
+```swift
+// In SQAppState.swift
+let myFeatureState: MyFeatureState
+
+// In init():
+self.myFeatureState = .init(hub: hub)
+```
+
+4. **Access from anywhere**:
+```swift
+let currentUser = SQAppState.shared.userState.loggedInUser
+```
+
+### State Benefits
+- **Centralized**: All state in one place
+- **Observable**: SwiftUI views auto-update when state changes
+- **Event-driven**: Use `hub` for cross-component communication
+- **Type-safe**: Protocol-based design
+
+## Logging Conventions
+
+We use **SQLogger** (from BeastFitnessCore) for all logging:
+
+### Basic Usage
+
+**iOS apps** - use `log()`:
+```swift
+SQLogger.shared.log(
+    "Message here",
+    .info,                    // Level: .debug, .info, .log, .error
+    context: .dailyCheckIn    // Context: categorizes logs
+)
+```
+
+**watchOS apps** - use `logW()`:
+```swift
+SQLogger.shared.logW(
+    "Message here",
+    .info,
+    context: .workoutSession
+)
+```
+
+### Available Contexts (iOS)
+
+- `.general` - General app events
+- `.dailyCheckIn` - Daily check-in operations
+- `.dashboard` - Dashboard loading/updates
+- `.workoutSession` - Workout tracking
+- `.healthKit` - HealthKit operations
+- `.metricsManager` - Metrics management
+- `.dataProcessing` - Data sync/processing
+- ... (see `SQiOSLogContext` for full list)
+
+### Log Levels
+
+- `.debug` - Detailed debugging info (verbose)
+- `.info` - General informational messages
+- `.log` - Standard operational logs
+- `.error` - Error conditions
+
+### Priority Logs
+
+Use `isPriority: true` for important logs that should stand out:
+```swift
+SQLogger.shared.log(
+    "✅ Sync completed: 42 documents fetched",
+    .info,
+    context: .dailyCheckIn,
+    isPriority: true  // Adds visual separators
+)
+```
+
+### Best Practices
+
+1. **Log sync operations** with document counts:
+   ```swift
+   SQLogger.shared.log(
+       "Fetched \(stats.count) documents from Firestore",
+       .info,
+       context: .dailyCheckIn
+   )
+   ```
+
+2. **Log errors with context**:
+   ```swift
+   SQLogger.shared.log(
+       "Failed to save: \(error.localizedDescription)",
+       .error,
+       context: .dailyCheckIn
+   )
+   ```
+
+3. **Use appropriate contexts** - helps filter logs in Console.app
+4. **Mark important events as priority** - easier to spot in logs
+
+## Networking conventions
+
+We use **Firestore** as our backend with a custom networking layer built around routes and services:
+
+### Architecture Components
+
+- **SQFirestoreRoute** (protocol) — Defines a route with a Firestore reference and optional write body
+  - Routes are enums that represent specific API operations
+  - Each route returns a `SQFirestoreReference` (documentRead, documentWrite, collection, or query)
+  - Write routes must provide a `writeBody: Encodable?`
+
+- **SQNetworkService** (base class) — Executes routes and handles Firestore operations
+  - `performRequest<T: Codable>(_ route: SQFirestoreRoute) async throws -> T`
+  - Automatically handles read/write operations based on the route's reference type
+  - Write operations use `SQVoidWrite` as the return type
+
+- **Service classes** (e.g., `SQDailyCheckInService`) — Domain-specific services that inherit from `SQNetworkService`
+  - Define high-level operations (e.g., `saveDailyCheckInStats`, `fetchAllDailyCheckIns`)
+  - Call `performRequest()` with the appropriate route
+
+### Example: Adding a new network operation
+
+1. **Define the route** in the appropriate route enum (e.g., `SQDailyCheckInRoute`):
+```swift
+enum SQDailyCheckInRoute {
+    case fetchAllDailyCheckIns(SQUser, afterDate: Date?)
+}
+
+extension SQDailyCheckInRoute: SQFirestoreRoute {
+    func reference(in db: Firestore) -> SQFirestoreReference {
+        case .fetchAllDailyCheckIns(let user, let afterDate):
+            let query = db.collection("users/\(user.id)/daily-check-in-summaries")
+                .whereField("date", isGreaterThan: afterDate ?? .distantPast)
+            return .query(query)
+    }
+}
+```
+
+2. **Add the service method**:
+```swift
+static func fetchAllDailyCheckIns(for user: SQUser, afterDate: Date? = nil) async throws -> [SQDailyCheckInStats] {
+    try await performRequest(SQDailyCheckInRoute.fetchAllDailyCheckIns(user, afterDate: afterDate))
+}
+```
+
+### Optimization: Incremental Sync
+
+Always use `afterDate` parameters for syncing to minimize Firestore reads:
+- First sync: `fetchAllDailyCheckIns(for: user, afterDate: nil)` fetches all
+- Subsequent syncs: `fetchAllDailyCheckIns(for: user, afterDate: lastSyncDate)` fetches only new data
+
 ## UI conventions
 
 - **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.

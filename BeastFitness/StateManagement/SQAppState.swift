@@ -16,15 +16,16 @@ final class SQAppState {
     
     let hub = EventHub()
 
+    let userState: SQUserState
     let navigationState: NavigationState
-    
+
     let dashboardState: DashboardState
-    
+
     let workoutSessionState: WorkoutSessionState
     let workoutScreenState: WorkoutsLandingState
     let workoutsListState: WorkoutsListState
     let workoutSummaryState: WorkoutSummaryState
-    
+
     let exercisesListState: ExercisesListState
     let metricsListState: SQMetricsListState
     let alertState: SQAlertState
@@ -32,6 +33,7 @@ final class SQAppState {
     let toastState: SQToastState
 
     init() {
+        self.userState = .init(hub: hub)
         self.navigationState = .init(hub: hub)
         self.dashboardState = .init(hub: hub)
         self.workoutSessionState = .init(hub: hub)
