@@ -39,13 +39,21 @@ struct SQWorkoutSessionExerciseRow: View {
                 .padding(.bottom, .SQSpace.l)
 
             // Set rows
+            if !viewModel.sets.isEmpty {
+                columnHeaderRow
+                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.red)
+                    .padding(.bottom, .SQSpace.xs)
+            }
+            
             List {
                 ForEach(viewModel.sets) { setVM in
                     setRow(setVM)
                         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
-                        .padding(.bottom, 10)
+                        .padding(.bottom, .SQSpace.m)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 withAnimation { viewModel.removeSet(setVM) }
@@ -92,6 +100,29 @@ struct SQWorkoutSessionExerciseRow: View {
             }
         }
     }
+    
+    private var columnHeaderRow: some View {
+        HStack(spacing: .SQSpace.s) {
+            Color.clear.frame(width: 28) // aligns with "#"
+
+            Text("Reps")
+                .sqFont(.bodySmall) // or your smallest
+                .sqForegroundColor(.textTertiary)
+                .frame(width: 60, alignment: .leading)
+
+            Text("lbs")
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textTertiary)
+                .frame(width: 80, alignment: .leading)
+
+            Spacer()
+
+            Image(systemName: "circle").opacity(0) // align with completion button
+        }
+        .padding(.vertical, 0)     // important
+        .frame(height: 14)         // keep it tight
+    }
+
 
     private func setRow(_ setVM: SQWorkoutSessionSetViewModel) -> some View {
         HStack(spacing: .SQSpace.s) {
