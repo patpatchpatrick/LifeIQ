@@ -224,11 +224,13 @@ final class SQDashboardController: SQDashboardInterface {
                 priorWorkouts: weekBeforeLastWorkouts)
 
             var weeklyRows: [SQDashboardRowViewModel] = []
-            if weeklyCheckInRow.shouldShow {
-                weeklyRows.append(weeklyCheckInRow)
-            }
+            
             if weeklyPerformanceRow.vitalRow != nil {
                 weeklyRows.append(weeklyPerformanceRow)
+            }
+            
+            if weeklyCheckInRow.shouldShow {
+                weeklyRows.append(weeklyCheckInRow)
             }
             if !weeklyWorkoutSummaryRowViewModel.isEmpty {
                 weeklyRows.append(weeklyWorkoutSummaryRowViewModel)
@@ -261,11 +263,13 @@ final class SQDashboardController: SQDashboardInterface {
                 priorWorkouts: yearBeforeLastWorkouts)
 
             var yearlyRows: [SQDashboardRowViewModel] = []
-            if yearlyCheckInRow.shouldShow {
-                yearlyRows.append(yearlyCheckInRow)
-            }
+            
             if yearlyPerformanceRow.vitalRow != nil {
                 yearlyRows.append(yearlyPerformanceRow)
+            }
+            
+            if yearlyCheckInRow.shouldShow {
+                yearlyRows.append(yearlyCheckInRow)
             }
             if !yearlyWorkoutSummaryRowViewModel.isEmpty {
                 yearlyRows.append(yearlyWorkoutSummaryRowViewModel)
