@@ -19,9 +19,14 @@ struct SQMetricsListItem: View {
                 .sqForegroundColor(.backgroundSecondaryLight)
                 .frame(width: 40)
 
-            Image(systemName: iconName)
-                .font(.system(size: 16, weight: .semibold))
-                .sqForegroundColor(.textPrimary)
+            if let emoji = viewModel.emoji, !emoji.isEmpty {
+                Text(emoji)
+                    .font(.system(size: 20))
+            } else {
+                Image(systemName: iconName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .sqForegroundColor(.textPrimary)
+            }
         }
     }
 

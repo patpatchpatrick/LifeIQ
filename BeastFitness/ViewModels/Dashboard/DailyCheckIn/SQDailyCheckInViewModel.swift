@@ -137,6 +137,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         for metric in metrics {
             let field: SQDailyCheckInField = .metric(id: metric.id)
+            let displayTitle = metric.emoji != nil ? "\(metric.emoji!) \(metric.title)" : metric.title
 
             switch metric.kind {
 
@@ -145,7 +146,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
                     field: field,
-                    title: metric.title,
+                    title: displayTitle,
                     segments: SQBinaryYesNo.allCases,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -160,7 +161,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
                     field: field,
-                    title: metric.title,
+                    title: displayTitle,
                     segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -172,7 +173,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
                 let row = SQDailyCheckInTextEntryViewModel(
                     field: field,
-                    title: metric.title,
+                    title: displayTitle,
                     textFieldViewModel: tf,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )

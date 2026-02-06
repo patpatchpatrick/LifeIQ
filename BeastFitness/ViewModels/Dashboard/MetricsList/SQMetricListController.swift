@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 import BeastFitnessCore
 
 @Observable @MainActor
@@ -18,11 +19,15 @@ final class SQMetricsListController {
     var navigationPath = NavigationPath()
     let state: SQMetricsListStating
 
-    private let metricsManager: SQMetricsManaging
+    let metricsManager: SQMetricsManaging
     private(set) var hasLoadedUI = false
 
     private(set) var rows: [SQMetricsListItemViewModel] = []
     private(set) var allRows: [SQMetricsListItemViewModel] = []
+
+    private var cancellables = Set<AnyCancellable>()
+    private var modelContext: ModelContext?
+    private var hub: EventHub { SQAppState.shared.hub }
 
     /// Optional hook if you want the view/controller above to react
     private let onMetricSelected: ((SQMetricDefinition) -> Void)?
@@ -51,14 +56,26 @@ final class SQMetricsListController {
     /// Call from the view's `.task`/`.onAppear` (since we need ModelContext)
     func loadUI(using context: ModelContext) {
         guard !hasLoadedUI else { return }
+        self.modelContext = context
         do {
             try metricsManager.loadIfNeeded(using: context)
             reloadRows(using: context)
             hasLoadedUI = true
+            subscribeToMetricEvents()
         } catch {
             // If you have eventHub alerts on this screen, emit one here
             // For now, fail silently
         }
+    }
+
+    private func subscribeToMetricEvents() {
+        hub.metricEvents.sink { [weak self] event in
+            guard let self, let context = self.modelContext else { return }
+            switch event {
+            case .metricsUpdated:
+                self.reloadRows(using: context)
+            }
+        }.store(in: &cancellables)
     }
 
     // MARK: - Rows
@@ -114,6 +131,21 @@ final class SQMetricsListController {
                 return tokens.allSatisfy { searchableText.contains($0) }
             }
             .sorted { $0.title < $1.title }
+    }
+
+    // MARK: - Navigation
+
+    func createMetricTapped() {
+        navigationPath.append(SQMetricNavTarget.create)
+    }
+
+    func editMetricTapped(_ metricId: String) {
+        navigationPath.append(SQMetricNavTarget.edit(metricId))
+    }
+
+    /// Look up a metric definition by ID for the edit form
+    func metricDefinition(for id: String) -> SQMetricDefinition? {
+        metricsManager.allMetrics(includeArchived: false).first(where: { $0.id == id })
     }
 
     // MARK: - Actions

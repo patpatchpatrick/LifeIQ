@@ -25,6 +25,7 @@ final class SQMetricDefinitionEntity {
     var isEnabled: Bool
     var sortOrder: Int
     var isArchived: Bool
+    var emoji: String?
 
     // Optional: for Firestore sync later
     var updatedAt: Date
@@ -41,7 +42,8 @@ final class SQMetricDefinitionEntity {
         isPreset: Bool,
         isEnabled: Bool,
         sortOrder: Int,
-        isArchived: Bool
+        isArchived: Bool,
+        emoji: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -55,6 +57,7 @@ final class SQMetricDefinitionEntity {
         self.isEnabled = isEnabled
         self.sortOrder = sortOrder
         self.isArchived = isArchived
+        self.emoji = emoji
         self.updatedAt = .now
     }
 }
@@ -77,7 +80,8 @@ extension SQMetricDefinitionEntity {
             isPreset: isPreset,
             isEnabled: isEnabled,
             sortOrder: sortOrder,
-            isArchived: isArchived
+            isArchived: isArchived,
+            emoji: emoji
         )
     }
 
@@ -93,6 +97,7 @@ extension SQMetricDefinitionEntity {
         isEnabled = def.isEnabled
         sortOrder = def.sortOrder
         isArchived = def.isArchived
+        emoji = def.emoji
         updatedAt = .now
     }
 }

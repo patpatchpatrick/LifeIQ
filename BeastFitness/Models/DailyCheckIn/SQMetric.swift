@@ -41,6 +41,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     var isEnabled: Bool          // user chooses what they track
     var sortOrder: Int
     var isArchived: Bool
+    var emoji: String?           // user-chosen emoji (single grapheme cluster)
 }
 
 enum SQMetricId {

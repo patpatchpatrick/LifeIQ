@@ -175,6 +175,8 @@
 		F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD792F31155400BF1022 /* SQModalHost.swift */; };
 		F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */; };
 		F6C5FD7E2F3116A900BF1022 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD7D2F3116A900BF1022 /* Image+Extensions.swift */; };
+		F6C5FD802F32C3B300BF1022 /* SQMetricFormViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD7F2F32C3B300BF1022 /* SQMetricFormViewModel.swift */; };
+		F6C5FD822F32C3F200BF1022 /* SQMetricFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD812F32C3F200BF1022 /* SQMetricFormView.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
@@ -414,6 +416,8 @@
 		F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDatePickerModal.swift; sourceTree = "<group>"; };
 		F6C5FD792F31155400BF1022 /* SQModalHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQModalHost.swift; sourceTree = "<group>"; };
 		F6C5FD7D2F3116A900BF1022 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
+		F6C5FD7F2F32C3B300BF1022 /* SQMetricFormViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricFormViewModel.swift; sourceTree = "<group>"; };
+		F6C5FD812F32C3F200BF1022 /* SQMetricFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricFormView.swift; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
@@ -950,6 +954,7 @@
 			children = (
 				F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */,
 				F67F0A0A2F087A0A00D7BB90 /* SQMetricsListView.swift */,
+				F6C5FD812F32C3F200BF1022 /* SQMetricFormView.swift */,
 			);
 			path = MetricsList;
 			sourceTree = "<group>";
@@ -959,6 +964,7 @@
 			children = (
 				F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */,
 				F67F09FF2F08759500D7BB90 /* SQMetricListController.swift */,
+				F6C5FD7F2F32C3B300BF1022 /* SQMetricFormViewModel.swift */,
 			);
 			path = MetricsList;
 			sourceTree = "<group>";
@@ -1647,6 +1653,7 @@
 				F6A848A12CB6032B00B09AD5 /* SQStravaImport.swift in Sources */,
 				F6A848AB2CB779A300B09AD5 /* SQStravaWorkout.swift in Sources */,
 				F67F09F62F08567000D7BB90 /* SQMetricDefinitionEntity.swift in Sources */,
+				F6C5FD822F32C3F200BF1022 /* SQMetricFormView.swift in Sources */,
 				F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */,
 				F61592312EF3628E00223A63 /* SQAlertState.swift in Sources */,
 				F68D702D2F01D86900543561 /* SQPicker.swift in Sources */,
@@ -1699,6 +1706,7 @@
 				F61591FB2EEA48E100223A63 /* SQWorkoutSession+Mocks.swift in Sources */,
 				F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */,
 				F679BC4D2EE4FB7100A2F249 /* SQWorkoutSummaryController.swift in Sources */,
+				F6C5FD802F32C3B300BF1022 /* SQMetricFormViewModel.swift in Sources */,
 				F61593BF2EF37A3400223A63 /* SQToastOverlayWindow.swift in Sources */,
 				F629CE6F2EE497960002330C /* SQWorkoutSessionExerciseView.swift in Sources */,
 			);

@@ -13,6 +13,7 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
     let subtitle: String
     let metricId: String
     let isTracked: Bool
+    let emoji: String?
 
     init(metric: SQMetricDefinition, isTracked: Bool) {
         self.id = metric.id
@@ -20,6 +21,7 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
         self.title = metric.title
         self.subtitle = Self.buildSubtitle(for: metric)
         self.isTracked = isTracked
+        self.emoji = metric.emoji
     }
 
     private static func buildSubtitle(for metric: SQMetricDefinition) -> String {
