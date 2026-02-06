@@ -129,19 +129,23 @@ enum SQImageSymbol: String {
     case wheelchairWalkPace  = "figure.roll"         // generic fallback for wheelchair
     
     /// Other
+    case arrowDown           = "arrow.down"
+    case arrowUp             = "arrow.up"
+    case calendar            = "calendar"
+    case checkmark           = "checkmark"
     case chevronDown         = "chevron.down"
     case chevronRight        = "chevron.right"
     case chevronUp           = "chevron.up"
-    case checkmark           = "checkmark"
     case edit                = "square.and.pencil"
-    case plus                = "plus"
     case ellipsisCircle      = "ellipsis.circle"
+    case exclamationmarkCircle = "exclamationmark.circle"
+    case gear                = "gear"
+    case heart               = "heart.fill"
     case minusCircle         = "minus.circle"
-    case play                = "play.fill"
     case pause               = "pause.fill"
     case pencil              = "pencil"
+    case play                = "play.fill"
+    case plus                = "plus"
     case xCircle             = "x.circle"
     case xMark               = "xmark"
-    case gear                = "gear"
-    case calendar            = "calendar"
 }
