@@ -12,6 +12,56 @@ struct SQDashboardView: View {
     @Environment(\.modelContext) private var modelContext
     static let uiConfig = UIConfig()
 
+    // MARK: - Computed Properties for Metrics
+
+    private var filteredMetrics: [SQStatRowData] {
+        // Find check-in row viewmodels in section view models
+        let checkInRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardDailyCheckInRowViewModel }
+
+        guard let checkInRow = checkInRows.first else { return [] }
+
+        // Extract all metrics from groups
+        var allMetrics: [SQStatRowData] = []
+
+        for group in checkInRow.groups {
+            // Filter by group if not "All"
+            guard controller.state.metricsGroupFilter == "All" || group.name == controller.state.metricsGroupFilter else {
+                continue
+            }
+
+            // Convert vital rows to stat row data
+            for vitalRow in group.rows {
+                let metricData = SQStatRowData(
+                    id: vitalRow.id,
+                    icon: vitalRow.emoji,
+                    title: vitalRow.title,
+                    avgValue: vitalRow.value,
+                    unit: vitalRow.subtitle ?? "",
+                    sparklineData: vitalRow.sparklineData,
+                    change14d: 0.0  // Placeholder - would need historical comparison
+                )
+                allMetrics.append(metricData)
+            }
+        }
+
+        return allMetrics
+    }
+
+    private var availableMetricGroups: [String] {
+        // Find check-in row viewmodels
+        let checkInRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardDailyCheckInRowViewModel }
+
+        guard let checkInRow = checkInRows.first else { return ["All"] }
+
+        // Extract unique group names
+        let groupNames = checkInRow.groups.map { $0.name }
+        return ["All"] + groupNames.sorted()
+    }
+
     // MARK: - Computed Subsections
 
     private var metricsSubsection: some View {
@@ -23,8 +73,14 @@ struct SQDashboardView: View {
                 isDisabled: false
             )
         ) {
-            Text("Metrics content - TODO")
-                .padding()
+            if filteredMetrics.isEmpty {
+                SQSubsectionEmptyState(
+                    title: "No metrics yet",
+                    message: "Complete your daily check-in to track metrics"
+                )
+            } else {
+                SQStatRowSection(rows: filteredMetrics)
+            }
         }
     }
 
@@ -69,7 +125,7 @@ struct SQDashboardView: View {
     // MARK: - Filter Menu Creators
 
     private func createMetricsFilterMenu() -> SQDropDownMenuViewModel {
-        let items = ["All", "Self", "Habits", "General"].map {
+        let items = availableMetricGroups.map {
             SQDropDownMenuViewModel.Item(title: $0)
         }
         return SQDropDownMenuViewModel(
