@@ -15,12 +15,28 @@ struct SQDashboardView: View {
     // MARK: - Computed Properties for Metrics
 
     private var filteredMetrics: [SQStatRowData] {
-        // Find check-in row viewmodels in section view models
-        let checkInRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardDailyCheckInRowViewModel }
+        // Get the section index based on selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        print("🔍 Selected time range: \(controller.state.selectedTimeRange.rawValue) (index: \(sectionIndex))")
 
-        guard let checkInRow = checkInRows.first else { return [] }
+        // Get the section for the selected time range
+        guard sectionIndex < controller.state.sectionViewModels.count else {
+            print("⚠️ Section index \(sectionIndex) out of bounds")
+            return []
+        }
+
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find check-in row in the current section
+        guard let checkInRow = currentSection.rows.compactMap({ $0 as? SQDashboardDailyCheckInRowViewModel }).first else {
+            print("⚠️ No check-in row found in section \(sectionIndex)")
+            return []
+        }
+
+        print("🔍 Check-in row has \(checkInRow.groups.count) groups")
+        for (i, group) in checkInRow.groups.enumerated() {
+            print("  Group \(i): \(group.name) with \(group.rows.count) rows")
+        }
 
         // Extract all metrics from groups
         var allMetrics: [SQStatRowData] = []
@@ -46,16 +62,21 @@ struct SQDashboardView: View {
             }
         }
 
+        print("🔍 Returning \(allMetrics.count) metrics (filter: \(controller.state.metricsGroupFilter))")
         return allMetrics
     }
 
     private var availableMetricGroups: [String] {
-        // Find check-in row viewmodels
-        let checkInRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardDailyCheckInRowViewModel }
+        // Get the section for the selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        guard sectionIndex < controller.state.sectionViewModels.count else { return ["All"] }
 
-        guard let checkInRow = checkInRows.first else { return ["All"] }
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find check-in row in current section
+        guard let checkInRow = currentSection.rows.compactMap({ $0 as? SQDashboardDailyCheckInRowViewModel }).first else {
+            return ["All"]
+        }
 
         // Extract unique group names
         let groupNames = checkInRow.groups.map { $0.name }
@@ -63,12 +84,14 @@ struct SQDashboardView: View {
     }
 
     private var performanceStats: [SQStatRowData] {
-        // Find performance row viewmodels in section view models
-        let performanceRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardDailyPerformanceRowViewModel }
+        // Get the section for the selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        guard sectionIndex < controller.state.sectionViewModels.count else { return [] }
 
-        guard let performanceRow = performanceRows.first,
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find performance row in current section
+        guard let performanceRow = currentSection.rows.compactMap({ $0 as? SQDashboardDailyPerformanceRowViewModel }).first,
               let vitalRow = performanceRow.vitalRow else {
             return []
         }
@@ -94,12 +117,14 @@ struct SQDashboardView: View {
     }
 
     private var availableWorkoutTypes: [String] {
-        // Find workout summary rows to get all workouts
-        let workoutSummaryRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+        // Get the section for the selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        guard sectionIndex < controller.state.sectionViewModels.count else { return ["All"] }
 
-        guard let workoutRow = workoutSummaryRows.first else {
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find workout summary row in current section
+        guard let workoutRow = currentSection.rows.compactMap({ $0 as? SQDashboardWorkoutSummaryRowViewModel }).first else {
             return ["All"]
         }
 
@@ -112,12 +137,14 @@ struct SQDashboardView: View {
     }
 
     private var filteredActivities: [SQDashboardWorkoutGroupViewModel] {
-        // Find workout summary rows to get workout groups
-        let workoutSummaryRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+        // Get the section for the selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        guard sectionIndex < controller.state.sectionViewModels.count else { return [] }
 
-        guard let workoutRow = workoutSummaryRows.first,
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find workout summary row in current section
+        guard let workoutRow = currentSection.rows.compactMap({ $0 as? SQDashboardWorkoutSummaryRowViewModel }).first,
               let workoutsSection = workoutRow.workoutsSection else {
             return []
         }
@@ -191,13 +218,18 @@ struct SQDashboardView: View {
     }
 
     private func getTotalsViewModel() -> SQDashboardWorkoutSummaryTotalsSectionViewModel? {
-        // Find workout summary rows in section view models
-        let workoutSummaryRows = controller.state.sectionViewModels
-            .flatMap { $0.rows }
-            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+        // Get the section for the selected time range
+        let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
+        guard sectionIndex < controller.state.sectionViewModels.count else { return nil }
 
-        // Get the totals section from the first workout summary row that has one
-        return workoutSummaryRows.first?.totalsSection
+        let currentSection = controller.state.sectionViewModels[sectionIndex]
+
+        // Find workout summary row in current section
+        guard let workoutRow = currentSection.rows.compactMap({ $0 as? SQDashboardWorkoutSummaryRowViewModel }).first else {
+            return nil
+        }
+
+        return workoutRow.totalsSection
     }
 
     private func totalsChartView(viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel) -> some View {
