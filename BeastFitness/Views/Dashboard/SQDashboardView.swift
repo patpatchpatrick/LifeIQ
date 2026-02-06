@@ -146,7 +146,6 @@ struct SQDashboardView: View {
         ) {
             if filteredMetrics.isEmpty {
                 SQSubsectionEmptyState(
-                    title: "No metrics yet",
                     message: "Complete your daily check-in to track metrics"
                 )
             } else {
@@ -319,7 +318,7 @@ struct SQDashboardView: View {
                 if !controller.state.isLoading {
                     HStack {
                         Text("Dashboard")
-                            .sqFont(.titleLarge)
+                            .sqFont(.title2)
                             .sqForegroundColor(.textPrimary)
 
                         Spacer()
