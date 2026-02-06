@@ -93,6 +93,46 @@ struct SQDashboardView: View {
         return [metricData]
     }
 
+    private var availableWorkoutTypes: [String] {
+        // Find workout summary rows to get all workouts
+        let workoutSummaryRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+
+        guard let workoutRow = workoutSummaryRows.first else {
+            return ["All"]
+        }
+
+        // Extract unique workout type names from workout groups
+        let workoutTypes = workoutRow.workouts.workoutsByActivityType.keys
+            .map { $0.name }
+            .sorted()
+
+        return workoutTypes.isEmpty ? ["All"] : ["All"] + workoutTypes
+    }
+
+    private var filteredActivities: [SQDashboardWorkoutGroupViewModel] {
+        // Find workout summary rows to get workout groups
+        let workoutSummaryRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+
+        guard let workoutRow = workoutSummaryRows.first,
+              let workoutsSection = workoutRow.workoutsSection else {
+            return []
+        }
+
+        // If "All" is selected, return all workout groups
+        if controller.state.activitiesTypeFilter == "All" {
+            return workoutsSection.workoutGroupViewModels
+        }
+
+        // Filter by selected workout type
+        return workoutsSection.workoutGroupViewModels.filter { group in
+            group.title.contains(controller.state.activitiesTypeFilter)
+        }
+    }
+
     // MARK: - Computed Subsections
 
     private var metricsSubsection: some View {
@@ -201,8 +241,27 @@ struct SQDashboardView: View {
                 isDisabled: false
             )
         ) {
-            Text("Activities content - TODO")
-                .padding()
+            if filteredActivities.isEmpty {
+                SQSubsectionEmptyState(
+                    message: "No activities recorded",
+                    icon: .questionmarkCircle
+                )
+            } else {
+                VStack(spacing: .SQSpace.m) {
+                    ForEach(Array(filteredActivities.enumerated()), id: \.1) { (index, workoutGroupViewModel) in
+                        SQDashboardWorkoutGroupView(viewModel: workoutGroupViewModel)
+                            .padding(.top, index == 0 ? .SQSpace.s : 0)
+                            .padding(.bottom, index == filteredActivities.count - 1 ? .SQSpace.xl : 0)
+
+                        if index != filteredActivities.count - 1 {
+                            Divider()
+                                .sqTintColor(.divider(1))
+                                .padding(.top, .SQSpace.xl)
+                                .padding(.bottom, .SQSpace.xl)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -242,7 +301,7 @@ struct SQDashboardView: View {
     }
 
     private func createActivitiesFilterMenu() -> SQDropDownMenuViewModel {
-        let items = ["All", "Running", "Cycling"].map {
+        let items = availableWorkoutTypes.map {
             SQDropDownMenuViewModel.Item(title: $0)
         }
         return SQDropDownMenuViewModel(
