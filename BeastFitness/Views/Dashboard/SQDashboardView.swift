@@ -140,8 +140,55 @@ struct SQDashboardView: View {
                 isDisabled: false
             )
         ) {
-            Text("Totals content - TODO")
-                .padding()
+            if let totalsViewModel = getTotalsViewModel() {
+                totalsChartView(viewModel: totalsViewModel)
+            } else {
+                SQSubsectionEmptyState(
+                    message: "No workouts recorded",
+                    icon: .questionmarkCircle
+                )
+            }
+        }
+    }
+
+    private func getTotalsViewModel() -> SQDashboardWorkoutSummaryTotalsSectionViewModel? {
+        // Find workout summary rows in section view models
+        let workoutSummaryRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardWorkoutSummaryRowViewModel }
+
+        // Get the totals section from the first workout summary row that has one
+        return workoutSummaryRows.first?.totalsSection
+    }
+
+    private func totalsChartView(viewModel: SQDashboardWorkoutSummaryTotalsSectionViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Activity bar chart
+            if !viewModel.currentChartDataPoints.isEmpty {
+                SQActivityBarChart(
+                    dataPoints: viewModel.currentChartDataPoints.map { point in
+                        SQActivityBarChart.DataPoint(
+                            label: point.label,
+                            value: point.value,
+                            color: SQColor.accent(1).color
+                        )
+                    },
+                    maxHeight: 60
+                )
+                .padding(.bottom, .SQSpace.xl)
+            }
+
+            // Total values and trends
+            HStack(alignment: .center, spacing: .SQSpace.m) {
+                SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
+                Text(viewModel.currentValueAndTrend.trend)
+            }
+        }
+        .onAppear {
+            // Sync view model's selected metric with filter state on first render
+            let metricType: SQDashboardWorkoutSummaryTotalsSectionViewModel.MetricType =
+                controller.state.totalsTypeFilter == .time ? .workoutTime : .kilocalories
+            viewModel.selectedMetric = metricType
         }
     }
 
@@ -183,6 +230,13 @@ struct SQDashboardView: View {
         ) { [controller] selectedTitle in
             if let type = TotalsType.allCases.first(where: { $0.rawValue == selectedTitle }) {
                 controller.state.totalsTypeFilter = type
+
+                // Update the view model's selected metric to match the filter
+                if let totalsViewModel = self.getTotalsViewModel() {
+                    let metricType: SQDashboardWorkoutSummaryTotalsSectionViewModel.MetricType =
+                        type == .time ? .workoutTime : .kilocalories
+                    totalsViewModel.selectedMetric = metricType
+                }
             }
         }
     }
