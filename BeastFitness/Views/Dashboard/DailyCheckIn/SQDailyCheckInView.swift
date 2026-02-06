@@ -25,15 +25,44 @@ struct SQDailyCheckInView: View {
     @ViewBuilder
     var mainScroll: some View {
         ScrollView {
-            mainStack
-                .padding(.SQSpace.xl)
+            VStack(spacing: .SQSpace.m) {
+                dateSelectionButton
+                mainStack
+            }
+            .padding(.SQSpace.xl)
         }
     }
     
+    @ViewBuilder
+    var dateSelectionButton: some View {
+        Button {
+            viewModel.showDatePicker(modelContext: modelContext)
+        } label: {
+            HStack(spacing: .SQSpace.s) {
+                Image(systemName: SQImageSymbol.calendar.rawValue)
+                    .sqForegroundColor(.accent(1))
+
+                Text(viewModel.targetDate.formattedString(with: .long))
+                    .sqFont(.body)
+                    .sqForegroundColor(.textPrimary)
+
+                Spacer()
+
+                Image(systemName: SQImageSymbol.pencil.rawValue)
+                    .sqForegroundColor(.textSecondary)
+            }
+            .padding(.SQSpace.m)
+            .frame(maxWidth: .infinity)
+            .sqBackgroundColor(.backgroundSecondary)
+            .cornerRadius(.SQCornerRadius.s)
+        }
+        .buttonStyle(.plain)
+    }
+
     var submitButton: some View {
         SQButton(
             shouldHugContent: false,
-            title: "Submit",
+            title: viewModel.isEditingPastDate ? "Update" : "Submit",
             isDisabled: !viewModel.canSubmit,
             isLoading: viewModel.isLoading,
             action: { Task { await viewModel.submitTapped(modelContext: modelContext) } })
@@ -46,7 +75,9 @@ struct SQDailyCheckInView: View {
         NavigationStack {
             mainScroll
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle("Daily Check-In")
+                .navigationTitle(viewModel.isEditingPastDate
+                    ? viewModel.targetDate.formattedString(with: .medium)
+                    : "Daily Check-In")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -74,7 +105,7 @@ struct SQDailyCheckInView: View {
         navStack
             .task {
                 /// TODO: - Don't refresh for every appear, only the first time the view appears
-                viewModel.refreshRows(stats: viewModel.stats, modelContext: modelContext)
+                await viewModel.refresh(for: viewModel.targetDate, modelContext: modelContext)
             }
     }
 }

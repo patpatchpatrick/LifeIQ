@@ -47,7 +47,7 @@ protocol DashboardStating: AnyObject {
     func changeTab(to tab: NavigationState.Tab)
 
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
-    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?)
+    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?)
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
 
     func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel])
@@ -107,15 +107,17 @@ protocol DashboardStating: AnyObject {
         isDailyCheckInSheetVisible = isVisible
     }
     
-    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?) {
+    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date? = nil) {
+        let targetDate = date ?? .now
         dailyCheckInViewModel = .init(
             eventHub: SQAppState.shared.hub,
             stats: stats,
+            targetDate: targetDate,
             metricsManager: SQMetricsManager.shared,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
             })
-        
+
         toggleDailyCheckInSheetVisibility(true)
     }
     

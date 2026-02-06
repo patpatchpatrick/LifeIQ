@@ -21,7 +21,8 @@ struct BeastFitnessApp: App {
                     
                     SQOverlayWindow.shared.attachIfNeeded(
                         alerts: SQAppState.shared.alertState,
-                        toasts: SQAppState.shared.toastState
+                        toasts: SQAppState.shared.toastState,
+                        modals: SQAppState.shared.modalState
                     )
                }
         }

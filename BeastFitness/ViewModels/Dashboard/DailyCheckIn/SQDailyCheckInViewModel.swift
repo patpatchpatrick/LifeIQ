@@ -17,12 +17,17 @@ final class SQDailyCheckInViewModel: Identifiable {
     private var modelContext: ModelContext?
 
     let id = UUID()
-    let stats: SQDailyCheckInStats?
+    private(set) var stats: SQDailyCheckInStats?
+    private(set) var targetDate: Date
     let eventHub: EventHub
     let dashboardInterface: SQDashboardInterface = SQDashboardController.default
 
     private let dailyCheckInManager: SQDailyCheckInManaging
     private let metricsManager: SQMetricsManaging
+
+    var isEditingPastDate: Bool {
+        !Calendar.current.isDateInToday(targetDate)
+    }
 
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     let onDismiss: () -> Void
@@ -36,16 +41,18 @@ final class SQDailyCheckInViewModel: Identifiable {
     init(
         eventHub: EventHub,
         stats: SQDailyCheckInStats?,
+        targetDate: Date = .now,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         metricsManager: SQMetricsManaging,
         onDismiss: @escaping () -> Void
     ) {
         self.eventHub = eventHub
         self.stats = stats
+        self.targetDate = targetDate
         self.dailyCheckInManager = dailyCheckInManager
         self.metricsManager = metricsManager
         self.onDismiss = onDismiss
-        
+
         handleEventSubscriptions(hub: eventHub)
     }
     
@@ -58,12 +65,39 @@ final class SQDailyCheckInViewModel: Identifiable {
             case .metricsUpdated:
                 SQLogger.shared.log("Metric events updated, refreshing daily check in list", .debug, context: .dailyCheckIn)
                 guard let modelContext = self.modelContext else { return }
-                refreshRows(stats: stats, modelContext: modelContext)
+                Task {
+                    await self.refresh(for: self.targetDate, modelContext: modelContext)
+                }
             }
         }.store(in: &cancellables)
     }
 
     // MARK: - Row Building
+
+    /// Comprehensive refresh function that updates date, loads stats, and refreshes rows
+    @MainActor
+    func refresh(for date: Date, modelContext: ModelContext) async {
+        self.modelContext = modelContext
+        self.targetDate = date
+
+        // Load stats for the new date
+        let loadedStats = try? await dailyCheckInManager.getDailyCheckInStats(
+            for: date,
+            context: modelContext
+        )
+        self.stats = loadedStats
+
+        // Refresh rows with new stats
+        do {
+            try metricsManager.loadIfNeeded(using: modelContext)
+            self.rows = buildRows(for: loadedStats)
+        } catch {
+            eventHub.alertEvents.send(.present(.init(
+                SQError.standard(withDescription: "Error loading metrics: \(error.localizedDescription)")
+            )))
+            self.rows = [buildNotesRow(stats: loadedStats)]
+        }
+    }
 
     @MainActor
     func refreshRows(stats: SQDailyCheckInStats?, modelContext: ModelContext) {
@@ -351,7 +385,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         }
 
         let stats = SQDailyCheckInStats(
-            date: .now,
+            date: targetDate,
             values: values,
             notes: notes
         )
@@ -371,6 +405,68 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     func addMetricTapped() {
         isAddMetricSheetDisplayed = true
+    }
+
+    func showDatePicker(modelContext: ModelContext) {
+        Task {
+            // Load date entries with completion status
+            let dateEntries = await loadDateEntries(modelContext: modelContext)
+
+            // Show modal with pre-loaded entries
+            eventHub.modalEvents.send(.presentDatePicker(
+                dateEntries: dateEntries,
+                onDateSelected: { [weak self] selectedDate in
+                    guard let self else { return }
+                    Task {
+                        await self.refresh(for: selectedDate, modelContext: modelContext)
+                    }
+                }
+            ))
+        }
+    }
+
+    private func loadDateEntries(modelContext: ModelContext) async -> [SQDatePickerModal.DateEntry] {
+        let calendar = Calendar.current
+        var entries: [SQDatePickerModal.DateEntry] = []
+
+        let today = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = .current
+        dateFormatter.dateFormat = "EEEE, MMMM d, yyyy"
+
+        // Add "Today" first
+        let todayNormalized = calendar.startOfDay(for: today)
+        let todayStats = try? await dailyCheckInManager.getDailyCheckInStats(
+            for: todayNormalized,
+            context: modelContext
+        )
+
+        entries.append(SQDatePickerModal.DateEntry(
+            date: todayNormalized,
+            displayText: dateFormatter.string(from: today),
+            isToday: true,
+            isCompleted: todayStats != nil
+        ))
+
+        // Add past 30 days
+        for i in 1...30 {
+            guard let pastDate = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
+            let normalizedDate = calendar.startOfDay(for: pastDate)
+
+            let stats = try? await dailyCheckInManager.getDailyCheckInStats(
+                for: normalizedDate,
+                context: modelContext
+            )
+
+            entries.append(SQDatePickerModal.DateEntry(
+                date: normalizedDate,
+                displayText: dateFormatter.string(from: normalizedDate),
+                isToday: false,
+                isCompleted: stats != nil
+            ))
+        }
+
+        return entries
     }
 }
 

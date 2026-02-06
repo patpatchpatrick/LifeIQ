@@ -171,6 +171,10 @@
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
 		F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */; };
 		F6C5FCED2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */; };
+		F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD762F3113D900BF1022 /* SQModalState.swift */; };
+		F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD792F31155400BF1022 /* SQModalHost.swift */; };
+		F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */; };
+		F6C5FD7E2F3116A900BF1022 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD7D2F3116A900BF1022 /* Image+Extensions.swift */; };
 		F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */; };
 		F6DF8DFB2CC71039005CC48B /* SQDropDownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */; };
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
@@ -406,6 +410,10 @@
 		F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserState.swift; sourceTree = "<group>"; };
 		F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSyncMetadataEntity.swift; sourceTree = "<group>"; };
 		F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFirestoreMetricsManager.swift; sourceTree = "<group>"; };
+		F6C5FD762F3113D900BF1022 /* SQModalState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQModalState.swift; sourceTree = "<group>"; };
+		F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDatePickerModal.swift; sourceTree = "<group>"; };
+		F6C5FD792F31155400BF1022 /* SQModalHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQModalHost.swift; sourceTree = "<group>"; };
+		F6C5FD7D2F3116A900BF1022 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
 		F6D232EE2CBDCA2600B84594 /* SQHKWorkout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHKWorkout.swift; sourceTree = "<group>"; };
 		F6DF8DFA2CC71038005CC48B /* SQDropDownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenu.swift; sourceTree = "<group>"; };
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
@@ -1046,6 +1054,7 @@
 				F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */,
 				F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */,
 				F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */,
+				F6C5FD762F3113D900BF1022 /* SQModalState.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1133,6 +1142,15 @@
 			path = Sync;
 			sourceTree = "<group>";
 		};
+		F6C5FD7A2F31155400BF1022 /* Modals */ = {
+			isa = PBXGroup;
+			children = (
+				F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */,
+				F6C5FD792F31155400BF1022 /* SQModalHost.swift */,
+			);
+			path = Modals;
+			sourceTree = "<group>";
+		};
 		F6E058952F04981C006C1CE0 /* WatchInterface */ = {
 			isa = PBXGroup;
 			children = (
@@ -1209,6 +1227,7 @@
 				F602DA382EC4118200404878 /* Dashboard */,
 				F602DA352EC4110600404878 /* Root */,
 				F6A848912CB4A7E900B09AD5 /* Shared */,
+				F6C5FD7A2F31155400BF1022 /* Modals */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1230,6 +1249,7 @@
 				F6A8488D2CB324A800B09AD5 /* Text+Extensions.swift */,
 				F6F94E092CABA03200C2B90B /* View+Extensions.swift */,
 				F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */,
+				F6C5FD7D2F3116A900BF1022 /* Image+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -1583,6 +1603,7 @@
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,
 				F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */,
 				F639B7DE2ED798BD00199C69 /* SQTextField.swift in Sources */,
+				F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */,
 				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,
 				F61592292EF1CA2200223A63 /* SQWorkoutSessionTimerViewModel.swift in Sources */,
@@ -1648,6 +1669,8 @@
 				F67F0A102F087C1400D7BB90 /* SQMetricsListItemViewModel.swift in Sources */,
 				F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
+				F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */,
+				F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */,
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
@@ -1659,6 +1682,7 @@
 				F67F0A792F0DE20200D7BB90 /* SQWorkoutStrengthDetails+PrintableDescription.swift in Sources */,
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
 				F602DA6A2EC7923F00404878 /* SQDashboardWorkoutStatView.swift in Sources */,
+				F6C5FD7E2F3116A900BF1022 /* Image+Extensions.swift in Sources */,
 				F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */,
 				F602DA282EC40EB800404878 /* SQAppState.swift in Sources */,
 				F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */,

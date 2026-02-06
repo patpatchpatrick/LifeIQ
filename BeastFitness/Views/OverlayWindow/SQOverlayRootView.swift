@@ -11,6 +11,7 @@ import SwiftUI
 struct SQOverlayRootView: View {
     @Bindable var alerts: SQAlertState
     @Bindable var toasts: SQToastState
+    @Bindable var modals: SQModalState
 
     var body: some View {
         ZStack {
@@ -21,6 +22,10 @@ struct SQOverlayRootView: View {
             // Alerts layer (center + dim background)
             SQAlertHost(alerts: alerts)
                 .zIndex(2)
+
+            // Modals layer (above alerts)
+            SQModalHost(modalState: modals)
+                .zIndex(3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)

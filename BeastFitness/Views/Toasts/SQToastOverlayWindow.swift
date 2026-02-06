@@ -17,7 +17,7 @@ final class SQOverlayWindow {
 
     private init() {}
 
-    func attachIfNeeded(alerts: SQAlertState, toasts: SQToastState) {
+    func attachIfNeeded(alerts: SQAlertState, toasts: SQToastState, modals: SQModalState) {
         guard window == nil else { return }
 
         guard let scene = UIApplication.shared.connectedScenes
@@ -27,7 +27,7 @@ final class SQOverlayWindow {
             return
         }
 
-        let rootView = SQOverlayRootView(alerts: alerts, toasts: toasts)
+        let rootView = SQOverlayRootView(alerts: alerts, toasts: toasts, modals: modals)
         let hc = UIHostingController(rootView: rootView)
         hc.view.backgroundColor = .clear
 
@@ -42,21 +42,26 @@ final class SQOverlayWindow {
 
         // ✅ Passthrough rules:
         // - If an alert is visible, we want to block the app (passthrough OFF).
+        // - If a modal is visible, we want to block the app (passthrough OFF).
         // - If only a toast is visible and you want the dismiss button tappable,
         //   passthrough should also be OFF (otherwise taps fall through).
         // - If nothing visible, passthrough ON.
-        updatePassthrough(alerts: alerts, toasts: toasts)
+        updatePassthrough(alerts: alerts, toasts: toasts, modals: modals)
 
         // React to changes (simple callbacks).
         // If your managers don't have callbacks, you can add them (like we did earlier),
         // or just call updatePassthrough() when you present/dismiss.
         alerts.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts)
+            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals)
         }
         toasts.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts)
+            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals)
+        }
+        modals.onVisibilityChanged = { [weak self] _ in
+            guard let self else { return }
+            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals)
         }
     }
 
@@ -66,9 +71,9 @@ final class SQOverlayWindow {
         hostingController = nil
     }
 
-    private func updatePassthrough(alerts: SQAlertState, toasts: SQToastState) {
+    private func updatePassthrough(alerts: SQAlertState, toasts: SQToastState, modals: SQModalState) {
         // Passthrough ONLY when nothing is showing
-        window?.isPassthroughEnabled = !(alerts.isPresented || toasts.isPresented)
+        window?.isPassthroughEnabled = !(alerts.isPresented || toasts.isPresented || modals.isPresented)
     }
 }
 

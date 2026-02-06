@@ -29,6 +29,7 @@ final class SQAppState {
     let exercisesListState: ExercisesListState
     let metricsListState: SQMetricsListState
     let alertState: SQAlertState
+    let modalState: SQModalState
     let settingsState: SettingsState
     let toastState: SQToastState
 
@@ -43,6 +44,7 @@ final class SQAppState {
         self.exercisesListState = .init(hub: hub)
         self.metricsListState = .init(hub: hub)
         self.alertState = .init(hub: hub)
+        self.modalState = .init(hub: hub)
         self.settingsState = .init(hub: hub)
         self.toastState = .init(hub: hub)
     }

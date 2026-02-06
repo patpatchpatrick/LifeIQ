@@ -14,7 +14,7 @@ import BeastFitnessCore
 protocol SQDashboardInterface {
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool) async
     func refreshUI(for context: ModelContext) async
-    func displayDailyCheckInSheet(for context: ModelContext) async
+    func displayDailyCheckInSheet(for context: ModelContext, date: Date?) async
 }
 
 @Observable @MainActor
@@ -302,9 +302,13 @@ final class SQDashboardController: SQDashboardInterface {
         refreshUiWithContext?(context)
     }
     
-    func displayDailyCheckInSheet(for context: ModelContext) async {
-        let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
-        state.displayDailyCheckInSheet(with: dailyCheckInStats)
+    func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {
+        let targetDate = date ?? .now
+        let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
+            for: targetDate,
+            context: context
+        )
+        state.displayDailyCheckInSheet(with: dailyCheckInStats, for: targetDate)
     }
     
     private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId) -> SQDashboardWorkoutSummaryRowConfig{

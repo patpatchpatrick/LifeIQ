@@ -6,6 +6,7 @@
 //
 
 import Combine
+import Foundation
 
 enum DomainEvent {
     /// Navigation
@@ -33,6 +34,14 @@ enum ToastEvent {
     case present(_ toast: SQToastViewModel)
 }
 
+enum ModalEvent {
+    case presentDatePicker(
+        dateEntries: [SQDatePickerModal.DateEntry],
+        onDateSelected: (Date) -> Void
+    )
+    case dismiss
+}
+
 @MainActor
 final class EventHub {
     let domainEvents = PassthroughSubject<DomainEvent, Never>()
@@ -40,4 +49,5 @@ final class EventHub {
     let metricEvents = PassthroughSubject<MetricEvent, Never>()
     let alertEvents = PassthroughSubject<AlertEvent, Never>()
     let toastEvents = PassthroughSubject<ToastEvent, Never>()
+    let modalEvents = PassthroughSubject<ModalEvent, Never>()
 }
