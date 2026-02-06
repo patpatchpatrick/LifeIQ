@@ -25,6 +25,11 @@ enum DashboardTimeRange: String, CaseIterable {
     }
 }
 
+enum TotalsType: String, CaseIterable {
+    case time = "Time"
+    case kilocalories = "Kilocalories"
+}
+
 @MainActor
 protocol DashboardStating: AnyObject {
     var hub: EventHub { get }
@@ -82,6 +87,21 @@ protocol DashboardStating: AnyObject {
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
     private(set) var workoutsListController: SQWorkoutsListController?
+
+    // MARK: - Section Collapse States
+    var isDailyStatsCollapsed: Bool = false
+    var isWorkoutsCollapsed: Bool = false
+
+    // MARK: - Subsection Collapse States
+    var isMetricsCollapsed: Bool = false
+    var isPerformanceCollapsed: Bool = false
+    var isTotalsCollapsed: Bool = false
+    var isActivitiesCollapsed: Bool = false
+
+    // MARK: - Filter States
+    var metricsGroupFilter: String = "All"
+    var totalsTypeFilter: TotalsType = .time
+    var activitiesTypeFilter: String = "All"
 
     init(hub: EventHub) {
         self.hub = hub
