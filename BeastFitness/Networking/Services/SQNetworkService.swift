@@ -118,17 +118,30 @@ extension SQNetworkService {
             return decoded
         }
 
-        // Add other array types as needed
-        // if type is [SomeOtherModel].Type {
-        //     return documents.compactMap { document -> SomeOtherModel? in
-        //         do {
-        //             return try document.data(as: SomeOtherModel.self)
-        //         } catch {
-        //             SQLogger.shared.log("Skipping document '\(document.documentID)': \(error.localizedDescription)", .warning, context: .network)
-        //             return nil
-        //         }
-        //     }
-        // }
+        if type is [SQMetricDefinition].Type {
+            let decoded = documents.compactMap { document -> SQMetricDefinition? in
+                do {
+                    return try document.data(as: SQMetricDefinition.self)
+                } catch {
+                    SQLogger.shared.log(
+                        "Skipping document '\(document.documentID)' - doesn't match current model: \(error.localizedDescription)",
+                        .warning,
+                        context: .metricsManager
+                    )
+                    return nil
+                }
+            }
+
+            // Track Firestore reads
+            Task { @MainActor in
+                SQFirestoreMetricsManager.shared.recordReads(
+                    documents.count,
+                    operation: "Fetch metric definitions"
+                )
+            }
+
+            return decoded
+        }
 
         throw SQNetworkError.invalidResponseType(
             expected: "a supported array type",

@@ -42,7 +42,61 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     var sortOrder: Int
     var isArchived: Bool
     var emoji: String?           // user-chosen emoji (single grapheme cluster)
+    var updatedAt: Date = .now   // last modification timestamp; used for Firestore sync
+
+    // MARK: - Manual Init (non-decoder)
+    init(
+        id: String,
+        title: String,
+        kind: SQMetricKind,
+        unit: SQMetricUnit,
+        group: SQMetricGroup,
+        min: Float? = nil,
+        max: Float? = nil,
+        step: Float? = nil,
+        isPreset: Bool,
+        isEnabled: Bool = true,
+        sortOrder: Int,
+        isArchived: Bool = false,
+        emoji: String? = nil,
+        updatedAt: Date = .now
+    ) {
+        self.id = id
+        self.title = title
+        self.kind = kind
+        self.unit = unit
+        self.group = group
+        self.min = min
+        self.max = max
+        self.step = step
+        self.isPreset = isPreset
+        self.isEnabled = isEnabled
+        self.sortOrder = sortOrder
+        self.isArchived = isArchived
+        self.emoji = emoji
+        self.updatedAt = updatedAt
+    }
+
+    // MARK: - Custom Decoder
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id          = try  c.decode(String.self,          forKey: .id)
+        title       = try  c.decode(String.self,          forKey: .title)
+        kind        = try  c.decode(SQMetricKind.self,    forKey: .kind)
+        unit        = try  c.decode(SQMetricUnit.self,    forKey: .unit)
+        group       = try  c.decode(SQMetricGroup.self,   forKey: .group)
+        min         = try  c.decodeIfPresent(Float.self,  forKey: .min)
+        max         = try  c.decodeIfPresent(Float.self,  forKey: .max)
+        step        = try  c.decodeIfPresent(Float.self,  forKey: .step)
+        isPreset    = try  c.decode(Bool.self,            forKey: .isPreset)
+        isEnabled   = try  c.decode(Bool.self,            forKey: .isEnabled)
+        sortOrder   = try  c.decode(Int.self,             forKey: .sortOrder)
+        isArchived  = try  c.decode(Bool.self,            forKey: .isArchived)
+        emoji       = try  c.decodeIfPresent(String.self, forKey: .emoji)
+        updatedAt   = try  c.decodeIfPresent(Date.self,   forKey: .updatedAt) ?? .now
+    }
 }
+
 
 enum SQMetricId {
     // MARK: - Core Daily Metrics (enabled by default)

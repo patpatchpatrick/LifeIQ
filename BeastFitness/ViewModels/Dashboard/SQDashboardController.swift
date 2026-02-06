@@ -106,16 +106,17 @@ final class SQDashboardController: SQDashboardInterface {
         do {
             // Sync daily check-ins from Firestore
             let timeRange = state.selectedTimeRange.toSQTimeRange()
-            let syncResult = try await dailyCheckInManager.syncDailyCheckInsIfNeeded(
+            _ = try await dailyCheckInManager.syncDailyCheckInsIfNeeded(
                 for: timeRange,
                 context: context
             )
 
-            SQLogger.shared.log(
-                "Sync result: \(syncResult)",
-                .debug,
-                context: .dashboard
-            )
+            // Sync metric definitions from Firestore
+            do {
+                _ = try await SQMetricsManager.shared.syncMetricsIfNeeded(using: context)
+            } catch {
+                SQLogger.shared.log("Metric definitions sync failed: \(error)", .error, context: .dashboard)
+            }
 
             // TODO: - PTD Handle Sleep
             //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)

@@ -16,6 +16,23 @@ enum SyncResult {
     case refreshCompleted
 }
 
+extension SyncResult {
+    /// Shared logging for all sync services. Produces consistent output:
+    ///   "Full sync: N documents for <service>"  (priority, with separators)
+    ///   "Sync result: <case>"
+    func logSync(documentCount: Int = 0, service: String, context: SQiOSLogContext) {
+        switch self {
+        case .fullSyncCompleted:
+            SQLogger.shared.log("Full sync: \(documentCount) documents for \(service)", .info, context: context, isPriority: true)
+        case .refreshCompleted, .incrementalSyncCompleted:
+            SQLogger.shared.log("Incremental sync: \(documentCount) documents for \(service)", .info, context: context, isPriority: true)
+        case .noSyncNeeded:
+            break
+        }
+        SQLogger.shared.log("Sync result: \(self)", .debug, context: context)
+    }
+}
+
 protocol SQDailyCheckInManaging {
     /// Saves a daily check in locally and to the server
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to modelContext: ModelContext) async throws
@@ -91,7 +108,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .info,
                 context: .dailyCheckIn
             )
-            try await performFullSync(for: timeRange, context: context)
+            let count = try await performFullSync(for: timeRange, context: context)
+            SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "\(timeRange)", context: .dailyCheckIn)
             return .fullSyncCompleted
 
         } else if lastSync == nil {
@@ -101,7 +119,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .info,
                 context: .dailyCheckIn
             )
-            try await performFullSync(for: timeRange, context: context)
+            let count = try await performFullSync(for: timeRange, context: context)
+            SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "\(timeRange)", context: .dailyCheckIn)
             return .fullSyncCompleted
 
         } else if shouldRefresh(for: timeRange, context: context) {
@@ -112,7 +131,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .info,
                 context: .dailyCheckIn
             )
-            try await performIncrementalSync(for: timeRange, context: context)
+            let count = try await performIncrementalSync(for: timeRange, context: context)
+            SyncResult.refreshCompleted.logSync(documentCount: count, service: "\(timeRange)", context: .dailyCheckIn)
             return .refreshCompleted
 
         } else {
@@ -122,6 +142,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .debug,
                 context: .dailyCheckIn
             )
+            SyncResult.noSyncNeeded.logSync(service: "\(timeRange)", context: .dailyCheckIn)
             return .noSyncNeeded
         }
     }
@@ -132,7 +153,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
     private func performFullSync(
         for timeRange: SQTimeRange,
         context: ModelContext
-    ) async throws {
+    ) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
 
         let stats = try await dailyCheckInService.fetchAllDailyCheckIns(
@@ -140,25 +161,19 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             afterDate: timeRange.startDate
         )
 
-        SQLogger.shared.log(
-            "Full sync: \(stats.count) documents for \(timeRange)",
-            .info,
-            context: .dailyCheckIn,
-            isPriority: true
-        )
-
         for stat in stats {
             try SQDailyCheckInEntity.upsert(stats: stat, in: context)
         }
 
         updateLastSyncDate(to: Date(), for: timeRange, context: context)
+        return stats.count
     }
 
     @MainActor
     private func performIncrementalSync(
         for timeRange: SQTimeRange,
         context: ModelContext
-    ) async throws {
+    ) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
         let lastSync = getLastSyncDate(for: timeRange, context: context)
 
@@ -167,18 +182,12 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             afterDate: lastSync
         )
 
-        SQLogger.shared.log(
-            "Incremental sync: \(stats.count) documents for \(timeRange)",
-            .info,
-            context: .dailyCheckIn,
-            isPriority: true
-        )
-
         for stat in stats {
             try SQDailyCheckInEntity.upsert(stats: stat, in: context)
         }
 
         updateLastSyncDate(to: Date(), for: timeRange, context: context)
+        return stats.count
     }
 
     @MainActor

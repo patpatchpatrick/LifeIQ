@@ -81,10 +81,12 @@ extension SQMetricDefinitionEntity {
             isEnabled: isEnabled,
             sortOrder: sortOrder,
             isArchived: isArchived,
-            emoji: emoji
+            emoji: emoji,
+            updatedAt: updatedAt
         )
     }
 
+    /// Apply a remote definition onto this entity, preserving its `updatedAt`.
     func apply(_ def: SQMetricDefinition) {
         title = def.title
         kindRaw = def.kind.rawValue
@@ -98,6 +100,6 @@ extension SQMetricDefinitionEntity {
         sortOrder = def.sortOrder
         isArchived = def.isArchived
         emoji = def.emoji
-        updatedAt = .now
+        updatedAt = def.updatedAt
     }
 }

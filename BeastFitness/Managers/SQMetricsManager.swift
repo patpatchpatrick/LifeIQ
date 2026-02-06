@@ -32,6 +32,9 @@ protocol SQMetricsManaging: AnyObject {
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws
     func updateMetric(id: String, title: String, emoji: String?, using context: ModelContext) throws
+
+    // Sync
+    func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult
 }
 
 // MARK: - Concrete Manager
@@ -41,6 +44,7 @@ final class SQMetricsManager: SQMetricsManaging {
     static let shared: SQMetricsManaging = SQMetricsManager()
 
     private var hub: EventHub { SQAppState.shared.hub }
+    private let metricService: SQMetricDefinitionServicing.Type = SQMetricDefinitionService.self
 
     private(set) var metrics: [SQMetricDefinition] = []
     private var hasLoaded = false
@@ -131,6 +135,7 @@ final class SQMetricsManager: SQMetricsManaging {
 
         entity.updatedAt = .now
         try saveContextAndNotify(context)
+        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
     }
 
     func disableMetric(id: String, using context: ModelContext) throws {
@@ -140,6 +145,7 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.isEnabled = false
         entity.updatedAt = .now
         try saveContextAndNotify(context)
+        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
     }
 
     func archiveMetric(id: String, using context: ModelContext) throws {
@@ -150,6 +156,7 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.isEnabled = false
         entity.updatedAt = .now
         try saveContextAndNotify(context)
+        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
     }
 
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws {
@@ -159,6 +166,7 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.sortOrder = sortOrder
         entity.updatedAt = .now
         try saveContextAndNotify(context)
+        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
     }
 
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws {
@@ -185,6 +193,7 @@ final class SQMetricsManager: SQMetricsManaging {
         )
 
         try saveContextAndNotify(context)
+        if let created = metrics.first(where: { $0.id == definition.id }) { pushMetricToFirestore(created) }
         SQLogger.shared.log("Created custom metric: \(definition.id)", .debug, context: .metricsManager)
     }
 
@@ -196,6 +205,7 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.emoji = emoji
         entity.updatedAt = .now
         try saveContextAndNotify(context)
+        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
     }
 
     // MARK: - Reload (protocol requires public)
@@ -205,6 +215,162 @@ final class SQMetricsManager: SQMetricsManaging {
             sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
         )
         metrics = try context.fetch(descriptor).map { $0.toDefinition() }
+    }
+
+    // MARK: - Sync
+
+    func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult {
+        try loadIfNeeded(using: context)
+        await bootstrapPushIfNeeded(context: context)
+
+        guard let lastSync = getMetricSyncDate(context: context) else {
+            SQLogger.shared.log("Metric definitions: never synced — full sync", .info, context: .metricsManager)
+            let count = try await performFullMetricSync(context: context)
+            SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "metric definitions", context: .metricsManager)
+            return .fullSyncCompleted
+        }
+
+        let hoursSinceSync = Date().timeIntervalSince(lastSync) / 3600
+        if hoursSinceSync > 6 {
+            SQLogger.shared.log("Metric definitions: stale (\(String(format: "%.1f", hoursSinceSync))h) — incremental sync", .info, context: .metricsManager)
+            let count = try await performIncrementalMetricSync(lastSync: lastSync, context: context)
+            SyncResult.refreshCompleted.logSync(documentCount: count, service: "metric definitions", context: .metricsManager)
+            return .refreshCompleted
+        }
+
+        SQLogger.shared.log("Metric definitions: cache fresh", .debug, context: .metricsManager)
+        SyncResult.noSyncNeeded.logSync(service: "metric definitions", context: .metricsManager)
+        return .noSyncNeeded
+    }
+
+    /// One-time push of all local metrics that existed before the per-mutation push
+    /// system was added. Gated by a metadata flag so it runs exactly once.
+    private func bootstrapPushIfNeeded(context: ModelContext) async {
+        let key = "metric-definitions-bootstrap"
+        let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
+            predicate: #Predicate { $0.id == key }
+        )
+        guard (try? context.fetch(descriptor))?.first == nil else { return }
+
+        let allEntities = (try? context.fetch(FetchDescriptor<SQMetricDefinitionEntity>())) ?? []
+        let allDefinitions = allEntities.map { $0.toDefinition() }
+
+        SQLogger.shared.log(
+            "Metric definitions: bootstrapping \(allDefinitions.count) metrics to Firestore",
+            .info,
+            context: .metricsManager,
+            isPriority: true
+        )
+
+        for definition in allDefinitions {
+            do {
+                try await metricService.saveMetricDefinition(definition)
+            } catch {
+                SQLogger.shared.log(
+                    "Bootstrap push failed for \(definition.id): \(error)",
+                    .error,
+                    context: .metricsManager
+                )
+            }
+        }
+
+        let metadata = SQSyncMetadataEntity(id: key)
+        metadata.lastSyncDate = .now
+        context.insert(metadata)
+        try? context.save()
+
+        SQLogger.shared.log(
+            "Metric definitions: bootstrap push complete (\(allDefinitions.count) metrics)",
+            .info,
+            context: .metricsManager,
+            isPriority: true
+        )
+    }
+
+    private func performFullMetricSync(context: ModelContext) async throws -> Int {
+        let user = SQAppState.shared.userState.loggedInUser
+        let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: nil)
+
+        try upsertMetrics(definitions, into: context, fullSync: true)
+        updateMetricSyncDate(to: .now, context: context)
+        try saveContextAndNotify(context)
+        return definitions.count
+    }
+
+    private func performIncrementalMetricSync(lastSync: Date, context: ModelContext) async throws -> Int {
+        let user = SQAppState.shared.userState.loggedInUser
+        let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: lastSync)
+
+        try upsertMetrics(definitions, into: context, fullSync: false)
+        updateMetricSyncDate(to: .now, context: context)
+        try saveContextAndNotify(context)
+        return definitions.count
+    }
+
+    private func upsertMetrics(_ definitions: [SQMetricDefinition], into context: ModelContext, fullSync: Bool) throws {
+        for def in definitions {
+            if let existing = try fetchEntity(id: def.id, using: context) {
+                if fullSync || def.updatedAt > existing.updatedAt {
+                    existing.apply(def)
+                }
+            } else {
+                let entity = SQMetricDefinitionEntity(
+                    id: def.id,
+                    title: def.title,
+                    kind: def.kind,
+                    unit: def.unit,
+                    group: def.group,
+                    min: def.min,
+                    max: def.max,
+                    step: def.step,
+                    isPreset: def.isPreset,
+                    isEnabled: def.isEnabled,
+                    sortOrder: def.sortOrder,
+                    isArchived: def.isArchived,
+                    emoji: def.emoji
+                )
+                entity.updatedAt = def.updatedAt
+                context.insert(entity)
+            }
+        }
+    }
+
+    // MARK: - Firestore Push
+
+    private func pushMetricToFirestore(_ definition: SQMetricDefinition) {
+        Task {
+            do {
+                try await metricService.saveMetricDefinition(definition)
+            } catch {
+                SQLogger.shared.log("Failed to push metric \(definition.id) to Firestore: \(error)", .error, context: .metricsManager)
+            }
+        }
+    }
+
+    // MARK: - Sync Metadata
+
+    private func getMetricSyncDate(context: ModelContext) -> Date? {
+        let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
+            predicate: #Predicate { $0.id == "metric-definitions-sync" }
+        )
+        return (try? context.fetch(descriptor))?.first?.lastSyncDate
+    }
+
+    private func updateMetricSyncDate(to date: Date, context: ModelContext) {
+        let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
+            predicate: #Predicate { $0.id == "metric-definitions-sync" }
+        )
+        do {
+            if let existing = try context.fetch(descriptor).first {
+                existing.lastSyncDate = date
+            } else {
+                let metadata = SQSyncMetadataEntity(id: "metric-definitions-sync")
+                metadata.lastSyncDate = date
+                context.insert(metadata)
+            }
+        } catch {
+            SQLogger.shared.log("Failed to update metric sync metadata: \(error)", .error, context: .metricsManager)
+        }
     }
 
     // MARK: - Persistence + Event
