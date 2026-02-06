@@ -22,10 +22,12 @@ enum SQMetricUnit: String, Codable, CaseIterable {
     case percent
 }
 
-enum SQMetricGroup: String, Codable, CaseIterable {
-    case state       // Physical/mental state: mood, energy, clarity, soreness, sleep
-    case habits      // Behavioral tracking: alcohol, weed, porn, caffeine, meditation
-    case custom      // User-created metrics
+/// Well-known default group names. Users may also create arbitrary group strings;
+/// these are just the ones that ship with presets and appear in the picker by default.
+enum SQDefaultGroup: String, CaseIterable {
+    case personal = "Self"
+    case habit    = "Habit"
+    case general  = "General"
 }
 
 struct SQMetricDefinition: Identifiable, Codable, Hashable {
@@ -33,7 +35,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     var title: String            // "Mood", "Sleep Hours", "Alcohol", "Weed", "Custom X"
     var kind: SQMetricKind
     var unit: SQMetricUnit
-    var group: SQMetricGroup     // category: state, habits, or custom
+    var group: String            // user-facing group name (e.g. "Self", "Habit", "General")
     var min: Float?              // for scale/number
     var max: Float?
     var step: Float?             // slider granularity
@@ -50,7 +52,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         title: String,
         kind: SQMetricKind,
         unit: SQMetricUnit,
-        group: SQMetricGroup,
+        group: String,
         min: Float? = nil,
         max: Float? = nil,
         step: Float? = nil,
@@ -84,7 +86,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         title       = try  c.decode(String.self,          forKey: .title)
         kind        = try  c.decode(SQMetricKind.self,    forKey: .kind)
         unit        = try  c.decode(SQMetricUnit.self,    forKey: .unit)
-        group       = try  c.decode(SQMetricGroup.self,   forKey: .group)
+        group       = try  c.decode(String.self,           forKey: .group)
         min         = try  c.decodeIfPresent(Float.self,  forKey: .min)
         max         = try  c.decodeIfPresent(Float.self,  forKey: .max)
         step        = try  c.decodeIfPresent(Float.self,  forKey: .step)

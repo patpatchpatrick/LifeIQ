@@ -26,7 +26,7 @@ struct SQTag: View {
             )
             .overlay(
                 Capsule()
-                    .strokeBorder(SQColor.divider.color, lineWidth: 1)
+                    .strokeBorder(SQColor.divider(1).color, lineWidth: 1)
             )
             .fixedSize(horizontal: true, vertical: false)
             .accessibilityLabel(text)

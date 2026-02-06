@@ -37,8 +37,10 @@ final class SQMetricFormViewModel {
         didSet { kindChanged() }
     }
     var selectedUnit: SQMetricUnit = .none
-    var selectedGroup: SQMetricGroup = .custom
+    var selectedGroup: String = SQDefaultGroup.general.rawValue
+    var isAddingNewGroup: Bool = false
 
+    let newGroupField: SQUITextFieldViewModel
     let minField: SQUITextFieldViewModel
     let maxField: SQUITextFieldViewModel
     let stepField: SQUITextFieldViewModel
@@ -122,6 +124,19 @@ final class SQMetricFormViewModel {
             errorHandler: { _ in nil }
         )
 
+        // New group text input
+        self.newGroupField = SQUITextFieldViewModel(
+            placeholder: "Group name",
+            font: UIFont.systemFont(ofSize: 16),
+            keyboardType: .default,
+            autocapitalizationType: .sentences,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .maxLength(20),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
         // Populate from existing definition in edit mode
         if case .edit(let existing) = mode {
             titleField.setText(existing.title)
@@ -162,6 +177,16 @@ final class SQMetricFormViewModel {
         selectedKind == .number
     }
 
+    /// All unique groups currently in use, plus defaults and the current selection, sorted alphabetically.
+    var availableGroups: [String] {
+        let existing = metricsManager.allMetrics(includeArchived: false).map(\.group)
+        var unique = Array(Set(existing))
+        for g in SQDefaultGroup.allCases.map(\.rawValue) + [selectedGroup] where !unique.contains(g) {
+            unique.append(g)
+        }
+        return unique.sorted()
+    }
+
     var canSave: Bool {
         let titleValid = !titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
@@ -195,7 +220,7 @@ final class SQMetricFormViewModel {
 
             case .edit(let existing):
                 let emoji = emojiField.text.isEmpty ? nil : emojiField.text
-                try metricsManager.updateMetric(id: existing.id, title: titleField.text, emoji: emoji, using: context)
+                try metricsManager.updateMetric(id: existing.id, title: titleField.text, emoji: emoji, group: selectedGroup, using: context)
             }
         } catch {
             // Error handling — caller can observe isLoading reset
@@ -228,7 +253,7 @@ final class SQMetricFormViewModel {
                 title: titleField.text,
                 kind: .binary,
                 unit: .none,
-                group: .custom,
+                group: selectedGroup,
                 min: 0, max: 1, step: 1,
                 isPreset: false,
                 isEnabled: true,
@@ -243,7 +268,7 @@ final class SQMetricFormViewModel {
                 title: titleField.text,
                 kind: .scale,
                 unit: .none,
-                group: .custom,
+                group: selectedGroup,
                 min: Float(minField.text),
                 max: Float(maxField.text),
                 step: Float(stepField.text),
@@ -260,7 +285,7 @@ final class SQMetricFormViewModel {
                 title: titleField.text,
                 kind: .number,
                 unit: selectedUnit,
-                group: .custom,
+                group: selectedGroup,
                 min: minField.text.isEmpty ? nil : Float(minField.text),
                 max: maxField.text.isEmpty ? nil : Float(maxField.text),
                 step: stepField.text.isEmpty ? nil : Float(stepField.text),
@@ -291,6 +316,20 @@ final class SQMetricFormViewModel {
             return step > 0
         }
         return true
+    }
+
+    // MARK: - Group Management
+
+    func confirmNewGroup() {
+        let trimmed = newGroupField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            selectedGroup = trimmed
+        }
+        isAddingNewGroup = false
+    }
+
+    func cancelNewGroup() {
+        isAddingNewGroup = false
     }
 
     /// Reset numeric defaults when kind changes in create mode

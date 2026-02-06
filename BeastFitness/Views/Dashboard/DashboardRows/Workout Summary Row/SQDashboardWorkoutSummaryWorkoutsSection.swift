@@ -21,7 +21,7 @@ struct SQDashboardWorkoutSummaryWorkoutsSection: View {
                 
                 if index != viewModel.workoutGroupViewModels.count - 1 {
                     Divider()
-                        .sqTintColor(.divider)
+                        .sqTintColor(.divider(1))
                         .padding(.top, .SQSpace.xl)
                         .padding(.bottom, .SQSpace.xl)
                 }

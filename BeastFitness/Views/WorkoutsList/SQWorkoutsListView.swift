@@ -34,7 +34,7 @@ struct SQWorkoutsListView: View {
                     
                     if index != controller.rows.count - 1 {
                         Divider()
-                            .sqTintColor(.divider)
+                            .sqTintColor(.divider(1))
                             .padding(.top, .SQSpace.xl)
                             .padding(.bottom, .SQSpace.xl)
                             .background(SQColor.background.color)

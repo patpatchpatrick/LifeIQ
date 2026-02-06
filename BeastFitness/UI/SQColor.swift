@@ -43,8 +43,8 @@ indirect enum SQColor {
     case backgroundInfo
 
     // MARK: - System
-    case divider
-    case border
+    case divider(Double = 1)
+    case border(Double = 1)
     case accent(Double = 1)
     case accentSecondary(Double = 1)
     case defaultAccent
@@ -90,29 +90,27 @@ indirect enum SQColor {
         // MARK: - Backgrounds
             
         case .background:
-            return Self.isDarkMode
-                ? UIColor(hexString: "#13151F")!
-                : .white
+            return Self.isDarkMode ? UIColor(hexString: "#000000")! : .white
 
         case .backgroundSecondary:
             return Self.isDarkMode
-                ? UIColor(hexString: "#1F2130")!
-                : UIColor(hexString: "#F3F4F6")!
+                ? UIColor(hexString: "#171717")!
+                : UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1)
 
         case .backgroundSecondaryLight:
             return Self.isDarkMode
-                ? UIColor(hexString: "#27293A")!
-                : UIColor(hexString: "#F6F7F9")!
+                ? UIColor(hexString: "#1F1F1F")!
+                : UIColor(hexString: "#FAFAFA")!
 
         case .backgroundTertiaryDark:
             return Self.isDarkMode
-                ? UIColor(hexString: "#2F3144")!
-                : UIColor(hexString: "#ECEEF2")!
+                ? UIColor(hexString: "#0D0D0D")!
+                : UIColor(hexString: "#EDEDED")!
 
         case .backgroundTertiaryLight:
             return Self.isDarkMode
-                ? UIColor(hexString: "#37394F")!
-                : UIColor(hexString: "#FAFBFC")!
+                ? UIColor(hexString: "#2E2E2E")!
+                : UIColor(hexString: "#FAFAFA")!
 
             
 
@@ -127,8 +125,10 @@ indirect enum SQColor {
             return UIColor(red: 227/255, green: 242/255, blue: 253/255, alpha: 1) // soft light blue for info background
 
         // MARK: - System
-        case .divider, .border:
-            return UIColor(hexString: "#384150")! // dark muted gray for dividers and borders
+        case .divider(let opacity):
+            return UIColor(hexString: "#384150")!.withAlphaComponent(opacity)
+        case .border(let opacity):
+            return UIColor(hexString: "#384150")!.withAlphaComponent(opacity)
         case .accent(let alpha):
             return SQColor.defaultAccent.uiColor.withAlphaComponent(alpha)
         case .accentSecondary(let alpha):

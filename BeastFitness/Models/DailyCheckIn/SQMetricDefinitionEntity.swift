@@ -35,7 +35,7 @@ final class SQMetricDefinitionEntity {
         title: String,
         kind: SQMetricKind,
         unit: SQMetricUnit,
-        group: SQMetricGroup,
+        group: String,
         min: Float? = nil,
         max: Float? = nil,
         step: Float? = nil,
@@ -49,7 +49,7 @@ final class SQMetricDefinitionEntity {
         self.title = title
         self.kindRaw = kind.rawValue
         self.unitRaw = unit.rawValue
-        self.groupRaw = group.rawValue
+        self.groupRaw = group
         self.minValue = min
         self.maxValue = max
         self.stepValue = step
@@ -65,7 +65,15 @@ final class SQMetricDefinitionEntity {
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(rawValue: kindRaw) ?? .number }
     var unit: SQMetricUnit { SQMetricUnit(rawValue: unitRaw) ?? .none }
-    var group: SQMetricGroup { SQMetricGroup(rawValue: groupRaw) ?? .custom }
+    /// Translates legacy enum raw values ("state", "habits", "custom") to current group names.
+    var group: String {
+        switch groupRaw {
+        case "state":  return SQDefaultGroup.personal.rawValue
+        case "habits": return SQDefaultGroup.habit.rawValue
+        case "custom": return SQDefaultGroup.general.rawValue
+        default:       return groupRaw
+        }
+    }
 
     func toDefinition() -> SQMetricDefinition {
         .init(
@@ -91,7 +99,7 @@ extension SQMetricDefinitionEntity {
         title = def.title
         kindRaw = def.kind.rawValue
         unitRaw = def.unit.rawValue
-        groupRaw = def.group.rawValue
+        groupRaw = def.group
         minValue = def.min
         maxValue = def.max
         stepValue = def.step

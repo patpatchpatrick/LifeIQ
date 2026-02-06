@@ -61,6 +61,46 @@ struct SQMetricFormView: View {
         }
     }
 
+    // MARK: - Group Picker
+
+    @ViewBuilder
+    var groupRow: some View {
+        labeledRow(label: "Group") {
+            if viewModel.isAddingNewGroup {
+                HStack(spacing: .SQSpace.s) {
+                    SQUITextField(viewModel: viewModel.newGroupField)
+
+                    Button(action: { viewModel.confirmNewGroup() }) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .sqForegroundColor(.accent(1))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: { viewModel.cancelNewGroup() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .sqForegroundColor(.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else {
+                HStack(spacing: .SQSpace.s) {
+                    Picker("Group", selection: $viewModel.selectedGroup) {
+                        ForEach(viewModel.availableGroups, id: \.self) { group in
+                            Text(group).tag(group)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Button(action: { viewModel.isAddingNewGroup = true }) {
+                        Image(systemName: "plus.circle")
+                            .sqForegroundColor(.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     // MARK: - Kind Picker (create only) / Static (edit)
 
     @ViewBuilder
@@ -166,13 +206,14 @@ struct SQMetricFormView: View {
                     .frame(maxWidth: .infinity)
 
                 Divider()
-                    .sqTintColor(.divider)
+                    .sqTintColor(.divider(1))
 
                 titleRow
                 emojiInputRow
+                groupRow
 
                 Divider()
-                    .sqTintColor(.divider)
+                    .sqTintColor(.divider(1))
 
                 kindRow
                 unitRow

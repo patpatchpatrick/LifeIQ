@@ -1,5 +1,9 @@
 # Agent Notes (BeastFitness)
 
+## Referenced projects
+
+**SportsPulse** (`/Users/patrickdoyle/Code/mapps/SportsPulse`) is available as a read-only reference. Do not edit any files in SportsPulse unless explicitly instructed to do so. It may be used for looking up patterns, shared conventions, or code examples when directed.
+
 ## Apps in this repo
 
 This project contains **two apps** that work together:
@@ -27,13 +31,13 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 
 ### Daily Check-In Metrics Organization
 
-Daily check-in metrics are organized into groups using the `SQMetricGroup` enum (defined in `BeastFitness/Models/DailyCheckIn/SQMetric.swift`):
+Metrics have a `group: String` property on `SQMetricDefinition`. Groups are user-facing strings and fully dynamic — users can create their own. Well-known defaults are defined in `SQDefaultGroup` (`BeastFitness/Models/DailyCheckIn/SQMetric.swift`):
 
-- **State** (.state) — Physical and mental state metrics: mood, energy, mental clarity, soreness/recovery, sleep hours, sleep quality
-- **Habits** (.habits) — Behavioral tracking metrics: alcohol, weed, porn, caffeine, meditation
-- **Custom** (.custom) — User-created metrics
+- **Self** (`.personal`) — Physical and mental state metrics: mood, energy, mental clarity, soreness/recovery, sleep hours, sleep quality
+- **Habit** (`.habit`) — Behavioral tracking metrics: alcohol, weed, porn, caffeine, meditation
+- **General** (`.general`) — Fallback group for uncategorized or user-created metrics
 
-All metrics must have a `group` property assigned in their `SQMetricDefinition`. The dashboard displays these groups as separate collapsible sections for better organization.
+The dashboard renders a collapsible section per group, ordered by the first metric's `sortOrder` within that group. The metric form lets users pick from existing groups or type a new one.
 
 ## Shared module
 

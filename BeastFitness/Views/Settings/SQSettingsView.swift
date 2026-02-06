@@ -96,7 +96,7 @@ private struct SQSettingsRowView: View {
 
             if showsDivider {
                 Divider()
-                    .sqTintColor(.divider)
+                    .sqTintColor(.divider(1))
                     .padding(.horizontal, .SQSpace.xl)
                     .background(SQColor.background.color)
             }

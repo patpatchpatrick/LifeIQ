@@ -31,7 +31,7 @@ struct SQUITextField: View {
                     .sqBackgroundColor(viewModel.uiConfig.backgroundColor)
                     .cornerRadius(.SQCornerRadius.m)
                     .sqBorder(
-                        viewModel.borderColor ?? .border,
+                        viewModel.borderColor ?? .border(1),
                         width: borderWidth,
                         cornerRadius: viewModel.uiConfig.cornerRadius
                     )

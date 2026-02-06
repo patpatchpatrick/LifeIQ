@@ -282,8 +282,8 @@ extension SQTextFieldViewModel {
         static let standard = UIConfig(
             tintColor: .textPrimary,
             backgroundColor: .backgroundSecondary,
-            standardBorderColor: .border,
-            unfocusedBorderColor: .border,
+            standardBorderColor: .border(1),
+            unfocusedBorderColor: .border(1),
             supportTextColor: .textSecondary,
             errorBorderColor: .colorErrorRed,
             validBorderColor: .colorGreenPct(percent: 1, base: .textPrimary),

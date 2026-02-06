@@ -20,72 +20,30 @@ struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
         .buttonStyle(.plain)
     }
 
-    var stateSection: some View {
+    @ViewBuilder
+    func groupSection(_ group: SQDashboardDailyCheckInRowViewModel.VitalGroup) -> some View {
         LazyVStack(alignment: .leading, spacing: 0) {
             SQCollapsibleSectionHeader(
-                title: "State",
-                isExpanded: viewModel.isStateExpanded,
-                action: { viewModel.toggleStateExpanded() }
+                title: group.name,
+                isExpanded: viewModel.isExpanded(group.id),
+                action: { viewModel.toggleGroup(group.id) }
             ) {
                 if viewModel.canEditDailyStats {
                     editButton
                 }
             }
 
-            if viewModel.isStateExpanded {
-                if let callToActionViewModel = viewModel.callToAction {
-                    SQCallToAction(viewModel: callToActionViewModel)
-                }
-
-                // State vital rows
-                if let stateRows = viewModel.stateRows {
-                    LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
-                        ForEach(stateRows) { row in
-                            SQDailyCheckInVitalRow(model: row) {
-                                print("PTD State Row Tapped:", row.title)
-                            }
-
-                            // Divider between rows
-                            if row.id != stateRows.last?.id {
-                                Divider()
-                                    .sqBackgroundColor(SQColor.border)
-                                    .padding(.vertical, .SQSpace.xs)
-                            }
+            if viewModel.isExpanded(group.id) {
+                LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
+                    ForEach(group.rows) { row in
+                        SQDailyCheckInVitalRow(model: row) {
+                            print("PTD Row Tapped:", row.title)
                         }
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
 
-    var habitsSection: some View {
-        LazyVStack(alignment: .leading, spacing: 0) {
-            SQCollapsibleSectionHeader(
-                title: "Habits",
-                isExpanded: viewModel.isHabitsExpanded,
-                action: { viewModel.toggleHabitsExpanded() }
-            ) {
-                if viewModel.canEditDailyStats {
-                    editButton
-                }
-            }
-
-            if viewModel.isHabitsExpanded {
-                // Habit vital rows
-                if let habitRows = viewModel.habitRows {
-                    LazyVStack(alignment: .leading, spacing: .SQSpace.s) {
-                        ForEach(habitRows) { row in
-                            SQDailyCheckInVitalRow(model: row) {
-                                print("PTD Habit Row Tapped:", row.title)
-                            }
-
-                            // Divider between rows
-                            if row.id != habitRows.last?.id {
-                                Divider()
-                                    .sqBackgroundColor(SQColor.border)
-                                    .padding(.vertical, .SQSpace.xs)
-                            }
+                        if row.id != group.rows.last?.id {
+                            Divider()
+                                .sqBackgroundColor(SQColor.border(1))
+                                .padding(.vertical, .SQSpace.xs)
                         }
                     }
                 }
@@ -96,10 +54,8 @@ struct SQDashboardWorkoutSummaryDailyCheckInRow: View {
 
     var mainStack: some View {
         VStack(spacing: .SQSpace.l) {
-            stateSection
-
-            if viewModel.habitRows?.isEmpty == false {
-                habitsSection
+            ForEach(viewModel.groups) { group in
+                groupSection(group)
             }
         }
     }

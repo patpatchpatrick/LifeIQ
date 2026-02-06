@@ -30,7 +30,7 @@ struct SQExercisesListView: View {
 
             if showDivider {
                 Divider()
-                    .sqTintColor(.divider)
+                    .sqTintColor(.divider(1))
                     .padding(.top, .SQSpace.xl)
                     .padding(.bottom, .SQSpace.xl)
                     .background(SQColor.background.color)
