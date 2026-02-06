@@ -16,21 +16,45 @@ final class SQDashboardDailyPerformanceRowViewModel: SQDashboardRowViewModel {
         isExpanded.toggle()
     }
 
-    init(vo2MaxSamples: [SQVO2MaxSample]) {
-        if let latestSample = vo2MaxSamples.last {
+    init(
+        vo2MaxSamples: [SQVO2MaxSample],
+        timeRange: DashboardTimeRange = .today
+    ) {
+        if !vo2MaxSamples.isEmpty {
+            // Calculate value (latest or average based on time range)
+            let shouldShowAverage = timeRange != .today
+            let displayValue: Double?
+            let subtitle: String?
+
+            if shouldShowAverage {
+                // Calculate average for multi-day ranges
+                let sum = vo2MaxSamples.reduce(0.0) { $0 + $1.value }
+                displayValue = sum / Double(vo2MaxSamples.count)
+                subtitle = "avg"
+            } else {
+                // Use latest value for today
+                displayValue = vo2MaxSamples.last?.value
+                subtitle = nil
+            }
+
             // Build sparkline from historical data
             let sparklineData = Self.buildSparklineData(from: vo2MaxSamples)
 
-            // Determine classification based on VO2 max value
-            let classification = Self.classifyVO2Max(latestSample.value)
+            if let value = displayValue {
+                // Determine classification based on VO2 max value
+                let classification = Self.classifyVO2Max(value)
 
-            self.vitalRow = .init(
-                id: "vo2max",
-                emoji: "❤️",
-                title: "VO2 Max",
-                value: String(format: "%.1f ml/kg/min • %@", latestSample.value, classification),
-                sparklineData: sparklineData
-            )
+                self.vitalRow = .init(
+                    id: "vo2max",
+                    emoji: "❤️",
+                    title: "VO2 Max",
+                    value: String(format: "%.1f ml/kg/min • %@", value, classification),
+                    subtitle: subtitle,
+                    sparklineData: sparklineData
+                )
+            } else {
+                self.vitalRow = nil
+            }
         } else {
             self.vitalRow = nil
         }
@@ -41,19 +65,8 @@ final class SQDashboardDailyPerformanceRowViewModel: SQDashboardRowViewModel {
     // MARK: - Private Helpers
 
     private static func buildSparklineData(from samples: [SQVO2MaxSample]) -> [Double] {
-        // Take the last 14 samples or pad with the earliest value if we have fewer
-        let targetCount = 14
-        let values = samples.map { $0.value }
-
-        if values.count >= targetCount {
-            return Array(values.suffix(targetCount))
-        } else if !values.isEmpty {
-            // Pad with the first value to reach 14 data points
-            let padding = Array(repeating: values.first!, count: targetCount - values.count)
-            return padding + values
-        } else {
-            return []
-        }
+        // Return actual sample values for sparkline
+        return samples.map { $0.value }
     }
 
     private static func classifyVO2Max(_ value: Double) -> String {

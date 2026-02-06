@@ -314,6 +314,7 @@ Firestore charges per document read/write. Tracking metrics helps:
 ## Coding style
 
 - **Prefer stored properties over computed properties** — When a value can be calculated once and stored, use a stored property with `didSet` observers to update it when dependencies change, rather than recalculating via computed properties on every access.
+- **Never use force unwrap (!)** — Force unwrapping can cause crashes. Always use optional binding (`if let`, `guard let`), optional chaining (`?.`), or nil coalescing (`??`) with appropriate fallback values. If data is truly expected to exist, handle the nil case gracefully with a fallback or error state (e.g., "N/A", default value, or early return).
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:

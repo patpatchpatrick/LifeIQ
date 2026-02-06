@@ -122,9 +122,20 @@ final class SQDashboardController: SQDashboardInterface {
 
             var dailyRows: [SQDashboardRowViewModel] = []
 
-            let vo2MaxData = try await healthKitManager.fetchVO2MaxSamples(.allTime)
-            if !vo2MaxData.isEmpty {
-                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(vo2MaxSamples: vo2MaxData))
+            // Fetch VO2 Max samples for different time ranges
+            let vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(
+                .pastWeek
+            )
+            let vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(
+                .pastYear
+            )
+
+            // Add performance row to daily section (shows latest value, past 7 days sparkline)
+            if !vo2MaxPast7Days.isEmpty {
+                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(
+                    vo2MaxSamples: vo2MaxPast7Days,
+                    timeRange: .today
+                ))
             }
             
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
@@ -201,6 +212,11 @@ final class SQDashboardController: SQDashboardInterface {
                 context: context
             )
 
+            let weeklyPerformanceRow = SQDashboardDailyPerformanceRowViewModel(
+                vo2MaxSamples: vo2MaxPast7Days, // Past 7 days average and sparkline
+                timeRange: .pastSevenDays
+            )
+
             let weeklyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .weekly,
                 config: weeklySectionConfig,
@@ -210,6 +226,9 @@ final class SQDashboardController: SQDashboardInterface {
             var weeklyRows: [SQDashboardRowViewModel] = []
             if weeklyCheckInRow.shouldShow {
                 weeklyRows.append(weeklyCheckInRow)
+            }
+            if weeklyPerformanceRow.vitalRow != nil {
+                weeklyRows.append(weeklyPerformanceRow)
             }
             if !weeklyWorkoutSummaryRowViewModel.isEmpty {
                 weeklyRows.append(weeklyWorkoutSummaryRowViewModel)
@@ -230,6 +249,11 @@ final class SQDashboardController: SQDashboardInterface {
                 context: context
             )
 
+            let yearlyPerformanceRow = SQDashboardDailyPerformanceRowViewModel(
+                vo2MaxSamples: vo2MaxPastYear, // Past year average and sparkline
+                timeRange: .pastYear
+            )
+
             let yearlyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .yearly,
                 config: yearlySectionConfig,
@@ -239,6 +263,9 @@ final class SQDashboardController: SQDashboardInterface {
             var yearlyRows: [SQDashboardRowViewModel] = []
             if yearlyCheckInRow.shouldShow {
                 yearlyRows.append(yearlyCheckInRow)
+            }
+            if yearlyPerformanceRow.vitalRow != nil {
+                yearlyRows.append(yearlyPerformanceRow)
             }
             if !yearlyWorkoutSummaryRowViewModel.isEmpty {
                 yearlyRows.append(yearlyWorkoutSummaryRowViewModel)
