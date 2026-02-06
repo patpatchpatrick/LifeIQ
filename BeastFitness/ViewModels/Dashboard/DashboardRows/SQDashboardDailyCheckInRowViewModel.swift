@@ -33,7 +33,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
         isHabitsExpanded.toggle()
     }
 
-    init(dailyCheckInStats: SQDailyCheckInStats?, context: ModelContext) {
+    init(
+        dailyCheckInStats: SQDailyCheckInStats?,
+        historicalStats: [SQDailyCheckInStats] = [],
+        context: ModelContext
+    ) {
         self.context = context
 
         if let dailyCheckInStats {
@@ -41,8 +45,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
             callToAction = nil
             metricChips = SQMetricChip.Model.chips(from: dailyCheckInStats)
 
-            // Build vital rows from stats, separated by group
-            let rows = Self.buildVitalRows(from: dailyCheckInStats)
+            // Build vital rows from stats with real sparklines from historical data
+            let rows = Self.buildVitalRows(
+                from: dailyCheckInStats,
+                historicalStats: historicalStats
+            )
             stateRows = rows.state
             habitRows = rows.habits
         } else {
@@ -73,7 +80,10 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
         let habits: [SQDailyCheckInVitalRow.Model]
     }
 
-    private static func buildVitalRows(from stats: SQDailyCheckInStats) -> VitalRowGroups {
+    private static func buildVitalRows(
+        from stats: SQDailyCheckInStats,
+        historicalStats: [SQDailyCheckInStats]
+    ) -> VitalRowGroups {
         var stateRows: [SQDailyCheckInVitalRow.Model] = []
         var habitRows: [SQDailyCheckInVitalRow.Model] = []
 
@@ -85,7 +95,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "🙂",
                 title: "Mood",
                 value: "\(Int(moodValue)) / 10",
-                sparklineData: generateMockSparkline(currentValue: Double(moodValue))
+                sparklineData: buildSparkline(
+                    for: SQMetricId.mood,
+                    from: historicalStats,
+                    currentValue: moodValue
+                )
             ))
         }
 
@@ -96,7 +110,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "⚡️",
                 title: "Energy",
                 value: "\(Int(energyValue)) / 10",
-                sparklineData: generateMockSparkline(currentValue: Double(energyValue))
+                sparklineData: buildSparkline(
+                    for: SQMetricId.energy,
+                    from: historicalStats,
+                    currentValue: energyValue
+                )
             ))
         }
 
@@ -107,7 +125,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "🧠",
                 title: "Focus",
                 value: "\(Int(clarityValue)) / 10",
-                sparklineData: generateMockSparkline(currentValue: Double(clarityValue))
+                sparklineData: buildSparkline(
+                    for: SQMetricId.mentalClarity,
+                    from: historicalStats,
+                    currentValue: clarityValue
+                )
             ))
         }
 
@@ -118,7 +140,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "💪",
                 title: "Recovery",
                 value: "\(Int(sorenessValue)) / 10",
-                sparklineData: generateMockSparkline(currentValue: Double(sorenessValue))
+                sparklineData: buildSparkline(
+                    for: SQMetricId.soreness,
+                    from: historicalStats,
+                    currentValue: sorenessValue
+                )
             ))
         }
 
@@ -129,7 +155,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "😴",
                 title: "Sleep",
                 value: String(format: "%.1f h", sleepHours),
-                sparklineData: generateMockSparkline(currentValue: Double(sleepHours), range: 4...9)
+                sparklineData: buildSparkline(
+                    for: SQMetricId.sleepHours,
+                    from: historicalStats,
+                    currentValue: sleepHours
+                )
             ))
         }
 
@@ -141,7 +171,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "🍷",
                 title: "Alcohol",
                 value: "\(Int(alcoholValue))",
-                sparklineData: generateMockSparkline(currentValue: Double(alcoholValue), range: 0...1)
+                sparklineData: buildSparkline(
+                    for: SQMetricId.alcohol,
+                    from: historicalStats,
+                    currentValue: alcoholValue
+                )
             ))
         }
 
@@ -152,7 +186,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "🌿",
                 title: "Weed",
                 value: "\(Int(weedValue))",
-                sparklineData: generateMockSparkline(currentValue: Double(weedValue), range: 0...1)
+                sparklineData: buildSparkline(
+                    for: SQMetricId.weed,
+                    from: historicalStats,
+                    currentValue: weedValue
+                )
             ))
         }
 
@@ -163,7 +201,11 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "📵",
                 title: "Porn",
                 value: "\(Int(pornValue))",
-                sparklineData: generateMockSparkline(currentValue: Double(pornValue), range: 0...1)
+                sparklineData: buildSparkline(
+                    for: SQMetricId.porn,
+                    from: historicalStats,
+                    currentValue: pornValue
+                )
             ))
         }
 
@@ -174,29 +216,42 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
                 emoji: "☕️",
                 title: "Caffeine",
                 value: "\(Int(caffeineValue))",
-                sparklineData: generateMockSparkline(currentValue: Double(caffeineValue), range: 0...1)
+                sparklineData: buildSparkline(
+                    for: SQMetricId.caffeine,
+                    from: historicalStats,
+                    currentValue: caffeineValue
+                )
             ))
         }
 
         return VitalRowGroups(state: stateRows, habits: habitRows)
     }
     
-    /// Generates mock sparkline data with realistic variation
-    /// Last value will match currentValue
-    private static func generateMockSparkline(currentValue: Double, range: ClosedRange<Double> = 0...10) -> [Double] {
-        let days = 14
-        var values: [Double] = []
-        
-        // Generate variation around current value
-        for i in 0..<(days - 1) {
-            let variation = Double.random(in: -1.5...1.5)
-            let value = max(range.lowerBound, min(range.upperBound, currentValue + variation))
-            values.append(value)
+    /// Builds real sparkline data from historical check-ins
+    /// Returns the last 14 days of values for the specified metric
+    private static func buildSparkline(
+        for metricId: String,
+        from historicalStats: [SQDailyCheckInStats],
+        currentValue: Float
+    ) -> [Double] {
+        // Sort by date ascending (oldest to newest)
+        let sortedStats = historicalStats.sorted { $0.date < $1.date }
+
+        // Take last 14 days (or less if not enough data)
+        let recentStats = sortedStats.suffix(14)
+
+        // Extract values for this metric
+        let values = recentStats.compactMap { stat -> Double? in
+            guard let value = stat.values[metricId] else { return nil }
+            return Double(value)
         }
-        
-        // Last value is current
-        values.append(currentValue)
-        
-        return values
+
+        // If we have data, return it
+        if !values.isEmpty {
+            return values
+        }
+
+        // Fallback: if no historical data, just return current value
+        return [Double(currentValue)]
     }
 }

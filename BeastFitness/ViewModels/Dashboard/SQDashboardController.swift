@@ -148,6 +148,14 @@ final class SQDashboardController: SQDashboardInterface {
 
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
 
+            // Fetch historical check-ins for sparklines (last 14 days)
+            let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: Date()) ?? Date()
+            let historicalCheckIns = try SQDailyCheckInEntity.getAll(
+                from: fourteenDaysAgo,
+                to: Date(),
+                context: context
+            )
+
             // Set the daily check-in CTA view model if no stats exist
             if dailyCheckInStats == nil {
                 state.updateDailyCheckInCtaViewModel(.init(
@@ -162,7 +170,11 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             dailyRows.append(contentsOf: [
-                SQDashboardDailyCheckInRowViewModel(dailyCheckInStats: dailyCheckInStats, context: context),
+                SQDashboardDailyCheckInRowViewModel(
+                    dailyCheckInStats: dailyCheckInStats,
+                    historicalStats: historicalCheckIns,
+                    context: context
+                ),
                 SQDashboardWorkoutSummaryRowViewModel(
                     rowId: .daily,
                     config: dailySectionConfig,
