@@ -62,6 +62,37 @@ struct SQDashboardView: View {
         return ["All"] + groupNames.sorted()
     }
 
+    private var performanceStats: [SQStatRowData] {
+        // Find performance row viewmodels in section view models
+        let performanceRows = controller.state.sectionViewModels
+            .flatMap { $0.rows }
+            .compactMap { $0 as? SQDashboardDailyPerformanceRowViewModel }
+
+        guard let performanceRow = performanceRows.first,
+              let vitalRow = performanceRow.vitalRow else {
+            return []
+        }
+
+        // Extract VO2 Max value and unit from the formatted string
+        // Format: "48.1 ml/kg/min • Excellent"
+        let components = vitalRow.value.components(separatedBy: " • ")
+        let valueComponents = components.first?.components(separatedBy: " ") ?? []
+        let avgValue = valueComponents.first ?? "N/A"
+        let unit = valueComponents.dropFirst().joined(separator: " ")
+
+        let metricData = SQStatRowData(
+            id: vitalRow.id,
+            icon: vitalRow.emoji,
+            title: vitalRow.title,
+            avgValue: avgValue,
+            unit: unit,
+            sparklineData: vitalRow.sparklineData,
+            change14d: 0.0  // Placeholder - would need historical comparison
+        )
+
+        return [metricData]
+    }
+
     // MARK: - Computed Subsections
 
     private var metricsSubsection: some View {
@@ -89,8 +120,14 @@ struct SQDashboardView: View {
             title: "Performance",
             isCollapsed: $controller.state.isPerformanceCollapsed
         ) {
-            Text("Performance content - TODO")
-                .padding()
+            if performanceStats.isEmpty {
+                SQSubsectionEmptyState(
+                    message: "No performance data available",
+                    icon: .questionmarkCircle
+                )
+            } else {
+                SQStatRowSection(rows: performanceStats)
+            }
         }
     }
 
