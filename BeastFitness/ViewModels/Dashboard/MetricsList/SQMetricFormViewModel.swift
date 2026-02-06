@@ -202,6 +202,20 @@ final class SQMetricFormViewModel {
         }
     }
 
+    // MARK: - Delete
+
+    var canDelete: Bool {
+        if case .edit = mode { return true }
+        return false
+    }
+
+    func deleteTapped(using context: ModelContext) {
+        guard case .edit(let existing) = mode else { return }
+        do {
+            try metricsManager.archiveMetric(id: existing.id, using: context)
+        } catch {}
+    }
+
     // MARK: - Private
 
     private func buildDefinition() -> SQMetricDefinition {

@@ -10,6 +10,7 @@ struct SQMetricFormView: View {
     @State var viewModel: SQMetricFormViewModel
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @State private var isConfirmingDelete = false
 
     // MARK: - Emoji Circle
 
@@ -186,6 +187,23 @@ struct SQMetricFormView: View {
         .background(SQColor.backgroundSecondary.color)
         .safeAreaInset(edge: .bottom) {
             saveButton
+        }
+        .toolbar {
+            if viewModel.canDelete {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { isConfirmingDelete = true }) {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
+        }
+        .confirmationDialog("Delete Metric", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                viewModel.deleteTapped(using: modelContext)
+                dismiss()
+            }
+        } message: {
+            Text("This will remove the metric from your daily check-in. Past check-in data is preserved.")
         }
     }
 
