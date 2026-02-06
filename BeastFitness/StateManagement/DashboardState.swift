@@ -47,7 +47,22 @@ protocol DashboardStating: AnyObject {
 
     var isWorkoutListSheetVisible: Bool { get }
     var workoutsListController: SQWorkoutsListController? { get }
-    
+
+    // MARK: - Section Collapse States
+    var isDailyStatsCollapsed: Bool { get set }
+    var isWorkoutsCollapsed: Bool { get set }
+
+    // MARK: - Subsection Collapse States
+    var isMetricsCollapsed: Bool { get set }
+    var isPerformanceCollapsed: Bool { get set }
+    var isTotalsCollapsed: Bool { get set }
+    var isActivitiesCollapsed: Bool { get set }
+
+    // MARK: - Filter States
+    var metricsGroupFilter: String { get set }
+    var totalsTypeFilter: TotalsType { get set }
+    var activitiesTypeFilter: String { get set }
+
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
 
