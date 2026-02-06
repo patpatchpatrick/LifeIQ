@@ -15,13 +15,19 @@ struct SQDashboardView: View {
     // MARK: - Computed Properties for Metrics
 
     private var filteredMetrics: [SQStatRowData] {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else {
+            print("⚠️ Section view models not loaded yet")
+            return []
+        }
+
         // Get the section index based on selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         print("🔍 Selected time range: \(controller.state.selectedTimeRange.rawValue) (index: \(sectionIndex))")
 
         // Get the section for the selected time range
         guard sectionIndex < controller.state.sectionViewModels.count else {
-            print("⚠️ Section index \(sectionIndex) out of bounds")
+            print("⚠️ Section index \(sectionIndex) out of bounds (count: \(controller.state.sectionViewModels.count))")
             return []
         }
 
@@ -67,6 +73,9 @@ struct SQDashboardView: View {
     }
 
     private var availableMetricGroups: [String] {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else { return ["All"] }
+
         // Get the section for the selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         guard sectionIndex < controller.state.sectionViewModels.count else { return ["All"] }
@@ -84,6 +93,9 @@ struct SQDashboardView: View {
     }
 
     private var performanceStats: [SQStatRowData] {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else { return [] }
+
         // Get the section for the selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         guard sectionIndex < controller.state.sectionViewModels.count else { return [] }
@@ -117,6 +129,9 @@ struct SQDashboardView: View {
     }
 
     private var availableWorkoutTypes: [String] {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else { return ["All"] }
+
         // Get the section for the selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         guard sectionIndex < controller.state.sectionViewModels.count else { return ["All"] }
@@ -137,6 +152,9 @@ struct SQDashboardView: View {
     }
 
     private var filteredActivities: [SQDashboardWorkoutGroupViewModel] {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else { return [] }
+
         // Get the section for the selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         guard sectionIndex < controller.state.sectionViewModels.count else { return [] }
@@ -218,6 +236,9 @@ struct SQDashboardView: View {
     }
 
     private func getTotalsViewModel() -> SQDashboardWorkoutSummaryTotalsSectionViewModel? {
+        // Check if sections are loaded
+        guard !controller.state.sectionViewModels.isEmpty else { return nil }
+
         // Get the section for the selected time range
         let sectionIndex = DashboardTimeRange.allCases.firstIndex(of: controller.state.selectedTimeRange) ?? 0
         guard sectionIndex < controller.state.sectionViewModels.count else { return nil }
