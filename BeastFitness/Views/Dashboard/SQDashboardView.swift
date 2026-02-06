@@ -11,20 +11,121 @@ struct SQDashboardView: View {
     @Bindable var controller: SQDashboardController
     @Environment(\.modelContext) private var modelContext
     static let uiConfig = UIConfig()
-    
-    private var filteredSections: [SQDashboardSectionViewModel] {
-        controller.state.sectionViewModels.filter { section in
-            guard let title = section.title else { return true }
-            return title == controller.state.selectedTimeRange.rawValue
+
+    // MARK: - Computed Subsections
+
+    private var metricsSubsection: some View {
+        SQDashboardSubsection(
+            title: "Metrics",
+            isCollapsed: $controller.state.isMetricsCollapsed,
+            dropdownMenu: SQDropDownMenu(
+                menuViewModel: createMetricsFilterMenu(),
+                isDisabled: false
+            )
+        ) {
+            Text("Metrics content - TODO")
+                .padding()
         }
     }
-    
+
+    private var performanceSubsection: some View {
+        SQDashboardSubsection(
+            title: "Performance",
+            isCollapsed: $controller.state.isPerformanceCollapsed
+        ) {
+            Text("Performance content - TODO")
+                .padding()
+        }
+    }
+
+    private var totalsSubsection: some View {
+        SQDashboardSubsection(
+            title: "Totals",
+            isCollapsed: $controller.state.isTotalsCollapsed,
+            dropdownMenu: SQDropDownMenu(
+                menuViewModel: createTotalsFilterMenu(),
+                isDisabled: false
+            )
+        ) {
+            Text("Totals content - TODO")
+                .padding()
+        }
+    }
+
+    private var activitiesSubsection: some View {
+        SQDashboardSubsection(
+            title: "Activities",
+            isCollapsed: $controller.state.isActivitiesCollapsed,
+            dropdownMenu: SQDropDownMenu(
+                menuViewModel: createActivitiesFilterMenu(),
+                isDisabled: false
+            )
+        ) {
+            Text("Activities content - TODO")
+                .padding()
+        }
+    }
+
+    // MARK: - Filter Menu Creators
+
+    private func createMetricsFilterMenu() -> SQDropDownMenuViewModel {
+        let items = ["All", "Self", "Habits", "General"].map {
+            SQDropDownMenuViewModel.Item(title: $0)
+        }
+        return SQDropDownMenuViewModel(
+            defaultItem: .init(title: controller.state.metricsGroupFilter),
+            items: items
+        ) { [controller] selectedTitle in
+            controller.state.metricsGroupFilter = selectedTitle
+        }
+    }
+
+    private func createTotalsFilterMenu() -> SQDropDownMenuViewModel {
+        let items = TotalsType.allCases.map {
+            SQDropDownMenuViewModel.Item(title: $0.rawValue)
+        }
+        return SQDropDownMenuViewModel(
+            defaultItem: .init(title: controller.state.totalsTypeFilter.rawValue),
+            items: items
+        ) { [controller] selectedTitle in
+            if let type = TotalsType.allCases.first(where: { $0.rawValue == selectedTitle }) {
+                controller.state.totalsTypeFilter = type
+            }
+        }
+    }
+
+    private func createActivitiesFilterMenu() -> SQDropDownMenuViewModel {
+        let items = ["All", "Running", "Cycling"].map {
+            SQDropDownMenuViewModel.Item(title: $0)
+        }
+        return SQDropDownMenuViewModel(
+            defaultItem: .init(title: controller.state.activitiesTypeFilter),
+            items: items
+        ) { [controller] selectedTitle in
+            controller.state.activitiesTypeFilter = selectedTitle
+        }
+    }
+
     var mainScroll: some View {
         ScrollView {
-            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+            VStack(spacing: 0) {
+                // Dashboard header with time range picker
+                if !controller.state.isLoading {
+                    HStack {
+                        Text("Dashboard")
+                            .sqFont(.titleLarge)
+                            .sqForegroundColor(.textPrimary)
 
-                Spacer()
-                    .frame(height: .SQSpace.l)
+                        Spacer()
+
+                        SQDropDownMenu(
+                            menuViewModel: controller.timeRangeMenuViewModel,
+                            isDisabled: false
+                        )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
 
                 // Loading indicator
                 if controller.state.isLoading {
@@ -44,65 +145,53 @@ struct SQDashboardView: View {
 
                 // Content - only show when not loading
                 if !controller.state.isLoading {
-                    // Time range selector
-                    HStack {
-                        Text("Time Range")
-                            .sqFont(.bodySmall)
-                            .sqForegroundColor(.textSecondary)
-                        
-                        Spacer()
-                        
-                        SQDropDownMenu(
-                            menuViewModel: controller.timeRangeMenuViewModel,
-                            isDisabled: false
-                        )
+                    // Daily Check-In CTA Banner
+                    if let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
+                        SQCallToAction(viewModel: dailyCheckInCtaViewModel)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
                     }
-                    .padding(.horizontal, .SQSpace.l)
-                    .padding(.bottom, .SQSpace.xl)
-                }
 
-                // Daily Check-In CTA Banner
-                if let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
-                    SQCallToAction(viewModel: dailyCheckInCtaViewModel)
-                        .padding(.horizontal, .SQSpace.l)
-                        .padding(.bottom, .SQSpace.xl)
-                }
-
-                ForEach(filteredSections) { sectionViewModel in
-                    VStack(spacing: 0) {
-                        ForEach(sectionViewModel.rows) { rowViewModel in
-                            switch rowViewModel.rowType {
-                            case .text:
-                                if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
-                                    SQDashboardTextRow(viewModel: textRowViewModel)
-                                        .padding(.bottom, .SQSpace.xxl)
+                    // Main sections with sticky headers
+                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        // Daily Stats Section
+                        Section {
+                            if !controller.state.isDailyStatsCollapsed {
+                                VStack(spacing: 12) {
+                                    metricsSubsection
+                                    performanceSubsection
                                 }
-                            case .workoutSummary:
-                                if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel, !weekSummaryViewModel.isEmpty {
-                                    SQDashboardWorkoutSummaryRow(
-                                        viewModel: weekSummaryViewModel)
-                                }
-                                
-                            case .dailyCheckInStats:
-                                if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel,
-                                   dailyCheckInRowViewModel.shouldShow {
-                                    SQDashboardWorkoutSummaryDailyCheckInRow(viewModel: dailyCheckInRowViewModel)
-                                }
-                                
-                            case .performance:
-                                if let dailyPerformanceRowViewModel = rowViewModel as? SQDashboardDailyPerformanceRowViewModel {
-                                    SQDashboardPerformanceRow(viewModel: dailyPerformanceRowViewModel)
-                                }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
                             }
+                        } header: {
+                            SQDashboardSectionHeader(
+                                title: "Daily Stats",
+                                isCollapsed: $controller.state.isDailyStatsCollapsed
+                            )
+                        }
+
+                        // Workouts Section
+                        Section {
+                            if !controller.state.isWorkoutsCollapsed {
+                                VStack(spacing: 12) {
+                                    totalsSubsection
+                                    activitiesSubsection
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                            }
+                        } header: {
+                            SQDashboardSectionHeader(
+                                title: "Workouts",
+                                isCollapsed: $controller.state.isWorkoutsCollapsed
+                            )
                         }
                     }
-                    .padding(.horizontal, SQDashboardView.uiConfig.sectionHorizPadding)
-                    .padding(.bottom, .SQSpace.xxl)
                 }
-                
+
                 Spacer()
             }
-            .padding(.top, .SQSpace.xxl)
         }
     }
 
