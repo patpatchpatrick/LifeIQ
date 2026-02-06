@@ -13,7 +13,6 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     let callToAction: SQCallToActionViewModel?
     let context: ModelContext
     let canEditDailyStats: Bool
-    let metricChips: [SQMetricChip.Model]?
     let stateRows: [SQDailyCheckInVitalRow.Model]?
     let habitRows: [SQDailyCheckInVitalRow.Model]?
 
@@ -36,25 +35,29 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     init(
         dailyCheckInStats: SQDailyCheckInStats?,
         historicalStats: [SQDailyCheckInStats] = [],
+        timeRange: DashboardTimeRange = .today,
         context: ModelContext
     ) {
         self.context = context
 
-        if let dailyCheckInStats {
-            canEditDailyStats = true
+        // For multi-day ranges, use historical data to show averages
+        let shouldShowAverages = timeRange != .today
+        let statsToUse = shouldShowAverages ? historicalStats : (dailyCheckInStats.map { [$0] } ?? [])
+
+        if !statsToUse.isEmpty {
+            canEditDailyStats = timeRange == .today && dailyCheckInStats != nil
             callToAction = nil
-            metricChips = SQMetricChip.Model.chips(from: dailyCheckInStats)
 
             // Build vital rows from stats with real sparklines from historical data
             let rows = Self.buildVitalRows(
-                from: dailyCheckInStats,
-                historicalStats: historicalStats
+                from: statsToUse,
+                historicalStats: historicalStats,
+                showAverages: shouldShowAverages
             )
             stateRows = rows.state
             habitRows = rows.habits
         } else {
             canEditDailyStats = false
-            metricChips = nil
             stateRows = nil
             habitRows = nil
             callToAction = .init(
@@ -81,145 +84,187 @@ final class SQDashboardDailyCheckInRowViewModel: SQDashboardRowViewModel {
     }
 
     private static func buildVitalRows(
-        from stats: SQDailyCheckInStats,
-        historicalStats: [SQDailyCheckInStats]
+        from stats: [SQDailyCheckInStats],
+        historicalStats: [SQDailyCheckInStats],
+        showAverages: Bool
     ) -> VitalRowGroups {
         var stateRows: [SQDailyCheckInVitalRow.Model] = []
         var habitRows: [SQDailyCheckInVitalRow.Model] = []
 
+        // Helper to get value and formatted string
+        func getValue(for metricId: String) -> (value: Float, formatted: String)? {
+            let values = stats.compactMap { $0.values[metricId] }
+            guard !values.isEmpty else { return nil }
+
+            let avgValue = values.reduce(0, +) / Float(values.count)
+            let formatted = showAverages
+                ? String(format: "%.1f / 10", avgValue)
+                : "\(Int(values.last!)) / 10"
+            return (avgValue, formatted)
+        }
+
         // State metrics
         // Mood
-        if let moodValue = stats.values[SQMetricId.mood] {
+        if let result = getValue(for: SQMetricId.mood) {
             stateRows.append(.init(
                 id: SQMetricId.mood,
                 emoji: "🙂",
                 title: "Mood",
-                value: "\(Int(moodValue)) / 10",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.mood,
                     from: historicalStats,
-                    currentValue: moodValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Energy
-        if let energyValue = stats.values[SQMetricId.energy] {
+        if let result = getValue(for: SQMetricId.energy) {
             stateRows.append(.init(
                 id: SQMetricId.energy,
                 emoji: "⚡️",
                 title: "Energy",
-                value: "\(Int(energyValue)) / 10",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.energy,
                     from: historicalStats,
-                    currentValue: energyValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Mental Clarity (Focus)
-        if let clarityValue = stats.values[SQMetricId.mentalClarity] {
+        if let result = getValue(for: SQMetricId.mentalClarity) {
             stateRows.append(.init(
                 id: SQMetricId.mentalClarity,
                 emoji: "🧠",
                 title: "Focus",
-                value: "\(Int(clarityValue)) / 10",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.mentalClarity,
                     from: historicalStats,
-                    currentValue: clarityValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Soreness (inverted scale - 0=sore, 10=fresh)
-        if let sorenessValue = stats.values[SQMetricId.soreness] {
+        if let result = getValue(for: SQMetricId.soreness) {
             stateRows.append(.init(
                 id: SQMetricId.soreness,
                 emoji: "💪",
                 title: "Recovery",
-                value: "\(Int(sorenessValue)) / 10",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.soreness,
                     from: historicalStats,
-                    currentValue: sorenessValue
+                    currentValue: result.value
                 )
             ))
         }
 
-        // Sleep
-        if let sleepHours = stats.values[SQMetricId.sleepHours] {
+        // Sleep - special formatting
+        func getSleepValue() -> (value: Float, formatted: String)? {
+            let values = stats.compactMap { $0.values[SQMetricId.sleepHours] }
+            guard !values.isEmpty else { return nil }
+
+            let avgValue = values.reduce(0, +) / Float(values.count)
+            let displayValue = showAverages ? avgValue : values.last!
+            return (avgValue, String(format: "%.1f h", displayValue))
+        }
+
+        if let result = getSleepValue() {
             stateRows.append(.init(
                 id: SQMetricId.sleepHours,
                 emoji: "😴",
                 title: "Sleep",
-                value: String(format: "%.1f h", sleepHours),
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.sleepHours,
                     from: historicalStats,
-                    currentValue: sleepHours
+                    currentValue: result.value
                 )
             ))
         }
 
-        // Habit metrics
+        // Habit metrics - 0/1 values
+        func getHabitValue(for metricId: String) -> (value: Float, formatted: String)? {
+            let values = stats.compactMap { $0.values[metricId] }
+            guard !values.isEmpty else { return nil }
+
+            let avgValue = values.reduce(0, +) / Float(values.count)
+            let formatted = showAverages
+                ? String(format: "%.1f", avgValue)
+                : "\(Int(values.last!))"
+            return (avgValue, formatted)
+        }
+
         // Alcohol
-        if let alcoholValue = stats.values[SQMetricId.alcohol] {
+        if let result = getHabitValue(for: SQMetricId.alcohol) {
             habitRows.append(.init(
                 id: SQMetricId.alcohol,
                 emoji: "🍷",
                 title: "Alcohol",
-                value: "\(Int(alcoholValue))",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.alcohol,
                     from: historicalStats,
-                    currentValue: alcoholValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Weed
-        if let weedValue = stats.values[SQMetricId.weed] {
+        if let result = getHabitValue(for: SQMetricId.weed) {
             habitRows.append(.init(
                 id: SQMetricId.weed,
                 emoji: "🌿",
                 title: "Weed",
-                value: "\(Int(weedValue))",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.weed,
                     from: historicalStats,
-                    currentValue: weedValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Porn
-        if let pornValue = stats.values[SQMetricId.porn] {
+        if let result = getHabitValue(for: SQMetricId.porn) {
             habitRows.append(.init(
                 id: SQMetricId.porn,
                 emoji: "📵",
                 title: "Porn",
-                value: "\(Int(pornValue))",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.porn,
                     from: historicalStats,
-                    currentValue: pornValue
+                    currentValue: result.value
                 )
             ))
         }
 
         // Caffeine
-        if let caffeineValue = stats.values[SQMetricId.caffeine] {
+        if let result = getHabitValue(for: SQMetricId.caffeine) {
             habitRows.append(.init(
                 id: SQMetricId.caffeine,
                 emoji: "☕️",
                 title: "Caffeine",
-                value: "\(Int(caffeineValue))",
+                value: result.formatted,
+                subtitle: showAverages ? "avg" : nil,
                 sparklineData: buildSparkline(
                     for: SQMetricId.caffeine,
                     from: historicalStats,
-                    currentValue: caffeineValue
+                    currentValue: result.value
                 )
             ))
         }

@@ -16,19 +16,22 @@ struct SQDailyCheckInVitalRow: View {
         let emoji: String
         let title: String
         let value: String
+        let subtitle: String? // Optional label like "avg" for averages
         let sparklineData: [Double]
-        
+
         init(
             id: String,
             emoji: String,
             title: String,
             value: String,
+            subtitle: String? = nil,
             sparklineData: [Double]
         ) {
             self.id = id
             self.emoji = emoji
             self.title = title
             self.value = value
+            self.subtitle = subtitle
             self.sparklineData = sparklineData
         }
     }
@@ -53,11 +56,19 @@ struct SQDailyCheckInVitalRow: View {
                     .sqForegroundColor(.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Value
-                Text(model.value)
-                    .sqFont(.body)
-                    .sqForegroundColor(.textSecondary)
-                    .frame(minWidth: 60, alignment: .trailing)
+                // Value with optional subtitle
+                HStack(spacing: .SQSpace.xs) {
+                    if let subtitle = model.subtitle {
+                        Text(subtitle)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textTertiary)
+                    }
+
+                    Text(model.value)
+                        .sqFont(.body)
+                        .sqForegroundColor(.textSecondary)
+                }
+                .frame(minWidth: 60, alignment: .trailing)
                 
                 // Sparkline
                 SQSparkline(dataPoints: model.sparklineData, height: 20)

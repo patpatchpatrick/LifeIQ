@@ -41,6 +41,31 @@ All metrics must have a `group` property assigned in their `SQMetricDefinition`.
 - Shared code such as extensions, utilities (e.g., logging), and reusable business logic should generally live in **BeastFitnessCore** so it can be reused across app targets/modules.
 - We use a local package called **CoolCharts** for all chart/graph components. Any chart visualizations should be added to or used from CoolCharts.
 
+### Time Range Utilities
+
+**SQTimeRange** provides standardized date ranges for querying data:
+
+```swift
+// Available time ranges
+SQTimeRange.today      // Today (midnight to now)
+SQTimeRange.pastWeek   // Past 7 days
+SQTimeRange.pastYear   // Past year
+// ... etc
+
+// Each time range has start and end dates
+let startDate = SQTimeRange.pastWeek.startDate
+let endDate = SQTimeRange.pastWeek.endDate
+
+// Example: Fetching data for a specific time range
+let checkIns = try SQDailyCheckInEntity.getAll(
+    from: SQTimeRange.pastWeek.startDate,
+    to: SQTimeRange.pastWeek.endDate,
+    context: context
+)
+```
+
+**Important:** Always use `SQTimeRange` date properties instead of manually calculating dates. This ensures consistency across the app.
+
 ## State Management Architecture
 
 All application state is centralized in **SQAppState** (singleton: `SQAppState.shared`):

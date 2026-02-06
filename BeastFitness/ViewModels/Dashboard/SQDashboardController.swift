@@ -148,11 +148,16 @@ final class SQDashboardController: SQDashboardInterface {
 
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
 
-            // Fetch historical check-ins for sparklines (last 14 days)
-            let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: Date()) ?? Date()
-            let historicalCheckIns = try SQDailyCheckInEntity.getAll(
-                from: fourteenDaysAgo,
-                to: Date(),
+            // Fetch historical check-ins for different time ranges using SQTimeRange dates
+            let past7DaysCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.pastWeek.startDate,
+                to: SQTimeRange.pastWeek.endDate,
+                context: context
+            )
+
+            let pastYearCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.pastYear.startDate,
+                to: SQTimeRange.pastYear.endDate,
                 context: context
             )
 
@@ -172,7 +177,8 @@ final class SQDashboardController: SQDashboardInterface {
             dailyRows.append(contentsOf: [
                 SQDashboardDailyCheckInRowViewModel(
                     dailyCheckInStats: dailyCheckInStats,
-                    historicalStats: historicalCheckIns,
+                    historicalStats: past7DaysCheckIns, // Past 7 days for sparklines
+                    timeRange: .today,
                     context: context
                 ),
                 SQDashboardWorkoutSummaryRowViewModel(
@@ -187,39 +193,61 @@ final class SQDashboardController: SQDashboardInterface {
                 rows: dailyRows))
 
             let weeklySectionConfig = buildConfigTotalsSectionConfig(workoutSummaryRowId: .weekly)
-            
+
+            let weeklyCheckInRow = SQDashboardDailyCheckInRowViewModel(
+                dailyCheckInStats: nil,
+                historicalStats: past7DaysCheckIns, // Past 7 days for averages and sparklines
+                timeRange: .pastSevenDays,
+                context: context
+            )
+
             let weeklyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .weekly,
                 config: weeklySectionConfig,
                 workouts: lastWeekWorkouts,
                 priorWorkouts: weekBeforeLastWorkouts)
-            
+
+            var weeklyRows: [SQDashboardRowViewModel] = []
+            if weeklyCheckInRow.shouldShow {
+                weeklyRows.append(weeklyCheckInRow)
+            }
             if !weeklyWorkoutSummaryRowViewModel.isEmpty {
+                weeklyRows.append(weeklyWorkoutSummaryRowViewModel)
+            }
+
+            if !weeklyRows.isEmpty {
                 dashboardSections.append(.init(
                     title: weeklySectionConfig.timeRange.title,
-                    rows: [
-                        weeklyWorkoutSummaryRowViewModel
-                    ]))
+                    rows: weeklyRows))
             }
             
             let yearlySectionConfig =  buildConfigTotalsSectionConfig(workoutSummaryRowId: .yearly)
-            
+
+            let yearlyCheckInRow = SQDashboardDailyCheckInRowViewModel(
+                dailyCheckInStats: nil,
+                historicalStats: pastYearCheckIns, // Past year for averages and sparklines
+                timeRange: .pastYear,
+                context: context
+            )
+
             let yearlyWorkoutSummaryRowViewModel = SQDashboardWorkoutSummaryRowViewModel(
                 rowId: .yearly,
                 config: yearlySectionConfig,
                 workouts: lastYearWorkouts,
                 priorWorkouts: yearBeforeLastWorkouts)
-            
+
+            var yearlyRows: [SQDashboardRowViewModel] = []
+            if yearlyCheckInRow.shouldShow {
+                yearlyRows.append(yearlyCheckInRow)
+            }
             if !yearlyWorkoutSummaryRowViewModel.isEmpty {
+                yearlyRows.append(yearlyWorkoutSummaryRowViewModel)
+            }
+
+            if !yearlyRows.isEmpty {
                 dashboardSections.append(.init(
                     title: yearlySectionConfig.timeRange.title,
-                    rows: [
-                        SQDashboardWorkoutSummaryRowViewModel(
-                            rowId: .yearly,
-                            config: yearlySectionConfig,
-                            workouts: lastYearWorkouts,
-                            priorWorkouts: yearBeforeLastWorkouts)
-                    ]))
+                    rows: yearlyRows))
             }
             
             state.updateSectionViewModels(to: dashboardSections)
