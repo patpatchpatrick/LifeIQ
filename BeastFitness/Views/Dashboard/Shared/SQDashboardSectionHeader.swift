@@ -1,0 +1,57 @@
+//
+//  SQDashboardSectionHeader.swift
+//  BeastFitness
+//
+//  Created by Claude Code on 2/6/26.
+//
+
+import SwiftUI
+
+struct SQDashboardSectionHeader: View {
+    let title: String
+    @Binding var isCollapsed: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isCollapsed.toggle()
+            }
+        } label: {
+            HStack {
+                Text(title)
+                    .sqFont(.titleLarge)
+                    .sqForegroundColor(.textPrimary)
+
+                Spacer()
+
+                SQImageView(
+                    image: .init(
+                        symbol: isCollapsed ? .chevronDown : .chevronUp,
+                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyMedium)
+                    )
+                )
+                .frame(width: 20, height: 20)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .padding(.horizontal, 16)
+            .sqBackgroundColor(.background)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+#Preview {
+    VStack(spacing: 0) {
+        SQDashboardSectionHeader(
+            title: "Daily Stats",
+            isCollapsed: .constant(false)
+        )
+
+        SQDashboardSectionHeader(
+            title: "Workouts",
+            isCollapsed: .constant(true)
+        )
+    }
+    .sqBackgroundColor(.background)
+}
