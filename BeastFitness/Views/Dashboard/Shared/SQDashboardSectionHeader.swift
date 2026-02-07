@@ -19,7 +19,7 @@ struct SQDashboardSectionHeader: View {
         } label: {
             HStack {
                 Text(title)
-                    .sqFont(.titleLarge)
+                    .sqFont(.title3)
                     .sqForegroundColor(.textPrimary)
 
                 Spacer()
@@ -27,7 +27,7 @@ struct SQDashboardSectionHeader: View {
                 SQImageView(
                     image: .init(
                         symbol: isCollapsed ? .chevronDown : .chevronUp,
-                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyMedium)
+                        symbolStyle: .colorWithFont(.textSecondary, font: .body)
                     )
                 )
                 .frame(width: 20, height: 20)

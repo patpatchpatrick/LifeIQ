@@ -8,10 +8,13 @@
 import Foundation
 
 enum SQDashboardRowType {
-    case text
+    case metricStats
+    case performanceStats
+    case totalsStats
+    case activityStats
     case workoutSummary
+    case checkInSummary
     case dailyCheckInStats
-    case performance
 }
 
 enum SQDashboardRowIdentifier {

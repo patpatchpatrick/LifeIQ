@@ -35,8 +35,8 @@ protocol DashboardStating: AnyObject {
     var hub: EventHub { get }
 
     /// State
-    ///
-    var sectionViewModels: [SQDashboardSectionViewModel] { get }
+    
+    var sectionGroups: [SQDashboardSectionGroupViewModel] { get }
     var selectedTimeRange: DashboardTimeRange { get set }
     var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> { get }
     var isLoading: Bool { get }
@@ -48,21 +48,6 @@ protocol DashboardStating: AnyObject {
     var isWorkoutListSheetVisible: Bool { get }
     var workoutsListController: SQWorkoutsListController? { get }
 
-    // MARK: - Section Collapse States
-    var isDailyStatsCollapsed: Bool { get set }
-    var isWorkoutsCollapsed: Bool { get set }
-
-    // MARK: - Subsection Collapse States
-    var isMetricsCollapsed: Bool { get set }
-    var isPerformanceCollapsed: Bool { get set }
-    var isTotalsCollapsed: Bool { get set }
-    var isActivitiesCollapsed: Bool { get set }
-
-    // MARK: - Filter States
-    var metricsGroupFilter: String { get set }
-    var totalsTypeFilter: TotalsType { get set }
-    var activitiesTypeFilter: String { get set }
-
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
 
@@ -70,7 +55,7 @@ protocol DashboardStating: AnyObject {
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?)
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
 
-    func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel])
+    func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel])
     func setLoading(_ isLoading: Bool)
 
     func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
@@ -85,7 +70,7 @@ protocol DashboardStating: AnyObject {
     private(set) var isWorkoutListSheetVisible: Bool = false
 
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
-    private(set) var sectionViewModels: [SQDashboardSectionViewModel] = []
+    private(set) var sectionGroups: [SQDashboardSectionGroupViewModel] = []
 
     private let selectedTimeRangeSubject = PassthroughSubject<DashboardTimeRange, Never>()
     var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> {
@@ -103,21 +88,6 @@ protocol DashboardStating: AnyObject {
 
     private(set) var workoutsListController: SQWorkoutsListController?
 
-    // MARK: - Section Collapse States
-    var isDailyStatsCollapsed: Bool = false
-    var isWorkoutsCollapsed: Bool = false
-
-    // MARK: - Subsection Collapse States
-    var isMetricsCollapsed: Bool = false
-    var isPerformanceCollapsed: Bool = false
-    var isTotalsCollapsed: Bool = false
-    var isActivitiesCollapsed: Bool = false
-
-    // MARK: - Filter States
-    var metricsGroupFilter: String = "All"
-    var totalsTypeFilter: TotalsType = .time
-    var activitiesTypeFilter: String = "All"
-
     init(hub: EventHub) {
         self.hub = hub
     }
@@ -125,9 +95,9 @@ protocol DashboardStating: AnyObject {
     func changeTab(to tab: NavigationState.Tab) {
         hub.domainEvents.send(.changeTab(tab))
     }
-    
-    func updateSectionViewModels(to sectionViewModels: [SQDashboardSectionViewModel]) {
-        self.sectionViewModels = sectionViewModels
+
+    func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel]) {
+        self.sectionGroups = sectionGroups
     }
 
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?) {

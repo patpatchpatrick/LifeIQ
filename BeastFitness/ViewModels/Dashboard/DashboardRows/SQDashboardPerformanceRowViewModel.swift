@@ -59,7 +59,7 @@ final class SQDashboardDailyPerformanceRowViewModel: SQDashboardRowViewModel {
             self.vitalRow = nil
         }
 
-        super.init(rowId: .dailyPerformance, rowType: .performance)
+        super.init(rowId: .dailyPerformance, rowType: .performanceStats)
     }
 
     // MARK: - Private Helpers

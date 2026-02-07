@@ -13,25 +13,30 @@ struct SQDashboardSection: View {
     var sectionContent: some View {
         ForEach(viewModel.rows) { rowViewModel in
             switch rowViewModel.rowType {
-            case .text:
-                if let textRowViewModel = rowViewModel as? SQDashboardTextRowViewModel {
-                    SQDashboardTextRow(viewModel: textRowViewModel)
-                        .padding(.bottom, .SQSpace.xxl)
-                }
+            case .metricStats:
+                // TODO: Implement metric stats row view
+                EmptyView()
+
+            case .performanceStats:
+                EmptyView()
+
+            case .totalsStats:
+                // TODO: Implement totals stats row view
+                EmptyView()
+
+            case .activityStats, .dailyCheckInStats:
+                // TODO: Implement activity stats row view
+                EmptyView()
+
             case .workoutSummary:
                 if let weekSummaryViewModel = rowViewModel as? SQDashboardWorkoutSummaryRowViewModel, !weekSummaryViewModel.isEmpty {
                     SQDashboardWorkoutSummaryRow(
                         viewModel: weekSummaryViewModel)
                 }
-                
-            case .dailyCheckInStats:
+
+            case .checkInSummary:
                 if let dailyCheckInRowViewModel = rowViewModel as? SQDashboardDailyCheckInRowViewModel {
                     SQDashboardWorkoutSummaryDailyCheckInRow(viewModel: dailyCheckInRowViewModel)
-                }
-                
-            case .performance:
-                if let dailyPerformanceRowViewModel = rowViewModel as? SQDashboardDailyPerformanceRowViewModel {
-                    SQDashboardPerformanceRow(viewModel: dailyPerformanceRowViewModel)
                 }
             }
         }

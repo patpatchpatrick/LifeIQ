@@ -18,11 +18,12 @@ struct SQSubsectionEmptyState: View {
         VStack(spacing: 12) {
             SQImageView(image: .init(
                 symbol: icon,
-                symbolStyle: .colorWithFont(.textSecondary, font: .bodyMedium)
+                symbolStyle: .colorWithFont(.textSecondary, font: .body)
             ))
+            frame(width: 25, height: 25)
 
             Text(message)
-                .sqFont(.bodyMedium)
+                .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
                 .multilineTextAlignment(.center)
         }

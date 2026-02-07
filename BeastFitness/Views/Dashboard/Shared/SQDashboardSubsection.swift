@@ -37,7 +37,7 @@ struct SQDashboardSubsection<Content: View>: View {
             } label: {
                 HStack {
                     Text(title)
-                        .sqFont(.titleMedium)
+                        .sqFont(.title4)
                         .sqForegroundColor(.textPrimary)
 
                     Spacer()
@@ -77,7 +77,7 @@ struct SQDashboardSubsection<Content: View>: View {
             isCollapsed: .constant(false)
         ) {
             Text("Metrics content goes here")
-                .sqFont(.bodyMedium)
+                .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
                 .padding(16)
         }
@@ -87,11 +87,11 @@ struct SQDashboardSubsection<Content: View>: View {
             isCollapsed: .constant(true)
         ) {
             Text("Performance content goes here")
-                .sqFont(.bodyMedium)
+                .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
                 .padding(16)
         }
     }
     .padding(16)
-    .sqBackgroundColor(.backgroundPrimary)
+    .sqBackgroundColor(.background)
 }

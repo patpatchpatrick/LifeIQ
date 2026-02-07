@@ -15,7 +15,7 @@ struct SQStatRowSection: View {
                 // Column 1: "Stat" (40%)
                 HStack(spacing: 8) {
                     Text("Stat")
-                        .font(.sqFont(.captionMedium))
+                        .font(.sqFont(.bodySmall))
                         .sqForegroundColor(.textSecondary)
 
                     Spacer()
@@ -24,13 +24,13 @@ struct SQStatRowSection: View {
 
                 // Column 2: "Avg Score" (30%)
                 Text("Avg Score")
-                    .font(.sqFont(.captionMedium))
+                    .font(.sqFont(.bodySmall))
                     .sqForegroundColor(.textSecondary)
                     .frame(maxWidth: .infinity * 0.75, alignment: .leading)
 
                 // Column 3: "14d %" (30%)
                 Text("14d %")
-                    .font(.sqFont(.captionMedium))
+                    .font(.sqFont(.bodySmall))
                     .sqForegroundColor(.textSecondary)
                     .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
             }
