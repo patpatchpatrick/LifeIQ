@@ -10,6 +10,9 @@ import Foundation
 enum SQDashboardRowType {
     case metricStats
     case performanceStats
+    case workoutTotals
+    case activityList
+    
     case totalsStats
     case activityStats
     case workoutSummary
@@ -18,6 +21,10 @@ enum SQDashboardRowType {
 }
 
 enum SQDashboardRowIdentifier {
+    case metricStats
+    case workoutTotals
+    case activityList
+    
     case motiviationalQuote
     case dailyCheckInStats
     case dailyPerformance
@@ -27,7 +34,7 @@ enum SQDashboardRowIdentifier {
 }
 
 class SQDashboardRowViewModel: Identifiable {
-    let id = UUID()
+    var id = UUID()
     let rowId: SQDashboardRowIdentifier
     let rowType: SQDashboardRowType
     

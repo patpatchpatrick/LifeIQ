@@ -1,0 +1,36 @@
+//
+//  SQDashboardActivityRowViewModel.swift
+//  BeastFitness
+//
+//  Created by Patrick Doyle on 2/7/26.
+//
+
+import SwiftUI
+
+@Observable @MainActor
+final class SQDashboardActivityRowViewModel: SQDashboardRowViewModel {
+    let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
+    let ctaViewModel: SQCallToActionViewModel?
+    
+    
+    init(workouts: [SQWorkoutSessionable]) {
+        var workoutGroupViewModels = [SQDashboardWorkoutGroupViewModel]()
+        for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
+            workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
+        }
+        self.workoutGroupViewModels = workoutGroupViewModels
+        
+        if workoutGroupViewModels.isEmpty {
+            ctaViewModel = .init(
+                title: "Start workout",
+                onTap: {
+                    SQAppState.shared.hub.domainEvents.send(.changeTab(.workouts))
+            })
+        } else {
+            ctaViewModel = nil
+        }
+        
+        super.init(rowId: .activityList, rowType: .activityList)
+    }
+    
+}

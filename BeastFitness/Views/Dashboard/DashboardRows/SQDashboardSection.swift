@@ -13,7 +13,7 @@ struct SQDashboardSection: View {
     var sectionContent: some View {
         ForEach(viewModel.rows) { rowViewModel in
             switch rowViewModel.rowType {
-            case .metricStats:
+            case .metricStats, .workoutTotals, .activityList:
                 // TODO: Implement metric stats row view
                 EmptyView()
 

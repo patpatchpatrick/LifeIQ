@@ -184,20 +184,28 @@ final class SQDashboardController: SQDashboardInterface {
 
             // Build section groups for new dashboard architecture
             let currentWorkouts: [SQWorkoutSessionable]
+            let priorWorkouts: [SQWorkoutSessionable]
+            let priorTimeRange: SQTimeRange
             let currentCheckIns: [SQDailyCheckInStats]
             let currentVO2MaxSamples: [SQVO2MaxSample]
 
             switch state.selectedTimeRange {
             case .today:
                 currentWorkouts = todaysWorkouts
+                priorTimeRange = .yesterday
+                priorWorkouts = yesterdaysWorkouts
                 currentCheckIns = past7DaysCheckIns // Use past 7 days for sparklines
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastSevenDays:
                 currentWorkouts = lastWeekWorkouts
+                priorWorkouts = weekBeforeLastWorkouts
+                priorTimeRange = .weekBeforeLast
                 currentCheckIns = past7DaysCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastYear:
                 currentWorkouts = lastYearWorkouts
+                priorWorkouts = yearBeforeLastWorkouts
+                priorTimeRange = .yearBeforeLast
                 currentCheckIns = pastYearCheckIns
                 currentVO2MaxSamples = vo2MaxPastYear
             }
@@ -206,7 +214,9 @@ final class SQDashboardController: SQDashboardInterface {
                 checkIns: currentCheckIns,
                 vo2MaxSamples: currentVO2MaxSamples,
                 workouts: currentWorkouts,
+                priorWorkouts: priorWorkouts,
                 timeRange: state.selectedTimeRange.toSQTimeRange(),
+                priorTimeRange: priorTimeRange,
                 context: context
             )
             state.updateSectionGroups(to: sectionGroups)
@@ -271,10 +281,10 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         // Build rowsByFilter dictionary
-        var rowsByFilter: [String: [Any]] = [:]
+        var rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = [:]
 
         // "All" filter: Include all metrics that have data
-        var allRows: [SQDashboardMetricStatsRow] = []
+        var allRows: [SQDashboardMetricStatsRowViewModel] = []
         for def in allDefinitions {
             if let row = buildMetricRow(for: def, from: stats) {
                 allRows.append(row)
@@ -284,7 +294,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Per-group filters
         for groupName in sortedGroups {
-            var groupRows: [SQDashboardMetricStatsRow] = []
+            var groupRows: [SQDashboardMetricStatsRowViewModel] = []
             let groupDefinitions = allDefinitions.filter { $0.group == groupName }
 
             for def in groupDefinitions {
@@ -299,25 +309,25 @@ final class SQDashboardController: SQDashboardInterface {
         // Create dropdown view model
         let dropDownViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: "All"),
-            items: filterItems
-        ) { [weak self] selectedFilter in
-            guard let self else { return }
-            // Find the section and update its active filter
-            for group in self.state.sectionGroups {
-                if let section = group.sections.first(where: { $0.id == "metrics" }) {
-                    section.updateActiveFilter(selectedFilter)
-                    break
-                }
-            }
-        }
-
-        // Return section view model
-        return SQDashboardSubsectionViewModel(
+            items: filterItems,
+            itemSelectionHandler: { _ in }
+        )
+        
+        let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel
         )
+        
+        dropDownViewModel.itemSelectionHandler = { [weak self] selectedFilter in
+            guard let self else { return }
+            
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        // Return section view model
+        return sectionViewModel
     }
 
     // MARK: - Performance Subsection Builder
@@ -337,8 +347,8 @@ final class SQDashboardController: SQDashboardInterface {
         let sparklineData = vo2MaxSamples.map { $0.value }
 
         // Create VO2 Max row
-        let vo2MaxRow = SQDashboardMetricStatsRow(
-            id: "vo2-max",
+        let vo2MaxRow = SQDashboardMetricStatsRowViewModel(
+            metricId: "vo2-max",
             icon: SQImageSymbol.heart.rawValue,
             title: "VO2 Max",
             avgValue: avgValueString,
@@ -348,7 +358,7 @@ final class SQDashboardController: SQDashboardInterface {
         )
 
         // Build rowsByFilter dictionary (no filters for Performance)
-        let rowsByFilter: [String: [Any]] = ["All": [vo2MaxRow]]
+        let rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = ["All": [vo2MaxRow]]
 
         // Return section view model
         return SQDashboardSubsectionViewModel(
@@ -361,107 +371,15 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Totals Subsection Builder
 
-    private func buildTotalsSubsection(workouts: [SQWorkoutSessionable], timeRange: SQTimeRange) -> SQDashboardSubsectionViewModel? {
-        // Skip if no workouts
-        guard !workouts.isEmpty else { return nil }
-
-        // Group workouts by activity type
-        var workoutsByActivity: [String: [SQWorkoutSessionable]] = [:]
-        for workout in workouts {
-            let activityName = workout.activityType.name
-            workoutsByActivity[activityName, default: []].append(workout)
-        }
-
-        // Build Time filter rows
-        var timeRows: [SQDashboardMetricStatsRow] = []
-        for (activityName, activityWorkouts) in workoutsByActivity {
-            // Sum total duration in seconds
-            let totalSeconds = activityWorkouts.compactMap { $0.activeDuration }.reduce(0, +)
-
-            // Convert to hours or minutes
-            let hours = totalSeconds / 3600.0
-            let avgValue: String
-            let unit: String
-
-            if hours >= 1.0 {
-                avgValue = String(format: "%.1f", hours)
-                unit = "hrs"
-            } else {
-                let minutes = totalSeconds / 60.0
-                avgValue = String(format: "%.1f", minutes)
-                unit = "min"
-            }
-
-            // Get activity type from first workout
-            let activityType = activityWorkouts.first?.activityType
-            let icon = activityType?.imageSymbol.rawValue ?? ""
-
-            timeRows.append(SQDashboardMetricStatsRow(
-                id: activityName,
-                icon: icon,
-                title: activityName,
-                avgValue: avgValue,
-                unit: unit,
-                sparklineData: [],
-                change14d: 0.0
-            ))
-        }
-
-        // Sort by total duration (descending)
-        timeRows.sort { lhs, rhs in
-            guard let lhsWorkouts = workoutsByActivity[lhs.id],
-                  let rhsWorkouts = workoutsByActivity[rhs.id] else {
-                return false
-            }
-            let lhsTotal = lhsWorkouts.compactMap { $0.activeDuration }.reduce(0, +)
-            let rhsTotal = rhsWorkouts.compactMap { $0.activeDuration }.reduce(0, +)
-            return lhsTotal > rhsTotal
-        }
-
-        // Build Kilocalories filter rows
-        var kcalRows: [SQDashboardMetricStatsRow] = []
-        for (activityName, activityWorkouts) in workoutsByActivity {
-            // Sum total kilocalories
-            let totalKcal = activityWorkouts.compactMap { $0.totalCalories }.reduce(0, +)
-
-            // Skip if no calorie data
-            guard totalKcal > 0 else { continue }
-
-            let avgValue = String(format: "%.0f", totalKcal)
-
-            // Get activity type from first workout
-            let activityType = activityWorkouts.first?.activityType
-            let icon = activityType?.imageSymbol.rawValue ?? ""
-
-            kcalRows.append(SQDashboardMetricStatsRow(
-                id: activityName,
-                icon: icon,
-                title: activityName,
-                avgValue: avgValue,
-                unit: "kcal",
-                sparklineData: [],
-                change14d: 0.0
-            ))
-        }
-
-        // Sort by total kilocalories (descending)
-        kcalRows.sort { lhs, rhs in
-            guard let lhsWorkouts = workoutsByActivity[lhs.id],
-                  let rhsWorkouts = workoutsByActivity[rhs.id] else {
-                return false
-            }
-            let lhsTotal = lhsWorkouts.compactMap { $0.totalCalories }.reduce(0, +)
-            let rhsTotal = rhsWorkouts.compactMap { $0.totalCalories }.reduce(0, +)
-            return lhsTotal > rhsTotal
-        }
-
-        // Return nil if no data in either filter
-        guard !timeRows.isEmpty || !kcalRows.isEmpty else { return nil }
+    private func buildTotalsSubsection(config: SQDashboardWorkoutSummaryRowConfig, workouts: [SQWorkoutSessionable], priorWorkouts: [SQWorkoutSessionable]) -> SQDashboardSubsectionViewModel? {
+        
+        let timeRow = SQDashboardWorkoutTotalsRowViewModel(config: config, workouts: workouts, priorWorkouts: priorWorkouts, filter: .workoutTime)
+        let caloriesRow = SQDashboardWorkoutTotalsRowViewModel(config: config, workouts: workouts, priorWorkouts: priorWorkouts, filter: .kilocalories)
 
         // Build rowsByFilter dictionary
-        let rowsByFilter: [String: [Any]] = [
-            "Time": timeRows,
-            "Kilocalories": kcalRows
+        let rowsByFilter: [String: [SQDashboardWorkoutTotalsRowViewModel]] = [
+            "Time": [timeRow],
+            "Kilocalories": [caloriesRow]
         ]
 
         // Create dropdown filter items
@@ -473,25 +391,24 @@ final class SQDashboardController: SQDashboardInterface {
         // Create dropdown view model
         let dropDownViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: "Time"),
-            items: filterItems
-        ) { [weak self] selectedFilter in
-            guard let self else { return }
-            // Find the section and update its active filter
-            for group in self.state.sectionGroups {
-                if let section = group.sections.first(where: { $0.id == "totals" }) {
-                    section.updateActiveFilter(selectedFilter)
-                    break
-                }
-            }
-        }
-
-        // Return section view model
-        return SQDashboardSubsectionViewModel(
+            items: filterItems,
+            itemSelectionHandler: { _ in }
+        )
+        let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "totals",
             title: "Totals",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel
         )
+        
+        dropDownViewModel.itemSelectionHandler = { [weak self] selectedFilter in
+            guard let self else { return }
+            
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        // Return section view model
+        return sectionViewModel
     }
 
     // MARK: - Activities Subsection Builder
@@ -515,220 +432,39 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         // Build rowsByFilter dictionary
-        var rowsByFilter: [String: [Any]] = [:]
-
+        var rowsByFilter: [String: [SQDashboardActivityRowViewModel]] = [:]
+        
         // "All" filter: Aggregate stats for ALL workouts
-        var allRows: [SQDashboardMetricStatsRow] = []
+        var allRows: [SQDashboardActivityRowViewModel] = []
 
-        // Calculate total workouts count
-        let totalWorkoutsCount = workouts.count
-        allRows.append(SQDashboardMetricStatsRow(
-            id: "all-workouts",
-            icon: SQImageSymbol.chartBar.rawValue,
-            title: "Workouts",
-            avgValue: "\(totalWorkoutsCount)",
-            unit: "total",
-            sparklineData: [],
-            change14d: 0.0
-        ))
-
-        // Calculate total duration
-        let totalSeconds = workouts.compactMap { $0.activeDuration }.reduce(0, +)
-        let totalHours = totalSeconds / 3600.0
-        let durationValue: String
-        let durationUnit: String
-        if totalHours >= 1.0 {
-            durationValue = String(format: "%.1f", totalHours)
-            durationUnit = "hrs"
-        } else {
-            let minutes = totalSeconds / 60.0
-            durationValue = String(format: "%.1f", minutes)
-            durationUnit = "min"
+        for (activityType, workouts) in workouts.workoutsByActivityType {
+            allRows.append(.init(workouts: workouts))
+            rowsByFilter[activityType.name] = [.init(workouts: workouts)]
         }
-        allRows.append(SQDashboardMetricStatsRow(
-            id: "all-duration",
-            icon: SQImageSymbol.clock.rawValue,
-            title: "Duration",
-            avgValue: durationValue,
-            unit: durationUnit,
-            sparklineData: [],
-            change14d: 0.0
-        ))
-
-        // Calculate total kilocalories
-        let totalKcal = workouts.compactMap { $0.totalCalories }.reduce(0, +)
-        if totalKcal > 0 {
-            allRows.append(SQDashboardMetricStatsRow(
-                id: "all-kcal",
-                icon: SQImageSymbol.flame.rawValue,
-                title: "Kilocalories",
-                avgValue: String(format: "%.0f", totalKcal),
-                unit: "kcal",
-                sparklineData: [],
-                change14d: 0.0
-            ))
-        }
-
-        // Calculate average duration per workout
-        let avgDurationSeconds = totalSeconds / Double(totalWorkoutsCount)
-        let avgDurationHours = avgDurationSeconds / 3600.0
-        let avgDurationValue: String
-        let avgDurationUnit: String
-        if avgDurationHours >= 1.0 {
-            avgDurationValue = String(format: "%.1f", avgDurationHours)
-            avgDurationUnit = "hrs"
-        } else {
-            let avgMinutes = avgDurationSeconds / 60.0
-            avgDurationValue = String(format: "%.1f", avgMinutes)
-            avgDurationUnit = "min"
-        }
-        allRows.append(SQDashboardMetricStatsRow(
-            id: "all-avg-duration",
-            icon: SQImageSymbol.clock.rawValue,
-            title: "Avg Duration",
-            avgValue: avgDurationValue,
-            unit: avgDurationUnit,
-            sparklineData: [],
-            change14d: 0.0
-        ))
-
-        // Calculate average kilocalories per workout
-        if totalKcal > 0 {
-            let avgKcal = totalKcal / Double(totalWorkoutsCount)
-            allRows.append(SQDashboardMetricStatsRow(
-                id: "all-avg-kcal",
-                icon: SQImageSymbol.flame.rawValue,
-                title: "Avg Kilocalories",
-                avgValue: String(format: "%.0f", avgKcal),
-                unit: "kcal",
-                sparklineData: [],
-                change14d: 0.0
-            ))
-        }
-
         rowsByFilter["All"] = allRows
-
-        // Per-activity filters
-        for activityType in sortedActivityTypes {
-            var activityRows: [SQDashboardMetricStatsRow] = []
-
-            // Filter workouts for this activity type
-            let activityWorkouts = workouts.filter { $0.activityType.name == activityType }
-
-            // Get icon from first workout
-            let icon = activityWorkouts.first?.activityType.imageSymbol.rawValue ?? SQImageSymbol.figureRun.rawValue
-
-            // Workouts count for this activity
-            let activityWorkoutsCount = activityWorkouts.count
-            activityRows.append(SQDashboardMetricStatsRow(
-                id: "\(activityType)-workouts",
-                icon: icon,
-                title: "Workouts",
-                avgValue: "\(activityWorkoutsCount)",
-                unit: "total",
-                sparklineData: [],
-                change14d: 0.0
-            ))
-
-            // Total duration for this activity
-            let activityTotalSeconds = activityWorkouts.compactMap { $0.activeDuration }.reduce(0, +)
-            let activityTotalHours = activityTotalSeconds / 3600.0
-            let activityDurationValue: String
-            let activityDurationUnit: String
-            if activityTotalHours >= 1.0 {
-                activityDurationValue = String(format: "%.1f", activityTotalHours)
-                activityDurationUnit = "hrs"
-            } else {
-                let activityMinutes = activityTotalSeconds / 60.0
-                activityDurationValue = String(format: "%.1f", activityMinutes)
-                activityDurationUnit = "min"
-            }
-            activityRows.append(SQDashboardMetricStatsRow(
-                id: "\(activityType)-duration",
-                icon: SQImageSymbol.clock.rawValue,
-                title: "Duration",
-                avgValue: activityDurationValue,
-                unit: activityDurationUnit,
-                sparklineData: [],
-                change14d: 0.0
-            ))
-
-            // Total kilocalories for this activity
-            let activityTotalKcal = activityWorkouts.compactMap { $0.totalCalories }.reduce(0, +)
-            if activityTotalKcal > 0 {
-                activityRows.append(SQDashboardMetricStatsRow(
-                    id: "\(activityType)-kcal",
-                    icon: SQImageSymbol.flame.rawValue,
-                    title: "Kilocalories",
-                    avgValue: String(format: "%.0f", activityTotalKcal),
-                    unit: "kcal",
-                    sparklineData: [],
-                    change14d: 0.0
-                ))
-            }
-
-            // Average duration per workout for this activity
-            let activityAvgDurationSeconds = activityTotalSeconds / Double(activityWorkoutsCount)
-            let activityAvgDurationHours = activityAvgDurationSeconds / 3600.0
-            let activityAvgDurationValue: String
-            let activityAvgDurationUnit: String
-            if activityAvgDurationHours >= 1.0 {
-                activityAvgDurationValue = String(format: "%.1f", activityAvgDurationHours)
-                activityAvgDurationUnit = "hrs"
-            } else {
-                let activityAvgMinutes = activityAvgDurationSeconds / 60.0
-                activityAvgDurationValue = String(format: "%.1f", activityAvgMinutes)
-                activityAvgDurationUnit = "min"
-            }
-            activityRows.append(SQDashboardMetricStatsRow(
-                id: "\(activityType)-avg-duration",
-                icon: SQImageSymbol.clock.rawValue,
-                title: "Avg Duration",
-                avgValue: activityAvgDurationValue,
-                unit: activityAvgDurationUnit,
-                sparklineData: [],
-                change14d: 0.0
-            ))
-
-            // Average kilocalories per workout for this activity
-            if activityTotalKcal > 0 {
-                let activityAvgKcal = activityTotalKcal / Double(activityWorkoutsCount)
-                activityRows.append(SQDashboardMetricStatsRow(
-                    id: "\(activityType)-avg-kcal",
-                    icon: SQImageSymbol.flame.rawValue,
-                    title: "Avg Kilocalories",
-                    avgValue: String(format: "%.0f", activityAvgKcal),
-                    unit: "kcal",
-                    sparklineData: [],
-                    change14d: 0.0
-                ))
-            }
-
-            rowsByFilter[activityType] = activityRows
-        }
-
+        
         // Create dropdown view model
         let dropDownViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: "All"),
-            items: filterItems
-        ) { [weak self] selectedFilter in
-            guard let self else { return }
-            // Find the section and update its active filter
-            for group in self.state.sectionGroups {
-                if let section = group.sections.first(where: { $0.id == "activities" }) {
-                    section.updateActiveFilter(selectedFilter)
-                    break
-                }
-            }
-        }
-
-        // Return section view model
-        return SQDashboardSubsectionViewModel(
+            items: filterItems,
+            itemSelectionHandler: { _ in }
+        )
+        
+        let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "activities",
             title: "Activities",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel
         )
+        
+        dropDownViewModel.itemSelectionHandler = { [weak self] selectedFilter in
+            guard let self else { return }
+            
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        // Return section view model
+        return sectionViewModel
     }
 
     // MARK: - Section Groups Builder
@@ -737,7 +473,9 @@ final class SQDashboardController: SQDashboardInterface {
         checkIns: [SQDailyCheckInStats],
         vo2MaxSamples: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
+        priorWorkouts: [SQWorkoutSessionable],
         timeRange: SQTimeRange,
+        priorTimeRange: SQTimeRange,
         context: ModelContext
     ) -> [SQDashboardSectionGroupViewModel] {
         var sectionGroups: [SQDashboardSectionGroupViewModel] = []
@@ -754,16 +492,6 @@ final class SQDashboardController: SQDashboardInterface {
             dailyStatsSections.append(performanceSection)
         }
 
-        // Add Totals subsection
-        if let totalsSection = buildTotalsSubsection(workouts: workouts, timeRange: timeRange) {
-            dailyStatsSections.append(totalsSection)
-        }
-
-        // Add Activities subsection
-        if let activitiesSection = buildActivitiesSubsection(workouts: workouts, timeRange: timeRange) {
-            dailyStatsSections.append(activitiesSection)
-        }
-
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
             let dailyStatsGroup = SQDashboardSectionGroupViewModel(
@@ -773,13 +501,26 @@ final class SQDashboardController: SQDashboardInterface {
             )
             sectionGroups.append(dailyStatsGroup)
         }
+        
+        var workoutsSections: [SQDashboardSubsectionViewModel] = []
+        
+        // Add Totals subsection
+        if let totalsSection = buildTotalsSubsection(config: .init(timeRange: timeRange, priorTimeRange: priorTimeRange), workouts: workouts, priorWorkouts: priorWorkouts) {
+            workoutsSections.append(totalsSection)
+        }
+
+        // Add Activities subsection
+        if let activitiesSection = buildActivitiesSubsection(workouts: workouts, timeRange: timeRange) {
+            workoutsSections.append(activitiesSection)
+        }
 
         // Create Workouts section group (currently empty, will be populated later)
         let workoutsGroup = SQDashboardSectionGroupViewModel(
             id: "workouts",
             title: "Workouts",
-            sections: []
+            sections: workoutsSections
         )
+        
         sectionGroups.append(workoutsGroup)
 
         return sectionGroups
@@ -787,7 +528,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Metric Row Builder
 
-    private func buildMetricRow(for definition: SQMetricDefinition, from stats: [SQDailyCheckInStats]) -> SQDashboardMetricStatsRow? {
+    private func buildMetricRow(for definition: SQMetricDefinition, from stats: [SQDailyCheckInStats]) -> SQDashboardMetricStatsRowViewModel? {
         // Get all values for this metric
         let values = stats.compactMap { $0.values[definition.id] }
 
@@ -832,8 +573,8 @@ final class SQDashboardController: SQDashboardInterface {
         // Icon: use emoji if available, otherwise empty string
         let icon = definition.emoji ?? ""
 
-        return SQDashboardMetricStatsRow(
-            id: definition.id,
+        return SQDashboardMetricStatsRowViewModel(
+            metricId: definition.id,
             icon: icon,
             title: definition.title,
             avgValue: avgValueString,

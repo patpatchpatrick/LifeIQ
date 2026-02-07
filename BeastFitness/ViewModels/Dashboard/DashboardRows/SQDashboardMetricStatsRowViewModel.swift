@@ -1,17 +1,15 @@
 //
-//  SQDashboardMetricStatsRow.swift
+//  SQDashboardMetricStatsRowViewModel.swift
 //  BeastFitness
 //
-//  Created by Claude on 2026-02-06.
+//  Created by Patrick Doyle on 2/7/26.
 //
 
-import Foundation
+import SwiftUI
 
-/// View model representing a single metric stats row in the dashboard.
-/// Displays daily check-in metric statistics with sparkline visualization.
-struct SQDashboardMetricStatsRow: Identifiable {
-    /// Unique identifier for the row
-    let id: String
+@Observable @MainActor
+final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
+    let metricId: String
 
     /// Emoji or SF Symbol name for the metric
     let icon: String
@@ -30,22 +28,18 @@ struct SQDashboardMetricStatsRow: Identifiable {
 
     /// 14-day percentage change (e.g., 0.15 for +15%)
     let change14d: Double
-
-    init(
-        id: String,
-        icon: String,
-        title: String,
-        avgValue: String,
-        unit: String,
-        sparklineData: [Double],
-        change14d: Double
-    ) {
-        self.id = id
+    
+    
+    init(metricId: String, icon: String, title: String, avgValue: String, unit: String, sparklineData: [Double], change14d: Double) {
+        self.metricId = metricId
         self.icon = icon
         self.title = title
         self.avgValue = avgValue
         self.unit = unit
         self.sparklineData = sparklineData
         self.change14d = change14d
+        
+        super.init(rowId: .metricStats, rowType: .metricStats)
     }
+    
 }

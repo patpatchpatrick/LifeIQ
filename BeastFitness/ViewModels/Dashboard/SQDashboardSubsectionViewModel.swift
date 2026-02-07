@@ -13,14 +13,14 @@ import Foundation
     let title: String
     var isCollapsed: Bool
     var dropDownViewModel: SQDropDownMenuViewModel?
-    private(set) var rowsByFilter: [String: [Any]]
+    private(set) var rowsByFilter: [String: [SQDashboardRowViewModel]]
     private(set) var activeFilter: String
-    private(set) var activeRows: [Any]
+    private(set) var activeRows: [SQDashboardRowViewModel]
 
     init(
         id: String,
         title: String,
-        rowsByFilter: [String: [Any]],
+        rowsByFilter: [String: [SQDashboardRowViewModel]],
         dropDownViewModel: SQDropDownMenuViewModel? = nil
     ) {
         self.id = id
