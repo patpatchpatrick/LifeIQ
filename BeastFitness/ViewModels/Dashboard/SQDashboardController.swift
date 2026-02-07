@@ -118,11 +118,6 @@ final class SQDashboardController: SQDashboardInterface {
                 SQLogger.shared.log("Metric definitions sync failed: \(error)", .error, context: .dashboard)
             }
 
-            // TODO: - PTD Handle Sleep
-            //            let sleepTime = try? await SQHealthKitManager.shared.fetchSleep(currentTimeRange)
-
-            var dailyRows: [SQDashboardRowViewModel] = []
-
             // Fetch VO2 Max samples for different time ranges
             let vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(
                 .pastWeek
@@ -130,14 +125,6 @@ final class SQDashboardController: SQDashboardInterface {
             let vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(
                 .pastYear
             )
-
-            // Add performance row to daily section (shows latest value, past 7 days sparkline)
-            if !vo2MaxPast7Days.isEmpty {
-                dailyRows.append(SQDashboardDailyPerformanceRowViewModel(
-                    vo2MaxSamples: vo2MaxPast7Days,
-                    timeRange: .today
-                ))
-            }
             
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
             
@@ -247,11 +234,6 @@ final class SQDashboardController: SQDashboardInterface {
             context: context
         )
         state.displayDailyCheckInSheet(with: dailyCheckInStats, for: targetDate)
-    }
-    
-    private func buildConfigTotalsSectionConfig(workoutSummaryRowId: SQDashboardWorkoutSummaryRowViewModel.WorkoutSummaryRowId) -> SQDashboardWorkoutSummaryRowConfig{
-
-        return .init(timeRange: workoutSummaryRowId.timeRange, priorTimeRange: workoutSummaryRowId.priorTimeRange)
     }
 
     // MARK: - Metrics Subsection Builder

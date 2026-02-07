@@ -12,25 +12,12 @@ enum SQDashboardRowType {
     case performanceStats
     case workoutTotals
     case activityList
-    
-    case totalsStats
-    case activityStats
-    case workoutSummary
-    case checkInSummary
-    case dailyCheckInStats
 }
 
 enum SQDashboardRowIdentifier {
     case metricStats
     case workoutTotals
     case activityList
-    
-    case motiviationalQuote
-    case dailyCheckInStats
-    case dailyPerformance
-    case dailySummary
-    case weeklySummary
-    case yearlySummary
 }
 
 class SQDashboardRowViewModel: Identifiable {

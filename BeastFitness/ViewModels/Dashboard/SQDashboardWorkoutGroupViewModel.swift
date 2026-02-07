@@ -1,44 +1,12 @@
 //
-//  SQDashboardWeekSummaryWorkoutsSectionViewModel.swift
+//  SQDashboardWorkoutGroupViewModel.swift
 //  BeastFitness
 //
-//  Created by Patrick Doyle on 11/13/25.
+//  Created by Patrick Doyle on 2/7/26.
 //
 
 import SwiftUI
 import HealthKit
-
-@Observable @MainActor
-final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
-    let sectionTitle: String
-    let workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]
-    let ctaViewModel: SQCallToActionViewModel?
-    
-    var isExpanded: Bool = true
-    func toggleExpanded() {
-        isExpanded.toggle()
-    }
-    
-    init(workouts: [SQWorkoutSessionable]) {
-        self.sectionTitle = "Workouts"
-        
-        var workoutGroupViewModels = [SQDashboardWorkoutGroupViewModel]()
-        for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
-            workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
-        }
-        self.workoutGroupViewModels = workoutGroupViewModels
-        
-        if workoutGroupViewModels.isEmpty {
-            ctaViewModel = .init(
-                title: "Start workout",
-                onTap: {
-                    SQAppState.shared.hub.domainEvents.send(.changeTab(.workouts))
-            })
-        } else {
-            ctaViewModel = nil
-        }
-    }
-}
 
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
