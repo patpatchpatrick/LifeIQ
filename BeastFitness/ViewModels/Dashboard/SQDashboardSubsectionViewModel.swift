@@ -30,7 +30,7 @@ import Foundation
         self.isCollapsed = false
 
         // Set activeFilter to first key in rowsByFilter or "All"
-        let filterKey = rowsByFilter.keys.first ?? "All"
+        let filterKey = dropDownViewModel?.defaultItem.title ?? "All"
         self.activeFilter = filterKey
 
         // Set activeRows based on activeFilter

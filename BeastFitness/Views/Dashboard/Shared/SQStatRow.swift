@@ -67,10 +67,9 @@ struct SQStatRow: View {
             // Column 3: Sparkline + Change (30%)
             HStack(spacing: 8) {
                 // Placeholder sparkline (will integrate CoolCharts later)
-                Rectangle()
+                SQSparkline(dataPoints: data.sparklineData, height: 20)
                     .sqForegroundColor(changeColor)
-                    .frame(width: 40, height: 20)
-                    .cornerRadius(4)
+                    .frame(width: 40)
 
                 // Change percentage
                 Text(String(format: "%.1f%%", abs(data.change14d)))

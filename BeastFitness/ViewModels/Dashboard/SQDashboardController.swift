@@ -256,77 +256,62 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Metrics Subsection Builder
 
-    private func buildMetricsSubsection(checkIns: [SQDailyCheckInStats], context: ModelContext) -> SQDashboardSubsectionViewModel {
-        // Use the stats directly
-        let stats = checkIns
+    private func buildMetricsSubsection(
+        checkIns: [SQDailyCheckInStats],
+        context: ModelContext
+    ) -> SQDashboardSubsectionViewModel {
 
-        // Get all metric definitions
+        let stats = checkIns
         let allDefinitions = SQMetricsManager.shared.dailyCheckInMetrics()
 
-        // Extract unique groups from definitions that have data
-        var uniqueGroups = Set<String>()
-        for def in allDefinitions {
-            let hasData = stats.contains { $0.values[def.id] != nil }
-            if hasData {
-                uniqueGroups.insert(def.group)
-            }
-        }
-
-        // Sort groups alphabetically for consistency
-        let sortedGroups = uniqueGroups.sorted()
-
-        // Build dropdown items: "All" + sorted groups
-        let filterItems = [SQDropDownMenuViewModel.Item(title: "All")] + sortedGroups.map { groupName in
-            SQDropDownMenuViewModel.Item(title: groupName)
-        }
-
-        // Build rowsByFilter dictionary
-        var rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = [:]
-
-        // "All" filter: Include all metrics that have data
-        var allRows: [SQDashboardMetricStatsRowViewModel] = []
-        for def in allDefinitions {
-            if let row = buildMetricRow(for: def, from: stats) {
-                allRows.append(row)
-            }
-        }
-        rowsByFilter["All"] = allRows
-
-        // Per-group filters
-        for groupName in sortedGroups {
-            var groupRows: [SQDashboardMetricStatsRowViewModel] = []
-            let groupDefinitions = allDefinitions.filter { $0.group == groupName }
-
-            for def in groupDefinitions {
-                if let row = buildMetricRow(for: def, from: stats) {
-                    groupRows.append(row)
+        // Only include groups that actually have data
+        let groupsWithData: [String] = {
+            var set = Set<String>()
+            for def in allDefinitions {
+                if stats.contains(where: { $0.values[def.id] != nil }) {
+                    set.insert(def.group)
                 }
             }
+            return set.sorted()
+        }()
 
-            rowsByFilter[groupName] = groupRows
+        // Build dropdown items (ensure "All" is the same instance used for default + list)
+        let allItem = SQDropDownMenuViewModel.Item(title: "All")
+        let groupItems = groupsWithData.map { SQDropDownMenuViewModel.Item(title: $0) }
+        let items = [allItem] + groupItems
+
+        // Build rows
+        func rows(for definitions: [SQMetricDefinition]) -> [SQDashboardMetricStatsRowViewModel] {
+            definitions.compactMap { buildMetricRow(for: $0, from: stats) }
         }
 
-        // Create dropdown view model
+        var rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = [:]
+        rowsByFilter[allItem.title] = rows(for: allDefinitions)
+
+        for groupName in groupsWithData {
+            let defs = allDefinitions.filter { $0.group == groupName }
+            rowsByFilter[groupName] = rows(for: defs)
+        }
+
+        // Create dropdown + section
         let dropDownViewModel = SQDropDownMenuViewModel(
-            defaultItem: .init(title: "All"),
-            items: filterItems,
+            defaultItem: allItem,
+            items: items,
             itemSelectionHandler: { _ in }
         )
-        
+
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel
         )
-        
-        dropDownViewModel.itemSelectionHandler = { [weak self] selectedFilter in
-            guard let self else { return }
-            
-            sectionViewModel.updateActiveFilter(selectedFilter)
+
+        // ✅ Pass the title (String) to match rowsByFilter keys
+        dropDownViewModel.itemSelectionHandler = { [weak sectionViewModel] selectedItem in
+            sectionViewModel?.updateActiveFilter(selectedItem)
         }
 
-        // Return section view model
         return sectionViewModel
     }
 
