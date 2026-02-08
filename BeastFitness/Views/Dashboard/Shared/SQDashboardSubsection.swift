@@ -10,6 +10,7 @@ import SwiftUI
 /// Reusable container for dashboard subsections.
 /// Provides collapsible header with optional dropdown menu.
 struct SQDashboardSubsection<Content: View>: View {
+    var horizontalPadding: CGFloat { .SQSpace.l }
     let title: String
     @Binding var isCollapsed: Bool
     let dropdownMenu: AnyView?
@@ -37,8 +38,8 @@ struct SQDashboardSubsection<Content: View>: View {
             } label: {
                 HStack {
                     Text(title)
-                        .sqFont(.title4)
-                        .sqForegroundColor(.textPrimary)
+                        .sqFont(.bodyLarge)
+                        .sqForegroundColor(.textTertiary)
 
                     Spacer()
 
@@ -52,16 +53,18 @@ struct SQDashboardSubsection<Content: View>: View {
                             symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
                         )
                     )
-                    .frame(width: 16, height: 16)
+                    .frame(width: 12, height: 12)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, SQDashboardView.uiConfig.sectionHeaderHorizPadding)
+                .padding(.vertical, SQDashboardView.uiConfig.sectionHeaderHorizPadding)
             }
             .buttonStyle(.plain)
 
             // Content
             if !isCollapsed {
                 content()
+                    .padding(.horizontal, SQDashboardView.uiConfig.sectionRowHorizPadding)
+                    .padding(.bottom, SQDashboardView.uiConfig.sectionRowVertPadding)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }

@@ -13,7 +13,7 @@ struct SQFont {
 
     var uiFont: UIFont {
         switch type {
-        case .title1, .title2, .title3, .title4,
+        case .titleNav, .title1, .title2, .title3, .title4,
                 .body, .bodyLarge, .bodyBold, .bodySemiBold, .bodyItalic,
              .bodySmall, .bodySmallSemiBold, .bodySmallBold,
              .bodyExtraSmall, .buttonTitle, .faded,
@@ -25,6 +25,7 @@ struct SQFont {
     var font: Font { Font(uiFont) }
 
     enum FontType: CaseIterable {
+        case titleNav
         /// **22pt Bold** — Needs review.
         case title1
         /// **18pt Bold** — Home view title2.
@@ -74,6 +75,7 @@ struct SQFont {
         // Centralized definition so docs & implementation stay in sync.
         fileprivate var pointSize: CGFloat {
             switch self {
+            case .titleNav: 30
             case .title1: 22
             case .title2: 18
             case .title3, .bodyLarge: 16
@@ -93,7 +95,7 @@ struct SQFont {
 
         fileprivate var weight: UIFont.Weight {
             switch self {
-            case .title1, .title2, .title3, .title4,
+            case .titleNav, .title1, .title2, .title3, .title4,
                  .bodyBold, .bodySmallBold, .buttonTitle,
                  .emojiLarge, .emojiToolbar, .emojiFeed:
                 return .bold

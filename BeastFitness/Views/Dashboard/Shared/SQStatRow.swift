@@ -17,8 +17,8 @@ struct SQStatRow: View {
     private var changeColor: SQColor {
         data.change14d >= 0 ? .colorFadedGreen : .colorFadedRed
     }
-
-    var body: some View {
+    
+    var mainBody: some View {
         HStack(spacing: 12) {
             // Column 1: Icon + Title (40%)
             HStack(spacing: 8) {
@@ -78,9 +78,11 @@ struct SQStatRow: View {
             }
             .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .sqBackgroundColor(.background)
+    }
+
+    var body: some View {
+        mainBody
+        .sqBackgroundColor(.backgroundSecondary)
     }
 }
 

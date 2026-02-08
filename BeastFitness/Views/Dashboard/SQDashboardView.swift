@@ -19,7 +19,7 @@ struct SQDashboardView: View {
                 if !controller.state.isLoading {
                     HStack {
                         Text("Dashboard")
-                            .sqFont(.title2)
+                            .sqFont(.titleNav)
                             .sqForegroundColor(.textPrimary)
 
                         Spacer()
@@ -132,9 +132,13 @@ struct SQDashboardView: View {
 extension SQDashboardView {
     
     struct UIConfig {
-        let cardInnerTitleBottomPadding: CGFloat = .SQSpace.xl
-        let cardSectionSpacing: CGFloat = .SQSpace.xxl
-        let sectionHorizPadding: CGFloat = .SQSpace.l
+        let sectionGroupHorizPadding: CGFloat = .SQSpace.l
+        
+        let sectionHeaderHorizPadding: CGFloat = .SQSpace.l
+        let sectionRowHorizPadding: CGFloat = .SQSpace.l
+        let sectionRowVertPadding: CGFloat = .SQSpace.l
+        let sectionRowSpacing: CGFloat = .SQSpace.m
+        let spacingBetweenSections: CGFloat = .SQSpace.l
     }
     
     @ViewBuilder

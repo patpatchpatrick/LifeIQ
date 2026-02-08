@@ -30,11 +30,10 @@ struct SQDashboardSectionHeader: View {
                         symbolStyle: .colorWithFont(.textSecondary, font: .body)
                     )
                 )
-                .frame(width: 20, height: 20)
+                .frame(width: 16, height: 16)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 44)
-            .padding(.horizontal, 16)
             .sqBackgroundColor(.background)
         }
         .buttonStyle(.plain)

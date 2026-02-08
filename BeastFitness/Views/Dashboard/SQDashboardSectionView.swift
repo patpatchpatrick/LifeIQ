@@ -15,7 +15,7 @@ import SwiftUI
 struct SQDashboardSectionView: View {
     @Bindable var section: SQDashboardSubsectionViewModel
 
-    var body: some View {
+    var mainBody: some View {
         SQDashboardSubsection(
             title: section.title,
             isCollapsed: $section.isCollapsed,
@@ -26,51 +26,36 @@ struct SQDashboardSectionView: View {
             if section.activeRows.isEmpty {
                 SQSubsectionEmptyState(message: "No data available")
             } else {
-                ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
-                    
-                    switch row.rowType {
-                    case .metricStats:
+                VStack(spacing: SQDashboardView.uiConfig.sectionRowSpacing) {
+                    ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
                         
-                        if let metricStatsViewModel = row as? SQDashboardMetricStatsRowViewModel {
-                            SQStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, change14d: metricStatsViewModel.change14d))
+                        switch row.rowType {
+                        case .metricStats:
+                            
+                            if let metricStatsViewModel = row as? SQDashboardMetricStatsRowViewModel {
+                                SQStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, change14d: metricStatsViewModel.change14d))
+                            }
+                            
+                        case .workoutTotals:
+                            
+                            if let workoutTotalsViewModel = row as? SQDashboardWorkoutTotalsRowViewModel {
+                                SQDashboardWorkoutTotalsRowView(viewModel: workoutTotalsViewModel)
+                            }
+                            
+                        case .activityList:
+                            
+                            if let activityListViewModel = row as? SQDashboardActivityRowViewModel {
+                                SQDashboardActivityListRowView(viewModel: activityListViewModel)
+                            }
                         }
-                        
-                    case .workoutTotals:
-                        
-                        if let workoutTotalsViewModel = row as? SQDashboardWorkoutTotalsRowViewModel {
-                            SQDashboardWorkoutTotalsRowView(viewModel: workoutTotalsViewModel)
-                        }
-                        
-                    case .activityList:
-                        
-                        if let activityListViewModel = row as? SQDashboardActivityRowViewModel {
-                            SQDashboardActivityListRowView(viewModel: activityListViewModel)
-                        }
-                        
-                    default:
-                        EmptyView()
                     }
-//                    // Dispatch to appropriate row view based on row type
-//                    if let metricRow = row as? SQDashboardMetricStatsRow {
-//                        // Metric stats, performance stats, totals stats, activity stats
-//                        SQStatRow(
-//                            data: SQStatRowData(
-//                                id: metricRow.id,
-//                                icon: metricRow.icon,
-//                                title: metricRow.title,
-//                                avgValue: metricRow.avgValue,
-//                                unit: metricRow.unit,
-//                                sparklineData: metricRow.sparklineData,
-//                                change14d: metricRow.change14d
-//                            )
-//                        )
-//                    } else {
-//                        // Fallback for other row types (workoutSummary, checkInSummary, etc.)
-//                        // These will be added in future iterations
-//                        EmptyView()
-//                    }
                 }
             }
         }
+
+    }
+    
+    var body: some View {
+        mainBody
     }
 }

@@ -21,12 +21,14 @@ struct SQDashboardSectionGroupView: View {
             set: { sectionGroup.isExpanded = !$0 }
         )
     }
-
-    var body: some View {
+    
+    var mainBody: some View {
         Section {
             if sectionGroup.isExpanded {
-                ForEach(sectionGroup.sections) { section in
-                    SQDashboardSectionView(section: section)
+                VStack(spacing: SQDashboardView.uiConfig.spacingBetweenSections) {
+                    ForEach(sectionGroup.sections) { section in
+                        SQDashboardSectionView(section: section)
+                    }
                 }
             }
         } header: {
@@ -35,5 +37,11 @@ struct SQDashboardSectionGroupView: View {
                 isCollapsed: isCollapsed
             )
         }
+
+    }
+
+    var body: some View {
+        mainBody
+            .padding(.horizontal, SQDashboardView.uiConfig.sectionGroupHorizPadding)
     }
 }

@@ -9,7 +9,6 @@ import Foundation
 
 enum SQDashboardRowType {
     case metricStats
-    case performanceStats
     case workoutTotals
     case activityList
 }
