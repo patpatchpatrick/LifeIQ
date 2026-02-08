@@ -33,7 +33,7 @@ struct SQDashboardSectionView: View {
                         case .metricStats:
                             
                             if let metricStatsViewModel = row as? SQDashboardMetricStatsRowViewModel {
-                                SQStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, change14d: metricStatsViewModel.change14d))
+                                SQDashboardStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, change14d: metricStatsViewModel.change14d))
                             }
                             
                         case .workoutTotals:

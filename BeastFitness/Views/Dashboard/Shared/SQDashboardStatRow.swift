@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct SQStatRow: View {
+struct SQDashboardStatRow: View {
     let data: SQStatRowData
 
     // Detect if icon is emoji (single character) vs SF Symbol name
@@ -87,7 +87,7 @@ struct SQStatRow: View {
 }
 
 #Preview("With Emoji") {
-    SQStatRow(
+    SQDashboardStatRow(
         data: SQStatRowData(
             id: "mood",
             icon: "😊",
@@ -102,7 +102,7 @@ struct SQStatRow: View {
 }
 
 #Preview("With SF Symbol") {
-    SQStatRow(
+    SQDashboardStatRow(
         data: SQStatRowData(
             id: "heart-rate",
             icon: "heart.fill",
@@ -118,7 +118,7 @@ struct SQStatRow: View {
 
 #Preview("Multiple Rows") {
     VStack(spacing: 1) {
-        SQStatRow(
+        SQDashboardStatRow(
             data: SQStatRowData(
                 id: "energy",
                 icon: "⚡️",
@@ -130,7 +130,7 @@ struct SQStatRow: View {
             )
         )
 
-        SQStatRow(
+        SQDashboardStatRow(
             data: SQStatRowData(
                 id: "sleep",
                 icon: "😴",
@@ -142,7 +142,7 @@ struct SQStatRow: View {
             )
         )
 
-        SQStatRow(
+        SQDashboardStatRow(
             data: SQStatRowData(
                 id: "recovery",
                 icon: "🧘",

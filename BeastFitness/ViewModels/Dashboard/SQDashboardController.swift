@@ -144,6 +144,12 @@ final class SQDashboardController: SQDashboardInterface {
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
+            let todaysCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.today.startDate,
+                to: SQTimeRange.today.endDate,
+                context: context
+            )
+
             let past7DaysCheckIns = try SQDailyCheckInEntity.getAll(
                 from: SQTimeRange.pastWeek.startDate,
                 to: SQTimeRange.pastWeek.endDate,
@@ -181,7 +187,7 @@ final class SQDashboardController: SQDashboardInterface {
                 currentWorkouts = todaysWorkouts
                 priorTimeRange = .yesterday
                 priorWorkouts = yesterdaysWorkouts
-                currentCheckIns = past7DaysCheckIns // Use past 7 days for sparklines
+                currentCheckIns = dailyCheckInStats != nil ? [dailyCheckInStats!] : []
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastSevenDays:
                 currentWorkouts = lastWeekWorkouts
@@ -510,7 +516,7 @@ final class SQDashboardController: SQDashboardInterface {
         let avgValueString: String
         if definition.kind == .binary {
             // For binary metrics, show count
-            avgValueString = "\(Int(sum))"
+            avgValueString = String(format: "%.1f", average)
         } else if definition.unit == .hours {
             avgValueString = String(format: "%.1f", average)
         } else {

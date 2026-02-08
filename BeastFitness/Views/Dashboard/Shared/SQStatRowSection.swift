@@ -42,7 +42,7 @@ struct SQStatRowSection: View {
                 Divider()
                     .sqBackgroundColor(.divider())
 
-                SQStatRow(data: row)
+                SQDashboardStatRow(data: row)
             }
         }
     }
