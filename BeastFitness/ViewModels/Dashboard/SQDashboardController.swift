@@ -187,7 +187,7 @@ final class SQDashboardController: SQDashboardInterface {
                 currentWorkouts = todaysWorkouts
                 priorTimeRange = .yesterday
                 priorWorkouts = yesterdaysWorkouts
-                currentCheckIns = dailyCheckInStats != nil ? [dailyCheckInStats!] : []
+                currentCheckIns = todaysCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastSevenDays:
                 currentWorkouts = lastWeekWorkouts
@@ -545,6 +545,13 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Icon: use emoji if available, otherwise empty string
         let icon = definition.emoji ?? ""
+
+        // Log sparkline data for debugging
+        SQLogger.shared.log(
+            "Metric '\(definition.title)': sparklineData count = \(sparklineData.count), icon = '\(icon)'",
+            .debug,
+            context: .dashboard
+        )
 
         return SQDashboardMetricStatsRowViewModel(
             metricId: definition.id,

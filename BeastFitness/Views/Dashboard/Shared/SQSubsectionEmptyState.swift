@@ -20,7 +20,7 @@ struct SQSubsectionEmptyState: View {
                 symbol: icon,
                 symbolStyle: .colorWithFont(.textSecondary, font: .body)
             ))
-            frame(width: 25, height: 25)
+            .frame(width: 25, height: 25)
 
             Text(message)
                 .sqFont(.body)

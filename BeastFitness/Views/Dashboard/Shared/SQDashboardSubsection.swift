@@ -62,7 +62,7 @@ struct SQDashboardSubsection<Content: View>: View {
 
             // Content
             if !isCollapsed {
-                content()
+                content() // PTD THIS ISSUE IS HERE!
                     .padding(.horizontal, SQDashboardView.uiConfig.sectionRowHorizPadding)
                     .padding(.bottom, SQDashboardView.uiConfig.sectionRowVertPadding)
                     .transition(.opacity.combined(with: .move(edge: .top)))
