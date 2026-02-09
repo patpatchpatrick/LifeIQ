@@ -13,7 +13,7 @@ struct SQDashboardSubsection<Content: View>: View {
     var horizontalPadding: CGFloat { .SQSpace.l }
     let title: String
     @Binding var isCollapsed: Bool
-    let dropdownMenu: AnyView?
+    let dropdownMenu: SQDropDownMenu?
     @ViewBuilder let content: () -> Content
 
     init(
@@ -24,7 +24,7 @@ struct SQDashboardSubsection<Content: View>: View {
     ) {
         self.title = title
         self._isCollapsed = isCollapsed
-        self.dropdownMenu = dropdownMenu.map { AnyView($0) }
+        self.dropdownMenu = dropdownMenu
         self.content = content
     }
 
