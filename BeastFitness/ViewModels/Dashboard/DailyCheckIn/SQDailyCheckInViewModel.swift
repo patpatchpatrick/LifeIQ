@@ -317,7 +317,8 @@ final class SQDailyCheckInViewModel: Identifiable {
     // MARK: - Form Submission
 
     var canSubmit: Bool {
-        rows.allSatisfy { $0.isCompleted }
+        // Allow submission if at least one row is completed
+        rows.contains { $0.isCompleted }
     }
 
     func submitTapped(modelContext: ModelContext) async {
