@@ -246,6 +246,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     private func buildMetricsSubsection(
         checkIns: [SQDailyCheckInStats],
+        timeRange: DashboardTimeRange,
         context: ModelContext
     ) -> SQDashboardSubsectionViewModel {
 
@@ -288,11 +289,24 @@ final class SQDashboardController: SQDashboardInterface {
             itemSelectionHandler: { _ in }
         )
 
+        // Create title button (edit button) only when showing "Today" timerange
+        let titleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel? = {
+            guard timeRange == .today else { return nil }
+
+            return .init(icon: .edit) { [weak self] in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.displayDailyCheckInSheet(for: context)
+                }
+            }
+        }()
+
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
             rowsByFilter: rowsByFilter,
-            dropDownViewModel: dropDownViewModel
+            dropDownViewModel: dropDownViewModel,
+            titleButton: titleButton
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys
@@ -457,7 +471,11 @@ final class SQDashboardController: SQDashboardInterface {
         var dailyStatsSections: [SQDashboardSubsectionViewModel] = []
 
         // Add Metrics subsection
-        let metricsSection = buildMetricsSubsection(checkIns: checkIns, context: context)
+        let metricsSection = buildMetricsSubsection(
+            checkIns: checkIns,
+            timeRange: state.selectedTimeRange,
+            context: context
+        )
         dailyStatsSections.append(metricsSection)
 
         // Add Performance subsection

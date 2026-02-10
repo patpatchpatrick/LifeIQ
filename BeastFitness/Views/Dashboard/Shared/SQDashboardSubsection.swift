@@ -8,23 +8,26 @@
 import SwiftUI
 
 /// Reusable container for dashboard subsections.
-/// Provides collapsible header with optional dropdown menu.
+/// Provides collapsible header with optional dropdown menu and title button.
 struct SQDashboardSubsection<Content: View>: View {
     var horizontalPadding: CGFloat { .SQSpace.l }
     let title: String
     @Binding var isCollapsed: Bool
     let dropdownMenu: SQDropDownMenu?
+    let titleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel?
     @ViewBuilder let content: () -> Content
 
     init(
         title: String,
         isCollapsed: Binding<Bool>,
         dropdownMenu: SQDropDownMenu? = nil,
+        titleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.title = title
         self._isCollapsed = isCollapsed
         self.dropdownMenu = dropdownMenu
+        self.titleButton = titleButton
         self.content = content
     }
 
@@ -40,6 +43,21 @@ struct SQDashboardSubsection<Content: View>: View {
                     Text(title)
                         .sqFont(.bodyLarge)
                         .sqForegroundColor(.textTertiary)
+
+                    if let titleButton = titleButton {
+                        Button {
+                            titleButton.onTap()
+                        } label: {
+                            SQImageView(
+                                image: .init(
+                                    symbol: titleButton.icon,
+                                    symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                                )
+                            )
+                            .frame(width: 16, height: 16)
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     Spacer()
 

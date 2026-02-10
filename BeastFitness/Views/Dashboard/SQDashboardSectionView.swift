@@ -21,7 +21,8 @@ struct SQDashboardSectionView: View {
             isCollapsed: $section.isCollapsed,
             dropdownMenu: section.dropDownViewModel.map { viewModel in
                 SQDropDownMenu(menuViewModel: viewModel, isDisabled: false)
-            }
+            },
+            titleButton: section.titleButton
         ) {
             if section.activeRows.isEmpty {
                 SQSubsectionEmptyState(message: "No data available")
