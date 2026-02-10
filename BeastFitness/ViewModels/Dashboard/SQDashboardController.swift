@@ -319,33 +319,77 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Performance Subsection Builder
 
-    private func buildPerformanceSubsection(vo2MaxSamples: [SQVO2MaxSample], timeRange: SQTimeRange) -> SQDashboardSubsectionViewModel? {
-        // Skip if no data
-        guard !vo2MaxSamples.isEmpty else { return nil }
+    private func buildPerformanceSubsection(
+        vo2MaxSamples: [SQVO2MaxSample],
+        workouts: [SQWorkoutSessionable],
+        timeRange: SQTimeRange
+    ) -> SQDashboardSubsectionViewModel? {
+        var rows: [SQDashboardMetricStatsRowViewModel] = []
 
-        // Calculate average VO2 Max
-        let sum = vo2MaxSamples.reduce(0.0) { $0 + $1.value }
-        let average = sum / Double(vo2MaxSamples.count)
+        // Add VO2 Max row if we have samples
+        if !vo2MaxSamples.isEmpty {
+            // Calculate average VO2 Max
+            let sum = vo2MaxSamples.reduce(0.0) { $0 + $1.value }
+            let average = sum / Double(vo2MaxSamples.count)
 
-        // Format average value (e.g., "45.3")
-        let avgValueString = String(format: "%.1f", average)
+            // Format average value (e.g., "45.3")
+            let avgValueString = String(format: "%.1f", average)
 
-        // Extract sparkline data (already in chronological order)
-        let sparklineData = vo2MaxSamples.map { $0.value }
+            // Extract sparkline data (already in chronological order)
+            let sparklineData = vo2MaxSamples.map { $0.value }
 
-        // Create VO2 Max row
-        let vo2MaxRow = SQDashboardMetricStatsRowViewModel(
-            metricId: "vo2-max",
-            icon: SQImageSymbol.heart.rawValue,
-            title: "VO2 Max",
-            avgValue: avgValueString,
-            unit: "mL/kg/min",
-            sparklineData: sparklineData,
-            change14d: 0.0  // Placeholder for future 14-day change calculation
-        )
+            let vo2MaxRow = SQDashboardMetricStatsRowViewModel(
+                metricId: "vo2-max",
+                icon: SQImageSymbol.heart.rawValue,
+                title: "VO2 Max",
+                avgValue: avgValueString,
+                unit: "mL/kg/min",
+                sparklineData: sparklineData,
+                change14d: 0.0  // Placeholder for future 14-day change calculation
+            )
+            rows.append(vo2MaxRow)
+        }
+
+        // Add Fastest Pace row if we have running workouts
+        let runningWorkouts = workouts.filter { $0.activityType == .running }
+        if !runningWorkouts.isEmpty {
+            // Get pace metrics from running workouts
+            let paceMetrics = runningWorkouts.compactMap { $0.getMetric(for: .sqPaceRunning) }
+
+            if !paceMetrics.isEmpty {
+                // Find fastest pace (minimum value, since lower pace = faster)
+                let fastestPaceMetric = paceMetrics.min(by: { $0.value < $1.value })!
+
+                // Format the pace value (e.g., "7:43")
+                let paceValueString = fastestPaceMetric.displayableValue(
+                    for: .sqPaceRunning,
+                    value: fastestPaceMetric.value
+                )
+
+                // Get the unit string (e.g., "/mi" or "/km")
+                let unitString = fastestPaceMetric.unit.unitString ?? ""
+
+                // Extract sparkline data for pace over time
+                let sparklineData = paceMetrics.map { $0.value }
+
+                let fastestPaceRow = SQDashboardMetricStatsRowViewModel(
+                    metricId: "fastest-pace",
+                    icon: SQImageSymbol.figureRun.rawValue,
+                    title: "Fastest Pace",
+                    avgValue: paceValueString,
+                    unit: unitString,
+                    sparklineData: sparklineData,
+                    change14d: 0.0  // Placeholder for future 14-day change calculation
+                )
+                rows.append(fastestPaceRow)
+            }
+        }
+
+        // Skip section if no performance data at all
+        guard !rows.isEmpty else { return nil }
 
         // Build rowsByFilter dictionary (no filters for Performance)
-        let rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = ["All": [vo2MaxRow]]
+        let rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = ["All": rows]
 
         // Return section view model
         return SQDashboardSubsectionViewModel(
@@ -479,7 +523,11 @@ final class SQDashboardController: SQDashboardInterface {
         dailyStatsSections.append(metricsSection)
 
         // Add Performance subsection
-        if let performanceSection = buildPerformanceSubsection(vo2MaxSamples: vo2MaxSamples, timeRange: timeRange) {
+        if let performanceSection = buildPerformanceSubsection(
+            vo2MaxSamples: vo2MaxSamples,
+            workouts: workouts,
+            timeRange: timeRange
+        ) {
             dailyStatsSections.append(performanceSection)
         }
 
