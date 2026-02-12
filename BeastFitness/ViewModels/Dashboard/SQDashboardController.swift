@@ -204,7 +204,7 @@ final class SQDashboardController: SQDashboardInterface {
                 currentVO2MaxSamples = vo2MaxPastYear
             }
 
-            let sectionGroups = buildSectionGroups(
+            let sectionGroups = await buildSectionGroups(
                 checkIns: currentCheckIns,
                 vo2MaxSamples: currentVO2MaxSamples,
                 workouts: currentWorkouts,
@@ -324,7 +324,7 @@ final class SQDashboardController: SQDashboardInterface {
         vo2MaxSamples: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
         timeRange: SQTimeRange
-    ) -> SQDashboardSubsectionViewModel? {
+    ) async -> SQDashboardSubsectionViewModel? {
         var rows: [SQDashboardMetricStatsRowViewModel] = []
 
         // Add VO2 Max row if we have samples
@@ -352,8 +352,16 @@ final class SQDashboardController: SQDashboardInterface {
         }
         
         let metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] = [
-            .running : [.sqPaceRunning, .distanceWalkingRunning],
-            .cycling: [.distanceCycling]
+            .running: [
+                .sqFastestPace(.mile),
+                .sqFastestPace(.fiveK),
+                .sqPaceRunning,
+                .distanceWalkingRunning
+            ],
+            .cycling: [
+                .sqFastestPace(.fiveK),
+                .distanceCycling
+            ]
         ]
 
         // Build performance rows for each activity type and metric
@@ -364,8 +372,23 @@ final class SQDashboardController: SQDashboardInterface {
 
             // Build rows for each metric type
             for quantityType in metricTypes {
-                // Get metrics from workouts
-                let metrics = activityWorkouts.compactMap { $0.getMetric(for: quantityType) }
+                // Get metrics from workouts (async)
+                let metrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
+                    for workout in activityWorkouts {
+                        group.addTask {
+                            await workout.getMetric(for: quantityType)
+                        }
+                    }
+
+                    var results: [SQWorkoutMetric] = []
+                    for await metric in group {
+                        if let metric = metric {
+                            results.append(metric)
+                        }
+                    }
+                    return results
+                }
+
                 guard !metrics.isEmpty else { continue }
 
                 // Determine aggregation strategy and create row
@@ -564,7 +587,7 @@ final class SQDashboardController: SQDashboardInterface {
         timeRange: SQTimeRange,
         priorTimeRange: SQTimeRange,
         context: ModelContext
-    ) -> [SQDashboardSectionGroupViewModel] {
+    ) async -> [SQDashboardSectionGroupViewModel] {
         var sectionGroups: [SQDashboardSectionGroupViewModel] = []
 
         // Build Daily Stats group
@@ -579,7 +602,7 @@ final class SQDashboardController: SQDashboardInterface {
         dailyStatsSections.append(metricsSection)
 
         // Add Performance subsection
-        if let performanceSection = buildPerformanceSubsection(
+        if let performanceSection = await buildPerformanceSubsection(
             vo2MaxSamples: vo2MaxSamples,
             workouts: workouts,
             timeRange: timeRange

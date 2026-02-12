@@ -30,17 +30,17 @@ struct SQWorkoutMetric: Codable {
 // MARK: - SQWorkoutSession Build Metrics
 
 extension SQWorkoutSession {
-    
-    static func getMetric(for quantityType: SQQuantityType, workoutSource: SQWorkoutSource) -> SQWorkoutMetric? {
+
+    static func getMetric(for quantityType: SQQuantityType, workoutSource: SQWorkoutSource) async -> SQWorkoutMetric? {
         guard let unit = quantityType.unit
         else {
             return nil
         }
-        
+
         switch quantityType.outputCalculationType {
 
         case .fastestPace(let distance):
-            guard let output = workoutSource.sourcableData.fastestPaceFor(distance) else { return nil }
+            guard let output = await workoutSource.sourcableData.fastestPaceFor(distance) else { return nil }
 
             return .init(
                 quantityType: quantityType,
@@ -50,19 +50,19 @@ extension SQWorkoutSession {
             )
 
         case .sum:
-            
+
             guard let output = workoutSource.sourcableData.sumOutputFor(quantityType) else { return nil }
-            
+
             return .init(
                 quantityType: quantityType,
                 displayName: quantityType.displayTitle,
                 unit: unit,
                 value: output)
-            
+
         case .average:
-            
+
             guard let output = workoutSource.sourcableData.avgOutputFor(quantityType) else { return nil }
-            
+
             return .init(
                 quantityType: quantityType,
                 displayName: quantityType.displayTitle,

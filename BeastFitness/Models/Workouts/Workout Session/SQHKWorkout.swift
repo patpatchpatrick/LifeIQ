@@ -7,11 +7,16 @@
 
 import Foundation
 import HealthKit
+import CoreLocation
+import BeastFitnessCore
 
 struct SQHKWorkout: SQWorkoutSourcable {
     let sourceId: String
     let hkWorkout: HKWorkout
-    
+
+    /// Enable verbose logging for pace calculations (useful for debugging)
+    static var isVerbosePaceLoggingEnabled: Bool = false
+
     init(hkWorkout: HKWorkout) {
         self.sourceId = hkWorkout.uuid.uuidString
         self.hkWorkout = hkWorkout
@@ -58,7 +63,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         return hkWorkout.avgOutputFor(quantityTypeIdentifier)
     }
 
-    func fastestPaceFor(_ distance: SQDistance) -> Double? {
+    func fastestPaceFor(_ distance: SQDistance) async -> Double? {
         // 1. Get the appropriate distance type for this activity
         guard let distanceType = hkWorkout.workoutActivityType.standardDistanceType else {
             return nil  // Activity doesn't track distance (e.g., strength training)
@@ -82,18 +87,109 @@ struct SQHKWorkout: SQWorkoutSourcable {
             return nil  // Workout too short (e.g., 0.5 mi run can't have fastest mile)
         }
 
-        // TODO: - PTD Implement route-based pace calculation
-        // 6. Query HKWorkoutRoute for location samples
-        // 7. Calculate rolling windows of target distance
-        // 8. Return fastest (minimum) pace in seconds per distance unit
-        //
-        // This requires:
-        // - Querying HKWorkoutRoute asynchronously
-        // - Processing location samples into distance/time segments
-        // - Finding the fastest rolling window
-        //
-        // For now, return nil until route query is implemented
-        return nil
+        // 6) Compute fastest time (seconds) over that distance from GPS route
+        let calc = WorkoutFastestSplitCalculator(workout: hkWorkout)
+
+        // Choose .elapsed (includes pauses) or .moving (subtracts pause/resume events)
+        guard let fastestSeconds = await calc.fastestTimeSeconds(
+            targetMeters: distance.meters,
+            timeBasis: .moving,          // change to .moving if you want "moving-time"
+            accuracyCutoff: 50            // tweak or set nil to disable accuracy filtering
+        ) else {
+            if Self.isVerbosePaceLoggingEnabled {
+                SQLogger.shared.log(
+                    "No route data for workout \(hkWorkout.uuid)",
+                    .debug,
+                    context: .healthKit
+                )
+            }
+            return nil
+        }
+
+        guard fastestSeconds > 0 else {
+            if Self.isVerbosePaceLoggingEnabled {
+                SQLogger.shared.log(
+                    "Invalid fastestSeconds (\(fastestSeconds)) for workout \(hkWorkout.uuid)",
+                    .error,
+                    context: .healthKit
+                )
+            }
+            return nil
+        }
+
+        // 7) Convert to pace per mile (seconds per mile)
+        // - distance.miles is the distance covered in miles
+        // - fastestSeconds is the time it took
+        // - Pace = time / distance in miles
+        guard distance.miles > 0 else {
+            if Self.isVerbosePaceLoggingEnabled {
+                SQLogger.shared.log(
+                    "Invalid distance.miles (\(distance.miles)) for distance \(distance)",
+                    .error,
+                    context: .healthKit
+                )
+            }
+            return nil
+        }
+
+        let pacePerMile = fastestSeconds / distance.miles
+
+        // Validate the result is reasonable based on activity type
+        let paceRange = reasonablePaceRange(for: hkWorkout.workoutActivityType)
+        guard pacePerMile >= paceRange.min && pacePerMile <= paceRange.max else {
+            if Self.isVerbosePaceLoggingEnabled {
+                SQLogger.shared.log(
+                    "Unreasonable pace (\(pacePerMile) sec/mile = \(pacePerMile.timeCode())) for \(hkWorkout.workoutActivityType.name) workout \(hkWorkout.uuid). Expected range: \(paceRange.min.timeCode())-\(paceRange.max.timeCode()). FastestSeconds: \(fastestSeconds), distance.miles: \(distance.miles)",
+                    .error,
+                    context: .healthKit
+                )
+            }
+            return nil
+        }
+
+        if Self.isVerbosePaceLoggingEnabled {
+            SQLogger.shared.log(
+                "Calculated pace: \(pacePerMile.timeCode()) per mile for \(hkWorkout.workoutActivityType.name) workout \(hkWorkout.uuid)",
+                .debug,
+                context: .healthKit
+            )
+        }
+
+        return pacePerMile
+    }
+
+    /// Returns reasonable pace range (in seconds per mile) for a given activity type
+    /// These ranges are extremely lenient to avoid filtering out any legitimate data
+    private func reasonablePaceRange(for activityType: HKWorkoutActivityType) -> (min: Double, max: Double) {
+        switch activityType {
+        case .running, .walking, .hiking:
+            // 2 min/mile (30 mph sprint) to 10 hours/mile (0.1 mph crawl)
+            return (1, 500000)
+
+        case .cycling, .handCycling:
+            // 18 sec/mile (200 mph) to 10 hours/mile (0.1 mph uphill/stopped)
+            return (1, 500000)
+
+        case .swimming:
+            // 5 min/mile (12 mph) to 10 hours/mile (0.1 mph)
+            return (1, 500000)
+
+        case .rowing:
+            // 1 min/mile (60 mph) to 10 hours/mile (0.1 mph)
+            return (1, 500000)
+
+        case .crossCountrySkiing:
+            // 1 min/mile (60 mph) to 10 hours/mile (0.1 mph)
+            return (1, 500000)
+
+        case .downhillSkiing, .snowboarding:
+            // 10 sec/mile (360 mph) to 10 hours/mile (0.1 mph)
+            return (1, 500000)
+
+        default:
+            // Generic fallback: catch only obviously corrupt data
+            return (1, 500000)
+        }
     }
 
     var activeDuration: Double? {
@@ -146,5 +242,352 @@ struct SQHKWorkout: SQWorkoutSourcable {
         if activeTime > 0 { return activeTime}
         
         return workout.duration
+    }
+}
+
+import Foundation
+import HealthKit
+import CoreLocation
+
+// MARK: - Fastest split (pace) from HKWorkoutRoute (with interpolation + pause-aware "moving time")
+
+final class WorkoutFastestSplitCalculator {
+
+    enum TimeBasis {
+        /// Uses wall-clock time between GPS timestamps (includes pauses / standing still).
+        case elapsed
+
+        /// Subtracts HKWorkout pause/resume events from the window.
+        /// (If there are no events, behaves like .elapsed.)
+        case moving
+    }
+
+    private let healthStore: HKHealthStore
+    private let workout: HKWorkout
+
+    init(healthStore: HKHealthStore = HKHealthStore(), workout: HKWorkout) {
+        self.healthStore = healthStore
+        self.workout = workout
+    }
+
+    /// Returns the fastest pace over `targetMeters` in **seconds per meter**.
+    /// Convert to sec/mile or sec/km using the helpers at the bottom.
+    ///
+    /// - Parameters:
+    ///   - targetMeters: Split distance to evaluate (e.g. 1609.344 for 1 mile).
+    ///   - timeBasis: `.elapsed` or `.moving`
+    ///   - accuracyCutoff: Optional horizontal accuracy filter for GPS points.
+    func fastestPaceSecondsPerMeter(
+        targetMeters: Double,
+        timeBasis: TimeBasis = .elapsed,
+        accuracyCutoff: CLLocationAccuracy? = 50
+    ) async -> Double? {
+
+        guard targetMeters > 0 else { return nil }
+
+        // 1) Fetch + normalize route locations
+        guard var locations = await fetchAllWorkoutRouteLocations() else { return nil }
+        if let cutoff = accuracyCutoff {
+            locations = locations.filter { $0.horizontalAccuracy >= 0 && $0.horizontalAccuracy <= cutoff }
+        }
+        locations.sort { $0.timestamp < $1.timestamp }
+        guard locations.count >= 2 else { return nil }
+
+        // Optional: remove duplicate timestamps / zero-time segments that can cause weird interpolation
+        locations = dedupeByTimestampKeepingBestAccuracy(locations)
+        guard locations.count >= 2 else { return nil }
+
+        // 2) Build cumulative distance (meters) along the path
+        let cumulative = buildCumulativeDistance(locations: locations)
+        let total = cumulative.last ?? 0
+        guard total >= targetMeters else { return nil }
+
+        // 3) Two-pointer sliding window in distance space (O(n))
+        var bestSecondsPerMeter: Double = .infinity
+        var j = 1
+
+        for i in 0..<(locations.count - 1) {
+            let startDist = cumulative[i]
+            let desiredDist = startDist + targetMeters
+
+            // Ensure j is at least i+1
+            if j < i + 1 { j = i + 1 }
+
+            // Advance j until we cross the desired cumulative distance
+            while j < locations.count && cumulative[j] < desiredDist {
+                j += 1
+            }
+            if j >= locations.count { break }
+
+            // We crossed target between (j-1) and j, or exactly at j
+            let startTime = locations[i].timestamp
+
+            // Interpolated end time exactly at the target distance
+            let endTime: Date = {
+                if cumulative[j] == desiredDist {
+                    return locations[j].timestamp
+                }
+                // interpolate within segment (j-1 -> j)
+                return interpolateTimeAtDistance(
+                    prev: locations[j - 1],
+                    next: locations[j],
+                    prevCum: cumulative[j - 1],
+                    nextCum: cumulative[j],
+                    targetCum: desiredDist
+                )
+            }()
+
+            var elapsed = endTime.timeIntervalSince(startTime)
+            if elapsed <= 0 { continue }
+
+            if timeBasis == .moving {
+                let paused = pausedSeconds(between: startTime, and: endTime, workout: workout)
+                elapsed = max(0, elapsed - paused)
+                if elapsed <= 0 { continue }
+            }
+
+            let secondsPerMeter = elapsed / targetMeters
+            if secondsPerMeter < bestSecondsPerMeter {
+                bestSecondsPerMeter = secondsPerMeter
+            }
+        }
+
+        return bestSecondsPerMeter.isFinite ? bestSecondsPerMeter : nil
+    }
+
+    /// Convenience: fastest pace in **seconds per mile** for a mile split.
+    func fastestMilePaceSeconds(
+        timeBasis: TimeBasis = .elapsed,
+        accuracyCutoff: CLLocationAccuracy? = 50
+    ) async -> Double? {
+        let mileMeters = 1609.344
+        guard let spm = await fastestPaceSecondsPerMeter(
+            targetMeters: mileMeters,
+            timeBasis: timeBasis,
+            accuracyCutoff: accuracyCutoff
+        ) else { return nil }
+        return spm * mileMeters
+    }
+
+    /// Convenience: fastest pace in **seconds per kilometer** for a 1km split.
+    func fastestKilometerPaceSeconds(
+        timeBasis: TimeBasis = .elapsed,
+        accuracyCutoff: CLLocationAccuracy? = 50
+    ) async -> Double? {
+        let kmMeters = 1000.0
+        guard let spm = await fastestPaceSecondsPerMeter(
+            targetMeters: kmMeters,
+            timeBasis: timeBasis,
+            accuracyCutoff: accuracyCutoff
+        ) else { return nil }
+        return spm * kmMeters
+    }
+
+    // MARK: - Route fetching
+
+    private func fetchAllWorkoutRouteLocations() async -> [CLLocation]? {
+        await withCheckedContinuation { continuation in
+            let routePredicate = HKQuery.predicateForObjects(from: workout)
+
+            let routeQuery = HKSampleQuery(
+                sampleType: HKSeriesType.workoutRoute(),
+                predicate: routePredicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { [weak self] _, samples, error in
+                guard let self else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                if let error {
+                    print("HKSampleQuery(workoutRoute) error: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let routes = (samples as? [HKWorkoutRoute]) ?? []
+                guard !routes.isEmpty else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                // Fetch locations for all routes and merge
+                Task {
+                    var all: [CLLocation] = []
+                    for route in routes {
+                        if let locs = await self.fetchLocations(for: route) {
+                            all.append(contentsOf: locs)
+                        }
+                    }
+                    continuation.resume(returning: all.isEmpty ? nil : all)
+                }
+            }
+
+            healthStore.execute(routeQuery)
+        }
+    }
+
+    private func fetchLocations(for route: HKWorkoutRoute) async -> [CLLocation]? {
+        await withCheckedContinuation { continuation in
+            var locations: [CLLocation] = []
+
+            let locationQuery = HKWorkoutRouteQuery(route: route) { _, newLocations, done, error in
+                if let error {
+                    print("HKWorkoutRouteQuery error: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                if let newLocations {
+                    locations.append(contentsOf: newLocations)
+                }
+                if done {
+                    continuation.resume(returning: locations)
+                }
+            }
+
+            healthStore.execute(locationQuery)
+        }
+    }
+
+    // MARK: - Distance + interpolation
+
+    private func buildCumulativeDistance(locations: [CLLocation]) -> [Double] {
+        var cumulative: [Double] = Array(repeating: 0, count: locations.count)
+        var total: Double = 0
+
+        for idx in 1..<locations.count {
+            let d = locations[idx].distance(from: locations[idx - 1]) // meters
+            if d.isFinite, d > 0 {
+                total += d
+            }
+            cumulative[idx] = total
+        }
+        return cumulative
+    }
+
+    /// Interpolates a timestamp at a target cumulative distance that lies between prevCum and nextCum.
+    private func interpolateTimeAtDistance(
+        prev: CLLocation,
+        next: CLLocation,
+        prevCum: Double,
+        nextCum: Double,
+        targetCum: Double
+    ) -> Date {
+        let segDist = nextCum - prevCum
+        guard segDist > 0 else { return next.timestamp }
+
+        let fraction = (targetCum - prevCum) / segDist
+        let clamped = max(0, min(1, fraction))
+
+        let segTime = next.timestamp.timeIntervalSince(prev.timestamp)
+        return prev.timestamp.addingTimeInterval(segTime * clamped)
+    }
+
+    private func dedupeByTimestampKeepingBestAccuracy(_ locations: [CLLocation]) -> [CLLocation] {
+        guard locations.count >= 2 else { return locations }
+
+        var result: [CLLocation] = []
+        result.reserveCapacity(locations.count)
+
+        var i = 0
+        while i < locations.count {
+            var best = locations[i]
+            var j = i + 1
+            while j < locations.count && locations[j].timestamp == best.timestamp {
+                // Keep the one with better (smaller) horizontalAccuracy, if valid
+                let a1 = best.horizontalAccuracy
+                let a2 = locations[j].horizontalAccuracy
+                if (a2 >= 0 && (a1 < 0 || a2 < a1)) {
+                    best = locations[j]
+                }
+                j += 1
+            }
+            result.append(best)
+            i = j
+        }
+
+        return result
+    }
+
+    // MARK: - Pause-aware moving time
+
+    /// Returns how many seconds of "paused" time overlap [start, end] based on workout events.
+    private func pausedSeconds(between start: Date, and end: Date, workout: HKWorkout) -> TimeInterval {
+        guard start < end, let events = workout.workoutEvents, !events.isEmpty else { return 0 }
+
+        var paused: TimeInterval = 0
+        var pauseStart: Date? = nil
+
+        for e in events {
+            switch e.type {
+            case .pause:
+                pauseStart = e.dateInterval.start
+
+            case .resume:
+                if let ps = pauseStart {
+                    let pe = e.dateInterval.start
+                    paused += overlapSeconds(aStart: start, aEnd: end, bStart: ps, bEnd: pe)
+                }
+                pauseStart = nil
+
+            // If you want to treat these as pauses too, you can add them:
+            // case .motionPaused, .motionResumed, .segment, .lap, .marker, etc.
+            default:
+                break
+            }
+        }
+
+        // If workout ended while paused (no resume event), count until end of window
+        if let ps = pauseStart {
+            paused += overlapSeconds(aStart: start, aEnd: end, bStart: ps, bEnd: end)
+        }
+
+        return paused
+    }
+
+    private func overlapSeconds(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) -> TimeInterval {
+        let s = max(aStart, bStart)
+        let e = min(aEnd, bEnd)
+        return max(0, e.timeIntervalSince(s))
+    }
+    
+    /// Fastest time (seconds) to cover `targetMeters` within the route.
+    func fastestTimeSeconds(
+        targetMeters: Double,
+        timeBasis: TimeBasis = .elapsed,
+        accuracyCutoff: CLLocationAccuracy? = 50
+    ) async -> Double? {
+        guard targetMeters > 0 else { return nil }
+
+        // Reuse the pace method and multiply back:
+        // secondsPerMeter * meters = seconds
+        guard let secondsPerMeter = await fastestPaceSecondsPerMeter(
+            targetMeters: targetMeters,
+            timeBasis: timeBasis,
+            accuracyCutoff: accuracyCutoff
+        ) else { return nil }
+
+        return secondsPerMeter * targetMeters
+    }
+
+}
+
+// MARK: - Helpers: formatting pace
+
+extension Double {
+    /// Converts seconds to "m:ss" (or "h:mm:ss" if >= 1 hour)
+    var asPaceString: String {
+        guard self.isFinite, self >= 0 else { return "--:--" }
+        let total = Int(self.rounded())
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     }
 }

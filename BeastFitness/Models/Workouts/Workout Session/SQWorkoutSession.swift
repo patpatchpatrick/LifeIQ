@@ -39,10 +39,10 @@ protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
     /// Summary
     var totalCalories: Double? { get }
     var averageHeartRate: Double? { get }
-    
+
     /// Details
-    func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric?
-    
+    func getMetric(for quantityType: SQQuantityType) async -> SQWorkoutMetric?
+
     var updateMetadata: SQWorkoutUpdateMetadata? { get }
 }
 
@@ -58,7 +58,7 @@ struct SQWorkoutUpdateMetadata: Codable {
 class SQWorkoutSession: SQWorkoutSessionable {
     let id: String
     let title: String?
-    let coreMetric: SQWorkoutMetric?
+    var coreMetric: SQWorkoutMetric?
     private(set) var hkWorkoutId: String?
     func updateHkWorkoutId(_ hkWorkoutId: String?) {
         self.hkWorkoutId = hkWorkoutId
@@ -106,10 +106,15 @@ class SQWorkoutSession: SQWorkoutSessionable {
         self.details = details ?? workoutSource.sourcableData.details
         self.updateMetadata = updateMetadata
         
-        if let coreOutputQuantityTypeId = activityType.coreOutputQuantityTypeId {
-            self.coreMetric = Self.getMetric(for: coreOutputQuantityTypeId, workoutSource: workoutSource)
-        } else {
-            self.coreMetric = nil
+        self.coreMetric = nil
+        
+        // TODO: - PTD Update this 
+        Task {
+            if let coreOutputQuantityTypeId = activityType.coreOutputQuantityTypeId {
+                self.coreMetric = await Self.getMetric(for: coreOutputQuantityTypeId, workoutSource: workoutSource)
+            } else {
+                self.coreMetric = nil
+            }
         }
     }
     
@@ -141,8 +146,8 @@ class SQWorkoutSession: SQWorkoutSessionable {
         return title ?? backupName
     }
     
-    func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric? {
-        Self.getMetric(for: quantityType, workoutSource: workoutSource)
+    func getMetric(for quantityType: SQQuantityType) async -> SQWorkoutMetric? {
+        await Self.getMetric(for: quantityType, workoutSource: workoutSource)
     }
     
     func hash(into hasher: inout Hasher) {

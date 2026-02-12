@@ -18,35 +18,35 @@ struct SQWorkoutSessionVisibleStat: Identifiable, Hashable {
 }
 
 extension SQWorkoutSessionable {
-    
-    var visibleStats: [SQWorkoutSessionVisibleStat]? {
-        
+
+    func visibleStats() async -> [SQWorkoutSessionVisibleStat]? {
+
         var stats = [SQWorkoutSessionVisibleStat]()
-        
+
         if let activeDuration {
             stats.append(.init(
                 title: "Active Time",
                 value: activeDuration.readableTime()))
         }
-        
+
         if let startDate, let endDate {
             stats.append(.init(
                 title: "Time",
                 value: endDate.timeIntervalSince(startDate).readableTime()))
         }
-        
+
         if let coreMetric {
             stats.append(.init(
                 title: coreMetric.displayName,
                 value: coreMetric.outputAndUnitString))
         }
-        
-        if let pace = getMetric(for: .sqPaceRunning) {
+
+        if let pace = await getMetric(for: .sqPaceRunning) {
             stats.append(.init(
                 title: pace.displayName,
                 value: pace.outputAndUnitString))
         }
-        
+
         return stats.isEmpty ? nil : stats
     }
 }

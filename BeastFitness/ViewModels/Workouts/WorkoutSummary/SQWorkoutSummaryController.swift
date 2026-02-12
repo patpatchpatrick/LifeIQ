@@ -12,7 +12,7 @@ import CoreLocation
 
 @MainActor
 protocol SQWorkoutSummaryInterface {
-    func load(workout: SQWorkoutSessionable)
+    func load(workout: SQWorkoutSessionable) async
     func pushEditWorkoutView()
 }
 
@@ -28,7 +28,9 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     static func `default`(workout: any SQWorkoutSessionable, onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) -> SQWorkoutSummaryController {
         Self.default.onPushEditWorkoutView = onPushEditWorkoutView
         Self.default.onDismiss = onDismiss
-        Self.default.load(workout: workout)
+        Task {
+            await Self.default.load(workout: workout)
+        }
         return Self.default
     }
     
@@ -43,12 +45,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.onDismiss = onDismiss
     }
     
-    func load(workout: any SQWorkoutSessionable) {
+    func load(workout: any SQWorkoutSessionable) async {
         state.reset()
-        state.load(workout: workout)
-        Task {
-            await loadRouteIfNeeded()
-        }
+        await state.load(workout: workout)
+        await loadRouteIfNeeded()
     }
     
     func pushEditWorkoutView() {

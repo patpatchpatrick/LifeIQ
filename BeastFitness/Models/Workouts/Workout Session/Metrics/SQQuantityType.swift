@@ -31,6 +31,10 @@ enum SQDistance: String, Codable, Hashable {
             return 42195
         }
     }
+
+    var miles: Double {
+        meters / 1609.344
+    }
 }
 
 enum SQQuantityType: Codable, Hashable {
@@ -232,7 +236,7 @@ extension SQQuantityType {
             case .sqPaceRunning:
                 return "Pace"
             case .sqFastestPace(let distance):
-                return "Fastest \(distance.rawValue.uppercased())"
+                return "Fastest \(distance.rawValue.capitalized)"
             case .sqTotalVolumeLifted:
                 return "Volume"
             case .unknown:

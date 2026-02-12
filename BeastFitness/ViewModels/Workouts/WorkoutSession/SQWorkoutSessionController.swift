@@ -73,8 +73,10 @@ final class SQWorkoutSessionController: Identifiable {
         SQLogger.shared.log("Resetting workout: \(workout?.id ?? "nil")", .debug, context: .workoutSession)
         hasStartedWorkout = false
         timerViewModel.stop()
-        state.load(workout: workout)
-        
+        Task {
+            await state.load(workout: workout)
+        }
+
         let workoutMode: WorkoutMode = workout == nil ? .new : .existing
         self.workoutMode = workoutMode
         shouldDisplayTimer = workoutMode.shouldDisplayTimer

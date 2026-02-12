@@ -22,7 +22,7 @@ protocol WorkoutSummaryStating: AnyObject {
     var workoutStatRowColumnCount: Int { get }
     
     var currentWorkout: SQWorkoutSessionable? { get }
-    func load(workout: SQWorkoutSessionable)
+    func load(workout: SQWorkoutSessionable) async
     func reset()
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable)
     
@@ -64,7 +64,9 @@ protocol WorkoutSummaryStating: AnyObject {
             case .workoutsUpdated(let workoutMap):
                 if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap [currentWorkoutId] {
                     SQLogger.shared.log("Refreshing workout summary with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
-                    self.load(workout: updatedWorkout)
+                    Task {
+                        await self.load(workout: updatedWorkout)
+                    }
                 }
             case .workoutsDeleted, .activeWorkoutUpdate:
                 return
@@ -74,17 +76,17 @@ protocol WorkoutSummaryStating: AnyObject {
         }.store(in: &cancellables)
     }
     
-    func load(workout: any SQWorkoutSessionable) {
+    func load(workout: any SQWorkoutSessionable) async {
         SQLogger.shared.log("Loading workout summary with workout with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
         currentWorkout = workout
         user = SQUser.mock
         userFullName = SQUser.mock.name // PTD replace with user's name
         workoutStartDate = workout.startDate
         workoutTitle = workout.visibleTitle
-        
-        let visibleStats = workout.visibleStats ?? []
+
+        let visibleStats = await workout.visibleStats() ?? []
         let visibleStatsChunks = visibleStats.chunked(into: workoutStatRowColumnCount)
-        
+
         workoutStatsRows = visibleStatsChunks.map {
             .init(visibleStats: $0)
         }
