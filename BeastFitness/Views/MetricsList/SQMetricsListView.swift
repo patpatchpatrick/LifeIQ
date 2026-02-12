@@ -12,44 +12,67 @@ struct SQMetricsListView: View {
     @State var controller: SQMetricsListController
     @Environment(\.modelContext) private var modelContext
     
-    // MARK: - Actions
-    
-    private func rowTapped(_ row: SQMetricsListItemViewModel) {
-        controller.metricTapped(row, using: modelContext)
-    }
-    
     // MARK: - Main Scroll
-    
+
     @ViewBuilder
     func metricRow(index: Int, row: SQMetricsListItemViewModel) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                // Main body: tap toggles tracking
-                Button(
-                    action: { rowTapped(row) },
-                    label: { SQMetricsListItem(viewModel: row) }
-                )
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-
-                // Trailing chevron: navigates to edit
+                // Main row content - navigates to edit
                 NavigationLink(value: SQMetricNavTarget.edit(row.metricId)) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .sqForegroundColor(.textTertiary)
+                    SQMetricsListItem(viewModel: row)
+                }
+                .buttonStyle(.plain)
+
+                // Toggle tracking button
+                Button {
+                    controller.metricTapped(row, using: modelContext)
+                } label: {
+                    trackingButton(isTracked: row.isTracked)
+                        .padding(.horizontal, .SQSpace.l)
                 }
                 .buttonStyle(.plain)
             }
             .padding(.top, index == 0 ? .SQSpace.s : 0)
-            .padding(.bottom, index == controller.rows.count - 1 ? .SQSpace.xl : 0)
-            .padding(.horizontal, .SQSpace.l)
+            .padding(.bottom, index == controller.rows.count - 1 ? .SQSpace.s : 0)
 
             if index != controller.rows.count - 1 {
                 Divider()
                     .sqTintColor(.divider(1))
-                    .padding(.top, .SQSpace.xl)
-                    .padding(.bottom, .SQSpace.xl)
-                    .background(SQColor.background.color)
+                    .padding(.horizontal, .SQSpace.l)
+            }
+        }
+    }
+
+    @ViewBuilder
+    func trackingButton(isTracked: Bool) -> some View {
+        if isTracked {
+            ZStack {
+                Circle()
+                    .sqForegroundColor(.colorGreenDarkBorder)
+                    .frame(width: 28, height: 28)
+
+                SQImageView(
+                    image: .init(
+                        symbol: .checkmark,
+                        symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                    )
+                )
+                .frame(width: 14, height: 14)
+            }
+        } else {
+            ZStack {
+                Circle()
+                    .sqForegroundColor(.backgroundSecondaryLight)
+                    .frame(width: 28, height: 28)
+
+                SQImageView(
+                    image: .init(
+                        symbol: .plus,
+                        symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                    )
+                )
+                .frame(width: 14, height: 14)
             }
         }
     }

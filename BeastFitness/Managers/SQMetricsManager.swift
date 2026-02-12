@@ -133,10 +133,6 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.isEnabled = true
         entity.isArchived = false
 
-        // Put newly-enabled metrics at end of tracked list (optional UX)
-        let maxTracked = dailyCheckInMetrics().map(\.sortOrder).max() ?? 0
-        if entity.sortOrder <= maxTracked { entity.sortOrder = maxTracked + 1 }
-
         entity.updatedAt = .now
         try saveContextAndNotify(context)
         if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }

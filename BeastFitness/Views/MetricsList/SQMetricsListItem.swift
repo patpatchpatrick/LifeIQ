@@ -17,14 +17,14 @@ struct SQMetricsListItem: View {
         ZStack {
             Circle()
                 .sqForegroundColor(.backgroundSecondaryLight)
-                .frame(width: 40)
+                .frame(width: 48, height: 48)
 
             if let emoji = viewModel.emoji, !emoji.isEmpty {
                 Text(emoji)
-                    .font(.system(size: 20))
+                    .font(.system(size: 24))
             } else {
                 Image(systemName: iconName)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .sqForegroundColor(.textPrimary)
             }
         }
@@ -47,55 +47,30 @@ struct SQMetricsListItem: View {
 
     @ViewBuilder
     var titleAndSubtitle: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(viewModel.title)
-                .sqFont(.bodyBold)
+                .sqFont(.title3)
                 .sqForegroundColor(.textPrimary)
 
             Text(viewModel.subtitle)
-                .sqFont(.body)
-                .sqForegroundColor(.textSecondary)
-        }
-    }
-
-    // MARK: - Trailing Accessory
-
-    @ViewBuilder
-    var trailingAccessory: some View {
-        if viewModel.isTracked {
-            Text("Tracked")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
-                .padding(.horizontal, .SQSpace.m)
-                .padding(.vertical, .SQSpace.s)
-                .background(
-                    Capsule()
-                        .fill(SQColor.textPrimary.color.opacity(0.10))
-                )
-        } else {
-            Image(systemName: "plus")
-                .font(.system(size: 14, weight: .semibold))
+                .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
         }
     }
 
     // MARK: - Layout
 
-    var mainHStack: some View {
-        HStack(alignment: .top, spacing: .SQSpace.m) {
+    var body: some View {
+        HStack(spacing: .SQSpace.l) {
             metricIcon
 
             titleAndSubtitle
 
-            Spacer()
-
-            trailingAccessory
+            Spacer(minLength: .SQSpace.m)
         }
-    }
-
-    var body: some View {
-        mainHStack
-            .background(SQColor.background.color)
-            .contentShape(Rectangle())
+        .padding(.horizontal, .SQSpace.l)
+        .padding(.vertical, .SQSpace.m)
+        .background(SQColor.background.color)
+        .contentShape(Rectangle())
     }
 }
