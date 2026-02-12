@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import SwiftData
 import BeastFitnessCore
+import HealthKit
 
 @MainActor
 protocol SQDashboardInterface {
@@ -349,39 +350,32 @@ final class SQDashboardController: SQDashboardInterface {
             )
             rows.append(vo2MaxRow)
         }
+        
+        let metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] = [
+            .running : [.sqPaceRunning, .distanceWalkingRunning],
+            .cycling: [.distanceCycling]
+        ]
 
-        // Add Fastest Pace row if we have running workouts
-        let runningWorkouts = workouts.filter { $0.activityType == .running }
-        if !runningWorkouts.isEmpty {
-            // Get pace metrics from running workouts
-            let paceMetrics = runningWorkouts.compactMap { $0.getMetric(for: .sqPaceRunning) }
+        // Build performance rows for each activity type and metric
+        for (activityType, metricTypes) in metricsForActivityType {
+            // Filter workouts by activity type
+            let activityWorkouts = workouts.filter { $0.activityType == activityType }
+            guard !activityWorkouts.isEmpty else { continue }
 
-            if !paceMetrics.isEmpty {
-                // Find fastest pace (minimum value, since lower pace = faster)
-                let fastestPaceMetric = paceMetrics.min(by: { $0.value < $1.value })!
+            // Build rows for each metric type
+            for quantityType in metricTypes {
+                // Get metrics from workouts
+                let metrics = activityWorkouts.compactMap { $0.getMetric(for: quantityType) }
+                guard !metrics.isEmpty else { continue }
 
-                // Format the pace value (e.g., "7:43")
-                let paceValueString = fastestPaceMetric.displayableValue(
-                    for: .sqPaceRunning,
-                    value: fastestPaceMetric.value
-                )
-
-                // Get the unit string (e.g., "/mi" or "/km")
-                let unitString = fastestPaceMetric.unit.unitString ?? ""
-
-                // Extract sparkline data for pace over time
-                let sparklineData = paceMetrics.map { $0.value }
-
-                let fastestPaceRow = SQDashboardMetricStatsRowViewModel(
-                    metricId: "fastest-pace",
-                    icon: SQImageSymbol.figureRun.rawValue,
-                    title: "Fastest Pace",
-                    avgValue: paceValueString,
-                    unit: unitString,
-                    sparklineData: sparklineData,
-                    change14d: 0.0  // Placeholder for future 14-day change calculation
-                )
-                rows.append(fastestPaceRow)
+                // Determine aggregation strategy and create row
+                if let row = buildPerformanceMetricRow(
+                    quantityType: quantityType,
+                    activityType: activityType,
+                    metrics: metrics
+                ) {
+                    rows.append(row)
+                }
             }
         }
 
@@ -397,6 +391,68 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Performance",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil  // No filter dropdown for performance
+        )
+    }
+
+    // MARK: - Performance Metric Row Builder
+
+    private func buildPerformanceMetricRow(
+        quantityType: SQQuantityType,
+        activityType: HKWorkoutActivityType,
+        metrics: [SQWorkoutMetric]
+    ) -> SQDashboardMetricStatsRowViewModel? {
+        guard !metrics.isEmpty else { return nil }
+
+        // Aggregate metrics based on the quantity type's dashboard aggregation strategy
+        let aggregatedValue: Double
+        switch quantityType.dashboardAggregationType {
+        case .minimum:
+            aggregatedValue = metrics.map { $0.value }.min() ?? 0
+
+        case .maximum:
+            aggregatedValue = metrics.map { $0.value }.max() ?? 0
+
+        case .sum:
+            aggregatedValue = metrics.reduce(0.0) { $0 + $1.value }
+
+        case .average:
+            aggregatedValue = metrics.reduce(0.0) { $0 + $1.value } / Double(metrics.count)
+        }
+
+        // Create aggregated metric
+        let aggregatedMetric = SQWorkoutMetric(
+            quantityType: quantityType,
+            displayName: quantityType.displayTitle,
+            unit: metrics[0].unit,
+            value: aggregatedValue
+        )
+
+        // Format the value using the metric's display logic
+        let valueString = aggregatedMetric.displayableValue(
+            for: quantityType,
+            value: aggregatedValue
+        )
+
+        // Get unit string
+        let unitString = aggregatedMetric.unit.unitString ?? ""
+
+        // Use activity type's icon
+        let icon = activityType.imageSymbol.rawValue
+
+        // Create unique metric ID from activity type and quantity type
+        let metricId = "\(activityType.name.lowercased())-\(quantityType.rawValue)"
+
+        // Extract sparkline data
+        let sparklineData = metrics.map { $0.value }
+
+        return SQDashboardMetricStatsRowViewModel(
+            metricId: metricId,
+            icon: icon,
+            title: quantityType.displayTitle,
+            avgValue: valueString,
+            unit: unitString,
+            sparklineData: sparklineData,
+            change14d: 0.0  // Placeholder for future 14-day change calculation
         )
     }
 

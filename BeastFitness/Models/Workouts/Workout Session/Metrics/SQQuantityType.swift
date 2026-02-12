@@ -34,6 +34,13 @@ enum SQOutputCalculationType {
     case average
 }
 
+enum SQDashboardAggregationType {
+    case minimum  // For pace - fastest is best
+    case maximum  // For anything where highest is best
+    case sum      // For distance, calories, etc.
+    case average  // For heart rate, etc.
+}
+
 extension SQQuantityType {
     var hkQuantityTypeIdentifier: HKQuantityTypeIdentifier? {
         switch self {
@@ -75,8 +82,27 @@ extension SQQuantityType {
         switch self {
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .unknown:
             return .sum
-            
+
         case .sqPaceRunning, .heartRate:
+            return .average
+        }
+    }
+
+    var dashboardAggregationType: SQDashboardAggregationType {
+        switch self {
+        case .sqPaceRunning:
+            return .minimum  // Fastest pace (lower is better)
+
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
+            return .maximum  // Longest single workout distance
+
+        case .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted:
+            return .sum  // Total across all workouts
+
+        case .heartRate:
+            return .average  // Average heart rate
+
+        case .unknown:
             return .average
         }
     }
