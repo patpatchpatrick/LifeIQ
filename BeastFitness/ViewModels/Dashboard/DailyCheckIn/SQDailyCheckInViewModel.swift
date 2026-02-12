@@ -137,7 +137,19 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         for metric in metrics {
             let field: SQDailyCheckInField = .metric(id: metric.id)
-            let displayTitle = metric.emoji != nil ? "\(metric.emoji!) \(metric.title)" : metric.title
+
+            // Build display title with emoji and unit
+            var displayTitle = metric.title
+
+            // Add unit suffix if present (e.g., "Weight (lbs)")
+            if metric.unit != .none {
+                displayTitle = "\(displayTitle) (\(metric.unit.rawValue))"
+            }
+
+            // Prepend emoji if present
+            if let emoji = metric.emoji {
+                displayTitle = "\(emoji) \(displayTitle)"
+            }
 
             switch metric.kind {
 

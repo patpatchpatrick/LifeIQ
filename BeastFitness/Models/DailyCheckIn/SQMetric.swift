@@ -117,6 +117,7 @@ enum SQMetricId {
     static let porn = "metric.porn"                    // binary
     static let caffeine = "metric.caffeine"            // binary
     static let meditation = "metric.meditation"        // binary
+    static let weight = "metric.weight"                // number (pounds)
 
     // MARK: - Future-proofing
 

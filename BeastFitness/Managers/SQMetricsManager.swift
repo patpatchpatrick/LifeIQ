@@ -92,6 +92,10 @@ final class SQMetricsManager: SQMetricsManaging {
             SQLogger.shared.log("Metrics are empty, loading from presets", .debug, context: .metricsManager)
         } else {
             metrics = stored.map { $0.toDefinition() }
+
+            // Migration: add new preset metrics if they don't exist
+            try? migrateNewPresets(context: context)
+
             SQLogger.shared.log("Metrics loaded from SwiftData. Total Count: \(metrics.count)", .debug, context: .metricsManager)
         }
 
@@ -395,6 +399,41 @@ final class SQMetricsManager: SQMetricsManaging {
         return try context.fetch(descriptor).first
     }
 
+    // MARK: - Migration
+
+    /// Adds any new preset metrics that don't exist in the database
+    private func migrateNewPresets(context: ModelContext) throws {
+        let allPresets = Self.presetMetrics()
+        let existingIds = Set(metrics.map { $0.id })
+
+        var added = 0
+        for preset in allPresets where !existingIds.contains(preset.id) {
+            context.insert(
+                SQMetricDefinitionEntity(
+                    id: preset.id,
+                    title: preset.title,
+                    kind: preset.kind,
+                    unit: preset.unit,
+                    group: preset.group,
+                    min: preset.min,
+                    max: preset.max,
+                    step: preset.step,
+                    isPreset: preset.isPreset,
+                    isEnabled: preset.isEnabled,
+                    sortOrder: preset.sortOrder,
+                    isArchived: preset.isArchived,
+                    emoji: preset.emoji
+                )
+            )
+            added += 1
+        }
+
+        if added > 0 {
+            try saveContextAndNotify(context)
+            SQLogger.shared.log("Migration: Added \(added) new preset metric(s)", .info, context: .metricsManager, isPriority: true)
+        }
+    }
+
     // MARK: - Presets
 
     private static func presetMetrics() -> [SQMetricDefinition] {
@@ -415,11 +454,14 @@ final class SQMetricsManager: SQMetricsManaging {
             .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
                   min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "💪"),
 
-            .init(id: SQMetricId.sleepHours, title: "Sleep (hours)", kind: .number, unit: .hours, group: SQDefaultGroup.personal.rawValue,
+            .init(id: SQMetricId.sleepHours, title: "Sleep", kind: .number, unit: .hours, group: SQDefaultGroup.personal.rawValue,
                   min: 0, max: 24, step: 0.5, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "🌙"),
 
             .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
                   min: 1, max: 5, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "😴"),
+
+            .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds, group: SQDefaultGroup.personal.rawValue,
+                  min: 0, max: 1000, step: 0.1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "⚖️"),
 
             // Habit metrics (disabled by default)
             .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,

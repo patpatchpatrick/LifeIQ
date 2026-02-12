@@ -547,7 +547,7 @@ final class SQDashboardController: SQDashboardInterface {
         // "All" filter: Aggregate stats for ALL workouts
         var allRows: [SQDashboardActivityRowViewModel] = []
 
-        for (activityType, workouts) in workouts.workoutsByActivityType {
+        for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
             allRows.append(.init(workouts: workouts))
             rowsByFilter[activityType.name] = [.init(workouts: workouts)]
         }
@@ -567,9 +567,7 @@ final class SQDashboardController: SQDashboardInterface {
             dropDownViewModel: dropDownViewModel
         )
         
-        dropDownViewModel.itemSelectionHandler = { [weak self] selectedFilter in
-            guard let self else { return }
-            
+        dropDownViewModel.itemSelectionHandler = { selectedFilter in
             sectionViewModel.updateActiveFilter(selectedFilter)
         }
 
