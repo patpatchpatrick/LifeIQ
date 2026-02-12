@@ -7,7 +7,33 @@
 
 import HealthKit
 
-enum SQQuantityType: String, Codable, UnfrozenEnum {
+enum SQDistance: String, Codable, Hashable {
+    case mile
+    case kilometer = "1k"
+    case fiveK = "5k"
+    case tenK = "10k"
+    case halfMarathon
+    case marathon
+
+    var meters: Double {
+        switch self {
+        case .mile:
+            return 1609.344
+        case .kilometer:
+            return 1000
+        case .fiveK:
+            return 5000
+        case .tenK:
+            return 10000
+        case .halfMarathon:
+            return 21097.5
+        case .marathon:
+            return 42195
+        }
+    }
+}
+
+enum SQQuantityType: Codable, Hashable {
     // Distance types
     case distanceWalkingRunning
     case distanceCycling
@@ -24,14 +50,18 @@ enum SQQuantityType: String, Codable, UnfrozenEnum {
     case sqPaceRunning
     case sqTotalVolumeLifted
 
+    // Parameterized performance metrics
+    case sqFastestPace(SQDistance)
+
     // Health metrics
     case heartRate
     case unknown
 }
 
-enum SQOutputCalculationType {
+enum SQOutputCalculationType: Codable, Hashable {
     case sum
     case average
+    case fastestPace(SQDistance)
 }
 
 enum SQDashboardAggregationType {
@@ -42,6 +72,37 @@ enum SQDashboardAggregationType {
 }
 
 extension SQQuantityType {
+    var id: String {
+        switch self {
+        case .distanceWalkingRunning:
+            return "distanceWalkingRunning"
+        case .distanceCycling:
+            return "distanceCycling"
+        case .distanceSwimming:
+            return "distanceSwimming"
+        case .distanceRowing:
+            return "distanceRowing"
+        case .distanceDownhillSnowSports:
+            return "distanceDownhillSnowSports"
+        case .distanceCrossCountrySkiing:
+            return "distanceCrossCountrySkiing"
+        case .flightsClimbed:
+            return "flightsClimbed"
+        case .activeKilocaloriesBurned:
+            return "activeKilocaloriesBurned"
+        case .sqPaceRunning:
+            return "sqPaceRunning"
+        case .sqFastestPace(let distance):
+            return "sqFastestPace-\(distance.rawValue)"
+        case .sqTotalVolumeLifted:
+            return "sqTotalVolumeLifted"
+        case .heartRate:
+            return "heartRate"
+        case .unknown:
+            return "unknown"
+        }
+    }
+
     var hkQuantityTypeIdentifier: HKQuantityTypeIdentifier? {
         switch self {
         case .distanceWalkingRunning:
@@ -71,6 +132,10 @@ extension SQQuantityType {
         case .heartRate:
             return .heartRate
             
+        case .sqFastestPace:
+            /// Custom quantity type
+            return nil
+            
         case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
             /// Custom quantity type
             return nil
@@ -80,6 +145,9 @@ extension SQQuantityType {
     
     var outputCalculationType: SQOutputCalculationType {
         switch self {
+        case .sqFastestPace(let distance):
+            return .fastestPace(distance)
+
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .unknown:
             return .sum
 
@@ -90,7 +158,7 @@ extension SQQuantityType {
 
     var dashboardAggregationType: SQDashboardAggregationType {
         switch self {
-        case .sqPaceRunning:
+        case .sqPaceRunning, .sqFastestPace:
             return .minimum  // Fastest pace (lower is better)
 
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
@@ -139,13 +207,13 @@ extension SQQuantityType {
         // Heart rate
         case .heartRate:
             return .countPerMinute
-            
-        case .sqPaceRunning:
+
+        case .sqPaceRunning, .sqFastestPace:
             return .secondsPerMile
-            
+
         case .sqTotalVolumeLifted:
             return .pound
-            
+
         case .unknown:
             return .unknown
         }
@@ -156,13 +224,15 @@ extension SQQuantityType {
             case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
                 return "Distance"
             case .flightsClimbed:
-                return "Flights Climbed" // ← UI-friendly version
+                return "Flights Climbed"
             case .activeKilocaloriesBurned:
                 return "Calories"
             case .heartRate:
                 return "Heart Rate"
             case .sqPaceRunning:
                 return "Pace"
+            case .sqFastestPace(let distance):
+                return "Fastest \(distance.rawValue.uppercased())"
             case .sqTotalVolumeLifted:
                 return "Volume"
             case .unknown:

@@ -31,6 +31,9 @@ struct SQManualWorkout: SQWorkoutSourcable {
         case .activeKilocaloriesBurned:
             return totalCalories
             
+        case .sqFastestPace:
+            return nil
+            
         case .sqPaceRunning, .unknown:
             return nil
             
@@ -47,13 +50,18 @@ struct SQManualWorkout: SQWorkoutSourcable {
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
         // TODO: - Implement this for all Quantity Types that are supported with manual workouts
         switch quantityTypeIdentifier {
-        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .sqPaceRunning, .unknown:
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .sqTotalVolumeLifted, .sqPaceRunning, .sqFastestPace, .unknown:
             return nil
         case .heartRate:
             return averageHeartRate
         }
     }
-    
+
+    func fastestPaceFor(_ distance: SQDistance) -> Double? {
+        // Not yet supported for manual workouts
+        return nil
+    }
+
     // If you have a default implementation of `coreOutput` / `outputString`
     // in a `SQWorkoutSourcable` extension, you don't need to implement them here.
     // Otherwise you can mirror what you did for SQWorkoutSessionable.

@@ -115,7 +115,143 @@ extension HKWorkoutActivityType {
         }
     }
 
-    
+    /// Returns the standard distance quantity type for this activity type.
+    /// Used for distance-based metrics like fastest pace calculations.
+    /// Returns nil for activities that don't track distance.
+    var standardDistanceType: SQQuantityType? {
+        switch self {
+        // MARK: - Distance: walking / running–style
+        case .running,
+             .walking,
+             .hiking,
+             .wheelchairWalkPace,
+             .wheelchairRunPace:
+            return .distanceWalkingRunning
+
+        // MARK: - Distance: cycling
+        case .cycling,
+             .handCycling:
+            return .distanceCycling
+
+        // MARK: - Distance: swimming / water cardio
+        case .swimming,
+             .waterFitness,
+             .waterSports:
+            return .distanceSwimming
+
+        // MARK: - Distance: rowing
+        case .rowing:
+            return .distanceRowing
+
+        // MARK: - Distance: snow sports
+        case .crossCountrySkiing:
+            return .distanceCrossCountrySkiing
+        case .downhillSkiing,
+             .snowboarding,
+             .snowSports:
+            return .distanceDownhillSnowSports
+
+        // MARK: - Stair / step based (no distance)
+        case .stairClimbing,
+             .stairs:
+            return nil
+
+        // MARK: - Tri / multi-sport
+        case .swimBikeRun:
+            return .distanceWalkingRunning
+
+        // MARK: - Strength / gym / HIIT / cardio machines (no distance)
+        case .elliptical,
+             .coreTraining,
+             .highIntensityIntervalTraining,
+             .mixedMetabolicCardioTraining,
+             .mixedCardio,
+             .jumpRope,
+             .stepTraining,
+             .fitnessGaming,
+             .cardioDance,
+             .cooldown,
+             .preparationAndRecovery,
+             .functionalStrengthTraining,
+             .traditionalStrengthTraining:
+            return nil
+
+        // MARK: - Team & court / field sports (no distance)
+        case .americanFootball,
+             .australianFootball,
+             .soccer,
+             .lacrosse,
+             .rugby,
+             .cricket,
+             .basketball,
+             .baseball,
+             .softball,
+             .hockey,
+             .handball,
+             .volleyball,
+             .waterPolo,
+             .pickleball,
+             .discSports,
+             .paddleSports:
+            return nil
+
+        // MARK: - Racket & similar (no distance)
+        case .badminton,
+             .tennis,
+             .tableTennis,
+             .racquetball,
+             .squash:
+            return nil
+
+        // MARK: - Combat / martial / boxing (no distance)
+        case .boxing,
+             .martialArts,
+             .kickboxing,
+             .wrestling:
+            return nil
+
+        // MARK: - Dance & mind/body (no distance)
+        case .dance,
+             .danceInspiredTraining,
+             .socialDance,
+             .yoga,
+             .mindAndBody,
+             .taiChi,
+             .pilates,
+             .flexibility,
+             .barre:
+            return nil
+
+        // MARK: - Misc / outdoor activities (no distance)
+        case .climbing,
+             .fishing,
+             .hunting,
+             .equestrianSports,
+             .golf,
+             .gymnastics,
+             .skatingSports,
+             .surfingSports,
+             .sailing,
+             .trackAndField,
+             .underwaterDiving,
+             .play,
+             .archery,
+             .bowling,
+             .crossTraining,
+             .curling,
+             .fencing,
+             .other:
+            return nil
+
+        // MARK: - Newer / catch-all
+        case .transition:
+            return nil
+
+        @unknown default:
+            return nil
+        }
+    }
+
     // TODO: - PTD best-guess mappings for all activities.
     // You can adjust per activity if you want a different "core" metric.
     var coreOutputQuantityTypeId: SQQuantityType? {

@@ -17,11 +17,11 @@ struct SQWorkoutMetric: Codable {
     
     func displayableValue(for quantityType: SQQuantityType, value: Double) -> String {
         switch quantityType {
-            
+
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .activeKilocaloriesBurned, .heartRate, .sqTotalVolumeLifted, .unknown:
             return value.sqShortString
-            
-        case .sqPaceRunning:
+
+        case .sqPaceRunning, .sqFastestPace:
             return value.timeCode() /// eg 7:43
         }
     }
@@ -38,6 +38,17 @@ extension SQWorkoutSession {
         }
         
         switch quantityType.outputCalculationType {
+
+        case .fastestPace(let distance):
+            guard let output = workoutSource.sourcableData.fastestPaceFor(distance) else { return nil }
+
+            return .init(
+                quantityType: quantityType,
+                displayName: quantityType.displayTitle,
+                unit: unit,
+                value: output
+            )
+
         case .sum:
             
             guard let output = workoutSource.sourcableData.sumOutputFor(quantityType) else { return nil }

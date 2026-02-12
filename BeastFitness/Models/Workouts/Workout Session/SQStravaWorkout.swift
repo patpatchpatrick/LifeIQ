@@ -46,6 +46,8 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return nil
         case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
             return nil
+        case .sqFastestPace:
+            return nil
         }
     }
     
@@ -58,12 +60,18 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
             return SQUnit.convert(average_heartrate, from: .countPerMinute, to: unit)
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
-        case .sqPaceRunning, .sqTotalVolumeLifted, .unknown:
-            // TODO: - PTD support strave running pace
+        case .sqPaceRunning, .sqFastestPace, .sqTotalVolumeLifted, .unknown:
+            // TODO: - PTD support strava running pace
             return nil
         }
     }
-    
+
+    func fastestPaceFor(_ distance: SQDistance) -> Double? {
+        // Not yet supported for Strava workouts
+        // Could potentially implement using polyline data in the future
+        return nil
+    }
+
     var activeDuration: Double? {
         moving_time
     }

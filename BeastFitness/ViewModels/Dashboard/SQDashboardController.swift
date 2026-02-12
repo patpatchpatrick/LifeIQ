@@ -440,7 +440,7 @@ final class SQDashboardController: SQDashboardInterface {
         let icon = activityType.imageSymbol.rawValue
 
         // Create unique metric ID from activity type and quantity type
-        let metricId = "\(activityType.name.lowercased())-\(quantityType.rawValue)"
+        let metricId = "\(activityType.name.lowercased())-\(quantityType.id)"
 
         // Extract sparkline data
         let sparklineData = metrics.map { $0.value }

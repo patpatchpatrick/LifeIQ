@@ -315,10 +315,139 @@ Firestore charges per document read/write. Tracking metrics helps:
   - Example: `SQImageView(image: .init(symbol: .chevronUp, symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)))`
 - **Use shared components for common UI patterns** — For collapsible section headers, use `SQCollapsibleSectionHeader` to ensure consistent styling across dashboard sections.
 - These wrappers ensure consistent theming and styling across the app.
+## Workout Source Architecture
+
+Workouts can come from three different sources, each with its own data structure and capabilities. The **SQWorkoutSourceable** protocol provides a unified interface for accessing workout data regardless of source.
+
+### Workout Source Types
+
+We support three types of workouts, wrapped in the `SQWorkoutSource` enum:
+
+1. **SQHKWorkout** (HealthKit workouts)
+   - Wraps `HKWorkout` from Apple HealthKit
+   - Most feature-complete source
+   - Has access to detailed metrics, route data, heart rate samples, etc.
+   - Located at: `BeastFitness/Models/Workouts/Workout Session/SQHKWorkout.swift`
+
+2. **SQManualWorkout** (Manual workouts created in-app)
+   - Workouts created manually by users through the app
+   - Contains basic metadata: duration, calories, activity type
+   - Supports strength training details (sets, reps, volume)
+   - Limited metric support compared to HealthKit
+   - Located at: `BeastFitness/Models/Workouts/Workout Session/SQManualWorkout.swift`
+
+3. **SQStravaWorkout** (Strava integration - not fully implemented)
+   - Workouts imported from Strava API
+   - Contains Strava-specific data (map polylines, elevation, speed)
+   - Integration is in progress, many features not yet implemented
+   - Located at: `BeastFitness/Models/Workouts/Workout Session/SQStravaWorkout.swift`
+
+### SQWorkoutSourceable Protocol
+
+The `SQWorkoutSourceable` protocol defines the interface all workout sources must implement:
+
+```swift
+protocol SQWorkoutSourceable {
+    var sourceId: String { get }
+    var activityType: HKWorkoutActivityType { get }
+
+    // Metric calculation methods
+    func sumOutputFor(_ quantityType: SQQuantityType) -> Double?
+    func avgOutputFor(_ quantityType: SQQuantityType) -> Double?
+
+    // Core workout properties
+    var activeDuration: Double? { get }  // Seconds
+    var totalCalories: Double? { get }
+    var startDate: Date? { get }
+    var endDate: Date? { get }
+    var device: SQWorkoutDevice? { get }
+    var details: SQWorkoutActivityDetails? { get }
+}
+```
+
+### SQWorkoutSource Enum
+
+The `SQWorkoutSource` enum wraps the three workout types and provides convenient access:
+
+```swift
+enum SQWorkoutSource {
+    case hkWorkout(SQHKWorkout)
+    case stravaWorkout(SQStravaWorkout)
+    case manual(SQManualWorkout)
+
+    var sourcableData: SQWorkoutSourceable { ... }
+    var rawSource: SQWorkoutSourceRaw { ... }
+    var isHealthKit: Bool { ... }
+}
+```
+
+### Accessing Workout Data
+
+`SQWorkoutSession` has a `workoutSource` property that you use to access the underlying data:
+
+```swift
+protocol SQWorkoutSessionable {
+    var workoutSource: SQWorkoutSource { get }
+
+    func getMetric(for quantityType: SQQuantityType) -> SQWorkoutMetric?
+}
+
+// Usage:
+let workout: SQWorkoutSessionable = ...
+let distance = workout.getMetric(for: .distanceWalkingRunning)
+let pace = workout.getMetric(for: .sqPaceRunning)
+
+// Accessing the underlying source:
+switch workout.workoutSource {
+case .hkWorkout(let hkWorkout):
+    // Access HealthKit-specific features
+    let hkWorkout = hkWorkout.hkWorkout  // The wrapped HKWorkout
+case .manual(let manualWorkout):
+    // Access manual workout data
+case .stravaWorkout(let stravaWorkout):
+    // Access Strava data
+}
+```
+
+### Implementation Guidelines
+
+When adding new metric types or capabilities:
+
+1. **Add to protocol** if the feature should be available across all workout types
+2. **Implement for SQHKWorkout first** - this is the most feature-complete source
+3. **Return `nil` for unsupported sources** - SQManualWorkout and SQStravaWorkout can return `nil` for features not yet implemented
+4. **Use the wrapped data** - For SQHKWorkout, query the `hkWorkout: HKWorkout` property to access HealthKit APIs
+
+Example:
+```swift
+// In SQWorkoutSourceable protocol:
+func fastestPaceFor(_ distance: SQDistance) -> Double?
+
+// In SQHKWorkout:
+func fastestPaceFor(_ distance: SQDistance) -> Double? {
+    // Query hkWorkout for route data and calculate
+    // Implementation here...
+}
+
+// In SQManualWorkout and SQStravaWorkout:
+func fastestPaceFor(_ distance: SQDistance) -> Double? {
+    return nil  // Not yet supported
+}
+```
+
+### Why This Architecture
+
+This design allows us to:
+- Support multiple workout sources with a unified interface
+- Gradually implement features for each source type
+- Keep source-specific logic isolated
+- Easily add new workout sources in the future (e.g., Garmin, Wahoo, etc.)
+
 ## Coding style
 
 - **Prefer stored properties over computed properties** — When a value can be calculated once and stored, use a stored property with `didSet` observers to update it when dependencies change, rather than recalculating via computed properties on every access.
 - **Never use force unwrap (!)** — Force unwrapping can cause crashes. Always use optional binding (`if let`, `guard let`), optional chaining (`?.`), or nil coalescing (`??`) with appropriate fallback values. If data is truly expected to exist, handle the nil case gracefully with a fallback or error state (e.g., "N/A", default value, or early return).
+
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:
