@@ -20,6 +20,7 @@ import Foundation
     var isCollapsed: Bool
     var dropDownViewModel: SQDropDownMenuViewModel?
     var titleButton: TitleButtonViewModel?
+    var columnHeaders: [String]?
     private(set) var rowsByFilter: [String: [SQDashboardRowViewModel]]
     private(set) var activeFilter: String
     private(set) var activeRows: [SQDashboardRowViewModel]
@@ -29,13 +30,15 @@ import Foundation
         title: String,
         rowsByFilter: [String: [SQDashboardRowViewModel]],
         dropDownViewModel: SQDropDownMenuViewModel? = nil,
-        titleButton: TitleButtonViewModel? = nil
+        titleButton: TitleButtonViewModel? = nil,
+        columnHeaders: [String]? = nil
     ) {
         self.id = id
         self.title = title
         self.rowsByFilter = rowsByFilter
         self.dropDownViewModel = dropDownViewModel
         self.titleButton = titleButton
+        self.columnHeaders = columnHeaders
         self.isCollapsed = false
 
         // Set activeFilter to first key in rowsByFilter or "All"

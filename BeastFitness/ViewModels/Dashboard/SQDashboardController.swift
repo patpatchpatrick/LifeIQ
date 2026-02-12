@@ -307,7 +307,8 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Metrics",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
-            titleButton: titleButton
+            titleButton: titleButton,
+            columnHeaders: ["Metric", "Avg Score", "14d %"]
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys
@@ -413,7 +414,8 @@ final class SQDashboardController: SQDashboardInterface {
             id: "performance",
             title: "Performance",
             rowsByFilter: rowsByFilter,
-            dropDownViewModel: nil  // No filter dropdown for performance
+            dropDownViewModel: nil,  // No filter dropdown for performance
+            columnHeaders: ["Stat", "Avg Score", "14d %"]
         )
     }
 

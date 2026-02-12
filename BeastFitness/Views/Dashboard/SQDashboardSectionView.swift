@@ -28,6 +28,15 @@ struct SQDashboardSectionView: View {
                 SQSubsectionEmptyState(message: "No data available")
             } else {
                 VStack(spacing: SQDashboardView.uiConfig.sectionRowSpacing) {
+                    // Render column headers if provided
+                    if let columnHeaders = section.columnHeaders {
+                        SQColumnHeaderRow(
+                            columns: columnHeaders.enumerated().map { index, title in
+                                index == 0 ? .leading(title) : .trailing(title)
+                            }
+                        )
+                    }
+
                     ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
                         
                         switch row.rowType {
