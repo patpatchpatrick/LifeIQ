@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Combine
+import HealthKit
+import BeastFitnessCore
 
 enum DashboardTimeRange: String, CaseIterable {
     case today = "Today"
@@ -48,6 +50,9 @@ protocol DashboardStating: AnyObject {
     var isWorkoutListSheetVisible: Bool { get }
     var workoutsListController: SQWorkoutsListController? { get }
 
+    var isLeaderboardSheetVisible: Bool { get }
+    var leaderboardController: SQLeaderboardController? { get }
+
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
 
@@ -60,6 +65,9 @@ protocol DashboardStating: AnyObject {
 
     func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
+
+    func toggleLeaderboardSheetVisibility(_ isVisible: Bool)
+    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType, workouts: [SQWorkoutSessionable])
 }
 
 @MainActor
@@ -68,6 +76,7 @@ protocol DashboardStating: AnyObject {
     private var cancellables = Set<AnyCancellable>()
     private(set) var isDailyCheckInSheetVisible: Bool = false
     private(set) var isWorkoutListSheetVisible: Bool = false
+    private(set) var isLeaderboardSheetVisible: Bool = false
 
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionGroups: [SQDashboardSectionGroupViewModel] = []
@@ -87,6 +96,7 @@ protocol DashboardStating: AnyObject {
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
     private(set) var workoutsListController: SQWorkoutsListController?
+    private(set) var leaderboardController: SQLeaderboardController?
 
     init(hub: EventHub) {
         self.hub = hub
@@ -133,5 +143,19 @@ protocol DashboardStating: AnyObject {
     func displayWorkoutsListSheet(with workouts: [any SQWorkoutSessionable]) {
         workoutsListController = .init(state: SQAppState.shared.workoutsListState, workouts: workouts)
         toggleWorkoutListSheetVisibility(true)
+    }
+
+    func toggleLeaderboardSheetVisibility(_ isVisible: Bool) {
+        isLeaderboardSheetVisible = isVisible
+    }
+
+    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType, workouts: [any SQWorkoutSessionable]) {
+        leaderboardController = .init(
+            state: SQAppState.shared.leaderboardState,
+            quantityType: quantityType,
+            activityType: activityType,
+            workouts: workouts
+        )
+        toggleLeaderboardSheetVisibility(true)
     }
 }

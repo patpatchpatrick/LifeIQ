@@ -68,6 +68,9 @@
 		F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */; };
 		F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B9842ED7BBFD00199C69 /* SQButton.swift */; };
 		F639F0C32F3E3C5E004AC701 /* SQColumnHeaderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */; };
+		F639F0C52F3ECCC8004AC701 /* LeaderboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */; };
+		F639F0C82F3ECCF8004AC701 /* SQLeaderboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C62F3ECCF8004AC701 /* SQLeaderboardController.swift */; };
+		F639F0CB2F3ECD14004AC701 /* SQLeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */; };
 		F647A9042EE7DAD000DAA247 /* SQExercisesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -313,6 +316,9 @@
 		F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTextValidationRule.swift; sourceTree = "<group>"; };
 		F639B9842ED7BBFD00199C69 /* SQButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButton.swift; sourceTree = "<group>"; };
 		F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColumnHeaderRow.swift; sourceTree = "<group>"; };
+		F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardState.swift; sourceTree = "<group>"; };
+		F639F0C62F3ECCF8004AC701 /* SQLeaderboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardController.swift; sourceTree = "<group>"; };
+		F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardView.swift; sourceTree = "<group>"; };
 		F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesManager.swift; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
@@ -516,6 +522,7 @@
 				F602DA292EC40EC700404878 /* EventHub.swift */,
 				F602DA272EC40EB700404878 /* SQAppState.swift */,
 				F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */,
+				F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */,
 			);
 			path = StateManagement;
 			sourceTree = "<group>";
@@ -768,6 +775,22 @@
 				F639B7DF2ED798DE00199C69 /* SQTextFieldViewModel.swift */,
 			);
 			path = TextField;
+			sourceTree = "<group>";
+		};
+		F639F0C72F3ECCF8004AC701 /* Leaderboard */ = {
+			isa = PBXGroup;
+			children = (
+				F639F0C62F3ECCF8004AC701 /* SQLeaderboardController.swift */,
+			);
+			path = Leaderboard;
+			sourceTree = "<group>";
+		};
+		F639F0CA2F3ECD14004AC701 /* Leaderboard */ = {
+			isa = PBXGroup;
+			children = (
+				F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */,
+			);
+			path = Leaderboard;
 			sourceTree = "<group>";
 		};
 		F657E29C2CA50D7C00E72926 = {
@@ -1212,6 +1235,7 @@
 				F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */,
 				F602DA2D2EC40F9900404878 /* Dashboard */,
 				F6A848BA2CBD950E00B09AD5 /* Shared */,
+				F639F0C72F3ECCF8004AC701 /* Leaderboard */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -1232,6 +1256,7 @@
 				F602DA352EC4110600404878 /* Root */,
 				F6A848912CB4A7E900B09AD5 /* Shared */,
 				F6C5FD7A2F31155400BF1022 /* Modals */,
+				F639F0CA2F3ECD14004AC701 /* Leaderboard */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1536,6 +1561,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F639F0C52F3ECCC8004AC701 /* LeaderboardState.swift in Sources */,
 				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */,
 				F615922F2EF35E2800223A63 /* SQUserDefaults.swift in Sources */,
@@ -1686,6 +1712,7 @@
 				F61591F72EE8F00F00223A63 /* HKDevice+Extensions.swift in Sources */,
 				F68C80592F365A3200327250 /* SQStatRowData.swift in Sources */,
 				F67F0A792F0DE20200D7BB90 /* SQWorkoutStrengthDetails+PrintableDescription.swift in Sources */,
+				F639F0CB2F3ECD14004AC701 /* SQLeaderboardView.swift in Sources */,
 				F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */,
 				F6C5FD7E2F3116A900BF1022 /* Image+Extensions.swift in Sources */,
 				F639F0C32F3E3C5E004AC701 /* SQColumnHeaderRow.swift in Sources */,
@@ -1699,6 +1726,7 @@
 				F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */,
 				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,
 				F6940F1B2F36AC390008A2A0 /* SQDashboardSectionView.swift in Sources */,
+				F639F0C82F3ECCF8004AC701 /* SQLeaderboardController.swift in Sources */,
 				F6A848932CB4A7F000B09AD5 /* SQImageView.swift in Sources */,
 				F679BA4B2EE4F41900A2F249 /* SQWorkoutsListItemViewModel.swift in Sources */,
 				F639B7E02ED798E300199C69 /* SQTextFieldViewModel.swift in Sources */,

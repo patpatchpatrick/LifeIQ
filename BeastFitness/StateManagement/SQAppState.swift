@@ -25,6 +25,7 @@ final class SQAppState {
     let workoutScreenState: WorkoutsLandingState
     let workoutsListState: WorkoutsListState
     let workoutSummaryState: WorkoutSummaryState
+    let leaderboardState: LeaderboardState
 
     let exercisesListState: ExercisesListState
     let metricsListState: SQMetricsListState
@@ -41,6 +42,7 @@ final class SQAppState {
         self.workoutScreenState = .init(hub: hub)
         self.workoutsListState = .init(hub: hub)
         self.workoutSummaryState = .init(hub: hub)
+        self.leaderboardState = .init(hub: hub)
         self.exercisesListState = .init(hub: hub)
         self.metricsListState = .init(hub: hub)
         self.alertState = .init(hub: hub)
