@@ -1,0 +1,77 @@
+//
+//  SQLeaderboardRowView.swift
+//  BeastFitness
+//
+//  Created by Claude on 2/12/26.
+//
+
+import SwiftUI
+
+struct SQLeaderboardRowView: View {
+    let viewModel: SQLeaderboardRowViewModel
+
+    // Display emoji medal for top 3, rank number for others
+    private var rankDisplay: String {
+        switch viewModel.rank {
+        case 1:
+            return "🥇"
+        case 2:
+            return "🥈"
+        case 3:
+            return "🥉"
+        default:
+            return "#\(viewModel.rank)"
+        }
+    }
+
+    // Use emoji for top 3, text color for others
+    private var usesEmoji: Bool {
+        viewModel.rank <= 3
+    }
+
+    var body: some View {
+        HStack(spacing: .SQSpace.m) {
+            // Rank (left side)
+            Group {
+                if usesEmoji {
+                    Text(rankDisplay)
+                        .font(.system(size: 24))
+                } else {
+                    Text(rankDisplay)
+                        .sqFont(.bodyLarge)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+            .frame(width: 50, alignment: .leading)
+
+            // Workout info (center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(viewModel.workoutTitle)
+                    .sqFont(.body)
+                    .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+
+                Text(viewModel.workoutDate)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Score (right side)
+            HStack(spacing: 4) {
+                Text(viewModel.formattedScore)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textPrimary)
+
+                if !viewModel.unitString.isEmpty {
+                    Text(viewModel.unitString)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+        }
+        .padding(.horizontal, .SQSpace.l)
+        .padding(.vertical, .SQSpace.m)
+        .sqBackgroundColor(.backgroundSecondary)
+    }
+}

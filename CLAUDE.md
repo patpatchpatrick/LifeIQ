@@ -135,6 +135,33 @@ let currentUser = SQAppState.shared.userState.loggedInUser
 - **Event-driven**: Use `hub` for cross-component communication
 - **Type-safe**: Protocol-based design
 
+## Date Formatting Conventions
+
+**Always use `SQDateFormatters`** for formatting dates — Never create `DateFormatter` instances directly. Use the shared `SQDateFormatters.shared` singleton with predefined styles:
+
+### Available Styles
+
+- `.short` - Example: "1/28/23"
+- `.medium` - Example: "Jan 28, 2023"
+- `.long` - Example: "January 28, 2023"
+- `.full` - Example: "Saturday, January 28, 2023 at 3:42 PM"
+- `.fullWithoutDayName` - Example: "January 28, 2023 at 3:42 PM"
+- `.timeOnly` - Example: "3:42 PM"
+- `.firebaseDayKey` - Example: "2025-01-22" (for Firestore keys)
+
+### Usage
+
+```swift
+// Using the Date extension (preferred)
+let dateString = myDate.formattedString(with: .medium)
+
+// Using SQDateFormatters directly
+let dateString = SQDateFormatters.shared.string(from: myDate, style: .medium)
+
+// Firestore day key
+let dayKey = myDate.firebaseDailyDateKey
+```
+
 ## Logging Conventions
 
 We use **SQLogger** (from BeastFitnessCore) for all logging:

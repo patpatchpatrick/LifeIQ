@@ -67,7 +67,7 @@ protocol DashboardStating: AnyObject {
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 
     func toggleLeaderboardSheetVisibility(_ isVisible: Bool)
-    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType, workouts: [SQWorkoutSessionable])
+    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType)
 }
 
 @MainActor
@@ -149,12 +149,11 @@ protocol DashboardStating: AnyObject {
         isLeaderboardSheetVisible = isVisible
     }
 
-    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType, workouts: [any SQWorkoutSessionable]) {
+    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType) {
         leaderboardController = .init(
             state: SQAppState.shared.leaderboardState,
             quantityType: quantityType,
-            activityType: activityType,
-            workouts: workouts
+            activityType: activityType
         )
         toggleLeaderboardSheetVisibility(true)
     }

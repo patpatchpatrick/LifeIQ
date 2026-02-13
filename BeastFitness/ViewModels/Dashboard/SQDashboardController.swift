@@ -477,7 +477,9 @@ final class SQDashboardController: SQDashboardInterface {
             avgValue: valueString,
             unit: unitString,
             sparklineData: sparklineData,
-            change14d: 0.0  // Placeholder for future 14-day change calculation
+            change14d: 0.0,  // Placeholder for future 14-day change calculation
+            quantityType: quantityType,
+            activityType: activityType
         )
     }
 
