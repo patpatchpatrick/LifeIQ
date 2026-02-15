@@ -30,6 +30,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let activityType: HKWorkoutActivityType
     private(set) var rows: [SQLeaderboardRowViewModel] = []
     private(set) var chartModel: LineChartModel?
+    private(set) var chartTitle: String?
+    private(set) var chartSubtitle: String?
 
     var title: String {
         "\(quantityType.displayTitle) Leaderboard"
@@ -148,6 +150,17 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     metric: item.metric,
                     quantityType: quantityType
                 )
+            }
+
+            // Update chart header properties
+            chartTitle = quantityType.displayTitle
+
+            if let firstDate = rows.first?.workout.startDate,
+               let lastDate = rows.last?.workout.startDate {
+                let dateRange = "\(firstDate.formattedString(with: .medium)) - \(lastDate.formattedString(with: .medium))"
+                chartSubtitle = "\(rows.count) workouts • \(dateRange)"
+            } else {
+                chartSubtitle = "\(rows.count) workouts"
             }
 
             SQLogger.shared.log(
