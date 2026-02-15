@@ -76,6 +76,17 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         hasLoadedUI = true
         isLoading = true
 
+        // Initialize mock rows for redacted loading state
+        let mockMetric = SQWorkoutMetric.mock(for: quantityType)
+        rows = (1...10).map { index in
+            SQLeaderboardRowViewModel(
+                rank: index,
+                workout: SQWorkoutSession.mockRun,
+                metric: mockMetric,
+                quantityType: quantityType
+            )
+        }
+
         SQLogger.shared.log(
             "Loading leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
             .info,

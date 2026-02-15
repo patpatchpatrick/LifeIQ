@@ -25,6 +25,31 @@ struct SQWorkoutMetric: Codable {
             return value.timeCode() /// eg 7:43
         }
     }
+
+    static func mock(for quantityType: SQQuantityType) -> SQWorkoutMetric {
+        let unit = quantityType.unit ?? .unknown
+        let mockValue: Double
+
+        switch quantityType {
+        case .distanceWalkingRunning:
+            mockValue = 5.2
+        case .sqPaceRunning, .sqFastestPace:
+            mockValue = 450.0 // 7:30 pace in seconds
+        case .activeKilocaloriesBurned:
+            mockValue = 425.0
+        case .heartRate:
+            mockValue = 152.0
+        default:
+            mockValue = 100.0
+        }
+
+        return SQWorkoutMetric(
+            quantityType: quantityType,
+            displayName: quantityType.displayTitle,
+            unit: unit,
+            value: mockValue
+        )
+    }
 }
 
 // MARK: - SQWorkoutSession Build Metrics

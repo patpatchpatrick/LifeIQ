@@ -7,23 +7,13 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct SQLeaderboardView: View {
     @Bindable var controller: SQLeaderboardController
     @Environment(\.modelContext) private var modelContext
 
-    var loadingView: some View {
-        VStack(spacing: .SQSpace.xl) {
-            ProgressView()
-                .progressViewStyle(.circular)
-                .scaleEffect(1.5)
-                .padding(.top, 100)
-
-            Text("Loading leaderboard...")
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
+    // MARK: - Empty State
 
     var emptyStateView: some View {
         VStack(spacing: .SQSpace.xl) {
@@ -41,37 +31,54 @@ struct SQLeaderboardView: View {
         .padding(.top, 100)
     }
 
+    // MARK: - Row
+
+    @ViewBuilder
+    private func rowView(_ row: SQLeaderboardRowViewModel, index: Int) -> some View {
+        let isLast = index == controller.rows.count - 1
+
+        ZStack(alignment: .bottom) {
+            // Row content
+            SQLeaderboardRowView(viewModel: row)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, .SQSpace.l) // ✅ consistent padding for every row
+                .background(SQColor.backgroundSecondary.color)
+
+            // Bottom divider (all but last row)
+            if !isLast {
+                Divider()
+                    .sqTintColor(.divider(1))
+                    .padding(.horizontal, 0) // full width
+                    .background(SQColor.backgroundSecondary.color)
+            }
+        }
+        .listRowInsets(EdgeInsets())              // ✅ no extra system padding
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    // MARK: - List
+
     var leaderboardList: some View {
         List {
             ForEach(Array(controller.rows.enumerated()), id: \.1.id) { index, row in
-                VStack(spacing: 0) {
-                    SQLeaderboardRowView(viewModel: row)
-
-                    if index != controller.rows.count - 1 {
-                        Divider()
-                            .sqTintColor(.divider(1))
-                            .padding(.top, .SQSpace.l)
-                            .padding(.bottom, .SQSpace.l)
-                            .background(SQColor.background.color)
-                    }
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                rowView(row, index: index)
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .background(SQColor.background.color)
     }
+
+    // MARK: - Content
 
     var contentView: some View {
         Group {
-            if controller.isLoading {
-                loadingView
-            } else if controller.rows.isEmpty {
+            if controller.rows.isEmpty && !controller.isLoading {
                 emptyStateView
             } else {
                 leaderboardList
+                    .redacted(controller.isLoading, reason: .placeholder)
             }
         }
     }
