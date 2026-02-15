@@ -180,4 +180,24 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             isLoading = false
         }
     }
+
+    private func buildChartUIConfig() -> LineChartModel.UIConfig {
+        let colorConfig = LineChartModel.ColorConfig(
+            textPrimary: SQColor.textPrimary.color,
+            textSecondary: SQColor.textSecondary.color,
+            backgroundPrimary: SQColor.background.color,
+            backgroundSecondary: SQColor.backgroundSecondary.color,
+            lineColor: SQColor.accentPrimary.color
+        )
+
+        let fontConfig = LineChartModel.FontConfig(
+            font: SQFont(type: .bodyExtraSmall).font,
+            boldFont: SQFont(type: .bodySmallBold).font
+        )
+
+        return LineChartModel.UIConfig(
+            colorConfig: colorConfig,
+            fontConfig: fontConfig
+        )
+    }
 }
