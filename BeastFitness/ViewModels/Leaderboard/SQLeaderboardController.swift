@@ -170,6 +170,41 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 isPriority: true
             )
 
+            // Build chart data from rows
+            let points: [CGPoint] = rows.compactMap { row in
+                guard let startDate = row.workout.startDate else { return nil }
+                return CGPoint(
+                    x: startDate.timeIntervalSince1970,
+                    y: row.metric.value
+                )
+            }
+
+            // Only create chart if we have 2+ valid data points
+            if points.count >= 2 {
+                chartModel = LineChartModel(
+                    width: 350,
+                    height: 220,
+                    lineTitle: quantityType.displayTitle,
+                    uiConfig: buildChartUIConfig(),
+                    inputPoints: points,
+                    gridConfig: GridConfig(),
+                    focusConfig: FocusConfig()
+                )
+
+                SQLogger.shared.log(
+                    "Created chart with \(points.count) data points",
+                    .debug,
+                    context: .workoutList
+                )
+            } else {
+                chartModel = nil
+                SQLogger.shared.log(
+                    "Insufficient data for chart (\(points.count) points, need 2+)",
+                    .debug,
+                    context: .workoutList
+                )
+            }
+
             isLoading = false
         } catch {
             SQLogger.shared.log(
