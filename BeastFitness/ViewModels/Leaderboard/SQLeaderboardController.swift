@@ -10,6 +10,7 @@ import SwiftData
 import Combine
 import BeastFitnessCore
 import HealthKit
+import CoolCharts
 
 @MainActor
 protocol SQLeaderboardInterface {
@@ -28,6 +29,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let quantityType: SQQuantityType
     let activityType: HKWorkoutActivityType
     private(set) var rows: [SQLeaderboardRowViewModel] = []
+    private(set) var chartModel: LineChartModel?
 
     var title: String {
         "\(quantityType.displayTitle) Leaderboard"
