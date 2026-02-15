@@ -6,8 +6,7 @@
 //
 
 import SwiftUI
-
-import SwiftUI
+import CoolCharts
 
 struct SQLeaderboardView: View {
     @Bindable var controller: SQLeaderboardController
@@ -55,6 +54,31 @@ struct SQLeaderboardView: View {
         .listRowInsets(EdgeInsets())              // ✅ no extra system padding
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+    }
+
+    // MARK: - Chart Section
+
+    @ViewBuilder
+    private func chartSection(_ chartModel: LineChartModel) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            // Header
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text(controller.chartTitle)
+                    .sqFont(.bodyMediumBold)
+                    .sqForegroundColor(.textPrimary)
+
+                Text(controller.chartSubtitle)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+
+            // Chart
+            LineChartView(model: chartModel)
+                .frame(height: 220)
+        }
+        .padding(.horizontal, .SQSpace.l)
+        .padding(.vertical, .SQSpace.xl)
+        .background(SQColor.background.color)
     }
 
     // MARK: - List
