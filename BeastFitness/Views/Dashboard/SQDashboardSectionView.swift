@@ -51,7 +51,26 @@ struct SQDashboardSectionView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            
+
+                        case .metricPerformance:
+                            if let performanceViewModel = row as? SQDashboardMetricPerformanceRowViewModel {
+                                Button(action: {
+                                    handleMetricRowTap(performanceViewModel)
+                                }) {
+                                    SQDashboardPerformanceRow(
+                                        data: .init(
+                                            id: performanceViewModel.metricId,
+                                            icon: performanceViewModel.icon,
+                                            title: performanceViewModel.title,
+                                            bestValue: performanceViewModel.bestValue,
+                                            unit: performanceViewModel.unit,
+                                            percentileRank: performanceViewModel.percentileRank
+                                        )
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+
                         case .workoutTotals:
                             
                             if let workoutTotalsViewModel = row as? SQDashboardWorkoutTotalsRowViewModel {
@@ -75,12 +94,29 @@ struct SQDashboardSectionView: View {
         mainBody
     }
 
-    private func handleMetricRowTap(_ viewModel: SQDashboardMetricStatsRowViewModel) {
+    private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
+        // Try to extract quantityType and activityType
+        let quantityType: SQQuantityType?
+        let activityType: HKWorkoutActivityType?
+        let title: String
+
+        if let statsViewModel = viewModel as? SQDashboardMetricStatsRowViewModel {
+            quantityType = statsViewModel.quantityType
+            activityType = statsViewModel.activityType
+            title = statsViewModel.title
+        } else if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
+            quantityType = performanceViewModel.quantityType
+            activityType = performanceViewModel.activityType
+            title = performanceViewModel.title
+        } else {
+            return
+        }
+
         // Only performance metrics have quantityType and activityType
-        guard let quantityType = viewModel.quantityType,
-              let activityType = viewModel.activityType else {
+        guard let quantityType = quantityType,
+              let activityType = activityType else {
             SQLogger.shared.log(
-                "Cannot display leaderboard: metric '\(viewModel.title)' does not have quantityType and activityType",
+                "Cannot display leaderboard: metric '\(title)' does not have quantityType and activityType",
                 .debug,
                 context: .dashboard
             )
