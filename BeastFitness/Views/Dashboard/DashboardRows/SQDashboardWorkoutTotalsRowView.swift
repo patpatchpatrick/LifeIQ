@@ -14,6 +14,8 @@ struct SQDashboardWorkoutTotalsRowView: View {
         HStack(alignment: .center, spacing: .SQSpace.m) {
             SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
             Text(viewModel.currentValueAndTrend.trend)
+            
+            Spacer()
         }
     }
     
@@ -21,7 +23,7 @@ struct SQDashboardWorkoutTotalsRowView: View {
         VStack(alignment: .leading, spacing: 0) {
 
             // Activity bar chart
-            if !viewModel.currentChartDataPoints.isEmpty {
+            if !viewModel.currentChartDataPoints.isEmpty && viewModel.currentChartDataPoints.count > 1 {
                 SQActivityBarChart(
                     dataPoints: viewModel.currentChartDataPoints.map { point in
                         SQActivityBarChart.DataPoint(

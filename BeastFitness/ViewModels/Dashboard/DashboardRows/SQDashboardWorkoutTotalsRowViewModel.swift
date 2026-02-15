@@ -174,7 +174,7 @@ private extension SQDashboardWorkoutTotalsRowViewModel {
         // If basically flat
         if abs(percent) < 0.01 {
             return AttributedString.build(
-                with: "About the same as last week",
+                with: "About the same as \(priorTimeRange.title)",
                 font: SQFont(type: .bodySmall).font,
                 color: SQColor.textSecondary.color
             )
