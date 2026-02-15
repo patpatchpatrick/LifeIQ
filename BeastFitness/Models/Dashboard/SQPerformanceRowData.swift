@@ -1,0 +1,31 @@
+//
+//  SQPerformanceRowData.swift
+//  BeastFitness
+//
+
+import Foundation
+
+struct SQPerformanceRowData: Identifiable {
+    let id: String
+    let icon: String  // Emoji or SF Symbol name
+    let title: String
+    let bestValue: String
+    let unit: String
+    let percentileRank: Double?  // 0.0 to 1.0, nil if insufficient data
+
+    init(
+        id: String,
+        icon: String,
+        title: String,
+        bestValue: String,
+        unit: String,
+        percentileRank: Double?
+    ) {
+        self.id = id
+        self.icon = icon
+        self.title = title
+        self.bestValue = bestValue
+        self.unit = unit
+        self.percentileRank = percentileRank
+    }
+}
