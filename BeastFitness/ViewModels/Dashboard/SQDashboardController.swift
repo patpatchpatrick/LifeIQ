@@ -127,7 +127,7 @@ final class SQDashboardController: SQDashboardInterface {
                 .pastYear
             )
             
-            let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
+            let todaysWorkouts = try await workoutManager.getWorkouts(for: .yesterday, modelContext: context)
             
             SQLogger.shared.log("Reloading today's workouts", .debug, context: .dashboard)
             for workout in todaysWorkouts {

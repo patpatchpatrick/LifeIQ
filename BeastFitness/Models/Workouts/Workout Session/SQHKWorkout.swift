@@ -48,8 +48,8 @@ struct SQHKWorkout: SQWorkoutSourcable {
             return nil
 
         case .sqPaceRunning, .sqTotalVolumeLifted:
-
-            guard  let totalDistance = sumOutputFor(.distanceWalkingRunning), let activeDuration else { return nil }
+            guard let totalDistance = sumOutputFor(.distanceWalkingRunning), let activeDuration else { return nil }
+            print("PTD1 Distance: \(totalDistance) \(activeDuration)")
             return activeDuration / totalDistance
 
         case .sqFastestPace:
@@ -93,7 +93,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         // Choose .elapsed (includes pauses) or .moving (subtracts pause/resume events)
         guard let fastestSeconds = await calc.fastestTimeSeconds(
             targetMeters: distance.meters,
-            timeBasis: .moving,          // change to .moving if you want "moving-time"
+            timeBasis: .moving,          // Uses moving time (excludes manual + motion pauses)
             accuracyCutoff: 50            // tweak or set nil to disable accuracy filtering
         ) else {
             if Self.isVerbosePaceLoggingEnabled {
@@ -214,35 +214,99 @@ struct SQHKWorkout: SQWorkoutSourcable {
         nil
     }
     
-    func workoutActiveDuration(from workout: HKWorkout) -> TimeInterval? {
-        // If there are no events, fall back to total duration
-        guard let events = workout.workoutEvents, !events.isEmpty else {
-            return workout.duration
+    func workoutActiveDuration(from workout: HKWorkout) -> TimeInterval {
+        // Use a non-optional for calculations
+        let totalDuration: TimeInterval = workout.duration ?? 0
+
+        // Optional only for logging if you want the nil behavior
+        let totalDurationForLog: TimeInterval? = workout.duration   // change this if your "nil" total comes from elsewhere
+
+        guard var events = workout.workoutEvents, !events.isEmpty else {
+            SQLogger.shared.log(
+                "⚠️ No workout events found - using total duration: \(totalDurationForLog?.timeCode() ?? "nil")",
+                .debug,
+                context: .healthKit
+            )
+            return totalDuration
         }
+
+        events.sort { $0.dateInterval.start < $1.dateInterval.start }
+
+        let pauseCount = events.filter { $0.type == .pause }.count
+        let resumeCount = events.filter { $0.type == .resume }.count
+        let motionPausedCount = events.filter { $0.type == .motionPaused }.count
+        let motionResumedCount = events.filter { $0.type == .motionResumed }.count
+
+        SQLogger.shared.log(
+            "📊 Workout events: manual pause/resume: \(pauseCount)/\(resumeCount), motion pause/resume: \(motionPausedCount)/\(motionResumedCount)",
+            .debug,
+            context: .healthKit
+        )
 
         var activeTime: TimeInterval = 0
         var lastStart = workout.startDate
 
+        var isPaused = false
+        var pauseStart: Date? = nil
+        var totalPausedTime: TimeInterval = 0
+
         for event in events {
+            let t = event.dateInterval.start
+
             switch event.type {
-            case .pause:
-                // Add time from lastStart to this pause
-                activeTime += event.dateInterval.start.timeIntervalSince(lastStart)
-            case .resume:
-                // Resume timer from this point
-                lastStart = event.dateInterval.start
+            case .pause, .motionPaused:
+                // Ignore redundant pauses
+                guard !isPaused else { break }
+
+                let seg = t.timeIntervalSince(lastStart)
+                if seg > 0 { activeTime += seg }
+
+                isPaused = true
+                pauseStart = t
+
+            case .resume, .motionResumed:
+                // Ignore redundant resumes
+                guard isPaused else { break }
+
+                if let ps = pauseStart {
+                    let pausedSeg = t.timeIntervalSince(ps)
+                    if pausedSeg > 0 { totalPausedTime += pausedSeg }
+                }
+
+                lastStart = t
+                isPaused = false
+                pauseStart = nil
+
             default:
                 break
             }
         }
 
-        // Add any remaining time from lastStart to endDate
-        activeTime += workout.endDate.timeIntervalSince(lastStart)
+        // Only add tail if we ended unpaused
+        if !isPaused {
+            let tail = workout.endDate.timeIntervalSince(lastStart)
+            if tail > 0 { activeTime += tail }
+        }
 
-        if activeTime > 0 { return activeTime}
-        
-        return workout.duration
+        SQLogger.shared.log(
+            "⏱️ Duration calc: Total: \(totalDurationForLog?.timeCode() ?? "nil"), Active: \(activeTime.timeCode()), Paused: \(totalPausedTime.timeCode()), EndedPaused: \(isPaused)",
+            .debug,
+            context: .healthKit,
+            isPriority: true
+        )
+
+        // Fallback sanity checks
+        if activeTime <= 0 { return totalDuration }
+
+        // Don’t let active exceed total by more than a small tolerance (clock jitter)
+        if activeTime > totalDuration + 5 {
+            return totalDuration
+        }
+
+        return activeTime
     }
+
+
 }
 
 import Foundation
@@ -521,18 +585,18 @@ final class WorkoutFastestSplitCalculator {
 
         for e in events {
             switch e.type {
-            case .pause:
+            case .pause, .motionPaused:
+                // Handle both manual pauses (.pause) and automatic motion detection (.motionPaused)
                 pauseStart = e.dateInterval.start
 
-            case .resume:
+            case .resume, .motionResumed:
+                // Handle both manual resumes (.resume) and automatic motion detection (.motionResumed)
                 if let ps = pauseStart {
                     let pe = e.dateInterval.start
                     paused += overlapSeconds(aStart: start, aEnd: end, bStart: ps, bEnd: pe)
                 }
                 pauseStart = nil
 
-            // If you want to treat these as pauses too, you can add them:
-            // case .motionPaused, .motionResumed, .segment, .lap, .marker, etc.
             default:
                 break
             }
