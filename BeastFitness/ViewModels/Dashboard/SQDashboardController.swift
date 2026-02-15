@@ -436,42 +436,47 @@ final class SQDashboardController: SQDashboardInterface {
     private func buildPerformanceMetricRow(
         quantityType: SQQuantityType,
         activityType: HKWorkoutActivityType,
-        metrics: [SQWorkoutMetric]
-    ) -> SQDashboardMetricStatsRowViewModel? {
+        metrics: [SQWorkoutMetric],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> SQDashboardMetricPerformanceRowViewModel? {
         guard !metrics.isEmpty else { return nil }
 
-        // Aggregate metrics based on the quantity type's dashboard aggregation strategy
-        let aggregatedValue: Double
+        // Calculate best value based on the quantity type's aggregation strategy
+        let bestValue: Double
         switch quantityType.dashboardAggregationType {
         case .minimum:
-            aggregatedValue = metrics.map { $0.value }.min() ?? 0
+            // For pace: lower (faster) is better
+            bestValue = metrics.map { $0.value }.min() ?? 0
 
         case .maximum:
-            aggregatedValue = metrics.map { $0.value }.max() ?? 0
+            // For VO2/distance: higher is better
+            bestValue = metrics.map { $0.value }.max() ?? 0
 
         case .sum:
-            aggregatedValue = metrics.reduce(0.0) { $0 + $1.value }
+            // For total distance: highest sum is best
+            bestValue = metrics.reduce(0.0) { $0 + $1.value }
 
         case .average:
-            aggregatedValue = metrics.reduce(0.0) { $0 + $1.value } / Double(metrics.count)
+            // For average metrics: highest average is best
+            bestValue = metrics.reduce(0.0) { $0 + $1.value } / Double(metrics.count)
         }
 
-        // Create aggregated metric
-        let aggregatedMetric = SQWorkoutMetric(
+        // Create metric for formatting
+        let bestMetric = SQWorkoutMetric(
             quantityType: quantityType,
             displayName: quantityType.displayTitle,
             unit: metrics[0].unit,
-            value: aggregatedValue
+            value: bestValue
         )
 
         // Format the value using the metric's display logic
-        let valueString = aggregatedMetric.displayableValue(
+        let valueString = bestMetric.displayableValue(
             for: quantityType,
-            value: aggregatedValue
+            value: bestValue
         )
 
         // Get unit string
-        let unitString = aggregatedMetric.unit.unitString ?? ""
+        let unitString = bestMetric.unit.unitString ?? ""
 
         // Use activity type's icon
         let icon = activityType.imageSymbol.rawValue
@@ -479,17 +484,42 @@ final class SQDashboardController: SQDashboardInterface {
         // Create unique metric ID from activity type and quantity type
         let metricId = "\(activityType.name.lowercased())-\(quantityType.id)"
 
-        // Extract sparkline data
-        let sparklineData = metrics.map { $0.value }
+        // Get all historical metrics for this quantity type and activity type
+        let historicalMetrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
+            // Filter all-time workouts by activity type
+            let relevantWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
 
-        return SQDashboardMetricStatsRowViewModel(
+            for workout in relevantWorkouts {
+                group.addTask {
+                    await workout.getMetric(for: quantityType)
+                }
+            }
+
+            var results: [SQWorkoutMetric] = []
+            for await metric in group {
+                if let metric = metric {
+                    results.append(metric)
+                }
+            }
+            return results
+        }
+
+        // Calculate percentile rank
+        let historicalValues = historicalMetrics.map { $0.value }
+        let isLowerBetter = quantityType.dashboardAggregationType == .minimum
+        let percentileRank = SQPercentileCalculator.calculatePercentile(
+            currentBest: bestValue,
+            historicalValues: historicalValues,
+            isLowerBetter: isLowerBetter
+        )
+
+        return SQDashboardMetricPerformanceRowViewModel(
             metricId: metricId,
             icon: icon,
             title: quantityType.displayTitle,
-            avgValue: valueString,
+            bestValue: valueString,
             unit: unitString,
-            sparklineData: sparklineData,
-            change14d: 0.0,  // Placeholder for future 14-day change calculation
+            percentileRank: percentileRank,
             quantityType: quantityType,
             activityType: activityType
         )
