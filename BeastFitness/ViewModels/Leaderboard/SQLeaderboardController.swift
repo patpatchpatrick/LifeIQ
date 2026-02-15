@@ -19,6 +19,8 @@ protocol SQLeaderboardInterface {
 
 @Observable @MainActor
 final class SQLeaderboardController: SQLeaderboardInterface {
+    let chartWidth: CGFloat = 350
+    let chartHeight: CGFloat = 220
     var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
     let state: LeaderboardStating
@@ -59,7 +61,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
     private func handleEventSubscriptions(hub: EventHub) {
         hub.workoutEvents.sink { [weak self] event in
-            guard let self else { return }
             switch event {
             case .workoutsUpdated, .workoutsDeleted:
                 // Reload data when workouts change
@@ -182,8 +183,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             // Only create chart if we have 2+ valid data points
             if points.count >= 2 {
                 chartModel = LineChartModel(
-                    width: 350,
-                    height: 220,
+                    width: chartWidth,
+                    height: chartHeight,
                     lineTitle: quantityType.displayTitle,
                     uiConfig: buildChartUIConfig(),
                     inputPoints: points,
@@ -222,7 +223,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             textSecondary: SQColor.textSecondary.color,
             backgroundPrimary: SQColor.background.color,
             backgroundSecondary: SQColor.backgroundSecondary.color,
-            lineColor: SQColor.accentPrimary.color
+            lineColor: SQColor.accent(1).color
         )
 
         let fontConfig = LineChartModel.FontConfig(

@@ -10,6 +10,10 @@ import SwiftUI
 public struct LineChartView: View {
     @ObservedObject var model: LineChartModel
     
+    public init(model: LineChartModel) {
+        self.model = model
+    }
+    
     // MARK: - Body
     
     public var body: some View {

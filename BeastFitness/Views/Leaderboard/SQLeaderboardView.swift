@@ -62,19 +62,21 @@ struct SQLeaderboardView: View {
     private func chartSection(_ chartModel: LineChartModel) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
             // Header
-            VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                Text(controller.chartTitle)
-                    .sqFont(.bodyMediumBold)
-                    .sqForegroundColor(.textPrimary)
+            if let title = controller.chartTitle, let subtitle = controller.chartSubtitle {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text(title)
+                        .sqFont(.body)
+                        .sqForegroundColor(.textPrimary)
 
-                Text(controller.chartSubtitle)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
+                    Text(subtitle)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
             }
 
             // Chart
             LineChartView(model: chartModel)
-                .frame(height: 220)
+                .frame(width: controller.chartWidth, height: controller.chartHeight)
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
