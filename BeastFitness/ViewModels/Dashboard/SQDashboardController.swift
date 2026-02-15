@@ -404,7 +404,7 @@ final class SQDashboardController: SQDashboardInterface {
                 guard !metrics.isEmpty else { continue }
 
                 // Determine aggregation strategy and create row
-                if let row = buildPerformanceMetricRow(
+                if let row = await buildPerformanceMetricRow(
                     quantityType: quantityType,
                     activityType: activityType,
                     metrics: metrics,

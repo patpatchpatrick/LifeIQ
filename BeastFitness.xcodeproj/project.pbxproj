@@ -75,6 +75,8 @@
 		F639F0CF2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0CE2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift */; };
 		F639F0FB2F4272AA004AC701 /* SQPerformanceRowData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FA2F4272AA004AC701 /* SQPerformanceRowData.swift */; };
 		F639F0FD2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */; };
+		F639F0FF2F4275BE004AC701 /* SQPercentileCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */; };
+		F639F1012F4277E8004AC701 /* SQDashboardPerformanceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */; };
 		F647A9042EE7DAD000DAA247 /* SQExercisesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -327,6 +329,8 @@
 		F639F0CE2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardRowViewModel.swift; sourceTree = "<group>"; };
 		F639F0FA2F4272AA004AC701 /* SQPerformanceRowData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPerformanceRowData.swift; sourceTree = "<group>"; };
 		F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardMetricPerformanceRowViewModel.swift; sourceTree = "<group>"; };
+		F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPercentileCalculator.swift; sourceTree = "<group>"; };
+		F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardPerformanceRow.swift; sourceTree = "<group>"; };
 		F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesManager.swift; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
@@ -589,6 +593,7 @@
 			children = (
 				F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */,
 				F6940F282F37A5560008A2A0 /* SQDashboardWorkoutTotalsRowView.swift */,
+				F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */,
 			);
 			path = DashboardRows;
 			sourceTree = "<group>";
@@ -1233,6 +1238,7 @@
 				F615922E2EF35E2500223A63 /* SQUserDefaults.swift */,
 				F6A848A22CB6033100B09AD5 /* ThirdParty */,
 				F6A8489B2CB4DD5400B09AD5 /* Formatters */,
+				F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -1690,6 +1696,7 @@
 				F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */,
 				F61592312EF3628E00223A63 /* SQAlertState.swift in Sources */,
 				F68D702D2F01D86900543561 /* SQPicker.swift in Sources */,
+				F639F1012F4277E8004AC701 /* SQDashboardPerformanceRow.swift in Sources */,
 				F6E058992F049940006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift in Sources */,
 				F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */,
 				F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */,
@@ -1726,6 +1733,7 @@
 				F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */,
 				F679BC502EE4FC1D00A2F249 /* SQWorkoutSummaryView.swift in Sources */,
 				F61591F72EE8F00F00223A63 /* HKDevice+Extensions.swift in Sources */,
+				F639F0FF2F4275BE004AC701 /* SQPercentileCalculator.swift in Sources */,
 				F68C80592F365A3200327250 /* SQStatRowData.swift in Sources */,
 				F67F0A792F0DE20200D7BB90 /* SQWorkoutStrengthDetails+PrintableDescription.swift in Sources */,
 				F639F0CB2F3ECD14004AC701 /* SQLeaderboardView.swift in Sources */,

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import BeastFitnessCore
+import HealthKit
 
 /// A view that renders a dashboard subsection with optional filtering and collapsible content.
 ///
