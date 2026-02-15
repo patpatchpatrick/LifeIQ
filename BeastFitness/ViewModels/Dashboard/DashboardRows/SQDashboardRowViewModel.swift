@@ -9,12 +9,14 @@ import Foundation
 
 enum SQDashboardRowType {
     case metricStats
+    case metricPerformance
     case workoutTotals
     case activityList
 }
 
 enum SQDashboardRowIdentifier {
     case metricStats
+    case metricPerformance
     case workoutTotals
     case activityList
 }
