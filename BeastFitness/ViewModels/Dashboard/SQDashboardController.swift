@@ -329,31 +329,36 @@ final class SQDashboardController: SQDashboardInterface {
 
     private func buildPerformanceSubsection(
         vo2MaxSamples: [SQVO2MaxSample],
+        vo2MaxAllTime: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
         timeRange: SQTimeRange
     ) async -> SQDashboardSubsectionViewModel? {
-        var rows: [SQDashboardMetricStatsRowViewModel] = []
+        var rows: [SQDashboardMetricPerformanceRowViewModel] = []
 
         // Add VO2 Max row if we have samples
         if !vo2MaxSamples.isEmpty {
-            // Calculate average VO2 Max
-            let sum = vo2MaxSamples.reduce(0.0) { $0 + $1.value }
-            let average = sum / Double(vo2MaxSamples.count)
+            // Calculate best VO2 Max (highest value)
+            let bestVO2Max = vo2MaxSamples.map { $0.value }.max() ?? 0.0
 
-            // Format average value (e.g., "45.3")
-            let avgValueString = String(format: "%.1f", average)
+            // Format best value (e.g., "45.3")
+            let bestValueString = String(format: "%.1f", bestVO2Max)
 
-            // Extract sparkline data (already in chronological order)
-            let sparklineData = vo2MaxSamples.map { $0.value }
+            // Calculate percentile rank
+            let historicalValues = vo2MaxAllTime.map { $0.value }
+            let percentileRank = SQPercentileCalculator.calculatePercentile(
+                currentBest: bestVO2Max,
+                historicalValues: historicalValues,
+                isLowerBetter: false  // Higher VO2 max is better
+            )
 
-            let vo2MaxRow = SQDashboardMetricStatsRowViewModel(
+            let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
                 metricId: "vo2-max",
                 icon: SQImageSymbol.heart.rawValue,
                 title: "VO2 Max",
-                avgValue: avgValueString,
+                bestValue: bestValueString,
                 unit: "mL/kg/min",
-                sparklineData: sparklineData,
-                change14d: 0.0  // Placeholder for future 14-day change calculation
+                percentileRank: percentileRank
             )
             rows.append(vo2MaxRow)
         }
@@ -402,7 +407,8 @@ final class SQDashboardController: SQDashboardInterface {
                 if let row = buildPerformanceMetricRow(
                     quantityType: quantityType,
                     activityType: activityType,
-                    metrics: metrics
+                    metrics: metrics,
+                    allTimeWorkouts: allTimeWorkouts
                 ) {
                     rows.append(row)
                 }
@@ -413,7 +419,7 @@ final class SQDashboardController: SQDashboardInterface {
         guard !rows.isEmpty else { return nil }
 
         // Build rowsByFilter dictionary (no filters for Performance)
-        let rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = ["All": rows]
+        let rowsByFilter: [String: [SQDashboardMetricPerformanceRowViewModel]] = ["All": rows]
 
         // Return section view model
         return SQDashboardSubsectionViewModel(
@@ -421,7 +427,7 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Performance",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
-            columnHeaders: ["Stat", "Avg Score", "14d %"]
+            columnHeaders: ["Stat", "Best Score", "Rank"]
         )
     }
 
