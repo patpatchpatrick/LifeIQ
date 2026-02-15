@@ -108,14 +108,22 @@ struct SQLeaderboardView: View {
     }
 
     var navView: some View {
-        contentView
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle(controller.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .background(SQColor.background.color)
-            .task {
-                await controller.loadUI(for: modelContext)
+        VStack(spacing: 0) {
+            // Chart Section (only if chartModel exists)
+            if let chartModel = controller.chartModel {
+                chartSection(chartModel)
             }
+
+            // Content (list or empty state)
+            contentView
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(controller.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .background(SQColor.background.color)
+        .task {
+            await controller.loadUI(for: modelContext)
+        }
     }
 
     var navStack: some View {
