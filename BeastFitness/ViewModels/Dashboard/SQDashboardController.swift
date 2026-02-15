@@ -126,7 +126,10 @@ final class SQDashboardController: SQDashboardInterface {
             let vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(
                 .pastYear
             )
-            
+            let vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(
+                .allTime
+            )
+
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .yesterday, modelContext: context)
             
             SQLogger.shared.log("Reloading today's workouts", .debug, context: .dashboard)
@@ -141,6 +144,7 @@ final class SQDashboardController: SQDashboardInterface {
             
             let lastYearWorkouts = try await workoutManager.getWorkouts(for: .pastYear, modelContext: context)
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
+            let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
 
@@ -207,8 +211,10 @@ final class SQDashboardController: SQDashboardInterface {
             let sectionGroups = await buildSectionGroups(
                 checkIns: currentCheckIns,
                 vo2MaxSamples: currentVO2MaxSamples,
+                vo2MaxAllTime: vo2MaxAllTime,
                 workouts: currentWorkouts,
                 priorWorkouts: priorWorkouts,
+                allTimeWorkouts: allTimeWorkouts,
                 timeRange: state.selectedTimeRange.toSQTimeRange(),
                 priorTimeRange: priorTimeRange,
                 context: context
@@ -584,8 +590,10 @@ final class SQDashboardController: SQDashboardInterface {
     private func buildSectionGroups(
         checkIns: [SQDailyCheckInStats],
         vo2MaxSamples: [SQVO2MaxSample],
+        vo2MaxAllTime: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
         timeRange: SQTimeRange,
         priorTimeRange: SQTimeRange,
         context: ModelContext
@@ -606,7 +614,9 @@ final class SQDashboardController: SQDashboardInterface {
         // Add Performance subsection
         if let performanceSection = await buildPerformanceSubsection(
             vo2MaxSamples: vo2MaxSamples,
+            vo2MaxAllTime: vo2MaxAllTime,
             workouts: workouts,
+            allTimeWorkouts: allTimeWorkouts,
             timeRange: timeRange
         ) {
             dailyStatsSections.append(performanceSection)
