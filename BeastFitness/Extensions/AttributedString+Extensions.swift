@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 extension AttributedString {
     
@@ -35,5 +36,9 @@ extension AttributedString {
         }
         
         return result
+    }
+    
+    var stringValue: String {
+        String(self.characters)
     }
 }

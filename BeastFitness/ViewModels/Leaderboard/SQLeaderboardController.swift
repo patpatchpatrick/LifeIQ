@@ -174,7 +174,9 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
             // Build chart data from rows
             let points: [LineChartIdentifiablePoint] = rows.compactMap { row in
-                guard let startDate = row.workout.startDate else { return nil }
+                guard let startDate = row.workout.startDate else {
+                    return nil
+                }
                 return LineChartIdentifiablePoint(
                     id: row.id,
                     point: CGPoint(
@@ -195,19 +197,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     gridConfig: GridConfig(),
                     focusConfig: buildFocusConfig()
                 )
-
-                SQLogger.shared.log(
-                    "Created chart with \(points.count) data points",
-                    .debug,
-                    context: .workoutList
-                )
             } else {
                 chartModel = nil
-                SQLogger.shared.log(
-                    "Insufficient data for chart (\(points.count) points, need 2+)",
-                    .debug,
-                    context: .workoutList
-                )
             }
 
             isLoading = false
@@ -249,7 +240,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
         // Pre-capture formatted values (score + unit) to avoid accessing @MainActor properties in @Sendable closure
         let formattedValues: [String: String] = Dictionary(
-            uniqueKeysWithValues: rows.map { ($0.id, $0.valueString) }
+            uniqueKeysWithValues: rows.map { ($0.id, $0.scoreAttributedString.stringValue) }
         )
 
         let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, yValue in

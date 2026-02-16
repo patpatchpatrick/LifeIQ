@@ -33,10 +33,6 @@ final class SQLeaderboardRowViewModel: Identifiable {
         metric.unit.unitString ?? ""
     }
 
-    var valueString: String {
-        "\(formattedScore)\(unitString.isEmpty ? "" : " ")\(unitString)"
-    }
-
     var scoreAttributedString: AttributedString {
         var result = AttributedString()
 
