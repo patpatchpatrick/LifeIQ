@@ -34,6 +34,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     private(set) var chartModel: LineChartModel?
     private(set) var chartTitle: String?
     private(set) var chartSubtitle: String?
+    var focusedWorkoutId: String?
 
     var title: String {
         "\(quantityType.displayTitle) Leaderboard"
@@ -189,7 +190,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     uiConfig: buildChartUIConfig(),
                     inputPoints: points,
                     gridConfig: GridConfig(),
-                    focusConfig: FocusConfig()
+                    focusConfig: buildFocusConfig()
                 )
 
                 SQLogger.shared.log(
@@ -234,6 +235,49 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         return LineChartModel.UIConfig(
             colorConfig: colorConfig,
             fontConfig: fontConfig
+        )
+    }
+
+    private func buildFocusConfig() -> FocusConfig {
+        let xLabelBuilder: @Sendable (CGFloat) -> String = { xValue in
+            let date = Date(timeIntervalSince1970: TimeInterval(xValue))
+            return date.formattedString(with: .medium)
+        }
+
+        let yLabelBuilder: @Sendable (CGFloat) -> String = { [quantityType] yValue in
+            // Create a temporary metric to format the value properly
+            let mockMetric = SQWorkoutMetric(
+                quantityType: quantityType,
+                displayName: "",
+                unit: quantityType.unit ?? .count,
+                value: Double(yValue)
+            )
+            return mockMetric.displayableValue(for: quantityType, value: Double(yValue))
+        }
+
+        let onFocus: @Sendable (CGPoint) -> Void = { [weak self] tappedPoint in
+            guard let self else { return }
+            Task { @MainActor in
+                
+                let timestamp = TimeInterval(tappedPoint.x)
+
+                // Find the workout that matches this timestamp
+                let focusedRow = self.rows.first { row in
+                    print("PTD Focused Row 0", row.workout.startDate)
+                    guard let startDate = row.workout.startDate else { return false }
+                    print("PTD Focused Row 1", abs(startDate.timeIntervalSince1970 - timestamp) < 1.0)
+                    return abs(startDate.timeIntervalSince1970 - timestamp) < 1.0 // Within 1 second tolerance
+                }
+                print("PTD Focused Row 2", focusedRow)
+                self.focusedWorkoutId = focusedRow?.workout.id
+            }
+        }
+
+        return FocusConfig(
+            focusColor: SQColor.accent(1).color,
+            xLabelBuilder: xLabelBuilder,
+            yLabelBuilder: yLabelBuilder,
+            onFocus: onFocus
         )
     }
 }

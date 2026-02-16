@@ -35,6 +35,7 @@ struct SQLeaderboardView: View {
     @ViewBuilder
     private func rowView(_ row: SQLeaderboardRowViewModel, index: Int) -> some View {
         let isLast = index == controller.rows.count - 1
+        let isFocused = controller.focusedWorkoutId == row.workout.id
 
         ZStack(alignment: .bottom) {
             // Row content
@@ -42,6 +43,11 @@ struct SQLeaderboardView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, .SQSpace.l) // ✅ consistent padding for every row
                 .background(SQColor.backgroundSecondary.color)
+                .overlay(
+                    // Highlight overlay for focused row
+                    isFocused ?
+                        SQColor.textPrimary.color.opacity(0.08) : Color.clear
+                )
 
             // Bottom divider (all but last row)
             if !isLast {

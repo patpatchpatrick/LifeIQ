@@ -11,9 +11,9 @@ public struct FocusConfig: Sendable {
     public let focusColor: Color
     public let xLabelBuilder: (@Sendable (CGFloat) -> String)?
     public let yLabelBuilder: (@Sendable (CGFloat) -> String)?
-    public let onFocus: (@Sendable () -> Void)?
-    
-    public init(focusColor: Color = .purple, xLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, yLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, onFocus: (@Sendable () -> Void)? = nil) {
+    public let onFocus: (@Sendable (CGPoint) -> Void)?
+
+    public init(focusColor: Color = .purple, xLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, yLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, onFocus: (@Sendable (CGPoint) -> Void)? = nil) {
         self.focusColor = focusColor
         self.xLabelBuilder = xLabelBuilder
         self.yLabelBuilder = yLabelBuilder

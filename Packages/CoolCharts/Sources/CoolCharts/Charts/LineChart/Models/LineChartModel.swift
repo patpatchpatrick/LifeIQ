@@ -167,8 +167,8 @@ public final class LineChartModel: ObservableObject {
     
     public func coordinateFocused(at point: CGPoint) {
         guard let focusConfig else { return }
-        focusConfig.onFocus?()
-        
+        focusConfig.onFocus?(point)
+
         withAnimation {
             self.focusedLineModel = .init(focusConfig: focusConfig, lineChartModel: self, focusedCoordinate: point)
         }
