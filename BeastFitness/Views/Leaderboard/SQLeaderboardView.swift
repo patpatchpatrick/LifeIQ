@@ -73,16 +73,26 @@ struct SQLeaderboardView: View {
                     Text(title)
                         .sqFont(.body)
                         .sqForegroundColor(.textPrimary)
+                        .redacted(controller.isLoading, reason: .placeholder)
 
                     Text(subtitle)
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
+                        .redacted(controller.isLoading, reason: .placeholder)
                 }
             }
 
-            // Chart
-            LineChartView(model: chartModel)
-                .frame(width: controller.chartWidth, height: controller.chartHeight)
+            // Chart or placeholder
+            if controller.isLoading {
+                // Show placeholder rectangle during loading
+                Rectangle()
+                    .fill(SQColor.background.color)
+                    .frame(width: controller.chartWidth, height: controller.chartHeight)
+            } else {
+                // Show actual chart when loaded
+                LineChartView(model: chartModel)
+                    .frame(width: controller.chartWidth, height: controller.chartHeight)
+            }
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
@@ -110,14 +120,13 @@ struct SQLeaderboardView: View {
                 emptyStateView
             } else {
                 leaderboardList
-                    .redacted(controller.isLoading, reason: .placeholder)
             }
         }
     }
 
     var navView: some View {
         VStack(spacing: 0) {
-            // Chart Section (only if chartModel exists)
+            // Chart Section (shows placeholder during loading, actual chart when loaded)
             if let chartModel = controller.chartModel {
                 chartSection(chartModel)
             }
@@ -125,6 +134,7 @@ struct SQLeaderboardView: View {
             // Content (list or empty state)
             contentView
         }
+        .redacted(controller.isLoading, reason: .placeholder)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(controller.title)
         .navigationBarTitleDisplayMode(.inline)

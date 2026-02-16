@@ -93,6 +93,28 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             )
         }
 
+        // Create mock chart for redacted loading state with unique IDs
+        let mockPoints: [LineChartIdentifiablePoint] = (1...10).map { index in
+            let timestamp = Date().addingTimeInterval(-Double(index) * 86400).timeIntervalSince1970 // Each day apart
+            return LineChartIdentifiablePoint(
+                id: "mock-chart-\(index)", // Unique ID for each mock point
+                point: CGPoint(x: timestamp, y: mockMetric.value + Double(index) * 0.5)
+            )
+        }
+
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: quantityType.displayTitle,
+            uiConfig: buildChartUIConfig(),
+            inputPoints: mockPoints,
+            gridConfig: GridConfig(),
+            focusConfig: buildFocusConfig()
+        )
+
+        chartTitle = quantityType.displayTitle
+        chartSubtitle = "Loading..."
+
         SQLogger.shared.log(
             "Loading leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
             .info,
@@ -239,8 +261,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         }
 
         // Pre-capture formatted values (score + unit) to avoid accessing @MainActor properties in @Sendable closure
+        // Use uniquingKeysWith to handle duplicate IDs (e.g., during mock loading state)
         let formattedValues: [String: String] = Dictionary(
-            uniqueKeysWithValues: rows.map { ($0.id, $0.scoreAttributedString.stringValue) }
+            rows.map { ($0.id, $0.scoreAttributedString.stringValue) },
+            uniquingKeysWith: { first, _ in first } // Keep first value if duplicate keys
         )
 
         let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, yValue in
