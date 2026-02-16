@@ -15,6 +15,11 @@ final class SQLeaderboardRowViewModel: Identifiable {
     let workout: SQWorkoutSessionable
     let metric: SQWorkoutMetric
     let quantityType: SQQuantityType
+    let state: LeaderboardStating
+
+    var hasWarning: Bool {
+        metric.warningText != nil
+    }
 
     var workoutTitle: String {
         workout.title ?? "Workout"
@@ -53,11 +58,24 @@ final class SQLeaderboardRowViewModel: Identifiable {
         return result
     }
 
-    init(rank: Int, workout: SQWorkoutSessionable, metric: SQWorkoutMetric, quantityType: SQQuantityType) {
+    init(rank: Int, workout: SQWorkoutSessionable, metric: SQWorkoutMetric, quantityType: SQQuantityType, state: LeaderboardStating) {
         self.id = workout.id
         self.rank = rank
         self.workout = workout
         self.metric = metric
         self.quantityType = quantityType
+        self.state = state
+    }
+
+    func warningTapped() {
+        print("PTD Warning Tapped")
+        guard let warningText = metric.warningText else { return }
+        
+        state.hub.alertEvents.send(
+            .present(.init(
+                title: "Data Accuracy Notice",
+                subtitle: warningText,
+                primary: .ok))
+        )
     }
 }

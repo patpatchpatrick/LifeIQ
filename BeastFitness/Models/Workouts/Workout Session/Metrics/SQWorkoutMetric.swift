@@ -10,6 +10,7 @@ struct SQWorkoutMetric: Codable {
     let displayName: String
     let unit: SQUnit
     let value: Double
+    let warningText: String?
     
     var outputAndUnitString: String {
         "\(displayableValue(for: quantityType, value: value)) \(unit.unitString ?? "")"
@@ -47,7 +48,8 @@ struct SQWorkoutMetric: Codable {
             quantityType: quantityType,
             displayName: quantityType.displayTitle,
             unit: unit,
-            value: mockValue
+            value: mockValue,
+            warningText: nil
         )
     }
 }
@@ -65,13 +67,14 @@ extension SQWorkoutSession {
         switch quantityType.outputCalculationType {
 
         case .fastestPace(let distance):
-            guard let output = await workoutSource.sourcableData.fastestPaceFor(distance) else { return nil }
+            guard let result = await workoutSource.sourcableData.fastestPaceFor(distance) else { return nil }
 
             return .init(
                 quantityType: quantityType,
                 displayName: quantityType.displayTitle,
                 unit: unit,
-                value: output
+                value: result.pace,
+                warningText: result.calculationMethod.warningText
             )
 
         case .sum:
@@ -82,7 +85,8 @@ extension SQWorkoutSession {
                 quantityType: quantityType,
                 displayName: quantityType.displayTitle,
                 unit: unit,
-                value: output)
+                value: output,
+                warningText: nil)
 
         case .average:
 
@@ -92,7 +96,8 @@ extension SQWorkoutSession {
                 quantityType: quantityType,
                 displayName: quantityType.displayTitle,
                 unit: unit,
-                value: output)
+                value: output,
+                warningText: nil)
         }
     }
 }

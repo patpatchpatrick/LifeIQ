@@ -57,7 +57,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
         }
     }
 
-    func fastestPaceFor(_ distance: SQDistance) async -> Double? {
+    func fastestPaceFor(_ distance: SQDistance) async -> (pace: Double, calculationMethod: PaceCalculationMethod)? {
         // Not yet supported for manual workouts
         return nil
     }

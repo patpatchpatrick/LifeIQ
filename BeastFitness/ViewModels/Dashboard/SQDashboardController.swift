@@ -466,7 +466,8 @@ final class SQDashboardController: SQDashboardInterface {
             quantityType: quantityType,
             displayName: quantityType.displayTitle,
             unit: metrics[0].unit,
-            value: bestValue
+            value: bestValue,
+            warningText: nil
         )
 
         // Format the value using the metric's display logic

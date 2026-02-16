@@ -46,10 +46,29 @@ struct SQLeaderboardRowView: View {
 
             // Workout info (center)
             VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.workoutTitle)
-                    .sqFont(.body)
-                    .sqForegroundColor(.textPrimary)
-                    .lineLimit(1)
+                HStack(spacing: .SQSpace.m) {
+                    Text(viewModel.workoutTitle)
+                        .sqFont(.body)
+                        .sqForegroundColor(.textPrimary)
+                        .lineLimit(1)
+
+                    if viewModel.hasWarning {
+                        Button {
+                            viewModel.warningTapped()
+                        } label: {
+                            SQImageView(image: .init(
+                                symbol: .exclamationmarkTriangle,
+                                symbolStyle: .colorWithFont(
+                                    .backgroundWarning,
+                                    font: .bodyExtraSmall
+                                )
+                            ))
+                            .frame(width: 14)
+                            .padding(.SQSpace.xs) // Increase tap target area
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
 
                 Text(viewModel.workoutDate)
                     .sqFont(.bodyExtraSmall)

@@ -66,7 +66,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
         }
     }
 
-    func fastestPaceFor(_ distance: SQDistance) async -> Double? {
+    func fastestPaceFor(_ distance: SQDistance) async -> (pace: Double, calculationMethod: PaceCalculationMethod)? {
         // Not yet supported for Strava workouts
         // Could potentially implement using polyline data in the future
         return nil

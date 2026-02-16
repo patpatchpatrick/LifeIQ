@@ -28,6 +28,8 @@ struct SQAlertViewModel: Identifiable, Equatable {
             self.shouldDismissOnTap = shouldDismissOnTap
             self.handler = handler
         }
+        
+        static let ok = Action(title: "OK")
     }
 
     let id: UUID

@@ -35,10 +35,12 @@ struct SQLeaderboardView: View {
                 .padding(.vertical, .SQSpace.l) // ✅ consistent padding for every row
                 .background(SQColor.backgroundSecondary.color)
                 .overlay(
-                    // Highlight overlay for focused row
-                    isFocused ?
-                        SQColor.textPrimary.color.opacity(0.08) : Color.clear
+                    // Highlight overlay for focused row (non-interactive)
+                    (isFocused ?
+                        SQColor.textPrimary.color.opacity(0.08) : Color.clear)
+                        .allowsHitTesting(false) // Let taps pass through to content below
                 )
+                .contentShape(Rectangle()) // Makes entire area tappable
                 .onTapGesture {
                     controller.rowTapped(row: row)
                 }

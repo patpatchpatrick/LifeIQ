@@ -10,6 +10,23 @@ import HealthKit
 import CoreLocation
 import BeastFitnessCore
 
+enum PaceCalculationMethod: String, Codable {
+    case gpsRoute = "GPS route"
+    case distanceSamples = "distance samples"
+    case averagePace = "average pace"
+
+    var warningText: String? {
+        switch self {
+        case .gpsRoute:
+            return nil // Most accurate, no warning needed
+        case .distanceSamples:
+            return "GPS route data was not available for this workout. This pace was calculated from distance samples instead and may be less accurate than GPS-based calculations."
+        case .averagePace:
+            return "GPS route data was not available for this workout. This is the average pace for the entire workout, not the fastest mile pace."
+        }
+    }
+}
+
 struct SQHKWorkout: SQWorkoutSourcable {
     let sourceId: String
     let hkWorkout: HKWorkout
@@ -63,7 +80,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         return hkWorkout.avgOutputFor(quantityTypeIdentifier)
     }
 
-    func fastestPaceFor(_ distance: SQDistance) async -> Double? {
+    func fastestPaceFor(_ distance: SQDistance) async -> (pace: Double, calculationMethod: PaceCalculationMethod)? {
         // 1. Get the appropriate distance type for this activity
         guard let distanceType = hkWorkout.workoutActivityType.standardDistanceType else {
             return nil  // Activity doesn't track distance (e.g., strength training)
@@ -90,7 +107,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         // 6) Three-tier approach to compute fastest time (seconds) over that distance
         let calc = WorkoutFastestSplitCalculator(workout: hkWorkout)
         var fastestSeconds: Double?
-        var calculationMethod: String = "unknown"
+        var calculationMethod: PaceCalculationMethod?
 
         // Tier 1: Try GPS route (most accurate)
         fastestSeconds = await calc.fastestTimeSeconds(
@@ -100,7 +117,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         )
 
         if fastestSeconds != nil {
-            calculationMethod = "GPS route"
+            calculationMethod = .gpsRoute
         } else {
             if Self.isVerbosePaceLoggingEnabled {
                 SQLogger.shared.log(
@@ -117,7 +134,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
             )
 
             if fastestSeconds != nil {
-                calculationMethod = "distance samples"
+                calculationMethod = .distanceSamples
             } else {
                 if Self.isVerbosePaceLoggingEnabled {
                     SQLogger.shared.log(
@@ -136,12 +153,13 @@ struct SQHKWorkout: SQWorkoutSourcable {
                 )
 
                 if fastestSeconds != nil {
-                    calculationMethod = "average pace"
+                    calculationMethod = .averagePace
                 }
             }
         }
 
-        guard let fastestSeconds = fastestSeconds else {
+        guard let fastestSeconds = fastestSeconds,
+              let calculationMethod = calculationMethod else {
             if Self.isVerbosePaceLoggingEnabled {
                 SQLogger.shared.log(
                     "❌ All calculation methods failed for workout \(hkWorkout.uuid)",
@@ -154,7 +172,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
 
         if Self.isVerbosePaceLoggingEnabled {
             SQLogger.shared.log(
-                "✅ Calculated fastest mile using: \(calculationMethod) for workout \(hkWorkout.startDate.formattedString(with: .medium))",
+                "✅ Calculated fastest mile using: \(calculationMethod.rawValue) for workout \(hkWorkout.startDate.formattedString(with: .medium))",
                 .debug,
                 context: .healthKit
             )
@@ -203,13 +221,13 @@ struct SQHKWorkout: SQWorkoutSourcable {
 
         if Self.isVerbosePaceLoggingEnabled {
             SQLogger.shared.log(
-                "Calculated pace: \(pacePerMile.timeCode()) per mile for \(hkWorkout.workoutActivityType.name) workout \(hkWorkout.uuid) calculation method: \(calculationMethod)",
+                "Calculated pace: \(pacePerMile.timeCode()) per mile for \(hkWorkout.workoutActivityType.name) workout \(hkWorkout.uuid) calculation method: \(calculationMethod.rawValue)",
                 .debug,
                 context: .healthKit
             )
         }
 
-        return pacePerMile
+        return (pace: pacePerMile, calculationMethod: calculationMethod)
     }
 
     /// Tier 3 fallback: Calculate average pace over target distance

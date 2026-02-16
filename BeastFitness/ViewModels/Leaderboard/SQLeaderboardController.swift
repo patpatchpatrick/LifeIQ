@@ -92,7 +92,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 rank: index,
                 workout: SQWorkoutSession.mockRun,
                 metric: mockMetric,
-                quantityType: quantityType
+                quantityType: quantityType,
+                state: state
             )
         }
 
@@ -176,7 +177,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     rank: index + 1,
                     workout: item.workout,
                     metric: item.metric,
-                    quantityType: quantityType
+                    quantityType: quantityType,
+                    state: state
                 )
             }
 

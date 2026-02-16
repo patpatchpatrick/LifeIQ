@@ -13,7 +13,7 @@ protocol SQWorkoutSourcable {
     var activityType: HKWorkoutActivityType { get }
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
     func avgOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double?
-    func fastestPaceFor(_ distance: SQDistance) async -> Double?
+    func fastestPaceFor(_ distance: SQDistance) async -> (pace: Double, calculationMethod: PaceCalculationMethod)?
     var activeDuration: Double? { get } /// Seconds
     var totalCalories: Double? { get }
     var startDate: Date? { get }

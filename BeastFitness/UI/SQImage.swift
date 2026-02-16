@@ -142,6 +142,8 @@ enum SQImageSymbol: String {
     case clock               = "clock"
     case ellipsisCircle      = "ellipsis.circle"
     case exclamationmarkCircle = "exclamationmark.circle"
+    case exclamationmarkTriangle = "exclamationmark.triangle"
+    case exclamationmarkTriangleFill = "exclamationmark.triangle.fill"
     case flame               = "flame"
     case gear                = "gear"
     case heart               = "heart.fill"
