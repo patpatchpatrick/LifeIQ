@@ -16,18 +16,9 @@ struct SQLeaderboardView: View {
 
     var emptyStateView: some View {
         VStack(spacing: .SQSpace.xl) {
-            Text("No workouts found")
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
-
-            Text("Complete some \(controller.activityType.name.lowercased()) workouts to see your leaderboard")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textTertiary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, .SQSpace.xxl)
+            SQSubsectionEmptyState(message: "No data available")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 100)
     }
 
     // MARK: - Row
@@ -57,7 +48,7 @@ struct SQLeaderboardView: View {
                     .background(SQColor.backgroundSecondary.color)
             }
         }
-        .listRowInsets(EdgeInsets())              // ✅ no extra system padding
+        .listRowInsets(EdgeInsets()) 
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
@@ -111,37 +102,38 @@ struct SQLeaderboardView: View {
         .scrollContentBackground(.hidden)
         .background(SQColor.background.color)
     }
+    
+    var shouldShowEmptyView: Bool {
+        controller.rows.isEmpty && !controller.isLoading
+    }
+    
+    @ViewBuilder
+    var mainView: some View {
+        if shouldShowEmptyView {
+            emptyStateView
+        } else {
+            VStack(spacing: 0) {
+                // Chart Section (shows placeholder during loading, actual chart when loaded)
+                if let chartModel = controller.chartModel {
+                    chartSection(chartModel)
+                }
 
-    // MARK: - Content
-
-    var contentView: some View {
-        Group {
-            if controller.rows.isEmpty && !controller.isLoading {
-                emptyStateView
-            } else {
+                // Content (list or empty state)
                 leaderboardList
             }
         }
     }
 
     var navView: some View {
-        VStack(spacing: 0) {
-            // Chart Section (shows placeholder during loading, actual chart when loaded)
-            if let chartModel = controller.chartModel {
-                chartSection(chartModel)
+        mainView
+            .redacted(controller.isLoading, reason: .placeholder)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .navigationTitle(controller.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .background(SQColor.background.color)
+            .task {
+                await controller.loadUI(for: modelContext)
             }
-
-            // Content (list or empty state)
-            contentView
-        }
-        .redacted(controller.isLoading, reason: .placeholder)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle(controller.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .background(SQColor.background.color)
-        .task {
-            await controller.loadUI(for: modelContext)
-        }
     }
 
     var navStack: some View {
