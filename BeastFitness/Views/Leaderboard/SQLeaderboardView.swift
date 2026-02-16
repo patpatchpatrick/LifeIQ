@@ -39,6 +39,9 @@ struct SQLeaderboardView: View {
                     isFocused ?
                         SQColor.textPrimary.color.opacity(0.08) : Color.clear
                 )
+                .onTapGesture {
+                    controller.rowTapped(row: row)
+                }
 
             // Bottom divider (all but last row)
             if !isLast {
@@ -89,6 +92,104 @@ struct SQLeaderboardView: View {
         .padding(.vertical, .SQSpace.xl)
         .background(SQColor.background.color)
     }
+    
+    @ViewBuilder
+    func chartStack(for chartModel: LineChartModel) -> some View {
+        ZStack {
+            // Chart section (base layer)
+            chartSection(chartModel)
+
+            // Navigation buttons overlay
+            GeometryReader { geometry in
+                let chartWidth = controller.chartWidth
+                let chartHeight = controller.chartHeight
+
+                // Left X-axis button (above chart, left side)
+                Button {
+                    controller.decrementChartXPoint()
+                } label: {
+                    SQImageView(image: .init(
+                        symbol: .chevronLeft,
+                        symbolStyle: .colorWithFont(
+                            .textPrimary,
+                            font: .bodySmall
+                        )
+                    ))
+                    .frame(width: 44, height: 44)
+                    .sqBackgroundColor(.backgroundSecondary)
+                    .cornerRadius(8)
+                }
+                .disabled(controller.isLoading)
+                .position(
+                    x: (geometry.size.width - chartWidth) / 2 + .SQSpace.m + 22,
+                    y: .SQSpace.xl + 22
+                )
+
+                // Right X-axis button (above chart, right side)
+                Button {
+                    controller.incrementChartXPoint()
+                } label: {
+                    SQImageView(image: .init(
+                        symbol: .chevronRight,
+                        symbolStyle: .colorWithFont(
+                            .textPrimary,
+                            font: .bodySmall
+                        )
+                    ))
+                    .frame(width: 44, height: 44)
+                    .sqBackgroundColor(.backgroundSecondary)
+                    .cornerRadius(8)
+                }
+                .disabled(controller.isLoading)
+                .position(
+                    x: (geometry.size.width + chartWidth) / 2 - .SQSpace.m - 22,
+                    y: .SQSpace.xl + 22
+                )
+
+                // Top Y-axis button (above chart, center)
+                Button {
+                    controller.incrementChartYPoint()
+                } label: {
+                    SQImageView(image: .init(
+                        symbol: .chevronUp,
+                        symbolStyle: .colorWithFont(
+                            .textPrimary,
+                            font: .bodySmall
+                        )
+                    ))
+                    .frame(width: 44, height: 44)
+                    .sqBackgroundColor(.backgroundSecondary)
+                    .cornerRadius(8)
+                }
+                .disabled(controller.isLoading)
+                .position(
+                    x: geometry.size.width / 2,
+                    y: .SQSpace.xl - 22
+                )
+
+                // Bottom Y-axis button (below chart, center)
+                Button {
+                    controller.decrementChartYPoint()
+                } label: {
+                    SQImageView(image: .init(
+                        symbol: .chevronDown,
+                        symbolStyle: .colorWithFont(
+                            .textPrimary,
+                            font: .bodySmall
+                        )
+                    ))
+                    .frame(width: 44, height: 44)
+                    .sqBackgroundColor(.backgroundSecondary)
+                    .cornerRadius(8)
+                }
+                .disabled(controller.isLoading)
+                .position(
+                    x: geometry.size.width / 2,
+                    y: geometry.size.height - .SQSpace.xl + 22
+                )
+            }
+        }
+    }
 
     // MARK: - List
 
@@ -115,7 +216,7 @@ struct SQLeaderboardView: View {
             VStack(spacing: 0) {
                 // Chart Section (shows placeholder during loading, actual chart when loaded)
                 if let chartModel = controller.chartModel {
-                    chartSection(chartModel)
+                    chartStack(for: chartModel)
                 }
 
                 // Content (list or empty state)
@@ -143,6 +244,14 @@ struct SQLeaderboardView: View {
     }
 
     var body: some View {
-        navStack
+        GeometryReader { geo in
+            navStack
+                .onAppear {
+                    controller.updateLayout(containerWidth: geo.size.width)
+                }
+                .onChange(of: geo.size.width) { _, newWidth in
+                    controller.updateLayout(containerWidth: newWidth)
+                }
+        }
     }
 }

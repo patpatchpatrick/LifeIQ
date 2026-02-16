@@ -32,9 +32,9 @@ public final class LineChartModel: ObservableObject {
 
     let width: CGFloat
     let height: CGFloat
-    let lineTitle: String
+    public let lineTitle: String
     let lineColor: Color
-    let inputPoints: [LineChartIdentifiablePoint]
+    public let inputPoints: [LineChartIdentifiablePoint]
     
     // MARK: - Coordinates
     /// Map of scaled coordinated and original coordinates
@@ -52,7 +52,7 @@ public final class LineChartModel: ObservableObject {
     let originalCoordinatesMinY: CGFloat
     let originalCoordinatesMaxY: CGFloat
     
-    let uiConfig: UIConfig
+    public let uiConfig: UIConfig
     
     public struct UIConfig: Sendable {
         public let colorConfig: ColorConfig
@@ -92,10 +92,10 @@ public final class LineChartModel: ObservableObject {
     
     // MARK: - Focus
     @Published private(set) var focusedLineModel: FocusedLineViewModel?
-    let focusConfig: FocusConfig?
+    public let focusConfig: FocusConfig?
     
     // MARK: - Grid
-    let gridConfig: GridConfig?
+    public let gridConfig: GridConfig?
 
     var yFloor: CGFloat { height - Self.verticalPaddingPct * height }
     var yCeiling: CGFloat { Self.verticalPaddingPct * height }
@@ -177,6 +177,11 @@ public final class LineChartModel: ObservableObject {
     )
     
     // MARK: - Actions
+    
+    public func focusCoordinateWith(id: String) {
+        guard let coordinateToFocus = self.lineChartCoordinates.first(where: { $0.id == id }) else { return }
+        coordinateFocused(at: .init(id: coordinateToFocus.id, point: coordinateToFocus.point))
+    }
     
     public func coordinateFocused(at point: LineChartIdentifiablePoint) {
         guard let focusConfig else { return }

@@ -19,7 +19,10 @@ protocol SQLeaderboardInterface {
 
 @Observable @MainActor
 final class SQLeaderboardController: SQLeaderboardInterface {
-    let chartWidth: CGFloat = 400
+    private(set) var containerWidth: CGFloat = 0
+    var chartWidth: CGFloat {
+        max(0, containerWidth * 0.8)
+    }
     let chartHeight: CGFloat = 300
     var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
@@ -285,5 +288,107 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             yLabelBuilder: yLabelBuilder,
             onFocus: onFocus
         )
+    }
+    
+    func rowTapped(row: SQLeaderboardRowViewModel) {
+        focusChartPoint(with: row.id)
+    }
+    
+    private func focusChartPoint(with id: String) {
+        self.chartModel?.focusCoordinateWith(id: id)
+    }
+    
+    func updateLayout(containerWidth: CGFloat) {
+        print("PTD Updating Container Width", containerWidth)
+        // Avoid thrashing from tiny changes
+        let rounded = (containerWidth * 2).rounded() / 2 // round to 0.5pt
+        guard abs(self.containerWidth - rounded) > 0.5 else { return }
+        self.containerWidth = rounded
+
+        // If chart model already exists, rebuild it with the new width.
+        // (CoolCharts LineChartModel takes width/height in init, so easiest is recreate.)
+        rebuildChartModelForCurrentState()
+    }
+    
+    private func rebuildChartModelForCurrentState() {
+        guard let existing = chartModel else { return }
+
+        // Rebuild using current points + config. If you can access points, do that.
+        // If CoolCharts exposes them, use them; otherwise store points in controller.
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: existing.lineTitle,
+            uiConfig: existing.uiConfig,
+            inputPoints: existing.inputPoints,   // <-- if not accessible, store points separately (see note below)
+            gridConfig: existing.gridConfig,
+            focusConfig: existing.focusConfig
+        )
+    }
+    
+    func incrementChartXPoint() {
+        navigateChartPoint(axis: .x, direction: .forward)
+    }
+
+    func decrementChartXPoint() {
+        navigateChartPoint(axis: .x, direction: .backward)
+    }
+
+    func incrementChartYPoint() {
+        navigateChartPoint(axis: .y, direction: .forward)
+    }
+
+    func decrementChartYPoint() {
+        navigateChartPoint(axis: .y, direction: .backward)
+    }
+
+    private func navigateChartPoint(axis: ChartAxis, direction: NavigationDirection) {
+        guard let chartModel = chartModel else { return }
+
+        // Sort points based on the axis
+        let sortedPoints: [LineChartIdentifiablePoint]
+        switch axis {
+        case .x:
+            sortedPoints = chartModel.inputPoints.sorted { $0.point.x < $1.point.x }
+        case .y:
+            sortedPoints = chartModel.inputPoints.sorted { $0.point.y < $1.point.y }
+        }
+
+        guard !sortedPoints.isEmpty else { return }
+
+        // If no point is focused, focus the edge point based on direction
+        guard let focusedId = focusedWorkoutId else {
+            let defaultIndex = direction == .forward ? 0 : sortedPoints.count - 1
+            focusChartPoint(with: sortedPoints[defaultIndex].id)
+            return
+        }
+
+        // Find the current focused point index
+        guard let currentIndex = sortedPoints.firstIndex(where: { $0.id == focusedId }) else {
+            // If focused ID not found, focus the edge point based on direction
+            let defaultIndex = direction == .forward ? 0 : sortedPoints.count - 1
+            focusChartPoint(with: sortedPoints[defaultIndex].id)
+            return
+        }
+
+        // Calculate next index with wrapping
+        let nextIndex: Int
+        if direction == .forward {
+            nextIndex = currentIndex + 1 >= sortedPoints.count ? 0 : currentIndex + 1
+        } else {
+            nextIndex = currentIndex - 1 < 0 ? sortedPoints.count - 1 : currentIndex - 1
+        }
+
+        focusChartPoint(with: sortedPoints[nextIndex].id)
+    }
+
+    private enum ChartAxis {
+        case x
+        case y
+    }
+
+    private enum NavigationDirection {
+        case forward
+        case backward
     }
 }
