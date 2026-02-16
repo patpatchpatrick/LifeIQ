@@ -15,22 +15,33 @@ public struct LineChartView: View {
     }
     
     // MARK: - Body
-    
+
     public var body: some View {
         ZStack {
-            
+            chartContent
+
+            if model.navigationConfig != nil {
+                navigationButtons
+            }
+        }
+    }
+
+    // MARK: - Chart Content
+
+    private var chartContent: some View {
+        ZStack {
             if let gridConfig = model.gridConfig {
                 GridBackgroundView(lineChartModel: model, gridConfig: gridConfig)
             }
-            
+
             LineChartShape(model: model)
                 .fill(model.lineColor)
-            
+
             Rectangle()
                 .fill(LinearGradient(gradient: Gradient(colors: [.green.opacity(0.2), .clear]), startPoint: .top, endPoint: .bottom))
                 .frame(width: model.width, height: model.height)
                 .clipShape(LineChartGradientShape(model: model))
-            
+
             if let focusedLineModel = model.focusedLineModel {
                 FocusedLineView(lineChartModel: model, model: focusedLineModel)
             }
@@ -52,8 +63,74 @@ public struct LineChartView: View {
                 )
                 model.coordinateFocused(at: identifiablePoint)
             }
-            
         }
+    }
+
+    // MARK: - Navigation Buttons
+
+    @ViewBuilder
+    private var navigationButtons: some View {
+        GeometryReader { geometry in
+            let buttonSize: CGFloat = 44
+            let buttonOffset: CGFloat = 4
+
+            if model.navigationConfig?.showXAxisButtons == true {
+                navigationButton(
+                    icon: "chevron.left",
+                    action: { model.decrementXPoint() },
+                    position: CGPoint(
+                        x: buttonOffset + buttonSize / 2,
+                        y: geometry.size.height / 2
+                    ),
+                    size: buttonSize
+                )
+
+                navigationButton(
+                    icon: "chevron.right",
+                    action: { model.incrementXPoint() },
+                    position: CGPoint(
+                        x: geometry.size.width - buttonOffset - buttonSize / 2,
+                        y: geometry.size.height / 2
+                    ),
+                    size: buttonSize
+                )
+            }
+
+            if model.navigationConfig?.showYAxisButtons == true {
+                navigationButton(
+                    icon: "chevron.up",
+                    action: { model.incrementYPoint() },
+                    position: CGPoint(
+                        x: geometry.size.width / 2,
+                        y: buttonOffset + buttonSize / 2
+                    ),
+                    size: buttonSize
+                )
+
+                navigationButton(
+                    icon: "chevron.down",
+                    action: { model.decrementYPoint() },
+                    position: CGPoint(
+                        x: geometry.size.width / 2,
+                        y: geometry.size.height - buttonOffset - buttonSize / 2
+                    ),
+                    size: buttonSize
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func navigationButton(icon: String, action: @escaping () -> Void, position: CGPoint, size: CGFloat) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(model.uiConfig.fontConfig.font)
+                .foregroundColor(model.uiConfig.colorConfig.textPrimary)
+                .frame(width: size, height: size)
+                .background(model.uiConfig.colorConfig.backgroundSecondary.opacity(0.5))
+                .cornerRadius(8)
+        }
+        .position(position)
     }
 }
 

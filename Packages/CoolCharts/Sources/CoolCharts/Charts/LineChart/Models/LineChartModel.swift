@@ -93,9 +93,12 @@ public final class LineChartModel: ObservableObject {
     // MARK: - Focus
     @Published private(set) var focusedLineModel: FocusedLineViewModel?
     public let focusConfig: FocusConfig?
-    
+
     // MARK: - Grid
     public let gridConfig: GridConfig?
+
+    // MARK: - Navigation
+    public let navigationConfig: NavigationConfig?
 
     var yFloor: CGFloat { height - Self.verticalPaddingPct * height }
     var yCeiling: CGFloat { Self.verticalPaddingPct * height }
@@ -111,7 +114,8 @@ public final class LineChartModel: ObservableObject {
     ///   - inputPoints: Line chart points
     ///   - gridConfig: Should be passed if the line chart will use a grid
     ///   - focusConfig: Should be passed if the line chart will allow focus
-    public init?(width: CGFloat = 200, height: CGFloat = 200, lineTitle: String, uiConfig: UIConfig, inputPoints: [LineChartIdentifiablePoint], gridConfig: GridConfig? = nil, focusConfig: FocusConfig? = nil) {
+    ///   - navigationConfig: Should be passed if the line chart will show navigation buttons
+    public init?(width: CGFloat = 200, height: CGFloat = 200, lineTitle: String, uiConfig: UIConfig, inputPoints: [LineChartIdentifiablePoint], gridConfig: GridConfig? = nil, focusConfig: FocusConfig? = nil, navigationConfig: NavigationConfig? = nil) {
         guard inputPoints.count >= 2 else { return nil }
 
         self.width = width
@@ -121,6 +125,7 @@ public final class LineChartModel: ObservableObject {
         self.inputPoints = inputPoints
         self.gridConfig = gridConfig
         self.focusConfig = focusConfig
+        self.navigationConfig = navigationConfig
         self.lineChartCoordinates = Self.buildCoordinates(width: width, height: height, inputPoints: inputPoints)
         self.coordinates = lineChartCoordinates.map { $0.point }
         self.originalCoordinates = lineChartCoordinates.map { $0.originalPoint }
@@ -196,5 +201,92 @@ public final class LineChartModel: ObservableObject {
         withAnimation {
             self.focusedLineModel = nil
         }
+    }
+
+    // MARK: - Navigation
+
+    public func incrementXPoint() {
+        navigatePoint(axis: .x, direction: .forward)
+    }
+
+    public func decrementXPoint() {
+        navigatePoint(axis: .x, direction: .backward)
+    }
+
+    public func incrementYPoint() {
+        navigatePoint(axis: .y, direction: .forward)
+    }
+
+    public func decrementYPoint() {
+        navigatePoint(axis: .y, direction: .backward)
+    }
+
+    private func navigatePoint(axis: ChartAxis, direction: NavigationDirection) {
+        guard navigationConfig != nil else { return }
+
+        // Sort points based on the axis
+        let sortedPoints: [LineChartIdentifiablePoint]
+        switch axis {
+        case .x:
+            sortedPoints = inputPoints.sorted { $0.point.x < $1.point.x }
+        case .y:
+            sortedPoints = inputPoints.sorted { $0.point.y < $1.point.y }
+        }
+
+        guard !sortedPoints.isEmpty else { return }
+
+        // Get the currently focused point ID by finding the coordinate with matching X position
+        let currentFocusedId: String? = {
+            guard let focusedLineModel = focusedLineModel else { return nil }
+            // Find the coordinate with the matching lineX (the snapped X position)
+            return lineChartCoordinates.first(where: { $0.point.x == focusedLineModel.lineX })?.id
+        }()
+
+        // If no point is focused, focus the edge point based on direction
+        guard let focusedId = currentFocusedId else {
+            let defaultIndex = direction == .forward ? 0 : sortedPoints.count - 1
+            focusCoordinateWith(id: sortedPoints[defaultIndex].id)
+            return
+        }
+
+        // Find the current focused point index
+        guard let currentIndex = sortedPoints.firstIndex(where: { $0.id == focusedId }) else {
+            // If focused ID not found, focus the edge point based on direction
+            let defaultIndex = direction == .forward ? 0 : sortedPoints.count - 1
+            focusCoordinateWith(id: sortedPoints[defaultIndex].id)
+            return
+        }
+
+        // Calculate next index with wrapping
+        let nextIndex: Int
+        if direction == .forward {
+            nextIndex = currentIndex + 1 >= sortedPoints.count ? 0 : currentIndex + 1
+        } else {
+            nextIndex = currentIndex - 1 < 0 ? sortedPoints.count - 1 : currentIndex - 1
+        }
+
+        focusCoordinateWith(id: sortedPoints[nextIndex].id)
+    }
+
+    private enum ChartAxis {
+        case x
+        case y
+    }
+
+    private enum NavigationDirection {
+        case forward
+        case backward
+    }
+}
+
+// MARK: - NavigationConfig
+
+public struct NavigationConfig: Sendable {
+    public let showXAxisButtons: Bool
+    public let showYAxisButtons: Bool
+
+    public init(showXAxisButtons: Bool = true, showYAxisButtons: Bool = true) {
+        self.showXAxisButtons = showXAxisButtons
+        self.showYAxisButtons = showYAxisButtons
     }
 }
