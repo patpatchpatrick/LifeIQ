@@ -48,7 +48,7 @@ struct SQLeaderboardView: View {
                     .background(SQColor.backgroundSecondary.color)
             }
         }
-        .listRowInsets(EdgeInsets()) 
+        .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
