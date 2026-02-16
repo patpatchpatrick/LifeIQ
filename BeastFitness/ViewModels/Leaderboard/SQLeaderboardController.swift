@@ -19,8 +19,8 @@ protocol SQLeaderboardInterface {
 
 @Observable @MainActor
 final class SQLeaderboardController: SQLeaderboardInterface {
-    let chartWidth: CGFloat = 350
-    let chartHeight: CGFloat = 220
+    let chartWidth: CGFloat = 400
+    let chartHeight: CGFloat = 300
     var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
     let state: LeaderboardStating
@@ -61,7 +61,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     private func handleEventSubscriptions(hub: EventHub) {
-        hub.workoutEvents.sink { [weak self] event in
+        hub.workoutEvents.sink { event in
             switch event {
             case .workoutsUpdated, .workoutsDeleted:
                 // Reload data when workouts change
@@ -173,11 +173,14 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             )
 
             // Build chart data from rows
-            let points: [CGPoint] = rows.compactMap { row in
+            let points: [LineChartIdentifiablePoint] = rows.compactMap { row in
                 guard let startDate = row.workout.startDate else { return nil }
-                return CGPoint(
-                    x: startDate.timeIntervalSince1970,
-                    y: row.metric.value
+                return LineChartIdentifiablePoint(
+                    id: row.id,
+                    point: CGPoint(
+                        x: startDate.timeIntervalSince1970,
+                        y: row.metric.value
+                    )
                 )
             }
 
@@ -239,37 +242,25 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     private func buildFocusConfig() -> FocusConfig {
-        let xLabelBuilder: @Sendable (CGFloat) -> String = { xValue in
+        let xLabelBuilder: @Sendable (String, CGFloat) -> String = { id, xValue in
             let date = Date(timeIntervalSince1970: TimeInterval(xValue))
             return date.formattedString(with: .medium)
         }
 
-        let yLabelBuilder: @Sendable (CGFloat) -> String = { [quantityType] yValue in
-            // Create a temporary metric to format the value properly
-            let mockMetric = SQWorkoutMetric(
-                quantityType: quantityType,
-                displayName: "",
-                unit: quantityType.unit ?? .count,
-                value: Double(yValue)
-            )
-            return mockMetric.displayableValue(for: quantityType, value: Double(yValue))
+        // Pre-capture formatted values (score + unit) to avoid accessing @MainActor properties in @Sendable closure
+        let formattedValues: [String: String] = Dictionary(
+            uniqueKeysWithValues: rows.map { ($0.id, $0.valueString) }
+        )
+
+        let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, yValue in
+            return formattedValues[id] ?? ""
         }
 
-        let onFocus: @Sendable (CGPoint) -> Void = { [weak self] tappedPoint in
+        let onFocus: @Sendable (LineChartIdentifiablePoint) -> Void = { [weak self] point in
             guard let self else { return }
             Task { @MainActor in
-                
-                let timestamp = TimeInterval(tappedPoint.x)
-
-                // Find the workout that matches this timestamp
-                let focusedRow = self.rows.first { row in
-                    print("PTD Focused Row 0", row.workout.startDate)
-                    guard let startDate = row.workout.startDate else { return false }
-                    print("PTD Focused Row 1", abs(startDate.timeIntervalSince1970 - timestamp) < 1.0)
-                    return abs(startDate.timeIntervalSince1970 - timestamp) < 1.0 // Within 1 second tolerance
-                }
-                print("PTD Focused Row 2", focusedRow)
-                self.focusedWorkoutId = focusedRow?.workout.id
+                // Simply set the focused workout ID from the point's ID
+                self.focusedWorkoutId = point.id
             }
         }
 

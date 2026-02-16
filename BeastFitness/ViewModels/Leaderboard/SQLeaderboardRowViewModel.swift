@@ -33,6 +33,30 @@ final class SQLeaderboardRowViewModel: Identifiable {
         metric.unit.unitString ?? ""
     }
 
+    var valueString: String {
+        "\(formattedScore)\(unitString.isEmpty ? "" : " ")\(unitString)"
+    }
+
+    var scoreAttributedString: AttributedString {
+        var result = AttributedString()
+
+        // Score part with primary font
+        var scoreText = AttributedString(formattedScore)
+        scoreText.font = SQFont(type: .bodySmallSemiBold).font
+        scoreText.foregroundColor = SQColor.textPrimary.color
+        result.append(scoreText)
+
+        // Unit part with smaller secondary font
+        if !unitString.isEmpty {
+            var unitText = AttributedString(" " + unitString)
+            unitText.font = SQFont(type: .bodyExtraSmall).font
+            unitText.foregroundColor = SQColor.textSecondary.color
+            result.append(unitText)
+        }
+
+        return result
+    }
+
     init(rank: Int, workout: SQWorkoutSessionable, metric: SQWorkoutMetric, quantityType: SQQuantityType) {
         self.id = workout.id
         self.rank = rank

@@ -9,11 +9,11 @@ import SwiftUI
 
 public struct FocusConfig: Sendable {
     public let focusColor: Color
-    public let xLabelBuilder: (@Sendable (CGFloat) -> String)?
-    public let yLabelBuilder: (@Sendable (CGFloat) -> String)?
-    public let onFocus: (@Sendable (CGPoint) -> Void)?
+    public let xLabelBuilder: (@Sendable (String, CGFloat) -> String)?
+    public let yLabelBuilder: (@Sendable (String, CGFloat) -> String)?
+    public let onFocus: (@Sendable (LineChartIdentifiablePoint) -> Void)?
 
-    public init(focusColor: Color = .purple, xLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, yLabelBuilder: (@Sendable (CGFloat) -> String)? = nil, onFocus: (@Sendable (CGPoint) -> Void)? = nil) {
+    public init(focusColor: Color = .purple, xLabelBuilder: (@Sendable (String, CGFloat) -> String)? = nil, yLabelBuilder: (@Sendable (String, CGFloat) -> String)? = nil, onFocus: (@Sendable (LineChartIdentifiablePoint) -> Void)? = nil) {
         self.focusColor = focusColor
         self.xLabelBuilder = xLabelBuilder
         self.yLabelBuilder = yLabelBuilder
@@ -53,13 +53,14 @@ public struct FocusedLineViewModel: Animatable, Sendable {
         self.lineX = nearestX
         
         let focusedCoordinate = lineChartModel.lineChartCoordinates.first(where: { $0.point.x == nearestX })
-        
+
         if let focusedCoordinate {
+            let id = focusedCoordinate.id
             let xValue = focusedCoordinate.originalPoint.x
             let yValue = focusedCoordinate.originalPoint.y
-            let xTitle = focusConfig.xLabelBuilder?(xValue) ?? "\(Double(xValue))"
-            let yTitle = focusConfig.yLabelBuilder?(yValue) ?? "\(Double(yValue))"
-            
+            let xTitle = focusConfig.xLabelBuilder?(id, xValue) ?? "\(Double(xValue))"
+            let yTitle = focusConfig.yLabelBuilder?(id, yValue) ?? "\(Double(yValue))"
+
             captionItems = [
                 .init(lineColor: lineChartModel.lineColor, lineTitle: lineChartModel.lineTitle, xTitle: xTitle, yTitle: yTitle, uiConfig: lineChartModel.uiConfig)
             ]

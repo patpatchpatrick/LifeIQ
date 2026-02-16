@@ -36,7 +36,23 @@ public struct LineChartView: View {
             }
         }
         .onTapGesture { location in
-            model.coordinateFocused(at: location)
+            // Find the nearest coordinate in the chart to the tapped location
+            var nearestX = model.coordinates.first?.x ?? 0
+            for coordinate in model.coordinates {
+                if abs(coordinate.x - location.x) < abs(nearestX - location.x) {
+                    nearestX = coordinate.x
+                }
+            }
+
+            // Get the identifiable point for the nearest coordinate
+            if let focusedCoordinate = model.lineChartCoordinates.first(where: { $0.point.x == nearestX }) {
+                let identifiablePoint = LineChartIdentifiablePoint(
+                    id: focusedCoordinate.id,
+                    point: location
+                )
+                model.coordinateFocused(at: identifiablePoint)
+            }
+            
         }
     }
 }

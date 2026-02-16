@@ -7,7 +7,19 @@
 
 import SwiftUI
 
+public struct LineChartIdentifiablePoint: Sendable {
+    public let id: String
+    public let point: CGPoint
+
+    public init(id: String, point: CGPoint) {
+        self.id = id
+        self.point = point
+    }
+}
+
 struct LineChartCoordinate {
+    /// The ID associated with this point
+    let id: String
     /// The point scaled for the coordinate system
     let point: CGPoint
     /// The actual values of the original point
@@ -22,7 +34,7 @@ public final class LineChartModel: ObservableObject {
     let height: CGFloat
     let lineTitle: String
     let lineColor: Color
-    let inputPoints: [CGPoint]
+    let inputPoints: [LineChartIdentifiablePoint]
     
     // MARK: - Coordinates
     /// Map of scaled coordinated and original coordinates
@@ -99,7 +111,7 @@ public final class LineChartModel: ObservableObject {
     ///   - inputPoints: Line chart points
     ///   - gridConfig: Should be passed if the line chart will use a grid
     ///   - focusConfig: Should be passed if the line chart will allow focus
-    public init?(width: CGFloat = 200, height: CGFloat = 200, lineTitle: String, uiConfig: UIConfig, inputPoints: [CGPoint], gridConfig: GridConfig? = nil, focusConfig: FocusConfig? = nil) {
+    public init?(width: CGFloat = 200, height: CGFloat = 200, lineTitle: String, uiConfig: UIConfig, inputPoints: [LineChartIdentifiablePoint], gridConfig: GridConfig? = nil, focusConfig: FocusConfig? = nil) {
         guard inputPoints.count >= 2 else { return nil }
 
         self.width = width
@@ -123,19 +135,20 @@ public final class LineChartModel: ObservableObject {
         self.lineColor = uiConfig.colorConfig.lineColor
     }
 
-    static func buildCoordinates(width: CGFloat, height: CGFloat, inputPoints: [CGPoint]) -> [LineChartCoordinate] {
+    static func buildCoordinates(width: CGFloat, height: CGFloat, inputPoints: [LineChartIdentifiablePoint]) -> [LineChartCoordinate] {
         let yFloor = height - verticalPaddingPct * height
         let yCeiling = verticalPaddingPct * height
         let xFloor = horizontalPaddingPct * width
         let xCeiling = width - horizontalPaddingPct * width
 
-        let minX = inputPoints.map(\.x).min() ?? 0
-        let maxX = inputPoints.map(\.x).max() ?? 1
-        let minY = inputPoints.map(\.y).min() ?? 0
-        let maxY = inputPoints.map(\.y).max() ?? 1
+        let minX = inputPoints.map(\.point.x).min() ?? 0
+        let maxX = inputPoints.map(\.point.x).max() ?? 1
+        let minY = inputPoints.map(\.point.y).min() ?? 0
+        let maxY = inputPoints.map(\.point.y).max() ?? 1
 
         // Normalize and scale points to chart dimensions
-        return inputPoints.map { point in
+        return inputPoints.map { identifiablePoint in
+            let point = identifiablePoint.point
             let normalizedX = (point.x - minX) / (maxX - minX)
             let normalizedY = (point.y - minY) / (maxY - minY)
 
@@ -143,7 +156,7 @@ public final class LineChartModel: ObservableObject {
             let y = yFloor - normalizedY * (yFloor - yCeiling) // Invert Y-axis
             let originalPoint = point
             let scaledPoint = CGPoint(x: x, y: y)
-            return .init(point: scaledPoint, originalPoint: originalPoint)
+            return .init(id: identifiablePoint.id, point: scaledPoint, originalPoint: originalPoint)
         }.sorted { $0.point.x < $1.point.x }
     }
 
@@ -153,24 +166,24 @@ public final class LineChartModel: ObservableObject {
         lineTitle: "Total",
         uiConfig: .init(colorConfig: .init(textPrimary: .accentColor, textSecondary: .black, backgroundPrimary: .blue, backgroundSecondary: .purple, lineColor: .green), fontConfig: .init(font: .body, boldFont: .caption)),
         inputPoints: [
-            CGPoint(x: 0, y: 1024),
-            CGPoint(x: 1, y: 237),
-            CGPoint(x: 2, y: 176),
-            CGPoint(x: 3, y: 324),
-            CGPoint(x: 4, y: 427),
-            CGPoint(x: 5, y: 518)
+            LineChartIdentifiablePoint(id: "0", point: CGPoint(x: 0, y: 1024)),
+            LineChartIdentifiablePoint(id: "1", point: CGPoint(x: 1, y: 237)),
+            LineChartIdentifiablePoint(id: "2", point: CGPoint(x: 2, y: 176)),
+            LineChartIdentifiablePoint(id: "3", point: CGPoint(x: 3, y: 324)),
+            LineChartIdentifiablePoint(id: "4", point: CGPoint(x: 4, y: 427)),
+            LineChartIdentifiablePoint(id: "5", point: CGPoint(x: 5, y: 518))
         ],
         gridConfig: .init()
     )
     
     // MARK: - Actions
     
-    public func coordinateFocused(at point: CGPoint) {
+    public func coordinateFocused(at point: LineChartIdentifiablePoint) {
         guard let focusConfig else { return }
         focusConfig.onFocus?(point)
 
         withAnimation {
-            self.focusedLineModel = .init(focusConfig: focusConfig, lineChartModel: self, focusedCoordinate: point)
+            self.focusedLineModel = .init(focusConfig: focusConfig, lineChartModel: self, focusedCoordinate: point.point)
         }
     }
     

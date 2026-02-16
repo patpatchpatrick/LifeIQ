@@ -58,17 +58,7 @@ struct SQLeaderboardRowView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             // Score (right side)
-            HStack(spacing: 4) {
-                Text(viewModel.formattedScore)
-                    .sqFont(.bodySmallSemiBold)
-                    .sqForegroundColor(.textPrimary)
-
-                if !viewModel.unitString.isEmpty {
-                    Text(viewModel.unitString)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                }
-            }
+            Text(viewModel.scoreAttributedString)
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.m)
