@@ -98,7 +98,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         ) else {
             if Self.isVerbosePaceLoggingEnabled {
                 SQLogger.shared.log(
-                    "No route data for workout \(hkWorkout.uuid)",
+                    "No route data for workout \(hkWorkout.uuid) \(hkWorkout.startDate.formattedString(with: .medium))",
                     .debug,
                     context: .healthKit
                 )

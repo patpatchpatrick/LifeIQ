@@ -183,9 +183,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             // Update chart header properties
             chartTitle = quantityType.displayTitle
 
-            if let firstDate = rows.first?.workout.startDate,
-               let lastDate = rows.last?.workout.startDate {
-                let dateRange = "\(firstDate.formattedString(with: .medium)) - \(lastDate.formattedString(with: .medium))"
+            // Find the earliest and latest workout dates (chronologically, not by rank)
+            let allDates = rows.compactMap { $0.workout.startDate }
+            if let earliestDate = allDates.min(),
+               let latestDate = allDates.max() {
+                let dateRange = "\(earliestDate.formattedString(with: .medium)) - \(latestDate.formattedString(with: .medium))"
                 chartSubtitle = "\(rows.count) workouts • \(dateRange)"
             } else {
                 chartSubtitle = "\(rows.count) workouts"
