@@ -475,6 +475,18 @@ This design allows us to:
 - **Prefer stored properties over computed properties** — When a value can be calculated once and stored, use a stored property with `didSet` observers to update it when dependencies change, rather than recalculating via computed properties on every access.
 - **Never use force unwrap (!)** — Force unwrapping can cause crashes. Always use optional binding (`if let`, `guard let`), optional chaining (`?.`), or nil coalescing (`??`) with appropriate fallback values. If data is truly expected to exist, handle the nil case gracefully with a fallback or error state (e.g., "N/A", default value, or early return).
 
+## Development workflow preferences
+
+**Performance optimization:**
+- **Do NOT build the Xcode project during implementation** — Building takes too long. Skip all "Build to verify no errors" steps in implementation plans. The user will build and verify once at the end.
+- **Do NOT use code reviewer tools/skills** — Code reviews are too slow during rapid development. Skip code review subagents. The user will review the final implementation themselves.
+
+**Workflow approach:**
+- Write code directly using file editing tools (Read, Edit, Write)
+- Commit changes with clear commit messages
+- Let the user build and review the complete implementation at the end
+- Focus on speed and iteration over intermediate verification
+
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:
