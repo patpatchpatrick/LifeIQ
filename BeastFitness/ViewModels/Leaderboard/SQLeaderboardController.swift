@@ -75,7 +75,12 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: initialTimeRange.rawValue),
             items: items
-        ) { [weak self] selectedTitle in
+        ) { _ in }  // Placeholder, will be set up after init
+
+        handleEventSubscriptions(hub: state.hub)
+
+        // Now that self is fully initialized, set up the actual handler
+        self.timeRangeMenuViewModel.itemSelectionHandler = { [weak self] selectedTitle in
             guard let self else { return }
             if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
                 self.selectedTimeRange = selectedRange
@@ -84,8 +89,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 }
             }
         }
-
-        handleEventSubscriptions(hub: state.hub)
     }
 
     private func handleEventSubscriptions(hub: EventHub) {
