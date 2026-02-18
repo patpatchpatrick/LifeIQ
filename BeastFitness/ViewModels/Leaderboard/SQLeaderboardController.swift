@@ -30,6 +30,9 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let workoutManager: SQWorkoutManaging
     private(set) var hasLoadedUI = false
     private(set) var isLoading = false
+    private(set) var selectedTimeRange: AppTimeRange
+    let timeRangeMenuViewModel: SQDropDownMenuViewModel
+    private weak var modelContext: ModelContext?
 
     let quantityType: SQQuantityType
     let activityType: HKWorkoutActivityType
@@ -47,19 +50,41 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     static let `default` = SQLeaderboardController(
         state: SQAppState.shared.leaderboardState,
         quantityType: .distanceWalkingRunning,
-        activityType: .running
+        activityType: .running,
+        initialTimeRange: .allTime
     )
 
     init(
         state: LeaderboardStating,
         quantityType: SQQuantityType,
         activityType: HKWorkoutActivityType,
+        initialTimeRange: AppTimeRange = .allTime,
         workoutManager: SQWorkoutManaging = SQWorkoutManager()
     ) {
+        self.selectedTimeRange = initialTimeRange
         self.state = state
         self.quantityType = quantityType
         self.activityType = activityType
         self.workoutManager = workoutManager
+
+        // Create time range dropdown (sorted by sortOrder)
+        let items = AppTimeRange.allCases
+            .sorted(by: { $0.sortOrder < $1.sortOrder })
+            .map { SQDropDownMenuViewModel.Item(title: $0.rawValue) }
+
+        self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: initialTimeRange.rawValue),
+            items: items
+        ) { [weak self] selectedTitle in
+            guard let self else { return }
+            if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
+                self.selectedTimeRange = selectedRange
+                Task { @MainActor in
+                    await self.reloadUI()
+                }
+            }
+        }
+
         handleEventSubscriptions(hub: state.hub)
     }
 
@@ -81,6 +106,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     func loadUI(for context: ModelContext) async {
+        // Store context for reloads
+        if self.modelContext == nil {
+            self.modelContext = context
+        }
+
         guard !hasLoadedUI else { return }
         hasLoadedUI = true
         isLoading = true
@@ -129,7 +159,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         do {
             // Fetch all workouts for the activity type
             let allWorkouts = try await workoutManager.getWorkouts(
-                for: .allTime,
+                for: selectedTimeRange.sqTimeRange,
                 modelContext: context
             )
 
@@ -190,9 +220,9 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             if let earliestDate = allDates.min(),
                let latestDate = allDates.max() {
                 let dateRange = "\(earliestDate.formattedString(with: .medium)) - \(latestDate.formattedString(with: .medium))"
-                chartSubtitle = "\(rows.count) workouts • \(dateRange)"
+                chartSubtitle = "\(rows.count) workouts • \(dateRange) • \(selectedTimeRange.rawValue)"
             } else {
-                chartSubtitle = "\(rows.count) workouts"
+                chartSubtitle = "\(rows.count) workouts • \(selectedTimeRange.rawValue)"
             }
 
             SQLogger.shared.log(
@@ -332,5 +362,21 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             navigationConfig: existing.navigationConfig
         )
     }
-    
+
+    // MARK: - Reload
+
+    private func reloadUI() async {
+        guard let context = modelContext else {
+            SQLogger.shared.log(
+                "Cannot reload leaderboard: ModelContext not available",
+                .error,
+                context: .workoutList
+            )
+            return
+        }
+
+        hasLoadedUI = false  // Allow re-loading
+        await loadUI(for: context)
+    }
+
 }
