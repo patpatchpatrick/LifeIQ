@@ -137,6 +137,14 @@ struct SQLeaderboardView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle(controller.title)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SQDropDownMenu(
+                        menuViewModel: controller.timeRangeMenuViewModel,
+                        isDisabled: controller.isLoading
+                    )
+                }
+            }
             .background(SQColor.background.color)
             .task {
                 await controller.loadUI(for: modelContext)
