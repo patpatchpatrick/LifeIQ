@@ -142,6 +142,9 @@ final class SQDashboardController: SQDashboardInterface {
             let lastWeekWorkouts = try await workoutManager.getWorkouts(for: .pastWeek, modelContext: context)
             let weekBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .weekBeforeLast, modelContext: context)
             
+            let past30DaysWorkouts = try await workoutManager.getWorkouts(for: .past30Days, modelContext: context)
+            let thirtyDaysBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .thirtyDaysBeforeLast, modelContext: context)
+
             let lastYearWorkouts = try await workoutManager.getWorkouts(for: .pastYear, modelContext: context)
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
@@ -158,6 +161,12 @@ final class SQDashboardController: SQDashboardInterface {
             let past7DaysCheckIns = try SQDailyCheckInEntity.getAll(
                 from: SQTimeRange.pastWeek.startDate,
                 to: SQTimeRange.pastWeek.endDate,
+                context: context
+            )
+
+            let past30DaysCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.past30Days.startDate,
+                to: SQTimeRange.past30Days.endDate,
                 context: context
             )
 
@@ -201,12 +210,11 @@ final class SQDashboardController: SQDashboardInterface {
                 currentCheckIns = past7DaysCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .past30Days:
-                // TODO: Need to fetch past30Days and thirtyDaysBeforeLast workouts
-                currentWorkouts = lastWeekWorkouts  // Temporary placeholder
-                priorWorkouts = weekBeforeLastWorkouts  // Temporary placeholder
+                currentWorkouts = past30DaysWorkouts
+                priorWorkouts = thirtyDaysBeforeLastWorkouts
                 priorTimeRange = .thirtyDaysBeforeLast
-                currentCheckIns = past7DaysCheckIns  // Temporary placeholder
-                currentVO2MaxSamples = vo2MaxPast7Days  // Temporary placeholder
+                currentCheckIns = past30DaysCheckIns
+                currentVO2MaxSamples = vo2MaxPast7Days
             case .pastYear:
                 currentWorkouts = lastYearWorkouts
                 priorWorkouts = yearBeforeLastWorkouts
@@ -216,8 +224,8 @@ final class SQDashboardController: SQDashboardInterface {
             case .allTime:
                 currentWorkouts = allTimeWorkouts
                 priorWorkouts = []  // No comparison for all time
-                priorTimeRange = .allTime  // Placeholder, won't be used
-                currentCheckIns = pastYearCheckIns  // Use past year as proxy
+                priorTimeRange = .allTime  // No prior period for all time
+                currentCheckIns = pastYearCheckIns  // Use past year for metrics (all-time check-ins would be too much data)
                 currentVO2MaxSamples = vo2MaxAllTime
             }
 
