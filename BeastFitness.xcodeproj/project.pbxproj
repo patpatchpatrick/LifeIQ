@@ -78,6 +78,7 @@
 		F639F0FF2F4275BE004AC701 /* SQPercentileCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */; };
 		F639F1012F4277E8004AC701 /* SQDashboardPerformanceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */; };
 		F639F1042F43D364004AC701 /* WorkoutFastestSplitCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F1032F43D35F004AC701 /* WorkoutFastestSplitCalculator.swift */; };
+		F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F1312F4547B8004AC701 /* AppTimeRange.swift */; };
 		F647A9042EE7DAD000DAA247 /* SQExercisesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */; };
 		F657E2A92CA50D7C00E72926 /* BeastFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */; };
 		F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F657E2AC2CA50D7E00E72926 /* Assets.xcassets */; };
@@ -333,6 +334,7 @@
 		F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPercentileCalculator.swift; sourceTree = "<group>"; };
 		F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardPerformanceRow.swift; sourceTree = "<group>"; };
 		F639F1032F43D35F004AC701 /* WorkoutFastestSplitCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFastestSplitCalculator.swift; sourceTree = "<group>"; };
+		F639F1312F4547B8004AC701 /* AppTimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTimeRange.swift; sourceTree = "<group>"; };
 		F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesManager.swift; sourceTree = "<group>"; };
 		F657E2A52CA50D7C00E72926 /* BeastFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeastFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F657E2A82CA50D7C00E72926 /* BeastFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessApp.swift; sourceTree = "<group>"; };
@@ -819,6 +821,15 @@
 			path = Workouts;
 			sourceTree = "<group>";
 		};
+		F639F1332F4547BF004AC701 /* TimeRange */ = {
+			isa = PBXGroup;
+			children = (
+				F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */,
+				F639F1312F4547B8004AC701 /* AppTimeRange.swift */,
+			);
+			path = TimeRange;
+			sourceTree = "<group>";
+		};
 		F657E29C2CA50D7C00E72926 = {
 			isa = PBXGroup;
 			children = (
@@ -1052,6 +1063,7 @@
 		F6A848942CB4ABCF00B09AD5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F639F1332F4547BF004AC701 /* TimeRange */,
 				F6E058952F04981C006C1CE0 /* WatchInterface */,
 				F61592082EEE18D800223A63 /* Firestore */,
 				F679BDD12EE7C0B200A2F249 /* Shared */,
@@ -1059,7 +1071,6 @@
 				F6ABC3602EDE654200D3E679 /* User */,
 				F602DA492EC6A5EF00404878 /* Workouts */,
 				F6A848B12CBD8CCE00B09AD5 /* SQError.swift */,
-				F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */,
 				F6C5FCEA2F2C3F2A00BF1022 /* Sync */,
 				F68C80582F365A3200327250 /* Dashboard */,
 			);
@@ -1629,6 +1640,7 @@
 				F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */,
 				F67F0A772F0DDBC600D7BB90 /* SQUITextField.swift in Sources */,
 				F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */,
+				F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */,
 				F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */,
 				F61592342EF362FF00223A63 /* SQAlertViewModel.swift in Sources */,
 				F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */,
