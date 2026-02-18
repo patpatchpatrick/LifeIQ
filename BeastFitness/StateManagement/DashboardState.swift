@@ -10,23 +10,6 @@ import Combine
 import HealthKit
 import BeastFitnessCore
 
-enum DashboardTimeRange: String, CaseIterable {
-    case today = "Today"
-    case pastSevenDays = "Past 7 Days"
-    case pastYear = "Past Year"
-
-    func toSQTimeRange() -> SQTimeRange {
-        switch self {
-        case .today:
-            return .today
-        case .pastSevenDays:
-            return .pastWeek
-        case .pastYear:
-            return .pastYear
-        }
-    }
-}
-
 enum TotalsType: String, CaseIterable {
     case time = "Time"
     case kilocalories = "Kilocalories"
@@ -39,8 +22,8 @@ protocol DashboardStating: AnyObject {
     /// State
     
     var sectionGroups: [SQDashboardSectionGroupViewModel] { get }
-    var selectedTimeRange: DashboardTimeRange { get set }
-    var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> { get }
+    var selectedTimeRange: AppTimeRange { get set }
+    var selectedTimeRangePublisher: AnyPublisher<AppTimeRange, Never> { get }
     var isLoading: Bool { get }
 
     var isDailyCheckInSheetVisible: Bool { get }
@@ -81,12 +64,12 @@ protocol DashboardStating: AnyObject {
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionGroups: [SQDashboardSectionGroupViewModel] = []
 
-    private let selectedTimeRangeSubject = PassthroughSubject<DashboardTimeRange, Never>()
-    var selectedTimeRangePublisher: AnyPublisher<DashboardTimeRange, Never> {
+    private let selectedTimeRangeSubject = PassthroughSubject<AppTimeRange, Never>()
+    var selectedTimeRangePublisher: AnyPublisher<AppTimeRange, Never> {
         selectedTimeRangeSubject.eraseToAnyPublisher()
     }
 
-    var selectedTimeRange: DashboardTimeRange = .today {
+    var selectedTimeRange: AppTimeRange = .today {
         didSet {
             selectedTimeRangeSubject.send(selectedTimeRange)
         }
@@ -150,10 +133,28 @@ protocol DashboardStating: AnyObject {
     }
 
     func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType) {
+        // Determine initial time range based on dashboard selection
+        let initialTimeRange: AppTimeRange = {
+            // Exception: Today → All Time (not enough data for meaningful leaderboard)
+            if selectedTimeRange == .today {
+                return .allTime
+            }
+
+            // Fallback: If time range not available, use last (largest) time range
+            if !AppTimeRange.allCases.contains(selectedTimeRange) {
+                return AppTimeRange.allCases
+                    .sorted(by: { $0.sortOrder < $1.sortOrder })
+                    .last ?? .allTime
+            }
+
+            return selectedTimeRange
+        }()
+
         leaderboardController = .init(
             state: SQAppState.shared.leaderboardState,
             quantityType: quantityType,
-            activityType: activityType
+            activityType: activityType,
+            initialTimeRange: initialTimeRange
         )
         toggleLeaderboardSheetVisibility(true)
     }
