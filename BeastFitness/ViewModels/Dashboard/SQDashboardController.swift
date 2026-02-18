@@ -43,15 +43,15 @@ final class SQDashboardController: SQDashboardInterface {
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         
-        let items = DashboardTimeRange.allCases.map {
-            SQDropDownMenuViewModel.Item(title: $0.rawValue)
-        }
+        let items = AppTimeRange.allCases
+            .sorted(by: { $0.sortOrder < $1.sortOrder })
+            .map { SQDropDownMenuViewModel.Item(title: $0.rawValue) }
         self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: state.selectedTimeRange.rawValue),
             items: items
         ) { [weak state] selectedTitle in
             guard let state else { return }
-            if let selectedRange = DashboardTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
+            if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
                 state.selectedTimeRange = selectedRange
             }
         }
@@ -106,7 +106,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         do {
             // Sync daily check-ins from Firestore
-            let timeRange = state.selectedTimeRange.toSQTimeRange()
+            let timeRange = state.selectedTimeRange.sqTimeRange
             _ = try await dailyCheckInManager.syncDailyCheckInsIfNeeded(
                 for: timeRange,
                 context: context
@@ -200,12 +200,25 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange = .weekBeforeLast
                 currentCheckIns = past7DaysCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
+            case .past30Days:
+                // TODO: Need to fetch past30Days and thirtyDaysBeforeLast workouts
+                currentWorkouts = lastWeekWorkouts  // Temporary placeholder
+                priorWorkouts = weekBeforeLastWorkouts  // Temporary placeholder
+                priorTimeRange = .thirtyDaysBeforeLast
+                currentCheckIns = past7DaysCheckIns  // Temporary placeholder
+                currentVO2MaxSamples = vo2MaxPast7Days  // Temporary placeholder
             case .pastYear:
                 currentWorkouts = lastYearWorkouts
                 priorWorkouts = yearBeforeLastWorkouts
                 priorTimeRange = .yearBeforeLast
                 currentCheckIns = pastYearCheckIns
                 currentVO2MaxSamples = vo2MaxPastYear
+            case .allTime:
+                currentWorkouts = allTimeWorkouts
+                priorWorkouts = []  // No comparison for all time
+                priorTimeRange = .allTime  // Placeholder, won't be used
+                currentCheckIns = pastYearCheckIns  // Use past year as proxy
+                currentVO2MaxSamples = vo2MaxAllTime
             }
 
             let sectionGroups = await buildSectionGroups(
@@ -215,7 +228,7 @@ final class SQDashboardController: SQDashboardInterface {
                 workouts: currentWorkouts,
                 priorWorkouts: priorWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
-                timeRange: state.selectedTimeRange.toSQTimeRange(),
+                timeRange: state.selectedTimeRange.sqTimeRange,
                 priorTimeRange: priorTimeRange,
                 context: context
             )
@@ -253,7 +266,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     private func buildMetricsSubsection(
         checkIns: [SQDailyCheckInStats],
-        timeRange: DashboardTimeRange,
+        timeRange: AppTimeRange,
         context: ModelContext
     ) -> SQDashboardSubsectionViewModel {
 
