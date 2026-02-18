@@ -12,7 +12,8 @@ enum SQTimeRange: String {
     case yesterday = "Yesterday"
     case pastWeek = "Past 7 Days"
     case weekBeforeLast = "Week Before Last"
-    case pastMonth = "Past Month"
+    case past30Days = "Past 30 Days"
+    case thirtyDaysBeforeLast = "30 Days Before Last"
     case pastYear = "Past Year"
     case yearBeforeLast = "Year Before Last"
     case allTime = "All Time"
@@ -28,8 +29,10 @@ enum SQTimeRange: String {
         switch self {
         case .allTime:
             return calendar.date(byAdding: .year, value: -20, to: endDate)!
-        case .pastMonth:
-            return calendar.date(byAdding: .month, value: -11, to: endDate)!
+        case .past30Days:
+            return calendar.date(byAdding: .day, value: -30, to: endDate)!
+        case .thirtyDaysBeforeLast:
+            return calendar.date(byAdding: .day, value: -60, to: endDate)!
         case .pastYear:
             return calendar.date(byAdding: .year, value: -1, to: endDate)!
         case .yearBeforeLast:
@@ -47,7 +50,7 @@ enum SQTimeRange: String {
     
     var endDate: Date {
         switch self {
-        case .pastWeek, .pastMonth, .pastYear, .allTime, .today:
+        case .pastWeek, .past30Days, .pastYear, .allTime, .today:
                 .now
         case .weekBeforeLast:
             SQTimeRange.pastWeek.startDate
@@ -55,6 +58,8 @@ enum SQTimeRange: String {
             SQTimeRange.pastYear.startDate
         case .yesterday:
             SQTimeRange.today.startDate
+        case .thirtyDaysBeforeLast:
+            SQTimeRange.past30Days.startDate
         }
     }
 }
