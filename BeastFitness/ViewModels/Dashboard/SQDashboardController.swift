@@ -814,7 +814,7 @@ final class SQDashboardController: SQDashboardInterface {
             avgValue: avgValueString,
             unit: unitString,
             sparklineData: sparklineData,
-            change14d: changePercent
+            changePercent: changePercent
         )
     }
 }
