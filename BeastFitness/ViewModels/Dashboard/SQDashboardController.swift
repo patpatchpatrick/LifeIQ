@@ -744,7 +744,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Metric Row Builder
 
-    private func buildMetricRow(for definition: SQMetricDefinition, from stats: [SQDailyCheckInStats]) -> SQDashboardMetricStatsRowViewModel? {
+    private func buildMetricRow(for definition: SQMetricDefinition, from stats: [SQDailyCheckInStats], priorStats: [SQDailyCheckInStats]) -> SQDashboardMetricStatsRowViewModel? {
         // Get all values for this metric
         let values = stats.compactMap { $0.values[definition.id] }
 
@@ -796,6 +796,17 @@ final class SQDashboardController: SQDashboardInterface {
             context: .dashboard
         )
 
+        // Calculate percentage change vs comparison period
+        let priorValues = priorStats.compactMap { $0.values[definition.id] }
+        let priorAverage: Float? = priorValues.isEmpty ? nil : priorValues.reduce(0, +) / Float(priorValues.count)
+
+        let changePercent: Double
+        if let prior = priorAverage, prior != 0 {
+            changePercent = Double((average - prior) / prior)
+        } else {
+            changePercent = 0.0
+        }
+
         return SQDashboardMetricStatsRowViewModel(
             metricId: definition.id,
             icon: icon,
@@ -803,7 +814,7 @@ final class SQDashboardController: SQDashboardInterface {
             avgValue: avgValueString,
             unit: unitString,
             sparklineData: sparklineData,
-            change14d: 0.0  // Placeholder for now
+            change14d: changePercent
         )
     }
 }
