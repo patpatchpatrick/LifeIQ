@@ -15,7 +15,7 @@ struct SQDashboardStatRow: View {
 
     // Color for change percentage based on positive/negative
     private var changeColor: SQColor {
-        data.change14d >= 0 ? .colorFadedGreen : .colorFadedRed
+        data.changePercent >= 0 ? .colorFadedGreen : .colorFadedRed
     }
     
     var mainBody: some View {
@@ -72,7 +72,7 @@ struct SQDashboardStatRow: View {
                     .frame(width: 40)
 
                 // Change percentage
-                Text(String(format: "%.1f%%", abs(data.change14d)))
+                Text(String(format: "%.1f%%", abs(data.changePercent * 100)))
                     .font(.sqFont(.bodyExtraSmall))
                     .sqForegroundColor(changeColor)
             }
@@ -95,7 +95,7 @@ struct SQDashboardStatRow: View {
             avgValue: "4.2",
             unit: "/5",
             sparklineData: [3.5, 4.0, 4.2, 4.1, 4.5, 4.3, 4.2],
-            change14d: 12.5
+            changePercent: 12.5
         )
     )
     .sqBackgroundColor(.backgroundSecondary)
@@ -110,7 +110,7 @@ struct SQDashboardStatRow: View {
             avgValue: "142",
             unit: "bpm",
             sparklineData: [138, 140, 142, 141, 145, 143, 142],
-            change14d: -3.2
+            changePercent: -3.2
         )
     )
     .sqBackgroundColor(.backgroundSecondary)
@@ -126,7 +126,7 @@ struct SQDashboardStatRow: View {
                 avgValue: "3.8",
                 unit: "/5",
                 sparklineData: [3.2, 3.5, 3.8, 3.9, 4.0, 3.7, 3.8],
-                change14d: 8.3
+                changePercent: 8.3
             )
         )
 
@@ -138,7 +138,7 @@ struct SQDashboardStatRow: View {
                 avgValue: "7.2",
                 unit: "hrs",
                 sparklineData: [7.0, 7.5, 7.2, 6.8, 7.3, 7.1, 7.2],
-                change14d: -5.1
+                changePercent: -5.1
             )
         )
 
@@ -150,7 +150,7 @@ struct SQDashboardStatRow: View {
                 avgValue: "4.5",
                 unit: "/5",
                 sparklineData: [4.0, 4.2, 4.5, 4.3, 4.6, 4.4, 4.5],
-                change14d: 15.7
+                changePercent: 15.7
             )
         )
     }
