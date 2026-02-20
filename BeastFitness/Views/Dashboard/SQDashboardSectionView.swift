@@ -48,7 +48,7 @@ struct SQDashboardSectionView: View {
                                 Button(action: {
                                     handleMetricRowTap(metricStatsViewModel)
                                 }) {
-                                    SQDashboardStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, change14d: metricStatsViewModel.change14d))
+                                    SQDashboardStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, changePercent: metricStatsViewModel.changePercent))
                                 }
                                 .buttonStyle(.plain)
                             }
