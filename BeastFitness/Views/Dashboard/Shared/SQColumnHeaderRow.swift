@@ -63,7 +63,7 @@ struct SQColumnHeaderRow: View {
                 avgValue: "4.5",
                 unit: "/ 10",
                 sparklineData: [3.5, 4.0, 4.2, 4.1, 4.5, 4.3, 4.2],
-                change14d: 35.28
+                changePercent: 35.28
             )
         )
         .padding(.horizontal, 16)
@@ -76,7 +76,7 @@ struct SQColumnHeaderRow: View {
                 avgValue: "8.1",
                 unit: "/ 10",
                 sparklineData: [7.5, 8.0, 8.2, 8.1, 8.5, 8.3, 8.2],
-                change14d: 35.28
+                changePercent: 35.28
             )
         )
         .padding(.horizontal, 16)
@@ -105,7 +105,7 @@ struct SQColumnHeaderRow: View {
                 avgValue: "48.1",
                 unit: "ml/kg/min",
                 sparklineData: [45.5, 46.0, 47.2, 47.1, 48.5, 48.3, 48.1],
-                change14d: -35.28
+                changePercent: -35.28
             )
         )
         .padding(.horizontal, 16)
@@ -118,7 +118,7 @@ struct SQColumnHeaderRow: View {
                 avgValue: "8:12",
                 unit: "/ mile",
                 sparklineData: [8.5, 8.3, 8.2, 8.1, 8.0, 8.1, 8.2],
-                change14d: 35.28
+                changePercent: 35.28
             )
         )
         .padding(.horizontal, 16)

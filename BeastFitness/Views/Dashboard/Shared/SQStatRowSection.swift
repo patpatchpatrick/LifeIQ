@@ -59,7 +59,7 @@ struct SQStatRowSection: View {
                     avgValue: "4.2",
                     unit: "/5",
                     sparklineData: [3.5, 4.0, 4.2, 4.1, 4.5, 4.3, 4.2],
-                    change14d: 12.5
+                    changePercent: 12.5
                 ),
                 SQStatRowData(
                     id: "energy",
@@ -68,7 +68,7 @@ struct SQStatRowSection: View {
                     avgValue: "3.8",
                     unit: "/5",
                     sparklineData: [3.2, 3.5, 3.8, 3.9, 4.0, 3.7, 3.8],
-                    change14d: 8.3
+                    changePercent: 8.3
                 )
             ]
         )
