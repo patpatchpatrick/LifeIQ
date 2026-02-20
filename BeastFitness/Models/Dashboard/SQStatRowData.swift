@@ -12,7 +12,7 @@ struct SQStatRowData: Identifiable {
     let avgValue: String
     let unit: String
     let sparklineData: [Double]
-    let change14d: Double  // Percentage change
+    let changePercent: Double  // Percentage change
 
     init(
         id: String,
@@ -21,7 +21,7 @@ struct SQStatRowData: Identifiable {
         avgValue: String,
         unit: String,
         sparklineData: [Double],
-        change14d: Double
+        changePercent: Double
     ) {
         self.id = id
         self.icon = icon
@@ -29,6 +29,6 @@ struct SQStatRowData: Identifiable {
         self.avgValue = avgValue
         self.unit = unit
         self.sparklineData = sparklineData
-        self.change14d = change14d
+        self.changePercent = changePercent
     }
 }
