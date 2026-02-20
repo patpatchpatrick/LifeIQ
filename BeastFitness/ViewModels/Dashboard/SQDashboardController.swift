@@ -270,7 +270,6 @@ final class SQDashboardController: SQDashboardInterface {
             // Clear loading state
             state.setLoading(false)
         } catch {
-            print("PTD Handle Errors here", error)
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
 
             // Clear loading state on error

@@ -50,7 +50,7 @@ struct SQColumnHeaderRow: View {
         SQColumnHeaderRow(columns: [
             .leading("Metric"),
             .trailing("Avg Score"),
-            .trailing("14d %")
+            .trailing("7d %")
         ])
         .padding(.horizontal, 16)
 
@@ -92,7 +92,7 @@ struct SQColumnHeaderRow: View {
         SQColumnHeaderRow(columns: [
             .leading("Stat"),
             .trailing("Avg Score"),
-            .trailing("14d %")
+            .trailing("7d %")
         ])
         .padding(.horizontal, 16)
 

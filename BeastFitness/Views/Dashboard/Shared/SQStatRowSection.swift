@@ -29,7 +29,7 @@ struct SQStatRowSection: View {
                     .frame(maxWidth: .infinity * 0.75, alignment: .leading)
 
                 // Column 3: "14d %" (30%)
-                Text("14d %")
+                Text("7d %")
                     .font(.sqFont(.bodySmall))
                     .sqForegroundColor(.textSecondary)
                     .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
