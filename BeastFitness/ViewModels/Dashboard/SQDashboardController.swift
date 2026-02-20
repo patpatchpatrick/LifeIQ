@@ -176,6 +176,24 @@ final class SQDashboardController: SQDashboardInterface {
                 context: context
             )
 
+            let weekBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.weekBeforeLast.startDate,
+                to: SQTimeRange.weekBeforeLast.endDate,
+                context: context
+            )
+
+            let thirtyDaysBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.thirtyDaysBeforeLast.startDate,
+                to: SQTimeRange.thirtyDaysBeforeLast.endDate,
+                context: context
+            )
+
+            let yearBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.yearBeforeLast.startDate,
+                to: SQTimeRange.yearBeforeLast.endDate,
+                context: context
+            )
+
             // Set the daily check-in CTA view model if no stats exist
             if dailyCheckInStats == nil {
                 state.updateDailyCheckInCtaViewModel(.init(
@@ -194,6 +212,7 @@ final class SQDashboardController: SQDashboardInterface {
             let priorWorkouts: [SQWorkoutSessionable]
             let priorTimeRange: SQTimeRange
             let currentCheckIns: [SQDailyCheckInStats]
+            let priorCheckIns: [SQDailyCheckInStats]
             let currentVO2MaxSamples: [SQVO2MaxSample]
 
             switch state.selectedTimeRange {
@@ -202,35 +221,41 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange = .yesterday
                 priorWorkouts = yesterdaysWorkouts
                 currentCheckIns = todaysCheckIns
+                priorCheckIns = past7DaysCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastSevenDays:
                 currentWorkouts = lastWeekWorkouts
                 priorWorkouts = weekBeforeLastWorkouts
                 priorTimeRange = .weekBeforeLast
                 currentCheckIns = past7DaysCheckIns
+                priorCheckIns = weekBeforeLastCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .past30Days:
                 currentWorkouts = past30DaysWorkouts
                 priorWorkouts = thirtyDaysBeforeLastWorkouts
                 priorTimeRange = .thirtyDaysBeforeLast
                 currentCheckIns = past30DaysCheckIns
+                priorCheckIns = thirtyDaysBeforeLastCheckIns
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastYear:
                 currentWorkouts = lastYearWorkouts
                 priorWorkouts = yearBeforeLastWorkouts
                 priorTimeRange = .yearBeforeLast
                 currentCheckIns = pastYearCheckIns
+                priorCheckIns = yearBeforeLastCheckIns
                 currentVO2MaxSamples = vo2MaxPastYear
             case .allTime:
                 currentWorkouts = allTimeWorkouts
                 priorWorkouts = []  // No comparison for all time
                 priorTimeRange = .allTime  // No prior period for all time
                 currentCheckIns = pastYearCheckIns  // Use past year for metrics (all-time check-ins would be too much data)
+                priorCheckIns = []
                 currentVO2MaxSamples = vo2MaxAllTime
             }
 
             let sectionGroups = await buildSectionGroups(
                 checkIns: currentCheckIns,
+                priorCheckIns: priorCheckIns,
                 vo2MaxSamples: currentVO2MaxSamples,
                 vo2MaxAllTime: vo2MaxAllTime,
                 workouts: currentWorkouts,
@@ -274,6 +299,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     private func buildMetricsSubsection(
         checkIns: [SQDailyCheckInStats],
+        priorCheckIns: [SQDailyCheckInStats],
         timeRange: AppTimeRange,
         context: ModelContext
     ) -> SQDashboardSubsectionViewModel {
@@ -299,7 +325,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Build rows
         func rows(for definitions: [SQMetricDefinition]) -> [SQDashboardMetricStatsRowViewModel] {
-            definitions.compactMap { buildMetricRow(for: $0, from: stats) }
+            definitions.compactMap { buildMetricRow(for: $0, from: stats, priorStats: priorCheckIns) }
         }
 
         var rowsByFilter: [String: [SQDashboardMetricStatsRowViewModel]] = [:]
@@ -335,7 +361,7 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             titleButton: titleButton,
-            columnHeaders: ["Metric", "Avg Score", "14d %"]
+            columnHeaders: ["Metric", "Avg Score", timeRange.dashboardChangePctHeader]
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys
@@ -647,6 +673,7 @@ final class SQDashboardController: SQDashboardInterface {
 
     private func buildSectionGroups(
         checkIns: [SQDailyCheckInStats],
+        priorCheckIns: [SQDailyCheckInStats],
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
@@ -664,6 +691,7 @@ final class SQDashboardController: SQDashboardInterface {
         // Add Metrics subsection
         let metricsSection = buildMetricsSubsection(
             checkIns: checkIns,
+            priorCheckIns: priorCheckIns,
             timeRange: state.selectedTimeRange,
             context: context
         )
