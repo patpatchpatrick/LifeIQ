@@ -26,7 +26,7 @@ struct SQLeaderboardView: View {
     @ViewBuilder
     private func rowView(_ row: SQLeaderboardRowViewModel, index: Int) -> some View {
         let isLast = index == controller.rows.count - 1
-        let isFocused = controller.focusedWorkoutId == row.workout.id
+        let isFocused = controller.focusedEntryId == row.id
 
         ZStack(alignment: .bottom) {
             // Row content

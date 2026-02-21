@@ -47,7 +47,7 @@ struct SQLeaderboardRowView: View {
             // Workout info (center)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: .SQSpace.m) {
-                    Text(viewModel.workoutTitle)
+                    Text(viewModel.title)
                         .sqFont(.body)
                         .sqForegroundColor(.textPrimary)
                         .lineLimit(1)
@@ -70,7 +70,7 @@ struct SQLeaderboardRowView: View {
                     }
                 }
 
-                Text(viewModel.workoutDate)
+                Text(viewModel.dateString)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
