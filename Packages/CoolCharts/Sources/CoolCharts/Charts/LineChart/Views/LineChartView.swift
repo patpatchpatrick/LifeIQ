@@ -38,7 +38,7 @@ public struct LineChartView: View {
                 .fill(model.lineColor)
 
             Rectangle()
-                .fill(LinearGradient(gradient: Gradient(colors: [.green.opacity(0.2), .clear]), startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(gradient: Gradient(colors: [model.lineColor.opacity(0.2), .clear]), startPoint: .top, endPoint: .bottom))
                 .frame(width: model.width, height: model.height)
                 .clipShape(LineChartGradientShape(model: model))
 
@@ -176,19 +176,21 @@ struct LineChartGradientShape: Shape {
     
     func linePath(in rect: CGRect) -> Path {
         var path = Path()
-        
-        path.move(to: model.coordinates.first!)
-        
+
+        // Start at the bottom of the chart directly below the first data point
+        path.move(to: .init(x: model.coordinates.first!.x, y: model.yFloor))
+
+        // Trace up through all data points
         model.coordinates.forEach {
             path.addLine(to: $0)
         }
-        
-        path.addLine(to: .init(x: model.coordinates.last!.x + LineChartShape.strokeWidth, y: model.coordinates.last!.y))
-        
-        path.addLine(to: .init(x: model.xCeiling + LineChartShape.strokeWidth, y: model.yFloor))
-        
+
+        // Come back down to the bottom below the last data point
+        path.addLine(to: .init(x: model.coordinates.last!.x, y: model.yFloor))
+
+        // Close along the bottom back to the start
         path.closeSubpath()
-        
+
         return path
     }
 }
