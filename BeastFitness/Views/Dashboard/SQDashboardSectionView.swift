@@ -7,7 +7,6 @@
 
 import SwiftUI
 import BeastFitnessCore
-import HealthKit
 
 /// A view that renders a dashboard subsection with optional filtering and collapsible content.
 ///
@@ -98,28 +97,27 @@ struct SQDashboardSectionView: View {
     }
 
     private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
-        // Try to extract quantityType and activityType
-        let quantityType: SQQuantityType?
-        let activityType: HKWorkoutActivityType?
+        let mode: SQLeaderboardMode?
         let title: String
 
         if let statsViewModel = viewModel as? SQDashboardMetricStatsRowViewModel {
-            quantityType = statsViewModel.quantityType
-            activityType = statsViewModel.activityType
+            // Stats rows carry separate quantityType/activityType — construct mode inline
+            if let qt = statsViewModel.quantityType, let at = statsViewModel.activityType {
+                mode = .workoutQuantity(qt, at)
+            } else {
+                mode = nil
+            }
             title = statsViewModel.title
         } else if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
-            quantityType = performanceViewModel.quantityType
-            activityType = performanceViewModel.activityType
+            mode = performanceViewModel.leaderboardMode
             title = performanceViewModel.title
         } else {
             return
         }
 
-        // Only performance metrics have quantityType and activityType
-        guard let quantityType = quantityType,
-              let activityType = activityType else {
+        guard let mode else {
             SQLogger.shared.log(
-                "Cannot display leaderboard: metric '\(title)' does not have quantityType and activityType",
+                "Cannot display leaderboard: metric '\(title)' does not have a leaderboard mode",
                 .debug,
                 context: .dashboard
             )
@@ -127,15 +125,11 @@ struct SQDashboardSectionView: View {
         }
 
         SQLogger.shared.log(
-            "Displaying leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
+            "Displaying leaderboard for '\(title)'",
             .debug,
             context: .dashboard
         )
 
-        // Display leaderboard sheet
-        SQAppState.shared.dashboardState.displayLeaderboardSheet(
-            quantityType: quantityType,
-            activityType: activityType
-        )
+        SQAppState.shared.dashboardState.displayLeaderboardSheet(mode: mode)
     }
 }
