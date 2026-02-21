@@ -1,37 +1,55 @@
 //
-//  Untitled.swift
+//  SQDropDownMenu.swift
 //  BeastFitness
-//
-//  Created by Patrick Doyle on 10/21/24.
 //
 
 import SwiftUI
 
+/// Captures the button's global frame so we can anchor the dropdown card to it.
+private struct SQDropDownAnchorKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
 struct SQDropDownMenu: View {
     @ObservedObject var menuViewModel: SQDropDownMenuViewModel
     let isDisabled: Bool
-    
-    @ViewBuilder
-    var menu: some View {
-        Menu {
-            ForEach(menuViewModel.dropDownButtons, id: \.title) { button in
-                Button(role: .cancel) {
-                    button.selected()
-                } label: {
-                    Text(button.title)
-                }
-                .disabled(isDisabled)
-            }
-        } label: {
-            SQDropDownButton(viewModel: menuViewModel.mainButton)
-                .disabled(isDisabled)
-                .frame(height: 30)
-        }
-        .menuStyle(NavMenuStyle())
-        .disabled(isDisabled)
-    }
-    
+
+    @State private var buttonFrame: CGRect = .zero
+
     var body: some View {
-        menu
+        SQDropDownButton(viewModel: menuViewModel.mainButton)
+            .disabled(isDisabled)
+            .frame(height: 30)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .preference(
+                            key: SQDropDownAnchorKey.self,
+                            value: geo.frame(in: .global)
+                        )
+                }
+            )
+            .onPreferenceChange(SQDropDownAnchorKey.self) { frame in
+                buttonFrame = frame
+            }
+            .onTapGesture {
+                guard !isDisabled else { return }
+                let presentation = SQDropDownMenuState.MenuPresentation(
+                    anchorFrame: buttonFrame,
+                    items: menuViewModel.dropDownButtons,
+                    selectedTitle: menuViewModel.mainButton.title,
+                    onSelect: { title in
+                        menuViewModel.dropDownButtons
+                            .first(where: { $0.title == title })?
+                            .selected()
+                    }
+                )
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    SQAppState.shared.dropDownMenuState.present(presentation)
+                }
+            }
     }
 }
