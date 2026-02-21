@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Combine
-import HealthKit
 import BeastFitnessCore
 
 enum TotalsType: String, CaseIterable {
@@ -50,7 +49,7 @@ protocol DashboardStating: AnyObject {
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 
     func toggleLeaderboardSheetVisibility(_ isVisible: Bool)
-    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType)
+    func displayLeaderboardSheet(mode: SQLeaderboardMode)
 }
 
 @MainActor
@@ -132,7 +131,7 @@ protocol DashboardStating: AnyObject {
         isLeaderboardSheetVisible = isVisible
     }
 
-    func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType) {
+    func displayLeaderboardSheet(mode: SQLeaderboardMode) {
         // Determine initial time range based on dashboard selection
         let initialTimeRange: AppTimeRange = {
             // Exception: Today → All Time (not enough data for meaningful leaderboard)
@@ -152,8 +151,7 @@ protocol DashboardStating: AnyObject {
 
         leaderboardController = .init(
             state: SQAppState.shared.leaderboardState,
-            quantityType: quantityType,
-            activityType: activityType,
+            mode: mode,
             initialTimeRange: initialTimeRange
         )
         toggleLeaderboardSheetVisibility(true)
