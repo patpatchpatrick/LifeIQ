@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 @MainActor
 @Observable final class SQDashboardSubsectionViewModel: Identifiable {
@@ -54,7 +55,9 @@ import Foundation
     }
 
     func updateActiveFilter(_ filter: String) {
-        activeFilter = filter
-        activeRows = rowsByFilter[filter] ?? []
+        withAnimation(.easeInOut(duration: 0.2)) {
+            activeFilter = filter
+            activeRows = rowsByFilter[filter] ?? []
+        }
     }
 }

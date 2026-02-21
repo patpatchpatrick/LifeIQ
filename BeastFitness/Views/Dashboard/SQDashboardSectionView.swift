@@ -40,7 +40,7 @@ struct SQDashboardSectionView: View {
                     }
 
                     ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
-                        
+
                         switch row.rowType {
                         case .metricStats:
 
@@ -73,19 +73,21 @@ struct SQDashboardSectionView: View {
                             }
 
                         case .workoutTotals:
-                            
+
                             if let workoutTotalsViewModel = row as? SQDashboardWorkoutTotalsRowViewModel {
                                 SQDashboardWorkoutTotalsRowView(viewModel: workoutTotalsViewModel)
                             }
-                            
+
                         case .activityList:
-                            
+
                             if let activityListViewModel = row as? SQDashboardActivityRowViewModel {
                                 SQDashboardActivityListRowView(viewModel: activityListViewModel)
                             }
                         }
                     }
                 }
+                .id(section.activeFilter)
+                .transition(.opacity)
             }
         }
 

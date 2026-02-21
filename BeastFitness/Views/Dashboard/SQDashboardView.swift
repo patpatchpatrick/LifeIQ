@@ -144,7 +144,7 @@ extension SQDashboardView {
         let sectionHeaderHorizPadding: CGFloat = .SQSpace.l
         let sectionRowHorizPadding: CGFloat = .SQSpace.l
         let sectionRowVertPadding: CGFloat = .SQSpace.l
-        let sectionRowSpacing: CGFloat = .SQSpace.m
+        let sectionRowSpacing: CGFloat = .SQSpace.l
         let spacingBetweenSections: CGFloat = .SQSpace.l
     }
     
