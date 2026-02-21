@@ -4,7 +4,6 @@
 //
 
 import HealthKit
-import BeastFitnessCore
 
 enum SQLeaderboardMode {
     case workoutQuantity(SQQuantityType, HKWorkoutActivityType)
