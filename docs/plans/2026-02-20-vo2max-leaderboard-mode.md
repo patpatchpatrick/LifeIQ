@@ -1,0 +1,1028 @@
+# VO2 Max Leaderboard Mode Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Introduce `SQLeaderboardMode` enum to replace the ad-hoc `(quantityType, activityType)` pair, then use it to add a tappable VO2 max leaderboard from the dashboard.
+
+**Architecture:** A new `SQLeaderboardMode` enum centralises all "what are we ranking?" decisions. `SQLeaderboardController` switches on mode to load either workout-based or VO2-max-sample-based data, producing the same `[SQLeaderboardRowViewModel]` output shape for both. `SQDashboardMetricPerformanceRowViewModel` gains a `leaderboardMode` property that drives navigation.
+
+**Tech Stack:** Swift, SwiftUI, HealthKit, SwiftData, BeastFitnessCore
+
+> **Note:** Per project conventions, do NOT build the Xcode project between tasks. Skip all build/test verification steps. The user will build and verify at the end.
+
+---
+
+### Task 1: Create `SQLeaderboardMode.swift`
+
+**Files:**
+- Create: `BeastFitness/ViewModels/Leaderboard/SQLeaderboardMode.swift`
+
+**Step 1: Create the file**
+
+```swift
+//
+//  SQLeaderboardMode.swift
+//  BeastFitness
+//
+
+import HealthKit
+import BeastFitnessCore
+
+enum SQLeaderboardMode {
+    case workoutQuantity(SQQuantityType, HKWorkoutActivityType)
+    case vo2Max
+
+    /// Navigation/sheet title for this leaderboard.
+    var title: String {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return "\(quantityType.displayTitle) Leaderboard"
+        case .vo2Max:
+            return "VO2 Max Leaderboard"
+        }
+    }
+
+    /// True when lower values rank higher (e.g. pace in seconds/mile).
+    var isLowerBetter: Bool {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return quantityType.dashboardAggregationType == .minimum
+        case .vo2Max:
+            return false
+        }
+    }
+
+    /// Label shown as the chart line title.
+    var chartLineTitle: String {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return quantityType.displayTitle
+        case .vo2Max:
+            return "VO2 Max"
+        }
+    }
+}
+```
+
+**Step 2: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Leaderboard/SQLeaderboardMode.swift
+git commit -m "feat: add SQLeaderboardMode enum"
+```
+
+---
+
+### Task 2: Generalize `SQLeaderboardRowViewModel`
+
+Remove the coupling to `SQWorkoutSessionable` and `SQWorkoutMetric`. The row VM will store plain display values instead.
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Leaderboard/SQLeaderboardRowViewModel.swift`
+
+**Step 1: Replace the entire file contents**
+
+```swift
+//
+//  SQLeaderboardRowViewModel.swift
+//  BeastFitness
+//
+
+import SwiftUI
+import BeastFitnessCore
+
+@Observable @MainActor
+final class SQLeaderboardRowViewModel: Identifiable {
+    let id: String
+    let rank: Int
+    let title: String
+    let date: Date
+    let formattedScore: String
+    let unitString: String
+    let warningText: String?
+    let state: LeaderboardStating
+
+    var hasWarning: Bool {
+        warningText != nil
+    }
+
+    var dateString: String {
+        date.formattedString(with: .medium)
+    }
+
+    var scoreAttributedString: AttributedString {
+        var result = AttributedString()
+
+        var scoreText = AttributedString(formattedScore)
+        scoreText.font = SQFont(type: .bodySmallSemiBold).font
+        scoreText.foregroundColor = SQColor.textPrimary.color
+        result.append(scoreText)
+
+        if !unitString.isEmpty {
+            var unitText = AttributedString(" " + unitString)
+            unitText.font = SQFont(type: .bodyExtraSmall).font
+            unitText.foregroundColor = SQColor.textSecondary.color
+            result.append(unitText)
+        }
+
+        return result
+    }
+
+    init(
+        id: String,
+        rank: Int,
+        title: String,
+        date: Date,
+        formattedScore: String,
+        unitString: String,
+        warningText: String? = nil,
+        state: LeaderboardStating
+    ) {
+        self.id = id
+        self.rank = rank
+        self.title = title
+        self.date = date
+        self.formattedScore = formattedScore
+        self.unitString = unitString
+        self.warningText = warningText
+        self.state = state
+    }
+
+    func warningTapped() {
+        guard let warningText else { return }
+        state.hub.alertEvents.send(
+            .present(.init(
+                title: "Data Accuracy Notice",
+                subtitle: warningText,
+                primary: .ok))
+        )
+    }
+}
+```
+
+**Step 2: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Leaderboard/SQLeaderboardRowViewModel.swift
+git commit -m "refactor: decouple SQLeaderboardRowViewModel from SQWorkoutSessionable"
+```
+
+---
+
+### Task 3: Update `SQLeaderboardRowView` and `SQLeaderboardView`
+
+Fix the two views that reference the now-removed `workout` property.
+
+**Files:**
+- Modify: `BeastFitness/Views/Leaderboard/SQLeaderboardRowView.swift`
+- Modify: `BeastFitness/Views/Leaderboard/SQLeaderboardView.swift`
+
+**Step 1: Update `SQLeaderboardRowView`**
+
+In `SQLeaderboardRowView.swift`, find the two references inside the `VStack` in `body` and update them:
+
+Old:
+```swift
+Text(viewModel.workoutTitle)
+    .sqFont(.body)
+    .sqForegroundColor(.textPrimary)
+    .lineLimit(1)
+```
+New:
+```swift
+Text(viewModel.title)
+    .sqFont(.body)
+    .sqForegroundColor(.textPrimary)
+    .lineLimit(1)
+```
+
+Old:
+```swift
+Text(viewModel.workoutDate)
+    .sqFont(.bodyExtraSmall)
+    .sqForegroundColor(.textSecondary)
+```
+New:
+```swift
+Text(viewModel.dateString)
+    .sqFont(.bodyExtraSmall)
+    .sqForegroundColor(.textSecondary)
+```
+
+**Step 2: Update `SQLeaderboardView`**
+
+In `SQLeaderboardView.swift`, the `rowView` function computes `isFocused`. Find:
+
+```swift
+let isFocused = controller.focusedWorkoutId == row.workout.id
+```
+
+Replace with:
+```swift
+let isFocused = controller.focusedEntryId == row.id
+```
+
+**Step 3: Commit**
+
+```bash
+git add BeastFitness/Views/Leaderboard/SQLeaderboardRowView.swift
+git add BeastFitness/Views/Leaderboard/SQLeaderboardView.swift
+git commit -m "refactor: update leaderboard views for generalized row VM"
+```
+
+---
+
+### Task 4: Rewrite `SQLeaderboardController` to use `SQLeaderboardMode`
+
+This is the largest change. The controller switches on mode to load data, build rows, and compute chart points.
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Leaderboard/SQLeaderboardController.swift`
+
+**Step 1: Replace the entire file contents**
+
+```swift
+//
+//  SQLeaderboardController.swift
+//  BeastFitness
+//
+
+import SwiftUI
+import SwiftData
+import Combine
+import BeastFitnessCore
+import HealthKit
+import CoolCharts
+
+@MainActor
+protocol SQLeaderboardInterface {
+    func loadUI(for context: ModelContext) async
+}
+
+@Observable @MainActor
+final class SQLeaderboardController: SQLeaderboardInterface {
+    private(set) var containerWidth: CGFloat = 0
+    var chartWidth: CGFloat {
+        max(0, containerWidth * 0.95)
+    }
+    let chartHeight: CGFloat = 300
+    var navigationPath = NavigationPath()
+    private var cancellables = Set<AnyCancellable>()
+    let state: LeaderboardStating
+    let workoutManager: SQWorkoutManaging
+    private(set) var hasLoadedUI = false
+    private(set) var isLoading = false
+    private(set) var selectedTimeRange: AppTimeRange
+    let timeRangeMenuViewModel: SQDropDownMenuViewModel
+    private weak var modelContext: ModelContext?
+
+    let mode: SQLeaderboardMode
+    private(set) var rows: [SQLeaderboardRowViewModel] = []
+    private(set) var chartModel: LineChartModel?
+    private(set) var chartTitle: String?
+    private(set) var chartSubtitle: String?
+    var focusedEntryId: String?
+
+    var title: String {
+        mode.title
+    }
+
+    @MainActor
+    static let `default` = SQLeaderboardController(
+        state: SQAppState.shared.leaderboardState,
+        mode: .workoutQuantity(.distanceWalkingRunning, .running),
+        initialTimeRange: .allTime
+    )
+
+    init(
+        state: LeaderboardStating,
+        mode: SQLeaderboardMode,
+        initialTimeRange: AppTimeRange = .allTime,
+        workoutManager: SQWorkoutManaging = SQWorkoutManager()
+    ) {
+        self.selectedTimeRange = initialTimeRange
+        self.state = state
+        self.mode = mode
+        self.workoutManager = workoutManager
+
+        let items = AppTimeRange.allCases
+            .sorted(by: { $0.sortOrder < $1.sortOrder })
+            .map { SQDropDownMenuViewModel.Item(title: $0.rawValue) }
+
+        self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: initialTimeRange.rawValue),
+            items: items
+        ) { _ in }
+
+        handleEventSubscriptions(hub: state.hub)
+
+        self.timeRangeMenuViewModel.itemSelectionHandler = { [weak self] selectedTitle in
+            guard let self else { return }
+            if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
+                self.selectedTimeRange = selectedRange
+                Task { @MainActor in
+                    await self.reloadUI()
+                }
+            }
+        }
+    }
+
+    private func handleEventSubscriptions(hub: EventHub) {
+        hub.workoutEvents.sink { event in
+            switch event {
+            case .workoutsUpdated, .workoutsDeleted:
+                SQLogger.shared.log(
+                    "Workouts updated, leaderboard should reload",
+                    .debug,
+                    context: .workoutList
+                )
+            case .activeWorkoutUpdate:
+                break
+            }
+        }.store(in: &cancellables)
+    }
+
+    func loadUI(for context: ModelContext) async {
+        if self.modelContext == nil {
+            self.modelContext = context
+        }
+
+        guard !hasLoadedUI else { return }
+        hasLoadedUI = true
+        isLoading = true
+
+        // Build mock rows for the redacted loading state
+        buildMockRows()
+
+        switch mode {
+        case .workoutQuantity(let quantityType, let activityType):
+            await loadWorkoutQuantity(quantityType: quantityType, activityType: activityType, context: context)
+        case .vo2Max:
+            await loadVO2Max()
+        }
+
+        isLoading = false
+    }
+
+    // MARK: - Mock Loading State
+
+    private func buildMockRows() {
+        let mockDate = Date()
+        switch mode {
+        case .workoutQuantity(let quantityType, _):
+            let mockMetric = SQWorkoutMetric.mock(for: quantityType)
+            rows = (1...10).map { index in
+                SQLeaderboardRowViewModel(
+                    id: "mock-row-\(index)",
+                    rank: index,
+                    title: "Loading...",
+                    date: mockDate,
+                    formattedScore: mockMetric.displayableValue(for: quantityType, value: mockMetric.value),
+                    unitString: mockMetric.unit.unitString ?? "",
+                    state: state
+                )
+            }
+            buildMockChart(mockValue: mockMetric.value)
+
+        case .vo2Max:
+            rows = (1...10).map { index in
+                SQLeaderboardRowViewModel(
+                    id: "mock-row-\(index)",
+                    rank: index,
+                    title: "VO2 Max",
+                    date: mockDate,
+                    formattedScore: "45.0",
+                    unitString: "mL/kg/min",
+                    state: state
+                )
+            }
+            buildMockChart(mockValue: 45.0)
+        }
+
+        chartTitle = mode.chartLineTitle
+        chartSubtitle = "Loading..."
+    }
+
+    private func buildMockChart(mockValue: Double) {
+        let mockPoints: [LineChartIdentifiablePoint] = (1...10).map { index in
+            let timestamp = Date().addingTimeInterval(-Double(index) * 86400).timeIntervalSince1970
+            return LineChartIdentifiablePoint(
+                id: "mock-chart-\(index)",
+                point: CGPoint(x: timestamp, y: mockValue + Double(index) * 0.5)
+            )
+        }
+
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: mode.chartLineTitle,
+            uiConfig: buildChartUIConfig(),
+            inputPoints: mockPoints,
+            gridConfig: GridConfig(),
+            focusConfig: buildFocusConfig(),
+            navigationConfig: NavigationConfig()
+        )
+    }
+
+    // MARK: - Load: Workout Quantity
+
+    private func loadWorkoutQuantity(
+        quantityType: SQQuantityType,
+        activityType: HKWorkoutActivityType,
+        context: ModelContext
+    ) async {
+        SQLogger.shared.log(
+            "Loading leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
+            .info,
+            context: .workoutList
+        )
+
+        do {
+            let allWorkouts = try await workoutManager.getWorkouts(
+                for: selectedTimeRange.sqTimeRange,
+                modelContext: context
+            )
+            let filteredWorkouts = allWorkouts.filter { $0.activityType == activityType }
+
+            SQLogger.shared.log(
+                "Found \(filteredWorkouts.count) workouts for \(activityType.name)",
+                .debug,
+                context: .workoutList
+            )
+
+            var workoutMetrics: [(workout: SQWorkoutSessionable, metric: SQWorkoutMetric)] = []
+            for workout in filteredWorkouts {
+                if let metric = await workout.getMetric(for: quantityType) {
+                    workoutMetrics.append((workout, metric))
+                }
+            }
+
+            let sortedMetrics = mode.isLowerBetter
+                ? workoutMetrics.sorted { $0.metric.value < $1.metric.value }
+                : workoutMetrics.sorted { $0.metric.value > $1.metric.value }
+
+            rows = sortedMetrics.enumerated().map { index, item in
+                SQLeaderboardRowViewModel(
+                    id: item.workout.id,
+                    rank: index + 1,
+                    title: item.workout.title ?? "Workout",
+                    date: item.workout.startDate ?? Date(),
+                    formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.value),
+                    unitString: item.metric.unit.unitString ?? "",
+                    warningText: item.metric.warningText,
+                    state: state
+                )
+            }
+
+            chartTitle = quantityType.displayTitle
+
+            let allDates = rows.map { $0.date }
+            if let earliest = allDates.min(), let latest = allDates.max() {
+                chartSubtitle = "\(rows.count) workouts • \(earliest.formattedString(with: .medium)) - \(latest.formattedString(with: .medium)) • \(selectedTimeRange.rawValue)"
+            } else {
+                chartSubtitle = "\(rows.count) workouts • \(selectedTimeRange.rawValue)"
+            }
+
+            SQLogger.shared.log(
+                "✅ Leaderboard loaded with \(rows.count) ranked entries",
+                .info,
+                context: .workoutList,
+                isPriority: true
+            )
+
+            buildChart()
+        } catch {
+            SQLogger.shared.log(
+                "Error loading leaderboard: \(error.localizedDescription)",
+                .error,
+                context: .workoutList
+            )
+        }
+    }
+
+    // MARK: - Load: VO2 Max
+
+    private func loadVO2Max() async {
+        SQLogger.shared.log(
+            "Loading VO2 Max leaderboard",
+            .info,
+            context: .healthKit
+        )
+
+        do {
+            let samples = try await SQHealthKitManager.shared.fetchVO2MaxSamples(selectedTimeRange.sqTimeRange)
+
+            // Group by calendar day, keep highest value per day
+            let calendar = Calendar.current
+            var byDay: [Date: SQVO2MaxSample] = [:]
+            for sample in samples {
+                let dayStart = calendar.startOfDay(for: sample.startDate)
+                if let existing = byDay[dayStart] {
+                    if sample.value > existing.value {
+                        byDay[dayStart] = sample
+                    }
+                } else {
+                    byDay[dayStart] = sample
+                }
+            }
+
+            // Sort descending (highest VO2 max = rank #1)
+            let sorted = byDay.values.sorted { $0.value > $1.value }
+
+            rows = sorted.enumerated().map { index, sample in
+                SQLeaderboardRowViewModel(
+                    id: sample.healthKitId ?? UUID().uuidString,
+                    rank: index + 1,
+                    title: "VO2 Max",
+                    date: sample.startDate,
+                    formattedScore: String(format: "%.1f", sample.value),
+                    unitString: "mL/kg/min",
+                    state: state
+                )
+            }
+
+            chartTitle = "VO2 Max"
+
+            let allDates = rows.map { $0.date }
+            if let earliest = allDates.min(), let latest = allDates.max() {
+                chartSubtitle = "\(rows.count) measurements • \(earliest.formattedString(with: .medium)) - \(latest.formattedString(with: .medium)) • \(selectedTimeRange.rawValue)"
+            } else {
+                chartSubtitle = "\(rows.count) measurements • \(selectedTimeRange.rawValue)"
+            }
+
+            SQLogger.shared.log(
+                "✅ VO2 Max leaderboard loaded with \(rows.count) entries",
+                .info,
+                context: .healthKit,
+                isPriority: true
+            )
+
+            buildChart()
+        } catch {
+            SQLogger.shared.log(
+                "Error loading VO2 Max leaderboard: \(error.localizedDescription)",
+                .error,
+                context: .healthKit
+            )
+        }
+    }
+
+    // MARK: - Chart
+
+    private func buildChart() {
+        let points: [LineChartIdentifiablePoint] = rows.map { row in
+            LineChartIdentifiablePoint(
+                id: row.id,
+                point: CGPoint(x: row.date.timeIntervalSince1970, y: row.value)
+            )
+        }
+
+        guard points.count >= 2 else {
+            chartModel = nil
+            return
+        }
+
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: mode.chartLineTitle,
+            uiConfig: buildChartUIConfig(),
+            inputPoints: points,
+            gridConfig: GridConfig(),
+            focusConfig: buildFocusConfig(),
+            navigationConfig: NavigationConfig()
+        )
+    }
+
+    private func buildChartUIConfig() -> LineChartModel.UIConfig {
+        let colorConfig = LineChartModel.ColorConfig(
+            textPrimary: SQColor.textPrimary.color,
+            textSecondary: SQColor.textSecondary.color,
+            backgroundPrimary: SQColor.background.color,
+            backgroundSecondary: SQColor.backgroundSecondary.color,
+            lineColor: SQColor.accent(1).color
+        )
+        let fontConfig = LineChartModel.FontConfig(
+            font: SQFont(type: .bodyExtraSmall).font,
+            boldFont: SQFont(type: .bodySmallBold).font
+        )
+        return LineChartModel.UIConfig(colorConfig: colorConfig, fontConfig: fontConfig)
+    }
+
+    private func buildFocusConfig() -> FocusConfig {
+        let xLabelBuilder: @Sendable (String, CGFloat) -> String = { _, xValue in
+            let date = Date(timeIntervalSince1970: TimeInterval(xValue))
+            return date.formattedString(with: .medium)
+        }
+
+        let formattedValues: [String: String] = Dictionary(
+            rows.map { ($0.id, $0.scoreAttributedString.stringValue) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, _ in
+            return formattedValues[id] ?? ""
+        }
+
+        let onFocus: @Sendable (LineChartIdentifiablePoint) -> Void = { [weak self] point in
+            guard let self else { return }
+            Task { @MainActor in
+                self.focusedEntryId = point.id
+            }
+        }
+
+        return FocusConfig(
+            focusColor: SQColor.accent(1).color,
+            xLabelBuilder: xLabelBuilder,
+            yLabelBuilder: yLabelBuilder,
+            onFocus: onFocus
+        )
+    }
+
+    func rowTapped(row: SQLeaderboardRowViewModel) {
+        focusChartPoint(with: row.id)
+    }
+
+    private func focusChartPoint(with id: String) {
+        self.chartModel?.focusCoordinateWith(id: id)
+    }
+
+    func updateLayout(containerWidth: CGFloat) {
+        print("PTD Updating Container Width", containerWidth)
+        let rounded = (containerWidth * 2).rounded() / 2
+        guard abs(self.containerWidth - rounded) > 0.5 else { return }
+        self.containerWidth = rounded
+        rebuildChartModelForCurrentState()
+    }
+
+    private func rebuildChartModelForCurrentState() {
+        guard let existing = chartModel else { return }
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: existing.lineTitle,
+            uiConfig: existing.uiConfig,
+            inputPoints: existing.inputPoints,
+            gridConfig: existing.gridConfig,
+            focusConfig: existing.focusConfig,
+            navigationConfig: existing.navigationConfig
+        )
+    }
+
+    // MARK: - Reload
+
+    private func reloadUI() async {
+        guard let context = modelContext else {
+            SQLogger.shared.log(
+                "Cannot reload leaderboard: ModelContext not available",
+                .error,
+                context: .workoutList
+            )
+            return
+        }
+        hasLoadedUI = false
+        await loadUI(for: context)
+    }
+}
+```
+
+> **Note:** `row.value` is referenced in `buildChart()`. Add `var value: Double` to `SQLeaderboardRowViewModel` if it isn't already there — it's needed to build chart points. Add it as a stored property in Task 2's row VM, storing the raw numeric value alongside `formattedScore`. Update `SQLeaderboardRowViewModel` to add `let value: Double` to the init and stored properties.
+
+**Step 2: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Leaderboard/SQLeaderboardController.swift
+git commit -m "feat: rewrite SQLeaderboardController to use SQLeaderboardMode with VO2 max support"
+```
+
+---
+
+### Task 4a: Add `value` stored property to `SQLeaderboardRowViewModel`
+
+The chart builder in the controller uses `row.value` for the y-axis. Go back and add it to the row VM.
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Leaderboard/SQLeaderboardRowViewModel.swift`
+
+**Step 1: Add `value: Double` as a stored property**
+
+After `let formattedScore: String`, add:
+
+```swift
+let value: Double
+```
+
+Update `init` to include:
+
+```swift
+value: Double,
+```
+
+And assign it:
+
+```swift
+self.value = value
+```
+
+**Step 2: Update every call site in `SQLeaderboardController` to pass `value:`**
+
+In `buildMockRows()`:
+- `.workoutQuantity` mock rows: pass `value: mockMetric.value`
+- `.vo2Max` mock rows: pass `value: 45.0`
+
+In `loadWorkoutQuantity`: pass `value: item.metric.value`
+
+In `loadVO2Max`: pass `value: sample.value`
+
+**Step 3: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Leaderboard/SQLeaderboardRowViewModel.swift
+git add BeastFitness/ViewModels/Leaderboard/SQLeaderboardController.swift
+git commit -m "refactor: add value stored property to SQLeaderboardRowViewModel for chart use"
+```
+
+---
+
+### Task 5: Update `SQDashboardMetricPerformanceRowViewModel`
+
+Replace the two separate optional navigation props with a single `leaderboardMode`.
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Dashboard/DashboardRows/SQDashboardMetricPerformanceRowViewModel.swift`
+
+**Step 1: Replace the entire file contents**
+
+```swift
+//
+//  SQDashboardMetricPerformanceRowViewModel.swift
+//  BeastFitness
+//
+
+import SwiftUI
+import BeastFitnessCore
+
+@Observable @MainActor
+final class SQDashboardMetricPerformanceRowViewModel: SQDashboardRowViewModel {
+    let metricId: String
+    let icon: String
+    let title: String
+    let bestValue: String
+    let unit: String
+    let percentileRank: Double?
+    let leaderboardMode: SQLeaderboardMode?
+
+    init(
+        metricId: String,
+        icon: String,
+        title: String,
+        bestValue: String,
+        unit: String,
+        percentileRank: Double?,
+        leaderboardMode: SQLeaderboardMode? = nil
+    ) {
+        self.metricId = metricId
+        self.icon = icon
+        self.title = title
+        self.bestValue = bestValue
+        self.unit = unit
+        self.percentileRank = percentileRank
+        self.leaderboardMode = leaderboardMode
+
+        super.init(rowId: .metricPerformance, rowType: .metricPerformance)
+    }
+}
+```
+
+Note: the `HealthKit` import is no longer needed since `HKWorkoutActivityType` is gone.
+
+**Step 2: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Dashboard/DashboardRows/SQDashboardMetricPerformanceRowViewModel.swift
+git commit -m "refactor: replace quantityType/activityType with leaderboardMode on performance row VM"
+```
+
+---
+
+### Task 6: Update `DashboardState`
+
+Replace `displayLeaderboardSheet(quantityType:activityType:)` with `displayLeaderboardSheet(mode:)` throughout protocol and implementation.
+
+**Files:**
+- Modify: `BeastFitness/StateManagement/DashboardState.swift`
+
+**Step 1: Update the protocol**
+
+Find:
+```swift
+func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType)
+```
+Replace with:
+```swift
+func displayLeaderboardSheet(mode: SQLeaderboardMode)
+```
+
+**Step 2: Update the implementation**
+
+Find the entire `displayLeaderboardSheet(quantityType:activityType:)` method:
+```swift
+func displayLeaderboardSheet(quantityType: SQQuantityType, activityType: HKWorkoutActivityType) {
+    let initialTimeRange: AppTimeRange = {
+        if selectedTimeRange == .today {
+            return .allTime
+        }
+        if !AppTimeRange.allCases.contains(selectedTimeRange) {
+            return AppTimeRange.allCases
+                .sorted(by: { $0.sortOrder < $1.sortOrder })
+                .last ?? .allTime
+        }
+        return selectedTimeRange
+    }()
+
+    leaderboardController = .init(
+        state: SQAppState.shared.leaderboardState,
+        quantityType: quantityType,
+        activityType: activityType,
+        initialTimeRange: initialTimeRange
+    )
+    toggleLeaderboardSheetVisibility(true)
+}
+```
+
+Replace with:
+```swift
+func displayLeaderboardSheet(mode: SQLeaderboardMode) {
+    let initialTimeRange: AppTimeRange = {
+        if selectedTimeRange == .today {
+            return .allTime
+        }
+        if !AppTimeRange.allCases.contains(selectedTimeRange) {
+            return AppTimeRange.allCases
+                .sorted(by: { $0.sortOrder < $1.sortOrder })
+                .last ?? .allTime
+        }
+        return selectedTimeRange
+    }()
+
+    leaderboardController = .init(
+        state: SQAppState.shared.leaderboardState,
+        mode: mode,
+        initialTimeRange: initialTimeRange
+    )
+    toggleLeaderboardSheetVisibility(true)
+}
+```
+
+Also remove the `import HealthKit` from `DashboardState.swift` if it is no longer needed after this change (check for other uses of `HKWorkoutActivityType` in the file first).
+
+**Step 3: Commit**
+
+```bash
+git add BeastFitness/StateManagement/DashboardState.swift
+git commit -m "feat: update DashboardState to use displayLeaderboardSheet(mode:)"
+```
+
+---
+
+### Task 7: Update `SQDashboardSectionView` tap handler
+
+Simplify `handleMetricRowTap` to extract `leaderboardMode` and forward it.
+
+**Files:**
+- Modify: `BeastFitness/Views/Dashboard/SQDashboardSectionView.swift`
+
+**Step 1: Replace `handleMetricRowTap`**
+
+Find the entire `handleMetricRowTap` method and replace it:
+
+```swift
+private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
+    let mode: SQLeaderboardMode?
+    let title: String
+
+    if let statsViewModel = viewModel as? SQDashboardMetricStatsRowViewModel {
+        // Stats rows still carry separate quantityType/activityType — construct mode inline
+        if let qt = statsViewModel.quantityType, let at = statsViewModel.activityType {
+            mode = .workoutQuantity(qt, at)
+        } else {
+            mode = nil
+        }
+        title = statsViewModel.title
+    } else if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
+        mode = performanceViewModel.leaderboardMode
+        title = performanceViewModel.title
+    } else {
+        return
+    }
+
+    guard let mode else {
+        SQLogger.shared.log(
+            "Cannot display leaderboard: metric '\(title)' does not have a leaderboard mode",
+            .debug,
+            context: .dashboard
+        )
+        return
+    }
+
+    SQLogger.shared.log(
+        "Displaying leaderboard for '\(title)'",
+        .debug,
+        context: .dashboard
+    )
+
+    SQAppState.shared.dashboardState.displayLeaderboardSheet(mode: mode)
+}
+```
+
+Also remove `import HealthKit` from this file if it is no longer needed (check for other uses first).
+
+**Step 2: Commit**
+
+```bash
+git add BeastFitness/Views/Dashboard/SQDashboardSectionView.swift
+git commit -m "refactor: update dashboard tap handler to use SQLeaderboardMode"
+```
+
+---
+
+### Task 8: Update `SQDashboardController` — VO2 Max row and workout rows
+
+Wire up `leaderboardMode` on all performance rows in `buildPerformanceSubsection` and `buildPerformanceMetricRow`.
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Dashboard/SQDashboardController.swift`
+
+**Step 1: Update the VO2 max row** (around line 401)
+
+Find:
+```swift
+let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
+    metricId: "vo2-max",
+    icon: SQImageSymbol.heart.rawValue,
+    title: "VO2 Max",
+    bestValue: bestValueString,
+    unit: "mL/kg/min",
+    percentileRank: percentileRank
+)
+```
+
+Replace with:
+```swift
+let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
+    metricId: "vo2-max",
+    icon: SQImageSymbol.heart.rawValue,
+    title: "VO2 Max",
+    bestValue: bestValueString,
+    unit: "mL/kg/min",
+    percentileRank: percentileRank,
+    leaderboardMode: .vo2Max
+)
+```
+
+**Step 2: Update `buildPerformanceMetricRow`** (around line 563)
+
+Find the return statement at the bottom of `buildPerformanceMetricRow`:
+```swift
+return SQDashboardMetricPerformanceRowViewModel(
+    metricId: metricId,
+    icon: icon,
+    title: quantityType.displayTitle,
+    bestValue: valueString,
+    unit: unitString,
+    percentileRank: percentileRank,
+    quantityType: quantityType,
+    activityType: activityType
+)
+```
+
+Replace with:
+```swift
+return SQDashboardMetricPerformanceRowViewModel(
+    metricId: metricId,
+    icon: icon,
+    title: quantityType.displayTitle,
+    bestValue: valueString,
+    unit: unitString,
+    percentileRank: percentileRank,
+    leaderboardMode: .workoutQuantity(quantityType, activityType)
+)
+```
+
+**Step 3: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Dashboard/SQDashboardController.swift
+git commit -m "feat: wire up leaderboardMode on all dashboard performance rows including VO2 max"
+```
+
+---
+
+## Done
+
+Hand off to the user to build and verify:
+- VO2 max dashboard row is tappable and opens the leaderboard sheet
+- VO2 max leaderboard shows entries ranked by value (highest first), one per day
+- Time range dropdown works the same as workout leaderboards
+- Existing workout leaderboards (fastest pace, distance, etc.) are unchanged
+- Chart shows VO2 max trend over time
