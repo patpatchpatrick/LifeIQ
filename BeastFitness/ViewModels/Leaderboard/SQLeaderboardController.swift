@@ -2,8 +2,6 @@
 //  SQLeaderboardController.swift
 //  BeastFitness
 //
-//  Created by Claude on 2/12/26.
-//
 
 import SwiftUI
 import SwiftData
@@ -34,40 +32,35 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private weak var modelContext: ModelContext?
 
-    let quantityType: SQQuantityType
-    let activityType: HKWorkoutActivityType
+    let mode: SQLeaderboardMode
     private(set) var rows: [SQLeaderboardRowViewModel] = []
     private(set) var chartModel: LineChartModel?
     private(set) var chartTitle: String?
     private(set) var chartSubtitle: String?
-    var focusedWorkoutId: String?
+    var focusedEntryId: String?
 
     var title: String {
-        "\(quantityType.displayTitle) Leaderboard"
+        mode.title
     }
 
     @MainActor
     static let `default` = SQLeaderboardController(
         state: SQAppState.shared.leaderboardState,
-        quantityType: .distanceWalkingRunning,
-        activityType: .running,
+        mode: .workoutQuantity(.distanceWalkingRunning, .running),
         initialTimeRange: .allTime
     )
 
     init(
         state: LeaderboardStating,
-        quantityType: SQQuantityType,
-        activityType: HKWorkoutActivityType,
+        mode: SQLeaderboardMode,
         initialTimeRange: AppTimeRange = .allTime,
         workoutManager: SQWorkoutManaging = SQWorkoutManager()
     ) {
         self.selectedTimeRange = initialTimeRange
         self.state = state
-        self.quantityType = quantityType
-        self.activityType = activityType
+        self.mode = mode
         self.workoutManager = workoutManager
 
-        // Create time range dropdown (sorted by sortOrder)
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
             .map { SQDropDownMenuViewModel.Item(title: $0.rawValue) }
@@ -75,11 +68,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         self.timeRangeMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: initialTimeRange.rawValue),
             items: items
-        ) { _ in }  // Placeholder, will be set up after init
+        ) { _ in }
 
         handleEventSubscriptions(hub: state.hub)
 
-        // Now that self is fully initialized, set up the actual handler
         self.timeRangeMenuViewModel.itemSelectionHandler = { [weak self] selectedTitle in
             guard let self else { return }
             if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
@@ -95,8 +87,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         hub.workoutEvents.sink { event in
             switch event {
             case .workoutsUpdated, .workoutsDeleted:
-                // Reload data when workouts change
-                // Note: We'd need to pass the context here in a real implementation
                 SQLogger.shared.log(
                     "Workouts updated, leaderboard should reload",
                     .debug,
@@ -109,7 +99,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     func loadUI(for context: ModelContext) async {
-        // Store context for reloads
         if self.modelContext == nil {
             self.modelContext = context
         }
@@ -118,41 +107,87 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         hasLoadedUI = true
         isLoading = true
 
-        // Initialize mock rows for redacted loading state
-        let mockMetric = SQWorkoutMetric.mock(for: quantityType)
-        rows = (1...10).map { index in
-            SQLeaderboardRowViewModel(
-                rank: index,
-                workout: SQWorkoutSession.mockRun,
-                metric: mockMetric,
-                quantityType: quantityType,
-                state: state
-            )
+        buildMockRows()
+
+        switch mode {
+        case .workoutQuantity(let quantityType, let activityType):
+            await loadWorkoutQuantity(quantityType: quantityType, activityType: activityType, context: context)
+        case .vo2Max:
+            await loadVO2Max()
         }
 
-        // Create mock chart for redacted loading state with unique IDs
+        isLoading = false
+    }
+
+    // MARK: - Mock Loading State
+
+    private func buildMockRows() {
+        let mockDate = Date()
+        switch mode {
+        case .workoutQuantity(let quantityType, _):
+            let mockMetric = SQWorkoutMetric.mock(for: quantityType)
+            rows = (1...10).map { index in
+                SQLeaderboardRowViewModel(
+                    id: "mock-row-\(index)",
+                    rank: index,
+                    title: "Loading...",
+                    date: mockDate,
+                    value: mockMetric.value,
+                    formattedScore: mockMetric.displayableValue(for: quantityType, value: mockMetric.value),
+                    unitString: mockMetric.unit.unitString ?? "",
+                    state: state
+                )
+            }
+            buildMockChart(mockValue: mockMetric.value)
+
+        case .vo2Max:
+            rows = (1...10).map { index in
+                SQLeaderboardRowViewModel(
+                    id: "mock-row-\(index)",
+                    rank: index,
+                    title: "VO2 Max",
+                    date: mockDate,
+                    value: 45.0,
+                    formattedScore: "45.0",
+                    unitString: "mL/kg/min",
+                    state: state
+                )
+            }
+            buildMockChart(mockValue: 45.0)
+        }
+
+        chartTitle = mode.chartLineTitle
+        chartSubtitle = "Loading..."
+    }
+
+    private func buildMockChart(mockValue: Double) {
         let mockPoints: [LineChartIdentifiablePoint] = (1...10).map { index in
-            let timestamp = Date().addingTimeInterval(-Double(index) * 86400).timeIntervalSince1970 // Each day apart
+            let timestamp = Date().addingTimeInterval(-Double(index) * 86400).timeIntervalSince1970
             return LineChartIdentifiablePoint(
-                id: "mock-chart-\(index)", // Unique ID for each mock point
-                point: CGPoint(x: timestamp, y: mockMetric.value + Double(index) * 0.5)
+                id: "mock-chart-\(index)",
+                point: CGPoint(x: timestamp, y: mockValue + Double(index) * 0.5)
             )
         }
 
         chartModel = LineChartModel(
             width: chartWidth,
             height: chartHeight,
-            lineTitle: quantityType.displayTitle,
+            lineTitle: mode.chartLineTitle,
             uiConfig: buildChartUIConfig(),
             inputPoints: mockPoints,
             gridConfig: GridConfig(),
             focusConfig: buildFocusConfig(),
             navigationConfig: NavigationConfig()
         )
+    }
 
-        chartTitle = quantityType.displayTitle
-        chartSubtitle = "Loading..."
+    // MARK: - Load: Workout Quantity
 
+    private func loadWorkoutQuantity(
+        quantityType: SQQuantityType,
+        activityType: HKWorkoutActivityType,
+        context: ModelContext
+    ) async {
         SQLogger.shared.log(
             "Loading leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
             .info,
@@ -160,13 +195,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         )
 
         do {
-            // Fetch all workouts for the activity type
             let allWorkouts = try await workoutManager.getWorkouts(
                 for: selectedTimeRange.sqTimeRange,
                 modelContext: context
             )
-
-            // Filter by activity type
             let filteredWorkouts = allWorkouts.filter { $0.activityType == activityType }
 
             SQLogger.shared.log(
@@ -175,55 +207,36 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 context: .workoutList
             )
 
-            // Calculate metrics for each workout
             var workoutMetrics: [(workout: SQWorkoutSessionable, metric: SQWorkoutMetric)] = []
-
             for workout in filteredWorkouts {
                 if let metric = await workout.getMetric(for: quantityType) {
                     workoutMetrics.append((workout, metric))
                 }
             }
 
-            SQLogger.shared.log(
-                "Calculated metrics for \(workoutMetrics.count) workouts",
-                .debug,
-                context: .workoutList
-            )
+            let sortedMetrics = mode.isLowerBetter
+                ? workoutMetrics.sorted { $0.metric.value < $1.metric.value }
+                : workoutMetrics.sorted { $0.metric.value > $1.metric.value }
 
-            // Sort based on aggregation type (minimum for pace, maximum for distance, etc.)
-            let sortedMetrics: [(workout: SQWorkoutSessionable, metric: SQWorkoutMetric)]
-            switch quantityType.dashboardAggregationType {
-            case .minimum:
-                // For pace - fastest (lowest) is best
-                sortedMetrics = workoutMetrics.sorted { $0.metric.value < $1.metric.value }
-            case .maximum:
-                // For distance, etc. - highest is best
-                sortedMetrics = workoutMetrics.sorted { $0.metric.value > $1.metric.value }
-            case .sum, .average:
-                // Default to descending for these types
-                sortedMetrics = workoutMetrics.sorted { $0.metric.value > $1.metric.value }
-            }
-
-            // Create rows with rankings
             rows = sortedMetrics.enumerated().map { index, item in
                 SQLeaderboardRowViewModel(
+                    id: item.workout.id,
                     rank: index + 1,
-                    workout: item.workout,
-                    metric: item.metric,
-                    quantityType: quantityType,
+                    title: item.workout.title ?? "Workout",
+                    date: item.workout.startDate ?? Date(),
+                    value: item.metric.value,
+                    formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.value),
+                    unitString: item.metric.unit.unitString ?? "",
+                    warningText: item.metric.warningText,
                     state: state
                 )
             }
 
-            // Update chart header properties
             chartTitle = quantityType.displayTitle
 
-            // Find the earliest and latest workout dates (chronologically, not by rank)
-            let allDates = rows.compactMap { $0.workout.startDate }
-            if let earliestDate = allDates.min(),
-               let latestDate = allDates.max() {
-                let dateRange = "\(earliestDate.formattedString(with: .medium)) - \(latestDate.formattedString(with: .medium))"
-                chartSubtitle = "\(rows.count) workouts • \(dateRange) • \(selectedTimeRange.rawValue)"
+            let allDates = rows.map { $0.date }
+            if let earliest = allDates.min(), let latest = allDates.max() {
+                chartSubtitle = "\(rows.count) workouts • \(earliest.formattedString(with: .medium)) - \(latest.formattedString(with: .medium)) • \(selectedTimeRange.rawValue)"
             } else {
                 chartSubtitle = "\(rows.count) workouts • \(selectedTimeRange.rawValue)"
             }
@@ -235,45 +248,109 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 isPriority: true
             )
 
-            // Build chart data from rows
-            let points: [LineChartIdentifiablePoint] = rows.compactMap { row in
-                guard let startDate = row.workout.startDate else {
-                    return nil
-                }
-                return LineChartIdentifiablePoint(
-                    id: row.id,
-                    point: CGPoint(
-                        x: startDate.timeIntervalSince1970,
-                        y: row.metric.value
-                    )
-                )
-            }
-
-            // Only create chart if we have 2+ valid data points
-            if points.count >= 2 {
-                chartModel = LineChartModel(
-                    width: chartWidth,
-                    height: chartHeight,
-                    lineTitle: quantityType.displayTitle,
-                    uiConfig: buildChartUIConfig(),
-                    inputPoints: points,
-                    gridConfig: GridConfig(),
-                    focusConfig: buildFocusConfig(),
-                    navigationConfig: NavigationConfig()
-                )
-            } else {
-                chartModel = nil
-            }
-
-            isLoading = false
+            buildChart()
         } catch {
             SQLogger.shared.log(
                 "Error loading leaderboard: \(error.localizedDescription)",
                 .error,
                 context: .workoutList
             )
-            isLoading = false
         }
+    }
+
+    // MARK: - Load: VO2 Max
+
+    private func loadVO2Max() async {
+        SQLogger.shared.log(
+            "Loading VO2 Max leaderboard",
+            .info,
+            context: .healthKit
+        )
+
+        do {
+            let samples = try await SQHealthKitManager.shared.fetchVO2MaxSamples(selectedTimeRange.sqTimeRange)
+
+            // Group by calendar day, keep highest value per day
+            let calendar = Calendar.current
+            var byDay: [Date: SQVO2MaxSample] = [:]
+            for sample in samples {
+                let dayStart = calendar.startOfDay(for: sample.startDate)
+                if let existing = byDay[dayStart] {
+                    if sample.value > existing.value {
+                        byDay[dayStart] = sample
+                    }
+                } else {
+                    byDay[dayStart] = sample
+                }
+            }
+
+            // Sort descending (highest VO2 max = rank #1)
+            let sorted = byDay.values.sorted { $0.value > $1.value }
+
+            rows = sorted.enumerated().map { index, sample in
+                SQLeaderboardRowViewModel(
+                    id: sample.healthKitId ?? UUID().uuidString,
+                    rank: index + 1,
+                    title: "VO2 Max",
+                    date: sample.startDate,
+                    value: sample.value,
+                    formattedScore: String(format: "%.1f", sample.value),
+                    unitString: "mL/kg/min",
+                    state: state
+                )
+            }
+
+            chartTitle = "VO2 Max"
+
+            let allDates = rows.map { $0.date }
+            if let earliest = allDates.min(), let latest = allDates.max() {
+                chartSubtitle = "\(rows.count) measurements • \(earliest.formattedString(with: .medium)) - \(latest.formattedString(with: .medium)) • \(selectedTimeRange.rawValue)"
+            } else {
+                chartSubtitle = "\(rows.count) measurements • \(selectedTimeRange.rawValue)"
+            }
+
+            SQLogger.shared.log(
+                "✅ VO2 Max leaderboard loaded with \(rows.count) entries",
+                .info,
+                context: .healthKit,
+                isPriority: true
+            )
+
+            buildChart()
+        } catch {
+            SQLogger.shared.log(
+                "Error loading VO2 Max leaderboard: \(error.localizedDescription)",
+                .error,
+                context: .healthKit
+            )
+        }
+    }
+
+    // MARK: - Chart
+
+    private func buildChart() {
+        let points: [LineChartIdentifiablePoint] = rows.map { row in
+            LineChartIdentifiablePoint(
+                id: row.id,
+                point: CGPoint(x: row.date.timeIntervalSince1970, y: row.value)
+            )
+        }
+
+        guard points.count >= 2 else {
+            chartModel = nil
+            return
+        }
+
+        chartModel = LineChartModel(
+            width: chartWidth,
+            height: chartHeight,
+            lineTitle: mode.chartLineTitle,
+            uiConfig: buildChartUIConfig(),
+            inputPoints: points,
+            gridConfig: GridConfig(),
+            focusConfig: buildFocusConfig(),
+            navigationConfig: NavigationConfig()
+        )
     }
 
     private func buildChartUIConfig() -> LineChartModel.UIConfig {
@@ -284,40 +361,32 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             backgroundSecondary: SQColor.backgroundSecondary.color,
             lineColor: SQColor.accent(1).color
         )
-
         let fontConfig = LineChartModel.FontConfig(
             font: SQFont(type: .bodyExtraSmall).font,
             boldFont: SQFont(type: .bodySmallBold).font
         )
-
-        return LineChartModel.UIConfig(
-            colorConfig: colorConfig,
-            fontConfig: fontConfig
-        )
+        return LineChartModel.UIConfig(colorConfig: colorConfig, fontConfig: fontConfig)
     }
 
     private func buildFocusConfig() -> FocusConfig {
-        let xLabelBuilder: @Sendable (String, CGFloat) -> String = { id, xValue in
+        let xLabelBuilder: @Sendable (String, CGFloat) -> String = { _, xValue in
             let date = Date(timeIntervalSince1970: TimeInterval(xValue))
             return date.formattedString(with: .medium)
         }
 
-        // Pre-capture formatted values (score + unit) to avoid accessing @MainActor properties in @Sendable closure
-        // Use uniquingKeysWith to handle duplicate IDs (e.g., during mock loading state)
         let formattedValues: [String: String] = Dictionary(
             rows.map { ($0.id, $0.scoreAttributedString.stringValue) },
-            uniquingKeysWith: { first, _ in first } // Keep first value if duplicate keys
+            uniquingKeysWith: { first, _ in first }
         )
 
-        let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, yValue in
+        let yLabelBuilder: @Sendable (String, CGFloat) -> String = { id, _ in
             return formattedValues[id] ?? ""
         }
 
         let onFocus: @Sendable (LineChartIdentifiablePoint) -> Void = { [weak self] point in
             guard let self else { return }
             Task { @MainActor in
-                // Simply set the focused workout ID from the point's ID
-                self.focusedWorkoutId = point.id
+                self.focusedEntryId = point.id
             }
         }
 
@@ -328,38 +397,31 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             onFocus: onFocus
         )
     }
-    
+
     func rowTapped(row: SQLeaderboardRowViewModel) {
         focusChartPoint(with: row.id)
     }
-    
+
     private func focusChartPoint(with id: String) {
         self.chartModel?.focusCoordinateWith(id: id)
     }
-    
+
     func updateLayout(containerWidth: CGFloat) {
         print("PTD Updating Container Width", containerWidth)
-        // Avoid thrashing from tiny changes
-        let rounded = (containerWidth * 2).rounded() / 2 // round to 0.5pt
+        let rounded = (containerWidth * 2).rounded() / 2
         guard abs(self.containerWidth - rounded) > 0.5 else { return }
         self.containerWidth = rounded
-
-        // If chart model already exists, rebuild it with the new width.
-        // (CoolCharts LineChartModel takes width/height in init, so easiest is recreate.)
         rebuildChartModelForCurrentState()
     }
-    
+
     private func rebuildChartModelForCurrentState() {
         guard let existing = chartModel else { return }
-
-        // Rebuild using current points + config. If you can access points, do that.
-        // If CoolCharts exposes them, use them; otherwise store points in controller.
         chartModel = LineChartModel(
             width: chartWidth,
             height: chartHeight,
             lineTitle: existing.lineTitle,
             uiConfig: existing.uiConfig,
-            inputPoints: existing.inputPoints,   // <-- if not accessible, store points separately (see note below)
+            inputPoints: existing.inputPoints,
             gridConfig: existing.gridConfig,
             focusConfig: existing.focusConfig,
             navigationConfig: existing.navigationConfig
@@ -377,9 +439,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             )
             return
         }
-
-        hasLoadedUI = false  // Allow re-loading
+        hasLoadedUI = false
         await loadUI(for: context)
     }
-
 }
