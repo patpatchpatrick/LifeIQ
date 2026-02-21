@@ -1,0 +1,42 @@
+//
+//  SQLeaderboardMode.swift
+//  BeastFitness
+//
+
+import HealthKit
+import BeastFitnessCore
+
+enum SQLeaderboardMode {
+    case workoutQuantity(SQQuantityType, HKWorkoutActivityType)
+    case vo2Max
+
+    /// Navigation/sheet title for this leaderboard.
+    var title: String {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return "\(quantityType.displayTitle) Leaderboard"
+        case .vo2Max:
+            return "VO2 Max Leaderboard"
+        }
+    }
+
+    /// True when lower values rank higher (e.g. pace in seconds/mile).
+    var isLowerBetter: Bool {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return quantityType.dashboardAggregationType == .minimum
+        case .vo2Max:
+            return false
+        }
+    }
+
+    /// Label shown as the chart line title.
+    var chartLineTitle: String {
+        switch self {
+        case .workoutQuantity(let quantityType, _):
+            return quantityType.displayTitle
+        case .vo2Max:
+            return "VO2 Max"
+        }
+    }
+}
