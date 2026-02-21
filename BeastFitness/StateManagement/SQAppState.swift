@@ -33,6 +33,7 @@ final class SQAppState {
     let modalState: SQModalState
     let settingsState: SettingsState
     let toastState: SQToastState
+    let dropDownMenuState: SQDropDownMenuState
 
     init() {
         self.userState = .init(hub: hub)
@@ -49,5 +50,6 @@ final class SQAppState {
         self.modalState = .init(hub: hub)
         self.settingsState = .init(hub: hub)
         self.toastState = .init(hub: hub)
+        self.dropDownMenuState = .init()
     }
 }

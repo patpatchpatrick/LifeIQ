@@ -22,7 +22,8 @@ struct BeastFitnessApp: App {
                     SQOverlayWindow.shared.attachIfNeeded(
                         alerts: SQAppState.shared.alertState,
                         toasts: SQAppState.shared.toastState,
-                        modals: SQAppState.shared.modalState
+                        modals: SQAppState.shared.modalState,
+                        dropdownMenu: SQAppState.shared.dropDownMenuState
                     )
                }
         }

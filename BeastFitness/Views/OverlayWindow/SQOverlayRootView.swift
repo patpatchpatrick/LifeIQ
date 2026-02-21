@@ -12,6 +12,7 @@ struct SQOverlayRootView: View {
     @Bindable var alerts: SQAlertState
     @Bindable var toasts: SQToastState
     @Bindable var modals: SQModalState
+    @Bindable var dropdownMenu: SQDropDownMenuState
 
     var body: some View {
         ZStack {
@@ -26,6 +27,10 @@ struct SQOverlayRootView: View {
             // Modals layer (above alerts)
             SQModalHost(modalState: modals)
                 .zIndex(3)
+
+            // Dropdown menu layer (above everything — anchored to button position)
+            SQDropDownMenuHost(menuState: dropdownMenu)
+                .zIndex(4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
