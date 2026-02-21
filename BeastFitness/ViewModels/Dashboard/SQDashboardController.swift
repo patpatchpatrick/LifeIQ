@@ -404,7 +404,8 @@ final class SQDashboardController: SQDashboardInterface {
                 title: "VO2 Max",
                 bestValue: bestValueString,
                 unit: "mL/kg/min",
-                percentileRank: percentileRank
+                percentileRank: percentileRank,
+                leaderboardMode: .vo2Max
             )
             rows.append(vo2MaxRow)
         }
@@ -567,8 +568,7 @@ final class SQDashboardController: SQDashboardInterface {
             bestValue: valueString,
             unit: unitString,
             percentileRank: percentileRank,
-            quantityType: quantityType,
-            activityType: activityType
+            leaderboardMode: .workoutQuantity(quantityType, activityType)
         )
     }
 
