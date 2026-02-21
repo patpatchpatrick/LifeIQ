@@ -5,13 +5,6 @@
 
 import SwiftUI
 
-/// Captures the button's global frame so we can anchor the dropdown card to it.
-private struct SQDropDownAnchorKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
 
 struct SQDropDownMenu: View {
     @ObservedObject var menuViewModel: SQDropDownMenuViewModel
@@ -26,15 +19,14 @@ struct SQDropDownMenu: View {
             .background(
                 GeometryReader { geo in
                     Color.clear
-                        .preference(
-                            key: SQDropDownAnchorKey.self,
-                            value: geo.frame(in: .global)
-                        )
+                        .onAppear {
+                            buttonFrame = geo.frame(in: .global)
+                        }
+                        .onChange(of: geo.frame(in: .global)) { _, newFrame in
+                            buttonFrame = newFrame
+                        }
                 }
             )
-            .onPreferenceChange(SQDropDownAnchorKey.self) { frame in
-                buttonFrame = frame
-            }
             .simultaneousGesture(
                 TapGesture().onEnded {
                     guard !isDisabled else { return }

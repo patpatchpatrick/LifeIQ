@@ -55,6 +55,7 @@ struct SQDropDownMenuHost: View {
                     )
             }
         }
+        .ignoresSafeArea()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .animation(.easeInOut(duration: 0.15), value: menuState.isPresented)
     }
