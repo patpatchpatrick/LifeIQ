@@ -84,7 +84,7 @@ struct SQDashboardPerformanceRow: View {
                     .font(.sqFont(.bodyExtraSmall))
                     .sqForegroundColor(rankColor)
             }
-            .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
+            .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
         }
     }
 

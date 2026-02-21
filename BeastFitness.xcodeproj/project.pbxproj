@@ -122,7 +122,6 @@
 		F67F0A7B2F0DE38800D7BB90 /* SQWorkoutSession+PrettyDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A7A2F0DE38300D7BB90 /* SQWorkoutSession+PrettyDescription.swift */; };
 		F68C80522F365A0C00327250 /* SQSubsectionEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */; };
 		F68C80532F365A0C00327250 /* SQDashboardSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804C2F365A0C00327250 /* SQDashboardSectionHeader.swift */; };
-		F68C80542F365A0C00327250 /* SQStatRowSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804F2F365A0C00327250 /* SQStatRowSection.swift */; };
 		F68C80552F365A0C00327250 /* SQDashboardStatRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */; };
 		F68C80562F365A0C00327250 /* SQDashboardSubsection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */; };
 		F68C80592F365A3200327250 /* SQStatRowData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C80572F365A3200327250 /* SQStatRowData.swift */; };
@@ -383,7 +382,6 @@
 		F68C804C2F365A0C00327250 /* SQDashboardSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSectionHeader.swift; sourceTree = "<group>"; };
 		F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSubsection.swift; sourceTree = "<group>"; };
 		F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardStatRow.swift; sourceTree = "<group>"; };
-		F68C804F2F365A0C00327250 /* SQStatRowSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStatRowSection.swift; sourceTree = "<group>"; };
 		F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubsectionEmptyState.swift; sourceTree = "<group>"; };
 		F68C80572F365A3200327250 /* SQStatRowData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStatRowData.swift; sourceTree = "<group>"; };
 		F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertDropDownViewModel.swift; sourceTree = "<group>"; };
@@ -1019,7 +1017,6 @@
 				F68C804C2F365A0C00327250 /* SQDashboardSectionHeader.swift */,
 				F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */,
 				F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */,
-				F68C804F2F365A0C00327250 /* SQStatRowSection.swift */,
 				F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */,
 				F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */,
 			);
@@ -1742,7 +1739,6 @@
 				F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */,
 				F68C80522F365A0C00327250 /* SQSubsectionEmptyState.swift in Sources */,
 				F68C80532F365A0C00327250 /* SQDashboardSectionHeader.swift in Sources */,
-				F68C80542F365A0C00327250 /* SQStatRowSection.swift in Sources */,
 				F68C80552F365A0C00327250 /* SQDashboardStatRow.swift in Sources */,
 				F68C80562F365A0C00327250 /* SQDashboardSubsection.swift in Sources */,
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,

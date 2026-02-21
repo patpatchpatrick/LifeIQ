@@ -47,8 +47,6 @@ struct SQDashboardStatRow: View {
                 Text(data.title)
                     .font(.sqFont(.body))
                     .sqForegroundColor(.textPrimary)
-
-                Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -75,8 +73,9 @@ struct SQDashboardStatRow: View {
                 Text(String(format: "%.1f%%", abs(data.changePercent * 100)))
                     .font(.sqFont(.bodyExtraSmall))
                     .sqForegroundColor(changeColor)
+                    .frame(width: 40, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
+            .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
         }
     }
 
