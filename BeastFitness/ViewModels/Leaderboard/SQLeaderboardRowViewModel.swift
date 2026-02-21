@@ -1,9 +1,6 @@
 //
 //  SQLeaderboardRowViewModel.swift
 //  BeastFitness
-//
-//  Created by Claude on 2/12/26.
-//
 
 import SwiftUI
 import BeastFitnessCore
@@ -12,42 +9,30 @@ import BeastFitnessCore
 final class SQLeaderboardRowViewModel: Identifiable {
     let id: String
     let rank: Int
-    let workout: SQWorkoutSessionable
-    let metric: SQWorkoutMetric
-    let quantityType: SQQuantityType
+    let title: String
+    let date: Date
+    let value: Double
+    let formattedScore: String
+    let unitString: String
+    let warningText: String?
     let state: LeaderboardStating
 
     var hasWarning: Bool {
-        metric.warningText != nil
+        warningText != nil
     }
 
-    var workoutTitle: String {
-        workout.title ?? "Workout"
-    }
-
-    var workoutDate: String {
-        guard let startDate = workout.startDate else { return "Unknown date" }
-        return startDate.formattedString(with: .medium)
-    }
-
-    var formattedScore: String {
-        metric.displayableValue(for: quantityType, value: metric.value)
-    }
-
-    var unitString: String {
-        metric.unit.unitString ?? ""
+    var dateString: String {
+        date.formattedString(with: .medium)
     }
 
     var scoreAttributedString: AttributedString {
         var result = AttributedString()
 
-        // Score part with primary font
         var scoreText = AttributedString(formattedScore)
         scoreText.font = SQFont(type: .bodySmallSemiBold).font
         scoreText.foregroundColor = SQColor.textPrimary.color
         result.append(scoreText)
 
-        // Unit part with smaller secondary font
         if !unitString.isEmpty {
             var unitText = AttributedString(" " + unitString)
             unitText.font = SQFont(type: .bodyExtraSmall).font
@@ -58,19 +43,30 @@ final class SQLeaderboardRowViewModel: Identifiable {
         return result
     }
 
-    init(rank: Int, workout: SQWorkoutSessionable, metric: SQWorkoutMetric, quantityType: SQQuantityType, state: LeaderboardStating) {
-        self.id = workout.id
+    init(
+        id: String,
+        rank: Int,
+        title: String,
+        date: Date,
+        value: Double,
+        formattedScore: String,
+        unitString: String,
+        warningText: String? = nil,
+        state: LeaderboardStating
+    ) {
+        self.id = id
         self.rank = rank
-        self.workout = workout
-        self.metric = metric
-        self.quantityType = quantityType
+        self.title = title
+        self.date = date
+        self.value = value
+        self.formattedScore = formattedScore
+        self.unitString = unitString
+        self.warningText = warningText
         self.state = state
     }
 
     func warningTapped() {
-        print("PTD Warning Tapped")
-        guard let warningText = metric.warningText else { return }
-        
+        guard let warningText else { return }
         state.hub.alertEvents.send(
             .present(.init(
                 title: "Data Accuracy Notice",
