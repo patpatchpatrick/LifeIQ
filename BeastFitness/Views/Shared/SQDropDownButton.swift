@@ -14,7 +14,7 @@ struct SQDropDownButton: View {
         HStack(spacing: 4) {
             Text(viewModel.title)
                 .sqFont(.body)
-                .foregroundStyle(SQColor.textPrimary.color)
+                .sqForegroundColor(.textPrimary)
             
             SQImageView(image: .init(
                 symbol: .chevronDown,

@@ -35,21 +35,23 @@ struct SQDropDownMenu: View {
             .onPreferenceChange(SQDropDownAnchorKey.self) { frame in
                 buttonFrame = frame
             }
-            .onTapGesture {
-                guard !isDisabled else { return }
-                let presentation = SQDropDownMenuState.MenuPresentation(
-                    anchorFrame: buttonFrame,
-                    items: menuViewModel.dropDownButtons,
-                    selectedTitle: menuViewModel.mainButton.title,
-                    onSelect: { title in
-                        menuViewModel.dropDownButtons
-                            .first(where: { $0.title == title })?
-                            .selected()
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    guard !isDisabled else { return }
+                    let presentation = SQDropDownMenuState.MenuPresentation(
+                        anchorFrame: buttonFrame,
+                        items: menuViewModel.dropDownButtons,
+                        selectedTitle: menuViewModel.mainButton.title,
+                        onSelect: { title in
+                            menuViewModel.dropDownButtons
+                                .first(where: { $0.title == title })?
+                                .selected()
+                        }
+                    )
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        SQAppState.shared.dropDownMenuState.present(presentation)
                     }
-                )
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    SQAppState.shared.dropDownMenuState.present(presentation)
                 }
-            }
+            )
     }
 }
