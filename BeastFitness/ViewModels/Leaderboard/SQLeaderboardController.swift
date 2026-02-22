@@ -135,6 +135,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: mockMetric.value,
                     formattedScore: mockMetric.displayableValue(for: quantityType, value: mockMetric.value),
                     unitString: mockMetric.unit.unitString ?? "",
+                    allTimeRank: index,
+                    allTimeTotal: 10,
                     state: state
                 )
             }
@@ -150,6 +152,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: 45.0,
                     formattedScore: "45.0",
                     unitString: "mL/kg/min",
+                    allTimeRank: index,
+                    allTimeTotal: 10,
                     state: state
                 )
             }
@@ -218,6 +222,19 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 ? workoutMetrics.sorted { $0.metric.value < $1.metric.value }
                 : workoutMetrics.sorted { $0.metric.value > $1.metric.value }
 
+            // Load all-time values for percentile ranking. When already on all-time,
+            // reuse the values already in hand to avoid a redundant fetch.
+            let allTimeValues: [Double]
+            if selectedTimeRange == .allTime {
+                allTimeValues = sortedMetrics.map { $0.metric.value }
+            } else {
+                allTimeValues = await fetchAllTimeWorkoutMetricValues(
+                    quantityType: quantityType,
+                    activityType: activityType,
+                    context: context
+                )
+            }
+
             rows = sortedMetrics.enumerated().map { index, item in
                 SQLeaderboardRowViewModel(
                     id: item.workout.id,
@@ -228,6 +245,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.value),
                     unitString: item.metric.unit.unitString ?? "",
                     warningText: item.metric.warningText,
+                    allTimeRank: computeAllTimeRank(value: item.metric.value, allTimeValues: allTimeValues, isLowerBetter: mode.isLowerBetter),
+                    allTimeTotal: allTimeValues.count,
                     state: state
                 )
             }
@@ -287,6 +306,14 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             // Sort descending (highest VO2 max = rank #1)
             let sorted = byDay.values.sorted { $0.value > $1.value }
 
+            // Load all-time values for percentile ranking.
+            let allTimeValues: [Double]
+            if selectedTimeRange == .allTime {
+                allTimeValues = sorted.map { $0.value }
+            } else {
+                allTimeValues = await fetchAllTimeVO2MaxValues()
+            }
+
             rows = sorted.enumerated().map { index, sample in
                 SQLeaderboardRowViewModel(
                     id: sample.healthKitId ?? UUID().uuidString,
@@ -296,6 +323,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: sample.value,
                     formattedScore: String(format: "%.1f", sample.value),
                     unitString: "mL/kg/min",
+                    allTimeRank: computeAllTimeRank(value: sample.value, allTimeValues: allTimeValues, isLowerBetter: false),
+                    allTimeTotal: allTimeValues.count,
                     state: state
                 )
             }
@@ -324,6 +353,54 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 context: .healthKit
             )
         }
+    }
+
+    // MARK: - All-Time Percentile Helpers
+
+    /// Returns the rank of `value` within `allTimeValues` (1 = best).
+    /// Rank is the number of all-time entries that are strictly better, plus 1.
+    private func computeAllTimeRank(value: Double, allTimeValues: [Double], isLowerBetter: Bool) -> Int {
+        if isLowerBetter {
+            return allTimeValues.filter { $0 < value }.count + 1
+        } else {
+            return allTimeValues.filter { $0 > value }.count + 1
+        }
+    }
+
+    /// Loads all-time metric values for a given activity type, used for percentile calculation
+    /// when the current leaderboard is filtered to a sub-range.
+    private func fetchAllTimeWorkoutMetricValues(
+        quantityType: SQQuantityType,
+        activityType: HKWorkoutActivityType,
+        context: ModelContext
+    ) async -> [Double] {
+        guard let allWorkouts = try? await workoutManager.getWorkouts(
+            for: AppTimeRange.allTime.sqTimeRange,
+            modelContext: context
+        ) else { return [] }
+
+        var values: [Double] = []
+        for workout in allWorkouts where workout.activityType == activityType {
+            if let metric = await workout.getMetric(for: quantityType) {
+                values.append(metric.value)
+            }
+        }
+        return values
+    }
+
+    /// Loads all-time VO2 max values (deduplicated by day), used for percentile calculation
+    /// when the current leaderboard is filtered to a sub-range.
+    private func fetchAllTimeVO2MaxValues() async -> [Double] {
+        guard let samples = try? await SQHealthKitManager.shared.fetchVO2MaxSamples(.allTime) else {
+            return []
+        }
+        let calendar = Calendar.current
+        var bestByDay: [Date: Double] = [:]
+        for sample in samples {
+            let dayStart = calendar.startOfDay(for: sample.startDate)
+            bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, sample.value)
+        }
+        return Array(bestByDay.values)
     }
 
     // MARK: - Chart

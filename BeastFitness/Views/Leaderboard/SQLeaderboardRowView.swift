@@ -78,6 +78,12 @@ struct SQLeaderboardRowView: View {
 
             // Score (right side)
             Text(viewModel.scoreAttributedString)
+
+            // All-time percentile
+            Text(viewModel.percentileString ?? "")
+                .sqFont(.bodyExtraSmall)
+                .foregroundColor(viewModel.percentileColor.color)
+                .frame(width: 60, alignment: .trailing)
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.m)

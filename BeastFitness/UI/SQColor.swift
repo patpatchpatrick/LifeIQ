@@ -62,8 +62,37 @@ indirect enum SQColor {
     case colorFadedRed
     case colorFadedGreen
     case colorGreenDarkBorder
+
+    /// Interpolates between red → base color → green on a **-1 to +1 scale**:
+    ///
+    /// - `+1.0` → full green
+    /// - ` 0.0` → `base` color (neutral, defaults to `.textPrimary`)
+    /// - `-1.0` → full red
+    ///
+    /// Values between these points are linearly interpolated.
+    ///
+    /// **Example — rank-based coloring:**
+    /// ```swift
+    /// // rank 1 = best (green), last rank = worst (red)
+    /// let percent = 1.0 - 2.0 * Double(rank) / Double(total)
+    /// SQColor.colorGreenRed(percent: percent)
+    /// ```
+    ///
+    /// **Example — change percentage (amplified for small values):**
+    /// ```swift
+    /// // percent is e.g. +0.52 (52% up) or -0.30 (30% down)
+    /// SQColor.colorGreenRed(percent: percent * 4) // multiply to reach full green/red sooner
+    /// ```
     case colorGreenRed(percent: Double, base: SQColor = .textPrimary)
+
+    /// Interpolates from `base` toward green on a **0 to 1 scale**:
+    /// - `0.0` → `base` color (neutral)
+    /// - `1.0` → full green
     case colorGreenPct(percent: Double, base: SQColor = .textPrimary)
+
+    /// Interpolates from `base` toward red on a **0 to 1 scale**:
+    /// - `0.0` → `base` color (neutral)
+    /// - `1.0` → full red
     case colorRedPct(percent: Double, base: SQColor = .textPrimary)
     // MARK: - Raw
     case hex(String)

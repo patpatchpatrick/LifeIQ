@@ -97,17 +97,52 @@ struct SQLeaderboardView: View {
     }
     
 
+    // MARK: - Column Header
+
+    /// Mirrors the HStack structure of SQLeaderboardRowView for aligned column labels.
+    var columnHeader: some View {
+        HStack(spacing: .SQSpace.m) {
+            Text("Rank")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+                .frame(width: 50, alignment: .leading)
+
+            Text("Workout")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("Score")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+
+            Text("Rank All Time")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+                .frame(width: 60, alignment: .trailing)
+        }
+        .padding(.horizontal, .SQSpace.l)
+        .padding(.vertical, .SQSpace.s)
+        .frame(maxWidth: .infinity)
+        .sqBackgroundColor(.background)
+    }
+
     // MARK: - List
 
     var leaderboardList: some View {
-        List {
-            ForEach(Array(controller.rows.enumerated()), id: \.1.id) { index, row in
-                rowView(row, index: index)
+        // Column header lives outside the List so it stays pinned without
+        // fighting SwiftUI's built-in section header insets and top padding.
+        VStack(spacing: 0) {
+            columnHeader
+            List {
+                ForEach(Array(controller.rows.enumerated()), id: \.1.id) { index, row in
+                    rowView(row, index: index)
+                }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(SQColor.background.color)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(SQColor.background.color)
     }
     
     var shouldShowEmptyView: Bool {
