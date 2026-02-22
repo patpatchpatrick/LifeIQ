@@ -20,7 +20,23 @@ struct SQConcreteWorkoutSessionOverridableData: SQWorkoutSessionOverridableData 
 }
 
 protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
+    /// The app's internal stable identifier for this workout session.
+    ///
+    /// For **HealthKit workouts**: defaults to `workoutSource.sourcableData.sourceId`
+    /// (the HK UUID), so `id == sourceId` for all HK workouts whether or not they've
+    /// been saved to SwiftData. The SwiftData entity stores this as its primary key.
+    ///
+    /// For **manual workouts**: a UUID generated at creation time. Also equals
+    /// `sourceId` since the convenience init defaults `id` to `sourceId`.
     var id: String { get }
+
+    /// The HealthKit `HKWorkout.uuid.uuidString` for this workout.
+    ///
+    /// - For workouts **fetched from HealthKit**: equals `id` and `sourceId` (all three
+    ///   are the same HK UUID).
+    /// - For **manual workouts saved to HealthKit**: differs from `id`/`sourceId`
+    ///   (which are the app's internal UUID). `hkWorkoutId` is assigned by HealthKit
+    ///   after the workout is saved and may be nil until then.
     var hkWorkoutId: String? { get }
     func updateHkWorkoutId(_ hkWorkoutId: String?)
     

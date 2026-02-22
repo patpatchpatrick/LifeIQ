@@ -16,6 +16,8 @@ protocol SQWorkoutManaging {
     func deletionTypeForWorkout(_ workout: any SQWorkoutSessionable) -> SQWorkoutManager.WorkoutDeletionType
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
+    func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext)
+    func fetchProcessedSourceIds(context: ModelContext) -> Set<String>
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
@@ -163,5 +165,21 @@ final class SQWorkoutManager: SQWorkoutManaging {
     
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
         return try SQWorkoutSessionEntity.getFromHkWorkout(source: workoutSource, hkWorkoutId: hkWorkoutId, context: modelContext)
+    }
+
+    func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext) {
+        for workout in workouts {
+            let sourceId = workout.workoutSource.sourcableData.sourceId
+            SQWorkoutProcessedEntity.markAsProcessed(sourceId: sourceId, context: context)
+        }
+        SQLogger.shared.log(
+            "Marked \(workouts.count) workout(s) as processed",
+            .debug,
+            context: .workoutManager
+        )
+    }
+
+    func fetchProcessedSourceIds(context: ModelContext) -> Set<String> {
+        SQWorkoutProcessedEntity.fetchProcessedSourceIds(context: context)
     }
 }
