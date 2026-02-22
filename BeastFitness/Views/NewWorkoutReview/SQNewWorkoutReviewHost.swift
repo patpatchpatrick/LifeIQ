@@ -10,18 +10,18 @@ struct SQNewWorkoutReviewHost: View {
     @Bindable var reviewState: SQNewWorkoutReviewState
     @Environment(\.modelContext) private var modelContext
     @State private var navigationPath = NavigationPath()
-    @State private var controllerCache: [String: SQWorkoutSummaryController] = [:]
+    @State private var summaryController: SQWorkoutSummaryController?
 
     var body: some View {
         ZStack {
-            if let workout = reviewState.currentWorkout {
+            if let workout = reviewState.currentWorkout, let controller = summaryController {
                 Color.black.opacity(0.45)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     NavigationStack(path: $navigationPath) {
                         SQWorkoutSummaryView(
-                            controller: cachedController(for: workout),
+                            controller: controller,
                             customNavigationTitle: navigationTitle(for: workout)
                         )
                         .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
@@ -51,8 +51,22 @@ struct SQNewWorkoutReviewHost: View {
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: reviewState.isPresented)
-        .onChange(of: reviewState.currentWorkout?.id) { _, _ in
+        .task(id: reviewState.currentWorkout?.id) {
+            summaryController = nil
             navigationPath = NavigationPath()
+            guard let workout = reviewState.currentWorkout else { return }
+            let state = WorkoutSummaryState(hub: SQAppState.shared.hub)
+            let controller = SQWorkoutSummaryController(
+                state: state,
+                onPushEditWorkoutView: { editWorkout in
+                    navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: editWorkout))
+                },
+                onDismiss: {
+                    reviewState.markCurrentAsProcessed(context: modelContext)
+                }
+            )
+            summaryController = controller
+            await controller.load(workout: workout)
         }
     }
 
@@ -62,26 +76,33 @@ struct SQNewWorkoutReviewHost: View {
     var actionBar: some View {
         HStack(spacing: .SQSpace.m) {
             if reviewState.queueCount > 1 {
-                Button("Skip Remaining") {
-                    reviewState.markAllAsProcessed(context: modelContext)
-                }
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
+                SQButton(
+                    shouldHugContent: false,
+                    title: "Skip Remaining",
+                    action: {
+                        reviewState.markAllAsProcessed(context: modelContext)
+                    }
+                )
 
                 Spacer()
 
-                Button("Review Next Workout") {
-                    reviewState.markCurrentAsProcessed(context: modelContext)
-                }
-                .sqFont(.bodySmallBold)
-                .sqForegroundColor(.textPrimary)
+                SQButton(
+                    shouldHugContent: false,
+                    title: "Review next",
+                    action: {
+                        reviewState.markCurrentAsProcessed(context: modelContext)
+                    }
+                )
             } else {
                 Spacer()
-                Button("Done") {
-                    reviewState.markCurrentAsProcessed(context: modelContext)
-                }
-                .sqFont(.bodySmallBold)
-                .sqForegroundColor(.textPrimary)
+                
+                SQButton(
+                    shouldHugContent: false,
+                    title: "Done",
+                    action: {
+                        reviewState.markCurrentAsProcessed(context: modelContext)
+                    }
+                )
             }
         }
         .padding(.horizontal, .SQSpace.xl)
@@ -94,27 +115,5 @@ struct SQNewWorkoutReviewHost: View {
     private func navigationTitle(for workout: SQWorkoutSessionable) -> String {
         let dateString = workout.startDate?.formattedString(with: .medium) ?? ""
         return "New Workout · \(dateString)"
-    }
-
-    /// Creates a fresh SQWorkoutSummaryController per workout (not the .default singleton)
-    /// to avoid corrupting SQWorkoutsListView's cached controllers.
-    private func cachedController(for workout: SQWorkoutSessionable) -> SQWorkoutSummaryController {
-        let key = workout.id
-        if let cached = controllerCache[key] { return cached }
-
-        let summaryState = WorkoutSummaryState(hub: SQAppState.shared.hub)
-        let controller = SQWorkoutSummaryController(
-            state: summaryState,
-            onPushEditWorkoutView: { editWorkout in
-                navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: editWorkout))
-            },
-            onDismiss: {
-                reviewState.markCurrentAsProcessed(context: modelContext)
-            }
-        )
-        Task { await controller.load(workout: workout) }
-
-        controllerCache[key] = controller
-        return controller
     }
 }
