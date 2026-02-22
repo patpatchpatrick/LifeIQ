@@ -19,6 +19,9 @@ final class SQUserDefaults {
     /// Map: exerciseId -> lastUsedAtEpochSeconds
     private static let keyRecentExercisesLastUsedAt = "exercises.recents.last-used-at"
 
+    /// Date the app was first installed on this device
+    private static let keyAppInstallDate = "app.install-date"
+
     // MARK: - Private helpers (Workouts)
 
     private var hiddenWorkoutIds: Set<String> {
@@ -90,6 +93,19 @@ final class SQUserDefaults {
     /// Clear all recent exercises
     func clearRecentExercises() {
         UserDefaults.standard.removeObject(forKey: Self.keyRecentExercisesLastUsedAt)
+    }
+
+    // MARK: - Public API (App Install Date)
+
+    /// Returns the date the app was first installed. Nil only before `recordInstallDateIfNeeded()` is called.
+    var appInstallDate: Date? {
+        UserDefaults.standard.object(forKey: Self.keyAppInstallDate) as? Date
+    }
+
+    /// Writes the install date once. Subsequent calls are no-ops.
+    func recordInstallDateIfNeeded() {
+        guard UserDefaults.standard.object(forKey: Self.keyAppInstallDate) == nil else { return }
+        UserDefaults.standard.set(Date(), forKey: Self.keyAppInstallDate)
     }
 }
 

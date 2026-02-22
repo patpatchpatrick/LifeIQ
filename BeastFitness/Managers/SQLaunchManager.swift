@@ -13,6 +13,7 @@ final class SQLaunchManager {
     func performLaunchTasks() {
         guard !hasPerformedLaunchTasks else { return }
         hasPerformedLaunchTasks = true
+        SQUserDefaults.shared.recordInstallDateIfNeeded()
         SQWatchInterface.shared.configureMirroringHandler(onStart: { _ in })
     }
 }
