@@ -31,7 +31,8 @@ struct BeastFitnessApp: App {
             SQDailyCheckInEntity.self,
             SQWorkoutSessionEntity.self,
             SQMetricDefinitionEntity.self,
-            SQSyncMetadataEntity.self
+            SQSyncMetadataEntity.self,
+            SQWorkoutProcessedEntity.self
         ])
     }
 }
