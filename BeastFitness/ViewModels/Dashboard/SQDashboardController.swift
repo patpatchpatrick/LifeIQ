@@ -269,6 +269,9 @@ final class SQDashboardController: SQDashboardInterface {
 
             // Clear loading state
             state.setLoading(false)
+
+            // Emit any unreviewed recent workouts for the new workout review modal
+            processNewWorkoutReviews(workouts: past30DaysWorkouts, context: context)
         } catch {
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
 
@@ -292,6 +295,42 @@ final class SQDashboardController: SQDashboardInterface {
             context: context
         )
         state.displayDailyCheckInSheet(with: dailyCheckInStats, for: targetDate)
+    }
+
+    // MARK: - New Workout Review Processing
+
+    private func processNewWorkoutReviews(
+        workouts: [SQWorkoutSessionable],
+        context: ModelContext
+    ) {
+        guard let installDate = SQUserDefaults.shared.appInstallDate else {
+            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .debug, context: .dashboard)
+            return
+        }
+
+        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
+        let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
+
+        let reviewableWorkouts = workouts.filter { workout in
+            guard let startDate = workout.startDate else { return false }
+            let sourceId = workout.workoutSource.sourcableData.sourceId
+            return startDate >= fourteenDaysAgo
+                && startDate >= installDate
+                && !processedIds.contains(sourceId)
+        }
+
+        guard !reviewableWorkouts.isEmpty else { return }
+
+        let sorted = reviewableWorkouts.sorted {
+            ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
+        }
+
+        SQLogger.shared.log(
+            "Emitting \(sorted.count) workout(s) ready for review",
+            .info,
+            context: .dashboard
+        )
+        state.hub.workoutReviewEvents.send(.workoutsReadyForReview(sorted))
     }
 
     // MARK: - Metrics Subsection Builder
