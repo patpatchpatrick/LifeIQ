@@ -51,12 +51,18 @@ struct SQRootTabView: View {
     }
     
     var body: some View {
-        mainTabViewWithSheets
-            .frame(maxHeight: .infinity)
-            .background(Color.purple)
-            .accentColor(SQColor.textPrimary.color)
-            .onOpenURL(perform: { url in
-                viewModel.deepLinkManager.handleUriDeepLink(for: url)
-            })
+        ZStack {
+            mainTabViewWithSheets
+
+            SQNewWorkoutReviewHost(
+                reviewState: SQAppState.shared.newWorkoutReviewState
+            )
+        }
+        .frame(maxHeight: .infinity)
+        .background(Color.purple)
+        .accentColor(SQColor.textPrimary.color)
+        .onOpenURL(perform: { url in
+            viewModel.deepLinkManager.handleUriDeepLink(for: url)
+        })
     }
 }
