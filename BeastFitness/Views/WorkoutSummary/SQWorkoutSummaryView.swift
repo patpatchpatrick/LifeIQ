@@ -59,7 +59,7 @@ struct SQWorkoutSummaryView: View {
             if controller.state.shouldShowRouteView {
                 SQDashboardSubsection(title: "Route", isCollapsed: $routeSectionCollapsed) {
                     SQWorkoutRouteMapView(
-                        isLoading: controller.state.isLoadingRoute,
+                        isLoading: controller.state.isLoadingRoute || controller.state.isLoading,
                         locations: controller.state.routeLocations,
                         errorMessage: controller.state.routeLoadErrorMessage
                     )
@@ -99,6 +99,7 @@ struct SQWorkoutSummaryView: View {
     }
     var body: some View {
         mainScroll
+            .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
             .navigationTitle(customNavigationTitle ?? "Workout summary")
             .toolbar {

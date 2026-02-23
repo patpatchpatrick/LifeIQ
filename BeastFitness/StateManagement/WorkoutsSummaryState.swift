@@ -13,6 +13,7 @@ import CoreLocation
 
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {
+    var isLoading: Bool { get set }
     var hub: EventHub { get }
     var user: SQUser? { get }
     var userFullName: String? { get }
@@ -51,6 +52,7 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var workoutStatsRows: [SQPerformanceRowData] = []
     private(set) var workoutStatRowColumnCount: Int = 2
 
+    var isLoading: Bool = true
     var isLoadingRoute: Bool = false
     var routeLocations: [CLLocation] = []
     var routeLoadErrorMessage: String? = nil

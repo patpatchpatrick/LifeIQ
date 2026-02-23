@@ -47,10 +47,12 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     }
 
     func load(workout: any SQWorkoutSessionable) async {
+        state.isLoading = true
         state.reset()
         await state.load(workout: workout)
         await loadRouteIfNeeded()
         await loadPerformanceDataIfNeeded(workout: workout)
+        state.isLoading = false
     }
 
     func pushEditWorkoutView() {

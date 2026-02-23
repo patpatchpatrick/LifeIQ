@@ -16,38 +16,20 @@ struct SQDashboardView: View {
         ScrollView {
             VStack(spacing: 0) {
                 // Dashboard header with time range picker
-                if !controller.state.isLoading {
-                    HStack {
-                        Text("Dashboard")
-                            .sqFont(.titleNav)
-                            .sqForegroundColor(.textPrimary)
+                HStack {
+                    Text("Dashboard")
+                        .sqFont(.titleNav)
+                        .sqForegroundColor(.textPrimary)
 
-                        Spacer()
+                    Spacer()
 
-                        SQDropDownMenu(
-                            menuViewModel: controller.timeRangeMenuViewModel,
-                            isDisabled: false
-                        )
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    SQDropDownMenu(
+                        menuViewModel: controller.timeRangeMenuViewModel,
+                        isDisabled: false
+                    )
                 }
-
-                // Loading indicator
-                if controller.state.isLoading {
-                    VStack(spacing: .SQSpace.xl) {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .scaleEffect(1.5)
-                            .padding(.top, 100)
-
-                        Text("Syncing daily check-ins...")
-                            .sqFont(.bodySmall)
-                            .sqForegroundColor(.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.SQSpace.xxl)
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
 
                 // Content - only show when not loading
                 if !controller.state.isLoading {
@@ -74,7 +56,7 @@ struct SQDashboardView: View {
     var body: some View {
         mainScroll
             .navigationBarTitleDisplayMode(.inline)
-           .toolbar {
+            .toolbar {
                ToolbarItem(placement: .topBarLeading) {
                    HStack(spacing: .SQSpace.l) {
                        // TODO: Remove mock
@@ -104,6 +86,8 @@ struct SQDashboardView: View {
                    }
                }
            }
+            .redacted(controller.state.isLoading, reason: .placeholder)
+            .disabled(controller.state.isLoading)
             .background(SQColor.background.color.ignoresSafeArea())
             .task {
                 await controller.loadUI(for: modelContext)
