@@ -49,7 +49,7 @@ struct SQSettingsView: View {
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .sqBackgroundColor(.background)
+                        .sqBackgroundColor(.backgroundSheet)
                         .navigationTitle("Advanced")
                         .navigationBarTitleDisplayMode(.inline)
                     }

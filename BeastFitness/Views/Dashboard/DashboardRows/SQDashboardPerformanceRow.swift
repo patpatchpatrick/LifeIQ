@@ -37,12 +37,11 @@ struct SQDashboardPerformanceRow: View {
         HStack(spacing: 12) {
             // Column 1: Icon + Title (40%)
             HStack(spacing: 8) {
-                if isEmoji {
-                    Text(data.icon)
-                        .font(.sqFont(.bodyLarge))
-                } else {
-                    // SF Symbol
-                    if let symbol = SQImageSymbol(rawValue: data.icon) {
+                Group {
+                    if isEmoji {
+                        Text(data.icon)
+                            .font(.sqFont(.bodyLarge))
+                    } else if let symbol = SQImageSymbol(rawValue: data.icon) {
                         SQImageView(
                             image: .init(
                                 symbol: symbol,
@@ -51,12 +50,12 @@ struct SQDashboardPerformanceRow: View {
                         )
                         .frame(width: 16, height: 16)
                     } else {
-                        // Fallback for missing symbols
                         Image(systemName: "questionmark.circle")
                             .font(.sqFont(.bodySmall))
                             .sqForegroundColor(.textSecondary)
                     }
                 }
+                .frame(width: 24)
 
                 Text(data.title)
                     .font(.sqFont(.body))

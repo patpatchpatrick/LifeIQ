@@ -128,6 +128,7 @@ struct SQDashboardView: View {
                 set: { isVisible in controller.state.toggleLeaderboardSheetVisibility(isVisible) })) {
                     if let leaderboardController = controller.state.leaderboardController {
                         SQLeaderboardView(controller: leaderboardController)
+                            .sqBackgroundColor(.backgroundSheet)
                     }
                 }
     }

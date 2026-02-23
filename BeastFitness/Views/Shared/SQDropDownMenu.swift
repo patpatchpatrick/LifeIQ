@@ -9,11 +9,12 @@ import SwiftUI
 struct SQDropDownMenu: View {
     @ObservedObject var menuViewModel: SQDropDownMenuViewModel
     let isDisabled: Bool
+    var showBackground: Bool = true
 
     @State private var buttonFrame: CGRect = .zero
 
     var body: some View {
-        SQDropDownButton(viewModel: menuViewModel.mainButton)
+        SQDropDownButton(viewModel: menuViewModel.mainButton, showBackground: showBackground)
             .disabled(isDisabled)
             .frame(height: 30)
             .background(

@@ -9,7 +9,8 @@ import SwiftUI
 
 struct SQDropDownButton: View {
     @ObservedObject var viewModel: SQButtonViewModel
-    
+    var showBackground: Bool = true
+
     var content: some View {
         HStack(spacing: 4) {
             Text(viewModel.title)
@@ -38,7 +39,7 @@ struct SQDropDownButton: View {
     var body: some View {
         button
             .padding(4)
-            .background(SQColor.backgroundTertiaryLight.color)
+            .background(showBackground ? SQColor.backgroundTertiaryLight.color : Color.clear)
             .cornerRadius(8)
     }
 }

@@ -124,7 +124,7 @@ struct SQLeaderboardView: View {
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.s)
         .frame(maxWidth: .infinity)
-        .sqBackgroundColor(.background)
+        .sqBackgroundColor(.backgroundSheet)
     }
 
     // MARK: - List
@@ -175,7 +175,8 @@ struct SQLeaderboardView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     SQDropDownMenu(
                         menuViewModel: controller.timeRangeMenuViewModel,
-                        isDisabled: controller.isLoading
+                        isDisabled: controller.isLoading,
+                        showBackground: false
                     )
                 }
             }
