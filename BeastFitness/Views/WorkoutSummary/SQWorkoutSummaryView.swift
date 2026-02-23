@@ -66,6 +66,15 @@ struct SQWorkoutSummaryView: View {
                 }
                 .padding(.bottom, .SQSpace.xl)
             }
+            
+            SQDashboardSubsection(title: "Stats", isCollapsed: $statsSectionCollapsed) {
+                VStack(spacing: .SQSpace.l) {
+                    ForEach(controller.state.workoutStatsRows) { row in
+                        SQDashboardPerformanceRow(data: row)
+                    }
+                }
+            }
+            .padding(.bottom, .SQSpace.xl)
 
             if controller.state.shouldShowPerformanceSection {
                 SQDashboardSubsection(title: "Performance", isCollapsed: $performanceSectionCollapsed) {
@@ -77,14 +86,6 @@ struct SQWorkoutSummaryView: View {
                     }
                 }
                 .padding(.bottom, .SQSpace.xl)
-            }
-
-            SQDashboardSubsection(title: "Stats", isCollapsed: $statsSectionCollapsed) {
-                VStack(spacing: .SQSpace.l) {
-                    ForEach(controller.state.workoutStatsRows) { row in
-                        SQWorkoutSummaryStatsRow(row: row, columnWidth: statColumnWidth)
-                    }
-                }
             }
         }
     }

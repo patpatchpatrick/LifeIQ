@@ -464,18 +464,7 @@ final class SQDashboardController: SQDashboardInterface {
             rows.append(vo2MaxRow)
         }
         
-        let metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] = [
-            .running: [
-                .sqFastestPace(.mile),
-                .sqFastestPace(.fiveK),
-                .sqPaceRunning,
-                .distanceWalkingRunning
-            ],
-            .cycling: [
-                .sqFastestPace(.fiveK),
-                .distanceCycling
-            ]
-        ]
+        let metricsForActivityType = workoutManager.metricsForActivityType
 
         // Build performance rows for each activity type and metric
         for (activityType, metricTypes) in metricsForActivityType {

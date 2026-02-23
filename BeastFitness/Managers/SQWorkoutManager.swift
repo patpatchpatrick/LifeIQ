@@ -18,6 +18,7 @@ protocol SQWorkoutManaging {
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
     func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext)
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String>
+    var metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] { get }
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
@@ -181,5 +182,25 @@ final class SQWorkoutManager: SQWorkoutManaging {
 
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String> {
         SQWorkoutProcessedEntity.fetchProcessedSourceIds(context: context)
+    }
+}
+
+// MARK: - Global Config
+
+extension SQWorkoutManager {
+    
+    var metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] {
+        [
+            .running: [
+                .sqFastestPace(.mile),
+                .sqFastestPace(.fiveK),
+                .sqPaceRunning,
+                .distanceWalkingRunning
+            ],
+            .cycling: [
+                .sqFastestPace(.fiveK),
+                .distanceCycling
+            ]
+        ]
     }
 }

@@ -18,7 +18,7 @@ protocol WorkoutSummaryStating: AnyObject {
     var userFullName: String? { get }
     var workoutStartDate: Date? { get }
     var workoutTitle: String? { get }
-    var workoutStatsRows: [SQWorkoutSummaryStatRow] { get }
+    var workoutStatsRows: [SQPerformanceRowData] { get }
     var workoutStatRowColumnCount: Int { get }
 
     var currentWorkout: SQWorkoutSessionable? { get }
@@ -48,7 +48,7 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var userFullName: String?
     private(set) var workoutStartDate: Date?
     private(set) var workoutTitle: String?
-    private(set) var workoutStatsRows: [SQWorkoutSummaryStatRow] = []
+    private(set) var workoutStatsRows: [SQPerformanceRowData] = []
     private(set) var workoutStatRowColumnCount: Int = 2
 
     var isLoadingRoute: Bool = false
@@ -92,8 +92,7 @@ protocol WorkoutSummaryStating: AnyObject {
         workoutTitle = workout.visibleTitle
 
         let visibleStats = await workout.visibleStats() ?? []
-        let visibleStatsChunks = visibleStats.chunked(into: workoutStatRowColumnCount)
-        workoutStatsRows = visibleStatsChunks.map { .init(visibleStats: $0) }
+        workoutStatsRows = visibleStats.map { .init(id: $0.id.uuidString, icon: $0.icon, title: $0.title, bestValue: $0.value, unit: "", percentileRank: nil) }
     }
 
     func reset() {

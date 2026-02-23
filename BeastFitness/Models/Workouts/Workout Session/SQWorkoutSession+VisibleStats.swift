@@ -9,6 +9,7 @@ import Foundation
 
 struct SQWorkoutSessionVisibleStat: Identifiable, Hashable {
     let id = UUID()
+    let icon: String
     let title: String
     let value: String
 
@@ -25,11 +26,11 @@ extension SQWorkoutSessionable {
         var stats = [SQWorkoutSessionVisibleStat]()
 
         if let activeDuration {
-            stats.append(.init(title: "Active Time", value: activeDuration.readableTime()))
+            stats.append(.init(icon: SQImageSymbol.clock.rawValue, title: "Active Time", value: activeDuration.readableTime()))
         }
 
         if let startDate, let endDate {
-            stats.append(.init(title: "Time", value: endDate.timeIntervalSince(startDate).readableTime()))
+            stats.append(.init(icon: SQImageSymbol.clock.rawValue, title: "Time", value: endDate.timeIntervalSince(startDate).readableTime()))
         }
 
         return stats.isEmpty ? nil : stats

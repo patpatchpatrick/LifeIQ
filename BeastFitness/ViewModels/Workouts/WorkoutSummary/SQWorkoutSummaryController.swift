@@ -136,31 +136,6 @@ extension SQWorkoutSummaryController {
 
 extension SQWorkoutSummaryController {
 
-    /// Mirrors the dashboard's metricsForActivityType — defines which metrics to show
-    /// (with all-time percentile ranks) per activity type.
-    private var metricsForActivityType: [HKWorkoutActivityType: [SQQuantityType]] {
-        [
-            .running: [
-                .sqFastestPace(.mile),
-                .sqFastestPace(.fiveK),
-                .sqPaceRunning,
-                .distanceWalkingRunning
-            ],
-            .walking: [
-                .sqPaceRunning,
-                .distanceWalkingRunning
-            ],
-            .hiking: [
-                .sqPaceRunning,
-                .distanceWalkingRunning
-            ],
-            .cycling: [
-                .sqFastestPace(.fiveK),
-                .distanceCycling
-            ]
-        ]
-    }
-
     func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
         guard case .hkWorkout = workout.workoutSource else { return }
         guard let workoutEndDate = workout.endDate else { return }
@@ -201,6 +176,7 @@ extension SQWorkoutSummaryController {
             }
 
             // Workout metrics — same pattern as SQDashboardController
+            let metricsForActivityType = workoutManager.metricsForActivityType
             let metricTypes = metricsForActivityType[workout.activityType] ?? []
             for quantityType in metricTypes {
                 guard let currentMetric = await workout.getMetric(for: quantityType) else { continue }
