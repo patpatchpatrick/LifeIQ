@@ -55,10 +55,11 @@ struct SQNewWorkoutReviewHost: View {
             summaryController = nil
             navigationPath = NavigationPath()
             guard let workout = reviewState.currentWorkout else { return }
-            let state = WorkoutSummaryState(hub: SQAppState.shared.hub)
-            let controller = SQWorkoutSummaryController(
-                state: state,
+            
+            let controller = SQWorkoutSummaryController.default(
+                workout: workout,
                 onPushEditWorkoutView: { editWorkout in
+                    SQWorkoutSessionController.default.willAppear(with: editWorkout)
                     navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: editWorkout))
                 },
                 onDismiss: {
