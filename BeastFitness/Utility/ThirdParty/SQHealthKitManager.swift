@@ -20,6 +20,10 @@ protocol SQHealthKitManaging {
 
     /// VO₂ max samples in a time range (ascending by date).
     func fetchVO2MaxSamples(_ timeRange: SQTimeRange) async throws -> [SQVO2MaxSample]
+
+    /// The N most-recent VO₂ max samples recorded on or before the calendar day of `date`,
+    /// sorted descending by endDate.
+    func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample]
     
     /// Returns all route points for a workout (may be empty if no GPS).
     func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation]

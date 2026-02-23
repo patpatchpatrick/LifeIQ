@@ -99,6 +99,53 @@ extension SQHealthKitManager {
 
 extension SQHealthKitManager {
 
+    @MainActor
+    func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample] {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+
+        try await Self.healthStore.requestAuthorization(
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
+        )
+
+        guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+
+        // Include all samples through the end of the calendar day containing `date`
+        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: date) ?? date.addingTimeInterval(86400)
+        let startOfNextDay = Calendar.current.startOfDay(for: nextDay)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: .distantPast,
+            end: startOfNextDay,
+            options: .strictEndDate
+        )
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        let samples: [HKQuantitySample] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: vo2Type,
+                predicate: predicate,
+                limit: limit,
+                sortDescriptors: [sort]
+            ) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                continuation.resume(returning: samples as? [HKQuantitySample] ?? [])
+            }
+            Self.healthStore.execute(query)
+        }
+
+        return samples.map(Self.mapVO2MaxSample)
+    }
+}
+
+extension SQHealthKitManager {
+
     static let vo2MaxUnit: HKUnit = {
         // ml / (kg * min)
         let ml = HKUnit.literUnit(with: .milli)
