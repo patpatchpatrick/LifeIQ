@@ -20,12 +20,12 @@ protocol WorkoutSummaryStating: AnyObject {
     var workoutTitle: String? { get }
     var workoutStatsRows: [SQWorkoutSummaryStatRow] { get }
     var workoutStatRowColumnCount: Int { get }
-    
+
     var currentWorkout: SQWorkoutSessionable? { get }
     func load(workout: SQWorkoutSessionable) async
     func reset()
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable)
-    
+
     var isLoadingRoute: Bool { get set  }
     var routeLocations: [CLLocation] { get set }
     var routeLoadErrorMessage: String? { get set }
@@ -42,15 +42,15 @@ protocol WorkoutSummaryStating: AnyObject {
 @Observable final class WorkoutSummaryState: WorkoutSummaryStating {
     let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
-    
+
     private(set) var currentWorkout: (any SQWorkoutSessionable)?
     private(set) var user: SQUser?
     private(set) var userFullName: String?
     private(set) var workoutStartDate: Date?
     private(set) var workoutTitle: String?
     private(set) var workoutStatsRows: [SQWorkoutSummaryStatRow] = []
-    private(set) var workoutStatRowColumnCount: Int = 3
-    
+    private(set) var workoutStatRowColumnCount: Int = 2
+
     var isLoadingRoute: Bool = false
     var routeLocations: [CLLocation] = []
     var routeLoadErrorMessage: String? = nil
@@ -59,18 +59,18 @@ protocol WorkoutSummaryStating: AnyObject {
     private(set) var performanceRowData: [SQPerformanceRowData] = []
 
     var shouldShowPerformanceSection: Bool { !performanceRowData.isEmpty }
-    
+
     init(hub: EventHub) {
         self.hub = hub
         handleEventSubscriptions()
     }
-    
+
     private func handleEventSubscriptions() {
         hub.workoutEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
             case .workoutsUpdated(let workoutMap):
-                if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap [currentWorkoutId] {
+                if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap[currentWorkoutId] {
                     SQLogger.shared.log("Refreshing workout summary with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
                     Task {
                         await self.load(workout: updatedWorkout)
@@ -78,12 +78,11 @@ protocol WorkoutSummaryStating: AnyObject {
                 }
             case .workoutsDeleted, .activeWorkoutUpdate:
                 return
-                // No-op
             }
-            
+
         }.store(in: &cancellables)
     }
-    
+
     func load(workout: any SQWorkoutSessionable) async {
         SQLogger.shared.log("Loading workout summary with workout with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
         currentWorkout = workout
@@ -94,12 +93,9 @@ protocol WorkoutSummaryStating: AnyObject {
 
         let visibleStats = await workout.visibleStats() ?? []
         let visibleStatsChunks = visibleStats.chunked(into: workoutStatRowColumnCount)
-
-        workoutStatsRows = visibleStatsChunks.map {
-            .init(visibleStats: $0)
-        }
+        workoutStatsRows = visibleStatsChunks.map { .init(visibleStats: $0) }
     }
-    
+
     func reset() {
         routeLocations = []
         isLoadingRoute = false
@@ -114,32 +110,25 @@ protocol WorkoutSummaryStating: AnyObject {
     func loadPerformanceData(rowData: [SQPerformanceRowData]) {
         performanceRowData = rowData
     }
-    
+
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable) {
         hub.workoutEvents.send(.workoutsDeleted([workout.id: workout]))
     }
-    
-    
+
+
     /// Whether the summary UI should include the route map section.
-    /// We only show this for HK workouts, and only when it is relevant
-    /// (loading, has data, or an error occurred).
     var shouldShowRouteView: Bool {
         guard let workout = currentWorkout else { return false }
 
         // Only HealthKit workouts can have HKWorkoutRoute
         guard case .hkWorkout = workout.workoutSource else { return false }
 
-        // Don’t show an empty “No route” card for workouts where route is irrelevant,
-        // unless we’re actively loading or we already know there is a route/error.
+        // Don't show an empty "No route" card for workouts where route is irrelevant,
+        // unless we're actively loading or we already know there is a route/error.
         if isLoadingRoute || hasRoute || routeLoadErrorMessage != nil {
             return true
         }
 
-        // Optional: show proactively for common outdoor route activities,
-        // so the map appears (with loading) when the user opens the screen.
-        //
-        // If you don't have access to HKWorkoutActivityType here, use your app’s
-        // own activityType enum if it exists on SQWorkoutSessionable.
         switch workout.activityType {
         case .running, .walking, .cycling, .hiking:
             return true

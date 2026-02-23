@@ -7,13 +7,16 @@
 
 
 import SwiftUI
+import SwiftData
 import Combine
 
 @MainActor
 @Observable
 final class SQAppState {
     static let shared = SQAppState()
-    
+
+    var modelContext: ModelContext?
+
     let hub = EventHub()
 
     let userState: SQUserState

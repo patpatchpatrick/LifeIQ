@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import BeastFitnessCore
 import CoreLocation
+import HealthKit
 
 @MainActor
 protocol SQWorkoutSummaryInterface {
@@ -23,7 +24,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let healthKitManager: SQHealthKitManaging
     var onPushEditWorkoutView: (SQWorkoutSessionable) -> Void
     var onDismiss: () -> Void
-    
+
     @MainActor
     static func `default`(workout: any SQWorkoutSessionable, onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) -> SQWorkoutSummaryController {
         Self.default.onPushEditWorkoutView = onPushEditWorkoutView
@@ -33,7 +34,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         }
         return Self.default
     }
-    
+
     @MainActor
     static let `default`: SQWorkoutSummaryController = SQWorkoutSummaryController(state: SQAppState.shared.workoutSummaryState, onPushEditWorkoutView: { _ in }, onDismiss: {})
 
@@ -44,33 +45,33 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.onPushEditWorkoutView = onPushEditWorkoutView
         self.onDismiss = onDismiss
     }
-    
+
     func load(workout: any SQWorkoutSessionable) async {
         state.reset()
         await state.load(workout: workout)
         await loadRouteIfNeeded()
         await loadPerformanceDataIfNeeded(workout: workout)
     }
-    
+
     func pushEditWorkoutView() {
         guard let baseWorkout = state.currentWorkout else {
             SQLogger.shared.log("Workout missing. Can't push edit workout screen.", .error, context: .workoutSummary)
             return
         }
-        
+
         onPushEditWorkoutView(baseWorkout)
     }
-    
+
     func deleteWorkout(from modelContext: ModelContext) async {
         guard let baseWorkout = state.currentWorkout else {
             SQLogger.shared.log("Workout missing. Can't delete workout.", .error, context: .workoutSummary)
             return
         }
-        
+
         let deletionType = workoutManager.deletionTypeForWorkout(baseWorkout)
         let title: String = "Delete workout?"
         let subtitle: String
-        
+
         switch deletionType {
         case .hiddenHealtKit:
             subtitle = "This workout can't be deleted from HealthKit since it wasn't created by this app. But it will be hidden. Go to Settings to unhide workouts."
@@ -79,8 +80,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         case .standard:
             subtitle = "This workout will be deleted from both HealthKit and this app."
         }
-        
-        
+
         state.hub.alertEvents.send(.present(.init(
             title: title,
             subtitle: subtitle,
@@ -103,7 +103,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
 // MARK: - Route Handling
 
 extension SQWorkoutSummaryController {
-    
+
     func loadRouteIfNeeded() async {
         guard !state.isLoadingRoute, state.routeLocations.isEmpty else { return }
         guard case .hkWorkout(let hk) = state.currentWorkout?.workoutSource else { return }
@@ -113,10 +113,7 @@ extension SQWorkoutSummaryController {
 
         do {
             let raw = try await healthKitManager.fetchRouteLocations(for: hk.hkWorkout)
-
-            // Do reduction off-main (cheap, but keep it off your UI actor anyway)
             let reduced = downsample(raw, maxPoints: 1500).sorted { $0.timestamp < $1.timestamp }
-
             state.routeLocations = reduced
         } catch {
             state.routeLoadErrorMessage = error.localizedDescription
@@ -126,7 +123,6 @@ extension SQWorkoutSummaryController {
         state.isLoadingRoute = false
     }
 
-    
     private func downsample(_ locations: [CLLocation], maxPoints: Int = 1500) -> [CLLocation] {
         guard locations.count > maxPoints else { return locations }
         let stride = max(1, locations.count / maxPoints)
@@ -140,47 +136,111 @@ extension SQWorkoutSummaryController {
 
 extension SQWorkoutSummaryController {
 
+    /// Mirrors the dashboard's metricsForActivityType — defines which metrics to show
+    /// (with all-time percentile ranks) per activity type.
+    private var metricsForActivityType: [HKWorkoutActivityType: [SQQuantityType]] {
+        [
+            .running: [
+                .sqFastestPace(.mile),
+                .sqFastestPace(.fiveK),
+                .sqPaceRunning,
+                .distanceWalkingRunning
+            ],
+            .walking: [
+                .sqPaceRunning,
+                .distanceWalkingRunning
+            ],
+            .hiking: [
+                .sqPaceRunning,
+                .distanceWalkingRunning
+            ],
+            .cycling: [
+                .sqFastestPace(.fiveK),
+                .distanceCycling
+            ]
+        ]
+    }
+
     func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
         guard case .hkWorkout = workout.workoutSource else { return }
-        guard workout.activityType.impactsVO2MaxData else { return }
         guard let workoutEndDate = workout.endDate else { return }
+        guard let modelContext = SQAppState.shared.modelContext else { return }
+
+        var rows: [SQPerformanceRowData] = []
+
         do {
-            // Fetch the most recent VO2 max sample recorded up to the workout's end date
-            let daySamples = try await healthKitManager.fetchVO2MaxSamples(upTo: workoutEndDate, limit: 1)
-            guard let sample = daySamples.first else { return }
+            let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
+            let sameActivityWorkouts = allTimeWorkouts.filter { $0.activityType == workout.activityType }
+            let activityIcon = workout.activityType.imageSymbol.rawValue
 
-            // Fetch all-time values for percentile ranking, deduped by calendar day
-            let allTimeSamples = try await healthKitManager.fetchVO2MaxSamples(.allTime)
-            let calendar = Calendar.current
-            var bestByDay: [Date: Double] = [:]
-            for s in allTimeSamples {
-                let dayStart = calendar.startOfDay(for: s.startDate)
-                bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, s.value)
+            // VO2 Max — special case, not a workout metric
+            if workout.activityType.impactsVO2MaxData {
+                let recentSamples = try await healthKitManager.fetchVO2MaxSamples(upTo: workoutEndDate, limit: 1)
+                if let sample = recentSamples.first {
+                    let allTimeSamples = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+                    let calendar = Calendar.current
+                    var bestByDay: [Date: Double] = [:]
+                    for s in allTimeSamples {
+                        let dayStart = calendar.startOfDay(for: s.startDate)
+                        bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, s.value)
+                    }
+                    let percentile = SQPercentileCalculator.calculatePercentile(
+                        currentBest: sample.value,
+                        historicalValues: Array(bestByDay.values),
+                        isLowerBetter: false
+                    )
+                    rows.append(SQPerformanceRowData(
+                        id: "vo2-max",
+                        icon: SQImageSymbol.heart.rawValue,
+                        title: "VO2 Max",
+                        bestValue: String(format: "%.1f", sample.value),
+                        unit: "mL/kg/min",
+                        percentileRank: percentile
+                    ))
+                }
             }
-            let historicalValues = Array(bestByDay.values)
 
-            let percentileRank = SQPercentileCalculator.calculatePercentile(
-                currentBest: sample.value,
-                historicalValues: historicalValues,
-                isLowerBetter: false
-            )
+            // Workout metrics — same pattern as SQDashboardController
+            let metricTypes = metricsForActivityType[workout.activityType] ?? []
+            for quantityType in metricTypes {
+                guard let currentMetric = await workout.getMetric(for: quantityType) else { continue }
 
-            let rowData = SQPerformanceRowData(
-                id: "vo2-max",
-                icon: SQImageSymbol.heart.rawValue,
-                title: "VO2 Max",
-                bestValue: String(format: "%.1f", sample.value),
-                unit: "mL/kg/min",
-                percentileRank: percentileRank
-            )
+                let historicalValues = await withTaskGroup(of: Double?.self) { group in
+                    for w in sameActivityWorkouts {
+                        group.addTask { await w.getMetric(for: quantityType)?.value }
+                    }
+                    var results: [Double] = []
+                    for await value in group { if let v = value { results.append(v) } }
+                    return results
+                }
 
-            state.loadPerformanceData(rowData: [rowData])
+                let isLowerBetter = quantityType.dashboardAggregationType == .minimum
+                let percentile = SQPercentileCalculator.calculatePercentile(
+                    currentBest: currentMetric.value,
+                    historicalValues: historicalValues,
+                    isLowerBetter: isLowerBetter
+                )
+
+                rows.append(SQPerformanceRowData(
+                    id: "\(workout.activityType.name.lowercased())-\(quantityType.id)",
+                    icon: activityIcon,
+                    title: currentMetric.displayName,
+                    bestValue: currentMetric.displayableValue(for: quantityType, value: currentMetric.value),
+                    unit: currentMetric.unit.unitString ?? "",
+                    percentileRank: percentile
+                ))
+            }
+
         } catch {
             SQLogger.shared.log(
-                "Failed to load VO2 max for performance section: \(error.localizedDescription)",
+                "Failed to load performance data: \(error.localizedDescription)",
                 .error,
                 context: .workoutSummary
             )
+        }
+
+        if !rows.isEmpty {
+            state.loadPerformanceData(rowData: rows)
         }
     }
 }

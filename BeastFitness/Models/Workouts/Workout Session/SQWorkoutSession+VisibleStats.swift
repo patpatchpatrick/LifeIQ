@@ -11,7 +11,7 @@ struct SQWorkoutSessionVisibleStat: Identifiable, Hashable {
     let id = UUID()
     let title: String
     let value: String
-    
+
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
@@ -19,36 +19,17 @@ struct SQWorkoutSessionVisibleStat: Identifiable, Hashable {
 
 extension SQWorkoutSessionable {
 
+    /// Basic time stats shown in the "Stats" section of the workout summary.
+    /// Performance metrics (distance, pace, VO2 max) are loaded separately by the controller with percentile ranks.
     func visibleStats() async -> [SQWorkoutSessionVisibleStat]? {
-
         var stats = [SQWorkoutSessionVisibleStat]()
 
         if let activeDuration {
-            stats.append(.init(
-                title: "Active Time",
-                value: activeDuration.readableTime()))
+            stats.append(.init(title: "Active Time", value: activeDuration.readableTime()))
         }
 
         if let startDate, let endDate {
-            stats.append(.init(
-                title: "Time",
-                value: endDate.timeIntervalSince(startDate).readableTime()))
-        }
-
-        if let coreMetric {
-            stats.append(.init(
-                title: coreMetric.displayName,
-                value: coreMetric.outputAndUnitString))
-        }
-
-        if let pace = await getMetric(for: .sqPaceRunning) {
-            stats.append(.init(
-                title: pace.displayName,
-                value: pace.outputAndUnitString))
-        }
-        
-        if let fastestMile = await getMetric(for: .sqFastestPace(.mile)) {
-            stats.append(.init(title: fastestMile.displayName, value: fastestMile.outputAndUnitString))
+            stats.append(.init(title: "Time", value: endDate.timeIntervalSince(startDate).readableTime()))
         }
 
         return stats.isEmpty ? nil : stats

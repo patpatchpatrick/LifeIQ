@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQRootTabView: View {
     @State private var viewModel: SQRootTabViewModel
+    @Environment(\.modelContext) private var modelContext
     var navigationState: NavigationStating { viewModel.navigationState }
     
     init(appState: SQAppState) {
@@ -65,5 +66,8 @@ struct SQRootTabView: View {
         .onOpenURL(perform: { url in
             viewModel.deepLinkManager.handleUriDeepLink(for: url)
         })
+        .task {
+            SQAppState.shared.modelContext = modelContext
+        }
     }
 }
