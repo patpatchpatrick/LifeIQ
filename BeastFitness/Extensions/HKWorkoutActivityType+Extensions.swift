@@ -252,6 +252,16 @@ extension HKWorkoutActivityType {
         }
     }
 
+    /// Whether this activity type is known to generate VO2 max estimates in HealthKit.
+    var impactsVO2MaxData: Bool {
+        switch self {
+        case .running, .walking, .hiking:
+            return true
+        default:
+            return false
+        }
+    }
+
     // TODO: - PTD best-guess mappings for all activities.
     // You can adjust per activity if you want a different "core" metric.
     var coreOutputQuantityTypeId: SQQuantityType? {

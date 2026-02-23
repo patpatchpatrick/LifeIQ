@@ -49,6 +49,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.reset()
         await state.load(workout: workout)
         await loadRouteIfNeeded()
+        await loadPerformanceDataIfNeeded()
     }
     
     func pushEditWorkoutView() {
@@ -131,6 +132,62 @@ extension SQWorkoutSummaryController {
         let stride = max(1, locations.count / maxPoints)
         return locations.enumerated().compactMap { (i, loc) in
             (i % stride == 0) ? loc : nil
+        }
+    }
+}
+
+// MARK: - Performance Handling
+
+extension SQWorkoutSummaryController {
+
+    func loadPerformanceDataIfNeeded() async {
+        guard let workout = state.currentWorkout else { return }
+        guard case .hkWorkout = workout.workoutSource else { return }
+
+        guard workout.activityType.impactsVO2MaxData else { return }
+
+        guard let workoutEndDate = workout.endDate else { return }
+
+        do {
+            // Fetch the most recent VO2 max sample on the workout's calendar day
+            let daySamples = try await healthKitManager.fetchVO2MaxSamples(upTo: workoutEndDate, limit: 1)
+            guard let sample = daySamples.first,
+                  Calendar.current.isDate(sample.endDate, inSameDayAs: workoutEndDate) else {
+                return
+            }
+
+            // Fetch all-time values for percentile ranking, deduped by calendar day
+            let allTimeSamples = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+            let calendar = Calendar.current
+            var bestByDay: [Date: Double] = [:]
+            for s in allTimeSamples {
+                let dayStart = calendar.startOfDay(for: s.startDate)
+                bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, s.value)
+            }
+            let historicalValues = Array(bestByDay.values)
+
+            let percentileRank = SQPercentileCalculator.calculatePercentile(
+                currentBest: sample.value,
+                historicalValues: historicalValues,
+                isLowerBetter: false
+            )
+
+            let rowData = SQPerformanceRowData(
+                id: "vo2-max",
+                icon: SQImageSymbol.heart.rawValue,
+                title: "VO2 Max",
+                bestValue: String(format: "%.1f", sample.value),
+                unit: "mL/kg/min",
+                percentileRank: percentileRank
+            )
+
+            state.loadPerformanceData(rowData: [rowData])
+        } catch {
+            SQLogger.shared.log(
+                "Failed to load VO2 max for performance section: \(error.localizedDescription)",
+                .error,
+                context: .workoutSummary
+            )
         }
     }
 }
