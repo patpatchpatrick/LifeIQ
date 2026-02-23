@@ -25,6 +25,7 @@ struct SQNewWorkoutReviewHost: View {
                             customNavigationTitle: navigationTitle(for: workout),
                             backgroundColor: .backgroundSheet
                         )
+                        .navigationBarTitleDisplayMode(.inline)
                         .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
                             switch route {
                             case .editWorkout(let editWorkout):
@@ -92,7 +93,7 @@ struct SQNewWorkoutReviewHost: View {
 
                 SQButton(
                     shouldHugContent: false,
-                    title: "Review next",
+                    title: "Review Next",
                     action: {
                         reviewState.markCurrentAsProcessed(context: modelContext)
                     }
