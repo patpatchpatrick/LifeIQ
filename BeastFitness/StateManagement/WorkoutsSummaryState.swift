@@ -32,6 +32,10 @@ protocol WorkoutSummaryStating: AnyObject {
     var shouldShowRouteView: Bool { get }
 
     var hasRoute: Bool { get }
+
+    var performanceRowData: [SQPerformanceRowData] { get }
+    var shouldShowPerformanceSection: Bool { get }
+    func loadPerformanceData(rowData: [SQPerformanceRowData])
 }
 
 @MainActor
@@ -51,6 +55,10 @@ protocol WorkoutSummaryStating: AnyObject {
     var routeLocations: [CLLocation] = []
     var routeLoadErrorMessage: String? = nil
     var hasRoute: Bool { !routeLocations.isEmpty }
+
+    private(set) var performanceRowData: [SQPerformanceRowData] = []
+
+    var shouldShowPerformanceSection: Bool { !performanceRowData.isEmpty }
     
     init(hub: EventHub) {
         self.hub = hub
@@ -100,6 +108,11 @@ protocol WorkoutSummaryStating: AnyObject {
         workoutStartDate = nil
         workoutTitle = nil
         workoutStatsRows = []
+        performanceRowData = []
+    }
+
+    func loadPerformanceData(rowData: [SQPerformanceRowData]) {
+        performanceRowData = rowData
     }
     
     func notifyAppOfWorkoutDeletion(workout: SQWorkoutSessionable) {
