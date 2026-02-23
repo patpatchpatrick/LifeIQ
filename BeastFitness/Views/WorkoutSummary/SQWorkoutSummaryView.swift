@@ -15,7 +15,11 @@ struct SQWorkoutSummaryView: View {
     var backgroundColor: SQColor = .background
     var screenWidth: CGFloat { UIScreen.main.bounds.width }
     let mainStackHorizPadding: CGFloat = .SQSpace.xxl
-    var statColumnWidth: CGFloat { (screenWidth - mainStackHorizPadding * 2.0) / CGFloat(controller.state.workoutStatRowColumnCount) }
+    var statColumnWidth: CGFloat { (screenWidth - mainStackHorizPadding * 2.0 - .SQSpace.l * 2) / CGFloat(controller.state.workoutStatRowColumnCount) }
+
+    @State private var routeSectionCollapsed = false
+    @State private var performanceSectionCollapsed = false
+    @State private var statsSectionCollapsed = false
     
     @ViewBuilder
     var userNameAndDateRow: some View {
@@ -53,17 +57,32 @@ struct SQWorkoutSummaryView: View {
                 .padding(.bottom, .SQSpace.xl)
             
             if controller.state.shouldShowRouteView {
-                SQWorkoutRouteMapView(
-                    isLoading: controller.state.isLoadingRoute,
-                    locations: controller.state.routeLocations,
-                    errorMessage: controller.state.routeLoadErrorMessage
-                )
+                SQDashboardSubsection(title: "Route", isCollapsed: $routeSectionCollapsed) {
+                    SQWorkoutRouteMapView(
+                        isLoading: controller.state.isLoadingRoute,
+                        locations: controller.state.routeLocations,
+                        errorMessage: controller.state.routeLoadErrorMessage
+                    )
+                }
                 .padding(.bottom, .SQSpace.xl)
             }
-            
-            VStack(spacing: .SQSpace.l) {
-                ForEach(controller.state.workoutStatsRows) { row in
-                    SQWorkoutSummaryStatsRow(row: row, columnWidth: statColumnWidth)
+
+            if controller.state.shouldShowPerformanceSection {
+                SQDashboardSubsection(title: "Performance", isCollapsed: $performanceSectionCollapsed) {
+                    VStack(spacing: SQDashboardView.uiConfig.sectionRowSpacing) {
+                        ForEach(controller.state.performanceRowData) { row in
+                            SQDashboardPerformanceRow(data: row)
+                        }
+                    }
+                }
+                .padding(.bottom, .SQSpace.xl)
+            }
+
+            SQDashboardSubsection(title: "Stats", isCollapsed: $statsSectionCollapsed) {
+                VStack(spacing: .SQSpace.l) {
+                    ForEach(controller.state.workoutStatsRows) { row in
+                        SQWorkoutSummaryStatsRow(row: row, columnWidth: statColumnWidth)
+                    }
                 }
             }
         }
