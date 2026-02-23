@@ -154,7 +154,10 @@ class SQWorkoutSession: SQWorkoutSessionable {
     }
     
     var visibleTitle: String {
-        let backupName = activityType.name
+        var backupName = activityType.name
+        if let date = startDate {
+            backupName = "\(date.dayAndTimeTitle()) \(backupName)"
+        }
         guard title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else {
             return backupName
         }

@@ -33,55 +33,43 @@ struct SQWorkoutRouteMapView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            HStack {
-                Text("Route")
-                    .sqFont(.bodySmallBold)
-                    .sqForegroundColor(.textPrimary)
-                Spacer()
-                if isLoading { ProgressView().scaleEffect(0.9) }
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(0.9)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
-            Group {
-                if let errorMessage {
-                    Text("Couldn’t load route: \(errorMessage)")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
+            if let errorMessage {
+                Text("Couldn’t load route: \(errorMessage)")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            } else if let polyline {
+                Map(position: $cameraPosition) {
+                    MapPolyline(polyline)
+                        .stroke(SQColor.accent(1).color.opacity(0.25), lineWidth: 10)
 
-                } else if let polyline {
-                    Map(position: $cameraPosition) {
-                        // ✅ This is the route line
-                        MapPolyline(polyline)
-                            .stroke(SQColor.accent(1).color.opacity(0.25), lineWidth: 10)
+                    MapPolyline(polyline)
+                        .stroke(SQColor.accent(1).color, lineWidth: 4)
 
-                        MapPolyline(polyline)
-                            .stroke(SQColor.accent(1).color, lineWidth: 4)
-
-
-                        // Optional: start/end markers look sick
-                        if let first = cleanedLocations.first?.coordinate {
-                            Marker("Start", coordinate: first)
-                        }
-                        if let last = cleanedLocations.last?.coordinate {
-                            Marker("End", coordinate: last)
-                        }
+                    if let first = cleanedLocations.first?.coordinate {
+                        Marker("Start", coordinate: first)
                     }
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .onAppear {
-                        cameraPosition = .rect(padded(polyline.boundingMapRect))
+                    if let last = cleanedLocations.last?.coordinate {
+                        Marker("End", coordinate: last)
                     }
-
-                } else if !isLoading {
-                    Text("No route recorded for this workout.")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
                 }
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous))
+                .onAppear {
+                    cameraPosition = .rect(padded(polyline.boundingMapRect))
+                }
+            } else if !isLoading {
+                Text("No route recorded for this workout.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
             }
         }
-        .padding(.SQSpace.l)
-        .background(SQColor.backgroundSecondary.color)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func padded(_ rect: MKMapRect) -> MKMapRect {

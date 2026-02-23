@@ -52,8 +52,8 @@ protocol WorkoutSessionStating: AnyObject {
     
     func load(workout: SQWorkoutSessionable?) {
         baseWorkout = workout
-        let placeholderTitle = "\(Date.now.dayAndTimeTitle()) Weight Training"
-        let initialText = workout?.title ?? placeholderTitle
+        let placeholderTitle = "\(Date.now.dayAndTimeTitle()) \(workout?.activityType.name ?? "Weight Training")"
+        let initialText = workout?.visibleTitle ?? placeholderTitle
         
         let titleTextField = SQTextFieldViewModel(
             font: .init(type: .title3),

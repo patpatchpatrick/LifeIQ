@@ -49,7 +49,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.reset()
         await state.load(workout: workout)
         await loadRouteIfNeeded()
-        await loadPerformanceDataIfNeeded()
+        await loadPerformanceDataIfNeeded(workout: workout)
     }
     
     func pushEditWorkoutView() {
@@ -140,21 +140,14 @@ extension SQWorkoutSummaryController {
 
 extension SQWorkoutSummaryController {
 
-    func loadPerformanceDataIfNeeded() async {
-        guard let workout = state.currentWorkout else { return }
+    func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
         guard case .hkWorkout = workout.workoutSource else { return }
-
         guard workout.activityType.impactsVO2MaxData else { return }
-
         guard let workoutEndDate = workout.endDate else { return }
-
         do {
-            // Fetch the most recent VO2 max sample on the workout's calendar day
+            // Fetch the most recent VO2 max sample recorded up to the workout's end date
             let daySamples = try await healthKitManager.fetchVO2MaxSamples(upTo: workoutEndDate, limit: 1)
-            guard let sample = daySamples.first,
-                  Calendar.current.isDate(sample.endDate, inSameDayAs: workoutEndDate) else {
-                return
-            }
+            guard let sample = daySamples.first else { return }
 
             // Fetch all-time values for percentile ranking, deduped by calendar day
             let allTimeSamples = try await healthKitManager.fetchVO2MaxSamples(.allTime)
