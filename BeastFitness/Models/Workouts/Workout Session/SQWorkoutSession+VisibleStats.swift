@@ -46,6 +46,10 @@ extension SQWorkoutSessionable {
                 title: pace.displayName,
                 value: pace.outputAndUnitString))
         }
+        
+        if let fastestMile = await getMetric(for: .sqFastestPace(.mile)) {
+            stats.append(.init(title: fastestMile.displayName, value: fastestMile.outputAndUnitString))
+        }
 
         return stats.isEmpty ? nil : stats
     }
