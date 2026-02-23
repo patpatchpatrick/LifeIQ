@@ -434,7 +434,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         let colorConfig = LineChartModel.ColorConfig(
             textPrimary: SQColor.textPrimary.color,
             textSecondary: SQColor.textSecondary.color,
-            backgroundPrimary: SQColor.background.color,
+            backgroundPrimary: SQColor.backgroundSheet.color,
             backgroundSecondary: SQColor.backgroundSecondary.color,
             lineColor: SQColor.accent(1).color
         )

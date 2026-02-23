@@ -31,6 +31,7 @@ indirect enum SQColor {
 
     // MARK: - Backgrounds
     case background
+    case backgroundSheet
     case backgroundSecondary
     case backgroundSecondaryLight
     case backgroundTertiaryDark
@@ -120,6 +121,11 @@ indirect enum SQColor {
             
         case .background:
             return Self.isDarkMode ? UIColor(hexString: "#000000")! : .white
+
+        case .backgroundSheet:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#0F0F0F")!
+                : UIColor(hexString: "#F8F8F8")!
 
         case .backgroundSecondary:
             return Self.isDarkMode

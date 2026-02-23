@@ -83,7 +83,7 @@ struct SQLeaderboardView: View {
             if controller.isLoading {
                 // Show placeholder rectangle during loading
                 Rectangle()
-                    .fill(SQColor.background.color)
+                    .fill(SQColor.backgroundSheet.color)
                     .frame(width: controller.chartWidth, height: controller.chartHeight)
             } else {
                 // Show actual chart when loaded
@@ -93,7 +93,7 @@ struct SQLeaderboardView: View {
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
-        .background(SQColor.background.color)
+        .background(SQColor.backgroundSheet.color)
     }
     
 
@@ -141,7 +141,6 @@ struct SQLeaderboardView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(SQColor.background.color)
         }
     }
     
@@ -180,7 +179,7 @@ struct SQLeaderboardView: View {
                     )
                 }
             }
-            .background(SQColor.background.color)
+            .background(SQColor.backgroundSheet.color)
             .task {
                 await controller.loadUI(for: modelContext)
             }

@@ -12,6 +12,7 @@ struct SQWorkoutSummaryView: View {
     @Environment(\.modelContext) private var modelContext
     
     var customNavigationTitle: String? = nil
+    var backgroundColor: SQColor = .background
     var screenWidth: CGFloat { UIScreen.main.bounds.width }
     let mainStackHorizPadding: CGFloat = .SQSpace.xxl
     var statColumnWidth: CGFloat { (screenWidth - mainStackHorizPadding * 2.0) / CGFloat(controller.state.workoutStatRowColumnCount) }
@@ -77,7 +78,7 @@ struct SQWorkoutSummaryView: View {
     }
     var body: some View {
         mainScroll
-            .background(SQColor.background.color)
+            .background(backgroundColor.color)
             .navigationTitle(customNavigationTitle ?? "Workout summary")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

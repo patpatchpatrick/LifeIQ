@@ -22,7 +22,8 @@ struct SQNewWorkoutReviewHost: View {
                     NavigationStack(path: $navigationPath) {
                         SQWorkoutSummaryView(
                             controller: controller,
-                            customNavigationTitle: navigationTitle(for: workout)
+                            customNavigationTitle: navigationTitle(for: workout),
+                            backgroundColor: .backgroundSheet
                         )
                         .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
                             switch route {
@@ -42,7 +43,7 @@ struct SQNewWorkoutReviewHost: View {
 
                     actionBar
                 }
-                .background(SQColor.background.color)
+                .background(SQColor.backgroundSheet.color)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .padding(.horizontal, .SQSpace.m)
                 .padding(.top, 80)
@@ -50,6 +51,8 @@ struct SQNewWorkoutReviewHost: View {
                 .id(workout.id)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .allowsHitTesting(reviewState.isPresented)
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: reviewState.isPresented)
         .task(id: reviewState.currentWorkout?.id) {
             summaryController = nil
@@ -108,7 +111,7 @@ struct SQNewWorkoutReviewHost: View {
         }
         .padding(.horizontal, .SQSpace.xl)
         .padding(.vertical, .SQSpace.l)
-        .background(SQColor.background.color)
+        .background(SQColor.backgroundSheet.color)
     }
 
     // MARK: - Helpers

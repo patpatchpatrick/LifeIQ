@@ -53,6 +53,7 @@ struct SQRootTabView: View {
     var body: some View {
         ZStack {
             mainTabViewWithSheets
+                .disabled(SQAppState.shared.newWorkoutReviewState.isPresented)
 
             SQNewWorkoutReviewHost(
                 reviewState: SQAppState.shared.newWorkoutReviewState

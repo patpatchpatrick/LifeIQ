@@ -30,7 +30,7 @@ struct SQSettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .background(SQColor.background.color)
+            .background(SQColor.backgroundSheet.color)
     }
 
     private var navStack: some View {
@@ -91,14 +91,14 @@ private struct SQSettingsRowView: View {
                 }
                 .padding(.vertical, .SQSpace.l)
                 .padding(.horizontal, .SQSpace.xl)
-                .background(SQColor.background.color)
+                .background(SQColor.backgroundSheet.color)
             }
 
             if showsDivider {
                 Divider()
                     .sqTintColor(.divider(1))
                     .padding(.horizontal, .SQSpace.xl)
-                    .background(SQColor.background.color)
+                    .background(SQColor.backgroundSheet.color)
             }
         }
         .listRowInsets(EdgeInsets())
