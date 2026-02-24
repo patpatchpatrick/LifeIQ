@@ -101,7 +101,8 @@ final class SQDashboardController: SQDashboardInterface {
         guard !hasLoadedUI || shouldForceRefresh else { return }
         hasLoadedUI = true
 
-        // Set loading state
+        // Show mock skeleton while real data loads
+        state.updateSectionGroups(to: SQDashboardSectionGroupViewModel.mock)
         state.setLoading(true)
 
         do {

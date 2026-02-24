@@ -1,0 +1,121 @@
+//
+//  SQDashboardSectionGroupViewModel+Mocks.swift
+//  BeastFitness
+//
+
+import Foundation
+
+@MainActor
+extension SQDashboardSectionGroupViewModel {
+
+    static var mock: [SQDashboardSectionGroupViewModel] {
+        [mockDailyStats, mockWorkouts]
+    }
+
+    // MARK: - Daily Stats
+
+    private static var mockDailyStats: SQDashboardSectionGroupViewModel {
+        let mockRows: [SQDashboardRowViewModel] = [
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-mood", icon: "😊", title: "Mood",
+                avgValue: "7.5", unit: "/10",
+                sparklineData: [6, 7, 8, 7, 7.5], changePercent: 0.05
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-energy", icon: "⚡️", title: "Energy",
+                avgValue: "6.8", unit: "/10",
+                sparklineData: [5, 6, 7, 7, 6.8], changePercent: -0.02
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-sleep", icon: "😴", title: "Sleep Hours",
+                avgValue: "7.2", unit: "hrs",
+                sparklineData: [7, 8, 6, 7, 7.2], changePercent: 0.03
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-energy", icon: "⚡️", title: "Energy",
+                avgValue: "6.8", unit: "/10",
+                sparklineData: [5, 6, 7, 7, 6.8], changePercent: -0.02
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-sleep", icon: "😴", title: "Sleep Hours",
+                avgValue: "7.2", unit: "hrs",
+                sparklineData: [7, 8, 6, 7, 7.2], changePercent: 0.03
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-energy", icon: "⚡️", title: "Energy",
+                avgValue: "6.8", unit: "/10",
+                sparklineData: [5, 6, 7, 7, 6.8], changePercent: -0.02
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-sleep", icon: "😴", title: "Sleep Hours",
+                avgValue: "7.2", unit: "hrs",
+                sparklineData: [7, 8, 6, 7, 7.2], changePercent: 0.03
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-clarity", icon: "🧠", title: "Mental Clarity",
+                avgValue: "7.0", unit: "/10",
+                sparklineData: [6, 7, 7, 8, 7.0], changePercent: 0.08
+            ),
+        ]
+
+        let metricsSection = SQDashboardSubsectionViewModel(
+            id: "metrics",
+            title: "Metrics",
+            rowsByFilter: ["All": mockRows],
+            columnHeaders: ["Metric", "Avg Score", "vs Prior"]
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "daily-stats",
+            title: "Daily Stats",
+            sections: [metricsSection]
+        )
+    }
+
+    // MARK: - Workouts
+
+    private static var mockWorkouts: SQDashboardSectionGroupViewModel {
+        let mockWorkoutsList: [any SQWorkoutSessionable] = .mock
+
+        let totalsRow = SQDashboardWorkoutTotalsRowViewModel(
+            config: .mock,
+            workouts: mockWorkoutsList,
+            priorWorkouts: [],
+            filter: .workoutTime
+        )
+
+        let totalsDropdown = SQDropDownMenuViewModel(
+            defaultItem: .init(title: "Time"),
+            items: [.init(title: "Time"), .init(title: "Kilocalories")],
+            itemSelectionHandler: { _ in }
+        )
+
+        let totalsSection = SQDashboardSubsectionViewModel(
+            id: "totals",
+            title: "Totals",
+            rowsByFilter: ["Time": [totalsRow]],
+            dropDownViewModel: totalsDropdown
+        )
+
+        let activityRow = SQDashboardActivityRowViewModel(workouts: mockWorkoutsList)
+
+        let activitiesDropdown = SQDropDownMenuViewModel(
+            defaultItem: .init(title: "All"),
+            items: [.init(title: "All")],
+            itemSelectionHandler: { _ in }
+        )
+
+        let activitiesSection = SQDashboardSubsectionViewModel(
+            id: "activities",
+            title: "Activities",
+            rowsByFilter: ["All": [activityRow]],
+            dropDownViewModel: activitiesDropdown
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "workouts",
+            title: "Workouts",
+            sections: [totalsSection, activitiesSection]
+        )
+    }
+}

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F601964A2F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60196492F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift */; };
 		F602DA282EC40EB800404878 /* SQAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA272EC40EB700404878 /* SQAppState.swift */; };
 		F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA292EC40EC700404878 /* EventHub.swift */; };
 		F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2B2EC40ED400404878 /* NavigationState.swift */; };
@@ -267,6 +268,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F60196492F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardSectionGroupViewModel+Mocks.swift"; sourceTree = "<group>"; };
 		F602DA272EC40EB700404878 /* SQAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppState.swift; sourceTree = "<group>"; };
 		F602DA292EC40EC700404878 /* EventHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHub.swift; sourceTree = "<group>"; };
 		F602DA2B2EC40ED400404878 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
@@ -566,6 +568,7 @@
 				F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */,
 				F6940F1C2F36AE7B0008A2A0 /* SQDashboardSectionGroupViewModel.swift */,
 				F6940F1E2F36B0F50008A2A0 /* SQDashboardSubsectionViewModel.swift */,
+				F60196492F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -1707,6 +1710,7 @@
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,
 				F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */,
 				F639B7DE2ED798BD00199C69 /* SQTextField.swift in Sources */,
+				F601964A2F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift in Sources */,
 				F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */,
 				F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */,
 				F6A8489D2CB4DD5C00B09AD5 /* DateFormatters.swift in Sources */,

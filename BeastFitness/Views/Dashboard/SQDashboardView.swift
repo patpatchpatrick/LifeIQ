@@ -31,20 +31,18 @@ struct SQDashboardView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
 
-                // Content - only show when not loading
-                if !controller.state.isLoading {
-                    // Daily Check-In CTA Banner
-                    if let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
-                        SQCallToAction(viewModel: dailyCheckInCtaViewModel)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 16)
-                    }
+                // Daily Check-In CTA Banner - hide while loading
+                if !controller.state.isLoading,
+                   let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
+                    SQCallToAction(viewModel: dailyCheckInCtaViewModel)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                }
 
-                    // Main sections with sticky headers
-                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                        ForEach(controller.state.sectionGroups) { sectionGroup in
-                            SQDashboardSectionGroupView(sectionGroup: sectionGroup)
-                        }
+                // Main sections - always rendered so mock data shows as a redacted skeleton
+                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    ForEach(controller.state.sectionGroups) { sectionGroup in
+                        SQDashboardSectionGroupView(sectionGroup: sectionGroup)
                     }
                 }
 
