@@ -39,12 +39,25 @@ struct FocusedLineCaptionView: View {
         }
     }
     
+    @State private var captionWidth: CGFloat = 0
+
+    private var clampedX: CGFloat {
+        let half = captionWidth / 2
+        let chartWidth = model.lineChartModel.width
+        return max(half, min(chartWidth - half, model.lineX))
+    }
+
     var body: some View {
         captionStack
             .padding(.SQSpace.s)
             .background(model.lineChartModel.uiConfig.colorConfig.backgroundSecondary)
             .cornerRadius(.SQSpace.s)
-            .position(x: model.lineX, y: model.focusedCoordinate.y)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.onAppear { captionWidth = geo.size.width }
+                }
+            )
+            .position(x: clampedX, y: model.focusedCoordinate.y)
     }
 }
 
