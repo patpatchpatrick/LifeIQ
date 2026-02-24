@@ -196,7 +196,8 @@ extension SQWorkoutManager {
                 .sqFastestPace(.fiveK),
                 .sqPaceRunning,
                 .distanceWalkingRunning,
-                .activeKilocaloriesBurned
+                .activeKilocaloriesBurned,
+                .heartRate
             ],
             .cycling: [
                 .sqFastestPace(.fiveK),

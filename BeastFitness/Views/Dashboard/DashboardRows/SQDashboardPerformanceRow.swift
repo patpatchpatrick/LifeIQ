@@ -21,7 +21,7 @@ struct SQDashboardPerformanceRow: View {
             return .textSecondary
         }
         // Top quartile (< 0.25 percentile, meaning top 75%+) gets green
-        return rank < 0.25 ? .colorFadedGreen : .textSecondary
+        return rank > 0.75 ? .colorFadedGreen : .textSecondary
     }
 
     // Format percentile as "Top X%"
