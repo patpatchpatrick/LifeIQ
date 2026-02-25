@@ -82,7 +82,9 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 let hkWorkout = try await healthKitManager.saveWorkout(workout: workout)
                 /// Set the ID on the workout so that it can be referenced from SwiftData using the hkWorkoutId
                 workout.updateHkWorkoutId(hkWorkout?.uuid.uuidString)
-                
+                healthKitManager.invalidateCache()
+                SQLogger.shared.log("Invalidated HK cache after saving workout", .debug, context: .workoutManager)
+
             } catch {
                 throw SQError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
             }
@@ -154,7 +156,9 @@ final class SQWorkoutManager: SQWorkoutManaging {
             
         case .standard:
             await attemptToDeleteWorkoutFromHealthKit(workout)
-            
+            healthKitManager.invalidateCache()
+            SQLogger.shared.log("Invalidated HK cache after deleting workout", .debug, context: .workoutManager)
+
         }
         
         do {

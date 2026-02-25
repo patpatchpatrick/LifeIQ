@@ -28,6 +28,7 @@ protocol SQHealthKitManaging {
     func invalidateCache()
 
     /// Fetches workouts within a time range from HealthKit.
+    @MainActor
     func fetchWorkouts(_ timeRange: SQTimeRange) async throws -> [HKWorkout]
 
     /// Returns all route points for a workout (may be empty if no GPS).
@@ -180,6 +181,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         try await healthStore.delete(workout)
     }
     
+    @MainActor
     func fetchWorkouts(_ timeRange: SQTimeRange) async throws -> [HKWorkout] {
         // Return cached result if fresh
         if let cached = workoutCache[timeRange], !cached.isStale {
