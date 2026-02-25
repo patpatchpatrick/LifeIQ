@@ -58,6 +58,16 @@ extension SQHealthKitManager {
 
     @MainActor
     func fetchVO2MaxSamples(_ timeRange: SQTimeRange) async throws -> [SQVO2MaxSample] {
+        // Return cached result if fresh
+        if let cached = vo2MaxCache[timeRange], !cached.isStale {
+            SQLogger.shared.log(
+                "↩️ VO2 Max cache hit for \(timeRange.rawValue) (\(cached.samples.count) samples)",
+                .debug,
+                context: .healthKit
+            )
+            return cached.samples
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -93,7 +103,17 @@ extension SQHealthKitManager {
             Self.healthStore.execute(query)
         }
 
-        return samples.map(Self.mapVO2MaxSample)
+        let result = samples.map(Self.mapVO2MaxSample)
+
+        // Populate cache
+        vo2MaxCache[timeRange] = VO2MaxCacheEntry(samples: result, fetchedAt: .now)
+        SQLogger.shared.log(
+            "💾 VO2 Max cache populated for \(timeRange.rawValue) (\(result.count) samples)",
+            .debug,
+            context: .healthKit
+        )
+
+        return result
     }
 }
 
