@@ -223,6 +223,23 @@ extension SQQuantityType {
         }
     }
     
+    /// Whether computed results for this metric should be cached in memory.
+    ///
+    /// Pace metrics are expensive to compute — they require fetching GPS route data
+    /// from HealthKit and running a sliding-window algorithm over potentially thousands
+    /// of coordinate samples. Caching ensures the work is only done once per workout
+    /// per app session rather than on every dashboard or leaderboard reload.
+    var shouldCache: Bool {
+        switch self {
+        case .sqPaceRunning, .sqFastestPace:
+            return true
+        case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing,
+             .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed,
+             .activeKilocaloriesBurned, .sqTotalVolumeLifted, .heartRate, .unknown:
+            return false
+        }
+    }
+
     var displayTitle: String {
             switch self {
             case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing:
