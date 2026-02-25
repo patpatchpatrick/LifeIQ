@@ -33,7 +33,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
-        let healthKitWorkouts = try await SQHealthKitManager.shared.fetchWorkouts(timeRange)
+        let healthKitWorkouts = try await healthKitManager.fetchWorkouts(timeRange, filterDuplicates: true)
         // TODO: - Fetch manual workouts within the same time range and de-dup
         
         // TODO: - PTD Update this system to gracefully handle errors and properly sync with cloud
