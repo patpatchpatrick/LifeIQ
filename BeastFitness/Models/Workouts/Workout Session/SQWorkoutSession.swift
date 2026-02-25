@@ -72,6 +72,8 @@ struct SQWorkoutUpdateMetadata: Codable {
 }
 
 class SQWorkoutSession: SQWorkoutSessionable {
+    static let metadataManager = SQWorkoutSessionMetadataManager.shared
+
     let id: String
     let title: String?
     var coreMetric: SQWorkoutMetric?
@@ -166,7 +168,15 @@ class SQWorkoutSession: SQWorkoutSessionable {
     }
     
     func getMetric(for quantityType: SQQuantityType) async -> SQWorkoutMetric? {
-        await Self.getMetric(for: quantityType, workoutSource: workoutSource)
+        // TODO: - PTD persist this data so we don't need to re-calculate it every time the app dies
+        if let cached = Self.metadataManager.cachedMetric(for: quantityType, sourceId: id) {
+            return cached
+        }
+        let result = await Self.getMetric(for: quantityType, workoutSource: workoutSource)
+        if let result {
+            Self.metadataManager.cacheMetric(result, for: quantityType, sourceId: id)
+        }
+        return result
     }
     
     func hash(into hasher: inout Hasher) {
