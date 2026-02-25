@@ -25,8 +25,10 @@ protocol SQHealthKitManaging {
     /// sorted descending by endDate.
     func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample]
     
+    func invalidateCache()
+
     /// Fetches workouts within a time range from HealthKit.
-    func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool) async throws -> [HKWorkout]
+    func fetchWorkouts(_ timeRange: SQTimeRange) async throws -> [HKWorkout]
 
     /// Returns all route points for a workout (may be empty if no GPS).
     func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation]
@@ -57,7 +59,24 @@ final class SQHealthKitManager: SQHealthKitManaging {
     
     private let userDefaults = UserDefaults.standard
     private let anchorKeyPrefix = "Anchor_"
-    
+
+    // MARK: - Cache
+
+    private struct WorkoutCacheEntry {
+        let workouts: [HKWorkout]
+        let fetchedAt: Date
+        var isStale: Bool { Date().timeIntervalSince(fetchedAt) > 300 } // 5 min TTL
+    }
+
+    private struct VO2MaxCacheEntry {
+        let samples: [SQVO2MaxSample]
+        let fetchedAt: Date
+        var isStale: Bool { Date().timeIntervalSince(fetchedAt) > 300 } // 5 min TTL
+    }
+
+    private var workoutCache: [SQTimeRange: WorkoutCacheEntry] = [:]
+    private var vo2MaxCache: [SQTimeRange: VO2MaxCacheEntry] = [:]
+
     @MainActor @discardableResult
     func saveWorkout(
         workout: SQWorkoutSessionable
@@ -161,7 +180,17 @@ final class SQHealthKitManager: SQHealthKitManaging {
         try await healthStore.delete(workout)
     }
     
-    func fetchWorkouts(_ timeRange: SQTimeRange, filterDuplicates: Bool = true) async throws -> [HKWorkout] {
+    func fetchWorkouts(_ timeRange: SQTimeRange) async throws -> [HKWorkout] {
+        // Return cached result if fresh
+        if let cached = workoutCache[timeRange], !cached.isStale {
+            SQLogger.shared.log(
+                "↩️ Workout cache hit for \(timeRange.rawValue) (\(cached.workouts.count) workouts)",
+                .debug,
+                context: .healthKit
+            )
+            return cached.workouts
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQError.standard
         }
@@ -175,23 +204,34 @@ final class SQHealthKitManager: SQHealthKitManaging {
             withStart: timeRange.startDate,
             end: timeRange.endDate
         )
-        
+
         let limit = HKObjectQueryNoLimit
         let workoutType: HKSampleType = .workoutType()
 
         var workouts = try await executeQuery(
             sampleType: workoutType,
             predicate: predicate,
-            anchor: nil,   // 👈 force full fetch for the time range PTD TODO: Update to use anchor later
+            anchor: nil,
             limit: limit
         )
 
-        if filterDuplicates {
-            workouts = Self.filterDuplicateWorkouts(workouts)
-            workouts = workouts.filter { $0.workoutActivityType != .other }
-        }
+        workouts = Self.filterDuplicateWorkouts(workouts)
+        workouts = workouts.filter { $0.workoutActivityType != .other }
+
+        workoutCache[timeRange] = WorkoutCacheEntry(workouts: workouts, fetchedAt: .now)
+        SQLogger.shared.log(
+            "💾 Workout cache populated for \(timeRange.rawValue) (\(workouts.count) workouts)",
+            .debug,
+            context: .healthKit
+        )
 
         return workouts
+    }
+
+    func invalidateCache() {
+        workoutCache.removeAll()
+        vo2MaxCache.removeAll()
+        SQLogger.shared.log("HealthKit cache invalidated", .debug, context: .healthKit)
     }
 
     // MARK: - Anchors
