@@ -25,6 +25,7 @@ protocol SQHealthKitManaging {
     /// sorted descending by endDate.
     func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample]
     
+    @MainActor
     func invalidateCache()
 
     /// Fetches workouts within a time range from HealthKit.
@@ -230,6 +231,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         return workouts
     }
 
+    @MainActor
     func invalidateCache() {
         workoutCache.removeAll()
         vo2MaxCache.removeAll()
