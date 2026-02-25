@@ -54,7 +54,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         state: LeaderboardStating,
         mode: SQLeaderboardMode,
         initialTimeRange: AppTimeRange = .allTime,
-        workoutManager: SQWorkoutManaging = SQWorkoutManager()
+        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared
     ) {
         self.selectedTimeRange = initialTimeRange
         self.state = state

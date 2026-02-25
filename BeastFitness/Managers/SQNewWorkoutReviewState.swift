@@ -21,7 +21,7 @@ final class SQNewWorkoutReviewState {
     var isPresented: Bool { currentWorkout != nil }
     var queueCount: Int { queue.count }
 
-    init(hub: EventHub, workoutManager: SQWorkoutManaging = SQWorkoutManager()) {
+    init(hub: EventHub, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared) {
         self.hub = hub
         self.workoutManager = workoutManager
         subscribeToEvents()

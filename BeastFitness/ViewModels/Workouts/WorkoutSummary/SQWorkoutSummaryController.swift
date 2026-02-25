@@ -38,7 +38,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     @MainActor
     static let `default`: SQWorkoutSummaryController = SQWorkoutSummaryController(state: SQAppState.shared.workoutSummaryState, onPushEditWorkoutView: { _ in }, onDismiss: {})
 
-    init(state: WorkoutSummaryStating, workoutManager: SQWorkoutManaging = SQWorkoutManager(), healthKitManager: SQHealthKitManaging = SQHealthKitManager(), onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) {
+    init(state: WorkoutSummaryStating, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) {
         self.state = state
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager

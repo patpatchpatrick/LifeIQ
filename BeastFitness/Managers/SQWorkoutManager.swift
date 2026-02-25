@@ -22,9 +22,11 @@ protocol SQWorkoutManaging {
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
+    static let shared = SQWorkoutManager()
+
     private let workoutService: SQWorkoutServicing.Type
     private let healthKitManager: SQHealthKitManaging
-    
+
     init(workoutService: SQWorkoutServicing.Type = SQWorkoutService.self, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared) {
         self.workoutService = workoutService
         self.healthKitManager = healthKitManager

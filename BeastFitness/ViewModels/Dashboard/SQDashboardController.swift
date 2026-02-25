@@ -37,7 +37,7 @@ final class SQDashboardController: SQDashboardInterface {
     @MainActor
     static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState)
     
-    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager(), healthKitManager: SQHealthKitManaging = SQHealthKitManager()) {
+    init(state: DashboardStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared) {
         self.state = state
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
