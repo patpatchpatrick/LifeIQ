@@ -6,6 +6,7 @@
 //
 
 import HealthKit
+import BeastFitnessCore
 
 struct SQVO2MaxSample: Sendable, Hashable {
     let value: Double              // ml/kg/min

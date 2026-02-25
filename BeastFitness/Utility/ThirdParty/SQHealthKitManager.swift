@@ -64,20 +64,20 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
     // MARK: - Cache
 
-    private struct WorkoutCacheEntry {
+    struct WorkoutCacheEntry {
         let workouts: [HKWorkout]
         let fetchedAt: Date
         var isStale: Bool { Date().timeIntervalSince(fetchedAt) > 300 } // 5 min TTL
     }
 
-    private struct VO2MaxCacheEntry {
+    struct VO2MaxCacheEntry {
         let samples: [SQVO2MaxSample]
         let fetchedAt: Date
         var isStale: Bool { Date().timeIntervalSince(fetchedAt) > 300 } // 5 min TTL
     }
 
     private var workoutCache: [SQTimeRange: WorkoutCacheEntry] = [:]
-    private var vo2MaxCache: [SQTimeRange: VO2MaxCacheEntry] = [:]
+    var vo2MaxCache: [SQTimeRange: VO2MaxCacheEntry] = [:]
 
     @MainActor @discardableResult
     func saveWorkout(

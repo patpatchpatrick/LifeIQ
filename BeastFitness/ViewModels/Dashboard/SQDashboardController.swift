@@ -101,11 +101,6 @@ final class SQDashboardController: SQDashboardInterface {
         guard !hasLoadedUI || shouldForceRefresh else { return }
         hasLoadedUI = true
 
-        if shouldForceRefresh {
-            healthKitManager.invalidateCache()
-            SQLogger.shared.log("Force-refresh: invalidated HealthKit cache", .debug, context: .dashboard)
-        }
-
         // Show mock skeleton while real data loads
         state.updateSectionGroups(to: SQDashboardSectionGroupViewModel.mock)
         state.setLoading(true)
