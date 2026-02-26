@@ -10,6 +10,8 @@ import Combine
 
 @MainActor
 protocol NavigationStating: AnyObject {
+    var dashboardNavStack: [SQNavRoute.DashboardRoute] { get }
+    var dashboardRootSheetView: SQNavRoute.DashboardRoute? { get set }
     var dashboardNavPath: NavigationPath { get set }
     var selectedTab: NavigationState.Tab { get }
     var selectedTabPublisher: AnyPublisher<NavigationState.Tab, Never> { get }
@@ -26,6 +28,14 @@ protocol NavigationStating: AnyObject {
     
     private(set) var isSettingsSheetVisible: Bool = false
     
+    var dashboardRootSheetView: SQNavRoute.DashboardRoute? {
+        didSet {
+            if dashboardRootSheetView == nil {
+                dashboardNavPath = .init() /// Clear the nav stack if the sheet is dismissed
+            }
+        }
+    }
+    let dashboardNavStack = [SQNavRoute.DashboardRoute]()
     var dashboardNavPath: NavigationPath = NavigationPath()
     
     enum Tab: Hashable {
@@ -44,18 +54,34 @@ protocol NavigationStating: AnyObject {
         hub.domainEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
+                
             case .changeTab(let tab):
+                
                 if tab != self.selectedTab {
                     self.selectedTab = tab
                 }
+                
             case .displaySettings:
+                
                 toggleSettingsSheetVisibility(true)
+                
             case .pushDashboardRoute(let route):
-                dashboardNavPath.append(route)
+                
+                if dashboardRootSheetView == nil {
+                    dashboardRootSheetView = route
+                } else {
+                    dashboardNavPath.append(route)
+                }
+                
+                
             case .popDashboardRoute:
-                if !dashboardNavPath.isEmpty {
+                
+                if dashboardNavPath.isEmpty {
+                   dashboardRootSheetView = nil
+                } else {
                     dashboardNavPath.removeLast()
                 }
+                
             }
             
         }.store(in: &cancellables)
@@ -71,7 +97,7 @@ protocol NavigationStating: AnyObject {
 }
 
 struct SQNavRoute {
-    enum DashboardRoute: Hashable, Equatable {
+    enum DashboardRoute: Identifiable, Hashable, Equatable {
         case workoutsList(workouts: [SQWorkoutSessionable])
         case workoutView(workout: SQWorkoutSessionable)
         case editWorkout(workout: SQWorkoutSessionable)

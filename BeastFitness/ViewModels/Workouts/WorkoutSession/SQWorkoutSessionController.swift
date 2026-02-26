@@ -20,9 +20,7 @@ final class SQWorkoutSessionController: Identifiable {
     private let exercisesManager: SQExercisesManaging
     private let workoutManager: SQWorkoutManaging
     let state: WorkoutSessionStating
-    let interface: SQWorkoutsLandingInterface = SQWorkoutsLandingController.default
     let watchInterface: SQWatchInterfacing = SQWatchInterface.shared
-    var onDismiss: () -> Void
     private(set) var shouldDisplayTimer: Bool = true
     private(set) var workoutTitle: String = "Workout"
     private(set) var displayDiscardButton: Bool = false
@@ -45,37 +43,23 @@ final class SQWorkoutSessionController: Identifiable {
     }
     
     @MainActor
-    static func `default`(for workout: SQWorkoutSessionable?, onDismiss: @escaping () -> Void) -> SQWorkoutSessionController {
-        print("PTD Reset from default")
-        Self.default.onDismiss = onDismiss
-        return Self.default
+    static func build(for workout: SQWorkoutSessionable?) -> SQWorkoutSessionController {
+        return .init(state: WorkoutSessionState(hub: SQAppState.shared.hub), session: workout)
     }
     
-    @MainActor
-    static let `default` = SQWorkoutSessionController(state: SQAppState.shared.workoutSessionState, onDismiss: {})
-    
-    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, onDismiss: @escaping () -> Void) {
+    init(state: WorkoutSessionStating, session: SQWorkoutSessionable? = nil, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared) {
         self.state = state
         self.workoutManager = workoutManager
         self.exercisesManager = SQExercisesManager.shared
-        self.onDismiss = onDismiss
-        print("PTD Reset from init")
         reset(with: session)
         handleEventSubscriptions(hub: state.hub)
-    }
-    
-    /// Should be called everytime before the view will appear
-    func willAppear(with workout: SQWorkoutSessionable?) {
-        reset(with: workout)
     }
     
     private func reset(with workout: SQWorkoutSessionable?) {
         SQLogger.shared.log("Resetting workout: \(workout?.id ?? "nil")", .debug, context: .workoutSession)
         hasStartedWorkout = false
         timerViewModel.stop()
-        Task {
-            await state.load(workout: workout)
-        }
+        state.load(workout: workout)
 
         let workoutMode: WorkoutMode = workout == nil ? .new : .existing
         self.workoutMode = workoutMode
@@ -225,7 +209,7 @@ final class SQWorkoutSessionController: Identifiable {
             do {
                 try await workoutManager.saveWorkout(workout: workout, to: modelContext)
                 state.workoutUpdated(workout: workout)
-                onDismiss()
+                self.dismiss()
             } catch {
                 state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Error saving workout: \(error.localizedDescription)."))))
                 SQLogger.shared.log("Error saving workout: \(error)", .debug, context: .workoutSession)
@@ -273,12 +257,16 @@ final class SQWorkoutSessionController: Identifiable {
                 role: .destructive,
                 handler: { [weak self] _ in
                     guard let self else { return }
-                    self.onDismiss()
+                    self.dismiss()
                 }),
             secondary: .init(
                 title: "Cancel",
                 role: .cancel)
         )))
+    }
+    
+    private func dismiss() {
+        state.hub.domainEvents.send(.popDashboardRoute)
     }
     
     // MARK: - Workout Mode

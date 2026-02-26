@@ -16,7 +16,6 @@ final class SQRootTabViewModel {
     private(set) var dashboardController: SQDashboardController
     let deepLinkManager = SQDeepLinkManager()
     
-    private(set) var workoutsScreenController: SQWorkoutsLandingController
     var workoutsNavigationPath = NavigationPath()
     
     // MARK: - Init
@@ -24,6 +23,5 @@ final class SQRootTabViewModel {
     init(appState: SQAppState) {
         self.navigationState = appState.navigationState
         self.dashboardController = .default
-        self.workoutsScreenController = .default
     }
 }

@@ -53,9 +53,6 @@
 		F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */; };
 		F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */; };
-		F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */; };
-		F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */; };
-		F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */; };
 		F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */; };
 		F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */; };
 		F629CE6F2EE497960002330C /* SQWorkoutSessionExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */; };
@@ -316,9 +313,6 @@
 		F61593D92EF4BD8400223A63 /* Beast Fitness Watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Beast Fitness Watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F61593E32EF4BD8400223A63 /* Beast Fitness Watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Beast Fitness Watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWatchInterface.swift; sourceTree = "<group>"; };
-		F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsViewModel.swift; sourceTree = "<group>"; };
-		F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsScreenState.swift; sourceTree = "<group>"; };
-		F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsLandingView.swift; sourceTree = "<group>"; };
 		F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionView.swift; sourceTree = "<group>"; };
 		F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionController.swift; sourceTree = "<group>"; };
 		F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseView.swift; sourceTree = "<group>"; };
@@ -545,7 +539,6 @@
 				F679BDE02EE7D66800A2F249 /* WorkoutSessionState.swift */,
 				F679BDD42EE7D3A700A2F249 /* ExercisesListState.swift */,
 				F679BC512EE72F6100A2F249 /* WorkoutsSummaryState.swift */,
-				F629CE632EE3B6AD0002330C /* WorkoutsScreenState.swift */,
 				F602DA302EC40FB600404878 /* DashboardState.swift */,
 				F602DA2B2EC40ED400404878 /* NavigationState.swift */,
 				F602DA292EC40EC700404878 /* EventHub.swift */,
@@ -765,7 +758,6 @@
 				F679BC4B2EE4FB5500A2F249 /* WorkoutSummary */,
 				F679BA402EE4F13D00A2F249 /* WorkoutsList */,
 				F629CE6B2EE3B8AF0002330C /* WorkoutSession */,
-				F629CE612EE3B65B0002330C /* SQWorkoutsViewModel.swift */,
 			);
 			path = Workouts;
 			sourceTree = "<group>";
@@ -774,7 +766,6 @@
 			isa = PBXGroup;
 			children = (
 				F629CE682EE3B86C0002330C /* WorkoutSession */,
-				F629CE662EE3B76E0002330C /* SQWorkoutsLandingView.swift */,
 			);
 			path = WorkoutsScreen;
 			sourceTree = "<group>";
@@ -1681,7 +1672,6 @@
 				F67F0A772F0DDBC600D7BB90 /* SQUITextField.swift in Sources */,
 				F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */,
 				F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */,
-				F629CE622EE3B65D0002330C /* SQWorkoutsViewModel.swift in Sources */,
 				F61592342EF362FF00223A63 /* SQAlertViewModel.swift in Sources */,
 				F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */,
 				F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */,
@@ -1773,7 +1763,6 @@
 				F67F0A122F09DC8600D7BB90 /* SQWorkoutRouteMapView.swift in Sources */,
 				F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */,
 				F602DA662EC789FC00404878 /* SQQuantityType.swift in Sources */,
-				F629CE642EE3B6B00002330C /* WorkoutsScreenState.swift in Sources */,
 				F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */,
 				F679BDDC2EE7D4DC00A2F249 /* SQExercisesListItemViewModel.swift in Sources */,
 				F647A9042EE7DAD000DAA247 /* SQExercisesManager.swift in Sources */,
@@ -1808,7 +1797,6 @@
 				F639F0C32F3E3C5E004AC701 /* SQColumnHeaderRow.swift in Sources */,
 				F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */,
 				F602DA282EC40EB800404878 /* SQAppState.swift in Sources */,
-				F629CE672EE3B7730002330C /* SQWorkoutsLandingView.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639F16A2F4BC6A8004AC701 /* SQNewWorkoutReviewState.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,

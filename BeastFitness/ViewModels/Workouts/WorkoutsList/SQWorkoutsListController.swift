@@ -52,7 +52,6 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     }
     
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
-        SQWorkoutSessionController.default.willAppear(with: workout)
         hub.domainEvents.send(.pushDashboardRoute(.editWorkout(workout: workout)))
     }
 }
