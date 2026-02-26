@@ -130,6 +130,6 @@ struct SQDashboardSectionView: View {
             context: .dashboard
         )
 
-        SQAppState.shared.dashboardState.displayLeaderboardSheet(mode: mode)
+        SQAppState.shared.dashboardState.displayLeaderboard(mode: mode)
     }
 }

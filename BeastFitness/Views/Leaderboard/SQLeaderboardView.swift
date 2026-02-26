@@ -9,7 +9,7 @@ import SwiftUI
 import CoolCharts
 
 struct SQLeaderboardView: View {
-    @Bindable var controller: SQLeaderboardController
+    @State var controller: SQLeaderboardController
     @Environment(\.modelContext) private var modelContext
 
     // MARK: - Empty State

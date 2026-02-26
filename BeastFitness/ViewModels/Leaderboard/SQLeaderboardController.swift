@@ -17,6 +17,7 @@ protocol SQLeaderboardInterface {
 
 @Observable @MainActor
 final class SQLeaderboardController: SQLeaderboardInterface {
+    let id = UUID().uuidString
     private(set) var containerWidth: CGFloat = 0
     var chartWidth: CGFloat {
         max(0, containerWidth * 0.95)
@@ -24,7 +25,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let chartHeight: CGFloat = 300
     var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
-    let state: LeaderboardStating
     let workoutManager: SQWorkoutManaging
     private(set) var hasLoadedUI = false
     private(set) var isLoading = false
@@ -45,19 +45,18 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
     @MainActor
     static let `default` = SQLeaderboardController(
-        state: SQAppState.shared.leaderboardState,
+        hub: SQAppState.shared.hub,
         mode: .workoutQuantity(.distanceWalkingRunning, .running),
         initialTimeRange: .allTime
     )
 
     init(
-        state: LeaderboardStating,
+        hub: EventHub,
         mode: SQLeaderboardMode,
         initialTimeRange: AppTimeRange = .allTime,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared
     ) {
         self.selectedTimeRange = initialTimeRange
-        self.state = state
         self.mode = mode
         self.workoutManager = workoutManager
 
@@ -70,7 +69,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             items: items
         ) { _ in }
 
-        handleEventSubscriptions(hub: state.hub)
+        handleEventSubscriptions(hub: hub)
 
         self.timeRangeMenuViewModel.itemSelectionHandler = { [weak self] selectedTitle in
             guard let self else { return }
@@ -136,8 +135,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     formattedScore: mockMetric.displayableValue(for: quantityType, value: mockMetric.value),
                     unitString: mockMetric.unit.unitString ?? "",
                     allTimeRank: index,
-                    allTimeTotal: 10,
-                    state: state
+                    allTimeTotal: 10
                 )
             }
             buildMockChart(mockValue: mockMetric.value)
@@ -153,8 +151,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     formattedScore: "45.0",
                     unitString: "mL/kg/min",
                     allTimeRank: index,
-                    allTimeTotal: 10,
-                    state: state
+                    allTimeTotal: 10
                 )
             }
             buildMockChart(mockValue: 45.0)
@@ -246,8 +243,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     unitString: item.metric.unit.unitString ?? "",
                     warningText: item.metric.warningText,
                     allTimeRank: computeAllTimeRank(value: item.metric.value, allTimeValues: allTimeValues, isLowerBetter: mode.isLowerBetter),
-                    allTimeTotal: allTimeValues.count,
-                    state: state
+                    allTimeTotal: allTimeValues.count
                 )
             }
 
@@ -324,8 +320,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     formattedScore: String(format: "%.1f", sample.value),
                     unitString: "mL/kg/min",
                     allTimeRank: computeAllTimeRank(value: sample.value, allTimeValues: allTimeValues, isLowerBetter: false),
-                    allTimeTotal: allTimeValues.count,
-                    state: state
+                    allTimeTotal: allTimeValues.count
                 )
             }
 

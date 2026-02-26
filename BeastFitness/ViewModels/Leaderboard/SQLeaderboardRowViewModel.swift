@@ -15,7 +15,6 @@ final class SQLeaderboardRowViewModel: Identifiable {
     let formattedScore: String
     let unitString: String
     let warningText: String?
-    let state: LeaderboardStating
 
     /// The rank of this entry among all-time entries for the same metric/activity type.
     let allTimeRank: Int
@@ -96,7 +95,6 @@ final class SQLeaderboardRowViewModel: Identifiable {
         warningText: String? = nil,
         allTimeRank: Int,
         allTimeTotal: Int,
-        state: LeaderboardStating
     ) {
         self.id = id
         self.rank = rank
@@ -108,12 +106,11 @@ final class SQLeaderboardRowViewModel: Identifiable {
         self.warningText = warningText
         self.allTimeRank = allTimeRank
         self.allTimeTotal = allTimeTotal
-        self.state = state
     }
 
     func warningTapped() {
         guard let warningText else { return }
-        state.hub.alertEvents.send(
+        SQAppState.shared.hub.alertEvents.send(
             .present(.init(
                 title: "Data Accuracy Notice",
                 subtitle: warningText,

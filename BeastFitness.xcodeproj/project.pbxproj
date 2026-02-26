@@ -67,7 +67,6 @@
 		F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */; };
 		F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639B9842ED7BBFD00199C69 /* SQButton.swift */; };
 		F639F0C32F3E3C5E004AC701 /* SQColumnHeaderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */; };
-		F639F0C52F3ECCC8004AC701 /* LeaderboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */; };
 		F639F0C82F3ECCF8004AC701 /* SQLeaderboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C62F3ECCF8004AC701 /* SQLeaderboardController.swift */; };
 		F639F0CB2F3ECD14004AC701 /* SQLeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */; };
 		F639F0CD2F3ED11F004AC701 /* SQLeaderboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0CC2F3ED11F004AC701 /* SQLeaderboardRowView.swift */; };
@@ -327,7 +326,6 @@
 		F639B8FA2ED7A46800199C69 /* SQTextValidationRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTextValidationRule.swift; sourceTree = "<group>"; };
 		F639B9842ED7BBFD00199C69 /* SQButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButton.swift; sourceTree = "<group>"; };
 		F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColumnHeaderRow.swift; sourceTree = "<group>"; };
-		F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardState.swift; sourceTree = "<group>"; };
 		F639F0C62F3ECCF8004AC701 /* SQLeaderboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardController.swift; sourceTree = "<group>"; };
 		F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardView.swift; sourceTree = "<group>"; };
 		F639F0CC2F3ED11F004AC701 /* SQLeaderboardRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardRowView.swift; sourceTree = "<group>"; };
@@ -544,7 +542,6 @@
 				F602DA292EC40EC700404878 /* EventHub.swift */,
 				F602DA272EC40EB700404878 /* SQAppState.swift */,
 				F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */,
-				F639F0C42F3ECCC8004AC701 /* LeaderboardState.swift */,
 			);
 			path = StateManagement;
 			sourceTree = "<group>";
@@ -1637,7 +1634,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F639F0C52F3ECCC8004AC701 /* LeaderboardState.swift in Sources */,
 				F6A848A62CB608D200B09AD5 /* AppDelegate.swift in Sources */,
 				F639F1622F493374004AC701 /* SQDropDownMenuOverlayCard.swift in Sources */,
 				F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */,

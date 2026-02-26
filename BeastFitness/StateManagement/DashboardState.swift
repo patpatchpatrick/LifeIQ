@@ -29,9 +29,6 @@ protocol DashboardStating: AnyObject {
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     var dailyCheckInCtaViewModel: SQCallToActionViewModel? { get }
 
-    var isLeaderboardSheetVisible: Bool { get }
-    var leaderboardController: SQLeaderboardController? { get }
-
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
 
@@ -44,8 +41,7 @@ protocol DashboardStating: AnyObject {
 
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 
-    func toggleLeaderboardSheetVisibility(_ isVisible: Bool)
-    func displayLeaderboardSheet(mode: SQLeaderboardMode)
+    func displayLeaderboard(mode: SQLeaderboardMode)
 }
 
 @MainActor
@@ -71,8 +67,6 @@ protocol DashboardStating: AnyObject {
 
     private(set) var isLoading: Bool = false
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
-
-    private(set) var leaderboardController: SQLeaderboardController?
 
     init(hub: EventHub) {
         self.hub = hub
@@ -120,7 +114,7 @@ protocol DashboardStating: AnyObject {
         isLeaderboardSheetVisible = isVisible
     }
 
-    func displayLeaderboardSheet(mode: SQLeaderboardMode) {
+    func displayLeaderboard(mode: SQLeaderboardMode) {
         // Determine initial time range based on dashboard selection
         let initialTimeRange: AppTimeRange = {
             // Exception: Today → All Time (not enough data for meaningful leaderboard)
@@ -138,11 +132,12 @@ protocol DashboardStating: AnyObject {
             return selectedTimeRange
         }()
 
-        leaderboardController = .init(
-            state: SQAppState.shared.leaderboardState,
+        let leaderboardController = SQLeaderboardController(
+            hub: hub,
             mode: mode,
             initialTimeRange: initialTimeRange
         )
-        toggleLeaderboardSheetVisibility(true)
+        
+        hub.domainEvents.send(.pushDashboardRoute(.leaderboard(controller: leaderboardController)))
     }
 }
