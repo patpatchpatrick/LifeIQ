@@ -20,7 +20,7 @@ final class SQWorkoutSessionMetadataManager {
     private var metricCache: [String: [SQQuantityType: SQWorkoutMetric]] = [:]
 
     func cachedMetric(for quantityType: SQQuantityType, sourceId: String) -> SQWorkoutMetric? {
-        metricCache[sourceId]?[quantityType]
+        metricCache[sourceId, default: [:]][quantityType]
     }
 
     func cacheMetric(_ metric: SQWorkoutMetric, for quantityType: SQQuantityType, sourceId: String) {
