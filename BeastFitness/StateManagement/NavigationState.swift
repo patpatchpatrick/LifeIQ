@@ -10,6 +10,7 @@ import Combine
 
 @MainActor
 protocol NavigationStating: AnyObject {
+    var dashboardNavPath: NavigationPath { get set }
     var selectedTab: NavigationState.Tab { get }
     var selectedTabPublisher: AnyPublisher<NavigationState.Tab, Never> { get }
     func changeTab(to tab: NavigationState.Tab)
@@ -24,6 +25,8 @@ protocol NavigationStating: AnyObject {
     private var cancellables = Set<AnyCancellable>()
     
     private(set) var isSettingsSheetVisible: Bool = false
+    
+    var dashboardNavPath: NavigationPath = NavigationPath()
     
     enum Tab: Hashable {
         case home
@@ -47,6 +50,12 @@ protocol NavigationStating: AnyObject {
                 }
             case .displaySettings:
                 toggleSettingsSheetVisibility(true)
+            case .pushDashboardRoute(let route):
+                dashboardNavPath.append(route)
+            case .popDashboardRoute:
+                if !dashboardNavPath.isEmpty {
+                    dashboardNavPath.removeLast()
+                }
             }
             
         }.store(in: &cancellables)
@@ -62,28 +71,29 @@ protocol NavigationStating: AnyObject {
 }
 
 struct SQNavRoute {
-    enum WorkoutsList: Hashable, Equatable {
+    enum DashboardRoute: Hashable, Equatable {
+        case workoutsList(workouts: [SQWorkoutSessionable])
         case workoutView(workout: SQWorkoutSessionable)
         case editWorkout(workout: SQWorkoutSessionable)
         
-        func hash(into hasher: inout Hasher) {
+        var id: String {
             switch self {
+            case .workoutsList(workouts: let workouts):
+                let workoutsIds = workouts.map(\.id).joined(separator: ",")
+                return "workoutsList-\(workoutsIds)"
             case .workoutView(let workout):
-                hasher.combine("workoutView-\(workout.id)")
+                return "workoutView-\(workout.id)"
             case .editWorkout(let workout):
-                hasher.combine("editWorkout-\(workout.id)")
+                return "editWorkout-\(workout.id)"
             }
         }
         
-        static func == (lhs: WorkoutsList, rhs: WorkoutsList) -> Bool {
-            switch (lhs, rhs) {
-            case (.workoutView(let lhs), .workoutView(let rhs)):
-                return lhs.id == rhs.id
-            case (.editWorkout(let lhs), .editWorkout(let rhs)):
-                return lhs.id == rhs.id
-            default:
-                return false
-            }
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
+        static func == (lhs: DashboardRoute, rhs: DashboardRoute) -> Bool {
+            lhs.id == rhs.id
         }
     }
     

@@ -170,12 +170,12 @@ class SQWorkoutSession: SQWorkoutSessionable {
     func getMetric(for quantityType: SQQuantityType) async -> SQWorkoutMetric? {
         // TODO: - PTD persist this data so we don't need to re-calculate it every time the app dies
         if quantityType.shouldCache {
-            if let cached = Self.metadataManager.cachedMetric(for: quantityType, sourceId: id) {
+            if let cached = await Self.metadataManager.cachedMetric(for: quantityType, sourceId: id) {
                 return cached
             }
             let result = await Self.getMetric(for: quantityType, workoutSource: workoutSource)
             if let result {
-                Self.metadataManager.cacheMetric(result, for: quantityType, sourceId: id)
+                await Self.metadataManager.cacheMetric(result, for: quantityType, sourceId: id)
             }
             return result
         }

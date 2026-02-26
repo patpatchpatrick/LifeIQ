@@ -15,21 +15,17 @@ protocol SQWorkoutsListInterface {
 
 @Observable @MainActor
 final class SQWorkoutsListController: SQWorkoutsListInterface {
-    var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
-    let state: WorkoutsListStating
     private(set) var hasLoadedUI = false
+    private let hub: EventHub
     private(set) var rows: [SQWorkoutsListItemViewModel]
     
-    @MainActor
-    static let `default` = SQWorkoutsListController(state: SQAppState.shared.workoutsListState)
-    
-    init(state: WorkoutsListStating, workouts: [SQWorkoutSessionable] = []) {
-        self.state = state
+    init(eventHub: EventHub, workouts: [SQWorkoutSessionable] = []) {
+        self.hub = eventHub
         self.rows = workouts
             .sorted(by: { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) })
             .map { .init(workout: $0) }
-        handleEventSubscriptions(hub: state.hub)
+        handleEventSubscriptions(hub: eventHub)
     }
     
     private func handleEventSubscriptions(hub: EventHub) {
@@ -52,17 +48,11 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     }
     
     func displayWorkoutSummary(for row: SQWorkoutsListItemViewModel) {
-        navigationPath.append(SQNavRoute.WorkoutsList.workoutView(workout: row.workout))
+        hub.domainEvents.send(.pushDashboardRoute(.workoutView(workout: row.workout)))
     }
     
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
         SQWorkoutSessionController.default.willAppear(with: workout)
-        navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: workout))
-    }
-    
-    func popView() {
-        if !navigationPath.isEmpty {
-            navigationPath.removeLast()
-        }
+        hub.domainEvents.send(.pushDashboardRoute(.editWorkout(workout: workout)))
     }
 }

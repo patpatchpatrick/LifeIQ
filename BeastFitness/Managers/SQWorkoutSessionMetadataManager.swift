@@ -13,7 +13,7 @@ import BeastFitnessCore
 /// (save/delete) to ensure stale data is never shown.
 ///
 /// Future improvement: persist entries to SwiftData so metrics survive app restarts.
-final class SQWorkoutSessionMetadataManager {
+actor SQWorkoutSessionMetadataManager {
 
     static let shared = SQWorkoutSessionMetadataManager()
 

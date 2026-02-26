@@ -26,20 +26,20 @@ struct SQNewWorkoutReviewHost: View {
                             backgroundColor: .backgroundSheet
                         )
                         .navigationBarTitleDisplayMode(.inline)
-                        .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
-                            switch route {
-                            case .editWorkout(let editWorkout):
-                                SQWorkoutSessionView(
-                                    isBeingDisplayedWithinNavStack: true,
-                                    controller: .default(
-                                        for: editWorkout,
-                                        onDismiss: { navigationPath.removeLast() }
-                                    )
-                                )
-                            case .workoutView:
-                                EmptyView()
-                            }
-                        }
+//                        .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
+//                            switch route {
+//                            case .editWorkout(let editWorkout):
+//                                SQWorkoutSessionView(
+//                                    isBeingDisplayedWithinNavStack: true,
+//                                    controller: .default(
+//                                        for: editWorkout,
+//                                        onDismiss: { navigationPath.removeLast() }
+//                                    )
+//                                )
+//                            case .workoutView:
+//                                EmptyView()
+//                            }
+//                        }
                     }
 
                     actionBar
@@ -60,18 +60,9 @@ struct SQNewWorkoutReviewHost: View {
             navigationPath = NavigationPath()
             guard let workout = reviewState.currentWorkout else { return }
             
-            let controller = SQWorkoutSummaryController.default(
-                workout: workout,
-                onPushEditWorkoutView: { editWorkout in
-                    SQWorkoutSessionController.default.willAppear(with: editWorkout)
-                    navigationPath.append(SQNavRoute.WorkoutsList.editWorkout(workout: editWorkout))
-                },
-                onDismiss: {
-                    reviewState.markCurrentAsProcessed(context: modelContext)
-                }
-            )
+            // PTD FIX THIS
+            let controller = SQWorkoutSummaryController(workout: workout)
             summaryController = controller
-            await controller.load(workout: workout)
         }
     }
 

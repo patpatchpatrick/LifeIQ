@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct SQWorkoutsListView: View {
-    @Bindable var controller: SQWorkoutsListController
-    @State private var summaryControllerCache: [String: SQWorkoutSummaryController] = [:]
+    @State var controller: SQWorkoutsListController
     
     @ViewBuilder
     var mainStack: some View {
@@ -48,54 +47,12 @@ struct SQWorkoutsListView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
     }
-    
-    var navView: some View {
+ 
+    var body: some View {
         mainScroll
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Workouts")
             .navigationBarTitleDisplayMode(.inline)
             .background(SQColor.background.color)
-    }
-    
-    private func cachedSummaryController(
-            for workout: SQWorkoutSessionable
-        ) -> SQWorkoutSummaryController {
-            let key = workout.id
-
-            if let cached = summaryControllerCache[key] {
-                return cached
-            }
-
-            let created = SQWorkoutSummaryController.default(
-                workout: workout,
-                onPushEditWorkoutView: { workout in
-                    controller.pushEditWorkoutView(for: workout)
-                },
-                onDismiss: {
-                    controller.popView()
-                }
-            )
-
-            summaryControllerCache[key] = created
-            return created
-        }
-    
-    @ViewBuilder
-    var navStack: some View {
-        NavigationStack(path: $controller.navigationPath) {
-            navView
-                .navigationDestination(for: SQNavRoute.WorkoutsList.self) { route in
-                    switch route {
-                    case .workoutView(let workout):
-                        SQWorkoutSummaryView(controller: cachedSummaryController(for: workout))
-                    case .editWorkout(workout: let workout):
-                        SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout, onDismiss: { self.controller.popView() }))
-                    }
-                }
-        }
-    }
-
-    var body: some View {
-        navStack
     }
 }

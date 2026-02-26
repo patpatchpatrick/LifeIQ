@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SQWorkoutSummaryView: View {
-    @Bindable var controller: SQWorkoutSummaryController
+    @State var controller: SQWorkoutSummaryController
     @Environment(\.modelContext) private var modelContext
     
     var customNavigationTitle: String? = nil

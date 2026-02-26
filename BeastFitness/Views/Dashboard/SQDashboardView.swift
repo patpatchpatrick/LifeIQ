@@ -99,13 +99,6 @@ struct SQDashboardView: View {
                     }
                 }
             .sheet(isPresented: .init(
-                get: { controller.state.isWorkoutListSheetVisible },
-                set: { isVisible in controller.state.toggleWorkoutListSheetVisibility(isVisible) })) {
-                    if let workoutListController = controller.state.workoutsListController {
-                        SQWorkoutsListView(controller: workoutListController)
-                    }
-                }
-            .sheet(isPresented: .init(
                 get: { controller.state.isLeaderboardSheetVisible },
                 set: { isVisible in controller.state.toggleLeaderboardSheetVisibility(isVisible) })) {
                     if let leaderboardController = controller.state.leaderboardController {

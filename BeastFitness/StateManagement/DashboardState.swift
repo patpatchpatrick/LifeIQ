@@ -29,9 +29,6 @@ protocol DashboardStating: AnyObject {
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     var dailyCheckInCtaViewModel: SQCallToActionViewModel? { get }
 
-    var isWorkoutListSheetVisible: Bool { get }
-    var workoutsListController: SQWorkoutsListController? { get }
-
     var isLeaderboardSheetVisible: Bool { get }
     var leaderboardController: SQLeaderboardController? { get }
 
@@ -45,7 +42,6 @@ protocol DashboardStating: AnyObject {
     func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel])
     func setLoading(_ isLoading: Bool)
 
-    func toggleWorkoutListSheetVisibility(_ isVisible: Bool)
     func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
 
     func toggleLeaderboardSheetVisibility(_ isVisible: Bool)
@@ -57,7 +53,6 @@ protocol DashboardStating: AnyObject {
     let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
     private(set) var isDailyCheckInSheetVisible: Bool = false
-    private(set) var isWorkoutListSheetVisible: Bool = false
     private(set) var isLeaderboardSheetVisible: Bool = false
 
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
@@ -77,7 +72,6 @@ protocol DashboardStating: AnyObject {
     private(set) var isLoading: Bool = false
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
-    private(set) var workoutsListController: SQWorkoutsListController?
     private(set) var leaderboardController: SQLeaderboardController?
 
     init(hub: EventHub) {
@@ -118,13 +112,8 @@ protocol DashboardStating: AnyObject {
         toggleDailyCheckInSheetVisibility(true)
     }
     
-    func toggleWorkoutListSheetVisibility(_ isVisible: Bool) {
-        isWorkoutListSheetVisible = isVisible
-    }
-    
     func displayWorkoutsListSheet(with workouts: [any SQWorkoutSessionable]) {
-        workoutsListController = .init(state: SQAppState.shared.workoutsListState, workouts: workouts)
-        toggleWorkoutListSheetVisibility(true)
+        hub.domainEvents.send(.pushDashboardRoute(.workoutsList(workouts: workouts)))
     }
 
     func toggleLeaderboardSheetVisibility(_ isVisible: Bool) {

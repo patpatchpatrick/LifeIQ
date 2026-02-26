@@ -16,14 +16,40 @@ struct SQRootTabView: View {
         _viewModel = .init(initialValue: .init(appState: appState))
     }
     
+    var navigableDashboardView: some View {
+        NavigationStack(path: $viewModel.navigationState.dashboardNavPath) {
+            SQDashboardView(controller: viewModel.dashboardController)
+                .navigationDestination(for: SQNavRoute.DashboardRoute.self) { route in
+                    switch route {
+                    case .workoutView(let workout):
+                        SQWorkoutSummaryView(controller: .init(workout: workout))
+                    case .editWorkout(workout: let workout):
+                        SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout, onDismiss: { print("PTD POP VIEW") }))
+                    case .workoutsList(workouts: let workouts):
+                        SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
+                    }
+                }
+        }
+    }
+    
     @ViewBuilder
     var mainTabView: some View {
         TabView(selection: .init(
             get: { navigationState.selectedTab },
             set: { navigationState.changeTab(to: $0) })) {
                 
-                NavigationStack(path: $viewModel.dashboardNavigationPath) {
+                NavigationStack(path: $viewModel.navigationState.dashboardNavPath) {
                     SQDashboardView(controller: viewModel.dashboardController)
+                        .navigationDestination(for: SQNavRoute.DashboardRoute.self) { route in
+                            switch route {
+                            case .workoutView(let workout):
+                                SQWorkoutSummaryView(controller: .init(workout: workout))
+                            case .editWorkout(workout: let workout):
+                                SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout, onDismiss: { print("PTD POP VIEW") }))
+                            case .workoutsList(workouts: let workouts):
+                                SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
+                            }
+                        }
                 }
                 .tabItem {
                     Image(systemName: "house")
@@ -43,7 +69,7 @@ struct SQRootTabView: View {
     }
     
     var mainTabViewWithSheets: some View {
-        mainTabView
+        navigableDashboardView
             .sheet(isPresented: .init(
                 get: { navigationState.isSettingsSheetVisible },
                 set: { isVisible in navigationState.toggleSettingsSheetVisibility(isVisible) })) {

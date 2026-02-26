@@ -13,7 +13,6 @@ import HealthKit
 
 @MainActor
 protocol SQWorkoutSummaryInterface {
-    func load(workout: SQWorkoutSessionable) async
     func pushEditWorkoutView()
 }
 
@@ -22,31 +21,20 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     let state: WorkoutSummaryStating
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
-    var onPushEditWorkoutView: (SQWorkoutSessionable) -> Void
-    var onDismiss: () -> Void
 
-    @MainActor
-    static func `default`(workout: any SQWorkoutSessionable, onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) -> SQWorkoutSummaryController {
-        Self.default.onPushEditWorkoutView = onPushEditWorkoutView
-        Self.default.onDismiss = onDismiss
-        Task {
-            await Self.default.load(workout: workout)
-        }
-        return Self.default
-    }
-
-    @MainActor
-    static let `default`: SQWorkoutSummaryController = SQWorkoutSummaryController(state: SQAppState.shared.workoutSummaryState, onPushEditWorkoutView: { _ in }, onDismiss: {})
-
-    init(state: WorkoutSummaryStating, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, onPushEditWorkoutView: @escaping (SQWorkoutSessionable) -> Void, onDismiss: @escaping () -> Void) {
-        self.state = state
+    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, workout: SQWorkoutSessionable) {
+        self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
-        self.onPushEditWorkoutView = onPushEditWorkoutView
-        self.onDismiss = onDismiss
+        Task {
+            await load(workout: workout)
+        }
     }
 
-    func load(workout: any SQWorkoutSessionable) async {
+    private var hasLoaded = false
+    private func load(workout: any SQWorkoutSessionable) async {
+        guard !hasLoaded else { return }
+        hasLoaded = true
         state.isLoading = true
         state.reset()
         await state.load(workout: workout)
@@ -61,7 +49,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             return
         }
 
-        onPushEditWorkoutView(baseWorkout)
+        state.hub.domainEvents.send(.pushDashboardRoute(.editWorkout(workout: baseWorkout)))
     }
 
     func deleteWorkout(from modelContext: ModelContext) async {
@@ -92,7 +80,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
                     do {
                         try await workoutManager.deleteWorkout(workout: baseWorkout, from: modelContext)
                         state.notifyAppOfWorkoutDeletion(workout: baseWorkout)
-                        onDismiss()
+                        state.hub.domainEvents.send(.popDashboardRoute)
                     } catch {
                         state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
                     }
