@@ -350,12 +350,6 @@ final class SQDashboardController: SQDashboardInterface {
             state.hub.domainEvents.send(.pushDashboardRoute(.workoutReview(workouts: sorted)))
         }
     }
-    
-    private func initiateWorkoutReviewManager(with workouts: [SQWorkoutSessionable]) {
-        
-        
-        
-    }
 
     // MARK: - Metrics Subsection Builder
 
