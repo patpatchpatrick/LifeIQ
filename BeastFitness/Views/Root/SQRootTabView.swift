@@ -19,8 +19,10 @@ struct SQRootTabView: View {
     @ViewBuilder
     func view(for route: SQNavRoute.DashboardRoute) -> some View {
         switch route {
-        case .workoutView(let workout):
-            SQWorkoutSummaryView(controller: .init(workout: workout))
+        case .workoutReview(workouts: let workouts):
+            SQWorkoutReviewView(reviewState: .init(hub: SQAppState.shared.hub, workouts: workouts))
+        case .workoutSummary(let controller):
+            SQWorkoutSummaryView(controller: controller)
         case .editWorkout(workout: let workout):
             SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .build(for: workout))
         case .workoutsList(workouts: let workouts):
@@ -85,14 +87,7 @@ struct SQRootTabView: View {
     }
     
     var body: some View {
-        ZStack {
-            mainTabViewWithSheets
-                .disabled(SQAppState.shared.newWorkoutReviewState.isPresented)
-
-            SQNewWorkoutReviewHost(
-                reviewState: SQAppState.shared.newWorkoutReviewState
-            )
-        }
+        mainTabViewWithSheets
         .frame(maxHeight: .infinity)
         .background(Color.purple)
         .accentColor(SQColor.textPrimary.color)

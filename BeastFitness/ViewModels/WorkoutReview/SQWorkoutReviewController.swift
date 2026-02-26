@@ -1,7 +1,10 @@
 //
-//  SQNewWorkoutReviewState.swift
+//  SQWorkoutReviewController.swift
 //  BeastFitness
 //
+//  Created by Patrick Doyle on 2/25/26.
+//
+
 
 import Foundation
 import Observation
@@ -11,37 +14,19 @@ import BeastFitnessCore
 
 @MainActor
 @Observable
-final class SQNewWorkoutReviewState {
+final class SQWorkoutReviewController {
     private let hub: EventHub
     private let workoutManager: SQWorkoutManaging
-    private var cancellables = Set<AnyCancellable>()
 
     private(set) var queue: [SQWorkoutSessionable] = []
     var currentWorkout: SQWorkoutSessionable? { queue.first }
     var isPresented: Bool { currentWorkout != nil }
     var queueCount: Int { queue.count }
 
-    init(hub: EventHub, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared) {
+    init(hub: EventHub, workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, workouts: [SQWorkoutSessionable]) {
         self.hub = hub
         self.workoutManager = workoutManager
-        subscribeToEvents()
-    }
-
-    private func subscribeToEvents() {
-        hub.workoutReviewEvents.sink { [weak self] event in
-            guard let self else { return }
-            switch event {
-            case .workoutsReadyForReview(let workouts):
-                // Only update if queue is empty — don't disrupt an in-progress review
-                guard queue.isEmpty else { return }
-                queue = workouts
-                SQLogger.shared.log(
-                    "Workout review queue loaded with \(workouts.count) workout(s)",
-                    .info,
-                    context: .workoutManager
-                )
-            }
-        }.store(in: &cancellables)
+        queue = workouts
     }
 
     /// Marks the current (first) workout as processed and advances the queue.
@@ -49,11 +34,17 @@ final class SQNewWorkoutReviewState {
         guard let workout = currentWorkout else { return }
         workoutManager.markWorkoutsAsProcessed([workout], context: context)
         queue.removeFirst()
+        dismiss()
     }
 
     /// Marks every workout in the queue as processed and clears it.
     func markAllAsProcessed(context: ModelContext) {
         workoutManager.markWorkoutsAsProcessed(queue, context: context)
         queue.removeAll()
+        dismiss()
+    }
+    
+    private func dismiss() {
+        hub.domainEvents.send(.popDashboardRoute)
     }
 }

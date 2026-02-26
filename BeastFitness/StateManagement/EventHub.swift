@@ -46,10 +46,6 @@ enum ModalEvent {
     case dismiss
 }
 
-enum WorkoutReviewEvent {
-    case workoutsReadyForReview([SQWorkoutSessionable])
-}
-
 @MainActor
 final class EventHub {
     let domainEvents = PassthroughSubject<DomainEvent, Never>()
@@ -58,5 +54,4 @@ final class EventHub {
     let alertEvents = PassthroughSubject<AlertEvent, Never>()
     let toastEvents = PassthroughSubject<ToastEvent, Never>()
     let modalEvents = PassthroughSubject<ModalEvent, Never>()
-    let workoutReviewEvents = PassthroughSubject<WorkoutReviewEvent, Never>()
 }

@@ -33,7 +33,6 @@ final class SQAppState {
     let settingsState: SettingsState
     let toastState: SQToastState
     let dropDownMenuState: SQDropDownMenuState
-    let newWorkoutReviewState: SQNewWorkoutReviewState
 
     init() {
         self.userState = .init(hub: hub)
@@ -47,6 +46,5 @@ final class SQAppState {
         self.settingsState = .init(hub: hub)
         self.toastState = .init(hub: hub)
         self.dropDownMenuState = .init()
-        self.newWorkoutReviewState = .init(hub: hub)
     }
 }

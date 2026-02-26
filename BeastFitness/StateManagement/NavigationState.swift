@@ -99,7 +99,8 @@ protocol NavigationStating: AnyObject {
 struct SQNavRoute {
     enum DashboardRoute: Identifiable, Hashable, Equatable {
         case workoutsList(workouts: [SQWorkoutSessionable])
-        case workoutView(workout: SQWorkoutSessionable)
+        case workoutSummary(controller: SQWorkoutSummaryController)
+        case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         
         var id: String {
@@ -107,8 +108,11 @@ struct SQNavRoute {
             case .workoutsList(workouts: let workouts):
                 let workoutsIds = workouts.map(\.id).joined(separator: ",")
                 return "workoutsList-\(workoutsIds)"
-            case .workoutView(let workout):
-                return "workoutView-\(workout.id)"
+            case .workoutReview(workouts: let workouts):
+                let workoutsIds = workouts.map(\.id).joined(separator: ",")
+                return "workoutReview-\(workoutsIds)"
+            case .workoutSummary(let controller):
+                return "workoutSummary-\(controller.id)"
             case .editWorkout(let workout):
                 return "editWorkout-\(workout.id)"
             }

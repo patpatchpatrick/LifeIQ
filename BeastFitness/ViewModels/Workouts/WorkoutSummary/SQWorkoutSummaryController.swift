@@ -18,6 +18,7 @@ protocol SQWorkoutSummaryInterface {
 
 @Observable @MainActor
 final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
+    let id = UUID().uuidString
     let state: WorkoutSummaryStating
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging

@@ -48,7 +48,7 @@ final class SQWorkoutsListController: SQWorkoutsListInterface {
     }
     
     func displayWorkoutSummary(for row: SQWorkoutsListItemViewModel) {
-        hub.domainEvents.send(.pushDashboardRoute(.workoutView(workout: row.workout)))
+        hub.domainEvents.send(.pushDashboardRoute(.workoutSummary(controller: .init(workout: row.workout))))
     }
     
     func pushEditWorkoutView(for workout: SQWorkoutSessionable) {
