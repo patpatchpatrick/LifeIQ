@@ -337,6 +337,7 @@ Firestore charges per document read/write. Tracking metrics helps:
 
 - **Always use `SQColor` for colors** — Never use SwiftUI's `Color` directly. Use `.sqForegroundColor()` and `.sqBackgroundColor()` modifiers.
 - **Always use `SQFont` for fonts** — Never use SwiftUI's `Font` directly. Use `.sqFont()` modifier.  Example: (SQFont(type: .bodySmall).font)
+- **Always use `SQUITextField` or `SQTextField` for text inputs** — Never use SwiftUI's `TextField` directly. Prefer `SQUITextField` (UIKit-backed, single-line) as the default. Use `SQTextField` as a fallback when multiline is needed (`axis: .vertical`).
 - **Always use `SQImageSymbol` for SF Symbols** — Never use hardcoded string literals in `Image(systemName:)`. All SF Symbols must be defined in the `SQImageSymbol` enum (found in `BeastFitness/UI/SQImage.swift`) to ensure we track all icons centrally. If a symbol you need doesn't exist in the enum, add it there first before using it.
   - Use `SQImageView` with `SQImage(symbol: .symbolName)` for rendering symbols with proper styling
   - Example: `SQImageView(image: .init(symbol: .chevronUp, symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)))`

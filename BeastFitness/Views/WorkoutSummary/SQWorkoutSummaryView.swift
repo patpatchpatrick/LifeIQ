@@ -105,13 +105,7 @@ struct SQWorkoutSummaryView: View {
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
 
-            TextField("How'd it go? Any notes...", text: bindable.workoutNotes, axis: .vertical)
-                .lineLimit(3...6)
-                .sqFont(.body)
-                .sqForegroundColor(.textPrimary)
-                .padding(.SQSpace.m)
-                .sqBackgroundColor(.backgroundSecondary)
-                .cornerRadius(.SQCornerRadius.s)
+            SQTextField(viewModel: controller.notesViewModel)
 
             reviewRatingRow(
                 title: "How did you perform?",

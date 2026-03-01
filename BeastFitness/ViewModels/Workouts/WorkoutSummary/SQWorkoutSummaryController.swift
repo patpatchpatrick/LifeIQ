@@ -40,7 +40,13 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     // Review state — only populated when mode == .review
     var selectedPerformance: SQSegmentedControlSegment? = nil
     var selectedDifficulty: SQSegmentedControlSegment? = nil
-    var workoutNotes: String = ""
+    let notesViewModel: SQTextFieldViewModel = .init(
+        axis: .vertical,
+        lineLimit: 5,
+        placeholder: "How'd it go? Any notes...",
+        textAutoCap: .sentences,
+        autoCorrectionEnabled: true
+    )
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
 
     let navigationTitle: String
