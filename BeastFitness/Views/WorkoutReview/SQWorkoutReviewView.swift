@@ -15,8 +15,7 @@ struct SQWorkoutReviewView: View {
     func workoutView(workout: SQWorkoutSessionable) -> some View {
         VStack(spacing: 0) {
             SQWorkoutSummaryView(
-                controller: .init(workout: workout),
-                customNavigationTitle: navigationTitle(for: workout),
+                controller: .init(workout: workout, mode: .review),
                 backgroundColor: .backgroundSheet
             )
             .navigationBarTitleDisplayMode(.inline)
@@ -82,10 +81,4 @@ struct SQWorkoutReviewView: View {
         .interactiveDismissDisabled()
     }
 
-    // MARK: - Helpers
-
-    private func navigationTitle(for workout: SQWorkoutSessionable) -> String {
-        let dateString = workout.startDate?.formattedString(with: .medium) ?? ""
-        return "New Workout · \(dateString)"
-    }
 }
