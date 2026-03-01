@@ -35,13 +35,38 @@ protocol SQWorkoutSummaryInterface {
 final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     let id = UUID().uuidString
     let state: WorkoutSummaryStating
+    let mode: SQWorkoutSummaryMode
+
+    // Review state — only populated when mode == .review
+    var selectedPerformance: SQSegmentedControlSegment? = nil
+    var selectedDifficulty: SQSegmentedControlSegment? = nil
+    var workoutNotes: String = ""
+    var reviewHighlights: [SQWorkoutReviewHighlight] = []
+
+    static let performanceSegments: [SQSegmentedControlSegment] = [
+        .init(id: "1", title: "😞"),
+        .init(id: "2", title: "😐"),
+        .init(id: "3", title: "🙂"),
+        .init(id: "4", title: "😄"),
+        .init(id: "5", title: "🔥"),
+    ]
+
+    static let difficultySegments: [SQSegmentedControlSegment] = [
+        .init(id: "1", title: "😴"),
+        .init(id: "2", title: "🙂"),
+        .init(id: "3", title: "😤"),
+        .init(id: "4", title: "💪"),
+        .init(id: "5", title: "💀"),
+    ]
+
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
 
-    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, workout: SQWorkoutSessionable) {
+    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        self.mode = mode
         Task {
             await load(workout: workout)
         }
@@ -57,6 +82,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         await loadRouteIfNeeded()
         await loadPerformanceDataIfNeeded(workout: workout)
         state.isLoading = false
+
+        if mode == .review {
+            reviewHighlights = Self.mockHighlights()
+        }
     }
 
     func displayLeaderboard(for rowData: SQPerformanceRowData) {
@@ -249,5 +278,17 @@ extension SQWorkoutSummaryController {
         if !rows.isEmpty {
             state.loadPerformanceData(rowData: rows)
         }
+    }
+}
+
+// MARK: - Review Highlights
+
+extension SQWorkoutSummaryController {
+    private static func mockHighlights() -> [SQWorkoutReviewHighlight] {
+        [
+            .init(text: "↑ VO2 Max went up 1%: 50.5 → 50.7", sentiment: .positive),
+            .init(text: "You burned a standard amount of calories (~50th %ile)", sentiment: .neutral),
+            .init(text: "Top 7% for distance — you crushed it!", sentiment: .positive),
+        ]
     }
 }
