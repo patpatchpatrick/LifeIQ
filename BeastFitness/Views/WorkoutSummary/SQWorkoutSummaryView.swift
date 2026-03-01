@@ -21,19 +21,11 @@ struct SQWorkoutSummaryView: View {
     @State private var statsSectionCollapsed = false
 
     // Scroll-tracking for review mode nav title fade
-    @State private var reviewScrollOffset: CGFloat = 0 {
-        didSet {
-            print("PTD reviewScrollOffset", reviewScrollOffset)
-        }
-    }
-    @State private var reviewScrollInitialOffset: CGFloat? = nil
+    @State private var reviewScrollOffset: CGFloat = 0
 
     private var reviewNavTitleOpacity: Double {
         let threshold: CGFloat = 80
-        guard let initial = reviewScrollInitialOffset else { return 1 }
-        let delta = initial - reviewScrollOffset // positive as user scrolls down
-        guard delta > 0 else { return 1 }
-        return Double(max(0, 1 - delta / threshold))
+        return Double(max(0, min(1, 1 - reviewScrollOffset / threshold)))
     }
     
     @ViewBuilder
@@ -227,22 +219,12 @@ struct SQWorkoutSummaryView: View {
         ScrollView {
             mainStack
                 .padding(mainStackHorizPadding)
-                .background(
-                    GeometryReader { geo in
-                        Color.clear.preference(
-                            key: ReviewScrollOffsetKey.self,
-                            value: geo.frame(in: .named("summaryScroll")).minY
-                        )
-                    }
-                )
         }
-        .coordinateSpace(name: "summaryScroll")
-        .onPreferenceChange(ReviewScrollOffsetKey.self) { value in
+        .onScrollGeometryChange(for: CGFloat.self) { geo in
+            geo.contentOffset.y + geo.contentInsets.top
+        } action: { _, newValue in
             guard controller.mode == .review else { return }
-            if reviewScrollInitialOffset == nil {
-                reviewScrollInitialOffset = value
-            }
-            reviewScrollOffset = value
+            reviewScrollOffset = max(0, newValue)
         }
     }
     var body: some View {
@@ -280,13 +262,6 @@ struct SQWorkoutSummaryView: View {
                     }
                 }
             }
-    }
-}
-
-private struct ReviewScrollOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
 
