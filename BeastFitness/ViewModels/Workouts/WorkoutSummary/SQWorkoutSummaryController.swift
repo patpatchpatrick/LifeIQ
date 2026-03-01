@@ -21,7 +21,7 @@ struct SQWorkoutReviewHighlight: Identifiable {
     let text: String
     let sentiment: Sentiment
 
-    enum Sentiment {
+    enum Sentiment: Equatable {
         case positive, neutral, negative
     }
 }
