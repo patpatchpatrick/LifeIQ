@@ -11,7 +11,6 @@ struct SQWorkoutSummaryView: View {
     @State var controller: SQWorkoutSummaryController
     @Environment(\.modelContext) private var modelContext
     
-    var customNavigationTitle: String? = nil
     var backgroundColor: SQColor = .background
     var screenWidth: CGFloat { UIScreen.main.bounds.width }
     let mainStackHorizPadding: CGFloat = .SQSpace.xxl
@@ -44,9 +43,133 @@ struct SQWorkoutSummaryView: View {
         }
     }
     
+    // MARK: - Review Header
+
+    @ViewBuilder
+    var reviewHeader: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xl) {
+            reviewTitleSection
+            if !controller.reviewHighlights.isEmpty {
+                reviewHighlightsSection
+            }
+            Divider()
+            reviewQuestionsSection
+            Divider()
+        }
+    }
+
+    @ViewBuilder
+    var reviewTitleSection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            Text("Nice workout! 💪")
+                .sqFont(.title1)
+                .sqForegroundColor(.textPrimary)
+
+            if let title = controller.state.workoutTitle {
+                Text(title)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    var reviewHighlightsSection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            ForEach(controller.reviewHighlights) { highlight in
+                HStack(alignment: .top, spacing: .SQSpace.s) {
+                    Text("•")
+                        .sqFont(.body)
+                        .sqForegroundColor(highlightColor(for: highlight.sentiment))
+                    Text(highlight.text)
+                        .sqFont(.body)
+                        .sqForegroundColor(highlightColor(for: highlight.sentiment))
+                }
+            }
+        }
+    }
+
+    private func highlightColor(for sentiment: SQWorkoutReviewHighlight.Sentiment) -> SQColor {
+        switch sentiment {
+        case .positive: return .colorGreenPct(percent: 1, base: .textPrimary)
+        case .negative: return .textError
+        case .neutral:  return .textPrimary
+        }
+    }
+
+    @ViewBuilder
+    var reviewQuestionsSection: some View {
+        let bindable = Bindable(controller)
+        VStack(alignment: .leading, spacing: .SQSpace.xl) {
+            Text("A couple quick questions to help track your progress")
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textSecondary)
+
+            TextField("How'd it go? Any notes...", text: bindable.workoutNotes, axis: .vertical)
+                .lineLimit(3...6)
+                .sqFont(.body)
+                .sqForegroundColor(.textPrimary)
+                .padding(.SQSpace.m)
+                .sqBackgroundColor(.backgroundSecondary)
+                .cornerRadius(.SQCornerRadius.s)
+
+            reviewRatingRow(
+                title: "How did you perform?",
+                segments: SQWorkoutSummaryController.performanceSegments,
+                selection: bindable.selectedPerformance,
+                scaleMin: "Very low",
+                scaleMax: "Very high"
+            )
+
+            reviewRatingRow(
+                title: "How hard was it?",
+                segments: SQWorkoutSummaryController.difficultySegments,
+                selection: bindable.selectedDifficulty,
+                scaleMin: "Easy",
+                scaleMax: "Max effort"
+            )
+        }
+    }
+
+    @ViewBuilder
+    func reviewRatingRow(
+        title: String,
+        segments: [SQSegmentedControlSegment],
+        selection: Binding<SQSegmentedControlSegment?>,
+        scaleMin: String,
+        scaleMax: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text(title)
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textPrimary)
+
+            SQSegmentedControl(segments: segments, selection: selection) { segment in
+                Text(segment.title)
+                    .sqFont(.title3)
+                    .sqForegroundColor(.textPrimary)
+            }
+
+            HStack {
+                Text(scaleMin)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+                Spacer()
+                Text(scaleMax)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+        }
+    }
+
     @ViewBuilder
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if controller.mode == .review {
+                reviewHeader
+                    .padding(.bottom, .SQSpace.xl)
+            }
+
             userNameAndDateRow
                 .padding(.bottom, .SQSpace.xl)
             
@@ -104,7 +227,7 @@ struct SQWorkoutSummaryView: View {
         mainScroll
             .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
-            .navigationTitle(customNavigationTitle ?? "Workout summary")
+            .navigationTitle(controller.navigationTitle)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
