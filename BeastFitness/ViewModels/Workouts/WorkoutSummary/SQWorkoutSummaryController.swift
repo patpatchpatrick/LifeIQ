@@ -192,8 +192,7 @@ extension SQWorkoutSummaryController {
             }
 
             // Workout metrics — same pattern as SQDashboardController
-            let metricsForActivityType = workoutManager.metricsForActivityType
-            let metricTypes = metricsForActivityType[workout.activityType] ?? []
+            let metricTypes = workoutManager.metrics(for: workout.activityType)
             for quantityType in metricTypes {
                 guard let currentMetric = await workout.getMetric(for: quantityType) else { continue }
 

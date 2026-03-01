@@ -18,7 +18,7 @@ protocol SQWorkoutManaging {
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
     func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext)
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String>
-    var metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] { get }
+    func metrics(for activityType: HKWorkoutActivityType) -> [SQQuantityType]
 }
 
 final class SQWorkoutManager: SQWorkoutManaging {
@@ -194,21 +194,33 @@ final class SQWorkoutManager: SQWorkoutManaging {
 // MARK: - Global Config
 
 extension SQWorkoutManager {
-    
-    var metricsForActivityType: [HKWorkoutActivityType : [SQQuantityType]] {
+
+    // Shared metrics that every activity gets
+    private var metricsForAllActivityTypes: [SQQuantityType] {
+        [
+            .activeKilocaloriesBurned,
+            .heartRate
+        ]
+    }
+
+    // Per-activity metrics (ONLY what they were before, minus shared metrics)
+    private var activitySpecificMetricsByActivityType: [HKWorkoutActivityType: [SQQuantityType]] {
         [
             .running: [
                 .sqFastestPace(.mile),
                 .sqFastestPace(.fiveK),
                 .sqPaceRunning,
-                .distanceWalkingRunning,
-                .activeKilocaloriesBurned,
-                .heartRate
+                .distanceWalkingRunning
             ],
             .cycling: [
                 .sqFastestPace(.fiveK),
                 .distanceCycling
             ]
         ]
+    }
+
+    func metrics(for activityType: HKWorkoutActivityType) -> [SQQuantityType] {
+        let specific = activitySpecificMetricsByActivityType[activityType] ?? []
+        return metricsForAllActivityTypes + specific
     }
 }

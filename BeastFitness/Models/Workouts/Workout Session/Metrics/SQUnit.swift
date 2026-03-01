@@ -99,8 +99,10 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     
     var unitString: String? {
         switch self {
-        case .kilocalorie, .mile, .meter, .count, .countPerMinute, .pound:
+        case .kilocalorie, .mile, .meter, .count, .pound:
             return hkUnit?.unitString
+        case .countPerMinute:
+            return "bpm"
         case .secondsPerMile:
             return "/mi"
         case .unknown:

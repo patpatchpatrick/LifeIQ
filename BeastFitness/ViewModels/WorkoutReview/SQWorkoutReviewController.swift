@@ -34,7 +34,9 @@ final class SQWorkoutReviewController {
         guard let workout = currentWorkout else { return }
         workoutManager.markWorkoutsAsProcessed([workout], context: context)
         queue.removeFirst()
-        dismiss()
+        if queue.isEmpty {
+            dismiss()
+        }
     }
 
     /// Marks every workout in the queue as processed and clears it.
