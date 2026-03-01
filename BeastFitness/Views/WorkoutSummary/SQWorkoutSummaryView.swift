@@ -173,11 +173,13 @@ struct SQWorkoutSummaryView: View {
             userNameAndDateRow
                 .padding(.bottom, .SQSpace.xl)
             
-            Text(controller.state.workoutTitle ?? "My workout")
-                .sqFont(.title3)
-                .sqForegroundColor(.textPrimary)
-                .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
-                .padding(.bottom, .SQSpace.xl)
+            if controller.mode != .review {
+                Text(controller.state.workoutTitle ?? "My workout")
+                    .sqFont(.title3)
+                    .sqForegroundColor(.textPrimary)
+                    .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
+                    .padding(.bottom, .SQSpace.xl)
+            }
             
             if controller.state.shouldShowRouteView {
                 SQDashboardSubsection(title: "Route", isCollapsed: $routeSectionCollapsed) {
