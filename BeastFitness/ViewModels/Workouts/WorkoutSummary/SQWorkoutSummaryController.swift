@@ -44,19 +44,19 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
 
     static let performanceSegments: [SQSegmentedControlSegment] = [
-        .init(id: "1", title: "😞"),
-        .init(id: "2", title: "😐"),
-        .init(id: "3", title: "🙂"),
-        .init(id: "4", title: "😄"),
-        .init(id: "5", title: "🔥"),
+        .init(id: "perf-1", title: "😞"),
+        .init(id: "perf-2", title: "😐"),
+        .init(id: "perf-3", title: "🙂"),
+        .init(id: "perf-4", title: "😄"),
+        .init(id: "perf-5", title: "🔥"),
     ]
 
     static let difficultySegments: [SQSegmentedControlSegment] = [
-        .init(id: "1", title: "😴"),
-        .init(id: "2", title: "🙂"),
-        .init(id: "3", title: "😤"),
-        .init(id: "4", title: "💪"),
-        .init(id: "5", title: "💀"),
+        .init(id: "diff-1", title: "😴"),
+        .init(id: "diff-2", title: "🙂"),
+        .init(id: "diff-3", title: "😤"),
+        .init(id: "diff-4", title: "💪"),
+        .init(id: "diff-5", title: "💀"),
     ]
 
     private let workoutManager: SQWorkoutManaging
