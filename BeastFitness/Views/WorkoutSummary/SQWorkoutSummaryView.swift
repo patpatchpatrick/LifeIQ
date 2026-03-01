@@ -232,7 +232,6 @@ struct SQWorkoutSummaryView: View {
             .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
             .navigationTitle(controller.navigationTitle)
-            .toolbarBackground(controller.mode == .review ? .hidden : .automatic, for: .navigationBar)
             .toolbar {
                 if controller.mode == .review {
                     ToolbarItem(placement: .principal) {
