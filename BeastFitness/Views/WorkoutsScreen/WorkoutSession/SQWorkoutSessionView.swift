@@ -10,7 +10,7 @@ import SwiftData
 
 struct SQWorkoutSessionView: View {
     let isBeingDisplayedWithinNavStack: Bool
-    @Bindable var controller: SQWorkoutSessionController
+    @State var controller: SQWorkoutSessionController
     @Environment(\.modelContext) private var modelContext
     @State private var isRestTimerPresented: Bool = false
 

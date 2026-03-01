@@ -40,6 +40,7 @@ struct SQRootTabView: View {
                                 view(for: route)
                             }
                 }
+                .background(SQColor.backgroundSheet.color)
             }
     }
     

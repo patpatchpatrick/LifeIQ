@@ -82,6 +82,9 @@ struct SQWorkoutSummaryView: View {
                         SQColumnHeaderRow(columns: [.leading("Stat"), .trailing("Best Score"), .trailing("Rank")])
                         ForEach(controller.state.performanceRowData) { row in
                             SQDashboardPerformanceRow(data: row)
+                                .onTapGesture {
+                                    controller.displayLeaderboard(for: row)
+                                }
                         }
                     }
                 }

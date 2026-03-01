@@ -186,15 +186,9 @@ struct SQLeaderboardView: View {
             }
     }
 
-    var navStack: some View {
-        NavigationStack(path: $controller.navigationPath) {
-            navView
-        }
-    }
-
     var body: some View {
         GeometryReader { geo in
-            navStack
+            navView
                 .onAppear {
                     controller.updateLayout(containerWidth: geo.size.width)
                 }

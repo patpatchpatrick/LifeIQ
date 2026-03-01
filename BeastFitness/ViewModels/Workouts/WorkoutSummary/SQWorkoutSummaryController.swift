@@ -44,6 +44,30 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.isLoading = false
     }
 
+    func displayLeaderboard(for rowData: SQPerformanceRowData) {
+        guard let mode = rowData.leaderboardMode else {
+            SQLogger.shared.log(
+                "Cannot display leaderboard: row '\(rowData.title)' does not have a leaderboard mode",
+                .debug,
+                context: .workoutSummary
+            )
+            return
+        }
+
+        SQLogger.shared.log(
+            "Displaying leaderboard for '\(rowData.title)'",
+            .debug,
+            context: .workoutSummary
+        )
+
+        let leaderboardController = SQLeaderboardController(
+            hub: state.hub,
+            mode: mode,
+            initialTimeRange: .allTime
+        )
+        state.hub.domainEvents.send(.pushDashboardRoute(.leaderboard(controller: leaderboardController)))
+    }
+
     func pushEditWorkoutView() {
         guard let baseWorkout = state.currentWorkout else {
             SQLogger.shared.log("Workout missing. Can't push edit workout screen.", .error, context: .workoutSummary)
@@ -161,7 +185,8 @@ extension SQWorkoutSummaryController {
                         title: "VO2 Max",
                         bestValue: String(format: "%.1f", sample.value),
                         unit: "mL/kg/min",
-                        percentileRank: percentile
+                        percentileRank: percentile,
+                        leaderboardMode: .vo2Max
                     ))
                 }
             }
@@ -194,7 +219,8 @@ extension SQWorkoutSummaryController {
                     title: currentMetric.displayName,
                     bestValue: currentMetric.displayableValue(for: quantityType, value: currentMetric.value),
                     unit: currentMetric.unit.unitString ?? "",
-                    percentileRank: percentile
+                    percentileRank: percentile,
+                    leaderboardMode: .workoutQuantity(quantityType, workout.activityType)
                 ))
             }
 
