@@ -11,6 +11,21 @@ import BeastFitnessCore
 import CoreLocation
 import HealthKit
 
+enum SQWorkoutSummaryMode: Equatable {
+    case standard
+    case review
+}
+
+struct SQWorkoutReviewHighlight: Identifiable {
+    let id = UUID()
+    let text: String
+    let sentiment: Sentiment
+
+    enum Sentiment {
+        case positive, neutral, negative
+    }
+}
+
 @MainActor
 protocol SQWorkoutSummaryInterface {
     func pushEditWorkoutView()
