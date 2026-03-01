@@ -43,6 +43,8 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     var workoutNotes: String = ""
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
 
+    let navigationTitle: String
+
     static let performanceSegments: [SQSegmentedControlSegment] = [
         .init(id: "perf-1", title: "😞"),
         .init(id: "perf-2", title: "😐"),
@@ -67,6 +69,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.mode = mode
+        self.navigationTitle = mode == .review ? "" : "Workout summary"
         Task {
             await load(workout: workout)
         }
