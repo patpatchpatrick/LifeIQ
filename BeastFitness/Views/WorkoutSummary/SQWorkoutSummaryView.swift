@@ -232,11 +232,12 @@ struct SQWorkoutSummaryView: View {
             .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
             .navigationTitle(controller.navigationTitle)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if controller.mode == .review {
                     ToolbarItem(placement: .principal) {
                         Text("Nice workout! 💪")
-                            .sqFont(.bodyBold)
+                            .sqFont(.title1)
                             .sqForegroundColor(.textPrimary)
                             .opacity(reviewNavTitleOpacity)
                     }

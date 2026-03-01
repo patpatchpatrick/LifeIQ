@@ -13,19 +13,13 @@ struct SQWorkoutReviewView: View {
     
     @ViewBuilder
     func workoutView(workout: SQWorkoutSessionable) -> some View {
-        VStack(spacing: 0) {
-            SQWorkoutSummaryView(
-                controller: .init(workout: workout, mode: .review),
-                backgroundColor: .backgroundSheet
-            )
-            .navigationBarTitleDisplayMode(.inline)
-            
-            Spacer()
-
+        SQWorkoutSummaryView(
+            controller: .init(workout: workout, mode: .review),
+            backgroundColor: .backgroundSheet
+        )
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             actionBar
         }
-        .background(SQColor.backgroundSheet.color)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .id(workout.id)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
