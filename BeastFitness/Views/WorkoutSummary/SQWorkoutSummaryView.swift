@@ -21,7 +21,11 @@ struct SQWorkoutSummaryView: View {
     @State private var statsSectionCollapsed = false
 
     // Scroll-tracking for review mode nav title fade
-    @State private var reviewScrollOffset: CGFloat = 0
+    @State private var reviewScrollOffset: CGFloat = 0 {
+        didSet {
+            print("PTD reviewScrollOffset", reviewScrollOffset)
+        }
+    }
     @State private var reviewScrollInitialOffset: CGFloat? = nil
 
     private var reviewNavTitleOpacity: Double {
@@ -166,17 +170,6 @@ struct SQWorkoutSummaryView: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             if controller.mode == .review {
-                // Scroll sensor — measures position relative to the scroll view frame
-                Color.clear
-                    .frame(height: 0)
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: ReviewScrollOffsetKey.self,
-                                value: geo.frame(in: .named("summaryScroll")).minY
-                            )
-                        }
-                    )
                 reviewHeader
                     .padding(.bottom, .SQSpace.xl)
             }
@@ -234,9 +227,18 @@ struct SQWorkoutSummaryView: View {
         ScrollView {
             mainStack
                 .padding(mainStackHorizPadding)
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.preference(
+                            key: ReviewScrollOffsetKey.self,
+                            value: geo.frame(in: .named("summaryScroll")).minY
+                        )
+                    }
+                )
         }
         .coordinateSpace(name: "summaryScroll")
         .onPreferenceChange(ReviewScrollOffsetKey.self) { value in
+            guard controller.mode == .review else { return }
             if reviewScrollInitialOffset == nil {
                 reviewScrollInitialOffset = value
             }
