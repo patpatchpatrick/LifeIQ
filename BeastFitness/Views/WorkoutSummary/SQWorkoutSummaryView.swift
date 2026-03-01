@@ -19,6 +19,18 @@ struct SQWorkoutSummaryView: View {
     @State private var routeSectionCollapsed = false
     @State private var performanceSectionCollapsed = false
     @State private var statsSectionCollapsed = false
+
+    // Scroll-tracking for review mode nav title fade
+    @State private var reviewScrollOffset: CGFloat = 0
+    @State private var reviewScrollInitialOffset: CGFloat? = nil
+
+    private var reviewNavTitleOpacity: Double {
+        let threshold: CGFloat = 80
+        guard let initial = reviewScrollInitialOffset else { return 0 }
+        let delta = initial - reviewScrollOffset // positive as user scrolls down
+        guard delta > 0 else { return 0 }
+        return Double(min(1, delta / threshold))
+    }
     
     @ViewBuilder
     var userNameAndDateRow: some View {
@@ -160,6 +172,17 @@ struct SQWorkoutSummaryView: View {
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             if controller.mode == .review {
+                // Scroll sensor — measures position relative to the scroll view frame
+                Color.clear
+                    .frame(height: 0)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: ReviewScrollOffsetKey.self,
+                                value: geo.frame(in: .named("summaryScroll")).minY
+                            )
+                        }
+                    )
                 reviewHeader
                     .padding(.bottom, .SQSpace.xl)
             }
@@ -218,13 +241,29 @@ struct SQWorkoutSummaryView: View {
             mainStack
                 .padding(mainStackHorizPadding)
         }
+        .coordinateSpace(name: "summaryScroll")
+        .onPreferenceChange(ReviewScrollOffsetKey.self) { value in
+            if reviewScrollInitialOffset == nil {
+                reviewScrollInitialOffset = value
+            }
+            reviewScrollOffset = value
+        }
     }
     var body: some View {
         mainScroll
             .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
             .navigationTitle(controller.navigationTitle)
+            .toolbarBackground(controller.mode == .review ? .hidden : .automatic, for: .navigationBar)
             .toolbar {
+                if controller.mode == .review {
+                    ToolbarItem(placement: .principal) {
+                        Text("Workout Review")
+                            .sqFont(.bodyBold)
+                            .sqForegroundColor(.textPrimary)
+                            .opacity(reviewNavTitleOpacity)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
@@ -245,6 +284,13 @@ struct SQWorkoutSummaryView: View {
                     }
                 }
             }
+    }
+}
+
+private struct ReviewScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
