@@ -26,10 +26,10 @@ struct SQWorkoutSummaryView: View {
 
     private var reviewNavTitleOpacity: Double {
         let threshold: CGFloat = 80
-        guard let initial = reviewScrollInitialOffset else { return 0 }
+        guard let initial = reviewScrollInitialOffset else { return 1 }
         let delta = initial - reviewScrollOffset // positive as user scrolls down
-        guard delta > 0 else { return 0 }
-        return Double(min(1, delta / threshold))
+        guard delta > 0 else { return 1 }
+        return Double(max(0, 1 - delta / threshold))
     }
     
     @ViewBuilder
@@ -72,16 +72,10 @@ struct SQWorkoutSummaryView: View {
 
     @ViewBuilder
     var reviewTitleSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xs) {
-            Text("Nice workout! 💪")
-                .sqFont(.title1)
-                .sqForegroundColor(.textPrimary)
-
-            if let title = controller.state.workoutTitle {
-                Text(title)
-                    .sqFont(.bodySmall)
-                    .sqForegroundColor(.textSecondary)
-            }
+        if let title = controller.state.workoutTitle {
+            Text(title)
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textSecondary)
         }
     }
 
@@ -258,7 +252,7 @@ struct SQWorkoutSummaryView: View {
             .toolbar {
                 if controller.mode == .review {
                     ToolbarItem(placement: .principal) {
-                        Text("Workout Review")
+                        Text("Nice workout! 💪")
                             .sqFont(.bodyBold)
                             .sqForegroundColor(.textPrimary)
                             .opacity(reviewNavTitleOpacity)
