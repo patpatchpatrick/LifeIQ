@@ -16,6 +16,8 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case countPerMinute
     case secondsPerMile
     case pound
+    case degreesCelsius
+    case degreesFahrenheit
     case unknown
     
     static func convert(_ value: Double?, from fromUnit: SQUnit, to toUnit: SQUnit) -> Double? {
@@ -48,6 +50,20 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             return value
         case .pound:
             return value
+        case .degreesCelsius:
+            switch toUnit {
+            case .degreesFahrenheit:
+                return value * 9.0 / 5.0 + 32.0
+            default:
+                return value
+            }
+        case .degreesFahrenheit:
+            switch toUnit {
+            case .degreesCelsius:
+                return (value - 32.0) * 5.0 / 9.0
+            default:
+                return value
+            }
         case .unknown:
             return value
         }
@@ -71,6 +87,8 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             return .timePerDistance
         case .pound:
             return .weight
+        case .degreesCelsius, .degreesFahrenheit:
+            return .temperature
         case .unknown:
             return .unknown
         }
@@ -92,6 +110,10 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
                 .second().unitDivided(by: .mile())
         case .pound:
                 .pound()
+        case .degreesCelsius:
+                .degreeCelsius()
+        case .degreesFahrenheit:
+                .degreeFahrenheit()
         case .unknown:
             nil
         }
@@ -105,6 +127,10 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             return "bpm"
         case .secondsPerMile:
             return "/mi"
+        case .degreesCelsius:
+            return "°C"
+        case .degreesFahrenheit:
+            return "°F"
         case .unknown:
             return nil
         }
@@ -119,5 +145,6 @@ enum SQUnitType: String, Codable, UnfrozenEnum {
     case timePerDistance
     case total
     case weight
+    case temperature
     case unknown
 }
