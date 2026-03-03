@@ -423,9 +423,11 @@ extension SQHealthKitManager {
     }
 
     func weatherTemperatureCelsius(from workout: HKWorkout) -> Double? {
+        print("PTD Weather 1", workout.startDate)
         guard let quantity = workout.metadata?[HKMetadataKeyWeatherTemperature] as? HKQuantity else {
             return nil
         }
+        print("PTD Weather 2", quantity, workout.startDate)
         return quantity.doubleValue(for: .degreeCelsius())
     }
 }

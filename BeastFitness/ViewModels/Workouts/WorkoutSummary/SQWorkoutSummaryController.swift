@@ -130,13 +130,14 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             titleViewModel.setText(workout.visibleTitle)
             notesViewModel.initializeText(workout.reviewNotes ?? "")
             // Temperature: prefer stored value, then try HealthKit metadata
+            let farenheitRoundedDecimalPlaces = 0
             if let stored = workout.temperatureCelsius,
                let fahrenheit = SQUnit.degreesCelsius.convert(stored, to: .degreesFahrenheit) {
-                temperatureViewModel.setText(String(format: "%g", fahrenheit))
+                temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: farenheitRoundedDecimalPlaces))
             } else if case .hkWorkout(let hk) = workout.workoutSource,
                       let celsius = healthKitManager.weatherTemperatureCelsius(from: hk.hkWorkout),
                       let fahrenheit = SQUnit.degreesCelsius.convert(celsius, to: .degreesFahrenheit) {
-                temperatureViewModel.setText(String(format: "%g", fahrenheit))
+                temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: farenheitRoundedDecimalPlaces))
             }
 
             selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
