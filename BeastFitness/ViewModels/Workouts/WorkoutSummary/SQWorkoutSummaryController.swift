@@ -19,8 +19,13 @@ enum SQWorkoutSummaryMode: Equatable {
 
 struct SQWorkoutReviewHighlight: Identifiable {
     let id = UUID()
-    let text: String
+    let segments: [Segment]
     let sentiment: Sentiment
+
+    struct Segment {
+        let text: String
+        let isStatistic: Bool
+    }
 
     enum Sentiment: Equatable {
         case positive, neutral, negative
@@ -77,11 +82,13 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
 
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
+    private let statsManager: SQWorkoutStatsManaging
 
-    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
+    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        self.statsManager = statsManager
         self.mode = mode
         self.navigationTitle = mode == .review ? "" : "Workout summary"
         self.titleViewModel = SQUITextFieldViewModel(
@@ -118,7 +125,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             selectedDifficulty = workout.ratingDifficulty.flatMap { rating in
                 Self.difficultySegments.first { $0.ratingValue == rating }
             }
-            reviewHighlights = Self.mockHighlights()
+            reviewHighlights = await statsManager.generateHighlights(
+                for: workout,
+                performanceData: state.performanceRowData
+            )
         }
         isWorkoutLoaded = true
         if mode == .review {
@@ -301,99 +311,10 @@ extension SQWorkoutSummaryController {
 extension SQWorkoutSummaryController {
 
     func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
-        guard case .hkWorkout = workout.workoutSource else { return }
-        guard let workoutEndDate = workout.endDate else { return }
-        guard let modelContext = SQAppState.shared.modelContext else { return }
-
-        var rows: [SQPerformanceRowData] = []
-
-        do {
-            let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
-            let sameActivityWorkouts = allTimeWorkouts.filter { $0.activityType == workout.activityType }
-            let activityIcon = workout.activityType.imageSymbol.rawValue
-
-            // VO2 Max — special case, not a workout metric
-            if workout.activityType.impactsVO2MaxData {
-                let recentSamples = try await healthKitManager.fetchVO2MaxSamples(upTo: workoutEndDate, limit: 1)
-                if let sample = recentSamples.first {
-                    let allTimeSamples = try await healthKitManager.fetchVO2MaxSamples(.allTime)
-                    let calendar = Calendar.current
-                    var bestByDay: [Date: Double] = [:]
-                    for s in allTimeSamples {
-                        let dayStart = calendar.startOfDay(for: s.startDate)
-                        bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, s.value)
-                    }
-                    let percentile = SQPercentileCalculator.calculatePercentile(
-                        currentBest: sample.value,
-                        historicalValues: Array(bestByDay.values),
-                        isLowerBetter: false
-                    )
-                    rows.append(SQPerformanceRowData(
-                        id: "vo2-max",
-                        icon: SQImageSymbol.heart.rawValue,
-                        title: "VO2 Max",
-                        bestValue: String(format: "%.1f", sample.value),
-                        unit: "mL/kg/min",
-                        percentileRank: percentile,
-                        leaderboardMode: .vo2Max
-                    ))
-                }
-            }
-
-            // Workout metrics — same pattern as SQDashboardController
-            let metricTypes = workoutManager.metrics(for: workout.activityType)
-            for quantityType in metricTypes {
-                guard let currentMetric = await workout.getMetric(for: quantityType) else { continue }
-
-                let historicalValues = await withTaskGroup(of: Double?.self) { group in
-                    for w in sameActivityWorkouts {
-                        group.addTask { await w.getMetric(for: quantityType)?.value }
-                    }
-                    var results: [Double] = []
-                    for await value in group { if let v = value { results.append(v) } }
-                    return results
-                }
-
-                let isLowerBetter = quantityType.dashboardAggregationType == .minimum
-                let percentile = SQPercentileCalculator.calculatePercentile(
-                    currentBest: currentMetric.value,
-                    historicalValues: historicalValues,
-                    isLowerBetter: isLowerBetter
-                )
-
-                rows.append(SQPerformanceRowData(
-                    id: "\(workout.activityType.name.lowercased())-\(quantityType.id)",
-                    icon: activityIcon,
-                    title: currentMetric.displayName,
-                    bestValue: currentMetric.displayableValue(for: quantityType, value: currentMetric.value),
-                    unit: currentMetric.unit.unitString ?? "",
-                    percentileRank: percentile,
-                    leaderboardMode: .workoutQuantity(quantityType, workout.activityType)
-                ))
-            }
-
-        } catch {
-            SQLogger.shared.log(
-                "Failed to load performance data: \(error.localizedDescription)",
-                .error,
-                context: .workoutSummary
-            )
-        }
-
+        let rows = await statsManager.loadPerformanceData(for: workout)
         if !rows.isEmpty {
             state.loadPerformanceData(rowData: rows)
         }
     }
 }
 
-// MARK: - Review Highlights
-
-extension SQWorkoutSummaryController {
-    private static func mockHighlights() -> [SQWorkoutReviewHighlight] {
-        [
-            .init(text: "↑ VO2 Max went up 1%: 50.5 → 50.7", sentiment: .positive),
-            .init(text: "You burned a standard amount of calories (~50th %ile)", sentiment: .neutral),
-            .init(text: "Top 7% for distance — you crushed it!", sentiment: .positive),
-        ]
-    }
-}

@@ -73,9 +73,16 @@ struct SQWorkoutSummaryView: View {
                     Text("•")
                         .sqFont(.body)
                         .sqForegroundColor(highlightColor(for: highlight.sentiment))
-                    Text(highlight.text)
-                        .sqFont(.body)
-                        .sqForegroundColor(highlightColor(for: highlight.sentiment))
+
+                    highlight.segments.reduce(Text("")) { result, segment in
+                        result + Text(segment.text)
+                            .foregroundColor(
+                                segment.isStatistic
+                                    ? highlightColor(for: highlight.sentiment).color
+                                    : SQColor.textPrimary.color
+                            )
+                    }
+                    .sqFont(.body)
                 }
             }
         }

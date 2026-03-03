@@ -26,6 +26,7 @@ final class SQDashboardController: SQDashboardInterface {
     let dailyCheckInManager: SQDailyCheckInManaging
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
+    let statsManager: SQWorkoutStatsManaging
     private(set) var hasLoadedUI = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     
@@ -33,12 +34,13 @@ final class SQDashboardController: SQDashboardInterface {
     @MainActor
     static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState, navState: SQAppState.shared.navigationState)
     
-    init(state: DashboardStating, navState: NavigationStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared) {
+    init(state: DashboardStating, navState: NavigationStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared) {
         self.state = state
         self.navState = navState
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        self.statsManager = statsManager
         
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -292,44 +294,44 @@ final class SQDashboardController: SQDashboardInterface {
         workouts: [SQWorkoutSessionable],
         context: ModelContext
     ) {
-//        guard let installDate = SQUserDefaults.shared.appInstallDate else {
-//            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
-//            return
-//        }
-//
-//        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
-//        let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
-//
-//        let reviewableWorkouts = workouts.filter { workout in
-//            guard let startDate = workout.startDate else { return false }
-//            let sourceId = workout.workoutSource.sourcableData.sourceId
-//            return startDate >= fourteenDaysAgo
-//                && startDate >= installDate
-//                && !processedIds.contains(sourceId)
-//        }
-//
-//        guard !reviewableWorkouts.isEmpty else {
-//            SQLogger.shared.log("Not launching new workout review modal - no workouts to display", .debug, context: .dashboard)
-//            return
-//        }
-//
-//        let sorted = reviewableWorkouts.sorted {
-//            ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
-//        }
-//
-//        SQLogger.shared.log(
-//            "Emitting \(sorted.count) workout(s) ready for review",
-//            .info,
-//            context: .dashboard
-//        )
-        
-        var sorted = [SQWorkoutSessionable]()
-        var total = 0
-        for workout in workouts.sorted(by: { $0.startDate ?? Date() > $1.startDate ?? Date() }).filter { $0.activityType == .pickleball } {
-            sorted.append(workout)
-            total += 1
-            if total >= 2 { break }
+        guard let installDate = SQUserDefaults.shared.appInstallDate else {
+            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
+            return
         }
+
+        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
+        let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
+
+        let reviewableWorkouts = workouts.filter { workout in
+            guard let startDate = workout.startDate else { return false }
+            let sourceId = workout.workoutSource.sourcableData.sourceId
+            return startDate >= fourteenDaysAgo
+                && startDate >= installDate
+                && !processedIds.contains(sourceId)
+        }
+
+        guard !reviewableWorkouts.isEmpty else {
+            SQLogger.shared.log("Not launching new workout review modal - no workouts to display", .debug, context: .dashboard)
+            return
+        }
+
+        let sorted = reviewableWorkouts.sorted {
+            ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
+        }
+
+        SQLogger.shared.log(
+            "Emitting \(sorted.count) workout(s) ready for review",
+            .info,
+            context: .dashboard
+        )
+        
+//        var sorted = [SQWorkoutSessionable]()
+//        var total = 0
+//        for workout in workouts.sorted(by: { $0.startDate ?? Date() > $1.startDate ?? Date() }).filter { $0.activityType == .pickleball } {
+//            sorted.append(workout)
+//            total += 1
+//            if total >= 2 { break }
+//        }
         print("PTD process new workout launch!")
         
         if navState.dashboardRootSheetView == nil {
@@ -456,7 +458,7 @@ final class SQDashboardController: SQDashboardInterface {
         // Build performance rows for each activity type present in the current workouts
         let uniqueActivityTypes = Set(workouts.map { $0.activityType })
         for activityType in uniqueActivityTypes {
-            let metricTypes = workoutManager.metrics(for: activityType)
+            let metricTypes = statsManager.metrics(for: activityType)
             let activityWorkouts = workouts.filter { $0.activityType == activityType }
             guard !activityWorkouts.isEmpty else { continue }
 

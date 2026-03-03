@@ -24,7 +24,14 @@ protocol SQHealthKitManaging {
     /// The N most-recent VO₂ max samples recorded on or before the calendar day of `date`,
     /// sorted descending by endDate.
     func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample]
-    
+
+    /// Most recent VO₂ max sample whose endDate is strictly before `date`.
+    func fetchLatestVO2MaxSample(strictlyBefore date: Date) async throws -> SQVO2MaxSample?
+
+    /// Most recent VO₂ max sample whose startDate is on or after `date` and
+    /// falls within the same calendar day as `endOfDay`.
+    func fetchLatestVO2MaxSample(onOrAfter date: Date, throughEndOfDay endOfDay: Date) async throws -> SQVO2MaxSample?
+
     @MainActor
     func invalidateCache()
 

@@ -167,6 +167,78 @@ extension SQHealthKitManager {
 
 extension SQHealthKitManager {
 
+    func fetchLatestVO2MaxSample(strictlyBefore date: Date) async throws -> SQVO2MaxSample? {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+        try await Self.healthStore.requestAuthorization(
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
+        )
+        guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+        let predicate = HKQuery.predicateForSamples(
+            withStart: .distantPast,
+            end: date,
+            options: .strictEndDate
+        )
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        let samples: [HKQuantitySample] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: vo2Type,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [sort]
+            ) { _, samples, error in
+                if let error { continuation.resume(throwing: error); return }
+                continuation.resume(returning: samples as? [HKQuantitySample] ?? [])
+            }
+            Self.healthStore.execute(query)
+        }
+        return samples.first.map(Self.mapVO2MaxSample)
+    }
+}
+
+extension SQHealthKitManager {
+
+    func fetchLatestVO2MaxSample(onOrAfter date: Date, throughEndOfDay endOfDay: Date) async throws -> SQVO2MaxSample? {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+        try await Self.healthStore.requestAuthorization(
+            toShare: allTypesToReadWrite,
+            read: allTypesToReadWrite
+        )
+        guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: endOfDay) ?? endOfDay.addingTimeInterval(86400)
+        let startOfNextDay = Calendar.current.startOfDay(for: nextDay)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: date,
+            end: startOfNextDay,
+            options: .strictStartDate
+        )
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let samples: [HKQuantitySample] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: vo2Type,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [sort]
+            ) { _, samples, error in
+                if let error { continuation.resume(throwing: error); return }
+                continuation.resume(returning: samples as? [HKQuantitySample] ?? [])
+            }
+            Self.healthStore.execute(query)
+        }
+        return samples.first.map(Self.mapVO2MaxSample)
+    }
+}
+
+extension SQHealthKitManager {
+
     static let vo2MaxUnit: HKUnit = {
         // ml / (kg * min)
         let ml = HKUnit.literUnit(with: .milli)
