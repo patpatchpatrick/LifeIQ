@@ -29,11 +29,6 @@ final class SQDashboardController: SQDashboardInterface {
     private(set) var hasLoadedUI = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     
-    /// A context-bound refresh callback installed by `attach(context:)`.
-       ///
-       /// This is intentionally optional: if the controller is not attached yet,
-       /// event-driven refreshes become a no-op rather than trying to guess a context.
-    private(set) var refreshUiWithContext: ((ModelContext?) -> Void)?
     
     @MainActor
     static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState, navState: SQAppState.shared.navigationState)
@@ -65,10 +60,8 @@ final class SQDashboardController: SQDashboardInterface {
         hub.workoutEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .workoutsUpdated:
-                self.refreshUiWithContext?(nil)
-            case .workoutsDeleted:
-                self.refreshUiWithContext?(nil)
+            case .workoutsUpdated, .workoutsDeleted:
+                self.refreshFromGlobalContext()
             case .activeWorkoutUpdate:
                 break
             }
@@ -78,25 +71,15 @@ final class SQDashboardController: SQDashboardInterface {
         state.selectedTimeRangePublisher
             .sink { [weak self] _ in
                 guard let self else { return }
-                SQLogger.shared.log(
-                    "Time range changed, reloading dashboard",
-                    .debug,
-                    context: .dashboard
-                )
-                self.refreshUiWithContext?(nil)
+                SQLogger.shared.log("Time range changed, reloading dashboard", .debug, context: .dashboard)
+                self.refreshFromGlobalContext()
             }
             .store(in: &cancellables)
     }
-    
-    /// Attaches the controller to a `ModelContext` so event-driven refreshes can reload the dashboard.
-       ///
-       /// Call this from the view layer once you have access to `@Environment(\.modelContext)`.
-       /// You may call it multiple times (e.g., if the environment changes); the latest context wins.
-    func attach(context: ModelContext) {
-        refreshUiWithContext = { [weak self] modelContext in
-            guard let self else { return }
-            Task { await self.loadUI(for: modelContext ?? context, shouldForceRefresh: false) }
-        }
+
+    private func refreshFromGlobalContext() {
+        guard let modelContext = SQAppState.shared.modelContext else { return }
+        Task { await self.loadUI(for: modelContext, shouldForceRefresh: true) }
     }
     
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
@@ -291,7 +274,7 @@ final class SQDashboardController: SQDashboardInterface {
     
     func refreshUI(for context: ModelContext) async {
         SQLogger.shared.log("Refreshing dashboard", .debug, context: .dashboard)
-        refreshUiWithContext?(context)
+        await loadUI(for: context, shouldForceRefresh: true)
     }
     
     func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {
@@ -349,7 +332,7 @@ final class SQDashboardController: SQDashboardInterface {
         }
         print("PTD process new workout launch!")
         
-        if navState.dashboardNavStack.isEmpty {
+        if navState.dashboardRootSheetView == nil {
             state.hub.domainEvents.send(.pushDashboardRoute(.workoutReview(workouts: sorted)))
         }
     }

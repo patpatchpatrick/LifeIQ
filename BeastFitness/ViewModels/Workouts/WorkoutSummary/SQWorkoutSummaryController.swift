@@ -92,9 +92,6 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars)
         )
         setupEventSubscriptions()
-        if mode == .review {
-            setupReviewSaveSubscriptions()
-        }
         Task {
             await load(workout: workout)
         }
@@ -114,7 +111,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         if mode == .review {
             titleViewModel.setText(workout.visibleTitle)
             notesViewModel.initializeText(workout.reviewNotes ?? "")
-            print("PTD Workout Data", workout.ratingUserPerformance, workout.ratingDifficulty, workout.reviewNotes, workout.visibleTitle)
+            
             selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
                 Self.performanceSegments.first { $0.ratingValue == rating }
             }
@@ -124,6 +121,9 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             reviewHighlights = Self.mockHighlights()
         }
         isWorkoutLoaded = true
+        if mode == .review {
+            setupReviewSaveSubscriptions()
+        }
     }
 
     func displayLeaderboard(for rowData: SQPerformanceRowData) {
@@ -213,13 +213,17 @@ extension SQWorkoutSummaryController {
     }
 
     private func setupReviewSaveSubscriptions() {
+        // .dropFirst() skips the current value emitted immediately on subscription
+        // (the already-loaded text). Only actual user edits after this point trigger saves.
         titleViewModel.$text
+            .dropFirst()
             .removeDuplicates()
             .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
             .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
             .store(in: &cancellables)
 
         notesViewModel.$text
+            .dropFirst()
             .removeDuplicates()
             .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
             .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
