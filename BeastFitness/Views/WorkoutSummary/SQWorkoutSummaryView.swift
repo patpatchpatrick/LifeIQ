@@ -108,6 +108,18 @@ struct SQWorkoutSummaryView: View {
 
             SQTextField(viewModel: controller.notesViewModel)
 
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                Text("Temperature")
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textPrimary)
+                HStack(spacing: .SQSpace.s) {
+                    SQUITextField(viewModel: controller.temperatureViewModel)
+                    Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
+                        .sqFont(.body)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+
             reviewRatingRow(
                 title: "How did you perform?",
                 segments: SQWorkoutSummaryController.performanceSegments,
