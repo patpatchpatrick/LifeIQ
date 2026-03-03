@@ -471,6 +471,18 @@ This design allows us to:
 - Keep source-specific logic isolated
 - Easily add new workout sources in the future (e.g., Garmin, Wahoo, etc.)
 
+## Unit Handling
+
+**Always use `SQUnit` for any unit-based values** — Never write ad-hoc conversion math or unit strings inline. `SQUnit` provides:
+
+- **Conversion**: `SQUnit.convert(_:from:to:)` or the instance method `.convert(_:to:)` — type-safe, logs errors for incompatible unit types
+- **Unit strings**: `.unitString` — e.g. `"°F"`, `"/mi"`, `"bpm"` — use this for display labels
+- **HealthKit interop**: `.hkUnit` — maps to the corresponding `HKUnit`
+
+When adding a new measurable quantity (distance, weight, temperature, speed, etc.), add the relevant cases to `SQUnit` and `SQUnitType` first, then use them everywhere. This keeps all unit logic in one place and makes future unit-preference support (e.g. metric vs imperial) a single-layer change.
+
+**Storage convention**: Store values in a stable canonical unit (e.g. Celsius for temperature, meters for distance) and convert to the display unit at the presentation layer. This avoids needing to store the unit alongside every value.
+
 ## Coding style
 
 - **Prefer stored properties over computed properties** — When a value can be calculated once and stored, use a stored property with `didSet` observers to update it when dependencies change, rather than recalculating via computed properties on every access.
