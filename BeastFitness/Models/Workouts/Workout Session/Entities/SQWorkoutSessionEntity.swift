@@ -52,7 +52,8 @@ final class SQWorkoutSessionEntity {
     var reviewNotes: String?
     var ratingUserPerformance: Float?
     var ratingDifficulty: Float?
-    
+    var temperatureCelsius: Double?
+
     init(from session: SQWorkoutSessionable) {
         self.workoutId = session.id
         self.title = session.title
@@ -78,6 +79,7 @@ final class SQWorkoutSessionEntity {
         self.reviewNotes = session.reviewNotes
         self.ratingUserPerformance = session.ratingUserPerformance
         self.ratingDifficulty = session.ratingDifficulty
+        self.temperatureCelsius = session.temperatureCelsius
     }
     
     func update(from session: SQWorkoutSessionable) {
@@ -105,6 +107,7 @@ final class SQWorkoutSessionEntity {
         reviewNotes = session.reviewNotes
         ratingUserPerformance = session.ratingUserPerformance
         ratingDifficulty = session.ratingDifficulty
+        temperatureCelsius = session.temperatureCelsius
     }
 
     func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
@@ -163,7 +166,8 @@ final class SQWorkoutSessionEntity {
         session.setReviewData(
             notes: reviewNotes,
             ratingUserPerformance: ratingUserPerformance,
-            ratingDifficulty: ratingDifficulty
+            ratingDifficulty: ratingDifficulty,
+            temperature: temperatureCelsius
         )
 
         return session
