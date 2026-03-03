@@ -9,7 +9,6 @@ import SwiftData
 struct SQWorkoutReviewView: View {
     @State var reviewState: SQWorkoutReviewController
     @Environment(\.modelContext) private var modelContext
-    @State private var summaryController: SQWorkoutSummaryController?
     
     @ViewBuilder
     func workoutView(workout: SQWorkoutSessionable) -> some View {

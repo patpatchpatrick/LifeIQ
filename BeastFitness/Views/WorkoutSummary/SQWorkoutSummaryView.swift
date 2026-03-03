@@ -232,6 +232,9 @@ struct SQWorkoutSummaryView: View {
             .background(backgroundColor.color)
             .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await controller.onAppear()
+            }
             .toolbar {
                 if controller.mode == .review {
                     ToolbarItem(placement: .principal) {

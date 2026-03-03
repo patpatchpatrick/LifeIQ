@@ -72,7 +72,7 @@ extension SQWorkoutStatsManager {
     func loadPerformanceData(for workout: SQWorkoutSessionable) async -> [SQPerformanceRowData] {
         guard case .hkWorkout = workout.workoutSource else { return [] }
         guard let workoutEndDate = workout.endDate else { return [] }
-        guard let modelContext = SQAppState.shared.modelContext else { return [] }
+        guard let modelContext = await SQAppState.shared.modelContext else { return [] }
 
         var rows: [SQPerformanceRowData] = []
 
@@ -191,8 +191,10 @@ extension SQWorkoutStatsManager {
         guard let startDate = workout.startDate, let endDate = workout.endDate else { return nil }
 
         do {
+            print("PTD Build VO2 Max Highlight 1")
             let beforeSample = try await healthKitManager.fetchLatestVO2MaxSample(strictlyBefore: startDate)
-            let afterSample = try await healthKitManager.fetchLatestVO2MaxSample(onOrAfter: endDate, throughEndOfDay: endDate)
+            let afterSample = try await healthKitManager.fetchLatestVO2MaxSample(onOrAfter: startDate, throughEndOfDay: endDate)
+            print("PTD Build VO2 Max Highlight 2", beforeSample, afterSample)
 
             if let before = beforeSample, let after = afterSample {
                 let beforeVal = before.value

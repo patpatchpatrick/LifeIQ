@@ -83,11 +83,13 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
     private let statsManager: SQWorkoutStatsManaging
+    private let workout: SQWorkoutSessionable
 
     init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        self.workout = workout
         self.statsManager = statsManager
         self.mode = mode
         self.navigationTitle = mode == .review ? "" : "Workout summary"
@@ -99,9 +101,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars)
         )
         setupEventSubscriptions()
-        Task {
-            await load(workout: workout)
-        }
+    }
+    
+    func onAppear() async {
+        await load(workout: workout)
     }
 
     private var hasLoaded = false
@@ -125,6 +128,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             selectedDifficulty = workout.ratingDifficulty.flatMap { rating in
                 Self.difficultySegments.first { $0.ratingValue == rating }
             }
+            
             reviewHighlights = await statsManager.generateHighlights(
                 for: workout,
                 performanceData: state.performanceRowData

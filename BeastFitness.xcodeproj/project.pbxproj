@@ -209,6 +209,7 @@
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
 		F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */; };
 		F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0E2CB3147C00C2B90B /* SQColor.swift */; };
+		F6FE15802F5686120023CF5C /* SQWorkoutStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -466,6 +467,7 @@
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkout+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
+		F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutStatsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1148,6 +1150,7 @@
 				F6C5FD762F3113D900BF1022 /* SQModalState.swift */,
 				F639F15E2F493246004AC701 /* SQDropDownMenuState.swift */,
 				F64B966C2F4E7E4900261004 /* SQWorkoutSessionMetadataManager.swift */,
+				F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1703,6 +1706,7 @@
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,
 				F679BDDF2EE7D54700A2F249 /* SQExercisesListItem.swift in Sources */,
+				F6FE15802F5686120023CF5C /* SQWorkoutStatsManager.swift in Sources */,
 				F639B7DE2ED798BD00199C69 /* SQTextField.swift in Sources */,
 				F601964A2F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift in Sources */,
 				F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */,
