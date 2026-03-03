@@ -58,6 +58,14 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         textAutoCap: .sentences,
         autoCorrectionEnabled: true
     )
+    let temperatureViewModel: SQUITextFieldViewModel = SQUITextFieldViewModel(
+        placeholder: "e.g. 72",
+        font: SQFont(type: .body).uiFont,
+        keyboardType: .decimalPad,
+        autocapitalizationType: .none,
+        autocorrectionType: .no,
+        textChangeFormatter: .decimal(maxDecimalPlaces: 1)
+    )
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
 
     let navigationTitle: String
@@ -121,7 +129,16 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         if mode == .review {
             titleViewModel.setText(workout.visibleTitle)
             notesViewModel.initializeText(workout.reviewNotes ?? "")
-            
+            // Temperature: prefer stored value, then try HealthKit metadata
+            if let stored = workout.temperatureCelsius,
+               let fahrenheit = SQUnit.degreesCelsius.convert(stored, to: .degreesFahrenheit) {
+                temperatureViewModel.setText(String(format: "%g", fahrenheit))
+            } else if case .hkWorkout(let hk) = workout.workoutSource,
+                      let celsius = healthKitManager.weatherTemperatureCelsius(from: hk.hkWorkout),
+                      let fahrenheit = SQUnit.degreesCelsius.convert(celsius, to: .degreesFahrenheit) {
+                temperatureViewModel.setText(String(format: "%g", fahrenheit))
+            }
+
             selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
                 Self.performanceSegments.first { $0.ratingValue == rating }
             }
@@ -242,6 +259,13 @@ extension SQWorkoutSummaryController {
             .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
             .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
             .store(in: &cancellables)
+
+        temperatureViewModel.$text
+            .dropFirst()
+            .removeDuplicates()
+            .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
+            .store(in: &cancellables)
     }
 
     private func persistReviewDataIfNeeded() {
@@ -251,10 +275,15 @@ extension SQWorkoutSummaryController {
               let modelContext = SQAppState.shared.modelContext else { return }
 
         let titleText = titleViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let temperatureFahrenheit = Double(temperatureViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines))
+        let temperatureCelsius = temperatureFahrenheit.flatMap {
+            SQUnit.degreesFahrenheit.convert($0, to: .degreesCelsius)
+        }
         workout.setReviewData(
             notes: notesViewModel.text.isEmpty ? nil : notesViewModel.text,
             ratingUserPerformance: selectedPerformance?.ratingValue,
-            ratingDifficulty: selectedDifficulty?.ratingValue
+            ratingDifficulty: selectedDifficulty?.ratingValue,
+            temperature: temperatureCelsius
         )
         // Update title separately since it lives on the session directly
         if let session = workout as? SQWorkoutSession {
