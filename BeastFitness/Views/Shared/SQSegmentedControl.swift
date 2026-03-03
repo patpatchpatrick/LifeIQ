@@ -11,10 +11,17 @@ import SwiftUI
 struct SQSegmentedControlSegment: Hashable, Identifiable {
     let id: String
     let title: String
+    /// The numeric value to persist when this segment is selected.
+    /// Use this when the segmented control represents a rating or scale — set the
+    /// value explicitly on each segment so the persisted number stays correct even
+    /// if segments are added, reordered, or the scale changes.
+    /// Nil for segments that don't map to a persisted numeric value.
+    let ratingValue: Float?
 
-    init(id: String? = nil, title: String) {
+    init(id: String? = nil, title: String, ratingValue: Float? = nil) {
         self.id = id ?? title
         self.title = title
+        self.ratingValue = ratingValue
     }
 }
 

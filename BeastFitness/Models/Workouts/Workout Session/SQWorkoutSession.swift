@@ -60,6 +60,15 @@ protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
     func getMetric(for quantityType: SQQuantityType) async -> SQWorkoutMetric?
 
     var updateMetadata: SQWorkoutUpdateMetadata? { get }
+
+    // MARK: - App Metadata
+    // Fields created within this app (not sourced from HealthKit, Strava, etc.)
+    // Non-SQWorkoutSession sources return nil by default.
+
+    var reviewNotes: String? { get }
+    var ratingUserPerformance: Float? { get }
+    var ratingDifficulty: Float? { get }
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?)
 }
 
 struct SQWorkoutUpdateMetadata: Codable {
@@ -75,7 +84,7 @@ class SQWorkoutSession: SQWorkoutSessionable {
     static let metadataManager = SQWorkoutSessionMetadataManager.shared
 
     let id: String
-    let title: String?
+    var title: String?
     var coreMetric: SQWorkoutMetric?
     private(set) var hkWorkoutId: String?
     func updateHkWorkoutId(_ hkWorkoutId: String?) {
@@ -94,7 +103,18 @@ class SQWorkoutSession: SQWorkoutSessionable {
     var details: SQWorkoutActivityDetails?
     
     let updateMetadata: SQWorkoutUpdateMetadata?
-    
+
+    // MARK: - App Metadata
+    var reviewNotes: String?
+    var ratingUserPerformance: Float?
+    var ratingDifficulty: Float?
+
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?) {
+        self.reviewNotes = notes
+        self.ratingUserPerformance = ratingUserPerformance
+        self.ratingDifficulty = ratingDifficulty
+    }
+
     init(
         id: String,
         title: String?,
@@ -197,4 +217,14 @@ class SQWorkoutSession: SQWorkoutSessionable {
 extension SQWorkoutSession {
     /// Limits
     static let titleMaxChars: Int = 500
+}
+
+// MARK: - App Metadata Defaults
+
+extension SQWorkoutSessionable {
+    // Default nil implementations so HK/Strava/manual sources don't need to implement these.
+    var reviewNotes: String? { nil }
+    var ratingUserPerformance: Float? { nil }
+    var ratingDifficulty: Float? { nil }
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?) {}
 }

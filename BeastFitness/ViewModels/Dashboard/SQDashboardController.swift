@@ -95,7 +95,7 @@ final class SQDashboardController: SQDashboardInterface {
     func attach(context: ModelContext) {
         refreshUiWithContext = { [weak self] modelContext in
             guard let self else { return }
-            Task { await self.loadUI(for: modelContext ?? context, shouldForceRefresh: true) }
+            Task { await self.loadUI(for: modelContext ?? context, shouldForceRefresh: false) }
         }
     }
     

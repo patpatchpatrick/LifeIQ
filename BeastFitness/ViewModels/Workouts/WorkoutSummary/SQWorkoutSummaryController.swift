@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 import BeastFitnessCore
 import CoreLocation
 import HealthKit
@@ -38,8 +39,13 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     let mode: SQWorkoutSummaryMode
 
     // Review state — only populated when mode == .review
-    var selectedPerformance: SQSegmentedControlSegment? = nil
-    var selectedDifficulty: SQSegmentedControlSegment? = nil
+    var selectedPerformance: SQSegmentedControlSegment? = nil {
+        didSet { persistReviewDataIfNeeded() }
+    }
+    var selectedDifficulty: SQSegmentedControlSegment? = nil {
+        didSet { persistReviewDataIfNeeded() }
+    }
+    let titleViewModel: SQUITextFieldViewModel
     let notesViewModel: SQTextFieldViewModel = .init(
         axis: .vertical,
         lineLimit: 5,
@@ -50,21 +56,23 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
 
     let navigationTitle: String
+    private var cancellables = Set<AnyCancellable>()
+    private var isWorkoutLoaded = false
 
     static let performanceSegments: [SQSegmentedControlSegment] = [
-        .init(id: "perf-1", title: "😞"),
-        .init(id: "perf-2", title: "😐"),
-        .init(id: "perf-3", title: "🙂"),
-        .init(id: "perf-4", title: "😄"),
-        .init(id: "perf-5", title: "🔥"),
+        .init(id: "perf-1", title: "😞", ratingValue: 2),
+        .init(id: "perf-2", title: "😐", ratingValue: 4),
+        .init(id: "perf-3", title: "🙂", ratingValue: 6),
+        .init(id: "perf-4", title: "😄", ratingValue: 8),
+        .init(id: "perf-5", title: "🔥", ratingValue: 10),
     ]
 
     static let difficultySegments: [SQSegmentedControlSegment] = [
-        .init(id: "diff-1", title: "😴"),
-        .init(id: "diff-2", title: "🙂"),
-        .init(id: "diff-3", title: "😤"),
-        .init(id: "diff-4", title: "💪"),
-        .init(id: "diff-5", title: "💀"),
+        .init(id: "diff-1", title: "😴", ratingValue: 2),
+        .init(id: "diff-2", title: "🙂", ratingValue: 4),
+        .init(id: "diff-3", title: "😤", ratingValue: 6),
+        .init(id: "diff-4", title: "💪", ratingValue: 8),
+        .init(id: "diff-5", title: "💀", ratingValue: 10),
     ]
 
     private let workoutManager: SQWorkoutManaging
@@ -76,6 +84,17 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.healthKitManager = healthKitManager
         self.mode = mode
         self.navigationTitle = mode == .review ? "" : "Workout summary"
+        self.titleViewModel = SQUITextFieldViewModel(
+            placeholder: workout.visibleTitle,
+            font: SQFont(type: .body).uiFont,
+            autocapitalizationType: .sentences,
+            autocorrectionType: .yes,
+            textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars)
+        )
+        setupEventSubscriptions()
+        if mode == .review {
+            setupReviewSaveSubscriptions()
+        }
         Task {
             await load(workout: workout)
         }
@@ -93,8 +112,18 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.isLoading = false
 
         if mode == .review {
+            titleViewModel.setText(workout.visibleTitle)
+            notesViewModel.initializeText(workout.reviewNotes ?? "")
+            print("PTD Workout Data", workout.ratingUserPerformance, workout.ratingDifficulty, workout.reviewNotes, workout.visibleTitle)
+            selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
+                Self.performanceSegments.first { $0.ratingValue == rating }
+            }
+            selectedDifficulty = workout.ratingDifficulty.flatMap { rating in
+                Self.difficultySegments.first { $0.ratingValue == rating }
+            }
             reviewHighlights = Self.mockHighlights()
         }
+        isWorkoutLoaded = true
     }
 
     func displayLeaderboard(for rowData: SQPerformanceRowData) {
@@ -166,6 +195,69 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             }),
             secondary: .init(title: "Cancel", role: .cancel))))
     }
+}
+
+// MARK: - Review Persistence
+
+extension SQWorkoutSummaryController {
+
+    private func setupEventSubscriptions() {
+        state.hub.workoutEvents.sink { [weak self] event in
+            guard let self else { return }
+            guard case .workoutsUpdated(let workoutMap) = event,
+                  let currentId = state.currentWorkout?.id,
+                  let updated = workoutMap[currentId] else { return }
+            titleViewModel.setText(updated.visibleTitle)
+        }
+        .store(in: &cancellables)
+    }
+
+    private func setupReviewSaveSubscriptions() {
+        titleViewModel.$text
+            .removeDuplicates()
+            .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
+            .store(in: &cancellables)
+
+        notesViewModel.$text
+            .removeDuplicates()
+            .debounce(for: .seconds(0.8), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.persistReviewDataIfNeeded() }
+            .store(in: &cancellables)
+    }
+
+    private func persistReviewDataIfNeeded() {
+        guard isWorkoutLoaded,
+              mode == .review,
+              let workout = state.currentWorkout,
+              let modelContext = SQAppState.shared.modelContext else { return }
+
+        let titleText = titleViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        workout.setReviewData(
+            notes: notesViewModel.text.isEmpty ? nil : notesViewModel.text,
+            ratingUserPerformance: selectedPerformance?.ratingValue,
+            ratingDifficulty: selectedDifficulty?.ratingValue
+        )
+        // Update title separately since it lives on the session directly
+        if let session = workout as? SQWorkoutSession {
+            session.title = titleText.isEmpty ? nil : titleText
+        }
+
+        Task {
+            do {
+                // TODO: PTD - saveToCloud: false here — review data is local-only until the
+                // workout sync pipeline is ready. See matching TODO in SQWorkoutSessionEntity.
+                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: false)
+            } catch {
+                SQLogger.shared.log(
+                    "Failed to save review data: \(error.localizedDescription)",
+                    .error,
+                    context: .workoutSummary
+                )
+            }
+        }
+    }
+
 }
 
 // MARK: - Route Handling

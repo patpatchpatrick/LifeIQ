@@ -44,6 +44,14 @@ final class SQWorkoutSessionEntity {
     var deletedAt: Date?
     var syncStatusRaw: String?
     var remoteId: String?
+
+    // Review data — saved locally only.
+    // TODO: PTD - Cloud sync for workout review data is not yet wired up. Review fields
+    // should only be persisted locally until the workout sync pipeline is ready. Before
+    // adding cloud save, remove this TODO and hook into the sync flow.
+    var reviewNotes: String?
+    var ratingUserPerformance: Float?
+    var ratingDifficulty: Float?
     
     init(from session: SQWorkoutSessionable) {
         self.workoutId = session.id
@@ -66,6 +74,10 @@ final class SQWorkoutSessionEntity {
         self.deletedAt = session.updateMetadata?.deletedAt
         self.syncStatusRaw = session.updateMetadata?.syncStatus?.rawValue
         self.remoteId = session.updateMetadata?.remoteId
+
+        self.reviewNotes = session.reviewNotes
+        self.ratingUserPerformance = session.ratingUserPerformance
+        self.ratingDifficulty = session.ratingDifficulty
     }
     
     func update(from session: SQWorkoutSessionable) {
@@ -89,8 +101,12 @@ final class SQWorkoutSessionEntity {
         deletedAt = session.updateMetadata?.deletedAt
         syncStatusRaw = session.updateMetadata?.syncStatus?.rawValue
         remoteId = session.updateMetadata?.remoteId
+
+        reviewNotes = session.reviewNotes
+        ratingUserPerformance = session.ratingUserPerformance
+        ratingDifficulty = session.ratingDifficulty
     }
-    
+
     func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
         let activityType = HKWorkoutActivityType(rawValue: UInt(activityTypeRaw)) ?? .other
         
@@ -129,7 +145,7 @@ final class SQWorkoutSessionEntity {
             syncStatus = .init(rawValue: rawSyncData)
         }
         
-        return SQWorkoutSession(
+        let session = SQWorkoutSession(
             id: workoutId,
             workoutSource: workoutSource,
             overrideData: SQConcreteWorkoutSessionOverridableData(
@@ -143,6 +159,14 @@ final class SQWorkoutSessionEntity {
                 syncStatus: syncStatus,
                 remoteId: remoteId)
         )
+
+        session.setReviewData(
+            notes: reviewNotes,
+            ratingUserPerformance: ratingUserPerformance,
+            ratingDifficulty: ratingDifficulty
+        )
+
+        return session
     }
 }
 

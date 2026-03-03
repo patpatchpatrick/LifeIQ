@@ -56,22 +56,12 @@ struct SQWorkoutSummaryView: View {
     @ViewBuilder
     var reviewHeader: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xl) {
-            reviewTitleSection
             if !controller.reviewHighlights.isEmpty {
                 reviewHighlightsSection
             }
             Divider()
             reviewQuestionsSection
             Divider()
-        }
-    }
-
-    @ViewBuilder
-    var reviewTitleSection: some View {
-        if let title = controller.state.workoutTitle {
-            Text(title)
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
         }
     }
 
@@ -106,6 +96,8 @@ struct SQWorkoutSummaryView: View {
             Text("A couple quick questions to help track your progress")
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
+
+            SQUITextField(viewModel: controller.titleViewModel)
 
             SQTextField(viewModel: controller.notesViewModel)
 

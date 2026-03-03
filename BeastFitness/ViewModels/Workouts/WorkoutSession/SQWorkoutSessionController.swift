@@ -207,7 +207,7 @@ final class SQWorkoutSessionController: Identifiable {
         func finishWorkout() async {
             let workout = buildSession()
             do {
-                try await workoutManager.saveWorkout(workout: workout, to: modelContext)
+                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
                 state.workoutUpdated(workout: workout)
                 self.dismiss()
             } catch {

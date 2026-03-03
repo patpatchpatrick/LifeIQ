@@ -11,7 +11,7 @@ import HealthKit
 import BeastFitnessCore
 
 protocol SQWorkoutManaging {
-    func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws
+    func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext, saveToCloud: Bool) async throws
     func deleteWorkout(workout: SQWorkoutSessionable, from modelContext: ModelContext) async throws
     func deletionTypeForWorkout(_ workout: any SQWorkoutSessionable) -> SQWorkoutManager.WorkoutDeletionType
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
@@ -72,8 +72,8 @@ final class SQWorkoutManager: SQWorkoutManaging {
         return workout
     }
     
-    func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext) async throws {
-        
+    func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext, saveToCloud: Bool = true) async throws {
+
         /// If the workout doesn't have a health kit ID, let's attempt to save it to healthKit
         if workout.hkWorkoutId == nil {
             do {
@@ -84,12 +84,11 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 workout.updateHkWorkoutId(hkWorkout?.uuid.uuidString)
                 await healthKitManager.invalidateCache()
                 SQLogger.shared.log("Invalidated HK cache after saving workout", .debug, context: .workoutManager)
-
             } catch {
                 throw SQError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
             }
         }
-        
+
         do {
             try SQWorkoutSessionEntity.upsert(session: workout, in: modelContext)
             SQLogger.shared.log("Successfully saved workout: \(workout.prettyDescription)", .debug, context: .workoutManager)
@@ -101,12 +100,14 @@ final class SQWorkoutManager: SQWorkoutManaging {
             )
             // TODO: PTD Error - throw check in error here and don't let the user continue to save to Firebase
         }
-        
-        do {
-            try await workoutService.saveWorkout(workout)
-        } catch {
-            SQLogger.shared.log("Saving workout failed with error: \(error)", .debug, context: .workoutManager)
-            // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
+
+        if saveToCloud {
+            do {
+                try await workoutService.saveWorkout(workout)
+            } catch {
+                SQLogger.shared.log("Saving workout failed with error: \(error)", .debug, context: .workoutManager)
+                // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
+            }
         }
     }
     
