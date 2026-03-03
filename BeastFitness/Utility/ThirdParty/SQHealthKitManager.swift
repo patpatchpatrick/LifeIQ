@@ -44,6 +44,10 @@ protocol SQHealthKitManaging {
 
     /// Same, but you pass your saved HealthKit UUID string.
     func fetchRouteLocations(for healthKitId: String) async throws -> [CLLocation]
+
+    /// Reads the weather temperature (in °C) recorded by Apple Watch during a workout.
+    /// Returns nil if the workout has no weather metadata.
+    func weatherTemperatureCelsius(from workout: HKWorkout) -> Double?
 }
 
 
@@ -416,6 +420,13 @@ extension SQHealthKitManager {
         }
 
         return try await fetchRouteLocations(for: workout)
+    }
+
+    func weatherTemperatureCelsius(from workout: HKWorkout) -> Double? {
+        guard let quantity = workout.metadata?[HKMetadataKeyWeatherTemperature] as? HKQuantity else {
+            return nil
+        }
+        return quantity.doubleValue(for: .degreeCelsius())
     }
 }
 
