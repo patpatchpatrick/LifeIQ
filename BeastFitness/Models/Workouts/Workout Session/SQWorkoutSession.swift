@@ -68,7 +68,8 @@ protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
     var reviewNotes: String? { get }
     var ratingUserPerformance: Float? { get }
     var ratingDifficulty: Float? { get }
-    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?)
+    var temperatureCelsius: Double? { get }
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?, temperature: Double?)
 }
 
 struct SQWorkoutUpdateMetadata: Codable {
@@ -108,11 +109,13 @@ class SQWorkoutSession: SQWorkoutSessionable {
     var reviewNotes: String?
     var ratingUserPerformance: Float?
     var ratingDifficulty: Float?
+    var temperatureCelsius: Double?
 
-    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?) {
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?, temperature: Double?) {
         self.reviewNotes = notes
         self.ratingUserPerformance = ratingUserPerformance
         self.ratingDifficulty = ratingDifficulty
+        self.temperatureCelsius = temperature
     }
 
     init(
@@ -226,5 +229,6 @@ extension SQWorkoutSessionable {
     var reviewNotes: String? { nil }
     var ratingUserPerformance: Float? { nil }
     var ratingDifficulty: Float? { nil }
-    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?) {}
+    var temperatureCelsius: Double? { nil }
+    func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?, temperature: Double?) {}
 }
