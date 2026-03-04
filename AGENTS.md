@@ -94,6 +94,29 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Prefer `SQImageView(image: .init(symbol: ...))`
 - Reuse shared UI components for common patterns (e.g. `SQCollapsibleSectionHeader`).
 
+## Dashboard composition conventions
+
+- Use a two-level hierarchy:
+  - Section group: `SQDashboardSectionGroupViewModel`
+  - Subsection card: `SQDashboardSubsectionViewModel`
+- Keep group composition logic centralized in `SQDashboardController.buildSectionGroups(...)`.
+- Prefer extending existing row infrastructure (for example `SQDashboardMetricStatsRowViewModel`) before introducing custom row types.
+
+Current intended dashboard structure:
+- `Daily Stats`: `Metrics`, `Performance`
+- `Sleep`: `Sleep Score`, `Sleep Phases`
+- `Workouts`: `Totals`, `Activities`
+
+Sleep-specific range semantics:
+- Use completed nights only, anchored to the latest completed wake day.
+- `Today` => last completed night.
+- `Past 7/30/Year` => rolling completed-night windows ending with last night.
+- Sleep phase metric rows show average duration for the selected window.
+- Sleep phase timeline row should show the latest completed night.
+
+Charts convention:
+- Reusable timeline/interval charts should live in `CoolCharts` as generic components (for example `TimelineChartView`) so they can be reused by Sleep and future Heart Rate surfaces.
+
 ## Workout source architecture
 
 - Supported sources are unified by `SQWorkoutSourceable`:

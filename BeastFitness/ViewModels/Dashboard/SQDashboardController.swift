@@ -10,6 +10,7 @@ import Combine
 import SwiftData
 import BeastFitnessCore
 import HealthKit
+import CoolCharts
 
 @MainActor
 protocol SQDashboardInterface {
@@ -27,6 +28,7 @@ final class SQDashboardController: SQDashboardInterface {
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
     let statsManager: SQWorkoutStatsManaging
+    let sleepAggregationService: SQSleepAggregationService
     private(set) var hasLoadedUI = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     
@@ -34,13 +36,22 @@ final class SQDashboardController: SQDashboardInterface {
     @MainActor
     static let `default` = SQDashboardController(state: SQAppState.shared.dashboardState, navState: SQAppState.shared.navigationState)
     
-    init(state: DashboardStating, navState: NavigationStating, dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(), workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared) {
+    init(
+        state: DashboardStating,
+        navState: NavigationStating,
+        dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
+        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
+        healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
+        statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
+        sleepAggregationService: SQSleepAggregationService = .init()
+    ) {
         self.state = state
         self.navState = navState
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.statsManager = statsManager
+        self.sleepAggregationService = sleepAggregationService
         
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -244,6 +255,10 @@ final class SQDashboardController: SQDashboardInterface {
                 currentVO2MaxSamples = vo2MaxAllTime
             }
 
+            let sleepDashboardData = try await buildSleepDashboardData(
+                for: state.selectedTimeRange
+            )
+
             let sectionGroups = await buildSectionGroups(
                 checkIns: currentCheckIns,
                 priorCheckIns: priorCheckIns,
@@ -252,6 +267,7 @@ final class SQDashboardController: SQDashboardInterface {
                 workouts: currentWorkouts,
                 priorWorkouts: priorWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
+                sleepData: sleepDashboardData,
                 timeRange: state.selectedTimeRange.sqTimeRange,
                 priorTimeRange: priorTimeRange,
                 context: context
@@ -699,6 +715,175 @@ final class SQDashboardController: SQDashboardInterface {
         return sectionViewModel
     }
 
+    // MARK: - Sleep Builders
+
+    private func buildSleepDashboardData(for timeRange: AppTimeRange) async throws -> SQSleepDashboardData? {
+        let window = sleepAggregationService.makeDashboardWindow(for: timeRange)
+        let sleepSegments = try await healthKitManager.fetchSleepSegments(
+            from: window.fetchStartDate,
+            to: window.fetchEndDate
+        )
+
+        let dashboardData = sleepAggregationService.buildDashboardData(
+            segments: sleepSegments,
+            window: window
+        )
+
+        return dashboardData.currentNights.isEmpty ? nil : dashboardData
+    }
+
+    private func buildSleepSectionGroup(with data: SQSleepDashboardData) -> SQDashboardSectionGroupViewModel? {
+        var sleepSections = [SQDashboardSubsectionViewModel]()
+
+        if let scoreSection = buildSleepScoreSubsection(with: data) {
+            sleepSections.append(scoreSection)
+        }
+
+        if let phasesSection = buildSleepPhasesSubsection(with: data) {
+            sleepSections.append(phasesSection)
+        }
+
+        guard !sleepSections.isEmpty else { return nil }
+
+        return SQDashboardSectionGroupViewModel(
+            id: "sleep",
+            title: "Sleep",
+            sections: sleepSections
+        )
+    }
+
+    private func buildSleepScoreSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
+        guard let averageScore = data.averageScore else { return nil }
+
+        let totalScore = averageScore.totalScore
+        let subtitle: String = {
+            guard let latestNight = data.latestNight else { return "No recent sleep summary" }
+            let totalSleep = formattedDuration(latestNight.totalSleepDuration)
+            let sleepStart = latestNight.sleepStartDate.formattedString(with: .timeOnly)
+            let wakeTime = latestNight.wakeDate.formattedString(with: .timeOnly)
+            return "Last night \(sleepStart)-\(wakeTime) • \(totalSleep)"
+        }()
+
+        let scoreRow = SQDashboardSleepScoreRowViewModel(
+            totalScore: totalScore,
+            scoreLabel: "\(Int(round(totalScore)))/100",
+            subtitle: subtitle,
+            components: [
+                .init(
+                    id: "duration",
+                    title: "Duration",
+                    score: averageScore.durationScore,
+                    maxScore: SQSleepScoreBreakdown.maxDurationScore,
+                    color: .accent(1)
+                ),
+                .init(
+                    id: "bedtime",
+                    title: "Bedtime",
+                    score: averageScore.bedtimeScore,
+                    maxScore: SQSleepScoreBreakdown.maxBedtimeScore,
+                    color: .accentNeutral1
+                ),
+                .init(
+                    id: "interruptions",
+                    title: "Interruptions",
+                    score: averageScore.interruptionsScore,
+                    maxScore: SQSleepScoreBreakdown.maxInterruptionsScore,
+                    color: .accentNeutral4
+                )
+            ]
+        )
+
+        return SQDashboardSubsectionViewModel(
+            id: "sleep-score",
+            title: "Sleep Score",
+            rowsByFilter: ["All": [scoreRow]],
+            dropDownViewModel: nil
+        )
+    }
+
+    private func buildSleepPhasesSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
+        var rows = [SQDashboardRowViewModel]()
+
+        let iconByPhase: [SQSleepPhase: String] = [
+            .rem: SQImageSymbol.eye.rawValue,
+            .deep: SQImageSymbol.moonZzzFill.rawValue,
+            .core: SQImageSymbol.bedDoubleFill.rawValue,
+            .awake: SQImageSymbol.sunMaxFill.rawValue
+        ]
+
+        let phaseOrder: [SQSleepPhase] = [.rem, .deep, .core, .awake]
+        for phase in phaseOrder {
+            guard let aggregate = data.phaseAggregates.first(where: { $0.phase == phase }) else { continue }
+
+            let row = SQDashboardMetricStatsRowViewModel(
+                metricId: "sleep.\(phase.rawValue)",
+                icon: iconByPhase[phase] ?? SQImageSymbol.moonFill.rawValue,
+                title: phase.title,
+                avgValue: formattedDuration(aggregate.averageDuration),
+                unit: "",
+                sparklineData: aggregate.sparklineDataHours,
+                changePercent: aggregate.changePercent
+            )
+            rows.append(row)
+        }
+
+        if let timelineRow = buildSleepPhaseTimelineRow(with: data) {
+            rows.append(timelineRow)
+        }
+
+        guard !rows.isEmpty else { return nil }
+
+        return SQDashboardSubsectionViewModel(
+            id: "sleep-phases",
+            title: "Sleep Phases",
+            rowsByFilter: ["All": rows],
+            dropDownViewModel: nil,
+            columnHeaders: ["Phase", "Avg Duration", "vs Prior"]
+        )
+    }
+
+    private func buildSleepPhaseTimelineRow(with data: SQSleepDashboardData) -> SQDashboardSleepPhaseTimelineRowViewModel? {
+        guard let latestNight = data.latestNight else { return nil }
+
+        let lanes: [TimelineChartLane] = [
+            .init(id: SQSleepPhase.awake.rawValue, title: "Awake", color: SQColor.textWarning.color),
+            .init(id: SQSleepPhase.rem.rawValue, title: "REM", color: SQColor.accentNeutral1.color),
+            .init(id: SQSleepPhase.core.rawValue, title: "Core", color: SQColor.accent(1).color),
+            .init(id: SQSleepPhase.deep.rawValue, title: "Deep", color: SQColor.accentNeutral4.color)
+        ]
+
+        let segments = latestNight.segments.map { segment in
+            TimelineChartSegment(
+                id: segment.id,
+                laneId: segment.phase.rawValue,
+                startDate: segment.startDate,
+                endDate: segment.endDate
+            )
+        }
+
+        let title = "Last Night Timeline • \(latestNight.sleepStartDate.formattedString(with: .timeOnly))-\(latestNight.wakeDate.formattedString(with: .timeOnly))"
+
+        return SQDashboardSleepPhaseTimelineRowViewModel(
+            title: title,
+            lanes: lanes,
+            segments: segments,
+            startDate: latestNight.sleepStartDate,
+            endDate: latestNight.wakeDate
+        )
+    }
+
+    private func formattedDuration(_ duration: TimeInterval) -> String {
+        let totalMinutes = Int((duration / 60.0).rounded())
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+
+        return "\(minutes)m"
+    }
+
     // MARK: - Section Groups Builder
 
     private func buildSectionGroups(
@@ -709,6 +894,7 @@ final class SQDashboardController: SQDashboardInterface {
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable],
+        sleepData: SQSleepDashboardData?,
         timeRange: SQTimeRange,
         priorTimeRange: SQTimeRange,
         context: ModelContext
@@ -746,6 +932,10 @@ final class SQDashboardController: SQDashboardInterface {
                 sections: dailyStatsSections
             )
             sectionGroups.append(dailyStatsGroup)
+        }
+
+        if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
+            sectionGroups.append(sleepGroup)
         }
         
         var workoutsSections: [SQDashboardSubsectionViewModel] = []

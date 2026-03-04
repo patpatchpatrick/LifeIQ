@@ -343,6 +343,46 @@ Firestore charges per document read/write. Tracking metrics helps:
   - Example: `SQImageView(image: .init(symbol: .chevronUp, symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)))`
 - **Use shared components for common UI patterns** — For collapsible section headers, use `SQCollapsibleSectionHeader` to ensure consistent styling across dashboard sections.
 - These wrappers ensure consistent theming and styling across the app.
+
+### Dashboard Groups and Subsections
+
+Dashboard content is organized in two layers:
+
+1. **Section Groups** (`SQDashboardSectionGroupViewModel`) — top-level buckets in `SQDashboardView`
+2. **Subsections** (`SQDashboardSubsectionViewModel`) — collapsible cards inside a group
+
+Current group/subsection structure:
+
+- **Daily Stats** group
+  - **Metrics** subsection
+  - **Performance** subsection
+- **Sleep** group
+  - **Sleep Score** subsection
+  - **Sleep Phases** subsection
+- **Workouts** group
+  - **Totals** subsection
+  - **Activities** subsection
+
+Guidelines:
+
+- Add new dashboard domains as a **new subsection** first; only create a new group when it materially improves hierarchy.
+- Reuse existing row/view model infrastructure where possible (e.g. `SQDashboardMetricStatsRowViewModel`) before adding custom row types.
+- Keep `SQDashboardController.buildSectionGroups(...)` as the source of truth for group ordering/composition.
+
+### Sleep Dashboard Time Range Rules
+
+Sleep uses **completed nights** anchored to the most recent completed wake day (not partial current-night data):
+
+- **Today**: last completed night only
+- **Past 7 Days**: last 7 completed nights ending with last night
+- **Past 30 Days**: last 30 completed nights
+- **Past Year**: last 365 completed nights
+- **All Time**: full available completed-night history
+
+For Sleep Phases rows:
+- Metric rows represent average phase duration for the selected range
+- Change-% compares to the prior equivalent window (Today compares to prior 7 nights)
+- Timeline row shows the latest completed night's stage timeline
 ## Workout Source Architecture
 
 Workouts can come from three different sources, each with its own data structure and capabilities. The **SQWorkoutSourceable** protocol provides a unified interface for accessing workout data regardless of source.

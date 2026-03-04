@@ -12,6 +12,8 @@ enum SQDashboardRowType {
     case metricPerformance
     case workoutTotals
     case activityList
+    case sleepScore
+    case sleepPhaseTimeline
 }
 
 enum SQDashboardRowIdentifier {
@@ -19,6 +21,8 @@ enum SQDashboardRowIdentifier {
     case metricPerformance
     case workoutTotals
     case activityList
+    case sleepScore
+    case sleepPhaseTimeline
 }
 
 class SQDashboardRowViewModel: Identifiable {

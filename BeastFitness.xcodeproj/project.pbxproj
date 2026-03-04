@@ -198,6 +198,12 @@
 		F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */; };
 		F6E058932F04961C006C1CE0 /* SQActiveWorkoutSessionPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E058922F049618006C1CE0 /* SQActiveWorkoutSessionPayload.swift */; };
 		F6E058992F049940006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E058982F049937006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift */; };
+		F6E179862F57D9D90099CAF2 /* SQSleepModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179842F57D9D90099CAF2 /* SQSleepModels.swift */; };
+		F6E1798A2F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179882F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift */; };
+		F6E1798B2F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179872F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift */; };
+		F6E1798F2F57DA5A0099CAF2 /* SQDashboardSleepPhaseTimelineRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E1798C2F57DA5A0099CAF2 /* SQDashboardSleepPhaseTimelineRowView.swift */; };
+		F6E179902F57DA5A0099CAF2 /* SQDashboardSleepScoreRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E1798D2F57DA5A0099CAF2 /* SQDashboardSleepScoreRowView.swift */; };
+		F6E179932F57DAED0099CAF2 /* SQSleepAggregationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179912F57DAED0099CAF2 /* SQSleepAggregationService.swift */; };
 		F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E909D12ED529D5003441B5 /* SQCallToAction.swift */; };
 		F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */; };
 		F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */; };
@@ -456,6 +462,12 @@
 		F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+Sleep.swift"; sourceTree = "<group>"; };
 		F6E058922F049618006C1CE0 /* SQActiveWorkoutSessionPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActiveWorkoutSessionPayload.swift; sourceTree = "<group>"; };
 		F6E058982F049937006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWatchWorkoutPayload+Extensions.swift"; sourceTree = "<group>"; };
+		F6E179842F57D9D90099CAF2 /* SQSleepModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepModels.swift; sourceTree = "<group>"; };
+		F6E179872F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSleepPhaseTimelineRowViewModel.swift; sourceTree = "<group>"; };
+		F6E179882F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSleepScoreRowViewModel.swift; sourceTree = "<group>"; };
+		F6E1798C2F57DA5A0099CAF2 /* SQDashboardSleepPhaseTimelineRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSleepPhaseTimelineRowView.swift; sourceTree = "<group>"; };
+		F6E1798D2F57DA5A0099CAF2 /* SQDashboardSleepScoreRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSleepScoreRowView.swift; sourceTree = "<group>"; };
+		F6E179912F57DAED0099CAF2 /* SQSleepAggregationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepAggregationService.swift; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
 		F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInView.swift; sourceTree = "<group>"; };
 		F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInViewModel.swift; sourceTree = "<group>"; };
@@ -594,6 +606,7 @@
 				F6940F222F379C090008A2A0 /* SQDashboardMetricStatsRowViewModel.swift */,
 				F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */,
 				F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */,
+				F6E179892F57DA400099CAF2 /* Sleep */,
 			);
 			path = DashboardRows;
 			sourceTree = "<group>";
@@ -604,6 +617,7 @@
 				F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */,
 				F6940F282F37A5560008A2A0 /* SQDashboardWorkoutTotalsRowView.swift */,
 				F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */,
+				F6E1798E2F57DA5A0099CAF2 /* Sleep */,
 			);
 			path = DashboardRows;
 			sourceTree = "<group>";
@@ -1103,6 +1117,7 @@
 				F6A848B12CBD8CCE00B09AD5 /* SQError.swift */,
 				F6C5FCEA2F2C3F2A00BF1022 /* Sync */,
 				F68C80582F365A3200327250 /* Dashboard */,
+				F6E179852F57D9D90099CAF2 /* Sleep */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1151,6 +1166,7 @@
 				F639F15E2F493246004AC701 /* SQDropDownMenuState.swift */,
 				F64B966C2F4E7E4900261004 /* SQWorkoutSessionMetadataManager.swift */,
 				F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */,
+				F6E179922F57DAED0099CAF2 /* Sleep */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1254,6 +1270,40 @@
 			children = (
 			);
 			path = WatchInterface;
+			sourceTree = "<group>";
+		};
+		F6E179852F57D9D90099CAF2 /* Sleep */ = {
+			isa = PBXGroup;
+			children = (
+				F6E179842F57D9D90099CAF2 /* SQSleepModels.swift */,
+			);
+			path = Sleep;
+			sourceTree = "<group>";
+		};
+		F6E179892F57DA400099CAF2 /* Sleep */ = {
+			isa = PBXGroup;
+			children = (
+				F6E179872F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift */,
+				F6E179882F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift */,
+			);
+			path = Sleep;
+			sourceTree = "<group>";
+		};
+		F6E1798E2F57DA5A0099CAF2 /* Sleep */ = {
+			isa = PBXGroup;
+			children = (
+				F6E1798C2F57DA5A0099CAF2 /* SQDashboardSleepPhaseTimelineRowView.swift */,
+				F6E1798D2F57DA5A0099CAF2 /* SQDashboardSleepScoreRowView.swift */,
+			);
+			path = Sleep;
+			sourceTree = "<group>";
+		};
+		F6E179922F57DAED0099CAF2 /* Sleep */ = {
+			isa = PBXGroup;
+			children = (
+				F6E179912F57DAED0099CAF2 /* SQSleepAggregationService.swift */,
+			);
+			path = Sleep;
 			sourceTree = "<group>";
 		};
 		F6E90B4A2ED55193003441B5 /* DailyCheckIn */ = {
@@ -1668,6 +1718,7 @@
 				F61592392EF3637E00223A63 /* SQAlertCard.swift in Sources */,
 				F679BDD32EE7C0C300A2F249 /* UnfrozenEnum.swift in Sources */,
 				F679BA422EE4F14800A2F249 /* SQWorkoutsListController.swift in Sources */,
+				F6E179932F57DAED0099CAF2 /* SQSleepAggregationService.swift in Sources */,
 				F6F94E032CAB9AB100C2B90B /* HKWorkoutActivityType+Extensions.swift in Sources */,
 				F61591F92EE9D98F00223A63 /* SQWorkoutSession+VisibleStats.swift in Sources */,
 				F639B7E22ED799E800199C69 /* String+Extensions.swift in Sources */,
@@ -1681,6 +1732,8 @@
 				F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */,
 				F61592342EF362FF00223A63 /* SQAlertViewModel.swift in Sources */,
 				F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */,
+				F6E1798A2F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift in Sources */,
+				F6E1798B2F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift in Sources */,
 				F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */,
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
@@ -1772,6 +1825,8 @@
 				F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */,
 				F602DA662EC789FC00404878 /* SQQuantityType.swift in Sources */,
 				F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */,
+				F6E1798F2F57DA5A0099CAF2 /* SQDashboardSleepPhaseTimelineRowView.swift in Sources */,
+				F6E179902F57DA5A0099CAF2 /* SQDashboardSleepScoreRowView.swift in Sources */,
 				F679BDDC2EE7D4DC00A2F249 /* SQExercisesListItemViewModel.swift in Sources */,
 				F647A9042EE7DAD000DAA247 /* SQExercisesManager.swift in Sources */,
 				F602DA4B2EC6A5FC00404878 /* SQWorkoutSource.swift in Sources */,
@@ -1809,6 +1864,7 @@
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,
 				F65E77FD2F2C0DFA005050B2 /* SQSparkline.swift in Sources */,
+				F6E179862F57D9D90099CAF2 /* SQSleepModels.swift in Sources */,
 				F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */,
 				F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */,
 				F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */,

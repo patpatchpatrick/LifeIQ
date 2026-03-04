@@ -9,7 +9,7 @@ import Foundation
 extension SQDashboardSectionGroupViewModel {
 
     static var mock: [SQDashboardSectionGroupViewModel] {
-        [mockDailyStats, mockWorkouts]
+        [mockDailyStats, mockSleep, mockWorkouts]
     }
 
     // MARK: - Daily Stats
@@ -73,6 +73,59 @@ extension SQDashboardSectionGroupViewModel {
     }
 
     // MARK: - Workouts
+
+    private static var mockSleep: SQDashboardSectionGroupViewModel {
+        let scoreRow = SQDashboardSleepScoreRowViewModel(
+            totalScore: 78,
+            scoreLabel: "78/100",
+            subtitle: "Last night 10:44 PM-6:37 AM • 7h 53m",
+            components: [
+                .init(id: "duration", title: "Duration", score: 39, maxScore: 50, color: .accent(1)),
+                .init(id: "bedtime", title: "Bedtime", score: 23, maxScore: 30, color: .accentNeutral1),
+                .init(id: "interruptions", title: "Interruptions", score: 16, maxScore: 20, color: .accentNeutral4)
+            ]
+        )
+
+        let phasesRows: [SQDashboardRowViewModel] = [
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-rem",
+                icon: SQImageSymbol.eye.rawValue,
+                title: "REM",
+                avgValue: "1h 24m",
+                unit: "",
+                sparklineData: [1.2, 1.4, 1.1, 1.5, 1.4, 1.3, 1.4],
+                changePercent: 0.12
+            ),
+            SQDashboardMetricStatsRowViewModel(
+                metricId: "mock-deep",
+                icon: SQImageSymbol.moonZzzFill.rawValue,
+                title: "Deep",
+                avgValue: "52m",
+                unit: "",
+                sparklineData: [0.8, 0.9, 0.7, 0.85, 0.9, 0.83, 0.87],
+                changePercent: 0.05
+            )
+        ]
+
+        let scoreSection = SQDashboardSubsectionViewModel(
+            id: "sleep-score",
+            title: "Sleep Score",
+            rowsByFilter: ["All": [scoreRow]]
+        )
+
+        let phasesSection = SQDashboardSubsectionViewModel(
+            id: "sleep-phases",
+            title: "Sleep Phases",
+            rowsByFilter: ["All": phasesRows],
+            columnHeaders: ["Phase", "Avg Duration", "vs Prior"]
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "sleep",
+            title: "Sleep",
+            sections: [scoreSection, phasesSection]
+        )
+    }
 
     private static var mockWorkouts: SQDashboardSectionGroupViewModel {
         let mockWorkoutsList: [any SQWorkoutSessionable] = .mock

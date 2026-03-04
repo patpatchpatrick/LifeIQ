@@ -2,128 +2,122 @@
 //  SQHealthKitManager+Sleep.swift
 //  BeastFitness
 //
-//  Created by Patrick Doyle on 10/24/24.
-//
+
 import Foundation
 import HealthKit
 import BeastFitnessCore
 
 extension SQHealthKitManager {
-    
-    func fetchSleep(_ timeRange: SQTimeRange) async throws -> SQSleepQueryResult? {
-           guard HKHealthStore.isHealthDataAvailable() else {
-               throw SQError.standard   // or SQHealthKitError.healthDataUnavailable
-           }
-           
-           do {
-               try await Self.healthStore.requestAuthorization(
-                   toShare: allTypesToReadWrite,
-                   read: allTypesToReadWrite
-               )
-           } catch {
-               SQLogger.shared.log("Error requesting healthStore auth: \(error.localizedDescription)", .error, context: .dataProcessing)
-               throw error
-           }
-           
-           let predicate = HKQuery.predicateForSamples(
-               withStart: timeRange.startDate,
-               end: timeRange.endDate
-           )
-           let limit = HKObjectQueryNoLimit
-           let sortDescriptor = NSSortDescriptor(
-               key: HKSampleSortIdentifierEndDate,
-               ascending: false
-           )
-           
-           guard let categoryType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
-               SQLogger.shared.log("Cannot get sleep category type", .error, context: .dataProcessing)
-               throw SQError.standard
-           }
-           
-           return try await executeSleepQuery(
-               categoryType: categoryType,
-               predicate: predicate,
-               sortDescriptors: [sortDescriptor],
-               limit: limit
-           )
-       }
-    
-    func executeSleepQuery(
-            categoryType: HKCategoryType,
-            predicate: NSPredicate?,
-            sortDescriptors: [NSSortDescriptor]?,
-            limit: Int
-        ) async throws -> SQSleepQueryResult? {
-            try await withCheckedThrowingContinuation { continuation in
-                let query = HKSampleQuery(
-                    sampleType: categoryType,
-                    predicate: predicate,
-                    limit: limit,
-                    sortDescriptors: sortDescriptors
-                ) { query, tmpResult, errorOrNil in
-                    
-                    if let error = errorOrNil {
-                        SQLogger.shared.log(
-                            "HKSampleQuery initialResultsHandler with identifier \(categoryType.identifier) error: \(error.localizedDescription)",
-                            .error,
-                            context: .dataProcessing
-                        )
-                        continuation.resume(throwing: error)
-                        return
-                    }
-                    
-                    SQLogger.shared.log(
-                        "HKSampleQuery initialResultsHandler has returned for \(categoryType.identifier)",
-                        .debug,
-                        context: .dataProcessing
-                    )
-                    
-                    guard let result = tmpResult else {
-                        continuation.resume(returning: nil)
-                        return
-                    }
-                    
-                    var totalSleepTimeInHours = 0.0
-                    for sample in result {
-                        guard let sleepSample = sample as? HKCategorySample else {
-                            continue
-                        }
-                        let sleepTimeForOneDay = sleepSample.endDate.timeIntervalSince(sleepSample.startDate)
-                        let sleepTimeInHours = sleepTimeForOneDay / (60.0 * 60.0)
-                        totalSleepTimeInHours += sleepTimeInHours
-                        
-                        SQLogger.shared.log(
-                            "PTD HKSampleQuery initialResultsHandler has returned \(sleepTimeInHours) " +
-                            "\nStartDate \(sleepSample.startDate)" +
-                            "\nEndDate \(sleepSample.endDate)",
-                            .debug,
-                            context: .dataProcessing
-                        )
-                    }
-                    
-                    let resultModel = SQSleepQueryResult(totalTime: totalSleepTimeInHours)
-                    continuation.resume(returning: resultModel)
-                }
-                
-                SQHealthKitManager.healthStore.execute(query)
-            }
+
+    func fetchSleepSegments(from startDate: Date, to endDate: Date) async throws -> [SQSleepStageSegment] {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQError.standard
         }
-    
-    enum SleepQueryResult {
-        case success(SQSleepQueryResult?)
-        case error(Error)
-        
-        var sleepQueryResult: SQSleepQueryResult? {
-            switch self {
-            case .success(let result):
-                return result
-            case .error:
-                return nil
+
+        do {
+            try await Self.healthStore.requestAuthorization(
+                toShare: allTypesToReadWrite,
+                read: allTypesToReadWrite
+            )
+        } catch {
+            SQLogger.shared.log(
+                "Error requesting healthStore auth for sleep: \(error.localizedDescription)",
+                .error,
+                context: .healthKit
+            )
+            throw error
+        }
+
+        guard let categoryType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            SQLogger.shared.log("Cannot get sleep category type", .error, context: .healthKit)
+            throw SQError.standard
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        let samples = try await executeSleepSampleQuery(
+            categoryType: categoryType,
+            predicate: predicate,
+            sortDescriptors: [sortDescriptor],
+            limit: HKObjectQueryNoLimit
+        )
+
+        let segments = samples.compactMap { sample -> SQSleepStageSegment? in
+            guard let phase = Self.phase(for: sample) else { return nil }
+            return SQSleepStageSegment(
+                phase: phase,
+                startDate: sample.startDate,
+                endDate: sample.endDate
+            )
+        }
+
+        SQLogger.shared.log(
+            "Fetched \(segments.count) sleep stage segments",
+            .debug,
+            context: .healthKit
+        )
+
+        return segments
+    }
+
+    private func executeSleepSampleQuery(
+        categoryType: HKCategoryType,
+        predicate: NSPredicate?,
+        sortDescriptors: [NSSortDescriptor]?,
+        limit: Int
+    ) async throws -> [HKCategorySample] {
+        try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: categoryType,
+                predicate: predicate,
+                limit: limit,
+                sortDescriptors: sortDescriptors
+            ) { _, result, error in
+                if let error {
+                    SQLogger.shared.log(
+                        "Sleep HKSampleQuery failed: \(error.localizedDescription)",
+                        .error,
+                        context: .healthKit
+                    )
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                let categorySamples = (result as? [HKCategorySample]) ?? []
+                continuation.resume(returning: categorySamples)
             }
+
+            SQHealthKitManager.healthStore.execute(query)
         }
     }
-}
 
-struct SQSleepQueryResult {
-    let totalTime: Double
+    private static func phase(for sample: HKCategorySample) -> SQSleepPhase? {
+        let value = sample.value
+
+        if value == HKCategoryValueSleepAnalysis.awake.rawValue {
+            return .awake
+        }
+
+        if #available(iOS 16.0, *) {
+            switch value {
+            case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
+                return .rem
+            case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
+                return .core
+            case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
+                return .deep
+            default:
+                break
+            }
+        }
+
+        if value == HKCategoryValueSleepAnalysis.asleep.rawValue
+            || value == HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue {
+            return .core
+        }
+
+        // Ignore inBed and unsupported values for the phase timeline.
+        return nil
+    }
 }

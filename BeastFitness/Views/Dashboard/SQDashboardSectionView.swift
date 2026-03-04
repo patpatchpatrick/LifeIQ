@@ -82,6 +82,16 @@ struct SQDashboardSectionView: View {
                             if let activityListViewModel = row as? SQDashboardActivityRowViewModel {
                                 SQDashboardActivityListRowView(viewModel: activityListViewModel)
                             }
+
+                        case .sleepScore:
+                            if let sleepScoreViewModel = row as? SQDashboardSleepScoreRowViewModel {
+                                SQDashboardSleepScoreRowView(viewModel: sleepScoreViewModel)
+                            }
+
+                        case .sleepPhaseTimeline:
+                            if let sleepTimelineViewModel = row as? SQDashboardSleepPhaseTimelineRowViewModel {
+                                SQDashboardSleepPhaseTimelineRowView(viewModel: sleepTimelineViewModel)
+                            }
                         }
                     }
                 }

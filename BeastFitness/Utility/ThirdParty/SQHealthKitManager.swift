@@ -48,6 +48,10 @@ protocol SQHealthKitManaging {
     /// Reads the weather temperature (in °C) recorded by Apple Watch during a workout.
     /// Returns nil if the workout has no weather metadata.
     func weatherTemperatureCelsius(from workout: HKWorkout) -> Double?
+
+    /// Fetch sleep stage segments overlapping the provided interval.
+    /// The caller can then aggregate by nights/time ranges.
+    func fetchSleepSegments(from startDate: Date, to endDate: Date) async throws -> [SQSleepStageSegment]
 }
 
 
