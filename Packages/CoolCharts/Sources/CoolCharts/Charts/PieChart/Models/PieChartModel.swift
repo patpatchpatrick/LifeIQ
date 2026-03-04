@@ -11,8 +11,10 @@ import SwiftUI
 public final class PieChartModel: ObservableObject {
     public var expectedPieSections: [PieChartSection]
     @Published public var pieSections: [PieChartSection]
-    public let sectionIdTapped: ((String) -> Void)?
+    @Published public private(set) var focusedSectionId: String?
+    public let sectionIdTapped: ((String?) -> Void)?
     public let sectionAlignment: SectionAlignment
+    public let focusGrowthPercent: Double
     public enum SectionAlignment: Sendable {
         case outside
         case center
@@ -25,12 +27,14 @@ public final class PieChartModel: ObservableObject {
     
     public init?(
         sections: [PieChartSectionConfig],
-        sectionIdTapped: ((String) -> Void)? = nil,
+        sectionIdTapped: ((String?) -> Void)? = nil,
         sectionAlignment: SectionAlignment = .center,
         initialStartAngleDegrees: CGFloat = -90,
-        widthHeight: CGFloat = 200
+        widthHeight: CGFloat = 200,
+        focusGrowthPercent: Double = 1.0
     ) {
         self.sectionIdTapped = sectionIdTapped
+        self.focusGrowthPercent = max(0, min(1, focusGrowthPercent))
         
         var totalMagnitude: Double = 0
         
@@ -64,13 +68,17 @@ public final class PieChartModel: ObservableObject {
                 strokeWidth: 30,
                 chartMaxStrokeWidth: 40,
                 startAngleDegrees: startAngle,
-                endAngleDegrees: endAngle))
+                endAngleDegrees: endAngle,
+                radialFillPercent: section.radialFillPercent,
+                radialUnfilledColor: section.radialUnfilledColor
+            ))
             
             startAngle = endAngle
         }
         
         self.expectedPieSections = pieSections
         self.pieSections = []
+        self.focusedSectionId = nil
         self.sectionAlignment = sectionAlignment
         self.initialStartAngleDegrees = initialStartAngleDegrees
         self.widthHeight = widthHeight
@@ -95,12 +103,18 @@ public final class PieChartModel: ObservableObject {
     }
     
     public func sectionFocused(sectionId: String?, shouldCallFocusCompletionHandler: Bool = true) {
+        let resolvedSectionId: String? = {
+            guard let sectionId else { return nil }
+            return focusedSectionId == sectionId ? nil : sectionId
+        }()
+        focusedSectionId = resolvedSectionId
         
         withAnimation {
             pieSections = pieSections.map {
                 var section = $0
-                if section.id == sectionId {
-                    section.strokeWidth = section.chartMaxStrokeWidth
+                if section.id == resolvedSectionId {
+                    let delta = section.chartMaxStrokeWidth - section.expectedStrokeWidth
+                    section.strokeWidth = section.expectedStrokeWidth + delta * focusGrowthPercent
                 } else {
                     section.strokeWidth = section.expectedStrokeWidth
                 }
@@ -108,8 +122,8 @@ public final class PieChartModel: ObservableObject {
             }
         }
         
-        if let sectionId, shouldCallFocusCompletionHandler {
-            sectionIdTapped?(sectionId)
+        if shouldCallFocusCompletionHandler {
+            sectionIdTapped?(resolvedSectionId)
         }
     }
 }

@@ -78,13 +78,18 @@ extension SQDashboardSectionGroupViewModel {
         let scoreRow = SQDashboardSleepScoreRowViewModel(
             totalScore: 78,
             scoreLabel: "78/100",
-            subtitle: "Last night 10:44 PM-6:37 AM • 7h 53m",
             components: [
                 .init(id: "duration", title: "Duration", score: 39, maxScore: 50, color: .accent(1)),
                 .init(id: "bedtime", title: "Bedtime", score: 23, maxScore: 30, color: .accentNeutral1),
                 .init(id: "interruptions", title: "Interruptions", score: 16, maxScore: 20, color: .accentNeutral4)
             ]
         )
+
+        let summaryRow = SQDashboardSleepSummaryRowViewModel(items: [
+            .init(id: "total", title: "Avg Total Sleep", value: "7h 53m"),
+            .init(id: "bed", title: "Avg Bedtime", value: "10:44 PM"),
+            .init(id: "wake", title: "Avg Wake Time", value: "6:37 AM")
+        ])
 
         let phasesRows: [SQDashboardRowViewModel] = [
             SQDashboardMetricStatsRowViewModel(
@@ -120,10 +125,16 @@ extension SQDashboardSectionGroupViewModel {
             columnHeaders: ["Phase", "Avg Duration", "vs Prior"]
         )
 
+        let summarySection = SQDashboardSubsectionViewModel(
+            id: "sleep-summary",
+            title: "Sleep Summary",
+            rowsByFilter: ["All": [summaryRow]]
+        )
+
         return SQDashboardSectionGroupViewModel(
             id: "sleep",
             title: "Sleep",
-            sections: [scoreSection, phasesSection]
+            sections: [scoreSection, summarySection, phasesSection]
         )
     }
 

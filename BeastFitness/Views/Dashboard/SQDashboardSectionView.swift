@@ -92,6 +92,11 @@ struct SQDashboardSectionView: View {
                             if let sleepTimelineViewModel = row as? SQDashboardSleepPhaseTimelineRowViewModel {
                                 SQDashboardSleepPhaseTimelineRowView(viewModel: sleepTimelineViewModel)
                             }
+
+                        case .sleepSummary:
+                            if let sleepSummaryViewModel = row as? SQDashboardSleepSummaryRowViewModel {
+                                SQDashboardSleepSummaryRowView(viewModel: sleepSummaryViewModel)
+                            }
                         }
                     }
                 }

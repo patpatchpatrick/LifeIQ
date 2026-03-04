@@ -13,11 +13,21 @@ public struct PieChartSectionConfig: Identifiable, Sendable {
     public let id: String
     public let magnitude: Double /// All magnitudes will be summed and the percentage of the pie chart will be determined by the ratios
     public let color: Color
+    public let radialFillPercent: Double?
+    public let radialUnfilledColor: Color?
     
-    public init(id: String, magnitude: Double, color: Color) {
+    public init(
+        id: String,
+        magnitude: Double,
+        color: Color,
+        radialFillPercent: Double? = nil,
+        radialUnfilledColor: Color? = nil
+    ) {
         self.id = id
         self.magnitude = magnitude
         self.color = color
+        self.radialFillPercent = radialFillPercent
+        self.radialUnfilledColor = radialUnfilledColor
     }
 }
 
@@ -32,6 +42,8 @@ public struct PieChartSection: Identifiable, Sendable {
     public var startAngleDegrees: CGFloat
     public let expectedEndAngleDegrees: CGFloat
     public var endAngleDegrees: CGFloat
+    public let radialFillPercent: Double?
+    public let radialUnfilledColor: Color?
     
     public var theta: CGFloat {
         thetaDegrees * .pi / 180
@@ -57,7 +69,9 @@ public struct PieChartSection: Identifiable, Sendable {
         strokeWidth: CGFloat,
         chartMaxStrokeWidth: CGFloat,
         startAngleDegrees: CGFloat,
-        endAngleDegrees: CGFloat
+        endAngleDegrees: CGFloat,
+        radialFillPercent: Double? = nil,
+        radialUnfilledColor: Color? = nil
     ) {
         self.id = id
         self.widthHeight = widthHeight
@@ -69,6 +83,8 @@ public struct PieChartSection: Identifiable, Sendable {
         self.startAngleDegrees = startAngleDegrees
         self.expectedEndAngleDegrees = endAngleDegrees
         self.endAngleDegrees = startAngleDegrees /// Start at the start angle until it's animated
+        self.radialFillPercent = radialFillPercent
+        self.radialUnfilledColor = radialUnfilledColor
     }
     
     public var radius: CGFloat {

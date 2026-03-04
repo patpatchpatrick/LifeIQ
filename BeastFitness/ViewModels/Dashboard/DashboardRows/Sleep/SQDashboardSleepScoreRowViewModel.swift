@@ -17,19 +17,19 @@ final class SQDashboardSleepScoreRowViewModel: SQDashboardRowViewModel {
 
     let totalScore: Double
     let scoreLabel: String
-    let subtitle: String
     let components: [Component]
+    let isSliceSelectionEnabled: Bool
 
     init(
         totalScore: Double,
         scoreLabel: String,
-        subtitle: String,
-        components: [Component]
+        components: [Component],
+        isSliceSelectionEnabled: Bool = true
     ) {
         self.totalScore = totalScore
         self.scoreLabel = scoreLabel
-        self.subtitle = subtitle
         self.components = components
+        self.isSliceSelectionEnabled = isSliceSelectionEnabled
 
         super.init(rowId: .sleepScore, rowType: .sleepScore)
     }

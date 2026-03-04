@@ -92,15 +92,15 @@ struct SQSleepAggregationService {
         let durationHours = night.totalSleepDuration / 3600.0
         let durationScore = min(
             SQSleepScoreBreakdown.maxDurationScore,
-            max(0, (durationHours / 8.0) * SQSleepScoreBreakdown.maxDurationScore)
+            max(0, (durationHours / 7.75) * SQSleepScoreBreakdown.maxDurationScore)
         )
 
         let bedtimeScore = bedtimeScoreFor(startDate: night.sleepStartDate)
 
         let awakeMinutes = night.phaseDuration(for: .awake) / 60.0
         let awakeSegments = night.segments.filter { $0.phase == .awake }.count
-        let interruptionsPenalty = Double(max(awakeSegments - 1, 0)) * 2.5
-        let awakePenalty = awakeMinutes * 0.2
+        let interruptionsPenalty = Double(max(awakeSegments - 1, 0)) * 1.2
+        let awakePenalty = awakeMinutes * 0.05
         let interruptionsScore = max(
             0,
             SQSleepScoreBreakdown.maxInterruptionsScore - interruptionsPenalty - awakePenalty
@@ -153,18 +153,34 @@ struct SQSleepAggregationService {
     }
 
     private func bedtimeScoreFor(startDate: Date) -> Double {
-        // Target bedtime: 10:30 PM local time.
-        let targetMinutes = 22 * 60 + 30
         let components = calendar.dateComponents([.hour, .minute], from: startDate)
-        let actualMinutes = (components.hour ?? 0) * 60 + (components.minute ?? 0)
+        let hour = components.hour ?? 0
+        let minute = components.minute ?? 0
 
-        var diff = abs(actualMinutes - targetMinutes)
-        diff = min(diff, 1440 - diff)
+        // Represent post-midnight bedtimes as continuation of previous night.
+        var bedtimeMinutes = hour * 60 + minute
+        if bedtimeMinutes < 12 * 60 {
+            bedtimeMinutes += 24 * 60
+        }
 
-        let maxDeviation = 180.0
-        let normalized = max(0, 1 - (Double(diff) / maxDeviation))
+        let idealStart = 22 * 60            // 10:00 PM
+        let idealEnd = 26 * 60              // 2:00 AM
+        let toleranceEarly = 20 * 60        // 8:00 PM
+        let toleranceLate = 29 * 60         // 5:00 AM
 
-        return normalized * SQSleepScoreBreakdown.maxBedtimeScore
+        if bedtimeMinutes >= idealStart && bedtimeMinutes <= idealEnd {
+            return SQSleepScoreBreakdown.maxBedtimeScore
+        }
+
+        if bedtimeMinutes < idealStart {
+            let span = Double(idealStart - toleranceEarly)
+            let progress = Double(bedtimeMinutes - toleranceEarly) / max(1, span)
+            return max(0, min(1, progress)) * SQSleepScoreBreakdown.maxBedtimeScore
+        }
+
+        let span = Double(toleranceLate - idealEnd)
+        let progress = Double(toleranceLate - bedtimeMinutes) / max(1, span)
+        return max(0, min(1, progress)) * SQSleepScoreBreakdown.maxBedtimeScore
     }
 
     private func latestCompletedWakeDay(now: Date) -> Date {

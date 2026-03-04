@@ -310,44 +310,44 @@ final class SQDashboardController: SQDashboardInterface {
         workouts: [SQWorkoutSessionable],
         context: ModelContext
     ) {
-//        guard let installDate = SQUserDefaults.shared.appInstallDate else {
-//            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
-//            return
-//        }
-//
-//        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
-//        let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
-//
-//        let reviewableWorkouts = workouts.filter { workout in
-//            guard let startDate = workout.startDate else { return false }
-//            let sourceId = workout.workoutSource.sourcableData.sourceId
-//            return startDate >= fourteenDaysAgo
-//                && startDate >= installDate
-//                && !processedIds.contains(sourceId)
-//        }
-//
-//        guard !reviewableWorkouts.isEmpty else {
-//            SQLogger.shared.log("Not launching new workout review modal - no workouts to display", .debug, context: .dashboard)
-//            return
-//        }
-//
-//        let sorted = reviewableWorkouts.sorted {
-//            ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
-//        }
-//
-//        SQLogger.shared.log(
-//            "Emitting \(sorted.count) workout(s) ready for review",
-//            .info,
-//            context: .dashboard
-//        )
-        
-        var sorted = [SQWorkoutSessionable]()
-        var total = 0
-        for workout in workouts.sorted(by: { $0.startDate ?? Date() > $1.startDate ?? Date() }) {
-            sorted.append(workout)
-            total += 1
-            if total >= 2 { break }
+        guard let installDate = SQUserDefaults.shared.appInstallDate else {
+            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
+            return
         }
+
+        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
+        let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
+
+        let reviewableWorkouts = workouts.filter { workout in
+            guard let startDate = workout.startDate else { return false }
+            let sourceId = workout.workoutSource.sourcableData.sourceId
+            return startDate >= fourteenDaysAgo
+                && startDate >= installDate
+                && !processedIds.contains(sourceId)
+        }
+
+        guard !reviewableWorkouts.isEmpty else {
+            SQLogger.shared.log("Not launching new workout review modal - no workouts to display", .debug, context: .dashboard)
+            return
+        }
+
+        let sorted = reviewableWorkouts.sorted {
+            ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
+        }
+
+        SQLogger.shared.log(
+            "Emitting \(sorted.count) workout(s) ready for review",
+            .info,
+            context: .dashboard
+        )
+        
+//        var sorted = [SQWorkoutSessionable]()
+//        var total = 0
+//        for workout in workouts.sorted(by: { $0.startDate ?? Date() > $1.startDate ?? Date() }) {
+//            sorted.append(workout)
+//            total += 1
+//            if total >= 2 { break }
+//        }
         print("PTD process new workout launch!")
         
         if navState.dashboardRootSheetView == nil {
@@ -739,6 +739,10 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSections.append(scoreSection)
         }
 
+        if let summarySection = buildSleepSummarySubsection(with: data) {
+            sleepSections.append(summarySection)
+        }
+
         if let phasesSection = buildSleepPhasesSubsection(with: data) {
             sleepSections.append(phasesSection)
         }
@@ -756,18 +760,10 @@ final class SQDashboardController: SQDashboardInterface {
         guard let averageScore = data.averageScore else { return nil }
 
         let totalScore = averageScore.totalScore
-        let subtitle: String = {
-            guard let latestNight = data.latestNight else { return "No recent sleep summary" }
-            let totalSleep = formattedDuration(latestNight.totalSleepDuration)
-            let sleepStart = latestNight.sleepStartDate.formattedString(with: .timeOnly)
-            let wakeTime = latestNight.wakeDate.formattedString(with: .timeOnly)
-            return "Last night \(sleepStart)-\(wakeTime) • \(totalSleep)"
-        }()
 
         let scoreRow = SQDashboardSleepScoreRowViewModel(
             totalScore: totalScore,
             scoreLabel: "\(Int(round(totalScore)))/100",
-            subtitle: subtitle,
             components: [
                 .init(
                     id: "duration",
@@ -795,8 +791,44 @@ final class SQDashboardController: SQDashboardInterface {
 
         return SQDashboardSubsectionViewModel(
             id: "sleep-score",
-            title: "Sleep Score",
+            title: data.currentNights.count > 1 ? "Average Sleep Score" : "Sleep Score",
             rowsByFilter: ["All": [scoreRow]],
+            dropDownViewModel: nil
+        )
+    }
+
+    private func buildSleepSummarySubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
+        guard !data.currentNights.isEmpty else { return nil }
+
+        let isAverageWindow = data.currentNights.count > 1
+        let totalSleepSeconds = data.currentNights.map(\.totalSleepDuration).reduce(0, +)
+        let averageSleepSeconds = totalSleepSeconds / Double(max(1, data.currentNights.count))
+
+        let averageSleepStart = averageBedtimeTime(of: data.currentNights.map(\.sleepStartDate))
+        let averageWakeTime = averageWakeTime(of: data.currentNights.map(\.wakeDate))
+
+        let summaryRow = SQDashboardSleepSummaryRowViewModel(items: [
+            .init(
+                id: "sleep-total",
+                title: isAverageWindow ? "Avg Total Sleep" : "Total Sleep",
+                value: formattedDuration(averageSleepSeconds)
+            ),
+            .init(
+                id: "sleep-bedtime",
+                title: isAverageWindow ? "Avg Bedtime" : "Bedtime",
+                value: averageSleepStart?.formattedString(with: .timeOnly) ?? "N/A"
+            ),
+            .init(
+                id: "sleep-wake",
+                title: isAverageWindow ? "Avg Wake Time" : "Wake Time",
+                value: averageWakeTime?.formattedString(with: .timeOnly) ?? "N/A"
+            )
+        ])
+
+        return SQDashboardSubsectionViewModel(
+            id: "sleep-summary",
+            title: "Sleep Summary",
+            rowsByFilter: ["All": [summaryRow]],
             dropDownViewModel: nil
         )
     }
@@ -827,7 +859,7 @@ final class SQDashboardController: SQDashboardInterface {
             rows.append(row)
         }
 
-        if let timelineRow = buildSleepPhaseTimelineRow(with: data) {
+        if state.selectedTimeRange == .today, let timelineRow = buildSleepPhaseTimelineRow(with: data) {
             rows.append(timelineRow)
         }
 
@@ -882,6 +914,59 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return "\(minutes)m"
+    }
+
+    private func averageBedtimeTime(of dates: [Date]) -> Date? {
+        guard !dates.isEmpty else { return nil }
+
+        let calendar = Calendar.current
+        let anchorDay = calendar.startOfDay(for: dates[0])
+        let secondsInDay = 24.0 * 60.0 * 60.0
+
+        let adjustedSeconds = dates.compactMap { date -> Double? in
+            let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+            let hour = components.hour ?? 0
+            let minute = components.minute ?? 0
+            let second = components.second ?? 0
+            let totalSeconds = Double(hour * 3600 + minute * 60 + second)
+
+            // Bedtimes after midnight should be treated as late-night continuation.
+            let normalizedSeconds = totalSeconds < (12.0 * 3600.0) ? totalSeconds + secondsInDay : totalSeconds
+
+            // Keep only likely nighttime bedtimes (6:00 PM to 5:00 AM next day).
+            // This avoids daytime naps/skewed sessions polluting long-range averages.
+            let lowerBound = 18.0 * 3600.0
+            let upperBound = 29.0 * 3600.0
+            guard normalizedSeconds >= lowerBound, normalizedSeconds <= upperBound else { return nil }
+
+            return normalizedSeconds
+        }
+
+        guard !adjustedSeconds.isEmpty else { return nil }
+
+        let averageSecondsAdjusted = adjustedSeconds.reduce(0, +) / Double(adjustedSeconds.count)
+        let averageSeconds = averageSecondsAdjusted.truncatingRemainder(dividingBy: secondsInDay)
+        return anchorDay.addingTimeInterval(averageSeconds)
+    }
+
+    private func averageWakeTime(of dates: [Date]) -> Date? {
+        guard !dates.isEmpty else { return nil }
+
+        let calendar = Calendar.current
+        let anchorDay = calendar.startOfDay(for: dates[0])
+        let secondsInDay = 24.0 * 60.0 * 60.0
+
+        let secondsValues = dates.map { date -> Double in
+            let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+            let hour = components.hour ?? 0
+            let minute = components.minute ?? 0
+            let second = components.second ?? 0
+            return Double(hour * 3600 + minute * 60 + second)
+        }
+
+        let averageSeconds = (secondsValues.reduce(0, +) / Double(secondsValues.count))
+            .truncatingRemainder(dividingBy: secondsInDay)
+        return anchorDay.addingTimeInterval(averageSeconds)
     }
 
     // MARK: - Section Groups Builder

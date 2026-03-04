@@ -358,6 +358,7 @@ Current group/subsection structure:
   - **Performance** subsection
 - **Sleep** group
   - **Sleep Score** subsection
+  - **Sleep Summary** subsection
   - **Sleep Phases** subsection
 - **Workouts** group
   - **Totals** subsection

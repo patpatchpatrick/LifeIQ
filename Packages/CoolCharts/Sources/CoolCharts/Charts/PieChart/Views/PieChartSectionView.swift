@@ -60,3 +60,79 @@ public struct PieChartSectionShape: Shape {
         set { model.animatableData = newValue }
     }
 }
+
+public struct PieChartSectorShape: Shape {
+    public var model: PieChartSection
+    public var radiusPercent: CGFloat
+
+    public init(model: PieChartSection, radiusPercent: CGFloat = 1) {
+        self.model = model
+        self.radiusPercent = radiusPercent
+    }
+
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let maxRadius = model.widthHeight / 2
+        let radius = maxRadius * max(0, min(1, radiusPercent))
+
+        path.move(to: CGPoint(x: model.centerX, y: model.centerY))
+        path.addArc(
+            center: CGPoint(x: model.centerX, y: model.centerY),
+            radius: radius,
+            startAngle: .degrees(model.startAngleDegrees),
+            endAngle: .degrees(model.endAngleDegrees),
+            clockwise: false
+        )
+        path.closeSubpath()
+        return path
+    }
+
+    public var animatableData: PieChartSection.AnimatableData {
+        get { model.animatableData }
+        set { model.animatableData = newValue }
+    }
+}
+
+public struct PieChartDonutBandSectorShape: Shape {
+    public var model: PieChartSection
+    public var radialFillPercent: CGFloat
+
+    public init(model: PieChartSection, radialFillPercent: CGFloat = 1) {
+        self.model = model
+        self.radialFillPercent = radialFillPercent
+    }
+
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let midRadius = model.radius
+        let innerRadius = max(0, midRadius - model.strokeWidth / 2)
+        let outerRadius = midRadius + model.strokeWidth / 2
+        let effectiveOuter = innerRadius + (outerRadius - innerRadius) * max(0, min(1, radialFillPercent))
+
+        // Outer arc
+        path.addArc(
+            center: CGPoint(x: model.centerX, y: model.centerY),
+            radius: effectiveOuter,
+            startAngle: .degrees(model.startAngleDegrees),
+            endAngle: .degrees(model.endAngleDegrees),
+            clockwise: false
+        )
+
+        // Inner arc (reverse) to close band
+        path.addArc(
+            center: CGPoint(x: model.centerX, y: model.centerY),
+            radius: innerRadius,
+            startAngle: .degrees(model.endAngleDegrees),
+            endAngle: .degrees(model.startAngleDegrees),
+            clockwise: true
+        )
+        path.closeSubpath()
+
+        return path
+    }
+
+    public var animatableData: PieChartSection.AnimatableData {
+        get { model.animatableData }
+        set { model.animatableData = newValue }
+    }
+}

@@ -4,80 +4,149 @@
 //
 
 import SwiftUI
+import CoolCharts
 
 struct SQDashboardSleepScoreRowView: View {
     @Bindable var viewModel: SQDashboardSleepScoreRowViewModel
 
     var body: some View {
-        HStack(alignment: .center, spacing: .SQSpace.l) {
-            SQSleepScoreDonutChart(components: viewModel.components)
-                .frame(width: 120, height: 120)
+        HStack(alignment: .center, spacing: 0) {
+            SQSleepScorePieChart(
+                components: viewModel.components,
+                totalLabel: viewModel.scoreLabel,
+                isInteractive: viewModel.isSliceSelectionEnabled
+            )
+            .frame(width: 148, height: 148)
+            
+            Spacer()
 
-            VStack(alignment: .leading, spacing: .SQSpace.m) {
-                Text(viewModel.scoreLabel)
-                    .sqFont(.title2)
-                    .sqForegroundColor(.textPrimary)
-
-                Text(viewModel.subtitle)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-
-                VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                    ForEach(viewModel.components) { component in
-                        HStack(spacing: .SQSpace.s) {
-                            Circle()
-                                .fill(component.color.color)
-                                .frame(width: 8, height: 8)
-                            Text("\(component.title): \(Int(component.score))/\(Int(component.maxScore))")
-                                .sqFont(.bodyExtraSmall)
-                                .sqForegroundColor(.textSecondary)
-                        }
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                ForEach(viewModel.components) { component in
+                    HStack(spacing: .SQSpace.s) {
+                        Circle()
+                            .fill(component.color.color)
+                            .frame(width: 8, height: 8)
+                        Text("\(component.title): \(Int(component.score))/\(Int(component.maxScore))")
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
                     }
                 }
             }
-
+            
             Spacer()
         }
     }
 }
 
-private struct SQSleepScoreDonutChart: View {
+private struct SQSleepScorePieChart: View {
+    private static let chartSize: CGFloat = 148
     let components: [SQDashboardSleepScoreRowViewModel.Component]
+    let totalLabel: String
+    let isInteractive: Bool
 
-    private var totalMagnitude: Double {
-        components.map(\.maxScore).reduce(0, +)
+    @State private var selectedComponentId: String?
+    @State private var pieChartModel: PieChartModel?
+
+    private var rebuildKey: String {
+        components
+            .map { "\($0.id):\($0.score):\($0.maxScore)" }
+            .joined(separator: "|")
+    }
+
+    private var selectedComponent: SQDashboardSleepScoreRowViewModel.Component? {
+        guard let selectedComponentId else { return nil }
+        return components.first(where: { $0.id == selectedComponentId })
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                ForEach(Array(components.enumerated()), id: \.element.id) { index, component in
-                    let start = startFraction(at: index)
-                    let fullFraction = component.maxScore / max(totalMagnitude, 1)
-                    let earnedFraction = fullFraction * (component.score / max(component.maxScore, 1))
-
-                    Circle()
-                        .trim(from: start, to: start + fullFraction)
-                        .stroke(component.color.color.opacity(0.20), style: .init(lineWidth: 18, lineCap: .butt))
-                        .rotationEffect(.degrees(-90))
-
-                    Circle()
-                        .trim(from: start, to: start + earnedFraction)
-                        .stroke(component.color.color, style: .init(lineWidth: 18, lineCap: .butt))
-                        .rotationEffect(.degrees(-90))
-                }
-
-                Text("\(Int(components.map(\.score).reduce(0, +)))")
-                    .sqFont(.title2)
-                    .sqForegroundColor(.textPrimary)
+        ZStack {
+            if let pieChartModel {
+                PieChartView(model: pieChartModel)
+            } else {
+                Circle()
+                    .stroke(SQColor.backgroundTertiaryLight.color, lineWidth: 18)
             }
-            .frame(width: geo.size.width, height: geo.size.height)
+
+            VStack(spacing: 2) {
+                if let selectedComponent {
+                    Text(selectedComponent.title)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                    Text("\(Int(selectedComponent.score))/\(Int(selectedComponent.maxScore))")
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+                } else {
+                    Text(totalLabel)
+                        .sqFont(.title2)
+                        .sqForegroundColor(.textPrimary)
+                }
+            }
+            .onTapGesture {
+                selectedComponentId = nil
+                pieChartModel?.sectionFocused(sectionId: nil, shouldCallFocusCompletionHandler: false)
+            }
+        }
+        .frame(width: Self.chartSize, height: Self.chartSize)
+        .onAppear {
+            rebuildModel(shouldAnimate: true)
+        }
+        .onChange(of: rebuildKey) { _, _ in
+            rebuildModel(shouldAnimate: false)
         }
     }
 
-    private func startFraction(at index: Int) -> CGFloat {
-        guard index > 0 else { return 0 }
-        let priorTotal = components.prefix(index).map(\.maxScore).reduce(0, +)
-        return CGFloat(priorTotal / max(totalMagnitude, 1))
+    private func rebuildModel(shouldAnimate: Bool) {
+        let sectionConfigs = buildSectionConfigs()
+        let model = PieChartModel(
+            sections: sectionConfigs,
+            sectionIdTapped: { sectionId in
+                guard isInteractive else { return }
+                selectedComponentId = sectionId.map(Self.componentId(from:))
+            },
+            sectionAlignment: .center,
+            widthHeight: Self.chartSize,
+            focusGrowthPercent: 0.5
+        )
+
+        if let model {
+            model.expectedPieSections = model.expectedPieSections.map { section in
+                var section = section
+                section.strokeWidth = 16
+                section.expectedStrokeWidth = 16
+                return section
+            }
+            model.pieSections = model.expectedPieSections
+        }
+
+        pieChartModel = model
+        selectedComponentId = nil
+
+        guard let model else { return }
+        if shouldAnimate {
+            Task { @MainActor in
+                await model.animateAppearance()
+            }
+        } else {
+            model.pieSections = model.expectedPieSections
+        }
+    }
+
+    private func buildSectionConfigs() -> [PieChartSectionConfig] {
+        components.map { component in
+            let clampedScore = min(component.maxScore, max(0, component.score))
+            let fillPercent = clampedScore / max(component.maxScore, 1)
+
+            return PieChartSectionConfig(
+                id: component.id,
+                magnitude: max(0.0001, component.maxScore),
+                color: component.color.color,
+                radialFillPercent: fillPercent,
+                radialUnfilledColor: component.color.color.opacity(0.22)
+            )
+        }
+    }
+
+    private static func componentId(from sectionId: String) -> String {
+        return sectionId
     }
 }

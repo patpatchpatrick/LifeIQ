@@ -104,7 +104,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 
 Current intended dashboard structure:
 - `Daily Stats`: `Metrics`, `Performance`
-- `Sleep`: `Sleep Score`, `Sleep Phases`
+- `Sleep`: `Sleep Score`, `Sleep Summary`, `Sleep Phases`
 - `Workouts`: `Totals`, `Activities`
 
 Sleep-specific range semantics:
