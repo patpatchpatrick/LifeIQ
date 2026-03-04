@@ -39,6 +39,7 @@ struct SQWorkoutReviewView: View {
     var actionBar: some View {
         HStack(spacing: .SQSpace.m) {
             if reviewState.queueCount > 1 {
+                
                 SQButton(
                     shouldHugContent: false,
                     title: "Skip Remaining",
