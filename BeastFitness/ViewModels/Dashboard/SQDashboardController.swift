@@ -471,44 +471,28 @@ final class SQDashboardController: SQDashboardInterface {
             rows.append(vo2MaxRow)
         }
         
-        // Build performance rows for each activity type present in the current workouts
+        // Build performance rows per activity type using the stats manager
         let uniqueActivityTypes = Set(workouts.map { $0.activityType })
         for activityType in uniqueActivityTypes {
-            let metricTypes = statsManager.metrics(for: activityType)
             let activityWorkouts = workouts.filter { $0.activityType == activityType }
             guard !activityWorkouts.isEmpty else { continue }
 
-            // Build rows for each metric type
-            for quantityType in metricTypes {
-                // Get metrics from workouts (async)
-                let metrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
-                    for workout in activityWorkouts {
-                        group.addTask {
-                            await workout.getMetric(for: quantityType)
-                        }
-                    }
-
-                    var results: [SQWorkoutMetric] = []
-                    for await metric in group {
-                        if let metric = metric {
-                            results.append(metric)
-                        }
-                    }
-                    return results
-                }
-
-                guard !metrics.isEmpty else { continue }
-
-                // Determine aggregation strategy and create row
-                if let row = await buildPerformanceMetricRow(
-                    quantityType: quantityType,
-                    activityType: activityType,
-                    metrics: metrics,
-                    allTimeWorkouts: allTimeWorkouts
-                ) {
-                    rows.append(row)
-                }
-            }
+            let performanceRows = await statsManager.loadPerformanceRows(
+                for: activityType,
+                in: activityWorkouts,
+                allTimeWorkouts: allTimeWorkouts
+            )
+            rows.append(contentsOf: performanceRows.map { rowData in
+                SQDashboardMetricPerformanceRowViewModel(
+                    metricId: rowData.id,
+                    icon: rowData.icon,
+                    title: rowData.title,
+                    bestValue: rowData.bestValue,
+                    unit: rowData.unit,
+                    percentileRank: rowData.percentileRank,
+                    leaderboardMode: rowData.leaderboardMode
+                )
+            })
         }
 
         // Skip section if no performance data at all
@@ -524,100 +508,6 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
             columnHeaders: ["Stat", "Best Score", "Rank"]
-        )
-    }
-
-    // MARK: - Performance Metric Row Builder
-
-    private func buildPerformanceMetricRow(
-        quantityType: SQQuantityType,
-        activityType: HKWorkoutActivityType,
-        metrics: [SQWorkoutMetric],
-        allTimeWorkouts: [SQWorkoutSessionable]
-    ) async -> SQDashboardMetricPerformanceRowViewModel? {
-        guard !metrics.isEmpty else { return nil }
-
-        // Calculate best value based on the quantity type's aggregation strategy
-        let bestValue: Double
-        switch quantityType.dashboardAggregationType {
-        case .minimum:
-            // For pace: lower (faster) is better
-            bestValue = metrics.map { $0.value }.min() ?? 0
-
-        case .maximum:
-            // For VO2/distance: higher is better
-            bestValue = metrics.map { $0.value }.max() ?? 0
-
-        case .sum:
-            // For total distance: highest sum is best
-            bestValue = metrics.reduce(0.0) { $0 + $1.value }
-
-        case .average:
-            // For average metrics: highest average is best
-            bestValue = metrics.reduce(0.0) { $0 + $1.value } / Double(metrics.count)
-        }
-
-        // Create metric for formatting
-        let bestMetric = SQWorkoutMetric(
-            quantityType: quantityType,
-            displayName: quantityType.displayTitle,
-            unit: metrics[0].unit,
-            value: bestValue,
-            warningText: nil
-        )
-
-        // Format the value using the metric's display logic
-        let valueString = bestMetric.displayableValue(
-            for: quantityType,
-            value: bestValue
-        )
-
-        // Get unit string
-        let unitString = bestMetric.unit.unitString ?? ""
-
-        // Use activity type's icon
-        let icon = activityType.imageSymbol.rawValue
-
-        // Create unique metric ID from activity type and quantity type
-        let metricId = "\(activityType.name.lowercased())-\(quantityType.id)"
-
-        // Get all historical metrics for this quantity type and activity type
-        let historicalMetrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
-            // Filter all-time workouts by activity type
-            let relevantWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
-
-            for workout in relevantWorkouts {
-                group.addTask {
-                    await workout.getMetric(for: quantityType)
-                }
-            }
-
-            var results: [SQWorkoutMetric] = []
-            for await metric in group {
-                if let metric = metric {
-                    results.append(metric)
-                }
-            }
-            return results
-        }
-
-        // Calculate percentile rank
-        let historicalValues = historicalMetrics.map { $0.value }
-        let isLowerBetter = quantityType.dashboardAggregationType == .minimum
-        let percentileRank = SQPercentileCalculator.calculatePercentile(
-            currentBest: bestValue,
-            historicalValues: historicalValues,
-            isLowerBetter: isLowerBetter
-        )
-
-        return SQDashboardMetricPerformanceRowViewModel(
-            metricId: metricId,
-            icon: icon,
-            title: quantityType.displayTitle,
-            bestValue: valueString,
-            unit: unitString,
-            percentileRank: percentileRank,
-            leaderboardMode: .workoutQuantity(quantityType, activityType)
         )
     }
 

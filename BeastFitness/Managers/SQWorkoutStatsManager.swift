@@ -13,6 +13,7 @@ import BeastFitnessCore
 protocol SQWorkoutStatsManaging {
     func metrics(for activityType: HKWorkoutActivityType) -> [SQQuantityType]
     func loadPerformanceData(for workout: SQWorkoutSessionable) async -> [SQPerformanceRowData]
+    func loadPerformanceRows(for activityType: HKWorkoutActivityType, in periodWorkouts: [SQWorkoutSessionable], allTimeWorkouts: [SQWorkoutSessionable]) async -> [SQPerformanceRowData]
     func generateHighlights(for workout: SQWorkoutSessionable, performanceData: [SQPerformanceRowData]) async -> [SQWorkoutReviewHighlight]
 }
 
@@ -79,7 +80,6 @@ extension SQWorkoutStatsManager {
         do {
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
             let sameActivityWorkouts = allTimeWorkouts.filter { $0.activityType == workout.activityType }
-            let activityIcon = workout.activityType.imageSymbol.rawValue
 
             // VO2 Max — special case, not a workout metric
             if workout.activityType.impactsVO2MaxData {
@@ -109,36 +109,18 @@ extension SQWorkoutStatsManager {
                 }
             }
 
-            // Workout metrics
+            // Workout metrics — delegate to shared helper
             let metricTypes = metrics(for: workout.activityType)
             for quantityType in metricTypes {
                 guard let currentMetric = await workout.getMetric(for: quantityType) else { continue }
-
-                let historicalValues = await withTaskGroup(of: Double?.self) { group in
-                    for w in sameActivityWorkouts {
-                        group.addTask { await w.getMetric(for: quantityType)?.value }
-                    }
-                    var results: [Double] = []
-                    for await value in group { if let v = value { results.append(v) } }
-                    return results
-                }
-
-                let isLowerBetter = quantityType.dashboardAggregationType == .minimum
-                let percentile = SQPercentileCalculator.calculatePercentile(
-                    currentBest: currentMetric.value,
-                    historicalValues: historicalValues,
-                    isLowerBetter: isLowerBetter
+                let row = await buildPerformanceRowData(
+                    quantityType: quantityType,
+                    activityType: workout.activityType,
+                    currentValue: currentMetric.value,
+                    sampleMetric: currentMetric,
+                    sameActivityAllTimeWorkouts: sameActivityWorkouts
                 )
-
-                rows.append(SQPerformanceRowData(
-                    id: "\(workout.activityType.name.lowercased())-\(quantityType.id)",
-                    icon: activityIcon,
-                    title: currentMetric.displayName,
-                    bestValue: currentMetric.displayableValue(for: quantityType, value: currentMetric.value),
-                    unit: currentMetric.unit.unitString ?? "",
-                    percentileRank: percentile,
-                    leaderboardMode: .workoutQuantity(quantityType, workout.activityType)
-                ))
+                rows.append(row)
             }
 
         } catch {
@@ -150,6 +132,87 @@ extension SQWorkoutStatsManager {
         }
 
         return rows
+    }
+
+    func loadPerformanceRows(
+        for activityType: HKWorkoutActivityType,
+        in periodWorkouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> [SQPerformanceRowData] {
+        let sameActivityAllTimeWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
+        let metricTypes = metrics(for: activityType)
+        var rows: [SQPerformanceRowData] = []
+
+        for quantityType in metricTypes {
+            let periodMetrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
+                for workout in periodWorkouts {
+                    group.addTask { await workout.getMetric(for: quantityType) }
+                }
+                var results: [SQWorkoutMetric] = []
+                for await metric in group { if let m = metric { results.append(m) } }
+                return results
+            }
+            guard !periodMetrics.isEmpty, let sampleMetric = periodMetrics.first else { continue }
+
+            // Best single workout in the period — always compare per-workout values so
+            // the result is apples-to-apples with historical per-workout data.
+            // .minimum types (e.g. pace) use min(); everything else uses max().
+            let currentValue: Double
+            if quantityType.dashboardAggregationType == .minimum {
+                currentValue = periodMetrics.map { $0.value }.min() ?? 0
+            } else {
+                currentValue = periodMetrics.map { $0.value }.max() ?? 0
+            }
+
+            let row = await buildPerformanceRowData(
+                quantityType: quantityType,
+                activityType: activityType,
+                currentValue: currentValue,
+                sampleMetric: sampleMetric,
+                sameActivityAllTimeWorkouts: sameActivityAllTimeWorkouts
+            )
+            rows.append(row)
+        }
+
+        return rows
+    }
+
+    // MARK: - Shared helper
+
+    /// Fetches historical metric values for `quantityType` from same-activity workouts,
+    /// calculates the percentile rank for `currentValue`, and returns a populated row.
+    private func buildPerformanceRowData(
+        quantityType: SQQuantityType,
+        activityType: HKWorkoutActivityType,
+        currentValue: Double,
+        sampleMetric: SQWorkoutMetric,
+        sameActivityAllTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> SQPerformanceRowData {
+        let historicalValues = await withTaskGroup(of: Double?.self) { group in
+            for w in sameActivityAllTimeWorkouts {
+                group.addTask { await w.getMetric(for: quantityType)?.value }
+            }
+            var results: [Double] = []
+            for await value in group { if let v = value { results.append(v) } }
+            return results
+        }
+
+        let isLowerBetter = quantityType.dashboardAggregationType == .minimum
+        let percentile = SQPercentileCalculator.calculatePercentile(
+            currentBest: currentValue,
+            historicalValues: historicalValues,
+            isLowerBetter: isLowerBetter
+        )
+
+        return SQPerformanceRowData(
+            id: "\(activityType.name.lowercased())-\(quantityType.id)",
+            icon: activityType.imageSymbol.rawValue,
+            title: sampleMetric.displayName,
+            bestValue: sampleMetric.displayableValue(for: quantityType, value: currentValue),
+            unit: sampleMetric.unit.unitString ?? "",
+            percentileRank: percentile,
+            leaderboardMode: .workoutQuantity(quantityType, activityType)
+        )
     }
 }
 

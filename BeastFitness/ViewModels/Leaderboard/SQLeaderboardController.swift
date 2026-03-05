@@ -134,8 +134,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: mockMetric.value,
                     formattedScore: mockMetric.displayableValue(for: quantityType, value: mockMetric.value),
                     unitString: mockMetric.unit.unitString ?? "",
-                    allTimeRank: index,
-                    allTimeTotal: 10
+                    percentileRank: nil
                 )
             }
             buildMockChart(mockValue: mockMetric.value)
@@ -150,8 +149,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: 45.0,
                     formattedScore: "45.0",
                     unitString: "mL/kg/min",
-                    allTimeRank: index,
-                    allTimeTotal: 10
+                    percentileRank: nil
                 )
             }
             buildMockChart(mockValue: 45.0)
@@ -242,8 +240,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.value),
                     unitString: item.metric.unit.unitString ?? "",
                     warningText: item.metric.warningText,
-                    allTimeRank: computeAllTimeRank(value: item.metric.value, allTimeValues: allTimeValues, isLowerBetter: mode.isLowerBetter),
-                    allTimeTotal: allTimeValues.count
+                    percentileRank: SQPercentileCalculator.calculatePercentile(
+                        currentBest: item.metric.value,
+                        historicalValues: allTimeValues,
+                        isLowerBetter: mode.isLowerBetter
+                    )
                 )
             }
 
@@ -319,8 +320,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     value: sample.value,
                     formattedScore: String(format: "%.1f", sample.value),
                     unitString: "mL/kg/min",
-                    allTimeRank: computeAllTimeRank(value: sample.value, allTimeValues: allTimeValues, isLowerBetter: false),
-                    allTimeTotal: allTimeValues.count
+                    percentileRank: SQPercentileCalculator.calculatePercentile(
+                        currentBest: sample.value,
+                        historicalValues: allTimeValues,
+                        isLowerBetter: false
+                    )
                 )
             }
 
@@ -347,18 +351,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 .error,
                 context: .healthKit
             )
-        }
-    }
-
-    // MARK: - All-Time Percentile Helpers
-
-    /// Returns the rank of `value` within `allTimeValues` (1 = best).
-    /// Rank is the number of all-time entries that are strictly better, plus 1.
-    private func computeAllTimeRank(value: Double, allTimeValues: [Double], isLowerBetter: Bool) -> Int {
-        if isLowerBetter {
-            return allTimeValues.filter { $0 < value }.count + 1
-        } else {
-            return allTimeValues.filter { $0 > value }.count + 1
         }
     }
 

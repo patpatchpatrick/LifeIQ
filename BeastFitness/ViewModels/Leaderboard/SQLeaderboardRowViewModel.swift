@@ -16,10 +16,9 @@ final class SQLeaderboardRowViewModel: Identifiable {
     let unitString: String
     let warningText: String?
 
-    /// The rank of this entry among all-time entries for the same metric/activity type.
-    let allTimeRank: Int
-    /// Total number of all-time entries for the same metric/activity type.
-    let allTimeTotal: Int
+    /// Percentile rank (0.0 = worst, 1.0 = best) relative to all-time entries.
+    /// Nil if insufficient historical data.
+    let percentileRank: Double?
 
     var hasWarning: Bool {
         warningText != nil
@@ -51,18 +50,17 @@ final class SQLeaderboardRowViewModel: Identifiable {
         }
     }
 
-    /// "Top X%" string based on all-time rank. Nil if there is only one all-time entry.
+    /// "Top X%" string based on percentile rank. Nil if insufficient data.
     var percentileString: String? {
-        guard allTimeTotal > 1 else { return nil }
-        let pct = Int(ceil(Double(allTimeRank) / Double(allTimeTotal) * 100))
-        return "Top \(max(1, min(100, pct)))%"
+        guard let rank = percentileRank else { return nil }
+        let topPercent = Int((1.0 - rank) * 100)
+        return "Top \(topPercent)%"
     }
 
-    /// Color interpolated from green (rank 1) through neutral (middle) to red (last rank).
-    /// Uses colorGreenRed on a -1…+1 scale: +1 = full green, 0 = neutral, -1 = full red.
+    /// Color interpolated from green (top) through neutral (middle) to red (bottom).
     var percentileColor: SQColor {
-        guard allTimeTotal > 1 else { return .textSecondary }
-        let percent = 1.0 - 2.0 * Double(allTimeRank) / Double(allTimeTotal)
+        guard let rank = percentileRank else { return .textSecondary }
+        let percent = (rank - 0.5) * 2.0
         return .colorGreenRed(percent: percent)
     }
 
@@ -93,8 +91,7 @@ final class SQLeaderboardRowViewModel: Identifiable {
         formattedScore: String,
         unitString: String,
         warningText: String? = nil,
-        allTimeRank: Int,
-        allTimeTotal: Int,
+        percentileRank: Double?,
     ) {
         self.id = id
         self.rank = rank
@@ -104,8 +101,7 @@ final class SQLeaderboardRowViewModel: Identifiable {
         self.formattedScore = formattedScore
         self.unitString = unitString
         self.warningText = warningText
-        self.allTimeRank = allTimeRank
-        self.allTimeTotal = allTimeTotal
+        self.percentileRank = percentileRank
     }
 
     func warningTapped() {

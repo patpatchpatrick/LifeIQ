@@ -28,14 +28,16 @@ struct SQPercentileCalculator {
 
         let betterCount: Int
         if isLowerBetter {
-            // For pace: count how many historical values are slower (higher)
-            betterCount = historicalValues.filter { $0 > currentBest }.count
+            // For pace: count how many historical values are slower (higher or equal)
+            betterCount = historicalValues.filter { $0 >= currentBest }.count
         } else {
-            // For VO2/distance: count how many historical values are lower
-            betterCount = historicalValues.filter { $0 < currentBest }.count
+            // For VO2/distance: count how many historical values are lower or equal
+            betterCount = historicalValues.filter { $0 <= currentBest }.count
         }
 
-        // Calculate percentile (0.0 = worst, 1.0 = best)
+        // Calculate percentile (0.0 = worst, 1.0 = best).
+        // Using >= / <= means the current value counts itself, so the all-time best
+        // scores rank = 1.0 ("Top 0%") rather than (N-1)/N.
         let percentile = Double(betterCount) / Double(historicalValues.count)
         return percentile
     }
