@@ -131,25 +131,86 @@ struct SQSleepAggregationService {
 
             guard !clippedSegments.isEmpty else { return nil }
 
-            // Ignore very short or likely nap-like nights.
-            let totalSleep = clippedSegments
+            guard let primaryBlockInterval = primarySleepBlockInterval(from: clippedSegments) else {
+                return nil
+            }
+
+            let primaryBlockSegments = clippedSegments.compactMap { segment -> SQSleepStageSegment? in
+                let overlapStart = max(segment.startDate, primaryBlockInterval.start)
+                let overlapEnd = min(segment.endDate, primaryBlockInterval.end)
+                guard overlapEnd > overlapStart else { return nil }
+                return .init(phase: segment.phase, startDate: overlapStart, endDate: overlapEnd)
+            }
+            .sorted(by: { $0.startDate < $1.startDate })
+
+            guard !primaryBlockSegments.isEmpty else { return nil }
+
+            let totalSleep = primaryBlockSegments
                 .filter { $0.phase != .awake }
                 .reduce(0) { $0 + $1.duration }
             guard totalSleep >= 30 * 60 else { return nil }
 
-            let sleepStartDate = clippedSegments.first(where: { $0.phase != .awake })?.startDate
-                ?? clippedSegments.first?.startDate
+            let sleepStartDate = primaryBlockSegments.first(where: { $0.phase != .awake })?.startDate
+                ?? primaryBlockSegments.first?.startDate
                 ?? nightStart
-            let wakeDate = clippedSegments.last?.endDate ?? nightEnd
+            let wakeDate = primaryBlockSegments.last?.endDate ?? nightEnd
 
             return SQSleepNight(
                 wakeDay: wakeDay,
                 sleepStartDate: sleepStartDate,
                 wakeDate: wakeDate,
-                segments: clippedSegments
+                segments: primaryBlockSegments
             )
         }
         .sorted(by: { $0.wakeDay < $1.wakeDay })
+    }
+
+    private func primarySleepBlockInterval(
+        from segments: [SQSleepStageSegment]
+    ) -> DateInterval? {
+        let nonAwakeSegments = segments
+            .filter { $0.phase != .awake }
+            .sorted(by: { $0.startDate < $1.startDate })
+
+        guard !nonAwakeSegments.isEmpty else { return nil }
+
+        // Bridge brief wake/gap periods so one fragmented night remains one block.
+        let maxBridgeGap: TimeInterval = 75 * 60
+
+        struct SleepBlock {
+            var start: Date
+            var end: Date
+            var sleepDuration: TimeInterval
+        }
+
+        var blocks = [SleepBlock]()
+        var currentBlock = SleepBlock(
+            start: nonAwakeSegments[0].startDate,
+            end: nonAwakeSegments[0].endDate,
+            sleepDuration: nonAwakeSegments[0].duration
+        )
+
+        for segment in nonAwakeSegments.dropFirst() {
+            let gap = segment.startDate.timeIntervalSince(currentBlock.end)
+            if gap <= maxBridgeGap {
+                currentBlock.end = max(currentBlock.end, segment.endDate)
+                currentBlock.sleepDuration += segment.duration
+            } else {
+                blocks.append(currentBlock)
+                currentBlock = SleepBlock(
+                    start: segment.startDate,
+                    end: segment.endDate,
+                    sleepDuration: segment.duration
+                )
+            }
+        }
+        blocks.append(currentBlock)
+
+        guard let bestBlock = blocks.max(by: { $0.sleepDuration < $1.sleepDuration }) else {
+            return nil
+        }
+
+        return DateInterval(start: bestBlock.start, end: bestBlock.end)
     }
 
     private func bedtimeScoreFor(startDate: Date) -> Double {
@@ -187,7 +248,9 @@ struct SQSleepAggregationService {
         let startOfToday = calendar.startOfDay(for: now)
         let hour = calendar.component(.hour, from: now)
 
-        if hour < 12 {
+        // Use today's wake day once we're past early-morning hours so
+        // the dashboard reflects the just-completed night after waking.
+        if hour < 4 {
             return calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
         }
 
