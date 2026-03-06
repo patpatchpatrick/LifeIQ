@@ -24,7 +24,7 @@ struct SQRootTabView: View {
         case .workoutSummary(let controller):
             SQWorkoutSummaryView(controller: controller)
         case .editWorkout(workout: let workout):
-            SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .build(for: workout))
+            SQDeprecatedWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .build(for: workout))
         case .workoutsList(workouts: let workouts):
             SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
         case .leaderboard(controller: let controller):

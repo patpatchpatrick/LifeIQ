@@ -8,7 +8,8 @@
 import SwiftUI
 import SwiftData
 
-struct SQWorkoutSessionView: View {
+@available(*, deprecated, message: "Use SQEditWorkoutView instead. Kept for potential future reuse of exercise tracking logic.")
+struct SQDeprecatedWorkoutSessionView: View {
     let isBeingDisplayedWithinNavStack: Bool
     @State var controller: SQWorkoutSessionController
     @Environment(\.modelContext) private var modelContext

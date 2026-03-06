@@ -9,6 +9,7 @@ import SwiftUI
 
 // MARK: - View
 
+@available(*, deprecated, message: "Only used by SQDeprecatedWorkoutSessionView. Not used in active app flows.")
 struct SQExercisesListView: View {
     @State var controller: SQExercisesListController
 
