@@ -84,25 +84,45 @@ final class SQEditWorkoutController: Identifiable {
 
     func onAppear() {
         guard !isLoaded else { return }
-        isLoaded = true
 
-        titleViewModel.setText(workout.visibleTitle)
-        notesViewModel.initializeText(workout.reviewNotes ?? "")
+        // Fetch the entity fresh from SwiftData so we always display the latest saved values,
+        // even if the workout object we received was created before recent edits (e.g. from
+        // the post-workout review sheet).
+        let entity = freshEntityFromStore()
+
+        let titleText = entity?.title ?? workout.visibleTitle
+        let notes = entity?.reviewNotes ?? workout.reviewNotes
+        let temperatureCelsius = entity?.temperatureCelsius ?? workout.temperatureCelsius
+        let ratingUserPerformance = entity?.ratingUserPerformance ?? workout.ratingUserPerformance
+        let ratingDifficulty = entity?.ratingDifficulty ?? workout.ratingDifficulty
+
+        titleViewModel.setText(titleText)
+        notesViewModel.initializeText(notes ?? "")
 
         let fahrenheitDecimalPlaces = 0
-        if let celsius = workout.temperatureCelsius,
+        if let celsius = temperatureCelsius,
            let fahrenheit = SQUnit.degreesCelsius.convert(celsius, to: .degreesFahrenheit) {
             temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: fahrenheitDecimalPlaces))
         }
 
-        selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
+        selectedPerformance = ratingUserPerformance.flatMap { rating in
             Self.performanceSegments.first { $0.ratingValue == rating }
         }
-        selectedDifficulty = workout.ratingDifficulty.flatMap { rating in
+        selectedDifficulty = ratingDifficulty.flatMap { rating in
             Self.difficultySegments.first { $0.ratingValue == rating }
         }
 
+        isLoaded = true
         setupSaveSubscriptions()
+    }
+
+    private func freshEntityFromStore() -> SQWorkoutSessionEntity? {
+        guard let modelContext = SQAppState.shared.modelContext else { return nil }
+        let workoutId = workout.id
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate { $0.workoutId == workoutId && $0.deletedAt == nil }
+        )
+        return try? modelContext.fetch(descriptor).first
     }
 
     func dismiss() {
@@ -161,6 +181,7 @@ final class SQEditWorkoutController: Identifiable {
             do {
                 try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: false)
                 SQLogger.shared.log("Auto-saved edit workout data", .debug, context: .workoutSession)
+                SQAppState.shared.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {
                 SQLogger.shared.log(
                     "Failed to auto-save edit workout: \(error.localizedDescription)",

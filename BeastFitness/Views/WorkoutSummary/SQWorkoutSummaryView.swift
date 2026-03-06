@@ -268,20 +268,20 @@ struct SQWorkoutSummaryView: View {
                 sqHideKeyboard()
             }
             .toolbar {
-                if controller.mode == .review {
-                    ToolbarItem(placement: .principal) {
-                        Text("Nice workout! 💪")
-                            .sqFont(.title1)
-                            .sqForegroundColor(.textPrimary)
-                            .opacity(reviewNavTitleOpacity)
-                    }
+                ToolbarItem(placement: .principal) {
+                    Text(controller.navTitle)
+                        .sqFont(.title1)
+                        .sqForegroundColor(.textPrimary)
+                        .opacity(reviewNavTitleOpacity)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button {
-                            controller.pushEditWorkoutView()
-                        } label: {
-                            Label("Edit workout", systemImage: SQImageSymbol.pencil.rawValue)
+                        if controller.showNavEditWorkoutButton {
+                            Button {
+                                controller.pushEditWorkoutView()
+                            } label: {
+                                Label("Edit workout", systemImage: SQImageSymbol.pencil.rawValue)
+                            }
                         }
                         Button {
                             Task { @MainActor in

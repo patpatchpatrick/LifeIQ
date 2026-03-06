@@ -53,7 +53,7 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
     }
     
     func displayWorkoutsSheet() {
-        dashboardState.displayWorkoutsListSheet(with: workouts.workouts)
+        dashboardState.navigateToWorkoutView(with: workouts.workouts)
     }
     
     nonisolated func hash(into hasher: inout Hasher) {

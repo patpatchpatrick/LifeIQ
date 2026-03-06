@@ -14,6 +14,7 @@ import CoreLocation
 @MainActor
 protocol WorkoutSummaryStating: AnyObject {
     var isLoading: Bool { get set }
+    var shouldReactToWorkoutUpdates: Bool { get set }
     var hub: EventHub { get }
     var user: SQUser? { get }
     var userFullName: String? { get }
@@ -54,6 +55,9 @@ protocol WorkoutSummaryStating: AnyObject {
 
     var isLoading: Bool = true
     var isLoadingRoute: Bool = false
+    /// Set to false when this controller is the source of saves (e.g. review mode),
+    /// so it doesn't reload itself in response to its own workoutsUpdated events.
+    var shouldReactToWorkoutUpdates: Bool = true
     var routeLocations: [CLLocation] = []
     var routeLoadErrorMessage: String? = nil
     var hasRoute: Bool { !routeLocations.isEmpty }
@@ -72,7 +76,7 @@ protocol WorkoutSummaryStating: AnyObject {
             guard let self else { return }
             switch event {
             case .workoutsUpdated(let workoutMap):
-                if let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap[currentWorkoutId] {
+                if shouldReactToWorkoutUpdates, let currentWorkoutId = currentWorkout?.id, let updatedWorkout = workoutMap[currentWorkoutId] {
                     SQLogger.shared.log("Refreshing workout summary with id: \(updatedWorkout.id) and title: \(String(describing: updatedWorkout.title))", .debug, context: .workoutSummary)
                     Task {
                         await self.load(workout: updatedWorkout)
@@ -100,6 +104,7 @@ protocol WorkoutSummaryStating: AnyObject {
     func reset() {
         routeLocations = []
         isLoadingRoute = false
+        
         currentWorkout = nil
         userFullName = nil
         workoutStartDate = nil

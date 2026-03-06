@@ -93,6 +93,14 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let healthKitManager: SQHealthKitManaging
     private let statsManager: SQWorkoutStatsManaging
     private let workout: SQWorkoutSessionable
+    
+    var navTitle: String {
+        switch mode {
+        case .standard: return state.workoutTitle ?? workout.visibleTitle
+        case .review: return "Nice workout! 💪"
+        }
+    }
+    let showNavEditWorkoutButton: Bool
 
     init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
@@ -109,6 +117,18 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             autocorrectionType: .yes,
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars)
         )
+        
+        switch mode {
+        case .standard:
+            showNavEditWorkoutButton = true
+            state.shouldReactToWorkoutUpdates = true
+        case .review:
+            /// Don't push to edit workout screen from review mode, because user can already edit the workout from the review page itself. And it causes a SwiftData race condition if we push to this view (because both views are editing the same data)
+            showNavEditWorkoutButton = false
+            // Review mode is the source of saves, so suppress self-reload from its own events.
+            state.shouldReactToWorkoutUpdates = false
+        }
+        
         setupEventSubscriptions()
     }
     
@@ -241,14 +261,12 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
 extension SQWorkoutSummaryController {
 
     private func setupEventSubscriptions() {
-        state.hub.workoutEvents.sink { [weak self] event in
-            guard let self else { return }
-            guard case .workoutsUpdated(let workoutMap) = event,
-                  let currentId = state.currentWorkout?.id,
-                  let updated = workoutMap[currentId] else { return }
-            titleViewModel.setText(updated.visibleTitle)
-        }
-        .store(in: &cancellables)
+        // WorkoutSummaryState has its own workoutEvents subscription that calls
+        // state.load() on updates, refreshing all @Observable state properties the
+        // view reads. navTitle is a computed var from state.workoutTitle so it also
+        // auto-updates. We intentionally avoid pushing values into editable text field
+        // VMs here — in review mode those have debounced save subscriptions that would
+        // cause a save → workoutsUpdated → save loop.
     }
 
     private func setupReviewSaveSubscriptions() {
@@ -303,6 +321,7 @@ extension SQWorkoutSummaryController {
                 // TODO: PTD - saveToCloud: false here — review data is local-only until the
                 // workout sync pipeline is ready. See matching TODO in SQWorkoutSessionEntity.
                 try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: false)
+                state.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {
                 SQLogger.shared.log(
                     "Failed to save review data: \(error.localizedDescription)",

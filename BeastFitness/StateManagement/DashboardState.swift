@@ -39,7 +39,7 @@ protocol DashboardStating: AnyObject {
     func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel])
     func setLoading(_ isLoading: Bool)
 
-    func displayWorkoutsListSheet(with workouts: [SQWorkoutSessionable])
+    func navigateToWorkoutView(with workouts: [SQWorkoutSessionable])
 
     func displayLeaderboard(mode: SQLeaderboardMode)
 }
@@ -106,8 +106,12 @@ protocol DashboardStating: AnyObject {
         toggleDailyCheckInSheetVisibility(true)
     }
     
-    func displayWorkoutsListSheet(with workouts: [any SQWorkoutSessionable]) {
-        hub.domainEvents.send(.pushDashboardRoute(.workoutsList(workouts: workouts)))
+    func navigateToWorkoutView(with workouts: [any SQWorkoutSessionable]) {
+        if workouts.count == 1, let firstWorkout = workouts.first {
+            hub.domainEvents.send(.pushDashboardRoute(.workoutSummary(controller: .init(workout: firstWorkout, mode: .standard))))
+        } else {
+            hub.domainEvents.send(.pushDashboardRoute(.workoutsList(workouts: workouts)))
+        }
     }
 
     func toggleLeaderboardSheetVisibility(_ isVisible: Bool) {
