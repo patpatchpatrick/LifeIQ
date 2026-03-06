@@ -266,20 +266,20 @@ extension SQWorkoutStatsManager {
                 let afterStr = String(format: "%.1f", afterVal)
 
                 if afterVal > beforeVal {
-                    let deltaPercent = Int(round(abs(afterVal - beforeVal) / beforeVal * 100))
+                    let deltaPercent = (abs(afterVal - beforeVal) / beforeVal * 100).adaptivePercentString
                     return SQWorkoutReviewHighlight(
                         segments: [
                             .init(text: "↑ VO2 Max went up ", isStatistic: false),
-                            .init(text: "\(deltaPercent)%: \(beforeStr) → \(afterStr)", isStatistic: true)
+                            .init(text: "\(deltaPercent): \(beforeStr) → \(afterStr)", isStatistic: true)
                         ],
                         sentiment: .positive
                     )
                 } else if afterVal < beforeVal {
-                    let deltaPercent = Int(round(abs(beforeVal - afterVal) / beforeVal * 100))
+                    let deltaPercent = (abs(beforeVal - afterVal) / beforeVal * 100).adaptivePercentString
                     return SQWorkoutReviewHighlight(
                         segments: [
                             .init(text: "↓ VO2 Max dropped ", isStatistic: false),
-                            .init(text: "\(deltaPercent)%: \(beforeStr) → \(afterStr)", isStatistic: true)
+                            .init(text: "\(deltaPercent): \(beforeStr) → \(afterStr)", isStatistic: true)
                         ],
                         sentiment: .negative
                     )

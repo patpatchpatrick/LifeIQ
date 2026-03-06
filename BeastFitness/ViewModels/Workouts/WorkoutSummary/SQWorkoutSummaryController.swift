@@ -60,7 +60,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         autoCorrectionEnabled: true
     )
     let temperatureViewModel: SQUITextFieldViewModel = SQUITextFieldViewModel(
-        placeholder: "e.g. 72",
+        placeholder: "Temperature (e.g. 72)",
         font: SQFont(type: .body).uiFont,
         keyboardType: .decimalPad,
         autocapitalizationType: .none,

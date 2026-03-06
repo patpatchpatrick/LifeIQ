@@ -88,6 +88,12 @@ struct SQTextField: View {
                 }
             }
         }
+        .listRowInsets(EdgeInsets(
+            top: .SQSpace.m,
+            leading: .SQSpace.xl,
+            bottom: .SQSpace.m,
+            trailing: .SQSpace.xl
+        ))
         .animation(.easeInOut(duration: 0.2), value: viewModel.textFieldState)
     }
 }

@@ -20,12 +20,6 @@ struct SQWorkoutSessionView: View {
     private var workoutHeaderSection: some View {
         if let titleTextField = controller.state.titleTextField {
             SQTextField(viewModel: titleTextField)
-                .listRowInsets(EdgeInsets(
-                    top: .SQSpace.m,
-                    leading: .SQSpace.xl,
-                    bottom: .SQSpace.m,
-                    trailing: .SQSpace.xl
-                ))
                 .listRowBackground(SQColor.background.color)
         }
     }

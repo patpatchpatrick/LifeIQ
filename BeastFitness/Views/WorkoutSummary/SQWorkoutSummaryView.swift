@@ -55,7 +55,7 @@ struct SQWorkoutSummaryView: View {
 
     @ViewBuilder
     var reviewHeader: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xl) {
+        VStack(alignment: .leading, spacing: .SQSpace.xxl) {
             if !controller.reviewHighlights.isEmpty {
                 reviewHighlightsSection
             }
@@ -67,7 +67,7 @@ struct SQWorkoutSummaryView: View {
 
     @ViewBuilder
     var reviewHighlightsSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             ForEach(controller.reviewHighlights) { highlight in
                 HStack(alignment: .top, spacing: .SQSpace.s) {
                     Text("•")
@@ -81,6 +81,7 @@ struct SQWorkoutSummaryView: View {
                                     ? highlightColor(for: highlight.sentiment).color
                                     : SQColor.textPrimary.color
                             )
+                            .bold(segment.isStatistic)
                     }
                     .sqFont(.body)
                 }
@@ -95,30 +96,45 @@ struct SQWorkoutSummaryView: View {
         case .neutral:  return .textPrimary
         }
     }
+    
+    @ViewBuilder
+    func questionTitle(title: String) -> some View {
+        Text(title)
+            .sqFont(.body)
+            .sqForegroundColor(.textSecondary)
+            .padding(.bottom, .SQSpace.s)
+    }
 
     @ViewBuilder
     var reviewQuestionsSection: some View {
         let bindable = Bindable(controller)
-        VStack(alignment: .leading, spacing: .SQSpace.xl) {
-            Text("A couple quick questions to help track your progress")
-                .sqFont(.bodySmall)
+        VStack(alignment: .leading, spacing: 0) {
+            Text("A couple quick performance questions…")
+                .sqFont(.title2)
+                .sqForegroundColor(.textPrimary)
+                .padding(.bottom, .SQSpace.s)
+            Text("These help track your data to provide better insights")
+                .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
+                .padding(.bottom, .SQSpace.xxl)
 
             SQUITextField(viewModel: controller.titleViewModel)
+                .padding(.bottom, .SQSpace.xxl)
 
             SQTextField(viewModel: controller.notesViewModel)
+                .padding(.bottom, .SQSpace.xxl)
 
-            VStack(alignment: .leading, spacing: .SQSpace.s) {
-                Text("Temperature")
-                    .sqFont(.bodySmall)
-                    .sqForegroundColor(.textPrimary)
-                HStack(spacing: .SQSpace.s) {
-                    SQUITextField(viewModel: controller.temperatureViewModel)
-                    Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
-                        .sqFont(.body)
-                        .sqForegroundColor(.textSecondary)
-                }
+            HStack(spacing: .SQSpace.s) {
+                
+                SQUITextField(viewModel: controller.temperatureViewModel, width: 100)
+                
+                Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
+                    .sqFont(.body)
+                    .sqForegroundColor(.textSecondary)
+                
+                Spacer()
             }
+            .padding(.bottom, .SQSpace.xxl)
 
             reviewRatingRow(
                 title: "How did you perform?",
@@ -127,6 +143,7 @@ struct SQWorkoutSummaryView: View {
                 scaleMin: "Very low",
                 scaleMax: "Very high"
             )
+            .padding(.bottom, .SQSpace.xxl)
 
             reviewRatingRow(
                 title: "How hard was it?",
@@ -135,6 +152,7 @@ struct SQWorkoutSummaryView: View {
                 scaleMin: "Easy",
                 scaleMax: "Max effort"
             )
+            .padding(.bottom, .SQSpace.m)
         }
     }
 
@@ -147,9 +165,7 @@ struct SQWorkoutSummaryView: View {
         scaleMax: String
     ) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text(title)
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textPrimary)
+            questionTitle(title: title)
 
             SQSegmentedControl(segments: segments, selection: selection) { segment in
                 Text(segment.title)

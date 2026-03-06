@@ -68,6 +68,14 @@ public extension Double {
         let valueString = percentageValue.roundedString(decimals: decimals)
         return "\(prefix)\(valueString)%"
     }
+
+    /// Formats a value that is already expressed as a percentage (e.g. 1.5 means 1.5%)
+    /// with adaptive precision: 1 decimal if >= 1%, 2 decimals if < 1%.
+    /// e.g. 1.5 → "1.5%", 0.04 → "0.04%", 0.0 → "0.00%"
+    var adaptivePercentString: String {
+        let decimals = self >= 1.0 ? 1 : 2
+        return roundedString(decimals: decimals) + "%"
+    }
 }
 
 // MARK: - Time Formatting

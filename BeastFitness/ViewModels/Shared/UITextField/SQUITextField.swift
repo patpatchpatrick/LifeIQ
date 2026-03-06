@@ -14,6 +14,9 @@ struct SQUITextField: View {
     @ObservedObject var viewModel: SQUITextFieldViewModel
     @State private var borderWidth: CGFloat = 0
 
+    /// Optional fixed width applied to the field. Prefer this over `.frame(width:)` on the call site.
+    var width: CGFloat? = nil
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
 
@@ -25,7 +28,7 @@ struct SQUITextField: View {
             }
 
             ZStack(alignment: .bottomTrailing) {
-                SQUITextFieldRepresentable(viewModel: viewModel)
+                SQUITextFieldRepresentable(viewModel: viewModel, fixedWidth: width)
                     .sqForegroundColor(viewModel.uiConfig.textColor)
                     .sqTintColor(viewModel.uiConfig.tintColor)
                     .sqBackgroundColor(viewModel.uiConfig.backgroundColor)
@@ -58,12 +61,35 @@ struct SQUITextField: View {
     }
 }
 
+private final class SQPaddedTextField: UITextField {
+    var textInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+
+    override func textRect(forBounds bounds: CGRect) -> CGRect {
+        bounds.inset(by: textInsets)
+    }
+
+    override func editingRect(forBounds bounds: CGRect) -> CGRect {
+        bounds.inset(by: textInsets)
+    }
+
+    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+        bounds.inset(by: textInsets)
+    }
+}
+
 private struct SQUITextFieldRepresentable: UIViewRepresentable {
 
     let viewModel: SQUITextFieldViewModel
+    var fixedWidth: CGFloat? = nil
+
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextField, context: Context) -> CGSize? {
+        guard let fixedWidth else { return nil }
+        let height = uiView.intrinsicContentSize.height // 20 = top + bottom insets
+        return CGSize(width: fixedWidth, height: height)
+    }
 
     func makeUIView(context: Context) -> UITextField {
-        let tf = UITextField()
+        let tf = SQPaddedTextField()
         tf.delegate = context.coordinator
         tf.borderStyle = .none
         tf.backgroundColor = .clear
