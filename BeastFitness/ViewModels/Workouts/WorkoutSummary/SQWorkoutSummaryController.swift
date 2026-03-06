@@ -39,6 +39,7 @@ protocol SQWorkoutSummaryInterface {
 
 @Observable @MainActor
 final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
+    var dismissKeyboard: Bool = false /// Toggle to dismiss keyboard
     let id = UUID().uuidString
     let state: WorkoutSummaryStating
     let mode: SQWorkoutSummaryMode
@@ -159,6 +160,8 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     }
 
     func displayLeaderboard(for rowData: SQPerformanceRowData) {
+        
+        
         guard let mode = rowData.leaderboardMode else {
             SQLogger.shared.log(
                 "Cannot display leaderboard: row '\(rowData.title)' does not have a leaderboard mode",
@@ -179,6 +182,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             mode: mode,
             initialTimeRange: .allTime
         )
+        
+        /// Dismiss the keyboard, otherwise it automatically appears when we return to page and covers the action bar 
+        dismissKeyboard.toggle()
+        
         state.hub.domainEvents.send(.pushDashboardRoute(.leaderboard(controller: leaderboardController)))
     }
 

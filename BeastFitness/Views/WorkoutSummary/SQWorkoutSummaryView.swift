@@ -240,12 +240,16 @@ struct SQWorkoutSummaryView: View {
     }
     var body: some View {
         mainScroll
+            .dismissKeyboardOnBackgroundTap()
             .redacted(controller.state.isLoading, reason: .placeholder)
             .background(backgroundColor.color)
             .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 await controller.onAppear()
+            }
+            .onChange(of: controller.dismissKeyboard) {
+                sqHideKeyboard()
             }
             .toolbar {
                 if controller.mode == .review {
