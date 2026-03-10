@@ -110,14 +110,18 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
         buildMockRows()
 
+        let loadSucceeded: Bool
+
         switch mode {
         case .workoutQuantity(let quantityType, let activityType):
-            await loadWorkoutQuantity(quantityType: quantityType, activityType: activityType, context: context)
+            loadSucceeded = await loadWorkoutQuantity(quantityType: quantityType, activityType: activityType, context: context)
         case .vo2Max:
-            await loadVO2Max()
+            loadSucceeded = await loadVO2Max()
         }
 
-        isLoading = false
+        if loadSucceeded {
+            isLoading = false
+        }
     }
 
     // MARK: - Mock Loading State
@@ -184,11 +188,13 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
     // MARK: - Load: Workout Quantity
 
+    /// Returns `true` on success, `false` if an error occurred and was shown.
+    @discardableResult
     private func loadWorkoutQuantity(
         quantityType: SQQuantityType,
         activityType: HKWorkoutActivityType,
         context: ModelContext
-    ) async {
+    ) async -> Bool {
         SQLogger.shared.log(
             "Loading leaderboard for \(quantityType.displayTitle) - \(activityType.name)",
             .info,
@@ -268,25 +274,29 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             )
 
             buildChart()
+            return true
         } catch {
             SQLogger.shared.log(
                 "Error loading leaderboard: \(error.localizedDescription)",
                 .error,
                 context: .workoutList
             )
-            
+
             hub.alertEvents.send(.present(.init(
                 SQError.standard(withDescription: "Error loading leaderboard: \(error.localizedDescription)"),
                 handler: { [weak self] _ in
                     self?.hub.domainEvents.send(.popDashboardRoute)
                 }
             )))
+            return false
         }
     }
 
     // MARK: - Load: VO2 Max
 
-    private func loadVO2Max() async {
+    /// Returns `true` on success, `false` if an error occurred and was shown.
+    @discardableResult
+    private func loadVO2Max() async -> Bool {
         SQLogger.shared.log(
             "Loading VO2 Max leaderboard",
             .info,
@@ -355,12 +365,21 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             )
 
             buildChart()
+            return true
         } catch {
             SQLogger.shared.log(
                 "Error loading VO2 Max leaderboard: \(error.localizedDescription)",
                 .error,
                 context: .healthKit
             )
+
+            hub.alertEvents.send(.present(.init(
+                SQError.standard(withDescription: "Error loading VO2 Max leaderboard: \(error.localizedDescription)"),
+                handler: { [weak self] _ in
+                    self?.hub.domainEvents.send(.popDashboardRoute)
+                }
+            )))
+            return false
         }
     }
 
