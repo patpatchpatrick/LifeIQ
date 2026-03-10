@@ -131,7 +131,10 @@ struct SQSleepAggregationService {
 
             guard !clippedSegments.isEmpty else { return nil }
 
-            guard let primaryBlockInterval = primarySleepBlockInterval(from: clippedSegments) else {
+            guard let primaryBlockInterval = primarySleepBlockInterval(
+                from: clippedSegments,
+                wakeDay: wakeDay
+            ) else {
                 return nil
             }
 
@@ -166,7 +169,8 @@ struct SQSleepAggregationService {
     }
 
     private func primarySleepBlockInterval(
-        from segments: [SQSleepStageSegment]
+        from segments: [SQSleepStageSegment],
+        wakeDay: Date
     ) -> DateInterval? {
         let nonAwakeSegments = segments
             .filter { $0.phase != .awake }
@@ -206,7 +210,16 @@ struct SQSleepAggregationService {
         }
         blocks.append(currentBlock)
 
-        guard let bestBlock = blocks.max(by: { $0.sleepDuration < $1.sleepDuration }) else {
+        let wakeDayStart = calendar.startOfDay(for: wakeDay)
+        let overnightStartCutoff = calendar.date(byAdding: .hour, value: 5, to: wakeDayStart) ?? wakeDayStart
+        let overnightBlocks = blocks.filter { $0.start < overnightStartCutoff }
+
+        // Treat daytime/morning-only blocks as naps/incomplete tracking, not a full night.
+        guard !overnightBlocks.isEmpty else {
+            return nil
+        }
+
+        guard let bestBlock = overnightBlocks.max(by: { $0.sleepDuration < $1.sleepDuration }) else {
             return nil
         }
 
@@ -269,7 +282,9 @@ struct SQSleepAggregationService {
 
     private func nightWindowStart(for wakeDay: Date) -> Date {
         let dayStart = calendar.startOfDay(for: wakeDay)
-        return calendar.date(byAdding: .hour, value: -18, to: dayStart) ?? dayStart
+        // A wake day's sleep should come from the prior evening/night, not the prior morning.
+        // Starting at 6 PM previous day avoids attributing yesterday-morning sleep to today's wake day.
+        return calendar.date(byAdding: .hour, value: -6, to: dayStart) ?? dayStart
     }
 
     private func nightWindowEnd(for wakeDay: Date) -> Date {

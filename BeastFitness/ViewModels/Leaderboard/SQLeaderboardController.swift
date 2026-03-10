@@ -32,6 +32,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private weak var modelContext: ModelContext?
 
+    private let hub: EventHub
     let mode: SQLeaderboardMode
     private(set) var rows: [SQLeaderboardRowViewModel] = []
     private(set) var chartModel: LineChartModel?
@@ -56,6 +57,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         initialTimeRange: AppTimeRange = .allTime,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared
     ) {
+        self.hub = hub
         self.selectedTimeRange = initialTimeRange
         self.mode = mode
         self.workoutManager = workoutManager
@@ -244,7 +246,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                         currentBest: item.metric.value,
                         historicalValues: allTimeValues,
                         isLowerBetter: mode.isLowerBetter
-                    )
+                    ),
+                    workout: item.workout
                 )
             }
 
@@ -271,6 +274,13 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 .error,
                 context: .workoutList
             )
+            
+            hub.alertEvents.send(.present(.init(
+                SQError.standard(withDescription: "Error loading leaderboard: \(error.localizedDescription)"),
+                handler: { [weak self] _ in
+                    self?.hub.domainEvents.send(.popDashboardRoute)
+                }
+            )))
         }
     }
 
@@ -464,6 +474,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
     func rowTapped(row: SQLeaderboardRowViewModel) {
         focusChartPoint(with: row.id)
+    }
+
+    func navigateToWorkout(_ row: SQLeaderboardRowViewModel) {
+        guard let workout = row.workout else { return }
+        hub.domainEvents.send(.pushDashboardRoute(.workoutSummary(controller: .init(workout: workout, mode: .standard))))
     }
 
     private func focusChartPoint(with id: String) {

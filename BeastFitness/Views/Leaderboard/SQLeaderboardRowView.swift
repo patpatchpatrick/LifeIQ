@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQLeaderboardRowView: View {
     let viewModel: SQLeaderboardRowViewModel
+    var onTitleTapped: (() -> Void)? = nil
 
     // Display emoji medal for top 3, rank number for others
     private var rankDisplay: String {
@@ -46,11 +47,30 @@ struct SQLeaderboardRowView: View {
 
             // Workout info (center)
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: .SQSpace.m) {
-                    Text(viewModel.title)
-                        .sqFont(.body)
-                        .sqForegroundColor(.textPrimary)
-                        .lineLimit(1)
+                HStack(spacing: .SQSpace.s) {
+                    if viewModel.isNavigable {
+                        Button {
+                            onTitleTapped?()
+                        } label: {
+                            HStack(spacing: .SQSpace.xs) {
+                                Text(viewModel.title)
+                                    .sqFont(.body)
+                                    .sqForegroundColor(.textPrimary)
+                                    .lineLimit(1)
+                                SQImageView(image: .init(
+                                    symbol: .chevronRight,
+                                    symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
+                                ))
+                                .frame(width: 5)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text(viewModel.title)
+                            .sqFont(.body)
+                            .sqForegroundColor(.textPrimary)
+                            .lineLimit(1)
+                    }
 
                     if viewModel.hasWarning {
                         Button {

@@ -63,7 +63,7 @@ struct SQAlertViewModel: Identifiable, Equatable {
         self.dropDown = dropDown
     }
     
-    init(_ sqError: SQUserFacingError) { self.init(title: sqError.userFacingTitle, subtitle: sqError.userFacingDescription, primary: .init(title: "Got it", role: .cancel)) }
+    init(_ sqError: SQUserFacingError, handler: (@MainActor (SQAlertContext?) -> Void)? = nil) { self.init(title: sqError.userFacingTitle, subtitle: sqError.userFacingDescription, primary: .init(title: "Got it", role: .cancel, handler: handler)) }
 
     static func == (lhs: SQAlertViewModel, rhs: SQAlertViewModel) -> Bool {
         // NOTE: dropDown is a reference type; don't include in Equatable

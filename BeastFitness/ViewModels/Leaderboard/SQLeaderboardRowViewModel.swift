@@ -15,6 +15,9 @@ final class SQLeaderboardRowViewModel: Identifiable {
     let formattedScore: String
     let unitString: String
     let warningText: String?
+    let workout: (any SQWorkoutSessionable)?
+
+    var isNavigable: Bool { workout != nil }
 
     /// Percentile rank (0.0 = worst, 1.0 = best) relative to all-time entries.
     /// Nil if insufficient historical data.
@@ -92,6 +95,7 @@ final class SQLeaderboardRowViewModel: Identifiable {
         unitString: String,
         warningText: String? = nil,
         percentileRank: Double?,
+        workout: (any SQWorkoutSessionable)? = nil
     ) {
         self.id = id
         self.rank = rank
@@ -102,6 +106,7 @@ final class SQLeaderboardRowViewModel: Identifiable {
         self.unitString = unitString
         self.warningText = warningText
         self.percentileRank = percentileRank
+        self.workout = workout
     }
 
     func warningTapped() {

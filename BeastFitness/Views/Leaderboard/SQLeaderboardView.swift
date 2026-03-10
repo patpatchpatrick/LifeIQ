@@ -30,7 +30,9 @@ struct SQLeaderboardView: View {
 
         ZStack(alignment: .bottom) {
             // Row content
-            SQLeaderboardRowView(viewModel: row)
+            SQLeaderboardRowView(viewModel: row, onTitleTapped: row.isNavigable ? {
+                controller.navigateToWorkout(row)
+            } : nil)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, .SQSpace.l) // ✅ consistent padding for every row
                 .background(SQColor.backgroundSecondary.color)
