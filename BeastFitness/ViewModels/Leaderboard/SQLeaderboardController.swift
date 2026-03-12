@@ -505,7 +505,6 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     func updateLayout(containerWidth: CGFloat) {
-        print("PTD Updating Container Width", containerWidth)
         let rounded = (containerWidth * 2).rounded() / 2
         guard abs(self.containerWidth - rounded) > 0.5 else { return }
         self.containerWidth = rounded
