@@ -167,30 +167,6 @@ extension SQNetworkService {
             return decoded
         }
 
-        if type is [SQDailyNote].Type {
-            let decoded = documents.compactMap { document -> SQDailyNote? in
-                do {
-                    return try document.data(as: SQDailyNote.self)
-                } catch {
-                    SQLogger.shared.log(
-                        "Skipping document '\(document.documentID)' - doesn't match current model: \(error.localizedDescription)",
-                        .warning,
-                        context: .dailyCheckIn
-                    )
-                    return nil
-                }
-            }
-
-            Task { @MainActor in
-                SQFirestoreMetricsManager.shared.recordReads(
-                    documents.count,
-                    operation: "Fetch daily notes"
-                )
-            }
-
-            return decoded
-        }
-
         throw SQNetworkError.invalidResponseType(
             expected: "a supported array type",
             got: String(describing: type)

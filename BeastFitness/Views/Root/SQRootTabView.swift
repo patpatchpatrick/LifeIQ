@@ -109,8 +109,6 @@ struct SQRootTabView: View {
 //                metricsManager: SQMetricsManager.shared
 //            )
 
-            // One-time migration: consolidate daily-notes Firestore collection into metric-entry buckets
-            await SQDailyNoteMigrationManager.runIfNeeded(context: modelContext)
         }
     }
 }
