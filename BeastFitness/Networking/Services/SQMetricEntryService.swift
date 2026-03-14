@@ -6,18 +6,17 @@
 import Foundation
 
 protocol SQMetricEntryServicing {
-    static func saveMetricEntry(_ entry: SQMetricEntry, for user: SQUser) async throws
-    static func fetchMetricEntries(for user: SQUser, afterDate: Date?) async throws -> [SQMetricEntry]
+    static func saveEntryBucket(_ bucket: SQMetricEntryBucket, for user: SQUser) async throws
+    static func fetchEntryBuckets(for user: SQUser, afterDate: Date?) async throws -> [SQMetricEntryBucket]
 }
 
 final class SQMetricEntryService: SQNetworkService, SQMetricEntryServicing {
 
-    static func saveMetricEntry(_ entry: SQMetricEntry, for user: SQUser) async throws {
-        let _: SQVoidWrite = try await performRequest(SQMetricEntryRoute.saveMetricEntry(entry, user: user))
+    static func saveEntryBucket(_ bucket: SQMetricEntryBucket, for user: SQUser) async throws {
+        let _: SQVoidWrite = try await performRequest(SQMetricEntryRoute.saveEntryBucket(bucket, user: user))
     }
 
-    static func fetchMetricEntries(for user: SQUser, afterDate: Date? = nil) async throws -> [SQMetricEntry] {
-        let entries: [SQMetricEntry] = try await performRequest(SQMetricEntryRoute.fetchMetricEntries(user: user, afterDate: afterDate))
-        return entries
+    static func fetchEntryBuckets(for user: SQUser, afterDate: Date? = nil) async throws -> [SQMetricEntryBucket] {
+        try await performRequest(SQMetricEntryRoute.fetchEntryBuckets(user: user, afterDate: afterDate))
     }
 }

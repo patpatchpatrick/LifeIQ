@@ -19,7 +19,7 @@ final class SQMetricMigrationManager {
     /// For development/debugging only.
     static var forceReMigrate = false
 
-    private static let migrationKey = "metric-entry-migration-v1"
+    private static let migrationKey = "metric-entry-migration-v2"
 
     // MARK: - Run Migration
 
@@ -116,24 +116,30 @@ final class SQMetricMigrationManager {
 
     // MARK: - Firestore Push
 
-    /// Pushes all migrated entries and notes to Firestore.
+    /// Pushes all migrated entries and notes to Firestore using daily bucket documents.
     private static func pushToFirestore(entries: [SQMetricEntry], notes: [SQDailyNote]) async {
         let user = SQAppState.shared.userState.loggedInUser
 
+        // Group entries by anchorDayKey → one Firestore document per day
+        let buckets = Dictionary(grouping: entries, by: { $0.anchorDayKey })
+            .map { dayKey, dayEntries in
+                SQMetricEntryBucket(anchorDayKey: dayKey, entries: dayEntries)
+            }
+
         SQLogger.shared.log(
-            "Pushing \(entries.count) migrated entries and \(notes.count) notes to Firestore...",
+            "Pushing \(buckets.count) migrated day buckets (\(entries.count) entries) and \(notes.count) notes to Firestore...",
             .info, context: .dailyCheckIn
         )
 
         var pushFailures = 0
 
-        for entry in entries {
+        for bucket in buckets {
             do {
-                try await SQMetricEntryService.saveMetricEntry(entry, for: user)
+                try await SQMetricEntryService.saveEntryBucket(bucket, for: user)
             } catch {
                 pushFailures += 1
                 SQLogger.shared.log(
-                    "Migration Firestore push failed for entry \(entry.metricId) (\(entry.anchorDayKey)): \(error)",
+                    "Migration Firestore push failed for bucket \(bucket.anchorDayKey): \(error)",
                     .error, context: .dailyCheckIn
                 )
             }
@@ -151,9 +157,10 @@ final class SQMetricMigrationManager {
             }
         }
 
-        let successCount = entries.count + notes.count - pushFailures
+        let totalDocs = buckets.count + notes.count
+        let successCount = totalDocs - pushFailures
         SQLogger.shared.log(
-            "Migration Firestore sync complete: \(successCount)/\(entries.count + notes.count) documents pushed (\(pushFailures) failures)",
+            "Migration Firestore sync complete: \(successCount)/\(totalDocs) documents pushed (\(pushFailures) failures)",
             .info, context: .dailyCheckIn, isPriority: true
         )
     }

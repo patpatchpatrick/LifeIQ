@@ -67,15 +67,20 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             }
         }
 
-        // Push to Firestore (failures are logged but don't block the user)
+        // Build daily buckets and push to Firestore.
+        // Fetch ALL entries for each affected anchorDayKey so morning + evening are merged into one bucket.
         let user = SQAppState.shared.userState.loggedInUser
-        for entry in entries {
+        let affectedDays = Set(entries.map { $0.anchorDayKey })
+        for dayKey in affectedDays {
             do {
-                try await entryService.saveMetricEntry(entry, for: user)
+                let allDayEntries = try SQMetricEntryEntity.getAll(for: dayKey, context: context)
+                let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries)
+                try await entryService.saveEntryBucket(bucket, for: user)
             } catch {
-                SQLogger.shared.log("Firestore push failed for entry \(entry.id): \(error)", .error, context: .dailyCheckIn)
+                SQLogger.shared.log("Firestore bucket push failed for \(dayKey): \(error)", .error, context: .dailyCheckIn)
             }
         }
+
         if let note {
             do {
                 try await noteService.saveDailyNote(note, for: user)
@@ -84,7 +89,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             }
         }
 
-        SQLogger.shared.log("Saved \(entries.count) entries", .info, context: .dailyCheckIn)
+        SQLogger.shared.log("Saved \(entries.count) entries in \(affectedDays.count) day bucket(s)", .info, context: .dailyCheckIn)
     }
 
     // MARK: - Read
@@ -123,38 +128,40 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     private func performFullSync(context: ModelContext) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
-        let entries = try await entryService.fetchMetricEntries(for: user, afterDate: nil)
+        let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: nil)
         let notes   = try await noteService.fetchDailyNotes(for: user, afterDate: nil)
 
+        let entries = buckets.flatMap { $0.entries }
         try SQMetricEntryEntity.upsert(entries, in: context)
         for note in notes { try SQDailyNoteEntity.upsert(note, in: context) }
 
         updateLastSyncDate(to: .now, context: context)
         Task { @MainActor in
             SQFirestoreMetricsManager.shared.recordReads(
-                entries.count + notes.count,
-                operation: "Full sync metric entries + notes"
+                buckets.count + notes.count,
+                operation: "Full sync metric buckets + notes"
             )
         }
-        return entries.count + notes.count
+        return buckets.count + notes.count
     }
 
     private func performIncrementalSync(lastSync: Date?, context: ModelContext) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
-        let entries = try await entryService.fetchMetricEntries(for: user, afterDate: lastSync)
+        let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: lastSync)
         let notes   = try await noteService.fetchDailyNotes(for: user, afterDate: lastSync)
 
+        let entries = buckets.flatMap { $0.entries }
         try SQMetricEntryEntity.upsert(entries, in: context)
         for note in notes { try SQDailyNoteEntity.upsert(note, in: context) }
 
         updateLastSyncDate(to: .now, context: context)
         Task { @MainActor in
             SQFirestoreMetricsManager.shared.recordReads(
-                entries.count + notes.count,
-                operation: "Incremental sync metric entries + notes"
+                buckets.count + notes.count,
+                operation: "Incremental sync metric buckets + notes"
             )
         }
-        return entries.count + notes.count
+        return buckets.count + notes.count
     }
 
     private func shouldRefresh(lastSync: Date?) -> Bool {

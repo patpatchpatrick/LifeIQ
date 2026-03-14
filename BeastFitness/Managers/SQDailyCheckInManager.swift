@@ -64,8 +64,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         }
 
         // Also write to new SQMetricEntry format
-        let metricsManager = SQMetricsManager.shared
-        let allMetrics = metricsManager.allMetrics(includeArchived: true)
+        let metricsManager = await SQMetricsManager.shared
+        let allMetrics = await metricsManager.allMetrics(includeArchived: true)
         let metricById = Dictionary(uniqueKeysWithValues: allMetrics.map { ($0.id, $0) })
         let tz = TimeZone.current
         let anchorDayKey = stats.date.anchorDayKey(in: tz)
@@ -97,13 +97,16 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             SQLogger.shared.log("Legacy Firestore push failed: \(error)", .debug, context: .dailyCheckIn)
         }
 
-        // Push new metric entries to Firestore
-        let user = SQAppState.shared.userState.loggedInUser
-        for entry in entries {
+        // Push new metric entries to Firestore as a daily bucket (one doc per day)
+        let user = await SQAppState.shared.userState.loggedInUser
+        let affectedDays = Set(entries.map { $0.anchorDayKey })
+        for dayKey in affectedDays {
             do {
-                try await SQMetricEntryService.saveMetricEntry(entry, for: user)
+                let allDayEntries = try SQMetricEntryEntity.getAll(for: dayKey, context: modelContext)
+                let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries)
+                try await SQMetricEntryService.saveEntryBucket(bucket, for: user)
             } catch {
-                SQLogger.shared.log("Entry Firestore push failed for \(entry.metricId): \(error)", .error, context: .dailyCheckIn)
+                SQLogger.shared.log("Entry bucket Firestore push failed for \(dayKey): \(error)", .error, context: .dailyCheckIn)
             }
         }
     }
