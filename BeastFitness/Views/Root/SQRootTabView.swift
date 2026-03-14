@@ -99,6 +99,12 @@ struct SQRootTabView: View {
         })
         .task {
             SQAppState.shared.modelContext = modelContext
+
+            // One-time migration: convert legacy SQDailyCheckInStats → SQMetricEntry records
+            SQMetricMigrationManager.runIfNeeded(
+                context: modelContext,
+                metricsManager: SQMetricsManager.shared
+            )
         }
     }
 }
