@@ -25,7 +25,17 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
     }
 
     private static func buildSubtitle(for metric: SQMetricDefinition) -> String {
-        let periodLabel = metric.period == .morning ? "Morning" : "Evening"
+        let periodLabel: String
+        let hasMorning = metric.periods.contains(.morning)
+        let hasEvening = metric.periods.contains(.evening)
+        if hasMorning && hasEvening {
+            periodLabel = metric.isSingleDailyValue ? "Morning & Evening (Shared)" : "Morning & Evening"
+        } else if hasEvening {
+            periodLabel = "Evening"
+        } else {
+            periodLabel = "Morning"
+        }
+
         let kindLabel = metric.kind == .number ? "Number" : "Scale 0–\(Int(metric.max ?? 10))"
 
         if metric.unit != .none {

@@ -85,9 +85,10 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.modelContext = modelContext
         self.targetDate = date
 
-        // Load stats for the new date
+        // Load stats for the new date, filtered to the current check-in period
         let loadedStats = try? await dailyCheckInManager.getDailyCheckInStats(
             for: date,
+            period: period,
             context: modelContext
         )
         self.stats = loadedStats
@@ -468,6 +469,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         let todayNormalized = calendar.startOfDay(for: today)
         let todayStats = try? await dailyCheckInManager.getDailyCheckInStats(
             for: todayNormalized,
+            period: nil,
             context: modelContext
         )
 
@@ -485,6 +487,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
             let stats = try? await dailyCheckInManager.getDailyCheckInStats(
                 for: normalizedDate,
+                period: nil,
                 context: modelContext
             )
 

@@ -107,17 +107,53 @@ struct SQMetricFormView: View {
     var periodRow: some View {
         if viewModel.isStructurallyEditable {
             labeledRow(label: "Check-In") {
-                Picker("Check-In", selection: $viewModel.selectedPeriod) {
-                    Text("Morning").tag(SQMetricPeriod.morning)
-                    Text("Evening").tag(SQMetricPeriod.evening)
+                HStack(spacing: 8) {
+                    periodToggle("Morning", period: .morning)
+                    periodToggle("Evening", period: .evening)
                 }
-                .pickerStyle(.segmented)
+            }
+            if viewModel.selectedPeriods.count > 1 {
+                labeledRow(label: "Tracking") {
+                    Picker("Tracking", selection: $viewModel.isSingleDailyValue) {
+                        Text("Independent").tag(false)
+                        Text("Shared").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                }
             }
         } else {
-            staticRow(
-                label: "Check-In",
-                value: viewModel.selectedPeriod == .morning ? "Morning" : "Evening"
-            )
+            staticRow(label: "Check-In", value: periodDisplayValue)
+        }
+    }
+
+    private var periodDisplayValue: String {
+        let periods = viewModel.selectedPeriods
+        if periods.contains(.morning) && periods.contains(.evening) {
+            return viewModel.isSingleDailyValue ? "Morning & Evening (Shared)" : "Morning & Evening"
+        } else if periods.contains(.evening) {
+            return "Evening"
+        } else {
+            return "Morning"
+        }
+    }
+
+    @ViewBuilder
+    private func periodToggle(_ label: String, period: SQMetricPeriod) -> some View {
+        let isOn = viewModel.selectedPeriods.contains(period)
+        Button {
+            viewModel.togglePeriod(period, on: !isOn)
+        } label: {
+            Text(label)
+                .sqFont(SQFont(type: .bodySmall))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .foregroundStyle(isOn ? SQColor.textPrimary.color : SQColor.textSecondary.color)
+                .background(isOn ? SQColor.backgroundCell.color : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isOn ? SQColor.textPrimary.color.opacity(0.3) : SQColor.textSecondary.color.opacity(0.2), lineWidth: 1)
+                )
         }
     }
 

@@ -84,8 +84,9 @@ final class SQMetricMigrationManager {
                     SQMetricEntry.normalizedScore(for: rawValue, definition: $0)
                 } ?? rawValue
 
+                let isSingleDaily = metricById[metricId]?.isSingleDailyValue ?? false
                 let entry = SQMetricEntry(
-                    id: SQMetricEntry.stableEntryId(metricId: metricId, anchorDayKey: anchorDayKey, period: period),
+                    id: SQMetricEntry.stableEntryId(metricId: metricId, anchorDayKey: anchorDayKey, period: period, isSingleDailyValue: isSingleDaily),
                     metricId: metricId,
                     recordedAt: stats.date,   // Start-of-day approximation for legacy data
                     anchorDayKey: anchorDayKey,

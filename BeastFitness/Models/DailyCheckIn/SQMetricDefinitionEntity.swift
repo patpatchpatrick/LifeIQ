@@ -26,8 +26,13 @@ final class SQMetricDefinitionEntity {
     var sortOrder: Int
     var isArchived: Bool
     var emoji: String?
-    var periodRaw: String = "morning"  // Stores SQMetricPeriod.rawValue — default allows lightweight migration of existing rows
-    var isDefault: Bool = false        // True if this metric is enabled by default for new users on first launch
+    /// Comma-separated SQMetricPeriod raw values (e.g. "morning", "evening", "morning,evening").
+    /// Default "morning" allows lightweight migration of pre-existing rows.
+    var periodRaw: String = "morning"
+    var isDefault: Bool = false           // True if this metric is enabled by default for new users on first launch
+    /// When true, one entry per calendar day shared across all check-in sessions (e.g. sleep, weight).
+    /// Default false allows lightweight migration of pre-existing rows.
+    var isSingleDailyValue: Bool = false
 
     // Optional: for Firestore sync later
     var updatedAt: Date
@@ -46,7 +51,8 @@ final class SQMetricDefinitionEntity {
         sortOrder: Int,
         isArchived: Bool,
         emoji: String? = nil,
-        period: SQMetricPeriod = .morning,
+        periods: Set<SQMetricPeriod> = [.morning],
+        isSingleDailyValue: Bool = false,
         isDefault: Bool = false
     ) {
         self.id = id
@@ -62,7 +68,8 @@ final class SQMetricDefinitionEntity {
         self.sortOrder = sortOrder
         self.isArchived = isArchived
         self.emoji = emoji
-        self.periodRaw = period.rawValue
+        self.periodRaw = Self.serialize(periods)
+        self.isSingleDailyValue = isSingleDailyValue
         self.isDefault = isDefault
         self.updatedAt = .now
     }
@@ -71,7 +78,14 @@ final class SQMetricDefinitionEntity {
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
-    var period: SQMetricPeriod { SQMetricPeriod(unfrozenRawValue: periodRaw) }
+
+    /// Parses `periodRaw` (comma-separated) into a set of periods.
+    /// Handles legacy single-value strings ("morning", "evening") and new multi-value strings.
+    var periods: Set<SQMetricPeriod> {
+        let parsed = Self.parse(periodRaw)
+        return parsed.isEmpty ? [.morning] : parsed
+    }
+
     /// Translates legacy enum raw values ("state", "habits", "custom") to current group names.
     var group: String {
         switch groupRaw {
@@ -98,7 +112,8 @@ extension SQMetricDefinitionEntity {
             sortOrder: sortOrder,
             isArchived: isArchived,
             emoji: emoji,
-            period: period,
+            periods: periods,
+            isSingleDailyValue: isSingleDailyValue,
             updatedAt: updatedAt
         )
     }
@@ -118,7 +133,27 @@ extension SQMetricDefinitionEntity {
         sortOrder = def.sortOrder
         isArchived = def.isArchived
         emoji = def.emoji
-        periodRaw = def.period.rawValue
+        periodRaw = Self.serialize(def.periods)
+        isSingleDailyValue = def.isSingleDailyValue
         updatedAt = def.updatedAt
+    }
+
+    // MARK: - Period Serialization
+
+    /// Serializes a set of periods to a sorted comma-separated string for storage.
+    static func serialize(_ periods: Set<SQMetricPeriod>) -> String {
+        periods
+            .filter { $0 != .unknown }
+            .map(\.rawValue)
+            .sorted()
+            .joined(separator: ",")
+    }
+
+    /// Parses a comma-separated period string back into a set.
+    static func parse(_ raw: String) -> Set<SQMetricPeriod> {
+        Set(raw.split(separator: ",").compactMap { segment in
+            let p = SQMetricPeriod(unfrozenRawValue: String(segment))
+            return p == .unknown ? nil : p
+        })
     }
 }

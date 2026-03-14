@@ -38,8 +38,10 @@ final class SQMetricFormViewModel {
     }
     var selectedUnit: SQMetricUnit = .none
     var selectedGroup: String = SQDefaultGroup.general.rawValue
-    /// Which check-in screen this metric will appear on. Only configurable in create mode.
-    var selectedPeriod: SQMetricPeriod = .morning
+    /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
+    var selectedPeriods: Set<SQMetricPeriod> = [.morning]
+    /// When both periods are selected, whether this is a single shared daily value or independent per-session.
+    var isSingleDailyValue: Bool = false
     var isAddingNewGroup: Bool = false
 
     let newGroupField: SQUITextFieldViewModel
@@ -146,7 +148,8 @@ final class SQMetricFormViewModel {
             selectedKind = existing.kind
             selectedUnit = existing.unit
             selectedGroup = existing.group
-            selectedPeriod = existing.period
+            selectedPeriods = existing.periods
+            isSingleDailyValue = existing.isSingleDailyValue
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
             maxField.setText(existing.max.map { Self.formatFloat($0) } ?? "")
             stepField.setText(existing.step.map { Self.formatFloat($0) } ?? "")
@@ -283,7 +286,8 @@ final class SQMetricFormViewModel {
                 sortOrder: 0,
                 isArchived: false,
                 emoji: emoji,
-                period: selectedPeriod
+                periods: selectedPeriods,
+                isSingleDailyValue: isSingleDailyValue
             )
 
         case .number:
@@ -301,7 +305,8 @@ final class SQMetricFormViewModel {
                 sortOrder: 0,
                 isArchived: false,
                 emoji: emoji,
-                period: selectedPeriod
+                periods: selectedPeriods,
+                isSingleDailyValue: isSingleDailyValue
             )
 
         default:
@@ -318,7 +323,8 @@ final class SQMetricFormViewModel {
                 sortOrder: 0,
                 isArchived: false,
                 emoji: emoji,
-                period: selectedPeriod
+                periods: selectedPeriods,
+                isSingleDailyValue: isSingleDailyValue
             )
         }
     }
@@ -341,6 +347,20 @@ final class SQMetricFormViewModel {
             return step > 0
         }
         return true
+    }
+
+    // MARK: - Period Management
+
+    func togglePeriod(_ period: SQMetricPeriod, on: Bool) {
+        if on {
+            selectedPeriods.insert(period)
+        } else {
+            selectedPeriods.remove(period)
+            // If no periods remain, keep at least the one being removed
+            if selectedPeriods.isEmpty { selectedPeriods.insert(period) }
+        }
+        // Reset isSingleDailyValue if no longer multi-period
+        if selectedPeriods.count < 2 { isSingleDailyValue = false }
     }
 
     // MARK: - Group Management

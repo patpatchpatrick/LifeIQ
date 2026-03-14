@@ -36,8 +36,11 @@ extension SyncResult {
 protocol SQDailyCheckInManaging {
     /// Saves a daily check in locally and to the server
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to modelContext: ModelContext) async throws
-    /// Gets daily check in stats.  This only checks locally right now, doesn't check Firebase.
-    func getDailyCheckInStats(for date: Date, context: ModelContext) async throws -> SQDailyCheckInStats?
+    /// Gets daily check in stats for a specific check-in period.
+    /// - For `isSingleDailyValue` metrics: returns the shared daily entry regardless of session.
+    /// - For periodic metrics: returns only entries recorded in the given period.
+    /// Pass `period: nil` to return all entries for the day (used for completion checks).
+    func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats?
     /// Smart sync that checks Core Data first and only syncs from Firestore if needed
     func syncDailyCheckInsIfNeeded(for timeRange: SQTimeRange, context: ModelContext) async throws -> SyncResult
 }
@@ -111,7 +114,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         }
     }
 
-    func getDailyCheckInStats(for date: Date, context: ModelContext) async throws -> SQDailyCheckInStats? {
+    func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats? {
         let anchorDayKey = date.anchorDayKey()
         let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
 
@@ -120,13 +123,23 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             return try SQDailyCheckInEntity.get(for: date, context: context)
         }
 
-        // Build SQDailyCheckInStats from new-format entries
+        // Build SQDailyCheckInStats from new-format entries, respecting session period.
+        // For single-daily-value metrics, include any entry for that metric (shared across sessions).
+        // For periodic metrics, include only entries matching the requested period.
+        let metricsManager = SQMetricsManager.shared
+        let metricById = Dictionary(
+            uniqueKeysWithValues: metricsManager.allMetrics(includeArchived: true).map { ($0.id, $0) }
+        )
+
         var values: [String: Float] = [:]
         for entry in entries {
-            values[entry.metricId] = entry.rawValue
+            let isSingleDaily = metricById[entry.metricId]?.isSingleDailyValue ?? false
+            if isSingleDaily || period == nil || entry.period == period {
+                values[entry.metricId] = entry.rawValue
+            }
         }
         let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
-        return SQDailyCheckInStats(date: date, values: values, notes: note?.content)
+        return values.isEmpty ? nil : SQDailyCheckInStats(date: date, values: values, notes: note?.content)
     }
 
     // MARK: - Smart Sync

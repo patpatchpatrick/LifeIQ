@@ -62,14 +62,19 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     var min: Float?              // Minimum value for scale/number entry
     var max: Float?              // Maximum value for scale/number entry
     var step: Float?             // Step granularity for scale segmented control
-    var isPreset: Bool           // True if this metric ships with the app
-    var isEnabled: Bool          // True if the user is actively tracking this metric
-    var isDefault: Bool          // True if this metric is enabled by default for new users on first launch
-    var sortOrder: Int           // Display order within the check-in form
-    var isArchived: Bool         // Soft-deleted; hidden from all lists but preserved in history
-    var emoji: String?           // Optional single-grapheme emoji chosen by the user
-    var period: SQMetricPeriod   // Which check-in screen this metric appears on (morning or evening)
-    var updatedAt: Date          // UTC timestamp of last modification; used for incremental Firestore sync
+    var isPreset: Bool                  // True if this metric ships with the app
+    var isEnabled: Bool                 // True if the user is actively tracking this metric
+    var isDefault: Bool                 // True if this metric is enabled by default for new users on first launch
+    var sortOrder: Int                  // Display order within the check-in form
+    var isArchived: Bool                // Soft-deleted; hidden from all lists but preserved in history
+    var emoji: String?                  // Optional single-grapheme emoji chosen by the user
+    var periods: Set<SQMetricPeriod>    // Which check-in screen(s) this metric appears on
+    /// When `true`, only one entry per calendar day is stored — the same slot is pre-filled
+    /// and overwritten regardless of which session (morning/evening) the user edits it from.
+    /// Use for measurements that represent a single daily fact (e.g. sleep hours, weight).
+    /// When `false`, morning and evening sessions each write to their own independent entry.
+    var isSingleDailyValue: Bool
+    var updatedAt: Date                 // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
     init(
@@ -87,7 +92,8 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         sortOrder: Int,
         isArchived: Bool = false,
         emoji: String? = nil,
-        period: SQMetricPeriod = .morning,
+        periods: Set<SQMetricPeriod> = [.morning],
+        isSingleDailyValue: Bool = false,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -104,29 +110,49 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.sortOrder = sortOrder
         self.isArchived = isArchived
         self.emoji = emoji
-        self.period = period
+        self.periods = periods
+        self.isSingleDailyValue = isSingleDailyValue
         self.updatedAt = updatedAt
     }
 
     // MARK: - Custom Decoder (handles missing fields from older Firestore documents)
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id          = try  c.decode(String.self,             forKey: .id)
-        title       = try  c.decode(String.self,             forKey: .title)
-        kind        = try  c.decode(SQMetricKind.self,       forKey: .kind)
-        unit        = try  c.decode(SQMetricUnit.self,       forKey: .unit)
-        group       = try  c.decode(String.self,             forKey: .group)
-        min         = try  c.decodeIfPresent(Float.self,     forKey: .min)
-        max         = try  c.decodeIfPresent(Float.self,     forKey: .max)
-        step        = try  c.decodeIfPresent(Float.self,     forKey: .step)
-        isPreset    = try  c.decode(Bool.self,               forKey: .isPreset)
-        isEnabled   = try  c.decode(Bool.self,               forKey: .isEnabled)
-        isDefault   = (try c.decodeIfPresent(Bool.self,      forKey: .isDefault)) ?? false
-        sortOrder   = try  c.decode(Int.self,                forKey: .sortOrder)
-        isArchived  = try  c.decode(Bool.self,               forKey: .isArchived)
-        emoji       = try  c.decodeIfPresent(String.self,    forKey: .emoji)
-        period      = (try c.decodeIfPresent(SQMetricPeriod.self, forKey: .period)) ?? .morning
-        updatedAt   = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
+        id                = try  c.decode(String.self,             forKey: .id)
+        title             = try  c.decode(String.self,             forKey: .title)
+        kind              = try  c.decode(SQMetricKind.self,       forKey: .kind)
+        unit              = try  c.decode(SQMetricUnit.self,       forKey: .unit)
+        group             = try  c.decode(String.self,             forKey: .group)
+        min               = try  c.decodeIfPresent(Float.self,     forKey: .min)
+        max               = try  c.decodeIfPresent(Float.self,     forKey: .max)
+        step              = try  c.decodeIfPresent(Float.self,     forKey: .step)
+        isPreset          = try  c.decode(Bool.self,               forKey: .isPreset)
+        isEnabled         = try  c.decode(Bool.self,               forKey: .isEnabled)
+        isDefault         = (try c.decodeIfPresent(Bool.self,      forKey: .isDefault)) ?? false
+        sortOrder         = try  c.decode(Int.self,                forKey: .sortOrder)
+        isArchived        = try  c.decode(Bool.self,               forKey: .isArchived)
+        emoji             = try  c.decodeIfPresent(String.self,    forKey: .emoji)
+        isSingleDailyValue = (try c.decodeIfPresent(Bool.self,     forKey: .isSingleDailyValue)) ?? false
+        updatedAt         = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
+
+        // Decode periods: try new array format first, then fall back to legacy single-period field
+        if let periodsArray = try c.decodeIfPresent([SQMetricPeriod].self, forKey: .periods) {
+            periods = Set(periodsArray.filter { $0 != .unknown })
+        } else if let legacyPeriod = try c.decodeIfPresent(SQMetricPeriod.self, forKey: .period) {
+            periods = legacyPeriod == .unknown ? [.morning] : [legacyPeriod]
+        } else {
+            periods = [.morning]
+        }
+        if periods.isEmpty { periods = [.morning] }
+    }
+
+    // MARK: - CodingKeys
+    private enum CodingKeys: String, CodingKey {
+        case id, title, kind, unit, group, min, max, step
+        case isPreset, isEnabled, isDefault, sortOrder, isArchived, emoji, updatedAt
+        case isSingleDailyValue
+        case periods   // new format: array
+        case period    // legacy format: single string (decode only)
     }
 }
 
@@ -136,17 +162,17 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
 enum SQMetricId {
 
     // MARK: Stats
-    static let weight        = "metric.weight"          // number (pounds); morning
+    static let weight        = "metric.weight"          // number (pounds); morning + evening
 
     // MARK: Self — enabled by default
-    static let mood          = "metric.mood"            // scale 0–10; morning
-    static let mentalClarity = "metric.mentalClarity"   // scale 0–10; morning
-    static let energy        = "metric.energy"          // scale 0–10; morning
-    static let soreness      = "metric.soreness"        // scale 0–10; morning
+    static let mood          = "metric.mood"            // scale 0–10; morning + evening
+    static let mentalClarity = "metric.mentalClarity"   // scale 0–10; morning + evening
+    static let energy        = "metric.energy"          // scale 0–10; morning + evening
+    static let soreness      = "metric.soreness"        // scale 0–10; morning + evening
 
     // MARK: Sleep
-    static let sleepQuality  = "metric.sleepQuality"   // scale 0–10; morning (reflects prior night)
-    static let sleepHours    = "metric.sleepHours"     // number 0–24 hrs; morning (reflects prior night)
+    static let sleepQuality  = "metric.sleepQuality"   // scale 0–10; morning + evening
+    static let sleepHours    = "metric.sleepHours"     // number 0–24 hrs; morning + evening
 
     // MARK: Positive Habits
     static let meditation    = "metric.meditation"     // scale 0–10; evening
