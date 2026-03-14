@@ -146,12 +146,35 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         if periods.isEmpty { periods = [.morning] }
     }
 
+    // MARK: - Custom Encoder
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id,                forKey: .id)
+        try c.encode(title,             forKey: .title)
+        try c.encode(kind,              forKey: .kind)
+        try c.encode(unit,              forKey: .unit)
+        try c.encode(group,             forKey: .group)
+        try c.encodeIfPresent(min,      forKey: .min)
+        try c.encodeIfPresent(max,      forKey: .max)
+        try c.encodeIfPresent(step,     forKey: .step)
+        try c.encode(isPreset,          forKey: .isPreset)
+        try c.encode(isEnabled,         forKey: .isEnabled)
+        try c.encode(isDefault,         forKey: .isDefault)
+        try c.encode(sortOrder,         forKey: .sortOrder)
+        try c.encode(isArchived,        forKey: .isArchived)
+        try c.encodeIfPresent(emoji,    forKey: .emoji)
+        try c.encode(isSingleDailyValue, forKey: .isSingleDailyValue)
+        try c.encode(updatedAt,         forKey: .updatedAt)
+        // Encode periods as a sorted array for deterministic output
+        try c.encode(periods.filter { $0 != .unknown }.map(\.rawValue).sorted(), forKey: .periods)
+    }
+
     // MARK: - CodingKeys
     private enum CodingKeys: String, CodingKey {
         case id, title, kind, unit, group, min, max, step
         case isPreset, isEnabled, isDefault, sortOrder, isArchived, emoji, updatedAt
         case isSingleDailyValue
-        case periods   // new format: array
+        case periods   // new format: array (encode + decode)
         case period    // legacy format: single string (decode only)
     }
 }
