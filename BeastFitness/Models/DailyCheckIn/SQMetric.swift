@@ -3,6 +3,7 @@
 //  BeastFitness
 
 import Foundation
+import BeastFitnessCore
 
 // MARK: - SQMetricKind
 
