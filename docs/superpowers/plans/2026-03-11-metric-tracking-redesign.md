@@ -1731,6 +1731,235 @@ git commit -m "feat: add morning/evening period routing to daily check-in sheet"
 
 ---
 
+## Chunk 5: UI Polish
+
+### Task 14: Update SQDailyCheckInView navigation title for period
+
+**Files:**
+- Modify: `BeastFitness/Views/Dashboard/DailyCheckIn/SQDailyCheckInView.swift`
+
+The view currently hardcodes `"Daily Check-In"` as the navigation title. It needs to reflect the period.
+
+- [ ] **Step 1: Update the navigation title**
+
+In `navStack`, find the `.navigationTitle(...)` modifier. Replace it:
+
+```swift
+.navigationTitle(viewModel.isEditingPastDate
+    ? viewModel.targetDate.formattedString(with: .medium)
+    : viewModel.period == .morning ? "Morning Check-In" : "Evening Check-In"
+)
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add BeastFitness/Views/Dashboard/DailyCheckIn/SQDailyCheckInView.swift
+git commit -m "feat: show Morning/Evening Check-In title based on period"
+```
+
+---
+
+### Task 15: Make SQMetricFormViewModel and SQMetricFormView period-aware
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Dashboard/MetricsList/SQMetricFormViewModel.swift`
+- Modify: `BeastFitness/Views/MetricsList/SQMetricFormView.swift`
+
+Three issues to fix:
+1. No `period` picker — custom metrics always default to `.morning`
+2. Kind picker exposes `.binary` and `.unknown` which should never be user-creatable
+3. `availableGroups` includes legacy/unknown groups (`.unknown`, `.habit`, `.personal`) from `SQDefaultGroup.allCases`
+
+- [ ] **Step 1: Add `selectedPeriod` to `SQMetricFormViewModel`**
+
+Add after `selectedGroup`:
+```swift
+/// Which check-in screen this metric will appear on. Only configurable in create mode.
+var selectedPeriod: SQMetricPeriod = .morning
+```
+
+In `init`, populate from existing definition in edit mode (after the `selectedGroup = existing.group` line):
+```swift
+if case .edit(let existing) = mode {
+    // ... existing field population ...
+    selectedPeriod = existing.period
+}
+```
+
+- [ ] **Step 2: Pass `selectedPeriod` into `buildDefinition()`**
+
+In every `return .init(...)` inside `buildDefinition()`, add `period: selectedPeriod` to the initializer.
+
+- [ ] **Step 3: Filter `availableGroups` to exclude legacy and unknown entries**
+
+Replace the current `availableGroups` computed property:
+
+```swift
+/// All unique groups currently in use, plus well-known defaults, sorted alphabetically.
+/// Excludes legacy and unknown groups so they don't appear in the picker.
+var availableGroups: [String] {
+    let legacyAndUnknown: Set<String> = [
+        SQDefaultGroup.unknown.rawValue,
+        SQDefaultGroup.habit.rawValue,
+        SQDefaultGroup.personal.rawValue,
+    ]
+
+    let fromMetrics = metricsManager.allMetrics(includeArchived: false)
+        .map(\.group)
+        .filter { !legacyAndUnknown.contains($0) }
+
+    let wellKnown = SQDefaultGroup.allCases
+        .map(\.rawValue)
+        .filter { !legacyAndUnknown.contains($0) }
+
+    var unique = Array(Set(fromMetrics + wellKnown + [selectedGroup]))
+    unique = unique.filter { !legacyAndUnknown.contains($0) }
+    return unique.sorted()
+}
+```
+
+- [ ] **Step 4: Add `selectableKinds` computed property to hide binary/unknown from the create form**
+
+```swift
+/// Metric kinds available to users when creating a metric.
+/// `.binary` is retired (all metrics use scale 0–10); `.unknown` is a decode fallback only.
+var selectableKinds: [SQMetricKind] {
+    [.scale, .number]
+}
+```
+
+Also update `canSave` — remove the `.binary` branch entirely:
+
+```swift
+var canSave: Bool {
+    let titleValid = !titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    guard titleValid else { return false }
+    if case .create = mode {
+        switch selectedKind {
+        case .scale:
+            return validateScaleFields()
+        case .number:
+            return validateNumberFields()
+        default:
+            return false
+        }
+    }
+    return true
+}
+```
+
+Also update `kindChanged()` — remove the `.binary` case:
+
+```swift
+private func kindChanged() {
+    guard isStructurallyEditable else { return }
+    switch selectedKind {
+    case .scale:
+        minField.setText("0")
+        maxField.setText("10")
+        stepField.setText("1")
+    case .number:
+        minField.setText("")
+        maxField.setText("")
+        stepField.setText("")
+    default:
+        break
+    }
+}
+```
+
+- [ ] **Step 5: Add period picker row to `SQMetricFormView`**
+
+In `SQMetricFormView`, add a `periodRow` view after `groupRow`. The period picker is shown in create mode and as a static read-only display in edit mode:
+
+```swift
+@ViewBuilder
+var periodRow: some View {
+    if viewModel.isStructurallyEditable {
+        labeledRow(label: "Check-In") {
+            Picker("Check-In", selection: $viewModel.selectedPeriod) {
+                Text("Morning").tag(SQMetricPeriod.morning)
+                Text("Evening").tag(SQMetricPeriod.evening)
+            }
+            .pickerStyle(.segmented)
+        }
+    } else {
+        staticRow(
+            label: "Check-In",
+            value: viewModel.selectedPeriod == .morning ? "Morning" : "Evening"
+        )
+    }
+}
+```
+
+Add `periodRow` to the scroll view body after `groupRow`:
+```swift
+titleRow
+emojiInputRow
+groupRow
+periodRow   // ← add here
+
+Divider()
+    .sqTintColor(.divider(1))
+
+kindRow
+```
+
+- [ ] **Step 6: Fix kind picker to use `selectableKinds` instead of `SQMetricKind.allCases`**
+
+In `kindRow`, find the `ForEach(SQMetricKind.allCases, id: \.self)` line and replace with:
+```swift
+ForEach(viewModel.selectableKinds, id: \.self) { kind in
+    Text(kind.rawValue.capitalized).tag(kind)
+}
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Dashboard/MetricsList/SQMetricFormViewModel.swift \
+        BeastFitness/Views/MetricsList/SQMetricFormView.swift
+git commit -m "feat: add period picker to metric form, filter legacy groups and retired kinds"
+```
+
+---
+
+### Task 16: Show period in SQMetricsListItemViewModel subtitle
+
+**Files:**
+- Modify: `BeastFitness/ViewModels/Dashboard/MetricsList/SQMetricsListItemViewModel.swift`
+
+The current subtitle format is `"Scale • No unit • 0–10"`. Users browsing the metrics list need to know which check-in screen a metric belongs to. Update the subtitle to include group and period.
+
+- [ ] **Step 1: Update `buildSubtitle(for:)`**
+
+Replace the existing implementation:
+
+```swift
+private static func buildSubtitle(for metric: SQMetricDefinition) -> String {
+    let periodLabel = metric.period == .morning ? "Morning" : "Evening"
+    let kindLabel = metric.kind == .number ? "Number" : "Scale 0–\(Int(metric.max ?? 10))"
+
+    if metric.unit != .none {
+        return "\(periodLabel) • \(kindLabel) • \(metric.unit.rawValue.capitalized)"
+    } else {
+        return "\(periodLabel) • \(kindLabel)"
+    }
+}
+```
+
+Example output: `"Morning • Scale 0–10"`, `"Evening • Number • Hours"`, `"Morning • Number • Pounds"`
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add BeastFitness/ViewModels/Dashboard/MetricsList/SQMetricsListItemViewModel.swift
+git commit -m "feat: include period in metrics list item subtitle"
+```
+
+---
+
 ## Done
 
 At this point:
@@ -1740,6 +1969,9 @@ At this point:
 - Morning check-in shows Self + Sleep metrics; evening shows Positive Habits + Vices
 - Period routing happens automatically based on device time at noon
 - One-time migration converts all legacy check-in data to metric entries
+- Custom metric creation includes a period picker (Morning/Evening)
+- Metrics list shows period in each row subtitle
+- Legacy groups and retired kinds are filtered from all UI pickers
 - The data model supports future insight correlations (period, normalizedScore, anchorDayKey, recordedAt)
 
 Hand off to the user for a build + smoke test.
