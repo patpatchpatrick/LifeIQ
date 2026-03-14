@@ -104,7 +104,7 @@ struct SQRootTabView: View {
             try? SQMetricsManager.shared.loadIfNeeded(using: modelContext)
 
             // One-time migration: convert legacy SQDailyCheckInStats → SQMetricEntry records
-            SQMetricMigrationManager.runIfNeeded(
+            await SQMetricMigrationManager.runIfNeeded(
                 context: modelContext,
                 metricsManager: SQMetricsManager.shared
             )

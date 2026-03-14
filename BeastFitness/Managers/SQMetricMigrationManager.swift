@@ -24,10 +24,11 @@ final class SQMetricMigrationManager {
     // MARK: - Run Migration
 
     /// Runs the migration if it has not already been completed (or if `forceReMigrate` is true).
+    /// Writes entries and notes to SwiftData first, then syncs all migrated data to Firestore.
     static func runIfNeeded(
         context: ModelContext,
         metricsManager: SQMetricsManaging
-    ) {
+    ) async {
         guard !hasMigrated(context: context) || forceReMigrate else {
             SQLogger.shared.log("Migration already completed, skipping", .debug, context: .dailyCheckIn)
             return
@@ -35,9 +36,14 @@ final class SQMetricMigrationManager {
 
         SQLogger.shared.log("Starting metric entry migration...", .info, context: .dailyCheckIn, isPriority: true)
         do {
-            let count = try migrate(context: context, metricsManager: metricsManager)
+            let (entries, notes) = try migrate(context: context, metricsManager: metricsManager)
             markMigrated(context: context)
-            SQLogger.shared.log("Migration complete: \(count) entries created", .info, context: .dailyCheckIn, isPriority: true)
+            SQLogger.shared.log(
+                "Migration local write complete: \(entries.count) entries, \(notes.count) notes",
+                .info, context: .dailyCheckIn, isPriority: true
+            )
+
+            await pushToFirestore(entries: entries, notes: notes)
         } catch {
             SQLogger.shared.log("Migration failed: \(error)", .error, context: .dailyCheckIn, isPriority: true)
         }
@@ -45,11 +51,11 @@ final class SQMetricMigrationManager {
 
     // MARK: - Private Migration Logic
 
-    @discardableResult
+    /// Migrates legacy check-in data to SwiftData. Returns all entries and notes created.
     private static func migrate(
         context: ModelContext,
         metricsManager: SQMetricsManaging
-    ) throws -> Int {
+    ) throws -> (entries: [SQMetricEntry], notes: [SQDailyNote]) {
 
         // Load all legacy check-in entities
         let legacyDescriptor = FetchDescriptor<SQDailyCheckInEntity>()
@@ -61,7 +67,8 @@ final class SQMetricMigrationManager {
         let allMetrics = metricsManager.allMetrics(includeArchived: true)
         let metricById = Dictionary(uniqueKeysWithValues: allMetrics.map { ($0.id, $0) })
 
-        var totalEntries = 0
+        var allEntries: [SQMetricEntry] = []
+        var allNotes: [SQDailyNote] = []
         let tz = TimeZone.current
 
         for entity in legacyEntities {
@@ -90,7 +97,7 @@ final class SQMetricMigrationManager {
             }
 
             try SQMetricEntryEntity.upsert(entries, in: context)
-            totalEntries += entries.count
+            allEntries.append(contentsOf: entries)
 
             // Migrate notes
             if let notesText = stats.notes, !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -100,10 +107,55 @@ final class SQMetricMigrationManager {
                     updatedAt: stats.date
                 )
                 try SQDailyNoteEntity.upsert(note, in: context)
+                allNotes.append(note)
             }
         }
 
-        return totalEntries
+        return (allEntries, allNotes)
+    }
+
+    // MARK: - Firestore Push
+
+    /// Pushes all migrated entries and notes to Firestore.
+    private static func pushToFirestore(entries: [SQMetricEntry], notes: [SQDailyNote]) async {
+        let user = SQAppState.shared.userState.loggedInUser
+
+        SQLogger.shared.log(
+            "Pushing \(entries.count) migrated entries and \(notes.count) notes to Firestore...",
+            .info, context: .dailyCheckIn
+        )
+
+        var pushFailures = 0
+
+        for entry in entries {
+            do {
+                try await SQMetricEntryService.saveMetricEntry(entry, for: user)
+            } catch {
+                pushFailures += 1
+                SQLogger.shared.log(
+                    "Migration Firestore push failed for entry \(entry.metricId) (\(entry.anchorDayKey)): \(error)",
+                    .error, context: .dailyCheckIn
+                )
+            }
+        }
+
+        for note in notes {
+            do {
+                try await SQDailyNoteService.saveDailyNote(note, for: user)
+            } catch {
+                pushFailures += 1
+                SQLogger.shared.log(
+                    "Migration Firestore push failed for note \(note.anchorDayKey): \(error)",
+                    .error, context: .dailyCheckIn
+                )
+            }
+        }
+
+        let successCount = entries.count + notes.count - pushFailures
+        SQLogger.shared.log(
+            "Migration Firestore sync complete: \(successCount)/\(entries.count + notes.count) documents pushed (\(pushFailures) failures)",
+            .info, context: .dailyCheckIn, isPriority: true
+        )
     }
 
     // MARK: - Migration Flag
