@@ -1,50 +1,74 @@
 //
 //  SQMetric.swift
 //  BeastFitness
-//
-//  Created by Patrick Doyle on 1/2/26.
-//
 
 import Foundation
 
-enum SQMetricKind: String, Codable, CaseIterable {
-    case binary      // 0/1
-    case scale       // slider
-    case number      // numeric input (hours, lbs, etc.)
+// MARK: - SQMetricKind
+
+enum SQMetricKind: String, Codable, CaseIterable, UnfrozenEnum {
+    case binary      // Legacy 0/1 — no longer used for new metrics; kept for backward-compatibility decoding
+    case scale       // Segmented control (min–max by step)
+    case number      // Free-form numeric input (hours, lbs, etc.)
+    case unknown     // Fallback for unrecognized values from Firestore
 }
 
-enum SQMetricUnit: String, Codable, CaseIterable {
+// MARK: - SQMetricUnit
+
+enum SQMetricUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case none
     case hours
     case count
     case pounds
     case kilograms
     case percent
+    case unknown     // Fallback for unrecognized values from Firestore
 }
+
+// MARK: - SQMetricPeriod
+
+/// Determines which check-in screen a metric appears on.
+enum SQMetricPeriod: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
+    case morning   // Appears on the morning check-in screen (logged before noon)
+    case evening   // Appears on the evening check-in screen (logged at noon or later)
+    case unknown   // Fallback for unrecognized values from Firestore
+}
+
+// MARK: - SQDefaultGroup
 
 /// Well-known default group names. Users may also create arbitrary group strings;
 /// these are just the ones that ship with presets and appear in the picker by default.
-enum SQDefaultGroup: String, CaseIterable {
-    case personal = "Self"
-    case habit    = "Habit"
-    case general  = "General"
+enum SQDefaultGroup: String, CaseIterable, UnfrozenEnum {
+    case stats          = "Stats"            // One-time or infrequent physical measurements (e.g. weight)
+    case self_          = "Self"             // Daily mental/physical state metrics
+    case sleep          = "Sleep"            // Sleep tracking metrics
+    case positiveHabits = "Positive Habits"  // Behaviors to build (nutrition, meditation)
+    case vices          = "Vices"            // Behaviors to monitor (alcohol, caffeine, etc.)
+    case general        = "General"          // Fallback for user-created metrics
+    case unknown        = "unknown"          // Fallback for unrecognized values from Firestore
+    case habit          = "Habit"            // Legacy — retained for migration read path only
+    case personal       = "Self_legacy"      // Legacy alias for .self_ — used only during migration
 }
 
+// MARK: - SQMetricDefinition
+
 struct SQMetricDefinition: Identifiable, Codable, Hashable {
-    let id: String               // stable preset IDs + UUIDs for custom
-    var title: String            // "Mood", "Sleep Hours", "Alcohol", "Weed", "Custom X"
-    var kind: SQMetricKind
-    var unit: SQMetricUnit
-    var group: String            // user-facing group name (e.g. "Self", "Habit", "General")
-    var min: Float?              // for scale/number
-    var max: Float?
-    var step: Float?             // slider granularity
-    var isPreset: Bool
-    var isEnabled: Bool          // user chooses what they track
-    var sortOrder: Int
-    var isArchived: Bool
-    var emoji: String?           // user-chosen emoji (single grapheme cluster)
-    var updatedAt: Date = .now   // last modification timestamp; used for Firestore sync
+    let id: String               // Stable preset IDs or UUIDs for custom metrics
+    var title: String            // Display name e.g. "Mood", "Sleep Hours", "Alcohol"
+    var kind: SQMetricKind       // How the value is entered (scale, number, etc.)
+    var unit: SQMetricUnit       // Unit for display purposes (e.g. pounds, hours)
+    var group: String            // User-facing group name (e.g. "Self", "Vices") — any string is valid
+    var min: Float?              // Minimum value for scale/number entry
+    var max: Float?              // Maximum value for scale/number entry
+    var step: Float?             // Step granularity for scale segmented control
+    var isPreset: Bool           // True if this metric ships with the app
+    var isEnabled: Bool          // True if the user is actively tracking this metric
+    var isDefault: Bool          // True if this metric is enabled by default for new users on first launch
+    var sortOrder: Int           // Display order within the check-in form
+    var isArchived: Bool         // Soft-deleted; hidden from all lists but preserved in history
+    var emoji: String?           // Optional single-grapheme emoji chosen by the user
+    var period: SQMetricPeriod   // Which check-in screen this metric appears on (morning or evening)
+    var updatedAt: Date          // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
     init(
@@ -58,9 +82,11 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         step: Float? = nil,
         isPreset: Bool,
         isEnabled: Bool = true,
+        isDefault: Bool = false,
         sortOrder: Int,
         isArchived: Bool = false,
         emoji: String? = nil,
+        period: SQMetricPeriod = .morning,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -73,55 +99,66 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.step = step
         self.isPreset = isPreset
         self.isEnabled = isEnabled
+        self.isDefault = isDefault
         self.sortOrder = sortOrder
         self.isArchived = isArchived
         self.emoji = emoji
+        self.period = period
         self.updatedAt = updatedAt
     }
 
-    // MARK: - Custom Decoder
+    // MARK: - Custom Decoder (handles missing fields from older Firestore documents)
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id          = try  c.decode(String.self,          forKey: .id)
-        title       = try  c.decode(String.self,          forKey: .title)
-        kind        = try  c.decode(SQMetricKind.self,    forKey: .kind)
-        unit        = try  c.decode(SQMetricUnit.self,    forKey: .unit)
-        group       = try  c.decode(String.self,           forKey: .group)
-        min         = try  c.decodeIfPresent(Float.self,  forKey: .min)
-        max         = try  c.decodeIfPresent(Float.self,  forKey: .max)
-        step        = try  c.decodeIfPresent(Float.self,  forKey: .step)
-        isPreset    = try  c.decode(Bool.self,            forKey: .isPreset)
-        isEnabled   = try  c.decode(Bool.self,            forKey: .isEnabled)
-        sortOrder   = try  c.decode(Int.self,             forKey: .sortOrder)
-        isArchived  = try  c.decode(Bool.self,            forKey: .isArchived)
-        emoji       = try  c.decodeIfPresent(String.self, forKey: .emoji)
-        updatedAt   = try  c.decodeIfPresent(Date.self,   forKey: .updatedAt) ?? .now
+        id          = try  c.decode(String.self,             forKey: .id)
+        title       = try  c.decode(String.self,             forKey: .title)
+        kind        = try  c.decode(SQMetricKind.self,       forKey: .kind)
+        unit        = try  c.decode(SQMetricUnit.self,       forKey: .unit)
+        group       = try  c.decode(String.self,             forKey: .group)
+        min         = try  c.decodeIfPresent(Float.self,     forKey: .min)
+        max         = try  c.decodeIfPresent(Float.self,     forKey: .max)
+        step        = try  c.decodeIfPresent(Float.self,     forKey: .step)
+        isPreset    = try  c.decode(Bool.self,               forKey: .isPreset)
+        isEnabled   = try  c.decode(Bool.self,               forKey: .isEnabled)
+        isDefault   = (try c.decodeIfPresent(Bool.self,      forKey: .isDefault)) ?? false
+        sortOrder   = try  c.decode(Int.self,                forKey: .sortOrder)
+        isArchived  = try  c.decode(Bool.self,               forKey: .isArchived)
+        emoji       = try  c.decodeIfPresent(String.self,    forKey: .emoji)
+        period      = (try c.decodeIfPresent(SQMetricPeriod.self, forKey: .period)) ?? .morning
+        updatedAt   = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
     }
 }
 
+// MARK: - SQMetricId
 
+/// Stable string identifiers for all preset metrics.
 enum SQMetricId {
-    // MARK: - Core Daily Metrics (enabled by default)
 
-    static let mood = "metric.mood"                    // 0–10
-    static let mentalClarity = "metric.mentalClarity"  // 0–10
-    static let energy = "metric.energy"                // 0–10
-    static let soreness = "metric.soreness"            // 0–10
-    static let sleepHours = "metric.sleepHours"        // 0–24
-    static let sleepQuality = "metric.sleepQuality"    // 1–5
+    // MARK: Stats
+    static let weight        = "metric.weight"          // number (pounds); morning
 
-    // MARK: - Optional Preset Metrics (disabled by default)
+    // MARK: Self — enabled by default
+    static let mood          = "metric.mood"            // scale 0–10; morning
+    static let mentalClarity = "metric.mentalClarity"   // scale 0–10; morning
+    static let energy        = "metric.energy"          // scale 0–10; morning
+    static let soreness      = "metric.soreness"        // scale 0–10; morning
 
-    static let alcohol = "metric.alcohol"              // binary
-    static let weed = "metric.weed"                    // binary
-    static let porn = "metric.porn"                    // binary
-    static let caffeine = "metric.caffeine"            // binary
-    static let meditation = "metric.meditation"        // binary
-    static let weight = "metric.weight"                // number (pounds)
+    // MARK: Sleep
+    static let sleepQuality  = "metric.sleepQuality"   // scale 0–10; morning (reflects prior night)
+    static let sleepHours    = "metric.sleepHours"     // number 0–24 hrs; morning (reflects prior night)
 
-    // MARK: - Future-proofing
+    // MARK: Positive Habits
+    static let meditation    = "metric.meditation"     // scale 0–10; evening
+    static let nutrition     = "metric.nutrition"      // scale 0–10; evening — NEW
 
-    /// Helper for generating custom metric IDs
+    // MARK: Vices — alcohol and caffeine enabled by default
+    static let alcohol       = "metric.alcohol"        // scale 0–10; evening
+    static let caffeine      = "metric.caffeine"       // scale 0–10; evening
+    static let weed          = "metric.weed"           // scale 0–10; evening
+    static let porn          = "metric.porn"           // scale 0–10; evening
+    static let nicotine      = "metric.nicotine"       // scale 0–10; evening — NEW
+
+    // MARK: - Custom metric ID generator
     static func custom(_ uuid: UUID = UUID()) -> String {
         "metric.custom.\(uuid.uuidString.lowercased())"
     }
