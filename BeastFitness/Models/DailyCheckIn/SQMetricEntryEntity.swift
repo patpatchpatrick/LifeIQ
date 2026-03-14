@@ -59,6 +59,9 @@ extension SQMetricEntryEntity {
     }
 
     /// Upserts a list of entries into the local store.
+    /// Uses a stable deterministic ID (anchorDayKey/metricId/period) as the primary key.
+    /// Also deletes any stale rows for the same (metricId, anchorDayKey, period) that have a
+    /// different ID — handles cleanup of pre-stable-ID entries so buckets never contain duplicates.
     static func upsert(_ entries: [SQMetricEntry], in context: ModelContext) throws {
         for entry in entries {
             let id = entry.id
@@ -73,6 +76,21 @@ extension SQMetricEntryEntity {
             } else {
                 context.insert(SQMetricEntryEntity(entry: entry))
             }
+
+            // Delete any stale rows for the same slot (different ID = pre-stable-ID data)
+            let metricId = entry.metricId
+            let anchorDayKey = entry.anchorDayKey
+            let periodRaw = entry.period.rawValue
+            let staleDescriptor = FetchDescriptor<SQMetricEntryEntity>(
+                predicate: #Predicate {
+                    $0.metricId == metricId &&
+                    $0.anchorDayKey == anchorDayKey &&
+                    $0.periodRaw == periodRaw &&
+                    $0.id != id
+                }
+            )
+            let staleRows = try context.fetch(staleDescriptor)
+            for stale in staleRows { context.delete(stale) }
         }
         try context.save()
     }
