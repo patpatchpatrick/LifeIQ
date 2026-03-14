@@ -85,6 +85,7 @@ final class SQMetricMigrationManager {
                 } ?? rawValue
 
                 let entry = SQMetricEntry(
+                    id: SQMetricEntry.stableEntryId(metricId: metricId, anchorDayKey: anchorDayKey, period: period),
                     metricId: metricId,
                     recordedAt: stats.date,   // Start-of-day approximation for legacy data
                     anchorDayKey: anchorDayKey,

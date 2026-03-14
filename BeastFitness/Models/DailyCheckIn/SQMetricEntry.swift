@@ -84,6 +84,8 @@ extension SQMetricEntry {
     }
 
     /// Builds a `SQMetricEntry` from a raw value, metric definition, and current device context.
+    /// Uses a stable deterministic ID (anchorDayKey + metricId + period) so that
+    /// re-submitting the same check-in always overwrites the existing entry rather than duplicating it.
     static func make(
         metricId: String,
         rawValue: Float,
@@ -92,7 +94,9 @@ extension SQMetricEntry {
     ) -> SQMetricEntry {
         let tz = TimeZone.current
         let anchorDayKey = recordedAt.anchorDayKey(in: tz)
+        let stableId = stableEntryId(metricId: metricId, anchorDayKey: anchorDayKey, period: definition.period)
         return SQMetricEntry(
+            id: stableId,
             metricId: metricId,
             recordedAt: recordedAt,
             anchorDayKey: anchorDayKey,
@@ -101,6 +105,12 @@ extension SQMetricEntry {
             rawValue: rawValue,
             normalizedScore: normalizedScore(for: rawValue, definition: definition)
         )
+    }
+
+    /// Deterministic entry ID: one slot per metric per day per period.
+    /// Format: `{anchorDayKey}/{metricId}/{period.rawValue}`
+    static func stableEntryId(metricId: String, anchorDayKey: String, period: SQMetricPeriod) -> String {
+        "\(anchorDayKey)/\(metricId)/\(period.rawValue)"
     }
 }
 
