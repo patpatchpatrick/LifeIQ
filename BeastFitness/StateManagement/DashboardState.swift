@@ -94,16 +94,26 @@ protocol DashboardStating: AnyObject {
     
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date? = nil) {
         let targetDate = date ?? .now
+        let period = Self.checkInPeriod(for: .now)
+
         dailyCheckInViewModel = .init(
             eventHub: SQAppState.shared.hub,
             stats: stats,
             targetDate: targetDate,
+            period: period,
             metricsManager: SQMetricsManager.shared,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
             })
 
         toggleDailyCheckInSheetVisibility(true)
+    }
+
+    /// Determines the check-in period based on current device time.
+    /// Before noon → morning; noon or after → evening.
+    private static func checkInPeriod(for date: Date) -> SQMetricPeriod {
+        let hour = Calendar.current.component(.hour, from: date)
+        return hour < 12 ? .morning : .evening
     }
     
     func navigateToWorkoutView(with workouts: [any SQWorkoutSessionable]) {
