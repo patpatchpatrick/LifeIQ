@@ -26,8 +26,8 @@ final class SQMetricDefinitionEntity {
     var sortOrder: Int
     var isArchived: Bool
     var emoji: String?
-    var periodRaw: String      // Stores SQMetricPeriod.rawValue — raw string for SwiftData compatibility
-    var isDefault: Bool        // True if this metric is enabled by default for new users on first launch
+    var periodRaw: String = "morning"  // Stores SQMetricPeriod.rawValue — default allows lightweight migration of existing rows
+    var isDefault: Bool = false        // True if this metric is enabled by default for new users on first launch
 
     // Optional: for Firestore sync later
     var updatedAt: Date
