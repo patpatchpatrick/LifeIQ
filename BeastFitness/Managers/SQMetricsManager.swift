@@ -21,6 +21,7 @@ protocol SQMetricsManaging: AnyObject {
 
     // Accessors
     func dailyCheckInMetrics() -> [SQMetricDefinition]
+    func dailyCheckInMetrics(for period: SQMetricPeriod) -> [SQMetricDefinition]
     func allMetrics(includeArchived: Bool) -> [SQMetricDefinition]
     func trackedMetrics() -> [SQMetricDefinition]
     func isMetricTracked(id: String) -> Bool
@@ -81,7 +82,9 @@ final class SQMetricsManager: SQMetricsManaging {
                         isEnabled: def.isEnabled,
                         sortOrder: def.sortOrder,
                         isArchived: def.isArchived,
-                        emoji: def.emoji
+                        emoji: def.emoji,
+                        period: def.period,
+                        isDefault: def.isDefault
                     )
                 )
             }
@@ -107,6 +110,12 @@ final class SQMetricsManager: SQMetricsManaging {
     func dailyCheckInMetrics() -> [SQMetricDefinition] {
         metrics
             .filter { $0.isEnabled && !$0.isArchived }
+            .sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    func dailyCheckInMetrics(for period: SQMetricPeriod) -> [SQMetricDefinition] {
+        metrics
+            .filter { $0.isEnabled && !$0.isArchived && $0.period == period }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
 
@@ -188,7 +197,9 @@ final class SQMetricsManager: SQMetricsManaging {
                 isEnabled: true,
                 sortOrder: maxOrder + 1,
                 isArchived: false,
-                emoji: definition.emoji
+                emoji: definition.emoji,
+                period: definition.period,
+                isDefault: false
             )
         )
 
@@ -328,7 +339,9 @@ final class SQMetricsManager: SQMetricsManaging {
                     isEnabled: def.isEnabled,
                     sortOrder: def.sortOrder,
                     isArchived: def.isArchived,
-                    emoji: def.emoji
+                    emoji: def.emoji,
+                    period: def.period,
+                    isDefault: def.isDefault
                 )
                 entity.updatedAt = def.updatedAt
                 context.insert(entity)
@@ -397,36 +410,86 @@ final class SQMetricsManager: SQMetricsManaging {
 
     // MARK: - Migration
 
-    /// Adds any new preset metrics that don't exist in the database
+    /// Migrates the preset catalog:
+    /// 1. Inserts any new preset metrics that don't exist in the database.
+    /// 2. For existing preset entities, applies period, isDefault, and binary→scale conversion.
     private func migrateNewPresets(context: ModelContext) throws {
         let allPresets = Self.presetMetrics()
         let existingIds = Set(metrics.map { $0.id })
 
         var added = 0
-        for preset in allPresets where !existingIds.contains(preset.id) {
-            context.insert(
-                SQMetricDefinitionEntity(
-                    id: preset.id,
-                    title: preset.title,
-                    kind: preset.kind,
-                    unit: preset.unit,
-                    group: preset.group,
-                    min: preset.min,
-                    max: preset.max,
-                    step: preset.step,
-                    isPreset: preset.isPreset,
-                    isEnabled: preset.isEnabled,
-                    sortOrder: preset.sortOrder,
-                    isArchived: preset.isArchived,
-                    emoji: preset.emoji
+        var updated = 0
+
+        for preset in allPresets {
+            if !existingIds.contains(preset.id) {
+                // New preset — insert with all fields
+                context.insert(
+                    SQMetricDefinitionEntity(
+                        id: preset.id,
+                        title: preset.title,
+                        kind: preset.kind,
+                        unit: preset.unit,
+                        group: preset.group,
+                        min: preset.min,
+                        max: preset.max,
+                        step: preset.step,
+                        isPreset: preset.isPreset,
+                        isEnabled: preset.isEnabled,
+                        sortOrder: preset.sortOrder,
+                        isArchived: preset.isArchived,
+                        emoji: preset.emoji,
+                        period: preset.period,
+                        isDefault: preset.isDefault
+                    )
                 )
-            )
-            added += 1
+                added += 1
+            } else if let entity = try? fetchEntity(id: preset.id, using: context) {
+                // Existing preset — apply period, isDefault, and binary→scale upgrade
+                var didChange = false
+
+                if entity.periodRaw != preset.period.rawValue {
+                    entity.periodRaw = preset.period.rawValue
+                    didChange = true
+                }
+                if entity.isDefault != preset.isDefault {
+                    entity.isDefault = preset.isDefault
+                    didChange = true
+                }
+                // Upgrade legacy binary metrics to scale 0–10
+                if entity.kindRaw == SQMetricKind.binary.rawValue {
+                    entity.kindRaw = SQMetricKind.scale.rawValue
+                    entity.minValue = preset.min
+                    entity.maxValue = preset.max
+                    entity.stepValue = preset.step
+                    didChange = true
+                }
+                // Migrate SleepQuality from 1–5 to 0–10 scale
+                if preset.id == SQMetricId.sleepQuality,
+                   entity.minValue == 1, entity.maxValue == 5 {
+                    entity.minValue = preset.min
+                    entity.maxValue = preset.max
+                    didChange = true
+                }
+                // Migrate group from legacy raw values to new group names
+                let migratedGroup = entity.group  // uses the computed migration property
+                if entity.groupRaw != migratedGroup {
+                    entity.groupRaw = migratedGroup
+                    didChange = true
+                }
+
+                if didChange {
+                    entity.updatedAt = .now
+                    updated += 1
+                }
+            }
         }
 
-        if added > 0 {
+        if added > 0 || updated > 0 {
             try saveContextAndNotify(context)
-            SQLogger.shared.log("Migration: Added \(added) new preset metric(s)", .info, context: .metricsManager, isPriority: true)
+            SQLogger.shared.log(
+                "Migration: Added \(added) new preset(s), updated \(updated) existing preset(s)",
+                .info, context: .metricsManager, isPriority: true
+            )
         }
     }
 
@@ -437,43 +500,80 @@ final class SQMetricsManager: SQMetricsManaging {
         func next() -> Int { defer { order += 1 }; return order }
 
         return [
-            // Self metrics (enabled)
-            .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "😊"),
+            // MARK: Stats — one-time or infrequent physical measurements
+            .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds,
+                  group: SQDefaultGroup.stats.rawValue, min: 0, max: 1000, step: 0.1,
+                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  emoji: "⚖️", period: .morning),
 
-            .init(id: SQMetricId.mentalClarity, title: "Mental Clarity", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "🧠"),
+            // MARK: Self — daily mental/physical state; all default-enabled
+            .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "😊", period: .morning),
 
-            .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "⚡"),
+            .init(id: SQMetricId.mentalClarity, title: "Mental Clarity", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "🧠", period: .morning),
 
-            .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 10, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "💪"),
+            .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "⚡", period: .morning),
 
-            .init(id: SQMetricId.sleepHours, title: "Sleep", kind: .number, unit: .hours, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 24, step: 0.5, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "🌙"),
+            .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "💪", period: .morning),
 
-            .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none, group: SQDefaultGroup.personal.rawValue,
-                  min: 1, max: 5, step: 1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "😴"),
+            // MARK: Sleep — logged in the morning, reflecting the prior night
+            .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.sleep.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  emoji: "😴", period: .morning),
 
-            .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds, group: SQDefaultGroup.personal.rawValue,
-                  min: 0, max: 1000, step: 0.1, isPreset: true, isEnabled: true, sortOrder: next(), isArchived: false, emoji: "⚖️"),
+            .init(id: SQMetricId.sleepHours, title: "Sleep Hours", kind: .number, unit: .hours,
+                  group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.5,
+                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  emoji: "🌙", period: .morning),
 
-            // Habit metrics (disabled by default)
-            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,
-                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false, emoji: "🍺"),
+            // MARK: Positive Habits — behaviors to build; logged in the evening
+            .init(id: SQMetricId.nutrition, title: "Nutrition", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "🥗", period: .evening),
 
-            .init(id: SQMetricId.weed, title: "Weed", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,
-                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false, emoji: "🌿"),
+            .init(id: SQMetricId.meditation, title: "Meditation", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🧘", period: .evening),
 
-            .init(id: SQMetricId.porn, title: "Porn", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,
-                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false),
+            // MARK: Vices — behaviors to monitor; logged in the evening
+            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "🍺", period: .evening),
 
-            .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,
-                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false, emoji: "☕"),
+            .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
+                  emoji: "☕", period: .evening),
 
-            .init(id: SQMetricId.meditation, title: "Meditation", kind: .binary, unit: .none, group: SQDefaultGroup.habit.rawValue,
-                  min: 0, max: 1, step: 1, isPreset: true, isEnabled: false, sortOrder: next(), isArchived: false, emoji: "🧘"),
+            .init(id: SQMetricId.weed, title: "Weed", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🌿", period: .evening),
+
+            .init(id: SQMetricId.porn, title: "Porn", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  period: .evening),
+
+            .init(id: SQMetricId.nicotine, title: "Nicotine", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🚬", period: .evening),
         ]
     }
 }
