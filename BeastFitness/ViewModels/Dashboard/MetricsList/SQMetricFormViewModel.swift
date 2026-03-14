@@ -38,6 +38,8 @@ final class SQMetricFormViewModel {
     }
     var selectedUnit: SQMetricUnit = .none
     var selectedGroup: String = SQDefaultGroup.general.rawValue
+    /// Which check-in screen this metric will appear on. Only configurable in create mode.
+    var selectedPeriod: SQMetricPeriod = .morning
     var isAddingNewGroup: Bool = false
 
     let newGroupField: SQUITextFieldViewModel
@@ -144,6 +146,7 @@ final class SQMetricFormViewModel {
             selectedKind = existing.kind
             selectedUnit = existing.unit
             selectedGroup = existing.group
+            selectedPeriod = existing.period
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
             maxField.setText(existing.max.map { Self.formatFloat($0) } ?? "")
             stepField.setText(existing.step.map { Self.formatFloat($0) } ?? "")
@@ -177,14 +180,32 @@ final class SQMetricFormViewModel {
         selectedKind == .number
     }
 
-    /// All unique groups currently in use, plus defaults and the current selection, sorted alphabetically.
+    /// All unique groups currently in use, plus well-known defaults, sorted alphabetically.
+    /// Excludes legacy and unknown groups so they don't appear in the picker.
     var availableGroups: [String] {
-        let existing = metricsManager.allMetrics(includeArchived: false).map(\.group)
-        var unique = Array(Set(existing))
-        for g in SQDefaultGroup.allCases.map(\.rawValue) + [selectedGroup] where !unique.contains(g) {
-            unique.append(g)
-        }
+        let legacyAndUnknown: Set<String> = [
+            SQDefaultGroup.unknown.rawValue,
+            SQDefaultGroup.habit.rawValue,
+            SQDefaultGroup.personal.rawValue,
+        ]
+
+        let fromMetrics = metricsManager.allMetrics(includeArchived: false)
+            .map(\.group)
+            .filter { !legacyAndUnknown.contains($0) }
+
+        let wellKnown = SQDefaultGroup.allCases
+            .map(\.rawValue)
+            .filter { !legacyAndUnknown.contains($0) }
+
+        var unique = Array(Set(fromMetrics + wellKnown + [selectedGroup]))
+        unique = unique.filter { !legacyAndUnknown.contains($0) }
         return unique.sorted()
+    }
+
+    /// Metric kinds available to users when creating a metric.
+    /// `.binary` is retired (all metrics use scale 0–10); `.unknown` is a decode fallback only.
+    var selectableKinds: [SQMetricKind] {
+        [.scale, .number]
     }
 
     var canSave: Bool {
@@ -194,12 +215,12 @@ final class SQMetricFormViewModel {
 
         if case .create = mode {
             switch selectedKind {
-            case .binary:
-                return true   // no numeric fields needed
             case .scale:
                 return validateScaleFields()
             case .number:
                 return validateNumberFields()
+            default:
+                return false
             }
         }
 
@@ -247,21 +268,6 @@ final class SQMetricFormViewModel {
         let emoji = emojiField.text.isEmpty ? nil : emojiField.text
 
         switch selectedKind {
-        case .binary:
-            return .init(
-                id: SQMetricId.custom(),
-                title: titleField.text,
-                kind: .binary,
-                unit: .none,
-                group: selectedGroup,
-                min: 0, max: 1, step: 1,
-                isPreset: false,
-                isEnabled: true,
-                sortOrder: 0,   // manager sets actual order
-                isArchived: false,
-                emoji: emoji
-            )
-
         case .scale:
             return .init(
                 id: SQMetricId.custom(),
@@ -276,7 +282,8 @@ final class SQMetricFormViewModel {
                 isEnabled: true,
                 sortOrder: 0,
                 isArchived: false,
-                emoji: emoji
+                emoji: emoji,
+                period: selectedPeriod
             )
 
         case .number:
@@ -293,7 +300,25 @@ final class SQMetricFormViewModel {
                 isEnabled: true,
                 sortOrder: 0,
                 isArchived: false,
-                emoji: emoji
+                emoji: emoji,
+                period: selectedPeriod
+            )
+
+        default:
+            // .binary and .unknown should never be user-created; fall back to scale
+            return .init(
+                id: SQMetricId.custom(),
+                title: titleField.text,
+                kind: .scale,
+                unit: .none,
+                group: selectedGroup,
+                min: 0, max: 10, step: 1,
+                isPreset: false,
+                isEnabled: true,
+                sortOrder: 0,
+                isArchived: false,
+                emoji: emoji,
+                period: selectedPeriod
             )
         }
     }
@@ -336,8 +361,6 @@ final class SQMetricFormViewModel {
     private func kindChanged() {
         guard isStructurallyEditable else { return }
         switch selectedKind {
-        case .binary:
-            break   // fields will be hidden
         case .scale:
             minField.setText("0")
             maxField.setText("10")
@@ -346,6 +369,8 @@ final class SQMetricFormViewModel {
             minField.setText("")
             maxField.setText("")
             stepField.setText("")
+        default:
+            break
         }
     }
 

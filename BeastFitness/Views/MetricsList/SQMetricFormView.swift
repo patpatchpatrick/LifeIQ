@@ -101,6 +101,26 @@ struct SQMetricFormView: View {
         }
     }
 
+    // MARK: - Period Picker (create only) / Static (edit)
+
+    @ViewBuilder
+    var periodRow: some View {
+        if viewModel.isStructurallyEditable {
+            labeledRow(label: "Check-In") {
+                Picker("Check-In", selection: $viewModel.selectedPeriod) {
+                    Text("Morning").tag(SQMetricPeriod.morning)
+                    Text("Evening").tag(SQMetricPeriod.evening)
+                }
+                .pickerStyle(.segmented)
+            }
+        } else {
+            staticRow(
+                label: "Check-In",
+                value: viewModel.selectedPeriod == .morning ? "Morning" : "Evening"
+            )
+        }
+    }
+
     // MARK: - Kind Picker (create only) / Static (edit)
 
     @ViewBuilder
@@ -108,7 +128,7 @@ struct SQMetricFormView: View {
         if viewModel.isStructurallyEditable {
             labeledRow(label: "Type") {
                 Picker("Type", selection: $viewModel.selectedKind) {
-                    ForEach(SQMetricKind.allCases, id: \.self) { kind in
+                    ForEach(viewModel.selectableKinds, id: \.self) { kind in
                         Text(kind.rawValue.capitalized).tag(kind)
                     }
                 }
@@ -211,6 +231,7 @@ struct SQMetricFormView: View {
                 titleRow
                 emojiInputRow
                 groupRow
+                periodRow
 
                 Divider()
                     .sqTintColor(.divider(1))
