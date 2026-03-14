@@ -976,6 +976,8 @@ final class SQDashboardController: SQDashboardInterface {
             unitString = "kg"
         case .percent:
             unitString = "%"
+        case .unknown:
+            unitString = ""
         }
 
         // Build sparkline data (in chronological order)

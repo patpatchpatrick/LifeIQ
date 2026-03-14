@@ -205,6 +205,8 @@ final class SQDailyCheckInViewModel: Identifiable {
                 }
 
                 built.append(row)
+            case .unknown:
+                SQLogger.shared.log("Unknown Daily Check In Metric Kind", .error, context: .dailyCheckIn)
             }
         }
 

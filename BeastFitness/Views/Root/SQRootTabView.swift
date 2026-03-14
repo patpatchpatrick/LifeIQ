@@ -100,14 +100,14 @@ struct SQRootTabView: View {
         .task {
             SQAppState.shared.modelContext = modelContext
 
-            // Ensure metrics are loaded before migration so period/normalization lookups work
-            try? SQMetricsManager.shared.loadIfNeeded(using: modelContext)
-
-            // One-time migration: convert legacy SQDailyCheckInStats → SQMetricEntry records
-            await SQMetricMigrationManager.runIfNeeded(
-                context: modelContext,
-                metricsManager: SQMetricsManager.shared
-            )
+//            // Ensure metrics are loaded before migration so period/normalization lookups work
+//            try? SQMetricsManager.shared.loadIfNeeded(using: modelContext)
+//
+//            // One-time migration: convert legacy SQDailyCheckInStats → SQMetricEntry records
+//            await SQMetricMigrationManager.runIfNeeded(
+//                context: modelContext,
+//                metricsManager: SQMetricsManager.shared
+//            )
         }
     }
 }
