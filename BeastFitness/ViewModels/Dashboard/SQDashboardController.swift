@@ -151,6 +151,11 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
+            // period: nil → return stats if *any* entries exist today regardless of session.
+            // This means the CTA disappears after the first completed check-in (morning or evening),
+            // even if the other session hasn't been filled in yet. Update to use
+            // DashboardState.checkInPeriod(for: .now) if the CTA should remain visible
+            // until the *current* session's check-in is also complete.
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, period: nil, context: context)
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
