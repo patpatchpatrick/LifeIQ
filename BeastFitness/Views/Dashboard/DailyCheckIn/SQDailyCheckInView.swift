@@ -79,7 +79,7 @@ struct SQDailyCheckInView: View {
                 .toolbar {
                     ToolbarItem(placement: .principal) {
                         Text("\(viewModel.period.rawValue.capitalized) Check-In · \(viewModel.targetDate.formattedString(with: .medium))")
-                            .sqFont(SQFont(type: .bodySmall))
+                            .sqFont(.bodySmall)
                             .sqForegroundColor(.textPrimary)
                     }
                     ToolbarItem(placement: .topBarTrailing) {

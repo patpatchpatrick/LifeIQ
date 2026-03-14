@@ -212,15 +212,12 @@
 		F6E179A32F6357450099CAF2 /* SQMetricEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179A02F6357450099CAF2 /* SQMetricEntry.swift */; };
 		F6E179A42F6357450099CAF2 /* SQMetricEntryEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179A12F6357450099CAF2 /* SQMetricEntryEntity.swift */; };
 		F6E179A52F6357450099CAF2 /* SQDailyNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E1799E2F6357450099CAF2 /* SQDailyNote.swift */; };
-		F6E179A82F63575C0099CAF2 /* SQDailyNoteRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179A62F63575C0099CAF2 /* SQDailyNoteRoute.swift */; };
 		F6E179A92F63575C0099CAF2 /* SQMetricEntryRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */; };
 		F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */; };
-		F6E179AD2F63576F0099CAF2 /* SQDailyNoteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AA2F63576F0099CAF2 /* SQDailyNoteService.swift */; };
 		F6E179B02F6357810099CAF2 /* SQMetricMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */; };
 		F6E179B12F6357810099CAF2 /* SQMetricEntryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */; };
 		F6E179B32F6384DB0099CAF2 /* SQMultiSelect.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */; };
 		F6E179B52F6384EE0099CAF2 /* SQMultiSelectViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */; };
-		F6E17A352F65DA5C0099CAF2 /* SQDailyNoteMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E17A342F65DA5C0099CAF2 /* SQDailyNoteMigrationManager.swift */; };
 		F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E909D12ED529D5003441B5 /* SQCallToAction.swift */; };
 		F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */; };
 		F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */; };
@@ -493,15 +490,12 @@
 		F6E1799F2F6357450099CAF2 /* SQDailyNoteEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyNoteEntity.swift; sourceTree = "<group>"; };
 		F6E179A02F6357450099CAF2 /* SQMetricEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntry.swift; sourceTree = "<group>"; };
 		F6E179A12F6357450099CAF2 /* SQMetricEntryEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryEntity.swift; sourceTree = "<group>"; };
-		F6E179A62F63575C0099CAF2 /* SQDailyNoteRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyNoteRoute.swift; sourceTree = "<group>"; };
 		F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryRoute.swift; sourceTree = "<group>"; };
-		F6E179AA2F63576F0099CAF2 /* SQDailyNoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyNoteService.swift; sourceTree = "<group>"; };
 		F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryService.swift; sourceTree = "<group>"; };
 		F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryManager.swift; sourceTree = "<group>"; };
 		F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricMigrationManager.swift; sourceTree = "<group>"; };
 		F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelect.swift; sourceTree = "<group>"; };
 		F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelectViewModel.swift; sourceTree = "<group>"; };
-		F6E17A342F65DA5C0099CAF2 /* SQDailyNoteMigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyNoteMigrationManager.swift; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
 		F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInView.swift; sourceTree = "<group>"; };
 		F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInViewModel.swift; sourceTree = "<group>"; };
@@ -1206,7 +1200,6 @@
 				F6E179922F57DAED0099CAF2 /* Sleep */,
 				F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */,
 				F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */,
-				F6E17A342F65DA5C0099CAF2 /* SQDailyNoteMigrationManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1255,7 +1248,6 @@
 				F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */,
 				F6ABC3562EDE58B800D3E679 /* SQRouter.swift */,
 				F6C5FDAD2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift */,
-				F6E179A62F63575C0099CAF2 /* SQDailyNoteRoute.swift */,
 				F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */,
 			);
 			path = Routers;
@@ -1268,7 +1260,6 @@
 				F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */,
 				F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */,
 				F6C5FDAF2F33A0FD00BF1022 /* SQMetricDefinitionService.swift */,
-				F6E179AA2F63576F0099CAF2 /* SQDailyNoteService.swift */,
 				F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */,
 			);
 			path = Services;
@@ -1792,7 +1783,6 @@
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */,
 				F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */,
-				F6E179AD2F63576F0099CAF2 /* SQDailyNoteService.swift in Sources */,
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
 				F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */,
 				F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */,
@@ -1812,7 +1802,6 @@
 				F639F0FB2F4272AA004AC701 /* SQPerformanceRowData.swift in Sources */,
 				F679BDE12EE7D66B00A2F249 /* WorkoutSessionState.swift in Sources */,
 				F6E058932F04961C006C1CE0 /* SQActiveWorkoutSessionPayload.swift in Sources */,
-				F6E179A82F63575C0099CAF2 /* SQDailyNoteRoute.swift in Sources */,
 				F6E179A92F63575C0099CAF2 /* SQMetricEntryRoute.swift in Sources */,
 				F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */,
 				F67F0A002F08759C00D7BB90 /* SQMetricListController.swift in Sources */,
@@ -1959,7 +1948,6 @@
 				F61591FB2EEA48E100223A63 /* SQWorkoutSession+Mocks.swift in Sources */,
 				F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */,
 				F679BC4D2EE4FB7100A2F249 /* SQWorkoutSummaryController.swift in Sources */,
-				F6E17A352F65DA5C0099CAF2 /* SQDailyNoteMigrationManager.swift in Sources */,
 				F6C5FD802F32C3B300BF1022 /* SQMetricFormViewModel.swift in Sources */,
 				F61593BF2EF37A3400223A63 /* SQToastOverlayWindow.swift in Sources */,
 				F6E1799D2F5B7EC90099CAF2 /* SQEditWorkoutController.swift in Sources */,
