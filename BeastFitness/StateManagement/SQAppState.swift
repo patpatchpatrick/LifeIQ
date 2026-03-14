@@ -29,6 +29,7 @@ final class SQAppState {
     let settingsState: SettingsState
     let toastState: SQToastState
     let dropDownMenuState: SQDropDownMenuState
+    let metricEntryManager: SQMetricEntryManager
 
     init() {
         self.userState = .init(hub: hub)
@@ -41,5 +42,6 @@ final class SQAppState {
         self.settingsState = .init(hub: hub)
         self.toastState = .init(hub: hub)
         self.dropDownMenuState = .init()
+        self.metricEntryManager = .init(hub: hub)
     }
 }
