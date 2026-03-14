@@ -77,7 +77,7 @@ struct SQDailyCheckInView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .navigationTitle(viewModel.isEditingPastDate
                     ? viewModel.targetDate.formattedString(with: .medium)
-                    : "Daily Check-In")
+                    : viewModel.period == .morning ? "Morning Check-In" : "Evening Check-In")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
