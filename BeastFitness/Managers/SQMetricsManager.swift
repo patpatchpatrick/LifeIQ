@@ -438,7 +438,8 @@ final class SQMetricsManager: SQMetricsManaging {
                         sortOrder: preset.sortOrder,
                         isArchived: preset.isArchived,
                         emoji: preset.emoji,
-                        period: preset.period,
+                        periods: preset.periods,
+                        isSingleDailyValue: preset.isSingleDailyValue,
                         isDefault: preset.isDefault
                     )
                 )
