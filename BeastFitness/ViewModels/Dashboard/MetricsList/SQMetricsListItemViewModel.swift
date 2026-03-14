@@ -25,12 +25,13 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
     }
 
     private static func buildSubtitle(for metric: SQMetricDefinition) -> String {
-        let kind = metric.kind.rawValue.capitalized
-        let unit = metric.unit == .none ? "No unit" : metric.unit.rawValue.capitalized
-        if let min = metric.min, let max = metric.max {
-            return "\(kind) • \(unit) • \(min.clean)–\(max.clean)"
+        let periodLabel = metric.period == .morning ? "Morning" : "Evening"
+        let kindLabel = metric.kind == .number ? "Number" : "Scale 0–\(Int(metric.max ?? 10))"
+
+        if metric.unit != .none {
+            return "\(periodLabel) • \(kindLabel) • \(metric.unit.rawValue.capitalized)"
         } else {
-            return "\(kind) • \(unit)"
+            return "\(periodLabel) • \(kindLabel)"
         }
     }
 }
