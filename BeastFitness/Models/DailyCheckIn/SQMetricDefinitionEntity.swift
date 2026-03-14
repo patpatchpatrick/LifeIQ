@@ -69,13 +69,13 @@ final class SQMetricDefinitionEntity {
 }
 
 extension SQMetricDefinitionEntity {
-    var kind: SQMetricKind { SQMetricKind(rawValue: kindRaw) ?? .number }
-    var unit: SQMetricUnit { SQMetricUnit(rawValue: unitRaw) ?? .none }
+    var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }
+    var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var period: SQMetricPeriod { SQMetricPeriod(unfrozenRawValue: periodRaw) }
     /// Translates legacy enum raw values ("state", "habits", "custom") to current group names.
     var group: String {
         switch groupRaw {
-        case "state":  return SQDefaultGroup.personal.rawValue
+        case "state":  return SQDefaultGroup.self_.rawValue   // was "Self" via old .personal alias
         case "habits": return SQDefaultGroup.habit.rawValue
         case "custom": return SQDefaultGroup.general.rawValue
         default:       return groupRaw
