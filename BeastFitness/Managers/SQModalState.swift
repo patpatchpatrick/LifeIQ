@@ -18,7 +18,7 @@ final class SQModalState {
     enum ModalContent {
         case datePicker(
             dateEntries: [SQDatePickerModal.DateEntry],
-            onDateSelected: (Date) -> Void
+            onDateSelected: (Date, SQMetricPeriod) -> Void
         )
     }
 

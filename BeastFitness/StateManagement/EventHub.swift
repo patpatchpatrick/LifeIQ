@@ -41,7 +41,7 @@ enum ToastEvent {
 enum ModalEvent {
     case presentDatePicker(
         dateEntries: [SQDatePickerModal.DateEntry],
-        onDateSelected: (Date) -> Void
+        onDateSelected: (Date, SQMetricPeriod) -> Void
     )
     case dismiss
 }

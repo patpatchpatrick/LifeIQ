@@ -33,8 +33,9 @@ final class SQDailyCheckInViewModel: Identifiable {
     let onDismiss: () -> Void
     private(set) var isLoading: Bool = false
     /// The check-in period this view model represents (morning or evening).
-    /// Determines which subset of metrics is shown.
-    let period: SQMetricPeriod
+    /// Starts as the default for this session; updated when the user picks a specific
+    /// date+period from the date picker.
+    private(set) var period: SQMetricPeriod
 
     var isAddMetricSheetDisplayed: Bool = false
     let metricsListController = SQMetricsListController.default(
@@ -417,6 +418,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         let stats = SQDailyCheckInStats(
             date: targetDate,
+            period: period,
             values: values,
             notes: notes
         )
@@ -440,14 +442,14 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     func showDatePicker(modelContext: ModelContext) {
         Task {
-            // Load date entries with completion status
+            // Load date entries with completion status (one row per day×period combo)
             let dateEntries = await loadDateEntries(modelContext: modelContext)
 
-            // Show modal with pre-loaded entries
             eventHub.modalEvents.send(.presentDatePicker(
                 dateEntries: dateEntries,
-                onDateSelected: { [weak self] selectedDate in
+                onDateSelected: { [weak self] selectedDate, selectedPeriod in
                     guard let self else { return }
+                    self.period = selectedPeriod
                     Task {
                         await self.refresh(for: selectedDate, modelContext: modelContext)
                     }
@@ -465,38 +467,27 @@ final class SQDailyCheckInViewModel: Identifiable {
         dateFormatter.locale = .current
         dateFormatter.dateFormat = "EEEE, MMMM d, yyyy"
 
-        // Add "Today" first
-        let todayNormalized = calendar.startOfDay(for: today)
-        let todayStats = try? await dailyCheckInManager.getDailyCheckInStats(
-            for: todayNormalized,
-            period: nil,
-            context: modelContext
-        )
+        // Build entries for today + past 30 days, two rows per day (morning then evening)
+        for i in 0...30 {
+            guard let dayDate = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
+            let normalizedDate = calendar.startOfDay(for: dayDate)
+            let isToday = i == 0
+            let dateString = dateFormatter.string(from: normalizedDate)
 
-        entries.append(SQDatePickerModal.DateEntry(
-            date: todayNormalized,
-            displayText: dateFormatter.string(from: today),
-            isToday: true,
-            isCompleted: todayStats != nil
-        ))
-
-        // Add past 30 days
-        for i in 1...30 {
-            guard let pastDate = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
-            let normalizedDate = calendar.startOfDay(for: pastDate)
-
-            let stats = try? await dailyCheckInManager.getDailyCheckInStats(
-                for: normalizedDate,
-                period: nil,
-                context: modelContext
-            )
-
-            entries.append(SQDatePickerModal.DateEntry(
-                date: normalizedDate,
-                displayText: dateFormatter.string(from: normalizedDate),
-                isToday: false,
-                isCompleted: stats != nil
-            ))
+            for entryPeriod in [SQMetricPeriod.morning, .evening] {
+                let stats = try? await dailyCheckInManager.getDailyCheckInStats(
+                    for: normalizedDate,
+                    period: entryPeriod,
+                    context: modelContext
+                )
+                entries.append(SQDatePickerModal.DateEntry(
+                    date: normalizedDate,
+                    displayText: "\(dateString) — \(entryPeriod.rawValue.capitalized)",
+                    period: entryPeriod,
+                    isToday: isToday,
+                    isCompleted: stats != nil
+                ))
+            }
         }
 
         return entries

@@ -9,6 +9,8 @@ import Foundation
 
 struct SQDailyCheckInStats: Codable {
     let date: Date
+    /// The check-in period (morning or evening) this submission belongs to.
+    var period: SQMetricPeriod
     var values: [String: Float]
     var notes: String?
 

@@ -34,7 +34,7 @@ extension SyncResult {
 }
 
 protocol SQDailyCheckInManaging {
-    /// Saves a daily check in locally and to the server
+    /// Saves a daily check in locally and to the server.
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to modelContext: ModelContext) async throws
     /// Gets daily check in stats for a specific check-in period.
     /// - For `isSingleDailyValue` metrics: returns the shared daily entry regardless of session.
@@ -71,17 +71,33 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         let allMetrics = await metricsManager.allMetrics(includeArchived: true)
         let metricById = Dictionary(uniqueKeysWithValues: allMetrics.map { ($0.id, $0) })
         let tz = TimeZone.current
+        // anchorDayKey is derived from stats.date (the selected day), not Date.now,
+        // so editing past dates writes to the correct day bucket.
         let anchorDayKey = stats.date.anchorDayKey(in: tz)
         let now = Date.now
+        // Period comes from the stats model (set by the caller from the view model's
+        // period, which is either the default time-of-day period or the one selected
+        // via the date picker).
+        let submissionPeriod = stats.period
 
         var entries: [SQMetricEntry] = []
         for (metricId, rawValue) in stats.values {
             guard let definition = metricById[metricId] else { continue }
-            let entry = SQMetricEntry.make(
+            let stableId = SQMetricEntry.stableEntryId(
                 metricId: metricId,
+                anchorDayKey: anchorDayKey,
+                period: submissionPeriod,
+                isSingleDailyValue: definition.isSingleDailyValue
+            )
+            let entry = SQMetricEntry(
+                id: stableId,
+                metricId: metricId,
+                recordedAt: now,
+                anchorDayKey: anchorDayKey,
+                timeZoneIdentifier: tz.identifier,
+                period: submissionPeriod,
                 rawValue: rawValue,
-                definition: definition,
-                recordedAt: now
+                normalizedScore: SQMetricEntry.normalizedScore(for: rawValue, definition: definition)
             )
             entries.append(entry)
         }
@@ -91,6 +107,9 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         if let notesText = stats.notes, !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let note = SQDailyNote(anchorDayKey: anchorDayKey, content: notesText)
             try SQDailyNoteEntity.upsert(note, in: modelContext)
+        } else {
+            // Clear note locally if the user submitted an empty notes field
+            // (leave Firestore as-is; it'll be overwritten below)
         }
 
         // Legacy Firestore push
@@ -100,17 +119,17 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             SQLogger.shared.log("Legacy Firestore push failed: \(error)", .debug, context: .dailyCheckIn)
         }
 
-        // Push new metric entries to Firestore as a daily bucket (one doc per day)
+        // Push metric entries + note to Firestore as a single daily bucket document.
+        // Always use anchorDayKey (from stats.date) so editing past dates writes to
+        // the correct bucket, not today's.
         let user = await SQAppState.shared.userState.loggedInUser
-        let affectedDays = Set(entries.map { $0.anchorDayKey })
-        for dayKey in affectedDays {
-            do {
-                let allDayEntries = try SQMetricEntryEntity.getAll(for: dayKey, context: modelContext)
-                let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries)
-                try await SQMetricEntryService.saveEntryBucket(bucket, for: user)
-            } catch {
-                SQLogger.shared.log("Entry bucket Firestore push failed for \(dayKey): \(error)", .error, context: .dailyCheckIn)
-            }
+        do {
+            let allDayEntries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: modelContext)
+            let noteForDay = try? SQDailyNoteEntity.get(for: anchorDayKey, context: modelContext)
+            let bucket = SQMetricEntryBucket(anchorDayKey: anchorDayKey, entries: allDayEntries, note: noteForDay?.content)
+            try await SQMetricEntryService.saveEntryBucket(bucket, for: user)
+        } catch {
+            SQLogger.shared.log("Entry bucket Firestore push failed for \(anchorDayKey): \(error)", .error, context: .dailyCheckIn)
         }
     }
 

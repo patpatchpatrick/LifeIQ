@@ -12,12 +12,13 @@ struct SQDatePickerModal: View {
         let id = UUID()
         let date: Date
         let displayText: String
+        let period: SQMetricPeriod
         let isToday: Bool
         let isCompleted: Bool
     }
 
     let dateEntries: [DateEntry]
-    let onDateSelected: (Date) -> Void
+    let onDateSelected: (Date, SQMetricPeriod) -> Void
     let onDismiss: () -> Void
 
     var body: some View {
@@ -47,7 +48,7 @@ struct SQDatePickerModal: View {
                 VStack(spacing: .SQSpace.xs) {
                     ForEach(dateEntries) { entry in
                         Button {
-                            onDateSelected(entry.date)
+                            onDateSelected(entry.date, entry.period)
                             onDismiss()
                         } label: {
                             HStack(spacing: .SQSpace.m) {
