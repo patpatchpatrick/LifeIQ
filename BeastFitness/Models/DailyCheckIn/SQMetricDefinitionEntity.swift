@@ -26,6 +26,8 @@ final class SQMetricDefinitionEntity {
     var sortOrder: Int
     var isArchived: Bool
     var emoji: String?
+    var periodRaw: String      // Stores SQMetricPeriod.rawValue — raw string for SwiftData compatibility
+    var isDefault: Bool        // True if this metric is enabled by default for new users on first launch
 
     // Optional: for Firestore sync later
     var updatedAt: Date
@@ -43,7 +45,9 @@ final class SQMetricDefinitionEntity {
         isEnabled: Bool,
         sortOrder: Int,
         isArchived: Bool,
-        emoji: String? = nil
+        emoji: String? = nil,
+        period: SQMetricPeriod = .morning,
+        isDefault: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -58,6 +62,8 @@ final class SQMetricDefinitionEntity {
         self.sortOrder = sortOrder
         self.isArchived = isArchived
         self.emoji = emoji
+        self.periodRaw = period.rawValue
+        self.isDefault = isDefault
         self.updatedAt = .now
     }
 }
@@ -65,6 +71,7 @@ final class SQMetricDefinitionEntity {
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(rawValue: kindRaw) ?? .number }
     var unit: SQMetricUnit { SQMetricUnit(rawValue: unitRaw) ?? .none }
+    var period: SQMetricPeriod { SQMetricPeriod(unfrozenRawValue: periodRaw) }
     /// Translates legacy enum raw values ("state", "habits", "custom") to current group names.
     var group: String {
         switch groupRaw {
@@ -87,9 +94,11 @@ extension SQMetricDefinitionEntity {
             step: stepValue,
             isPreset: isPreset,
             isEnabled: isEnabled,
+            isDefault: isDefault,
             sortOrder: sortOrder,
             isArchived: isArchived,
             emoji: emoji,
+            period: period,
             updatedAt: updatedAt
         )
     }
@@ -105,9 +114,11 @@ extension SQMetricDefinitionEntity {
         stepValue = def.step
         isPreset = def.isPreset
         isEnabled = def.isEnabled
+        isDefault = def.isDefault
         sortOrder = def.sortOrder
         isArchived = def.isArchived
         emoji = def.emoji
+        periodRaw = def.period.rawValue
         updatedAt = def.updatedAt
     }
 }
