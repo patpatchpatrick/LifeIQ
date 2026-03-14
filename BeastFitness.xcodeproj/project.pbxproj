@@ -218,6 +218,8 @@
 		F6E179AD2F63576F0099CAF2 /* SQDailyNoteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AA2F63576F0099CAF2 /* SQDailyNoteService.swift */; };
 		F6E179B02F6357810099CAF2 /* SQMetricMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */; };
 		F6E179B12F6357810099CAF2 /* SQMetricEntryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */; };
+		F6E179B32F6384DB0099CAF2 /* SQMultiSelect.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */; };
+		F6E179B52F6384EE0099CAF2 /* SQMultiSelectViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */; };
 		F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E909D12ED529D5003441B5 /* SQCallToAction.swift */; };
 		F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */; };
 		F6F4D4132ED60E5700ECE0BC /* SQDailyCheckInViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */; };
@@ -496,6 +498,8 @@
 		F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryService.swift; sourceTree = "<group>"; };
 		F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryManager.swift; sourceTree = "<group>"; };
 		F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricMigrationManager.swift; sourceTree = "<group>"; };
+		F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelect.swift; sourceTree = "<group>"; };
+		F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelectViewModel.swift; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
 		F6E90B4B2ED55199003441B5 /* SQDailyCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInView.swift; sourceTree = "<group>"; };
 		F6F4D4122ED60E5300ECE0BC /* SQDailyCheckInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInViewModel.swift; sourceTree = "<group>"; };
@@ -1130,6 +1134,7 @@
 				F6A848922CB4A7F000B09AD5 /* SQImageView.swift */,
 				F6A848B72CBD8FE700B09AD5 /* SQDropDownButton.swift */,
 				F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */,
+				F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1219,6 +1224,7 @@
 				F6A848BD2CBD959400B09AD5 /* DropDownMenu */,
 				F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */,
 				F6A848B92CBD950400B09AD5 /* NavBar */,
+				F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1798,6 +1804,7 @@
 				F6E1798B2F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift in Sources */,
 				F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */,
 				F6A8489F2CB4E0C300B09AD5 /* HKWorkout+Extensions.swift in Sources */,
+				F6E179B52F6384EE0099CAF2 /* SQMultiSelectViewModel.swift in Sources */,
 				F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */,
 				F639F0FB2F4272AA004AC701 /* SQPerformanceRowData.swift in Sources */,
 				F679BDE12EE7D66B00A2F249 /* WorkoutSessionState.swift in Sources */,
@@ -1819,6 +1826,7 @@
 				F6C5FDAE2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift in Sources */,
 				F639F0FD2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift in Sources */,
 				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
+				F6E179B32F6384DB0099CAF2 /* SQMultiSelect.swift in Sources */,
 				F65E77FB2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift in Sources */,
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
 				F6D232EF2CBDCA2600B84594 /* SQHKWorkout.swift in Sources */,

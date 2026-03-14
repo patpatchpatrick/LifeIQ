@@ -28,20 +28,72 @@ final class SQMetricFormViewModel {
 
     let mode: Mode
 
+    // MARK: - Validation Row Models
+
+    final class RowViewModel: Identifiable {
+        let id = UUID()
+        private(set) var isValid: Bool
+        var validationStatusChanged: (() -> Void)?
+        let isActive: () -> Bool
+        let validator: () -> Bool
+        let errorMessage: () -> String?
+
+        init(
+            isActive: @escaping () -> Bool,
+            validator: @escaping () -> Bool,
+            errorMessage: @escaping () -> String?
+        ) {
+            self.isActive = isActive
+            self.validator = validator
+            self.errorMessage = errorMessage
+            self.isValid = validator()
+        }
+
+        func updateValidity() {
+            setValidity(validator(), notify: true)
+        }
+
+        func setValidity(_ newValue: Bool, notify: Bool) {
+            guard newValue != isValid else { return }
+            isValid = newValue
+            if notify {
+                validationStatusChanged?()
+            }
+        }
+    }
+
     // MARK: - Fields
 
     let titleField: SQUITextFieldViewModel
     let emojiField: SQUITextFieldViewModel
 
     var selectedKind: SQMetricKind = .scale {
-        didSet { kindChanged() }
+        didSet {
+            updateKindMenuSelection()
+            kindChanged()
+        }
     }
-    var selectedUnit: SQMetricUnit = .none
-    var selectedGroup: String = SQDefaultGroup.general.rawValue
+    var selectedUnit: SQMetricUnit = .none {
+        didSet {
+            updateUnitMenuSelection()
+            calculateValidity()
+        }
+    }
+    var selectedGroup: String = SQDefaultGroup.general.rawValue {
+        didSet {
+            updateGroupMenuSelection()
+            calculateValidity()
+        }
+    }
     /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
     var selectedPeriods: Set<SQMetricPeriod> = [.morning]
     /// When both periods are selected, whether this is a single shared daily value or independent per-session.
-    var isSingleDailyValue: Bool = false
+    var isSingleDailyValue: Bool = false {
+        didSet {
+            updateTrackingMenuSelection()
+            calculateValidity()
+        }
+    }
     var isAddingNewGroup: Bool = false
 
     let newGroupField: SQUITextFieldViewModel
@@ -49,9 +101,23 @@ final class SQMetricFormViewModel {
     let maxField: SQUITextFieldViewModel
     let stepField: SQUITextFieldViewModel
 
+    var groupMenuViewModel: SQDropDownMenuViewModel
+    var unitMenuViewModel: SQDropDownMenuViewModel
+    var kindMenuViewModel: SQDropDownMenuViewModel
+    var trackingMenuViewModel: SQDropDownMenuViewModel
+    let periodMultiSelectViewModel: SQMultiSelectViewModel
+
+    private var rowViewModels: [RowViewModel] = []
+    private var titleRowViewModel: RowViewModel?
+    private var minRowViewModel: RowViewModel?
+    private var maxRowViewModel: RowViewModel?
+    private var stepRowViewModel: RowViewModel?
+
     // MARK: - State
 
     var isLoading = false
+    private(set) var isFormValid = false
+    private(set) var saveDisabledMessage: String? = nil
 
     // MARK: - Dependencies
 
@@ -62,6 +128,12 @@ final class SQMetricFormViewModel {
     init(mode: Mode, metricsManager: SQMetricsManaging) {
         self.mode = mode
         self.metricsManager = metricsManager
+
+        var initialSelectedKind: SQMetricKind = .scale
+        var initialSelectedUnit: SQMetricUnit = .none
+        var initialSelectedGroup: String = SQDefaultGroup.general.rawValue
+        var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning]
+        var initialIsSingleDailyValue: Bool = false
 
         // Title field
         self.titleField = SQUITextFieldViewModel(
@@ -145,11 +217,11 @@ final class SQMetricFormViewModel {
         if case .edit(let existing) = mode {
             titleField.setText(existing.title)
             emojiField.setText(existing.emoji ?? "")
-            selectedKind = existing.kind
-            selectedUnit = existing.unit
-            selectedGroup = existing.group
-            selectedPeriods = existing.periods
-            isSingleDailyValue = existing.isSingleDailyValue
+            initialSelectedKind = existing.kind
+            initialSelectedUnit = existing.unit
+            initialSelectedGroup = existing.group
+            initialSelectedPeriods = existing.periods
+            initialIsSingleDailyValue = existing.isSingleDailyValue
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
             maxField.setText(existing.max.map { Self.formatFloat($0) } ?? "")
             stepField.setText(existing.step.map { Self.formatFloat($0) } ?? "")
@@ -159,6 +231,45 @@ final class SQMetricFormViewModel {
             maxField.setText("10")
             stepField.setText("1")
         }
+
+        selectedKind = initialSelectedKind
+        selectedUnit = initialSelectedUnit
+        selectedGroup = initialSelectedGroup
+        selectedPeriods = initialSelectedPeriods
+        isSingleDailyValue = initialIsSingleDailyValue
+
+        let initialGroupItems = Self.computeAvailableGroups(metricsManager: metricsManager, selectedGroup: initialSelectedGroup)
+            .map { SQDropDownMenuViewModel.Item(title: $0) }
+        self.groupMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: initialSelectedGroup),
+            items: initialGroupItems
+        ) { _ in }
+
+        let unitItems = Self.unitDisplayItems
+        self.unitMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: initialSelectedUnit)),
+            items: unitItems
+        ) { _ in }
+
+        let kindItems = Self.kindDisplayItems
+        self.kindMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: initialSelectedKind)),
+            items: kindItems
+        ) { _ in }
+
+        self.trackingMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(forTrackingShared: initialIsSingleDailyValue)),
+            items: Self.trackingDisplayItems
+        ) { _ in }
+
+        let periodItems = Self.periodDisplayItems
+        let selectedPeriodIds = Set(initialSelectedPeriods.map { $0.rawValue })
+        self.periodMultiSelectViewModel = SQMultiSelectViewModel(
+            items: periodItems,
+            selectedIds: selectedPeriodIds
+        )
+
+        configureAfterInit()
     }
 
     // MARK: - Computed
@@ -186,23 +297,7 @@ final class SQMetricFormViewModel {
     /// All unique groups currently in use, plus well-known defaults, sorted alphabetically.
     /// Excludes legacy and unknown groups so they don't appear in the picker.
     var availableGroups: [String] {
-        let legacyAndUnknown: Set<String> = [
-            SQDefaultGroup.unknown.rawValue,
-            SQDefaultGroup.habit.rawValue,
-            SQDefaultGroup.personal.rawValue,
-        ]
-
-        let fromMetrics = metricsManager.allMetrics(includeArchived: false)
-            .map(\.group)
-            .filter { !legacyAndUnknown.contains($0) }
-
-        let wellKnown = SQDefaultGroup.allCases
-            .map(\.rawValue)
-            .filter { !legacyAndUnknown.contains($0) }
-
-        var unique = Array(Set(fromMetrics + wellKnown + [selectedGroup]))
-        unique = unique.filter { !legacyAndUnknown.contains($0) }
-        return unique.sorted()
+        Self.computeAvailableGroups(metricsManager: metricsManager, selectedGroup: selectedGroup)
     }
 
     /// Metric kinds available to users when creating a metric.
@@ -212,22 +307,45 @@ final class SQMetricFormViewModel {
     }
 
     var canSave: Bool {
-        let titleValid = !titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        isFormValid
+    }
 
-        guard titleValid else { return false }
-
-        if case .create = mode {
-            switch selectedKind {
-            case .scale:
-                return validateScaleFields()
-            case .number:
-                return validateNumberFields()
-            default:
-                return false
-            }
+    var periodDisplayValue: String {
+        let periods = selectedPeriods
+        if periods.contains(.morning) && periods.contains(.evening) {
+            return isSingleDailyValue ? "Morning & Evening (Shared)" : "Morning & Evening"
+        } else if periods.contains(.evening) {
+            return "Evening"
+        } else if periods.contains(.morning) {
+            return "Morning"
+        } else {
+            return "None"
         }
+    }
 
-        return true   // edit mode: title is the only required editable field
+    var currentKind: SQMetricKind {
+        if case .edit(let def) = mode { return def.kind }
+        return selectedKind
+    }
+
+    var currentUnit: SQMetricUnit {
+        if case .edit(let def) = mode { return def.unit }
+        return selectedUnit
+    }
+
+    var currentMin: String {
+        if case .edit(let def) = mode { return def.min.map { Self.formatFloat($0) } ?? "—" }
+        return minField.text
+    }
+
+    var currentMax: String {
+        if case .edit(let def) = mode { return def.max.map { Self.formatFloat($0) } ?? "—" }
+        return maxField.text
+    }
+
+    var currentStep: String {
+        if case .edit(let def) = mode { return def.step.map { Self.formatFloat($0) } ?? "—" }
+        return stepField.text
     }
 
     // MARK: - Actions
@@ -266,6 +384,209 @@ final class SQMetricFormViewModel {
     }
 
     // MARK: - Private
+
+    private func setupRowViewModels() {
+        let titleRow = RowViewModel(
+            isActive: { true },
+            validator: { [weak self] in
+                guard let self else { return false }
+                return !self.titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            },
+            errorMessage: { "Title is required." }
+        )
+
+        let minRow = RowViewModel(
+            isActive: { [weak self] in
+                guard let self else { return false }
+                return self.isStructurallyEditable && self.showNumericRange
+            },
+            validator: { [weak self] in
+                guard let self else { return false }
+                return self.validateMinField()
+            },
+            errorMessage: { [weak self] in
+                self?.minFieldErrorMessage()
+            }
+        )
+
+        let maxRow = RowViewModel(
+            isActive: { [weak self] in
+                guard let self else { return false }
+                return self.isStructurallyEditable && self.showNumericRange
+            },
+            validator: { [weak self] in
+                guard let self else { return false }
+                return self.validateMaxField()
+            },
+            errorMessage: { [weak self] in
+                self?.maxFieldErrorMessage()
+            }
+        )
+
+        let stepRow = RowViewModel(
+            isActive: { [weak self] in
+                guard let self else { return false }
+                return self.isStructurallyEditable && self.showNumericRange
+            },
+            validator: { [weak self] in
+                guard let self else { return false }
+                return self.validateStepField()
+            },
+            errorMessage: { [weak self] in
+                self?.stepFieldErrorMessage()
+            }
+        )
+
+        rowViewModels = [titleRow, minRow, maxRow, stepRow]
+        titleRowViewModel = titleRow
+        minRowViewModel = minRow
+        maxRowViewModel = maxRow
+        stepRowViewModel = stepRow
+
+        rowViewModels.forEach { row in
+            row.validationStatusChanged = { [weak self] in
+                self?.calculateValidity()
+            }
+        }
+    }
+
+    private func calculateValidity() {
+        let activeRows = rowViewModels.filter { $0.isActive() }
+        activeRows.forEach { $0.setValidity($0.validator(), notify: false) }
+
+        var firstError: String? = activeRows.first(where: { !$0.isValid })?.errorMessage()
+
+        if firstError == nil, case .create = mode {
+            if selectedPeriods.isEmpty {
+                firstError = "Select at least one check-in period."
+            }
+        }
+
+        if firstError == nil, case .create = mode {
+            switch selectedKind {
+            case .scale:
+                let result = validateScaleFieldsDetailed()
+                if !result.isValid { firstError = result.message }
+            case .number:
+                let result = validateNumberFieldsDetailed()
+                if !result.isValid { firstError = result.message }
+            default:
+                firstError = "Metric type is invalid."
+            }
+        }
+
+        isFormValid = firstError == nil
+        saveDisabledMessage = isFormValid ? nil : (firstError ?? "Please fix the errors above.")
+    }
+
+    private func configureAfterInit() {
+        // Wire delegates for validation updates
+        titleField.delegate = self
+        minField.delegate = self
+        maxField.delegate = self
+        stepField.delegate = self
+        newGroupField.delegate = self
+
+        groupMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: selectedGroup),
+            items: availableGroups.map { SQDropDownMenuViewModel.Item(title: $0) }
+        ) { [weak self] title in
+            self?.selectedGroup = title
+        }
+
+        unitMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: selectedUnit)),
+            items: Self.unitDisplayItems
+        ) { [weak self] title in
+            self?.selectedUnit = Self.unit(fromDisplayName: title)
+        }
+
+        kindMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: selectedKind)),
+            items: Self.kindDisplayItems
+        ) { [weak self] title in
+            self?.selectedKind = Self.kind(fromDisplayName: title)
+        }
+
+        trackingMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(forTrackingShared: isSingleDailyValue)),
+            items: Self.trackingDisplayItems
+        ) { [weak self] title in
+            self?.isSingleDailyValue = Self.isTrackingShared(fromDisplayName: title)
+        }
+
+        periodMultiSelectViewModel.selectionChanged = { [weak self] selectedIds in
+            guard let self else { return }
+            let periods = Set(selectedIds.compactMap { SQMetricPeriod(rawValue: $0) })
+            self.selectedPeriods = periods
+            if self.selectedPeriods.count < 2 {
+                self.isSingleDailyValue = false
+                self.updateTrackingMenuSelection()
+            }
+            self.calculateValidity()
+        }
+
+        setupRowViewModels()
+        calculateValidity()
+    }
+
+    private static func computeAvailableGroups(metricsManager: SQMetricsManaging, selectedGroup: String) -> [String] {
+        let legacyAndUnknown: Set<String> = [
+            SQDefaultGroup.unknown.rawValue,
+            SQDefaultGroup.habit.rawValue,
+            SQDefaultGroup.personal.rawValue,
+        ]
+
+        let fromMetrics = metricsManager.allMetrics(includeArchived: false)
+            .map(\.group)
+            .filter { !legacyAndUnknown.contains($0) }
+
+        let wellKnown = SQDefaultGroup.allCases
+            .map(\.rawValue)
+            .filter { !legacyAndUnknown.contains($0) }
+
+        var unique = Array(Set(fromMetrics + wellKnown + [selectedGroup]))
+        unique = unique.filter { !legacyAndUnknown.contains($0) }
+        return unique.sorted()
+    }
+
+    private func updateGroupMenuSelection() {
+        let title = selectedGroup
+        if groupMenuViewModel.mainButton.title != title {
+            groupMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
+    private func refreshGroupMenuViewModel() {
+        let items = availableGroups.map { SQDropDownMenuViewModel.Item(title: $0) }
+        groupMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: selectedGroup),
+            items: items
+        ) { [weak self] title in
+            self?.selectedGroup = title
+        }
+    }
+
+    private func updateUnitMenuSelection() {
+        let title = Self.displayName(for: selectedUnit)
+        if unitMenuViewModel.mainButton.title != title {
+            unitMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
+    private func updateKindMenuSelection() {
+        let title = Self.displayName(for: selectedKind)
+        if kindMenuViewModel.mainButton.title != title {
+            kindMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
+    private func updateTrackingMenuSelection() {
+        let title = Self.displayName(forTrackingShared: isSingleDailyValue)
+        if trackingMenuViewModel.mainButton.title != title {
+            trackingMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
 
     private func buildDefinition() -> SQMetricDefinition {
         let emoji = emojiField.text.isEmpty ? nil : emojiField.text
@@ -329,38 +650,105 @@ final class SQMetricFormViewModel {
         }
     }
 
-    private func validateScaleFields() -> Bool {
-        guard let min = Float(minField.text),
-              let max = Float(maxField.text),
-              let step = Float(stepField.text) else { return false }
-        return max > min && step > 0 && step <= (max - min)
+    private func validateScaleFieldsDetailed() -> (isValid: Bool, message: String?) {
+        guard let min = Float(minField.text), !minField.text.isEmpty else {
+            return (false, "Min is required for scale.")
+        }
+        guard let max = Float(maxField.text), !maxField.text.isEmpty else {
+            return (false, "Max is required for scale.")
+        }
+        guard let step = Float(stepField.text), !stepField.text.isEmpty else {
+            return (false, "Step is required for scale.")
+        }
+        guard max > min else { return (false, "Max must be greater than Min.") }
+        guard step > 0 else { return (false, "Step must be greater than 0.") }
+        guard step <= (max - min) else { return (false, "Step must be less than or equal to Max - Min.") }
+        return (true, nil)
     }
 
-    private func validateNumberFields() -> Bool {
-        // For number type, min/max/step are all optional
-        // But if both min and max are provided, max must be > min
+    private func validateNumberFieldsDetailed() -> (isValid: Bool, message: String?) {
+        if !minField.text.isEmpty, Float(minField.text) == nil {
+            return (false, "Min must be a number.")
+        }
+        if !maxField.text.isEmpty, Float(maxField.text) == nil {
+            return (false, "Max must be a number.")
+        }
+        if !stepField.text.isEmpty, Float(stepField.text) == nil {
+            return (false, "Step must be a number.")
+        }
         if let min = Float(minField.text), let max = Float(maxField.text) {
-            return max > min
+            guard max > min else { return (false, "Max must be greater than Min.") }
         }
-        // If step is provided, it must be positive
         if let step = Float(stepField.text) {
-            return step > 0
+            guard step > 0 else { return (false, "Step must be greater than 0.") }
         }
-        return true
+        return (true, nil)
     }
 
-    // MARK: - Period Management
-
-    func togglePeriod(_ period: SQMetricPeriod, on: Bool) {
-        if on {
-            selectedPeriods.insert(period)
-        } else {
-            selectedPeriods.remove(period)
-            // If no periods remain, keep at least the one being removed
-            if selectedPeriods.isEmpty { selectedPeriods.insert(period) }
+    private func validateMinField() -> Bool {
+        switch selectedKind {
+        case .scale:
+            return !minField.text.isEmpty && Float(minField.text) != nil
+        case .number:
+            return minField.text.isEmpty || Float(minField.text) != nil
+        default:
+            return true
         }
-        // Reset isSingleDailyValue if no longer multi-period
-        if selectedPeriods.count < 2 { isSingleDailyValue = false }
+    }
+
+    private func minFieldErrorMessage() -> String? {
+        switch selectedKind {
+        case .scale:
+            return "Min is required for scale."
+        case .number:
+            return "Min must be a number."
+        default:
+            return nil
+        }
+    }
+
+    private func validateMaxField() -> Bool {
+        switch selectedKind {
+        case .scale:
+            return !maxField.text.isEmpty && Float(maxField.text) != nil
+        case .number:
+            return maxField.text.isEmpty || Float(maxField.text) != nil
+        default:
+            return true
+        }
+    }
+
+    private func maxFieldErrorMessage() -> String? {
+        switch selectedKind {
+        case .scale:
+            return "Max is required for scale."
+        case .number:
+            return "Max must be a number."
+        default:
+            return nil
+        }
+    }
+
+    private func validateStepField() -> Bool {
+        switch selectedKind {
+        case .scale:
+            return !stepField.text.isEmpty && Float(stepField.text) != nil
+        case .number:
+            return stepField.text.isEmpty || Float(stepField.text) != nil
+        default:
+            return true
+        }
+    }
+
+    private func stepFieldErrorMessage() -> String? {
+        switch selectedKind {
+        case .scale:
+            return "Step is required for scale."
+        case .number:
+            return "Step must be a number."
+        default:
+            return nil
+        }
     }
 
     // MARK: - Group Management
@@ -371,10 +759,13 @@ final class SQMetricFormViewModel {
             selectedGroup = trimmed
         }
         isAddingNewGroup = false
+        refreshGroupMenuViewModel()
+        calculateValidity()
     }
 
     func cancelNewGroup() {
         isAddingNewGroup = false
+        calculateValidity()
     }
 
     /// Reset numeric defaults when kind changes in create mode
@@ -392,10 +783,102 @@ final class SQMetricFormViewModel {
         default:
             break
         }
+        calculateValidity()
     }
 
     private static func formatFloat(_ value: Float) -> String {
         if value.rounded() == value { return "\(Int(value))" }
         return String(format: "%.1f", Double(value))
+    }
+
+    private static var unitDisplayItems: [SQDropDownMenuViewModel.Item] {
+        SQMetricUnit.allCases
+            .filter { $0 != .unknown }
+            .map { SQDropDownMenuViewModel.Item(title: displayName(for: $0)) }
+    }
+
+    private static var kindDisplayItems: [SQDropDownMenuViewModel.Item] {
+        selectableKindsStatic
+            .map { SQDropDownMenuViewModel.Item(title: displayName(for: $0)) }
+    }
+
+    private static var trackingDisplayItems: [SQDropDownMenuViewModel.Item] {
+        [
+            .init(title: "Independent"),
+            .init(title: "Shared")
+        ]
+    }
+
+    private static var periodDisplayItems: [SQMultiSelectViewModel.Item] {
+        [
+            .init(id: SQMetricPeriod.morning.rawValue, title: "Morning"),
+            .init(id: SQMetricPeriod.evening.rawValue, title: "Evening")
+        ]
+    }
+
+    private static var selectableKindsStatic: [SQMetricKind] {
+        [.scale, .number]
+    }
+
+    private static func displayName(for unit: SQMetricUnit) -> String {
+        switch unit {
+        case .none:
+            return "None"
+        case .unknown:
+            return "Unknown"
+        default:
+            return unit.rawValue.capitalized
+        }
+    }
+
+    private static func displayName(for kind: SQMetricKind) -> String {
+        kind.rawValue.capitalized
+    }
+
+    private static func displayName(forTrackingShared isShared: Bool) -> String {
+        isShared ? "Shared" : "Independent"
+    }
+
+    private static func unit(fromDisplayName title: String) -> SQMetricUnit {
+        if title == "None" { return .none }
+        if title == "Unknown" { return .unknown }
+        return SQMetricUnit.allCases.first(where: { displayName(for: $0) == title }) ?? .none
+    }
+
+    private static func kind(fromDisplayName title: String) -> SQMetricKind {
+        selectableKindsStatic.first(where: { displayName(for: $0) == title }) ?? .scale
+    }
+
+    private static func isTrackingShared(fromDisplayName title: String) -> Bool {
+        title == "Shared"
+    }
+}
+
+// MARK: - SQUITextFieldViewModelDelegate
+
+extension SQMetricFormViewModel: SQUITextFieldViewModelDelegate {
+    func squiTextFieldFocused(_ viewModel: SQUITextFieldViewModel) {
+        // No-op
+    }
+
+    func squiTextFieldTextChanged(_ viewModel: SQUITextFieldViewModel, text: String) {
+        handleFieldChanged(viewModel)
+    }
+
+    func squiTextFieldStateChanged(_ viewModel: SQUITextFieldViewModel, state: SQUITextFieldViewModel.TextFieldState) {
+        handleFieldChanged(viewModel)
+    }
+
+    private func handleFieldChanged(_ viewModel: SQUITextFieldViewModel) {
+        if viewModel === titleField {
+            titleRowViewModel?.updateValidity()
+        } else if viewModel === minField {
+            minRowViewModel?.updateValidity()
+        } else if viewModel === maxField {
+            maxRowViewModel?.updateValidity()
+        } else if viewModel === stepField {
+            stepRowViewModel?.updateValidity()
+        }
+        calculateValidity()
     }
 }

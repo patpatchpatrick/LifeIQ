@@ -77,12 +77,7 @@ struct SQMetricFormView: View {
                 }
             } else {
                 HStack(spacing: .SQSpace.s) {
-                    Picker("Group", selection: $viewModel.selectedGroup) {
-                        ForEach(viewModel.availableGroups, id: \.self) { group in
-                            Text(group).tag(group)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                    SQDropDownMenu(menuViewModel: viewModel.groupMenuViewModel, isDisabled: false)
 
                     Button(action: { viewModel.isAddingNewGroup = true }) {
                         Image(systemName: "plus.circle")
@@ -99,54 +94,16 @@ struct SQMetricFormView: View {
     @ViewBuilder
     var periodRow: some View {
         if viewModel.isStructurallyEditable {
-            labeledRow(label: "Check-In") {
-                HStack(spacing: 8) {
-                    periodToggle("Morning", period: .morning)
-                    periodToggle("Evening", period: .evening)
-                }
+            labeledRow(label: "Check-In Period") {
+                SQMultiSelect(viewModel: viewModel.periodMultiSelectViewModel)
             }
             if viewModel.selectedPeriods.count > 1 {
-                labeledRow(label: "Tracking") {
-                    Picker("Tracking", selection: $viewModel.isSingleDailyValue) {
-                        Text("Independent").tag(false)
-                        Text("Shared").tag(true)
-                    }
-                    .pickerStyle(.segmented)
+                labeledRow(label: "Check-In Period Tracking") {
+                    SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
                 }
             }
         } else {
-            staticRow(label: "Check-In Period", value: periodDisplayValue)
-        }
-    }
-
-    private var periodDisplayValue: String {
-        let periods = viewModel.selectedPeriods
-        if periods.contains(.morning) && periods.contains(.evening) {
-            return viewModel.isSingleDailyValue ? "Morning & Evening (Shared)" : "Morning & Evening"
-        } else if periods.contains(.evening) {
-            return "Evening"
-        } else {
-            return "Morning"
-        }
-    }
-
-    @ViewBuilder
-    private func periodToggle(_ label: String, period: SQMetricPeriod) -> some View {
-        let isOn = viewModel.selectedPeriods.contains(period)
-        Button {
-            viewModel.togglePeriod(period, on: !isOn)
-        } label: {
-            Text(label)
-                .sqFont(.bodySmall)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .foregroundStyle(isOn ? SQColor.textPrimary.color : SQColor.textSecondary.color)
-                .background(isOn ? SQColor.backgroundSecondary.color : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isOn ? SQColor.textPrimary.color.opacity(0.3) : SQColor.textSecondary.color.opacity(0.2), lineWidth: 1)
-                )
+            staticRow(label: "Check-In Period", value: viewModel.periodDisplayValue)
         }
     }
 
@@ -156,12 +113,7 @@ struct SQMetricFormView: View {
     var kindRow: some View {
         if viewModel.isStructurallyEditable {
             labeledRow(label: "Type") {
-                Picker("Type", selection: $viewModel.selectedKind) {
-                    ForEach(viewModel.selectableKinds, id: \.self) { kind in
-                        Text(kind.rawValue.capitalized).tag(kind)
-                    }
-                }
-                .pickerStyle(.segmented)
+                SQDropDownMenu(menuViewModel: viewModel.kindMenuViewModel, isDisabled: false)
             }
         } else {
             staticRow(label: "Type", value: viewModel.currentKind.rawValue.capitalized)
@@ -175,12 +127,7 @@ struct SQMetricFormView: View {
         if viewModel.showUnit {
             if viewModel.isStructurallyEditable {
                 labeledRow(label: "Unit") {
-                    Picker("Unit", selection: $viewModel.selectedUnit) {
-                        ForEach(SQMetricUnit.allCases, id: \.self) { unit in
-                            Text(unit == .none ? "None" : unit.rawValue.capitalized).tag(unit)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                    SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
                 }
             } else {
                 staticRow(label: "Unit", value: viewModel.currentUnit == .none ? "None" : viewModel.currentUnit.rawValue.capitalized)
@@ -227,22 +174,31 @@ struct SQMetricFormView: View {
 
     @ViewBuilder
     var saveButton: some View {
-        SQButton(
-            shouldHugContent: false,
-            title: "Save",
-            isDisabled: !viewModel.canSave,
-            isLoading: viewModel.isLoading,
-            action: {
-                Task {
-                    await viewModel.saveTapped(using: modelContext)
-                    if !viewModel.isLoading {
-                        dismiss()
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            if !viewModel.canSave, let message = viewModel.saveDisabledMessage {
+                Text(message)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.colorErrorRed)
+                    .padding(.horizontal, .SQSpace.xl)
+            }
+
+            SQButton(
+                shouldHugContent: false,
+                title: "Save",
+                isDisabled: !viewModel.canSave,
+                isLoading: viewModel.isLoading,
+                action: {
+                    Task {
+                        await viewModel.saveTapped(using: modelContext)
+                        if !viewModel.isLoading {
+                            dismiss()
+                        }
                     }
                 }
-            }
-        )
-        .padding(.horizontal, .SQSpace.xl)
-        .padding(.bottom, .SQSpace.l)
+            )
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.bottom, .SQSpace.l)
+        }
     }
 
     // MARK: - Body
@@ -324,39 +280,5 @@ struct SQMetricFormView: View {
                 .opacity(0.5)
                 .cornerRadius(.SQCornerRadius.m)
         }
-    }
-}
-
-// MARK: - View Model Accessors for Read-Only Display
-
-private extension SQMetricFormViewModel {
-    var currentKind: SQMetricKind {
-        if case .edit(let def) = mode { return def.kind }
-        return selectedKind
-    }
-
-    var currentUnit: SQMetricUnit {
-        if case .edit(let def) = mode { return def.unit }
-        return selectedUnit
-    }
-
-    var currentMin: String {
-        if case .edit(let def) = mode { return def.min.map { Self.fmt($0) } ?? "—" }
-        return minField.text
-    }
-
-    var currentMax: String {
-        if case .edit(let def) = mode { return def.max.map { Self.fmt($0) } ?? "—" }
-        return maxField.text
-    }
-
-    var currentStep: String {
-        if case .edit(let def) = mode { return def.step.map { Self.fmt($0) } ?? "—" }
-        return stepField.text
-    }
-
-    private static func fmt(_ v: Float) -> String {
-        if v.rounded() == v { return "\(Int(v))" }
-        return String(format: "%.1f", Double(v))
     }
 }
