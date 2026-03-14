@@ -135,18 +135,22 @@ extension SQMetricEntry {
 /// A day's worth of metric entries grouped into a single Firestore document.
 /// Stored at: `users/{userId}/metric-entries/{anchorDayKey}`
 /// One document per calendar day (vs. one per entry) reduces Firestore reads/writes ~14×.
+/// Also stores the day's free-form note, eliminating the separate `daily-notes` collection.
 struct SQMetricEntryBucket: Identifiable, Codable {
     /// "YYYY-MM-DD" — also the Firestore document ID.
     var anchorDayKey: String
     var entries: [SQMetricEntry]
-    /// Updated whenever any entry in this bucket changes — used for incremental sync queries.
+    /// The user's free-form note for this day. Nil if no note was written.
+    var note: String?
+    /// Updated whenever any entry or the note in this bucket changes — used for incremental sync queries.
     var updatedAt: Date
 
     var id: String { anchorDayKey }
 
-    init(anchorDayKey: String, entries: [SQMetricEntry], updatedAt: Date = .now) {
+    init(anchorDayKey: String, entries: [SQMetricEntry], note: String? = nil, updatedAt: Date = .now) {
         self.anchorDayKey = anchorDayKey
         self.entries = entries
+        self.note = note
         self.updatedAt = updatedAt
     }
 }

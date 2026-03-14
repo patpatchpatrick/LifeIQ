@@ -34,16 +34,13 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     let hub: EventHub
     private let entryService: SQMetricEntryServicing.Type
-    private let noteService: SQDailyNoteServicing.Type
 
     init(
         hub: EventHub,
-        entryService: SQMetricEntryServicing.Type = SQMetricEntryService.self,
-        noteService: SQDailyNoteServicing.Type = SQDailyNoteService.self
+        entryService: SQMetricEntryServicing.Type = SQMetricEntryService.self
     ) {
         self.hub = hub
         self.entryService = entryService
-        self.noteService = noteService
     }
 
     // MARK: - Save
@@ -69,23 +66,19 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
         // Build daily buckets and push to Firestore.
         // Fetch ALL entries for each affected anchorDayKey so morning + evening are merged into one bucket.
+        // The note is embedded in the bucket — no separate daily-notes write needed.
         let user = SQAppState.shared.userState.loggedInUser
-        let affectedDays = Set(entries.map { $0.anchorDayKey })
+        var affectedDays = Set(entries.map { $0.anchorDayKey })
+        if let noteDay = note?.anchorDayKey { affectedDays.insert(noteDay) }
+
         for dayKey in affectedDays {
             do {
                 let allDayEntries = try SQMetricEntryEntity.getAll(for: dayKey, context: context)
-                let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries)
+                let noteContent = dayKey == note?.anchorDayKey ? note?.content : nil
+                let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries, note: noteContent)
                 try await entryService.saveEntryBucket(bucket, for: user)
             } catch {
                 SQLogger.shared.log("Firestore bucket push failed for \(dayKey): \(error)", .error, context: .dailyCheckIn)
-            }
-        }
-
-        if let note {
-            do {
-                try await noteService.saveDailyNote(note, for: user)
-            } catch {
-                SQLogger.shared.log("Firestore push failed for note \(note.anchorDayKey): \(error)", .error, context: .dailyCheckIn)
             }
         }
 
@@ -129,39 +122,46 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     private func performFullSync(context: ModelContext) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
         let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: nil)
-        let notes   = try await noteService.fetchDailyNotes(for: user, afterDate: nil)
 
         let entries = buckets.flatMap { $0.entries }
         try SQMetricEntryEntity.upsert(entries, in: context)
-        for note in notes { try SQDailyNoteEntity.upsert(note, in: context) }
+        try upsertNotes(from: buckets, in: context)
 
         updateLastSyncDate(to: .now, context: context)
         Task { @MainActor in
             SQFirestoreMetricsManager.shared.recordReads(
-                buckets.count + notes.count,
-                operation: "Full sync metric buckets + notes"
+                buckets.count,
+                operation: "Full sync metric buckets"
             )
         }
-        return buckets.count + notes.count
+        return buckets.count
     }
 
     private func performIncrementalSync(lastSync: Date?, context: ModelContext) async throws -> Int {
         let user = SQAppState.shared.userState.loggedInUser
         let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: lastSync)
-        let notes   = try await noteService.fetchDailyNotes(for: user, afterDate: lastSync)
 
         let entries = buckets.flatMap { $0.entries }
         try SQMetricEntryEntity.upsert(entries, in: context)
-        for note in notes { try SQDailyNoteEntity.upsert(note, in: context) }
+        try upsertNotes(from: buckets, in: context)
 
         updateLastSyncDate(to: .now, context: context)
         Task { @MainActor in
             SQFirestoreMetricsManager.shared.recordReads(
-                buckets.count + notes.count,
-                operation: "Incremental sync metric buckets + notes"
+                buckets.count,
+                operation: "Incremental sync metric buckets"
             )
         }
-        return buckets.count + notes.count
+        return buckets.count
+    }
+
+    /// Extracts notes embedded in buckets and upserts them into local SwiftData storage.
+    private func upsertNotes(from buckets: [SQMetricEntryBucket], in context: ModelContext) throws {
+        for bucket in buckets {
+            guard let content = bucket.note, !content.isEmpty else { continue }
+            let note = SQDailyNote(anchorDayKey: bucket.anchorDayKey, content: content, updatedAt: bucket.updatedAt)
+            try SQDailyNoteEntity.upsert(note, in: context)
+        }
     }
 
     private func shouldRefresh(lastSync: Date?) -> Bool {
