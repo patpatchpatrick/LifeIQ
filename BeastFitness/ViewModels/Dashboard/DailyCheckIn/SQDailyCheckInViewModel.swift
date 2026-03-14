@@ -32,6 +32,9 @@ final class SQDailyCheckInViewModel: Identifiable {
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     let onDismiss: () -> Void
     private(set) var isLoading: Bool = false
+    /// The check-in period this view model represents (morning or evening).
+    /// Determines which subset of metrics is shown.
+    let period: SQMetricPeriod
 
     var isAddMetricSheetDisplayed: Bool = false
     let metricsListController = SQMetricsListController.default(
@@ -42,6 +45,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         eventHub: EventHub,
         stats: SQDailyCheckInStats?,
         targetDate: Date = .now,
+        period: SQMetricPeriod,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         metricsManager: SQMetricsManaging,
         onDismiss: @escaping () -> Void
@@ -49,6 +53,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.eventHub = eventHub
         self.stats = stats
         self.targetDate = targetDate
+        self.period = period
         self.dailyCheckInManager = dailyCheckInManager
         self.metricsManager = metricsManager
         self.onDismiss = onDismiss
@@ -133,7 +138,7 @@ final class SQDailyCheckInViewModel: Identifiable {
     func buildRows(for stats: SQDailyCheckInStats?) -> [SQDailyCheckInRowViewModel] {
         var built: [SQDailyCheckInRowViewModel] = []
 
-        let metrics = metricsManager.dailyCheckInMetrics()
+        let metrics = metricsManager.dailyCheckInMetrics(for: period)
 
         for metric in metrics {
             let field: SQDailyCheckInField = .metric(id: metric.id)
@@ -154,12 +159,17 @@ final class SQDailyCheckInViewModel: Identifiable {
             switch metric.kind {
 
             case .binary:
-                let initial = Self.binaryInitialSelection(metricId: metric.id, stats: stats)
-
+                // Legacy: treat as a 0–1 scale for display purposes
+                let legacyDef = SQMetricDefinition(
+                    id: metric.id, title: metric.title, kind: .scale, unit: metric.unit,
+                    group: metric.group, min: 0, max: 1, step: 1,
+                    isPreset: metric.isPreset, sortOrder: metric.sortOrder
+                )
+                let segments = Self.scaleSegments(for: legacyDef)
+                guard !segments.isEmpty else { continue }
+                let initial = Self.scaleInitialSelection(metricId: metric.id, stats: stats, segments: segments)
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
-                    field: field,
-                    title: displayTitle,
-                    segments: SQBinaryYesNo.allCases,
+                    field: field, title: displayTitle, segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )
@@ -366,12 +376,13 @@ final class SQDailyCheckInViewModel: Identifiable {
                 switch metric.kind {
 
                 case .binary:
+                    // Legacy: treated as scale at display time; read value same way as scale
                     if
                         let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel,
                         let seg = segmented.selectedSegment,
-                        let yn = SQBinaryYesNo.fromSegment(seg)
+                        let v = Float(seg.id)
                     {
-                        values[metricId] = yn.value
+                        values[metricId] = v
                     }
 
                 case .scale:
@@ -388,6 +399,9 @@ final class SQDailyCheckInViewModel: Identifiable {
                         let raw = textRow.textFieldViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
                         if let v = Float(raw) { values[metricId] = v }
                     }
+
+                case .unknown:
+                    break
                 }
 
             case .notes:
