@@ -127,7 +127,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         // For single-daily-value metrics, include any entry for that metric (shared across sessions).
         // For periodic metrics, include only entries matching the requested period.
         let metricsManager = SQMetricsManager.shared
-        let metricById = Dictionary(
+        let metricById = await Dictionary(
             uniqueKeysWithValues: metricsManager.allMetrics(includeArchived: true).map { ($0.id, $0) }
         )
 

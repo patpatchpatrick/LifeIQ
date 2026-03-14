@@ -144,11 +144,11 @@ struct SQMetricFormView: View {
             viewModel.togglePeriod(period, on: !isOn)
         } label: {
             Text(label)
-                .sqFont(SQFont(type: .bodySmall))
+                .sqFont(.bodySmall)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .foregroundStyle(isOn ? SQColor.textPrimary.color : SQColor.textSecondary.color)
-                .background(isOn ? SQColor.backgroundCell.color : Color.clear)
+                .background(isOn ? SQColor.backgroundSecondary.color : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)

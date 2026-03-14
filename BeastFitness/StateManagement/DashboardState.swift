@@ -111,7 +111,7 @@ protocol DashboardStating: AnyObject {
 
     /// Determines the check-in period based on current device time.
     /// Before noon → morning; noon or after → evening.
-    private static func checkInPeriod(for date: Date) -> SQMetricPeriod {
+    static func checkInPeriod(for date: Date) -> SQMetricPeriod {
         let hour = Calendar.current.component(.hour, from: date)
         return hour < 12 ? .morning : .evening
     }
