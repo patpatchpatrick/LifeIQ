@@ -151,7 +151,7 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
-            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, context: context)
+            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, period: nil, context: context)
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
             let todaysCheckIns = try SQDailyCheckInEntity.getAll(
@@ -297,8 +297,10 @@ final class SQDashboardController: SQDashboardInterface {
     
     func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {
         let targetDate = date ?? .now
+        let checkInPeriod = DashboardState.checkInPeriod(for: targetDate)
         let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
             for: targetDate,
+            period: checkInPeriod,
             context: context
         )
         state.displayDailyCheckInSheet(with: dailyCheckInStats, for: targetDate)
