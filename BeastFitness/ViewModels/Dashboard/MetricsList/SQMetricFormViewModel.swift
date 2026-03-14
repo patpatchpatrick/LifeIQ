@@ -80,8 +80,8 @@ final class SQMetricFormViewModel {
 
         // Emoji field — single grapheme cluster, select-all on focus so tapping replaces
         self.emojiField = SQUITextFieldViewModel(
-            placeholder: "👆",
-            font: UIFont.systemFont(ofSize: 28),
+            placeholder: "Enter an emoji or single character",
+            font: SQFont(type: .body).uiFont,
             keyboardType: .default,
             autocapitalizationType: .none,
             autocorrectionType: .no,
@@ -94,7 +94,7 @@ final class SQMetricFormViewModel {
         // Numeric fields — decimal with 1 decimal place
         self.minField = SQUITextFieldViewModel(
             placeholder: "0",
-            font: UIFont.systemFont(ofSize: 16),
+            font: SQFont(type: .body).uiFont,
             keyboardType: .decimalPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
@@ -106,7 +106,7 @@ final class SQMetricFormViewModel {
 
         self.maxField = SQUITextFieldViewModel(
             placeholder: "10",
-            font: UIFont.systemFont(ofSize: 16),
+            font: SQFont(type: .body).uiFont,
             keyboardType: .decimalPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
@@ -118,7 +118,7 @@ final class SQMetricFormViewModel {
 
         self.stepField = SQUITextFieldViewModel(
             placeholder: "1",
-            font: UIFont.systemFont(ofSize: 16),
+            font: SQFont(type: .body).uiFont,
             keyboardType: .decimalPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
@@ -131,7 +131,7 @@ final class SQMetricFormViewModel {
         // New group text input
         self.newGroupField = SQUITextFieldViewModel(
             placeholder: "Group name",
-            font: UIFont.systemFont(ofSize: 16),
+            font: SQFont(type: .body).uiFont,
             keyboardType: .default,
             autocapitalizationType: .sentences,
             autocorrectionType: .no,

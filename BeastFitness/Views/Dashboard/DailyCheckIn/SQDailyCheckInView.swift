@@ -85,8 +85,8 @@ struct SQDailyCheckInView: View {
                             viewModel.addMetricTapped()
                         } label: {
                             HStack(spacing: .SQSpace.m) {
-                                Image(systemName: SQImageSymbol.plus.rawValue)
-                                Text("Add Metric")
+                                Image(systemName: SQImageSymbol.edit.rawValue)
+                                Text("Edit Metrics")
                             }
                         }
                     }

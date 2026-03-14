@@ -70,7 +70,7 @@ struct SQMetricsListItem: View {
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.m)
-        .background(SQColor.background.color)
+        .background(SQColor.backgroundSheet.color)
         .contentShape(Rectangle())
     }
 }

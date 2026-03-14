@@ -41,14 +41,7 @@ struct SQMetricFormView: View {
     @ViewBuilder
     var emojiInputRow: some View {
         labeledRow(label: "Emoji") {
-            HStack(spacing: .SQSpace.m) {
-                SQUITextField(viewModel: viewModel.emojiField)
-                    .frame(width: 48)
-
-                Text("Tap field, then use emoji keyboard")
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textTertiary)
-            }
+            SQUITextField(viewModel: viewModel.emojiField)
         }
     }
 
@@ -122,7 +115,7 @@ struct SQMetricFormView: View {
                 }
             }
         } else {
-            staticRow(label: "Check-In", value: periodDisplayValue)
+            staticRow(label: "Check-In Period", value: periodDisplayValue)
         }
     }
 
@@ -282,7 +275,7 @@ struct SQMetricFormView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(viewModel.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .background(SQColor.backgroundSecondary.color)
+        .background(SQColor.backgroundSheet.color)
         .safeAreaInset(edge: .bottom) {
             saveButton
         }
@@ -328,7 +321,7 @@ struct SQMetricFormView: View {
                 .sqForegroundColor(.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
-                .sqBackgroundColor(.backgroundSecondaryLight)
+                .opacity(0.5)
                 .cornerRadius(.SQCornerRadius.m)
         }
     }

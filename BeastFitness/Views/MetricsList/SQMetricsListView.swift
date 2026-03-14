@@ -99,7 +99,7 @@ struct SQMetricsListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Add Metrics")
             .navigationBarTitleDisplayMode(.inline)
-            .background(SQColor.background.color)
+            .background(SQColor.backgroundSheet.color)
             .searchable(
                 text: $controller.searchText,
                 placement: .navigationBarDrawer(displayMode: .automatic),
