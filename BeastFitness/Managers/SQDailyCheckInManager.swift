@@ -50,7 +50,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
     }
     
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to modelContext: ModelContext) async throws {
-        
+
+        // Write to legacy entity (dashboard reads from it until fully migrated)
         do {
             try SQDailyCheckInEntity.upsert(stats: stats, in: modelContext)
         } catch {
@@ -59,21 +60,70 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 .error,
                 context: .dailyCheckIn
             )
-            
             throw error
         }
-        
+
+        // Also write to new SQMetricEntry format
+        let metricsManager = SQMetricsManager.shared
+        let allMetrics = metricsManager.allMetrics(includeArchived: true)
+        let metricById = Dictionary(uniqueKeysWithValues: allMetrics.map { ($0.id, $0) })
+        let tz = TimeZone.current
+        let anchorDayKey = stats.date.anchorDayKey(in: tz)
+        let now = Date.now
+
+        var entries: [SQMetricEntry] = []
+        for (metricId, rawValue) in stats.values {
+            guard let definition = metricById[metricId] else { continue }
+            let entry = SQMetricEntry.make(
+                metricId: metricId,
+                rawValue: rawValue,
+                definition: definition,
+                recordedAt: now
+            )
+            entries.append(entry)
+        }
+
+        try SQMetricEntryEntity.upsert(entries, in: modelContext)
+
+        if let notesText = stats.notes, !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let note = SQDailyNote(anchorDayKey: anchorDayKey, content: notesText)
+            try SQDailyNoteEntity.upsert(note, in: modelContext)
+        }
+
+        // Legacy Firestore push
         do {
             try await dailyCheckInService.saveDailyCheckInStats(stats)
         } catch {
-            
-            SQLogger.shared.log("Submitting daily stats failed with error: \(error)", .debug, context: .dailyCheckIn)
-            // TODO: PTD Error - throw check in error here and let the user know that failed to save to cloud... add a system to retry saving all failed daily check ins in the background in the future.
+            SQLogger.shared.log("Legacy Firestore push failed: \(error)", .debug, context: .dailyCheckIn)
+        }
+
+        // Push new metric entries to Firestore
+        let user = SQAppState.shared.userState.loggedInUser
+        for entry in entries {
+            do {
+                try await SQMetricEntryService.saveMetricEntry(entry, for: user)
+            } catch {
+                SQLogger.shared.log("Entry Firestore push failed for \(entry.metricId): \(error)", .error, context: .dailyCheckIn)
+            }
         }
     }
-    
+
     func getDailyCheckInStats(for date: Date, context: ModelContext) async throws -> SQDailyCheckInStats? {
-        return try SQDailyCheckInEntity.get(for: date, context: context)
+        let anchorDayKey = date.anchorDayKey()
+        let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
+
+        if entries.isEmpty {
+            // Fall back to legacy entity during transition period
+            return try SQDailyCheckInEntity.get(for: date, context: context)
+        }
+
+        // Build SQDailyCheckInStats from new-format entries
+        var values: [String: Float] = [:]
+        for entry in entries {
+            values[entry.metricId] = entry.rawValue
+        }
+        let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
+        return SQDailyCheckInStats(date: date, values: values, notes: note?.content)
     }
 
     // MARK: - Smart Sync
