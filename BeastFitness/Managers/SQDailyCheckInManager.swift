@@ -77,8 +77,8 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         let now = Date.now
         // Period comes from the stats model (set by the caller from the view model's
         // period, which is either the default time-of-day period or the one selected
-        // via the date picker).
-        let submissionPeriod = stats.period
+        // via the date picker). Falls back to .morning if somehow nil.
+        let submissionPeriod = stats.period ?? .morning
 
         var entries: [SQMetricEntry] = []
         for (metricId, rawValue) in stats.values {
@@ -158,7 +158,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             }
         }
         let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
-        return values.isEmpty ? nil : SQDailyCheckInStats(date: date, values: values, notes: note?.content)
+        return values.isEmpty ? nil : SQDailyCheckInStats(date: date, period: period, values: values, notes: note?.content)
     }
 
     // MARK: - Smart Sync
