@@ -22,9 +22,11 @@ struct SQModalHost: View {
                     }
 
                 switch modal {
-                case .datePicker(let dateEntries, let onDateSelected):
+                case .datePicker(let dateEntries, let selectedDate, let selectedPeriod, let onDateSelected):
                     SQDatePickerModal(
                         dateEntries: dateEntries,
+                        selectedDate: selectedDate,
+                        selectedPeriod: selectedPeriod,
                         onDateSelected: onDateSelected,
                         onDismiss: { modalState.dismiss() }
                     )

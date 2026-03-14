@@ -447,6 +447,8 @@ final class SQDailyCheckInViewModel: Identifiable {
 
             eventHub.modalEvents.send(.presentDatePicker(
                 dateEntries: dateEntries,
+                selectedDate: self.targetDate,
+                selectedPeriod: self.period,
                 onDateSelected: { [weak self] selectedDate, selectedPeriod in
                     guard let self else { return }
                     self.period = selectedPeriod

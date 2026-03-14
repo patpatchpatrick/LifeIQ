@@ -75,11 +75,13 @@ struct SQDailyCheckInView: View {
         NavigationStack {
             mainScroll
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle(viewModel.isEditingPastDate
-                    ? viewModel.targetDate.formattedString(with: .medium)
-                    : viewModel.period == .morning ? "Morning Check-In" : "Evening Check-In")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("\(viewModel.period.rawValue.capitalized) Check-In · \(viewModel.targetDate.formattedString(with: .medium))")
+                            .sqFont(SQFont(type: .bodySmall))
+                            .sqForegroundColor(.textPrimary)
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             viewModel.addMetricTapped()

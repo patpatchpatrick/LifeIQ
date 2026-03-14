@@ -18,8 +18,15 @@ struct SQDatePickerModal: View {
     }
 
     let dateEntries: [DateEntry]
+    var selectedDate: Date?
+    var selectedPeriod: SQMetricPeriod?
     let onDateSelected: (Date, SQMetricPeriod) -> Void
     let onDismiss: () -> Void
+
+    private func isSelected(_ entry: DateEntry) -> Bool {
+        guard let selectedDate, let selectedPeriod else { return false }
+        return Calendar.current.isDate(entry.date, inSameDayAs: selectedDate) && entry.period == selectedPeriod
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -78,7 +85,11 @@ struct SQDatePickerModal: View {
                                     .sqForegroundColor(.textSecondary)
                             }
                             .padding(.SQSpace.m)
-                            .sqBackgroundColor(.backgroundSecondary)
+                            .background(isSelected(entry) ? SQColor.accent(1).color.opacity(0.15) : SQColor.backgroundSecondary.color)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.s)
+                                    .stroke(isSelected(entry) ? SQColor.accent(1).color : Color.clear, lineWidth: 1.5)
+                            )
                             .cornerRadius(.SQCornerRadius.s)
                         }
                         .buttonStyle(.plain)
