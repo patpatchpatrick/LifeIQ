@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import BeastFitnessCore
 
 /// A single metric value logged by the user during a check-in.
 /// This is the canonical analytics storage unit — one entry per metric per check-in submission.
