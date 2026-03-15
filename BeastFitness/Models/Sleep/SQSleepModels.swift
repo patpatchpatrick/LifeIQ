@@ -86,8 +86,8 @@ struct SQSleepPhaseAggregate: Sendable {
     let priorAverageDuration: TimeInterval?
     let sparklineDataHours: [Double]
 
-    var changePercent: Double {
-        guard let priorAverageDuration, priorAverageDuration > 0 else { return 0 }
+    var changePercent: Double? {
+        guard let priorAverageDuration, priorAverageDuration > 0 else { return nil }
         return (averageDuration - priorAverageDuration) / priorAverageDuration
     }
 }

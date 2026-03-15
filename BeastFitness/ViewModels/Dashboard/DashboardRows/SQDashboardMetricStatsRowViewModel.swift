@@ -28,8 +28,8 @@ final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
     /// Data points for sparkline chart visualization
     let sparklineData: [Double]
 
-    /// Fractional percentage change (e.g., 0.15 for +15%)
-    let changePercent: Double
+    /// Fractional percentage change (e.g., 0.15 for +15%); nil = no prior data to compare
+    let changePercent: Double?
 
     /// Optional quantity type for performance metrics (used for leaderboard)
     let quantityType: SQQuantityType?
@@ -45,7 +45,7 @@ final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
         avgValue: String,
         unit: String,
         sparklineData: [Double],
-        changePercent: Double,
+        changePercent: Double?,
         quantityType: SQQuantityType? = nil,
         activityType: HKWorkoutActivityType? = nil
     ) {

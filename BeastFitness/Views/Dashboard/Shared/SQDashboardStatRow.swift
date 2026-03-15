@@ -13,14 +13,47 @@ struct SQDashboardStatRow: View {
         data.icon.count == 1
     }
 
-    // Color for change percentage based on positive/negative
     private var changeColor: SQColor {
-        data.changePercent >= 0 ? .colorFadedGreen : .colorFadedRed
+        guard let pct = data.changePercent else { return .textTertiary }
+        return pct >= 0 ? .colorFadedGreen : .colorFadedRed
     }
-    
+
+    private var sparklineLineColor: Color {
+        guard let pct = data.changePercent else {
+            return SQColor.textTertiary.color.opacity(0.5)
+        }
+        return (pct >= 0 ? SQColor.colorFadedGreen.color : SQColor.colorFadedRed.color).opacity(0.8)
+    }
+
+    @ViewBuilder
+    private var trendColumn: some View {
+        let hasSparkline = data.sparklineData.count >= 2
+        VStack(alignment: .trailing, spacing: 4) {
+            if hasSparkline {
+                SQSparkline(dataPoints: data.sparklineData, height: 20, lineColor: sparklineLineColor)
+                    .frame(width: 70)
+            }
+
+            if let pct = data.changePercent {
+                HStack(spacing: 2) {
+                    SQImageView(image: .init(
+                        symbol: pct >= 0 ? .chevronUp : .chevronDown,
+                        symbolStyle: .colorWithFont(changeColor, font: .bodyExtraSmall)
+                    ))
+                    .frame(width: 10, height: 10)
+
+                    Text(String(format: "%.1f%%", abs(pct * 100)))
+                        .font(.sqFont(.bodyExtraSmall))
+                        .sqForegroundColor(changeColor)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity * 0.8, maxHeight: .infinity, alignment: .trailing)
+    }
+
     var mainBody: some View {
-        HStack(spacing: 12) {
-            // Column 1: Icon + Title (40%)
+        HStack(spacing: .SQSpace.l) {
+            // Column 1: Icon + Title
             HStack(spacing: 8) {
                 Group {
                     if isEmoji {
@@ -48,7 +81,7 @@ struct SQDashboardStatRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Column 2: Avg Value + Unit (30%)
+            // Column 2: Avg Value + Unit
             HStack(spacing: 4) {
                 Text(data.avgValue)
                     .font(.sqFont(.bodySmallSemiBold))
@@ -60,20 +93,9 @@ struct SQDashboardStatRow: View {
             }
             .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
 
-            // Column 3: Sparkline + Change (30%)
-            HStack(spacing: 8) {
-                // Placeholder sparkline (will integrate CoolCharts later)
-                SQSparkline(dataPoints: data.sparklineData, height: 20)
-                    .sqForegroundColor(changeColor)
-                    .frame(width: 40)
-
-                // Change percentage
-                Text(String(format: "%.1f%%", abs(data.changePercent * 100)))
-                    .font(.sqFont(.bodyExtraSmall))
-                    .sqForegroundColor(changeColor)
-                    .frame(width: 40, alignment: .trailing)
-            }
-            .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
+            // Column 3: Stacked sparkline + trend indicator
+            trendColumn
+                .padding(.leading, .SQSpace.m)
         }
     }
 
@@ -148,6 +170,34 @@ struct SQDashboardStatRow: View {
                 unit: "/5",
                 sparklineData: [4.0, 4.2, 4.5, 4.3, 4.6, 4.4, 4.5],
                 changePercent: 15.7
+            )
+        )
+    }
+    .sqBackgroundColor(.backgroundSecondary)
+}
+
+#Preview("No Prior Data") {
+    VStack(spacing: 1) {
+        SQDashboardStatRow(
+            data: SQStatRowData(
+                id: "mood-nodata",
+                icon: "😊",
+                title: "Mood (has sparkline)",
+                avgValue: "4.2",
+                unit: "/5",
+                sparklineData: [3.5, 4.0, 4.2, 4.1, 4.5, 4.3, 4.2],
+                changePercent: nil
+            )
+        )
+        SQDashboardStatRow(
+            data: SQStatRowData(
+                id: "sleep-nodata",
+                icon: "😴",
+                title: "Sleep (no data)",
+                avgValue: "7.2",
+                unit: "hrs",
+                sparklineData: [],
+                changePercent: nil
             )
         )
     }

@@ -1004,11 +1004,11 @@ final class SQDashboardController: SQDashboardInterface {
         let priorValues = priorStats.compactMap { $0.values[definition.id] }
         let priorAverage: Float? = priorValues.isEmpty ? nil : priorValues.reduce(0, +) / Float(priorValues.count)
 
-        let changePercent: Double
+        let changePercent: Double?
         if let prior = priorAverage, prior != 0 {
             changePercent = Double((average - prior) / prior)
         } else {
-            changePercent = 0.0
+            changePercent = nil
         }
 
         return SQDashboardMetricStatsRowViewModel(

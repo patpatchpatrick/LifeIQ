@@ -12,7 +12,7 @@ struct SQStatRowData: Identifiable {
     let avgValue: String
     let unit: String
     let sparklineData: [Double]
-    let changePercent: Double  // Percentage change
+    let changePercent: Double?  // Fractional change; nil = no prior data to compare
 
     init(
         id: String,
@@ -21,7 +21,7 @@ struct SQStatRowData: Identifiable {
         avgValue: String,
         unit: String,
         sparklineData: [Double],
-        changePercent: Double
+        changePercent: Double?
     ) {
         self.id = id
         self.icon = icon
