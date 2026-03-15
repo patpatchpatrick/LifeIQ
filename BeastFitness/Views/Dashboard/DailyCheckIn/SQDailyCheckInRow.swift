@@ -15,35 +15,26 @@ struct SQDailyCheckInRow: View {
     @ViewBuilder
     var titleStack: some View {
         HStack(spacing: .SQSpace.s) {
-            Circle()
-                .sqForegroundColor(.colorErrorRed)
-                .frame(width: circleBadgeHeight, height: circleBadgeHeight)
-                .overlay {
-                    Text(viewModel.number)
-                        .sqFont(.title3)
-                        .sqForegroundColor(.textPrimary)
-                }
-         
             Text(viewModel.title)
                 .sqFont(.title3)
                 .sqForegroundColor(.textPrimary)
             
             Spacer()
             
-            if viewModel.isCompleted {
-                Circle()
-                    .sqForegroundColor(.colorGreenDarkBorder)
-                    .frame(width: circleBadgeHeight, height: circleBadgeHeight)
-                    .overlay {
-                        SQImageView(
-                            image: .init(
-                                symbol: .checkmark,
-                                symbolStyle: .colorWithFont(.textPrimary, font: .bodyBold)
-                            )
-                        )
-                        .frame(width: 12)
-                    }
-            }
+//            if viewModel.isCompleted {
+//                Circle()
+//                    .sqForegroundColor(.colorGreenDarkBorder)
+//                    .frame(width: circleBadgeHeight, height: circleBadgeHeight)
+//                    .overlay {
+//                        SQImageView(
+//                            image: .init(
+//                                symbol: .checkmark,
+//                                symbolStyle: .colorWithFont(.textPrimary, font: .bodyBold)
+//                            )
+//                        )
+//                        .frame(width: 12)
+//                    }
+//            }
         }
     }
     
@@ -71,15 +62,9 @@ struct SQDailyCheckInRow: View {
         vertStack
             .padding(.SQSpace.l)
             .sqBackgroundColor(
-                .colorGreenPct(percent: 1, base: .background),
-                opacity: viewModel.isCompleted ? 0.1 : 0
+                .backgroundSecondary
             )
             .cornerRadius(.SQCornerRadius.l)
-            .sqBorder(
-                viewModel.isCompleted ? .colorGreenDarkBorder : .backgroundSecondaryLight,
-                width: 1,
-                cornerRadius: .SQCornerRadius.l
-            )
     }
     
     var body: some View {

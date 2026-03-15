@@ -13,7 +13,7 @@ struct SQDailyCheckInView: View {
     
     @ViewBuilder
     var mainStack: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xl) {
+        VStack(alignment: .leading, spacing: .SQSpace.xxl) {
             ForEach(viewModel.rows) { row in
                 SQDailyCheckInRow(viewModel: row)
                     .disabled(row.isDisabled)
@@ -93,7 +93,7 @@ struct SQDailyCheckInView: View {
                         }
                     }
                 }
-                .background(SQColor.backgroundSecondary.color)
+                .background(SQColor.backgroundSheet.color)
                 .safeAreaInset(edge: .bottom) {
                     submitButton
                 }
