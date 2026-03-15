@@ -77,9 +77,13 @@ struct SQDashboardWorkoutGroupView: View {
                 .sqFont(.bodyBold)
                 .sqForegroundColor(.textPrimary)
             
-            Text("Camelback, etc...")
-                .sqFont(.body)
-                .sqForegroundColor(.textSecondary)
+            if let subtitle = viewModel.subtitle {
+                Text(subtitle)
+                    .sqFont(.body)
+                    .sqForegroundColor(.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
             
             Text(viewModel.workoutStatsString)
         }
