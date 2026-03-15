@@ -24,12 +24,15 @@ struct SQDailyCheckInView: View {
     
     @ViewBuilder
     var mainScroll: some View {
-        ScrollView {
-            VStack(spacing: .SQSpace.m) {
-                dateSelectionButton
+        VStack(alignment: .leading, spacing: 0) {
+            dateSelectionButton
+                .padding(.horizontal, .SQSpace.xl)
+                .padding(.vertical, .SQSpace.m)
+
+            ScrollView {
                 mainStack
+                    .padding(.SQSpace.xl)
             }
-            .padding(.SQSpace.xl)
         }
     }
     
@@ -39,22 +42,13 @@ struct SQDailyCheckInView: View {
             viewModel.showDatePicker(modelContext: modelContext)
         } label: {
             HStack(spacing: .SQSpace.s) {
-                Image(systemName: SQImageSymbol.calendar.rawValue)
-                    .sqForegroundColor(.accent(1))
-
                 Text(viewModel.targetDate.formattedString(with: .long))
                     .sqFont(.body)
                     .sqForegroundColor(.textPrimary)
 
-                Spacer()
-
-                Image(systemName: SQImageSymbol.pencil.rawValue)
-                    .sqForegroundColor(.textSecondary)
+                SQImageView(image: .init(symbol: .chevronDown, symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)))
+                    .frame(width: 10)
             }
-            .padding(.SQSpace.m)
-            .frame(maxWidth: .infinity)
-            .sqBackgroundColor(.backgroundSecondary)
-            .cornerRadius(.SQCornerRadius.s)
         }
         .buttonStyle(.plain)
     }
@@ -78,18 +72,15 @@ struct SQDailyCheckInView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("\(viewModel.period.rawValue.capitalized) Check-In · \(viewModel.targetDate.formattedString(with: .medium))")
-                            .sqFont(.bodySmall)
+                        Text("\(viewModel.period.rawValue.capitalized) Check-In")
+                            .sqFont(.titleNav)
                             .sqForegroundColor(.textPrimary)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             viewModel.addMetricTapped()
                         } label: {
-                            HStack(spacing: .SQSpace.m) {
-                                Image(systemName: SQImageSymbol.edit.rawValue)
-                                Text("Edit Metrics")
-                            }
+                            Text("Edit")
                         }
                     }
                 }

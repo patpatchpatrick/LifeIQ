@@ -9,52 +9,60 @@ import SwiftUI
 
 struct SQDailyCheckInSegmentedControl: View {
     @Bindable var viewModel: SQDailyCheckInRowSegmentedControlViewModel
-    
+
+    private let circleSize: CGFloat = 26
+
     @ViewBuilder
-    var segmentedControl: some View {
-        SQSegmentedControl(
-            segments: viewModel.segments,
-            selection: $viewModel.selectedSegment
-        ) { segment in
-            Text(segment.title)
-                .sqFont(.title3)
-                .sqForegroundColor(.textPrimary)
+    var circleRow: some View {
+        HStack(spacing: 0) {
+            ForEach(viewModel.segments) { segment in
+                let isSelected = viewModel.selectedSegment?.id == segment.id
+                Button {
+                    viewModel.selectedSegment = segment
+                } label: {
+                    Group {
+                        if isSelected {
+                            Text(segment.title)
+                                .sqFont(.bodySemiBold)
+                                .sqForegroundColor(.colorGreenPct(percent: 1.0))
+                        } else {
+                            Circle()
+                                .strokeBorder(SQColor.textPrimary.color.opacity(0.4), lineWidth: 1.5)
+                                .frame(width: circleSize, height: circleSize)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
-    
+
     @ViewBuilder
     func scaleStack(scaleConfig: SQDailyCheckInRowSegmentedControlViewModel.ScaleConfig) -> some View {
-        HStack(spacing: 0) {
+        HStack {
             Text(scaleConfig.minText)
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
-            
+
             Spacer()
-                .frame(height: 1)
-                .sqBackgroundColor(.textSecondary)
-                .opacity(0.5)
-                .padding(.horizontal, .SQSpace.l)
-            
+
             Text(scaleConfig.maxText)
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
         }
-        .frame(maxWidth: .infinity)
+        .opacity(0.6)
     }
-    
-    @ViewBuilder
-    var fullSegmentedControlView: some View {
-        VStack(spacing: .SQSpace.l) {
-            segmentedControl
-            
+
+    var body: some View {
+        VStack(spacing: .SQSpace.s) {
+            circleRow
+
             if let scaleConfig = viewModel.scaleConfig {
                 scaleStack(scaleConfig: scaleConfig)
             }
         }
-    }
-    
-    var body: some View {
-        fullSegmentedControlView
     }
 }
 

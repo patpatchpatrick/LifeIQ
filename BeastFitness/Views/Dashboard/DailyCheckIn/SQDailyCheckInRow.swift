@@ -16,8 +16,8 @@ struct SQDailyCheckInRow: View {
     var titleStack: some View {
         HStack(spacing: .SQSpace.s) {
             Text(viewModel.title)
-                .sqFont(.title3)
-                .sqForegroundColor(.textPrimary)
+                .sqFont(.bodyLarge)
+                .sqForegroundColor(.textSecondary)
             
             Spacer()
             
