@@ -185,6 +185,77 @@ struct SQWorkoutSummaryView: View {
         }
     }
 
+    // MARK: - Workout Review Display (standard mode only)
+
+    /// Shows saved review data (notes, temperature, performance, effort) below the
+    /// workout title when not in review mode. Hidden in review mode because the user
+    /// is actively editing those fields there.
+    @ViewBuilder
+    var workoutReviewDisplay: some View {
+        let workout = controller.state.currentWorkout
+        let notes = workout?.reviewNotes
+        let temperatureCelsius = workout?.temperatureCelsius
+        let performanceRating = workout?.ratingUserPerformance
+        let difficultyRating = workout?.ratingDifficulty
+
+        let hasNotes = !(notes?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        let fahrenheit: Double? = temperatureCelsius.flatMap {
+            SQUnit.degreesCelsius.convert($0, to: .degreesFahrenheit)
+        }
+        let performanceSegment = performanceRating.flatMap { rating in
+            SQWorkoutSummaryController.performanceSegments.first { $0.ratingValue == rating }
+        }
+        let difficultySegment = difficultyRating.flatMap { rating in
+            SQWorkoutSummaryController.difficultySegments.first { $0.ratingValue == rating }
+        }
+        let hasChips = fahrenheit != nil || performanceSegment != nil || difficultySegment != nil
+
+        if hasNotes || hasChips {
+            VStack(alignment: .leading, spacing: .SQSpace.xl) {
+                if hasNotes, let notes {
+                    Text(notes)
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if hasChips {
+                    HStack(spacing: .SQSpace.l) {
+                        if let fahrenheit {
+                            HStack(spacing: .SQSpace.xs) {
+                                Text("🌡️")
+                                    .sqFont(.body)
+                                Text("\(Int(fahrenheit.rounded()))°F")
+                                    .sqFont(.bodySmall)
+                                    .sqForegroundColor(.textSecondary)
+                            }
+                        }
+
+                        if let seg = performanceSegment {
+                            HStack(spacing: .SQSpace.xs) {
+                                Text(seg.title)
+                                    .sqFont(.body)
+                                Text("Performance")
+                                    .sqFont(.bodyExtraSmall)
+                                    .sqForegroundColor(.textTertiary)
+                            }
+                        }
+
+                        if let seg = difficultySegment {
+                            HStack(spacing: .SQSpace.xs) {
+                                Text(seg.title)
+                                    .sqFont(.body)
+                                Text("Effort")
+                                    .sqFont(.bodyExtraSmall)
+                                    .sqForegroundColor(.textTertiary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @ViewBuilder
     var mainStack: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -197,11 +268,18 @@ struct SQWorkoutSummaryView: View {
                 .padding(.bottom, .SQSpace.xl)
             
             if controller.mode != .review {
-                Text(controller.state.workoutTitle ?? "My workout")
-                    .sqFont(.title3)
-                    .sqForegroundColor(.textPrimary)
-                    .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
-                    .padding(.bottom, .SQSpace.xl)
+                VStack(alignment: .leading, spacing: 0) {
+                    
+                    Text(controller.state.workoutTitle ?? "My workout")
+                        .sqFont(.title3)
+                        .sqForegroundColor(.textPrimary)
+                        .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
+                        .padding(.bottom, .SQSpace.m)
+
+                    workoutReviewDisplay
+                        .padding(.bottom, .SQSpace.s)
+                }
+                .padding(.bottom, .SQSpace.xl)
             }
             
             if controller.state.shouldShowRouteView {
