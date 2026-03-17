@@ -20,9 +20,7 @@ struct SQDashboardPerformanceRow: View {
         guard let rank = data.percentileRank else {
             return .textSecondary
         }
-        // Interpolate: rank=1.0 (top) → green, rank=0.5 → neutral, rank=0.0 (bottom) → red
-        let percent = (rank - 0.5) * 2.0
-        return .colorGreenRed(percent: percent, base: .textSecondary)
+        return rank >= 0.5 ? .colorNeonGreen : .colorNeonRed
     }
 
     // Format percentile as "Top X%"
