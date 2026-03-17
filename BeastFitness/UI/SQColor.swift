@@ -62,6 +62,8 @@ indirect enum SQColor {
     case colorErrorRed
     case colorFadedRed
     case colorFadedGreen
+    case colorNeonGreen   // vibrant sparkline green
+    case colorNeonRed     // vibrant sparkline red
     case colorGreenDarkBorder
 
     /// Interpolates between red → base color → green on a **-1 to +1 scale**:
@@ -205,6 +207,10 @@ indirect enum SQColor {
             return Self.defaultRed(of: 0.35, base: SQColor.textPrimary.uiColor) // softer red
         case .colorFadedGreen:
             return Self.defaultGreen(of: 0.35, base: SQColor.textPrimary.uiColor) // softer green
+        case .colorNeonGreen:
+            return UIColor(hexString: "#0DFF6E")! // electric green for sparklines
+        case .colorNeonRed:
+            return UIColor(hexString: "#FF2D55")! // vivid red for sparklines
         case .colorGreenDarkBorder:
             return UIColor(hexString: "#0C500B")!
         case .colorGreenRed(let percent, let base):

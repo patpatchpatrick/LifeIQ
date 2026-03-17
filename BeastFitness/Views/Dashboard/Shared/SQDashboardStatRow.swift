@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import CoolCharts
 
 struct SQDashboardStatRow: View {
     let data: SQStatRowData
@@ -15,14 +16,14 @@ struct SQDashboardStatRow: View {
 
     private var changeColor: SQColor {
         guard let pct = data.changePercent else { return .textTertiary }
-        return pct >= 0 ? .colorFadedGreen : .colorFadedRed
+        return pct >= 0 ? .colorNeonGreen : .colorNeonRed
     }
 
     private var sparklineLineColor: Color {
         guard let pct = data.changePercent else {
             return SQColor.textTertiary.color.opacity(0.5)
         }
-        return (pct >= 0 ? SQColor.colorFadedGreen.color : SQColor.colorFadedRed.color).opacity(0.8)
+        return pct >= 0 ? SQColor.colorNeonGreen.color : SQColor.colorNeonRed.color
     }
 
     @ViewBuilder
@@ -30,8 +31,11 @@ struct SQDashboardStatRow: View {
         let hasSparkline = data.sparklineData.count >= 2
         VStack(alignment: .trailing, spacing: 4) {
             if hasSparkline {
-                SQSparkline(dataPoints: data.sparklineData, height: 20, lineColor: sparklineLineColor)
-                    .frame(width: 70)
+                SparklineView(
+                    dataPoints: data.sparklineData.map { SparklineView.DataPoint(value: $0) },
+                    lineColor: sparklineLineColor
+                )
+                .frame(width: 55, height: 20)
             }
 
             if let pct = data.changePercent {

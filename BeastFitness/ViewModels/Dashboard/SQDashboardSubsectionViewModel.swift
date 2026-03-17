@@ -22,6 +22,7 @@ import SwiftUI
     var dropDownViewModel: SQDropDownMenuViewModel?
     var titleButton: TitleButtonViewModel?
     var columnHeaders: [String]?
+    var rowSpacing: CGFloat?
     private(set) var rowsByFilter: [String: [SQDashboardRowViewModel]]
     private(set) var activeFilter: String
     private(set) var activeRows: [SQDashboardRowViewModel]
@@ -32,7 +33,8 @@ import SwiftUI
         rowsByFilter: [String: [SQDashboardRowViewModel]],
         dropDownViewModel: SQDropDownMenuViewModel? = nil,
         titleButton: TitleButtonViewModel? = nil,
-        columnHeaders: [String]? = nil
+        columnHeaders: [String]? = nil,
+        rowSpacing: CGFloat? = nil
     ) {
         self.id = id
         self.title = title
@@ -40,6 +42,7 @@ import SwiftUI
         self.dropDownViewModel = dropDownViewModel
         self.titleButton = titleButton
         self.columnHeaders = columnHeaders
+        self.rowSpacing = rowSpacing
         self.isCollapsed = false
 
         // Set activeFilter to first key in rowsByFilter or "All"

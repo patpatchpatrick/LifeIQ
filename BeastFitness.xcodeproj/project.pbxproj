@@ -92,7 +92,6 @@
 		F657E2C42CA50D7E00E72926 /* BeastFitnessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C32CA50D7E00E72926 /* BeastFitnessUITests.swift */; };
 		F657E2C62CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */; };
 		F65E77FB2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F65E77FA2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift */; };
-		F65E77FD2F2C0DFA005050B2 /* SQSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */; };
 		F679BA422EE4F14800A2F249 /* SQWorkoutsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA412EE4F14400A2F249 /* SQWorkoutsListController.swift */; };
 		F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA462EE4F36B00A2F249 /* SQWorkoutsListView.swift */; };
 		F679BA492EE4F3ED00A2F249 /* SQWorkoutsListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA482EE4F3E400A2F249 /* SQWorkoutsListItem.swift */; };
@@ -376,7 +375,6 @@
 		F657E2C52CA50D7E00E72926 /* BeastFitnessUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeastFitnessUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F657E2D22CA50E7800E72926 /* BeastFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeastFitness.entitlements; sourceTree = "<group>"; };
 		F65E77FA2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInVitalRow.swift; sourceTree = "<group>"; };
-		F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSparkline.swift; sourceTree = "<group>"; };
 		F679BA412EE4F14400A2F249 /* SQWorkoutsListController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListController.swift; sourceTree = "<group>"; };
 		F679BA462EE4F36B00A2F249 /* SQWorkoutsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListView.swift; sourceTree = "<group>"; };
 		F679BA482EE4F3E400A2F249 /* SQWorkoutsListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListItem.swift; sourceTree = "<group>"; };
@@ -615,7 +613,6 @@
 		F602DA382EC4118200404878 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
-				F67F09932F07293600D7BB90 /* Charts */,
 				F6E90B4A2ED55193003441B5 /* DailyCheckIn */,
 				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F602DA392EC4118600404878 /* SQDashboardView.swift */,
@@ -1049,14 +1046,6 @@
 				F679BDD62EE7D46100A2F249 /* SQExercisesListView.swift */,
 			);
 			path = ExercisesList;
-			sourceTree = "<group>";
-		};
-		F67F09932F07293600D7BB90 /* Charts */ = {
-			isa = PBXGroup;
-			children = (
-				F65E77FC2F2C0DFA005050B2 /* SQSparkline.swift */,
-			);
-			path = Charts;
 			sourceTree = "<group>";
 		};
 		F67F0A092F087A0500D7BB90 /* MetricsList */ = {
@@ -1934,7 +1923,6 @@
 				F602DA282EC40EB800404878 /* SQAppState.swift in Sources */,
 				F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */,
 				F639B9852ED7BBFF00199C69 /* SQButton.swift in Sources */,
-				F65E77FD2F2C0DFA005050B2 /* SQSparkline.swift in Sources */,
 				F6E179862F57D9D90099CAF2 /* SQSleepModels.swift in Sources */,
 				F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */,
 				F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */,

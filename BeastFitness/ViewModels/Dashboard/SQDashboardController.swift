@@ -601,7 +601,8 @@ final class SQDashboardController: SQDashboardInterface {
             id: "activities",
             title: "Activities",
             rowsByFilter: rowsByFilter,
-            dropDownViewModel: dropDownViewModel
+            dropDownViewModel: dropDownViewModel,
+            rowSpacing: .SQSpace.l
         )
         
         dropDownViewModel.itemSelectionHandler = { selectedFilter in
@@ -767,7 +768,7 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Sleep Phases",
             rowsByFilter: ["All": rows],
             dropDownViewModel: nil,
-            columnHeaders: ["Phase", "Avg Duration", "vs Prior"]
+            columnHeaders: ["Phase", "Avg Duration", state.selectedTimeRange.dashboardChangePctHeader]
         )
     }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoolCharts
 
 /// A single row in the vertical Daily Check-In vitals list.
 /// Displays: emoji, title, value, and sparkline trend.
@@ -71,8 +72,11 @@ struct SQDailyCheckInVitalRow: View {
                 .frame(minWidth: 60, alignment: .trailing)
                 
                 // Sparkline
-                SQSparkline(dataPoints: model.sparklineData, height: 20)
-                    .frame(width: sparklineWidth)
+                SparklineView(
+                    dataPoints: model.sparklineData.map { SparklineView.DataPoint(value: $0) },
+                    lineColor: SQColor.textTertiary.color.opacity(0.5)
+                )
+                .frame(width: sparklineWidth, height: 20)
             }
             .frame(height: rowHeight)
             .frame(maxWidth: .infinity)

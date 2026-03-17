@@ -52,10 +52,11 @@ enum AppTimeRange: String, CaseIterable {
     /// Column header label for the change-% column in the metrics table.
     var dashboardChangePctHeader: String {
         switch self {
-        case .today, .pastSevenDays: return "7d %"
-        case .past30Days:            return "30d %"
-        case .pastYear:              return "1y %"
-        case .allTime:               return "—"
+        case .today:         return "vs 7d Avg"
+        case .pastSevenDays: return "vs Prior Wk"
+        case .past30Days:    return "vs Prior 30d"
+        case .pastYear:      return "vs Prior Yr"
+        case .allTime:       return "—"
         }
     }
 
