@@ -541,6 +541,16 @@ When adding a new measurable quantity (distance, weight, temperature, speed, etc
 - Let the user build and review the complete implementation at the end
 - Focus on speed and iteration over intermediate verification
 
+## Routing and Alerts
+
+- Use `hub.domainEvents.send(.pushDashboardRoute(...))` to present dashboard sheets and handle them in `SQRootTabView` via the dashboard sheet stack.
+- For user-facing errors, send alerts through `hub.alertEvents` using `SQAlertViewModel`, typically `hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))`.
+
+## Auth UI Patterns
+
+- Use `SQUITextFieldViewModel` + `SQUITextField` for login or sign-up fields, with validation rules and error handlers for email and password.
+- Disable the screen and show button loading states while auth is in progress using a shared `isLoading` boolean.
+
 ## Product goal
 
 Use all available data (HealthKit + workouts + self-tracked habits) to build a dashboard that provides:

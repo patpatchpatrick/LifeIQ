@@ -11,9 +11,31 @@ struct SQLoginView: View {
     @State var controller: SQLoginController
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: .SQSpace.xl) {
+                VStack(spacing: .SQSpace.m) {
+                    SQUITextField(viewModel: controller.emailViewModel)
+                    SQUITextField(viewModel: controller.passwordViewModel)
+                }
+
+                Spacer()
+
+                SQButton(
+                    style: .primary,
+                    shouldHugContent: true,
+                    title: controller.title,
+                    isLoading: controller.isLoading
+                ) {
+                    controller.loginOrSignUpButtonTapped()
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, .SQSpace.xl)
+                
+                Spacer()
+            }
         }
+        .padding(.horizontal, .SQSpace.xl)
+        .padding(.top, .SQSpace.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(controller.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -28,6 +50,8 @@ struct SQLoginView: View {
                 }
             }
         }
+        .disabled(controller.isLoading)
+        .opacity(controller.isLoading ? 0.5 : 1)
         .background(SQColor.backgroundSheet.color)
     }
 }

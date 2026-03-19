@@ -54,6 +54,11 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   4. Access via `SQAppState.shared`
 - Prefer event-driven updates via `hub`.
 
+## Routing and alerts
+
+- Use `hub.domainEvents.send(.pushDashboardRoute(...))` for dashboard sheet routes and handle them in `SQRootTabView`.
+- For user-facing errors, use `hub.alertEvents` with `SQAlertViewModel`, typically `hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))`.
+
 ## Date formatting
 
 - Always use `SQDateFormatters` (or Date extension helpers).
@@ -88,6 +93,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Text inputs:
   - Default to `SQUITextField` (UIKit-backed single-line)
   - Use `SQTextField` for multiline fallback
+- Auth screens: use `SQUITextFieldViewModel` + `SQUITextField` for email/password with validation + error handlers, and disable the screen while auth is in progress.
 - SF Symbols:
   - Use `SQImageSymbol` enum (no hardcoded `Image(systemName:)` strings)
   - Add new symbols to `BeastFitness/UI/SQImage.swift` before use
