@@ -23,8 +23,12 @@ struct SQProfileView: View {
                 .padding(.top, .SQSpace.xl)
 
                 HStack(spacing: .SQSpace.m) {
-                    SQButton(style: .secondary, shouldHugContent: true, title: "Log in") { }
-                    SQButton(style: .secondary, shouldHugContent: true, title: "Sign up") { }
+                    SQButton(style: .secondary, shouldHugContent: true, title: "Log in") {
+                        controller.showLogin(mode: .login)
+                    }
+                    SQButton(style: .secondary, shouldHugContent: true, title: "Sign up") {
+                        controller.showLogin(mode: .signup)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 

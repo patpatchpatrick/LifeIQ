@@ -56,6 +56,8 @@
 		F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */; };
 		F6268AE02F6B823000087C0F /* SQProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268ADE2F6B823000087C0F /* SQProfileController.swift */; };
 		F6268AE32F6B824700087C0F /* SQProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE12F6B824700087C0F /* SQProfileView.swift */; };
+		F6268AE52F6B83DA00087C0F /* SQLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE42F6B83DA00087C0F /* SQLoginView.swift */; };
+		F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE62F6B83EE00087C0F /* SQLoginController.swift */; };
 		F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */; };
 		F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */; };
 		F629CE6F2EE497960002330C /* SQWorkoutSessionExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */; };
@@ -337,6 +339,8 @@
 		F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWatchInterface.swift; sourceTree = "<group>"; };
 		F6268ADE2F6B823000087C0F /* SQProfileController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQProfileController.swift; sourceTree = "<group>"; };
 		F6268AE12F6B824700087C0F /* SQProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQProfileView.swift; sourceTree = "<group>"; };
+		F6268AE42F6B83DA00087C0F /* SQLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLoginView.swift; sourceTree = "<group>"; };
+		F6268AE62F6B83EE00087C0F /* SQLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLoginController.swift; sourceTree = "<group>"; };
 		F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionView.swift; sourceTree = "<group>"; };
 		F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionController.swift; sourceTree = "<group>"; };
 		F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseView.swift; sourceTree = "<group>"; };
@@ -805,6 +809,7 @@
 			isa = PBXGroup;
 			children = (
 				F6268ADE2F6B823000087C0F /* SQProfileController.swift */,
+				F6268AE62F6B83EE00087C0F /* SQLoginController.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -813,6 +818,7 @@
 			isa = PBXGroup;
 			children = (
 				F6268AE12F6B824700087C0F /* SQProfileView.swift */,
+				F6268AE42F6B83DA00087C0F /* SQLoginView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -1800,6 +1806,7 @@
 				F67F0A772F0DDBC600D7BB90 /* SQUITextField.swift in Sources */,
 				F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */,
 				F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */,
+				F6268AE52F6B83DA00087C0F /* SQLoginView.swift in Sources */,
 				F6268AE32F6B824700087C0F /* SQProfileView.swift in Sources */,
 				F61592342EF362FF00223A63 /* SQAlertViewModel.swift in Sources */,
 				F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */,
@@ -1929,6 +1936,7 @@
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
 				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
+				F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */,
 				F6940F252F379E860008A2A0 /* SQDashboardWorkoutTotalsRowViewModel.swift in Sources */,
 				F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */,
 				F679BC502EE4FC1D00A2F249 /* SQWorkoutSummaryView.swift in Sources */,
