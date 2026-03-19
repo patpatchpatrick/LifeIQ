@@ -103,6 +103,7 @@ struct SQNavRoute {
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
+        case profile(controller: SQProfileController)
         
         var id: String {
             switch self {
@@ -118,6 +119,8 @@ struct SQNavRoute {
                 return "editWorkout-\(workout.id)"
             case .leaderboard(controller: let controller):
                 return "leaderboard-\(controller.id)"
+            case .profile(let controller):
+                return "profile-\(controller.id)"
             }
         }
         

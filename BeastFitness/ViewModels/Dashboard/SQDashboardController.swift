@@ -24,6 +24,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var cancellables = Set<AnyCancellable>()
     var state: DashboardStating
     let navState: NavigationStating
+    let userState: SQUserStating
     let dailyCheckInManager: SQDailyCheckInManaging
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
@@ -39,6 +40,7 @@ final class SQDashboardController: SQDashboardInterface {
     init(
         state: DashboardStating,
         navState: NavigationStating,
+        userState: SQUserStating = SQAppState.shared.userState,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
@@ -47,6 +49,7 @@ final class SQDashboardController: SQDashboardInterface {
     ) {
         self.state = state
         self.navState = navState
+        self.userState = userState
         self.dailyCheckInManager = dailyCheckInManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
@@ -67,6 +70,15 @@ final class SQDashboardController: SQDashboardInterface {
         }
         
         self.handleEventSubscriptions(hub: state.hub)
+    }
+
+    var authButtonSymbol: SQImageSymbol {
+        userState.isLoggedIn ? .personCircleFill : .personCircle
+    }
+
+    func handleAuthButtonTap() {
+        let controller = SQProfileController(userState: userState)
+        state.hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
     }
     
     private func handleEventSubscriptions(hub: EventHub) {

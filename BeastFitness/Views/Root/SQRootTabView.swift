@@ -29,6 +29,8 @@ struct SQRootTabView: View {
             SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
         case .leaderboard(controller: let controller):
             SQLeaderboardView(controller: controller)
+        case .profile(controller: let controller):
+            SQProfileView(controller: controller)
         }
     }
     
@@ -43,42 +45,6 @@ struct SQRootTabView: View {
                 .background(SQColor.backgroundSheet.color)
             }
     }
-    
-//    @ViewBuilder
-//    var mainTabView: some View {
-//        TabView(selection: .init(
-//            get: { navigationState.selectedTab },
-//            set: { navigationState.changeTab(to: $0) })) {
-//                
-//                NavigationStack(path: $viewModel.navigationState.dashboardNavPath) {
-//                    SQDashboardView(controller: viewModel.dashboardController)
-//                        .navigationDestination(for: SQNavRoute.DashboardRoute.self) { route in
-//                            switch route {
-//                            case .workoutView(let workout):
-//                                SQWorkoutSummaryView(controller: .init(workout: workout))
-//                            case .editWorkout(workout: let workout):
-//                                SQWorkoutSessionView(isBeingDisplayedWithinNavStack: true, controller: .default(for: workout, onDismiss: { print("PTD POP VIEW") }))
-//                            case .workoutsList(workouts: let workouts):
-//                                SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
-//                            }
-//                        }
-//                }
-//                .tabItem {
-//                    Image(systemName: "house")
-//                    Text("Home")
-//                }
-//                .tag(NavigationState.Tab.home)
-//            
-//                NavigationStack(path: $viewModel.workoutsNavigationPath) {
-//                    SQWorkoutsLandingView(controller: viewModel.workoutsScreenController)
-//                }
-//                .tabItem {
-//                    Image(systemName: "plus")
-//                    Text("Workouts")
-//                }
-//                .tag(NavigationState.Tab.workouts)
-//        }
-//    }
     
     var mainTabViewWithSheets: some View {
         dashboardViewWithNavSheet

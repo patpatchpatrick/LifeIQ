@@ -23,10 +23,25 @@ struct SQDashboardView: View {
 
                     Spacer()
 
-                    SQDropDownMenu(
-                        menuViewModel: controller.timeRangeMenuViewModel,
-                        isDisabled: false
-                    )
+                    HStack(spacing: .SQSpace.m) {
+                        SQDropDownMenu(
+                            menuViewModel: controller.timeRangeMenuViewModel,
+                            isDisabled: false
+                        )
+
+                        Button {
+                            controller.handleAuthButtonTap()
+                        } label: {
+                            SQImageView(
+                                image: .init(
+                                    symbol: controller.authButtonSymbol,
+                                    symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        }
+                        .accessibilityLabel(controller.userState.isLoggedIn ? "Profile" : "Sign in")
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
