@@ -14,6 +14,7 @@ import os
 public enum SQiOSLogContext: Sendable {
     case general
     case dailyCheckIn
+    case loginSignup
     case metricsManager
     case deepLink
     case dataProcessing

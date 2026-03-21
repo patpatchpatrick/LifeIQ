@@ -15,7 +15,7 @@ protocol SQDailyCheckInServicing {
 final class SQDailyCheckInService: SQNetworkService, SQDailyCheckInServicing {
 
     static func saveDailyCheckInStats(_ stats: SQDailyCheckInStats) async throws {
-        let user = await SQAppState.shared.userState.loggedInUser
+        guard let user = await SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let _ : SQVoidWrite = try await performRequest(SQDailyCheckInRoute.saveDailyCheckIn(stats, user))
     }
 

@@ -300,7 +300,7 @@ final class SQMetricsManager: SQMetricsManaging {
     }
 
     private func performFullMetricSync(context: ModelContext) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: nil)
 
         try upsertMetrics(definitions, into: context, fullSync: true)
@@ -310,7 +310,7 @@ final class SQMetricsManager: SQMetricsManaging {
     }
 
     private func performIncrementalMetricSync(lastSync: Date, context: ModelContext) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: lastSync)
 
         try upsertMetrics(definitions, into: context, fullSync: false)

@@ -82,6 +82,11 @@ protocol NavigationStating: AnyObject {
                     dashboardNavPath.removeLast()
                 }
                 
+            case .dismissDashboardNavStack:
+                
+                dashboardRootSheetView = nil
+                dashboardNavPath = .init()
+                
             }
             
         }.store(in: &cancellables)

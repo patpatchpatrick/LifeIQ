@@ -12,6 +12,7 @@ enum DomainEvent {
     /// Navigation
     case pushDashboardRoute(SQNavRoute.DashboardRoute)
     case popDashboardRoute
+    case dismissDashboardNavStack
     
     case changeTab(NavigationState.Tab)
     

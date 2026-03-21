@@ -58,6 +58,10 @@
 		F6268AE32F6B824700087C0F /* SQProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE12F6B824700087C0F /* SQProfileView.swift */; };
 		F6268AE52F6B83DA00087C0F /* SQLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE42F6B83DA00087C0F /* SQLoginView.swift */; };
 		F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE62F6B83EE00087C0F /* SQLoginController.swift */; };
+		F6268B142F6F3B9000087C0F /* SQUserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B132F6F3B9000087C0F /* SQUserManager.swift */; };
+		F6268B152F6F3B9000087C0F /* SQAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B122F6F3B9000087C0F /* SQAuthManager.swift */; };
+		F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B162F6F3BAA00087C0F /* SQUserRoute.swift */; };
+		F6268B192F6F3BB700087C0F /* SQUserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B182F6F3BB700087C0F /* SQUserService.swift */; };
 		F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */; };
 		F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */; };
 		F629CE6F2EE497960002330C /* SQWorkoutSessionExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */; };
@@ -341,6 +345,10 @@
 		F6268AE12F6B824700087C0F /* SQProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQProfileView.swift; sourceTree = "<group>"; };
 		F6268AE42F6B83DA00087C0F /* SQLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLoginView.swift; sourceTree = "<group>"; };
 		F6268AE62F6B83EE00087C0F /* SQLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLoginController.swift; sourceTree = "<group>"; };
+		F6268B122F6F3B9000087C0F /* SQAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAuthManager.swift; sourceTree = "<group>"; };
+		F6268B132F6F3B9000087C0F /* SQUserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserManager.swift; sourceTree = "<group>"; };
+		F6268B162F6F3BAA00087C0F /* SQUserRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserRoute.swift; sourceTree = "<group>"; };
+		F6268B182F6F3BB700087C0F /* SQUserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserService.swift; sourceTree = "<group>"; };
 		F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionView.swift; sourceTree = "<group>"; };
 		F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionController.swift; sourceTree = "<group>"; };
 		F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseView.swift; sourceTree = "<group>"; };
@@ -1215,6 +1223,8 @@
 				F6E179922F57DAED0099CAF2 /* Sleep */,
 				F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */,
 				F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */,
+				F6268B122F6F3B9000087C0F /* SQAuthManager.swift */,
+				F6268B132F6F3B9000087C0F /* SQUserManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1264,6 +1274,7 @@
 				F6ABC3562EDE58B800D3E679 /* SQRouter.swift */,
 				F6C5FDAD2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift */,
 				F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */,
+				F6268B162F6F3BAA00087C0F /* SQUserRoute.swift */,
 			);
 			path = Routers;
 			sourceTree = "<group>";
@@ -1276,6 +1287,7 @@
 				F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */,
 				F6C5FDAF2F33A0FD00BF1022 /* SQMetricDefinitionService.swift */,
 				F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */,
+				F6268B182F6F3BB700087C0F /* SQUserService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1803,6 +1815,7 @@
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
 				F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */,
 				F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */,
+				F6268B192F6F3BB700087C0F /* SQUserService.swift in Sources */,
 				F67F0A772F0DDBC600D7BB90 /* SQUITextField.swift in Sources */,
 				F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */,
 				F639F1322F4547B8004AC701 /* AppTimeRange.swift in Sources */,
@@ -1865,6 +1878,8 @@
 				F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */,
 				F639F1042F43D364004AC701 /* WorkoutFastestSplitCalculator.swift in Sources */,
 				F67F0A752F0DDB7800D7BB90 /* SQUITextFieldViewModel.swift in Sources */,
+				F6268B142F6F3B9000087C0F /* SQUserManager.swift in Sources */,
+				F6268B152F6F3B9000087C0F /* SQAuthManager.swift in Sources */,
 				F679BDD92EE7D49500A2F249 /* SQExercisesListController.swift in Sources */,
 				F67F0A082F08774000D7BB90 /* SQMetricsManager.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
@@ -1935,6 +1950,7 @@
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
+				F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */,
 				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
 				F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */,
 				F6940F252F379E860008A2A0 /* SQDashboardWorkoutTotalsRowViewModel.swift in Sources */,

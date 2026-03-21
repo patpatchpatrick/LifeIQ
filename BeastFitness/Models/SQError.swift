@@ -26,6 +26,7 @@ struct SQError: SQUserFacingError {
     
     static let standard = SQError(title: Self.genericErrorTitle, description: Self.genericErrorDescription)
     static let standardConnection = SQError(title: Self.genericErrorTitle, description: "Something went wrong. Please check connection or try again later.")
+    static let notLoggedIn = SQError(title: "Not Logged In", description: "Please log in to continue.")
     static func standard(withDescription description: String) -> SQError {
         .init(title: Self.standard.title, description: description)
     }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import BeastFitnessCore
 
 enum SQLoginMode: String {
     case login = "Log In"
@@ -115,7 +116,7 @@ protocol SQLoginInterface: AnyObject {
         let passwordValid = passwordViewModel.isContentValid
 
         guard emailValid && passwordValid else {
-            hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Please enter a valid email and a stronger password."))))
+            hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Enter a valid email and password."))))
             return false
         }
 
@@ -123,13 +124,34 @@ protocol SQLoginInterface: AnyObject {
     }
 
     private func login() async throws {
-        try await Task.sleep(nanoseconds: 900_000_000)
-        throw SQError.standard(withDescription: "Login is not wired up yet.")
+                
+        let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            let result = try await SQAuthManager.shared.signIn(email: email, password: passwordViewModel.text)
+            
+            SQLogger.shared.log("User logged in successfully", .info, context: .loginSignup)
+            
+            hub.toastEvents.send(.present(.init(title: "Login successful!", style: .success)))
+            hub.domainEvents.send(.dismissDashboardNavStack)
+        } catch {
+            throw SQAuthError.from(error)
+        }
     }
 
     private func signUp() async throws {
-        try await Task.sleep(nanoseconds: 900_000_000)
-        throw SQError.standard(withDescription: "Sign up is not wired up yet.")
+        let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            let result = try await SQAuthManager.shared.createUser(email: email, password: passwordViewModel.text)
+            _ = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: email)
+            
+            SQLogger.shared.log("User signed in successfully", .info, context: .loginSignup)
+            
+            hub.toastEvents.send(.present(.init(title: "Signup successful!", style: .success)))
+            hub.domainEvents.send(.dismissDashboardNavStack)
+            
+        } catch {
+            throw SQAuthError.from(error)
+        }
     }
 
     private static func isValidEmail(_ text: String) -> Bool {

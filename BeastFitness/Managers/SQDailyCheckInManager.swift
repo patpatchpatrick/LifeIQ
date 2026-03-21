@@ -122,7 +122,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         // Push metric entries + note to Firestore as a single daily bucket document.
         // Always use anchorDayKey (from stats.date) so editing past dates writes to
         // the correct bucket, not today's.
-        let user = await SQAppState.shared.userState.loggedInUser
+        guard let user = await SQAppState.shared.userState.loggedInUser else { return }
         do {
             let allDayEntries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: modelContext)
             let noteForDay = try? SQDailyNoteEntity.get(for: anchorDayKey, context: modelContext)
@@ -239,7 +239,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         for timeRange: SQTimeRange,
         context: ModelContext
     ) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
 
         let stats = try await dailyCheckInService.fetchAllDailyCheckIns(
             for: user,
@@ -259,7 +259,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         for timeRange: SQTimeRange,
         context: ModelContext
     ) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let lastSync = getLastSyncDate(for: timeRange, context: context)
 
         let stats = try await dailyCheckInService.fetchAllDailyCheckIns(

@@ -67,7 +67,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         // Build daily buckets and push to Firestore.
         // Fetch ALL entries for each affected anchorDayKey so morning + evening are merged into one bucket.
         // The note is embedded in the bucket — no separate daily-notes write needed.
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { return }
         var affectedDays = Set(entries.map { $0.anchorDayKey })
         if let noteDay = note?.anchorDayKey { affectedDays.insert(noteDay) }
 
@@ -120,7 +120,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     // MARK: - Private Sync Helpers
 
     private func performFullSync(context: ModelContext) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: nil)
 
         let entries = buckets.flatMap { $0.entries }
@@ -138,7 +138,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     private func performIncrementalSync(lastSync: Date?, context: ModelContext) async throws -> Int {
-        let user = SQAppState.shared.userState.loggedInUser
+        guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: lastSync)
 
         let entries = buckets.flatMap { $0.entries }

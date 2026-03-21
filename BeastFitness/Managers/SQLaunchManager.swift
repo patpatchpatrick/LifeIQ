@@ -15,5 +15,6 @@ final class SQLaunchManager {
         hasPerformedLaunchTasks = true
         SQUserDefaults.shared.recordInstallDateIfNeeded()
         SQWatchInterface.shared.configureMirroringHandler(onStart: { _ in })
+        SQAuthManager.shared.startListening(userState: SQAppState.shared.userState)
     }
 }

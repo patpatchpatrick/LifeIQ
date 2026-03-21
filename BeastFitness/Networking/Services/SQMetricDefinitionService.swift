@@ -15,7 +15,7 @@ protocol SQMetricDefinitionServicing {
 final class SQMetricDefinitionService: SQNetworkService, SQMetricDefinitionServicing {
 
     static func saveMetricDefinition(_ definition: SQMetricDefinition) async throws {
-        let user = await SQAppState.shared.userState.loggedInUser
+        guard let user = await SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let _: SQVoidWrite = try await performRequest(SQMetricDefinitionRoute.saveMetricDefinition(definition, user))
     }
 
