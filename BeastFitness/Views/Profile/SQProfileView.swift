@@ -22,18 +22,38 @@ struct SQProfileView: View {
                 .frame(width: 64, height: 64)
                 .padding(.top, .SQSpace.xl)
 
-                HStack(spacing: .SQSpace.m) {
-                    SQButton(style: .secondary, shouldHugContent: true, title: "Log in") {
-                        controller.showLogin(mode: .login)
+                if controller.loginButtonViewModel != nil || controller.signUpButtonViewModel != nil {
+                    HStack(spacing: .SQSpace.m) {
+                        if let vm = controller.loginButtonViewModel {
+                            SQButton(style: .secondary, shouldHugContent: true, title: vm.title, isDisabled: controller.isLoggingOut) {
+                                vm.tapped()
+                            }
+                        }
+                        if let vm = controller.signUpButtonViewModel {
+                            SQButton(style: .secondary, shouldHugContent: true, title: vm.title, isDisabled: controller.isLoggingOut) {
+                                vm.tapped()
+                            }
+                        }
                     }
-                    SQButton(style: .secondary, shouldHugContent: true, title: "Sign up") {
-                        controller.showLogin(mode: .signup)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .opacity(controller.isLoggingOut ? 0.5 : 1)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
 
-                VStack(spacing: 0) {
-                    SQButton(style: .secondary, shouldHugContent: false, title: "Settings") { }
+                VStack(spacing: .SQSpace.m) {
+                    SQButton(style: .secondary, shouldHugContent: false, title: "Settings", isDisabled: controller.isLoggingOut) { }
+                        .opacity(controller.isLoggingOut ? 0.5 : 1)
+
+                    if let vm = controller.logOutButtonViewModel {
+                        SQButton(
+                            style: .secondary,
+                            shouldHugContent: false,
+                            title: vm.title,
+                            isDisabled: controller.isLoggingOut,
+                            isLoading: controller.isLoggingOut
+                        ) {
+                            vm.tapped()
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }

@@ -92,6 +92,14 @@ final class SQDashboardController: SQDashboardInterface {
             }
         }.store(in: &cancellables)
 
+        hub.userEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .loginStateChanged:
+                self.refreshFromGlobalContext()
+            }
+        }.store(in: &cancellables)
+
         // Watch for time range changes and reload dashboard
         state.selectedTimeRangePublisher
             .sink { [weak self] _ in

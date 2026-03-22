@@ -39,6 +39,10 @@ enum ToastEvent {
     case present(_ toast: SQToastViewModel)
 }
 
+enum UserEvent {
+    case loginStateChanged(isLoggedIn: Bool)
+}
+
 enum ModalEvent {
     case presentDatePicker(
         dateEntries: [SQDatePickerModal.DateEntry],
@@ -57,4 +61,5 @@ final class EventHub {
     let alertEvents = PassthroughSubject<AlertEvent, Never>()
     let toastEvents = PassthroughSubject<ToastEvent, Never>()
     let modalEvents = PassthroughSubject<ModalEvent, Never>()
+    let userEvents = PassthroughSubject<UserEvent, Never>()
 }

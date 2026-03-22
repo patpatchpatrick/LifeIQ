@@ -9,7 +9,14 @@ import Foundation
 import FirebaseAuth
 
 @MainActor
-final class SQAuthManager {
+protocol SQAuthManaging: AnyObject {
+    func signIn(email: String, password: String) async throws -> AuthDataResult
+    func createUser(email: String, password: String) async throws -> AuthDataResult
+    func signOut() throws
+}
+
+@MainActor
+final class SQAuthManager: SQAuthManaging {
     static let shared = SQAuthManager()
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?

@@ -31,10 +31,12 @@ protocol SQUserStating: AnyObject {
     func setLoggedIn(_ user: SQUser) {
         loggedInUser = user
         isLoggedIn = true
+        hub.userEvents.send(.loginStateChanged(isLoggedIn: true))
     }
 
     func setLoggedOut() {
         loggedInUser = nil
         isLoggedIn = false
+        hub.userEvents.send(.loginStateChanged(isLoggedIn: false))
     }
 }

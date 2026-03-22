@@ -126,7 +126,7 @@ struct SQWorkoutSummaryView: View {
 
             HStack(spacing: .SQSpace.s) {
                 
-                SQUITextField(viewModel: controller.temperatureViewModel, width: 100)
+                SQUITextField(viewModel: controller.temperatureViewModel, width: 60)
                 
                 Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
                     .sqFont(.body)
