@@ -93,7 +93,7 @@ final class SQDashboardController: SQDashboardInterface {
         }.store(in: &cancellables)
 
         hub.userEvents.sink { [weak self] event in
-            guard let self else { return }
+            guard let self, self.hasLoadedUI else { return }
             switch event {
             case .loginStateChanged:
                 self.refreshFromGlobalContext()
@@ -464,48 +464,28 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func buildLockedMetricsSubsection(timeRange: AppTimeRange) -> SQDashboardSubsectionViewModel {
-        // Use real enabled metric definitions if available; fall back to a short preset list
-        let definitions = SQMetricsManager.shared.dailyCheckInMetrics().filter { $0.isEnabled }
         let fakeSparkline: [Double] = [5.8, 6.5, 7.2, 6.8, 7.5, 7.2, 6.9]
         let fakeValues: [Double] = [7.2, 6.8, 8.1, 5.9, 7.5, 6.3, 7.8, 8.0, 6.5, 7.1]
 
-        let fakeRows: [SQDashboardMetricStatsRowViewModel]
-        if !definitions.isEmpty {
-            fakeRows = definitions.enumerated().map { index, def in
-                SQDashboardMetricStatsRowViewModel(
-                    metricId: def.id,
-                    icon: def.emoji ?? "",
-                    title: def.title,
-                    avgValue: String(format: "%.1f", fakeValues[index % fakeValues.count]),
-                    unit: metricUnitString(for: def),
-                    sparklineData: fakeSparkline,
-                    changePercent: [0.04, -0.02, 0.07, -0.05, 0.03][index % 5],
-                    quantityType: nil,
-                    activityType: nil
-                )
-            }
-        } else {
-            // Fallback hardcoded list if no definitions loaded yet
-            let presets: [(id: String, icon: String, title: String, unit: String)] = [
-                ("mood",    "😊", "Mood",    "/10"),
-                ("energy",  "⚡️", "Energy",  "/10"),
-                ("sleep",   "😴", "Sleep",   "hrs"),
-                ("soreness","🦵", "Soreness","/10"),
-                ("clarity", "🧠", "Clarity", "/10")
-            ]
-            fakeRows = presets.enumerated().map { index, preset in
-                SQDashboardMetricStatsRowViewModel(
-                    metricId: preset.id,
-                    icon: preset.icon,
-                    title: preset.title,
-                    avgValue: String(format: "%.1f", fakeValues[index % fakeValues.count]),
-                    unit: preset.unit,
-                    sparklineData: fakeSparkline,
-                    changePercent: [0.04, -0.02, 0.07, -0.05, 0.03][index % 5],
-                    quantityType: nil,
-                    activityType: nil
-                )
-            }
+        let presets: [(id: String, icon: String, title: String, unit: String)] = [
+            ("mood",    "😊", "Mood",    "/10"),
+            ("energy",  "⚡️", "Energy",  "/10"),
+            ("sleep",   "😴", "Sleep",   "hrs"),
+            ("soreness","🦵", "Soreness","/10"),
+            ("clarity", "🧠", "Clarity", "/10")
+        ]
+        let fakeRows = presets.enumerated().map { index, preset in
+            SQDashboardMetricStatsRowViewModel(
+                metricId: preset.id,
+                icon: preset.icon,
+                title: preset.title,
+                avgValue: String(format: "%.1f", fakeValues[index % fakeValues.count]),
+                unit: preset.unit,
+                sparklineData: fakeSparkline,
+                changePercent: [0.04, -0.02, 0.07, -0.05, 0.03][index % 5],
+                quantityType: nil,
+                activityType: nil
+            )
         }
 
         let sectionViewModel = SQDashboardSubsectionViewModel(
