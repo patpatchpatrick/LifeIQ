@@ -23,6 +23,8 @@ import SwiftUI
     var titleButton: TitleButtonViewModel?
     var columnHeaders: [String]?
     var rowSpacing: CGFloat?
+    var isLocked: Bool = false
+    var onLockedTap: (() -> Void)? = nil
     private(set) var rowsByFilter: [String: [SQDashboardRowViewModel]]
     private(set) var activeFilter: String
     private(set) var activeRows: [SQDashboardRowViewModel]

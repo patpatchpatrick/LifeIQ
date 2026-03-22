@@ -145,6 +145,7 @@ fileprivate extension Logger {
         case .watchInterface:  return .watchInterface
         case .metricsManager:  return .metricsManager
         case .network:         return .network
+        case .loginSignup:     return .loginSignuo
         }
     }
 
@@ -163,6 +164,7 @@ fileprivate extension Logger {
     static let watchInterface = Logger(subsystem: subsystem, category: "WatchInterface")
     static let metricsManager = Logger(subsystem: subsystem, category: "MetricsManager")
     static let network        = Logger(subsystem: subsystem, category: "Network")
+    static let loginSignuo    = Logger(subsystem: subsystem, category: "LoginSignup")
 }
 #endif
 

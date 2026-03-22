@@ -16,7 +16,7 @@ import BeastFitnessCore
 struct SQDashboardSectionView: View {
     @Bindable var section: SQDashboardSubsectionViewModel
 
-    var mainBody: some View {
+    var body: some View {
         SQDashboardSubsection(
             title: section.title,
             isCollapsed: $section.isCollapsed,
@@ -40,79 +40,81 @@ struct SQDashboardSectionView: View {
                         .padding(.bottom, .SQSpace.l)
                     }
 
-                    VStack(spacing: section.rowSpacing ?? SQDashboardView.uiConfig.sectionRowSpacing) {
-                    ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
+                    ZStack(alignment: .center) {
+                        VStack(spacing: section.rowSpacing ?? SQDashboardView.uiConfig.sectionRowSpacing) {
+                            ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
+                                switch row.rowType {
+                                case .metricStats:
+                                    if let vm = row as? SQDashboardMetricStatsRowViewModel {
+                                        Button(action: { handleMetricRowTap(vm) }) {
+                                            SQDashboardStatRow(data: .init(id: vm.metricId, icon: vm.icon, title: vm.title, avgValue: vm.avgValue, unit: vm.unit, sparklineData: vm.sparklineData, changePercent: vm.changePercent))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
 
-                        switch row.rowType {
-                        case .metricStats:
+                                case .metricPerformance:
+                                    if let vm = row as? SQDashboardMetricPerformanceRowViewModel {
+                                        Button(action: { handleMetricRowTap(vm) }) {
+                                            SQDashboardPerformanceRow(
+                                                data: .init(
+                                                    id: vm.metricId,
+                                                    icon: vm.icon,
+                                                    title: vm.title,
+                                                    bestValue: vm.bestValue,
+                                                    unit: vm.unit,
+                                                    percentileRank: vm.percentileRank
+                                                )
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
 
-                            if let metricStatsViewModel = row as? SQDashboardMetricStatsRowViewModel {
-                                Button(action: {
-                                    handleMetricRowTap(metricStatsViewModel)
-                                }) {
-                                    SQDashboardStatRow(data: .init(id: metricStatsViewModel.metricId, icon: metricStatsViewModel.icon, title: metricStatsViewModel.title, avgValue: metricStatsViewModel.avgValue, unit: metricStatsViewModel.unit, sparklineData: metricStatsViewModel.sparklineData, changePercent: metricStatsViewModel.changePercent))
+                                case .workoutTotals:
+                                    if let vm = row as? SQDashboardWorkoutTotalsRowViewModel {
+                                        SQDashboardWorkoutTotalsRowView(viewModel: vm)
+                                    }
+
+                                case .activityList:
+                                    if let vm = row as? SQDashboardActivityRowViewModel {
+                                        SQDashboardActivityListRowView(viewModel: vm)
+                                    }
+
+                                case .sleepScore:
+                                    if let vm = row as? SQDashboardSleepScoreRowViewModel {
+                                        SQDashboardSleepScoreRowView(viewModel: vm)
+                                    }
+
+                                case .sleepPhaseTimeline:
+                                    if let vm = row as? SQDashboardSleepPhaseTimelineRowViewModel {
+                                        SQDashboardSleepPhaseTimelineRowView(viewModel: vm)
+                                    }
+
+                                case .sleepSummary:
+                                    if let vm = row as? SQDashboardSleepSummaryRowViewModel {
+                                        SQDashboardSleepSummaryRowView(viewModel: vm)
+                                    }
                                 }
-                                .buttonStyle(.plain)
-                            }
-
-                        case .metricPerformance:
-                            if let performanceViewModel = row as? SQDashboardMetricPerformanceRowViewModel {
-                                Button(action: {
-                                    handleMetricRowTap(performanceViewModel)
-                                }) {
-                                    SQDashboardPerformanceRow(
-                                        data: .init(
-                                            id: performanceViewModel.metricId,
-                                            icon: performanceViewModel.icon,
-                                            title: performanceViewModel.title,
-                                            bestValue: performanceViewModel.bestValue,
-                                            unit: performanceViewModel.unit,
-                                            percentileRank: performanceViewModel.percentileRank
-                                        )
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-
-                        case .workoutTotals:
-
-                            if let workoutTotalsViewModel = row as? SQDashboardWorkoutTotalsRowViewModel {
-                                SQDashboardWorkoutTotalsRowView(viewModel: workoutTotalsViewModel)
-                            }
-
-                        case .activityList:
-
-                            if let activityListViewModel = row as? SQDashboardActivityRowViewModel {
-                                SQDashboardActivityListRowView(viewModel: activityListViewModel)
-                            }
-
-                        case .sleepScore:
-                            if let sleepScoreViewModel = row as? SQDashboardSleepScoreRowViewModel {
-                                SQDashboardSleepScoreRowView(viewModel: sleepScoreViewModel)
-                            }
-
-                        case .sleepPhaseTimeline:
-                            if let sleepTimelineViewModel = row as? SQDashboardSleepPhaseTimelineRowViewModel {
-                                SQDashboardSleepPhaseTimelineRowView(viewModel: sleepTimelineViewModel)
-                            }
-
-                        case .sleepSummary:
-                            if let sleepSummaryViewModel = row as? SQDashboardSleepSummaryRowViewModel {
-                                SQDashboardSleepSummaryRowView(viewModel: sleepSummaryViewModel)
                             }
                         }
+                        .blur(radius: section.isLocked ? 6 : 0)
+
+                        if section.isLocked {
+                            Button(action: { section.onLockedTap?() }) {
+                                Text("Log in to unlock your stats")
+                                    .sqFont(.body)
+                                    .foregroundStyle(SQColor.textPrimary.color)
+                                    .padding(.horizontal, .SQSpace.xl)
+                                    .padding(.vertical, .SQSpace.m)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                }
-                .id(section.activeFilter)
-                .transition(.opacity)
+                    .id(section.activeFilter)
+                    .transition(.opacity)
                 }
             }
         }
-
-    }
-    
-    var body: some View {
-        mainBody
     }
 
     private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
