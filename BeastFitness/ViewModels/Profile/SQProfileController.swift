@@ -22,6 +22,25 @@ protocol SQProfileInterface: AnyObject {
     let authManager: SQAuthManaging
 
     var title: String { "Profile" }
+    var subtitle: String {
+        if let user = userState.loggedInUser {
+            let name = user.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? user.email : name
+        }
+
+        return "Manage your account, settings, and app access."
+    }
+
+    var detailText: String? {
+        guard let user = userState.loggedInUser else { return nil }
+        let name = user.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+        return user.email
+    }
+
+    var statusTitle: String {
+        userState.isLoggedIn ? "Signed In" : "Guest"
+    }
 
     // MARK: - Button view models (nil = hidden)
 
@@ -100,5 +119,9 @@ protocol SQProfileInterface: AnyObject {
     private func showLogin(mode: SQLoginMode) {
         let controller = SQLoginController(mode: mode)
         hub.domainEvents.send(.pushDashboardRoute(.login(controller: controller)))
+    }
+
+    func settingsTapped() {
+        hub.domainEvents.send(.displaySettings)
     }
 }
