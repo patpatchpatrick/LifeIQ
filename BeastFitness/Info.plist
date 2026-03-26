@@ -19,6 +19,8 @@
 	<array>
 		<string>strava</string>
 	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 </dict>

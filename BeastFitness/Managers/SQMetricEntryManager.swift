@@ -118,7 +118,6 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     // MARK: - Private Sync Helpers
-
     private func performFullSync(context: ModelContext) async throws -> Int {
         guard let user = SQAppState.shared.userState.loggedInUser else { throw SQError.notLoggedIn }
         let buckets = try await entryService.fetchEntryBuckets(for: user, afterDate: nil)

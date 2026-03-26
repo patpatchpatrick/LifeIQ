@@ -35,6 +35,7 @@ protocol SQMetricsManaging: AnyObject {
     func updateMetric(id: String, title: String, emoji: String?, group: String, using context: ModelContext) throws
 
     // Sync
+    /// Syncs both the metric catalog and the user's logged metric entry data from Firestore.
     func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult
 }
 
@@ -233,6 +234,15 @@ final class SQMetricsManager: SQMetricsManaging {
 
     func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult {
         try loadIfNeeded(using: context)
+
+        // Keep metric entry values/notes and metric definitions in sync from one entrypoint.
+        _ = try await SQAppState.shared.metricEntryManager.syncIfNeeded(
+            for: .allTime,
+            context: context
+        )
+
+        // Metric definitions are synced separately from metric entries because they live in a
+        // different Firestore collection and have their own incremental sync timestamps.
         await bootstrapPushIfNeeded(context: context)
 
         guard let lastSync = getMetricSyncDate(context: context) else {

@@ -217,6 +217,12 @@ final class SQDashboardController: SQDashboardInterface {
                 context: context
             )
 
+            let allTimeCheckIns = try SQDailyCheckInEntity.getAll(
+                from: SQTimeRange.allTime.startDate,
+                to: SQTimeRange.allTime.endDate,
+                context: context
+            )
+
             let weekBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
                 from: SQTimeRange.weekBeforeLast.startDate,
                 to: SQTimeRange.weekBeforeLast.endDate,
@@ -289,7 +295,7 @@ final class SQDashboardController: SQDashboardInterface {
                 currentWorkouts = allTimeWorkouts
                 priorWorkouts = []  // No comparison for all time
                 priorTimeRange = .allTime  // No prior period for all time
-                currentCheckIns = pastYearCheckIns  // Use past year for metrics (all-time check-ins would be too much data)
+                currentCheckIns = allTimeCheckIns
                 priorCheckIns = []
                 currentVO2MaxSamples = vo2MaxAllTime
             }
@@ -412,6 +418,12 @@ final class SQDashboardController: SQDashboardInterface {
 
         let stats = checkIns
         let allDefinitions = SQMetricsManager.shared.dailyCheckInMetrics()
+
+        SQLogger.shared.log(
+            "Building Metrics subsection for \(timeRange.rawValue): current check-ins = \(stats.count), prior check-ins = \(priorCheckIns.count), definitions = \(allDefinitions.count)",
+            .debug,
+            context: .dashboard
+        )
 
         // Only include groups that actually have data
         let groupsWithData: [String] = {
@@ -1031,7 +1043,14 @@ final class SQDashboardController: SQDashboardInterface {
         let values = stats.compactMap { $0.values[definition.id] }
 
         // Skip if no data
-        guard !values.isEmpty else { return nil }
+        guard !values.isEmpty else {
+            SQLogger.shared.log(
+                "Metric row skipped for '\(definition.title)' (\(definition.id)) - no current values in \(stats.count) check-ins",
+                .debug,
+                context: .dashboard
+            )
+            return nil
+        }
 
         // Calculate average
         let sum = values.reduce(0, +)
@@ -1057,14 +1076,6 @@ final class SQDashboardController: SQDashboardInterface {
         // Icon: use emoji if available, otherwise empty string
         let icon = definition.emoji ?? ""
 
-        // Log sparkline data for debugging
-        SQLogger.shared.log(
-            "Metric '\(definition.title)': sparklineData count = \(sparklineData.count), icon = '\(icon)'",
-            .debug,
-            context: .dashboard
-        )
-
-        // Calculate percentage change vs comparison period
         let priorValues = priorStats.compactMap { $0.values[definition.id] }
         let priorAverage: Float? = priorValues.isEmpty ? nil : priorValues.reduce(0, +) / Float(priorValues.count)
 
@@ -1074,6 +1085,21 @@ final class SQDashboardController: SQDashboardInterface {
         } else {
             changePercent = nil
         }
+
+        SQLogger.shared.log(
+            """
+            Metric row '\(definition.title)' (\(definition.id)):
+            currentValues=\(values.count)
+            priorValues=\(priorValues.count)
+            currentAverage=\(String(format: "%.2f", average))
+            priorAverage=\(priorAverage.map { String(format: "%.2f", $0) } ?? "nil")
+            sparklineCount=\(sparklineData.count)
+            changePercent=\(changePercent.map { String(format: "%.4f", $0) } ?? "nil")
+            icon='\(icon)'
+            """,
+            .debug,
+            context: .dashboard
+        )
 
         return SQDashboardMetricStatsRowViewModel(
             metricId: definition.id,
