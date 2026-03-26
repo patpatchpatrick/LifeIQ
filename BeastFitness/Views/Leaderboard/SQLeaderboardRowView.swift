@@ -11,6 +11,23 @@ struct SQLeaderboardRowView: View {
     let viewModel: SQLeaderboardRowViewModel
     var onTitleTapped: (() -> Void)? = nil
 
+    private var scoreColumn: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(viewModel.formattedScore)
+                .sqFont(.bodySmallSemiBold)
+                .sqForegroundColor(.textPrimary)
+
+            if !viewModel.unitString.isEmpty {
+                Text(viewModel.unitString)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .frame(width: 88, alignment: .trailing)
+    }
+
     var body: some View {
         HStack(spacing: .SQSpace.m) {
             SQDashboardTrendBadge(
@@ -70,8 +87,7 @@ struct SQLeaderboardRowView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Score (right side)
-            Text(viewModel.scoreAttributedString)
+            scoreColumn
 
             if let topPercentText = viewModel.topPercentText {
                 HStack(spacing: .SQSpace.xs) {

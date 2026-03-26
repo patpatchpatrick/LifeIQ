@@ -32,6 +32,10 @@ struct SQMetricDetailView: View {
 
             LineChartView(model: chartModel)
                 .frame(width: controller.chartWidth, height: controller.chartHeight)
+
+            SQChartLegend(model: chartModel, primaryTitle: "Values", trendTitle: "Trend")
+            .padding(.horizontal, .SQSpace.l)
+            .padding(.top, .SQSpace.m)
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
@@ -80,10 +84,12 @@ struct SQMetricDetailView: View {
             } else {
                 ScrollView {
                     VStack(spacing: .SQSpace.l) {
-                        if let chartModel = controller.chartModel {
-                            chartSection(chartModel)
-                        } else {
-                            chartPlaceholderSection
+                        if controller.selectedTimeRange != .today {
+                            if let chartModel = controller.chartModel {
+                                chartSection(chartModel)
+                            } else {
+                                chartPlaceholderSection
+                            }
                         }
 
                         VStack(spacing: .SQSpace.l) {
@@ -173,5 +179,91 @@ private struct SQMetricDetailCardView: View {
         }
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+}
+
+struct SQChartLegend: View {
+    @ObservedObject var model: LineChartModel
+    let primaryTitle: String
+    let trendTitle: String
+
+    var body: some View {
+        HStack(spacing: .SQSpace.s) {
+            SQChartLegendToggle(
+                title: primaryTitle,
+                color: model.primaryLegendColor,
+                isSelected: model.showPrimaryLine,
+                action: { model.togglePrimaryLineVisibility() }
+            )
+
+            if model.hasTrendLine {
+                SQChartLegendToggle(
+                    title: trendTitle,
+                    color: model.trendLegendColor,
+                    isSelected: model.showTrendLine,
+                    action: { model.toggleTrendLineVisibility() }
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct SQChartLegendToggle: View {
+    let title: String
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: .SQSpace.s) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(
+                            isSelected
+                                ? color.opacity(0.22)
+                                : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.96)
+                        )
+
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .stroke(
+                            isSelected
+                                ? color.opacity(0.9)
+                                : SQColor.glassStroke.color,
+                            lineWidth: 1
+                        )
+
+                    if isSelected {
+                        SQImageView(
+                            image: .init(
+                                symbol: .checkmark,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)
+                            )
+                        )
+                    }
+                }
+                .frame(width: 16, height: 16)
+
+                Capsule(style: .continuous)
+                    .fill(color)
+                    .frame(width: 16, height: 4)
+
+                Text(title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(isSelected ? .textPrimary : .textSecondary)
+            }
+            .padding(.vertical, .SQSpace.s)
+            .padding(.horizontal, .SQSpace.m)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.76 : 0.96))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }

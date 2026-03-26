@@ -100,7 +100,7 @@ extension SQWorkoutStatsManager {
                     rows.append(SQPerformanceRowData(
                         id: "vo2-max",
                         icon: SQImageSymbol.heart.rawValue,
-                        title: "VO2 Max",
+                        title: "VO₂ Max",
                         bestValue: String(format: "%.1f", sample.value),
                         unit: "mL/kg/min",
                         percentileRank: percentile,
@@ -269,7 +269,7 @@ extension SQWorkoutStatsManager {
                     let deltaPercent = (abs(afterVal - beforeVal) / beforeVal * 100).adaptivePercentString
                     return SQWorkoutReviewHighlight(
                         segments: [
-                            .init(text: "↑ VO2 Max went up ", isStatistic: false),
+                            .init(text: "↑ VO₂ Max went up ", isStatistic: false),
                             .init(text: "\(deltaPercent): \(beforeStr) → \(afterStr)", isStatistic: true)
                         ],
                         sentiment: .positive
@@ -278,7 +278,7 @@ extension SQWorkoutStatsManager {
                     let deltaPercent = (abs(beforeVal - afterVal) / beforeVal * 100).adaptivePercentString
                     return SQWorkoutReviewHighlight(
                         segments: [
-                            .init(text: "↓ VO2 Max dropped ", isStatistic: false),
+                            .init(text: "↓ VO₂ Max dropped ", isStatistic: false),
                             .init(text: "\(deltaPercent): \(beforeStr) → \(afterStr)", isStatistic: true)
                         ],
                         sentiment: .negative
@@ -286,7 +286,7 @@ extension SQWorkoutStatsManager {
                 } else {
                     return SQWorkoutReviewHighlight(
                         segments: [
-                            .init(text: "VO2 Max unchanged at ", isStatistic: false),
+                            .init(text: "VO₂ Max unchanged at ", isStatistic: false),
                             .init(text: "\(afterStr) mL/kg/min", isStatistic: true)
                         ],
                         sentiment: .neutral

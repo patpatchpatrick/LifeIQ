@@ -102,7 +102,7 @@ struct SQColumnHeaderRow: View {
             data: SQStatRowData(
                 id: "vo2-max",
                 icon: "heart.fill",
-                title: "VO2 Max",
+                title: "VO₂ Max",
                 avgValue: "48.1",
                 unit: "ml/kg/min",
                 sparklineData: [45.5, 46.0, 47.2, 47.1, 48.5, 48.3, 48.1],

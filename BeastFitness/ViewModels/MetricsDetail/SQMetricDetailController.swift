@@ -364,6 +364,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             lineTitle: definition.title,
             uiConfig: buildChartUIConfig(),
             inputPoints: chartPoints,
+            trendInputPoints: buildTrendInputPoints(from: chartPoints),
             gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(definition: definition),
             navigationConfig: NavigationConfig()
@@ -378,6 +379,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             lineTitle: existing.lineTitle,
             uiConfig: existing.uiConfig,
             inputPoints: existing.inputPoints,
+            trendInputPoints: existing.trendInputPoints,
             gridConfig: existing.gridConfig,
             focusConfig: existing.focusConfig,
             navigationConfig: existing.navigationConfig
@@ -412,6 +414,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             lineTitle: mockDefinition.title,
             uiConfig: buildChartUIConfig(),
             inputPoints: mockPoints,
+            trendInputPoints: buildTrendInputPoints(from: mockPoints),
             gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(definition: mockDefinition),
             navigationConfig: NavigationConfig()
@@ -448,7 +451,8 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             textSecondary: SQColor.textSecondary.color,
             backgroundPrimary: SQColor.glassCardTint.color,
             backgroundSecondary: SQColor.glassPopoverTint.color,
-            lineColor: SQColor.dashboardGlowBlue.color
+            lineColor: SQColor.dashboardGlowBlue.color,
+            trendLineColor: SQColor.dashboardGlowMint.color
         )
         let fontConfig = LineChartModel.FontConfig(
             font: SQFont(type: .bodyExtraSmall).font,
@@ -609,6 +613,46 @@ final class SQMetricDetailController: SQMetricDetailInterface {
                 return .init(id: stat.uniqueDateKey, date: stat.date, value: Double(value))
             }
             .sorted { $0.date < $1.date }
+    }
+
+    private func buildTrendInputPoints(from inputPoints: [LineChartIdentifiablePoint]) -> [LineChartIdentifiablePoint]? {
+        guard inputPoints.count >= 4 else { return nil }
+
+        let alpha: CGFloat = inputPoints.count > 12 ? 0.18 : 0.24
+        var smoothedY = inputPoints[0].point.y
+
+        let smoothedPoints = inputPoints.enumerated().map { index, point in
+            if index == 0 {
+                return point
+            }
+
+            smoothedY = (alpha * point.point.y) + ((1 - alpha) * smoothedY)
+            return LineChartIdentifiablePoint(
+                id: point.id,
+                point: CGPoint(x: point.point.x, y: smoothedY)
+            )
+        }
+
+        let anchorCount = inputPoints.count >= 9 ? 4 : 3
+        let anchorIndices = buildTrendAnchorIndices(totalCount: smoothedPoints.count, anchorCount: anchorCount)
+        return anchorIndices.map { smoothedPoints[$0] }
+    }
+
+    private func buildTrendAnchorIndices(totalCount: Int, anchorCount: Int) -> [Int] {
+        guard totalCount > 0 else { return [] }
+        guard anchorCount > 1 else { return [0] }
+
+        let lastIndex = totalCount - 1
+        let denominator = max(1, anchorCount - 1)
+        let indices = (0..<anchorCount).map { anchorIndex in
+            Int(round((Double(anchorIndex) / Double(denominator)) * Double(lastIndex)))
+        }
+
+        return indices.reduce(into: [Int]()) { result, index in
+            if result.last != index {
+                result.append(index)
+            }
+        }
     }
 
     private func currentAvoidanceWindow(for points: [DayValuePoint]) -> AvoidanceWindow? {

@@ -27,14 +27,17 @@ struct LineChartCoordinate {
 }
 
 public final class LineChartModel: ObservableObject {
-    static let verticalPaddingPct = 0.1
+    static let verticalPaddingPct = 0.14
     static let horizontalPaddingPct = 0.1
+    static let yDomainPaddingPct = 0.14
 
     let width: CGFloat
     let height: CGFloat
     public let lineTitle: String
     let lineColor: Color
     public let inputPoints: [LineChartIdentifiablePoint]
+    public let trendInputPoints: [LineChartIdentifiablePoint]?
+    let trendLineColor: Color?
     
     // MARK: - Coordinates
     /// Map of scaled coordinated and original coordinates
@@ -51,6 +54,7 @@ public final class LineChartModel: ObservableObject {
     let originalCoordinatesMaxX: CGFloat
     let originalCoordinatesMinY: CGFloat
     let originalCoordinatesMaxY: CGFloat
+    let trendLineCoordinates: [CGPoint]
     
     public let uiConfig: UIConfig
     
@@ -70,13 +74,22 @@ public final class LineChartModel: ObservableObject {
         let backgroundPrimary: Color
         let backgroundSecondary: Color
         let lineColor: Color
+        let trendLineColor: Color?
         
-        public init(textPrimary: Color, textSecondary: Color, backgroundPrimary: Color, backgroundSecondary: Color, lineColor: Color) {
+        public init(
+            textPrimary: Color,
+            textSecondary: Color,
+            backgroundPrimary: Color,
+            backgroundSecondary: Color,
+            lineColor: Color,
+            trendLineColor: Color? = nil
+        ) {
             self.textPrimary = textPrimary
             self.textSecondary = textSecondary
             self.backgroundPrimary = backgroundPrimary
             self.backgroundSecondary = backgroundSecondary
             self.lineColor = lineColor
+            self.trendLineColor = trendLineColor
         }
     }
     
@@ -92,6 +105,8 @@ public final class LineChartModel: ObservableObject {
     
     // MARK: - Focus
     @Published private(set) var focusedLineModel: FocusedLineViewModel?
+    @Published public var showPrimaryLine: Bool
+    @Published public var showTrendLine: Bool
     public let focusConfig: FocusConfig?
 
     // MARK: - Grid
@@ -112,10 +127,21 @@ public final class LineChartModel: ObservableObject {
     ///   - lineTitle: Title of the line (appears on selectable caption)
     ///   - lineColor: Line color
     ///   - inputPoints: Line chart points
+    ///   - trendInputPoints: Optional smoother trend points that share the same chart domain
     ///   - gridConfig: Should be passed if the line chart will use a grid
     ///   - focusConfig: Should be passed if the line chart will allow focus
     ///   - navigationConfig: Should be passed if the line chart will show navigation buttons
-    public init?(width: CGFloat = 200, height: CGFloat = 200, lineTitle: String, uiConfig: UIConfig, inputPoints: [LineChartIdentifiablePoint], gridConfig: GridConfig? = nil, focusConfig: FocusConfig? = nil, navigationConfig: NavigationConfig? = nil) {
+    public init?(
+        width: CGFloat = 200,
+        height: CGFloat = 200,
+        lineTitle: String,
+        uiConfig: UIConfig,
+        inputPoints: [LineChartIdentifiablePoint],
+        trendInputPoints: [LineChartIdentifiablePoint]? = nil,
+        gridConfig: GridConfig? = nil,
+        focusConfig: FocusConfig? = nil,
+        navigationConfig: NavigationConfig? = nil
+    ) {
         guard inputPoints.count >= 2 else { return nil }
 
         self.width = width
@@ -123,11 +149,30 @@ public final class LineChartModel: ObservableObject {
         self.lineTitle = lineTitle
         self.uiConfig = uiConfig
         self.inputPoints = inputPoints
+        self.trendInputPoints = trendInputPoints
+        self.showPrimaryLine = true
+        self.showTrendLine = trendInputPoints != nil
         self.gridConfig = gridConfig
         self.focusConfig = focusConfig
         self.navigationConfig = navigationConfig
-        self.lineChartCoordinates = Self.buildCoordinates(width: width, height: height, inputPoints: inputPoints)
+        let sharedYDomain = trendInputPoints.map { Self.sharedYDomain(primary: inputPoints, secondary: $0) }
+        self.lineChartCoordinates = Self.buildCoordinates(
+            width: width,
+            height: height,
+            inputPoints: inputPoints,
+            yDomain: sharedYDomain
+        )
         self.coordinates = lineChartCoordinates.map { $0.point }
+        if let trendInputPoints, trendInputPoints.count >= 2 {
+            self.trendLineCoordinates = Self.buildCoordinates(
+                width: width,
+                height: height,
+                inputPoints: trendInputPoints,
+                yDomain: sharedYDomain
+            ).map(\.point)
+        } else {
+            self.trendLineCoordinates = []
+        }
         self.originalCoordinates = lineChartCoordinates.map { $0.originalPoint }
         self.coordinatesMinX = coordinates.map { $0.x }.min()!
         self.coordinatesMaxX = coordinates.map { $0.x }.max()!
@@ -138,9 +183,36 @@ public final class LineChartModel: ObservableObject {
         self.originalCoordinatesMinY = originalCoordinates.map { $0.y }.min()!
         self.originalCoordinatesMaxY = originalCoordinates.map { $0.y }.max()!
         self.lineColor = uiConfig.colorConfig.lineColor
+        self.trendLineColor = uiConfig.colorConfig.trendLineColor
     }
 
-    static func buildCoordinates(width: CGFloat, height: CGFloat, inputPoints: [LineChartIdentifiablePoint]) -> [LineChartCoordinate] {
+    public var hasTrendLine: Bool {
+        !trendLineCoordinates.isEmpty && trendLineColor != nil
+    }
+
+    public var primaryLegendColor: Color {
+        lineColor
+    }
+
+    public var trendLegendColor: Color {
+        trendLineColor ?? lineColor
+    }
+
+    public func togglePrimaryLineVisibility() {
+        showPrimaryLine.toggle()
+    }
+
+    public func toggleTrendLineVisibility() {
+        guard hasTrendLine else { return }
+        showTrendLine.toggle()
+    }
+
+    static func buildCoordinates(
+        width: CGFloat,
+        height: CGFloat,
+        inputPoints: [LineChartIdentifiablePoint],
+        yDomain: ClosedRange<CGFloat>? = nil
+    ) -> [LineChartCoordinate] {
         let yFloor = height - verticalPaddingPct * height
         let yCeiling = verticalPaddingPct * height
         let xFloor = horizontalPaddingPct * width
@@ -148,14 +220,15 @@ public final class LineChartModel: ObservableObject {
 
         let minX = inputPoints.map(\.point.x).min() ?? 0
         let maxX = inputPoints.map(\.point.x).max() ?? 1
-        let minY = inputPoints.map(\.point.y).min() ?? 0
-        let maxY = inputPoints.map(\.point.y).max() ?? 1
+        let resolvedYDomain = yDomain ?? paddedYDomain(for: inputPoints)
+        let minY = resolvedYDomain.lowerBound
+        let maxY = resolvedYDomain.upperBound
 
         // Normalize and scale points to chart dimensions
         return inputPoints.map { identifiablePoint in
             let point = identifiablePoint.point
-            let normalizedX = (point.x - minX) / (maxX - minX)
-            let normalizedY = (point.y - minY) / (maxY - minY)
+            let normalizedX = maxX == minX ? 0.5 : (point.x - minX) / (maxX - minX)
+            let normalizedY = maxY == minY ? 0.5 : (point.y - minY) / (maxY - minY)
 
             let x = xFloor + normalizedX * (xCeiling - xFloor)
             let y = yFloor - normalizedY * (yFloor - yCeiling) // Invert Y-axis
@@ -163,6 +236,22 @@ public final class LineChartModel: ObservableObject {
             let scaledPoint = CGPoint(x: x, y: y)
             return .init(id: identifiablePoint.id, point: scaledPoint, originalPoint: originalPoint)
         }.sorted { $0.point.x < $1.point.x }
+    }
+
+    static func sharedYDomain(
+        primary: [LineChartIdentifiablePoint],
+        secondary: [LineChartIdentifiablePoint]
+    ) -> ClosedRange<CGFloat> {
+        let all = primary + secondary
+        return paddedYDomain(for: all)
+    }
+
+    private static func paddedYDomain(for points: [LineChartIdentifiablePoint]) -> ClosedRange<CGFloat> {
+        let minY = points.map(\.point.y).min() ?? 0
+        let maxY = points.map(\.point.y).max() ?? 1
+        let range = maxY - minY
+        let padding = max(range * yDomainPaddingPct, range == 0 ? 1 : 0)
+        return (minY - padding)...(maxY + padding)
     }
 
     @MainActor static let mock = LineChartModel(

@@ -15,7 +15,7 @@ enum SQLeaderboardMode {
         case .workoutQuantity(let quantityType, _):
             return "\(quantityType.displayTitle) Leaderboard"
         case .vo2Max:
-            return "VO2 Max Leaderboard"
+            return "VO₂ Max Leaderboard"
         }
     }
 
@@ -35,7 +35,7 @@ enum SQLeaderboardMode {
         case .workoutQuantity(let quantityType, _):
             return quantityType.displayTitle
         case .vo2Max:
-            return "VO2 Max"
+            return "VO₂ Max"
         }
     }
 }

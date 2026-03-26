@@ -34,35 +34,55 @@ public struct LineChartView: View {
                 GridBackgroundView(lineChartModel: model, gridConfig: gridConfig)
             }
 
-            LineChartShape(model: model)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.92),
-                            model.lineColor
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .shadow(color: model.lineColor.opacity(0.24), radius: 10, x: 0, y: 3)
-
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(
+            if model.showPrimaryLine {
+                LineChartShape(model: model)
+                    .fill(
+                        LinearGradient(
                             colors: [
-                                model.lineColor.opacity(0.24),
-                                model.lineColor.opacity(0.08),
-                                .clear
-                            ]
-                        ),
-                        startPoint: .top,
-                        endPoint: .bottom
+                                Color.white.opacity(0.92),
+                                model.lineColor
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .frame(width: model.width, height: model.height)
-                .clipShape(LineChartGradientShape(model: model))
+                    .shadow(color: model.lineColor.opacity(0.24), radius: 10, x: 0, y: 3)
+            }
+
+            if model.showTrendLine, !model.trendLineCoordinates.isEmpty, let trendLineColor = model.trendLineColor {
+                TrendLineShape(points: model.trendLineCoordinates)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                trendLineColor.opacity(0.95),
+                                trendLineColor.opacity(0.72)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                    )
+                    .shadow(color: trendLineColor.opacity(0.22), radius: 7, x: 0, y: 2)
+            }
+
+            if model.showPrimaryLine {
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: [
+                                    model.lineColor.opacity(0.24),
+                                    model.lineColor.opacity(0.08),
+                                    .clear
+                                ]
+                            ),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: model.width, height: model.height)
+                    .clipShape(LineChartGradientShape(model: model))
+            }
 
             if let focusedLineModel = model.focusedLineModel {
                 FocusedLineView(lineChartModel: model, model: focusedLineModel)
@@ -181,15 +201,7 @@ struct LineChartShape: Shape {
     }
     
     func linePath(in rect: CGRect) -> Path {
-        var path = Path()
-        
-        path.move(to: model.coordinates.first!)
-        
-        model.coordinates.forEach {
-            path.addLine(to: $0)
-        }
-        
-        return path
+        SmoothLinePathBuilder.buildPath(points: model.coordinates)
     }
 }
 
@@ -204,22 +216,89 @@ struct LineChartGradientShape: Shape {
     
     func linePath(in rect: CGRect) -> Path {
         var path = Path()
-
-        // Start at the bottom of the chart directly below the first data point
-        path.move(to: .init(x: model.coordinates.first!.x, y: model.yFloor))
-
-        // Trace up through all data points
-        model.coordinates.forEach {
-            path.addLine(to: $0)
+        guard let firstPoint = model.coordinates.first, let lastPoint = model.coordinates.last else {
+            return path
         }
 
+        // Start at the bottom of the chart directly below the first data point
+        path.move(to: .init(x: firstPoint.x, y: model.yFloor))
+        path.addLine(to: firstPoint)
+
+        SmoothLinePathBuilder.appendSmoothedPoints(
+            Array(model.coordinates.dropFirst()),
+            to: &path,
+            moveToFirstPoint: false
+        )
+
         // Come back down to the bottom below the last data point
-        path.addLine(to: .init(x: model.coordinates.last!.x, y: model.yFloor))
+        path.addLine(to: .init(x: lastPoint.x, y: model.yFloor))
 
         // Close along the bottom back to the start
         path.closeSubpath()
 
         return path
+    }
+}
+
+struct TrendLineShape: Shape {
+    let points: [CGPoint]
+
+    func path(in rect: CGRect) -> Path {
+        SmoothLinePathBuilder.buildPath(points: points)
+    }
+}
+
+enum SmoothLinePathBuilder {
+    static func buildPath(points: [CGPoint]) -> Path {
+        var path = Path()
+        appendSmoothedPoints(points, to: &path, moveToFirstPoint: true)
+        return path
+    }
+
+    static func appendSmoothedPoints(
+        _ points: [CGPoint],
+        to path: inout Path,
+        moveToFirstPoint: Bool
+    ) {
+        guard let first = points.first else { return }
+        guard points.count > 1 else {
+            if moveToFirstPoint {
+                path.move(to: first)
+            } else {
+                path.addLine(to: first)
+            }
+            return
+        }
+
+        if moveToFirstPoint {
+            path.move(to: first)
+        } else {
+            path.addLine(to: first)
+        }
+
+        if points.count == 2 {
+            path.addLine(to: points[1])
+            return
+        }
+
+        for index in 0..<(points.count - 1) {
+            let current = points[index]
+            let next = points[index + 1]
+            let midpoint = CGPoint(
+                x: (current.x + next.x) / 2,
+                y: (current.y + next.y) / 2
+            )
+
+            if index == 0 {
+                path.addQuadCurve(to: midpoint, control: current)
+            } else {
+                path.addQuadCurve(to: midpoint, control: current)
+            }
+
+            if index == points.count - 2 {
+                path.addQuadCurve(to: next, control: midpoint)
+            }
+        }
     }
 }
 

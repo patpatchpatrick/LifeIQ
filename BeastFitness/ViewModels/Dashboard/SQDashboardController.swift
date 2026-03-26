@@ -599,7 +599,7 @@ final class SQDashboardController: SQDashboardInterface {
             let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
                 metricId: "vo2-max",
                 icon: SQImageSymbol.heart.rawValue,
-                title: "VO2 Max",
+                title: "VO₂ Max",
                 bestValue: bestValueString,
                 unit: "mL/kg/min",
                 percentileRank: percentileRank,

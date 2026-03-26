@@ -83,6 +83,10 @@ struct SQLeaderboardView: View {
             } else {
                 LineChartView(model: chartModel)
                     .frame(width: controller.chartWidth, height: controller.chartHeight)
+
+                SQChartLegend(model: chartModel, primaryTitle: "Scores", trendTitle: "Trend")
+                .padding(.horizontal, .SQSpace.l)
+                .padding(.top, .SQSpace.m)
             }
         }
         .padding(.horizontal, .SQSpace.l)
@@ -110,6 +114,7 @@ struct SQLeaderboardView: View {
             Text("SCORE")
                 .sqFont(.headerSmall)
                 .sqForegroundColor(.textSecondary)
+                .frame(width: 88, alignment: .trailing)
 
             Text("ALL TIME")
                 .sqFont(.headerSmall)
