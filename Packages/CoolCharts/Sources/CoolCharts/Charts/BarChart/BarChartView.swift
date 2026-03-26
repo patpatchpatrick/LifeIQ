@@ -8,12 +8,18 @@
 import SwiftUI
 
 public struct BarChartView: View {
+    public enum VisualStyle {
+        case standard
+        case glass
+    }
+
     let dataPoints: [DataPoint]
     let maxHeight: CGFloat
     let barSpacing: CGFloat
     let barCornerRadius: CGFloat
     let labelFont: Font
     let labelColor: Color
+    let visualStyle: VisualStyle
     
     public struct DataPoint: Identifiable {
         public let id = UUID()
@@ -34,7 +40,8 @@ public struct BarChartView: View {
         barSpacing: CGFloat = 8,
         barCornerRadius: CGFloat = 3,
         labelFont: Font = .caption,
-        labelColor: Color = .secondary
+        labelColor: Color = .secondary,
+        visualStyle: VisualStyle = .standard
     ) {
         self.dataPoints = dataPoints
         self.maxHeight = maxHeight
@@ -42,6 +49,7 @@ public struct BarChartView: View {
         self.barCornerRadius = barCornerRadius
         self.labelFont = labelFont
         self.labelColor = labelColor
+        self.visualStyle = visualStyle
     }
     
     private var maxValue: Double {
@@ -54,8 +62,7 @@ public struct BarChartView: View {
                 ForEach(dataPoints, id: \.id) { point in
                     VStack(spacing: 4) {
                         // Bar
-                        RoundedRectangle(cornerRadius: barCornerRadius)
-                            .fill(point.color)
+                        barView(for: point)
                             .frame(
                                 width: barWidth(totalWidth: geometry.size.width),
                                 height: barHeight(for: point.value)
@@ -72,6 +79,36 @@ public struct BarChartView: View {
             .frame(maxWidth: .infinity)
         }
         .frame(height: maxHeight + 20) // Add space for labels
+    }
+
+    @ViewBuilder
+    private func barView(for point: DataPoint) -> some View {
+        let shape = RoundedRectangle(cornerRadius: barCornerRadius, style: .continuous)
+
+        switch visualStyle {
+        case .standard:
+            shape.fill(point.color)
+        case .glass:
+            shape
+                .fill(point.color.opacity(0.72))
+                .overlay {
+                    shape
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.30),
+                                    Color.white.opacity(0.04)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                }
+                .overlay {
+                    shape
+                        .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                }
+        }
     }
     
     private func barWidth(totalWidth: CGFloat) -> CGFloat {

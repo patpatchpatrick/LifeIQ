@@ -10,14 +10,39 @@ import CoolCharts
 
 /// Wrapper around CoolCharts BarChartView with BeastFitness styling
 struct SQActivityBarChart: View {
+    enum VisualStyle {
+        case standard
+        case glass
+    }
+
     let dataPoints: [DataPoint]
     let maxHeight: CGFloat
-    
+    let barSpacing: CGFloat
+    let barCornerRadius: CGFloat
+    let labelColor: Color
+    let visualStyle: VisualStyle
+
     struct DataPoint: Identifiable {
         let id = UUID()
         let label: String
         let value: Double
         let color: Color
+    }
+
+    init(
+        dataPoints: [DataPoint],
+        maxHeight: CGFloat,
+        barSpacing: CGFloat = 8,
+        barCornerRadius: CGFloat = 3,
+        labelColor: Color = SQColor.textTertiary.color,
+        visualStyle: VisualStyle = .standard
+    ) {
+        self.dataPoints = dataPoints
+        self.maxHeight = maxHeight
+        self.barSpacing = barSpacing
+        self.barCornerRadius = barCornerRadius
+        self.labelColor = labelColor
+        self.visualStyle = visualStyle
     }
     
     var body: some View {
@@ -30,8 +55,11 @@ struct SQActivityBarChart: View {
                 )
             },
             maxHeight: maxHeight,
+            barSpacing: barSpacing,
+            barCornerRadius: barCornerRadius,
             labelFont: SQFont(type: .bodySmall).font,
-            labelColor: SQColor.textTertiary.color
+            labelColor: labelColor,
+            visualStyle: visualStyle == .glass ? .glass : .standard
         )
     }
 }

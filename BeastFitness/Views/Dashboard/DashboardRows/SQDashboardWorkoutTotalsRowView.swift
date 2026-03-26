@@ -9,13 +9,33 @@ import SwiftUI
 
 struct SQDashboardWorkoutTotalsRowView: View {
     @Bindable var viewModel: SQDashboardWorkoutTotalsRowViewModel
+
+    private var chartDataPoints: [SQActivityBarChart.DataPoint] {
+        let maxValue = viewModel.currentChartDataPoints.map(\.value).max() ?? 1
+        let latestIndex = max(0, viewModel.currentChartDataPoints.count - 1)
+
+        return viewModel.currentChartDataPoints.enumerated().map { index, point in
+            let normalizedValue = maxValue > 0 ? point.value / maxValue : 0
+            let baseOpacity = 0.20 + (normalizedValue * 0.40)
+            let isLatest = index == latestIndex
+            let color = isLatest
+                ? SQColor.dashboardGlowBlue.color.opacity(0.95)
+                : Color.white.opacity(baseOpacity)
+
+            return SQActivityBarChart.DataPoint(
+                label: point.label,
+                value: point.value,
+                color: color
+            )
+        }
+    }
     
     var totalValuesAndTrendsStack: some View {
-        HStack(alignment: .center, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
             SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
             Text(viewModel.currentValueAndTrend.trend)
-            
-            Spacer()
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textSecondary)
         }
     }
     
@@ -25,19 +45,18 @@ struct SQDashboardWorkoutTotalsRowView: View {
             // Activity bar chart
             if !viewModel.currentChartDataPoints.isEmpty && viewModel.currentChartDataPoints.count > 1 {
                 SQActivityBarChart(
-                    dataPoints: viewModel.currentChartDataPoints.map { point in
-                        SQActivityBarChart.DataPoint(
-                            label: point.label,
-                            value: point.value,
-                            color: SQColor.accent(1).color
-                        )
-                    },
-                    maxHeight: 60
+                    dataPoints: chartDataPoints,
+                    maxHeight: 64,
+                    barSpacing: 6,
+                    barCornerRadius: 7,
+                    labelColor: SQColor.textDisabled.color,
+                    visualStyle: .glass
                 )
                 .padding(.bottom, .SQSpace.xl)
             }
             
             totalValuesAndTrendsStack
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
@@ -53,11 +72,17 @@ struct SQDashboardWorkoutStatView: View {
     
     var body: some View {
         Text(attributedTitle)
-            .padding(.top, .SQSpace.m) /// Subtract a bit to center the text since we typically use 2 different size fonts here which makes the text sit towards the bottom
+            .padding(.top, .SQSpace.m)
             .padding(.bottom, .SQSpace.m)
-            .padding(.horizontal, .SQSpace.m)
-            .sqBackgroundColor(.backgroundTertiaryLight)
-            .cornerRadius(.SQCornerRadius.s)
+            .padding(.horizontal, .SQSpace.l)
+            .background(
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.8 : 1))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
+            )
     }
 }
 
