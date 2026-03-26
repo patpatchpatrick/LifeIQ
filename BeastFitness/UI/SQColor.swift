@@ -58,6 +58,9 @@ indirect enum SQColor {
     case dashboardGradientStart
     case dashboardGradientMid
     case dashboardGradientEnd
+    case sheetGradientStart
+    case sheetGradientMid
+    case sheetGradientEnd
     case dashboardGlowBlue
     case dashboardGlowMint
     case dashboardTrendWarm
@@ -193,6 +196,18 @@ indirect enum SQColor {
             return Self.isDarkMode
                 ? UIColor(hexString: "#15424A")!
                 : UIColor(hexString: "#E7F0FA")!
+        case .sheetGradientStart:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#071118")!
+                : UIColor(hexString: "#F5F9FA")!
+        case .sheetGradientMid:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#0D1A22")!
+                : UIColor(hexString: "#EDF4F4")!
+        case .sheetGradientEnd:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#13242B")!
+                : UIColor(hexString: "#EAF0F6")!
         case .dashboardGlowBlue:
             return Self.isDarkMode
                 ? UIColor(hexString: "#6FD7FF")!

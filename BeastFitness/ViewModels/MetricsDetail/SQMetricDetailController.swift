@@ -63,7 +63,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
     let id = UUID().uuidString
     private(set) var containerWidth: CGFloat = 0
     var chartWidth: CGFloat {
-        max(0, containerWidth * 0.95)
+        max(0, containerWidth - (.SQSpace.l * 4))
     }
     let chartHeight: CGFloat = 300
 
@@ -321,7 +321,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             lineTitle: definition.title,
             uiConfig: buildChartUIConfig(),
             inputPoints: chartPoints,
-            gridConfig: GridConfig(),
+            gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(definition: definition),
             navigationConfig: NavigationConfig()
         )
@@ -369,7 +369,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             lineTitle: mockDefinition.title,
             uiConfig: buildChartUIConfig(),
             inputPoints: mockPoints,
-            gridConfig: GridConfig(),
+            gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(definition: mockDefinition),
             navigationConfig: NavigationConfig()
         )
@@ -403,15 +403,21 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let colorConfig = LineChartModel.ColorConfig(
             textPrimary: SQColor.textPrimary.color,
             textSecondary: SQColor.textSecondary.color,
-            backgroundPrimary: SQColor.backgroundSheet.color,
-            backgroundSecondary: SQColor.backgroundSecondary.color,
-            lineColor: SQColor.accent(1).color
+            backgroundPrimary: SQColor.glassCardTint.color,
+            backgroundSecondary: SQColor.glassPopoverTint.color,
+            lineColor: SQColor.dashboardGlowBlue.color
         )
         let fontConfig = LineChartModel.FontConfig(
             font: SQFont(type: .bodyExtraSmall).font,
             boldFont: SQFont(type: .bodySmallBold).font
         )
         return LineChartModel.UIConfig(colorConfig: colorConfig, fontConfig: fontConfig)
+    }
+
+    private func buildGridConfig() -> GridConfig {
+        GridConfig(
+            lineColor: SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.9 : 0.55)
+        )
     }
 
     private func buildFocusConfig(definition: SQMetricDefinition) -> FocusConfig {
@@ -426,7 +432,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         }
 
         return FocusConfig(
-            focusColor: SQColor.accent(1).color,
+            focusColor: SQColor.dashboardGlowBlue.color,
             xLabelBuilder: xLabelBuilder,
             yLabelBuilder: yLabelBuilder,
             onFocus: { _ in }
@@ -546,7 +552,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         }
 
         let percent = ((currentAverage - priorAverage) / priorAverage) * 100
-        let color: SQColor = percent >= 0 ? .colorNeonGreen : .colorNeonRed
+        let color: SQColor = percent >= 0 ? .dashboardGlowBlue : .dashboardTrendWarm
         return .init(
             value: String(format: "%@%.1f%%", percent >= 0 ? "+" : "", percent),
             color: color

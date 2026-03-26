@@ -35,10 +35,32 @@ public struct LineChartView: View {
             }
 
             LineChartShape(model: model)
-                .fill(model.lineColor)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.92),
+                            model.lineColor
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .shadow(color: model.lineColor.opacity(0.24), radius: 10, x: 0, y: 3)
 
             Rectangle()
-                .fill(LinearGradient(gradient: Gradient(colors: [model.lineColor.opacity(0.2), .clear]), startPoint: .top, endPoint: .bottom))
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                model.lineColor.opacity(0.24),
+                                model.lineColor.opacity(0.08),
+                                .clear
+                            ]
+                        ),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .frame(width: model.width, height: model.height)
                 .clipShape(LineChartGradientShape(model: model))
 
@@ -127,8 +149,14 @@ public struct LineChartView: View {
                 .font(model.uiConfig.fontConfig.font)
                 .foregroundColor(model.uiConfig.colorConfig.textPrimary)
                 .frame(width: size, height: size)
-                .background(model.uiConfig.colorConfig.backgroundSecondary.opacity(0.5))
-                .cornerRadius(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(model.uiConfig.colorConfig.backgroundSecondary.opacity(0.85))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                )
         }
         .position(position)
     }

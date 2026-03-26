@@ -16,7 +16,7 @@ struct FocusedLineView: View {
         ZStack {
             FocusedLineShape(model: model)
                 .stroke(style: StrokeStyle(lineWidth: 1, dash: [5]))
-                .foregroundStyle(model.focusConfig.focusColor)
+                .foregroundStyle(model.focusConfig.focusColor.opacity(0.85))
             
             FocusedLineCaptionView(model: model)
         }
@@ -50,8 +50,15 @@ struct FocusedLineCaptionView: View {
     var body: some View {
         captionStack
             .padding(.SQSpace.s)
-            .background(model.lineChartModel.uiConfig.colorConfig.backgroundSecondary)
-            .cornerRadius(.SQSpace.s)
+            .background(
+                RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
+                    .fill(model.lineChartModel.uiConfig.colorConfig.backgroundSecondary.opacity(0.9))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
+                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
             .background(
                 GeometryReader { geo in
                     Color.clear.onAppear { captionWidth = geo.size.width }
@@ -69,9 +76,9 @@ struct FocusedLineCaptionItemView: View {
         HStack(alignment: .center, spacing: .SQSpace.s) {
             
             if let lineColor = captionItem.lineColor {
-                Rectangle()
+                Capsule(style: .continuous)
                     .foregroundStyle(lineColor)
-                    .frame(width: 4, height: 1)
+                    .frame(width: 12, height: 4)
             }
             
             Text(captionItem.lineTitle)

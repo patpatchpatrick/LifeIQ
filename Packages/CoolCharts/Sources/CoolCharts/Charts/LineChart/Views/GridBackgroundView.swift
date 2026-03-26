@@ -84,7 +84,7 @@ struct GridBackgroundView: View {
                         let label = yLabelBuilder(value)
                         Text(label)
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(lineChartModel.uiConfig.colorConfig.textSecondary)
                             .position(x: 15, y: yPos + 5)
                     }
                 }
@@ -97,7 +97,7 @@ struct GridBackgroundView: View {
                         let label = xLabelBuilder(value)
                         Text(label)
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(lineChartModel.uiConfig.colorConfig.textSecondary)
                             .position(x: xPos + 5, y: height - 10)
                     }
                 }
@@ -106,4 +106,3 @@ struct GridBackgroundView: View {
         .frame(width: lineChartModel.width, height: lineChartModel.height)
     }
 }
-

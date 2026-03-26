@@ -53,18 +53,30 @@ final class SQLeaderboardRowViewModel: Identifiable {
         }
     }
 
-    /// "Top X%" string based on percentile rank. Nil if insufficient data.
-    var percentileString: String? {
-        guard let rank = percentileRank else { return nil }
-        let topPercent = Int((1.0 - rank) * 100)
-        return "Top \(topPercent)%"
+    var rankTone: SQDashboardTrendTone {
+        switch rank {
+        case 1...3:
+            return .positive
+        default:
+            return .neutral
+        }
     }
 
-    /// Color interpolated from green (top) through neutral (middle) to red (bottom).
-    var percentileColor: SQColor {
-        guard let rank = percentileRank else { return .textSecondary }
-        let percent = (rank - 0.5) * 2.0
-        return .colorGreenRed(percent: percent)
+    var topPercentText: String? {
+        guard let rank = percentileRank else { return nil }
+        let topPercent = Int((1.0 - rank) * 100)
+        return "\(topPercent)%"
+    }
+
+    var percentileTone: SQDashboardTrendTone {
+        guard let rank = percentileRank else { return .neutral }
+        if rank >= 0.65 {
+            return .positive
+        }
+        if rank >= 0.35 {
+            return .neutral
+        }
+        return .negative
     }
 
     var scoreAttributedString: AttributedString {

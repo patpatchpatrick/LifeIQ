@@ -20,7 +20,7 @@ struct SQMetricDetailView: View {
             if let title = controller.chartTitle, let subtitle = controller.chartSubtitle {
                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
                     Text(title)
-                        .sqFont(.body)
+                        .sqFont(.title3)
                         .sqForegroundColor(.textPrimary)
 
                     Text(subtitle)
@@ -35,7 +35,8 @@ struct SQMetricDetailView: View {
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
-        .background(SQColor.backgroundSheet.color)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     @ViewBuilder
@@ -44,7 +45,7 @@ struct SQMetricDetailView: View {
             if let title = controller.chartTitle, let subtitle = controller.chartSubtitle {
                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
                     Text(title)
-                        .sqFont(.body)
+                        .sqFont(.title3)
                         .sqForegroundColor(.textPrimary)
 
                     Text(subtitle)
@@ -57,12 +58,12 @@ struct SQMetricDetailView: View {
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
-                .sqBackgroundColor(.backgroundSecondary)
-                .cornerRadius(.SQCornerRadius.m)
+                .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.l)
         }
-        .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
-        .background(SQColor.backgroundSheet.color)
+        .padding(.horizontal, .SQSpace.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private var emptyStateView: some View {
@@ -90,9 +91,10 @@ struct SQMetricDetailView: View {
                                 SQMetricDetailCardView(section: section)
                             }
                         }
-                        .padding(.horizontal, .SQSpace.l)
                         .padding(.bottom, .SQSpace.xl)
                     }
+                    .padding(.horizontal, .SQSpace.l)
+                    .padding(.top, .SQSpace.l)
                 }
             }
         }
@@ -109,7 +111,9 @@ struct SQMetricDetailView: View {
                 )
             }
         }
-        .background(SQColor.backgroundSheet.color)
+        .background {
+            SQSheetBackground()
+        }
         .task {
             await controller.loadUI(for: modelContext)
         }
@@ -139,14 +143,14 @@ private struct SQMetricDetailCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
             Text(section.title)
-                .sqFont(.bodySmallSemiBold)
+                .sqFont(.title3)
                 .sqForegroundColor(.textPrimary)
 
             LazyVGrid(columns: columns, spacing: .SQSpace.s) {
                 ForEach(section.items) { item in
                     VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                        Text(item.title)
-                            .sqFont(.bodyExtraSmall)
+                        Text(item.title.uppercased())
+                            .sqFont(.headerSmall)
                             .sqForegroundColor(.textSecondary)
 
                         Text(item.value)
@@ -163,13 +167,11 @@ private struct SQMetricDetailCardView: View {
                     }
                     .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
                     .padding(.SQSpace.m)
-                    .sqBackgroundColor(.backgroundTertiaryLight)
-                    .cornerRadius(.SQCornerRadius.s)
+                    .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.l)
                 }
             }
         }
         .padding(.SQSpace.l)
-        .sqBackgroundColor(.backgroundSecondary)
-        .cornerRadius(.SQCornerRadius.m)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 }

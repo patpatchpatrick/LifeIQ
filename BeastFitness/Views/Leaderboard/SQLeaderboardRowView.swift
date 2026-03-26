@@ -11,41 +11,15 @@ struct SQLeaderboardRowView: View {
     let viewModel: SQLeaderboardRowViewModel
     var onTitleTapped: (() -> Void)? = nil
 
-    // Display emoji medal for top 3, rank number for others
-    private var rankDisplay: String {
-        switch viewModel.rank {
-        case 1:
-            return "🥇"
-        case 2:
-            return "🥈"
-        case 3:
-            return "🥉"
-        default:
-            return "#\(viewModel.rank)"
-        }
-    }
-
-    // Use emoji for top 3, text color for others
-    private var usesEmoji: Bool {
-        viewModel.rank <= 3
-    }
-
     var body: some View {
         HStack(spacing: .SQSpace.m) {
-            // Rank (left side)
-            Group {
-                if usesEmoji {
-                    Text(rankDisplay)
-                        .font(.system(size: 24))
-                } else {
-                    Text(rankDisplay)
-                        .sqFont(.bodyLarge)
-                        .sqForegroundColor(.textSecondary)
-                }
-            }
+            SQDashboardTrendBadge(
+                text: "#\(viewModel.rank)",
+                tone: viewModel.rankTone,
+                symbol: nil
+            )
             .frame(width: 50, alignment: .leading)
 
-            // Workout info (center)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: .SQSpace.s) {
                     if viewModel.isNavigable {
@@ -99,14 +73,25 @@ struct SQLeaderboardRowView: View {
             // Score (right side)
             Text(viewModel.scoreAttributedString)
 
-            // All-time percentile
-            Text(viewModel.percentileString ?? "")
-                .sqFont(.bodyExtraSmall)
-                .foregroundColor(viewModel.percentileColor.color)
-                .frame(width: 60, alignment: .trailing)
+            if let topPercentText = viewModel.topPercentText {
+                HStack(spacing: .SQSpace.xs) {
+                    Text("Top")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    SQDashboardTrendBadge(
+                        text: topPercentText,
+                        tone: viewModel.percentileTone,
+                        symbol: nil
+                    )
+                }
+                .frame(width: 84, alignment: .trailing)
+            } else {
+                Text("")
+                    .frame(width: 84, alignment: .trailing)
+            }
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.m)
-        .sqBackgroundColor(.backgroundSecondary)
     }
 }

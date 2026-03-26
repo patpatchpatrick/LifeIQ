@@ -20,7 +20,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     let id = UUID().uuidString
     private(set) var containerWidth: CGFloat = 0
     var chartWidth: CGFloat {
-        max(0, containerWidth * 0.95)
+        max(0, containerWidth - (.SQSpace.l * 4))
     }
     let chartHeight: CGFloat = 300
     var navigationPath = NavigationPath()
@@ -180,7 +180,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             lineTitle: mode.chartLineTitle,
             uiConfig: buildChartUIConfig(),
             inputPoints: mockPoints,
-            gridConfig: GridConfig(),
+            gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(),
             navigationConfig: NavigationConfig()
         )
@@ -440,7 +440,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             lineTitle: mode.chartLineTitle,
             uiConfig: buildChartUIConfig(),
             inputPoints: points,
-            gridConfig: GridConfig(),
+            gridConfig: buildGridConfig(),
             focusConfig: buildFocusConfig(),
             navigationConfig: NavigationConfig()
         )
@@ -450,15 +450,21 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         let colorConfig = LineChartModel.ColorConfig(
             textPrimary: SQColor.textPrimary.color,
             textSecondary: SQColor.textSecondary.color,
-            backgroundPrimary: SQColor.backgroundSheet.color,
-            backgroundSecondary: SQColor.backgroundSecondary.color,
-            lineColor: SQColor.accent(1).color
+            backgroundPrimary: SQColor.glassCardTint.color,
+            backgroundSecondary: SQColor.glassPopoverTint.color,
+            lineColor: SQColor.dashboardGlowBlue.color
         )
         let fontConfig = LineChartModel.FontConfig(
             font: SQFont(type: .bodyExtraSmall).font,
             boldFont: SQFont(type: .bodySmallBold).font
         )
         return LineChartModel.UIConfig(colorConfig: colorConfig, fontConfig: fontConfig)
+    }
+
+    private func buildGridConfig() -> GridConfig {
+        GridConfig(
+            lineColor: SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.9 : 0.55)
+        )
     }
 
     private func buildFocusConfig() -> FocusConfig {
@@ -484,7 +490,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         }
 
         return FocusConfig(
-            focusColor: SQColor.accent(1).color,
+            focusColor: SQColor.dashboardGlowBlue.color,
             xLabelBuilder: xLabelBuilder,
             yLabelBuilder: yLabelBuilder,
             onFocus: onFocus

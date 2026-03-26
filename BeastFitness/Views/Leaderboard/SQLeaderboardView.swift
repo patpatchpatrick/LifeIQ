@@ -34,25 +34,21 @@ struct SQLeaderboardView: View {
                 controller.navigateToWorkout(row)
             } : nil)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, .SQSpace.l) // ✅ consistent padding for every row
-                .background(SQColor.backgroundSecondary.color)
+                .padding(.vertical, .SQSpace.l)
                 .overlay(
-                    // Highlight overlay for focused row (non-interactive)
                     (isFocused ?
-                        SQColor.textPrimary.color.opacity(0.08) : Color.clear)
-                        .allowsHitTesting(false) // Let taps pass through to content below
+                        SQColor.dashboardGlowBlue.color.opacity(0.08) : Color.clear)
+                        .allowsHitTesting(false)
                 )
-                .contentShape(Rectangle()) // Makes entire area tappable
+                .contentShape(Rectangle())
                 .onTapGesture {
                     controller.rowTapped(row: row)
                 }
 
-            // Bottom divider (all but last row)
             if !isLast {
                 Divider()
-                    .sqTintColor(.divider(1))
-                    .padding(.horizontal, 0) // full width
-                    .background(SQColor.backgroundSecondary.color)
+                    .sqTintColor(.glassStroke)
+                    .padding(.leading, .SQSpace.l)
             }
         }
         .listRowInsets(EdgeInsets())
@@ -65,11 +61,10 @@ struct SQLeaderboardView: View {
     @ViewBuilder
     private func chartSection(_ chartModel: LineChartModel) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            // Header
             if let title = controller.chartTitle, let subtitle = controller.chartSubtitle {
                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
                     Text(title)
-                        .sqFont(.body)
+                        .sqFont(.title3)
                         .sqForegroundColor(.textPrimary)
                         .redacted(controller.isLoading, reason: .placeholder)
 
@@ -81,21 +76,19 @@ struct SQLeaderboardView: View {
                 .padding(.horizontal, .SQSpace.l)
             }
 
-            // Chart or placeholder
             if controller.isLoading {
-                // Show placeholder rectangle during loading
-                Rectangle()
-                    .fill(SQColor.backgroundSheet.color)
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.5 : 0.9))
                     .frame(width: controller.chartWidth, height: controller.chartHeight)
             } else {
-                // Show actual chart when loaded
                 LineChartView(model: chartModel)
                     .frame(width: controller.chartWidth, height: controller.chartHeight)
             }
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.xl)
-        .background(SQColor.backgroundSheet.color)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
     
 
@@ -104,29 +97,29 @@ struct SQLeaderboardView: View {
     /// Mirrors the HStack structure of SQLeaderboardRowView for aligned column labels.
     var columnHeader: some View {
         HStack(spacing: .SQSpace.m) {
-            Text("Rank")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textTertiary)
+            Text("RANK")
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
                 .frame(width: 50, alignment: .leading)
 
-            Text("Workout")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textTertiary)
+            Text("WORKOUT")
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("Score")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textTertiary)
+            Text("SCORE")
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
 
-            Text("Rank All Time")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textTertiary)
-                .frame(width: 60, alignment: .trailing)
+            Text("ALL TIME")
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+                .frame(width: 84, alignment: .trailing)
         }
         .padding(.horizontal, .SQSpace.l)
-        .padding(.vertical, .SQSpace.s)
+        .padding(.top, .SQSpace.l)
+        .padding(.bottom, .SQSpace.m)
         .frame(maxWidth: .infinity)
-        .sqBackgroundColor(.backgroundSheet)
     }
 
     // MARK: - List
@@ -144,6 +137,8 @@ struct SQLeaderboardView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
         }
+        .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous))
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
     
     var shouldShowEmptyView: Bool {
@@ -155,15 +150,16 @@ struct SQLeaderboardView: View {
         if shouldShowEmptyView {
             emptyStateView
         } else {
-            VStack(spacing: 0) {
-                // Chart Section (shows placeholder during loading, actual chart when loaded)
+            VStack(spacing: .SQSpace.l) {
                 if let chartModel = controller.chartModel {
                     chartSection(chartModel)
                 }
 
-                // Content (list or empty state)
                 leaderboardList
             }
+            .padding(.horizontal, .SQSpace.l)
+            .padding(.top, .SQSpace.l)
+            .padding(.bottom, .SQSpace.xl)
         }
     }
 
@@ -182,7 +178,9 @@ struct SQLeaderboardView: View {
                     )
                 }
             }
-            .background(SQColor.backgroundSheet.color)
+            .background {
+                SQSheetBackground()
+            }
             .task {
                 await controller.loadUI(for: modelContext)
             }

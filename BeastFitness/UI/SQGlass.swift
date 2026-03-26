@@ -165,3 +165,42 @@ struct SQDashboardBackground: View {
         .ignoresSafeArea()
     }
 }
+
+struct SQSheetBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    SQColor.sheetGradientStart.color,
+                    SQColor.sheetGradientMid.color,
+                    SQColor.sheetGradientEnd.color
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            RadialGradient(
+                colors: [
+                    SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.10 : 0.18),
+                    .clear
+                ],
+                center: .top,
+                startRadius: 24,
+                endRadius: 280
+            )
+            .offset(x: -10, y: -60)
+
+            RadialGradient(
+                colors: [
+                    SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.06 : 0.12),
+                    .clear
+                ],
+                center: .bottomTrailing,
+                startRadius: 30,
+                endRadius: 260
+            )
+            .offset(x: 60, y: 120)
+        }
+        .ignoresSafeArea()
+    }
+}
