@@ -32,7 +32,17 @@ protocol SQMetricsManaging: AnyObject {
     func archiveMetric(id: String, using context: ModelContext) throws
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws
-    func updateMetric(id: String, title: String, emoji: String?, group: String, using context: ModelContext) throws
+    func updateMetric(
+        id: String,
+        title: String,
+        emoji: String?,
+        group: String,
+        goalStyle: SQMetricGoalStyle,
+        targetValue: Float?,
+        targetRangeMin: Float?,
+        targetRangeMax: Float?,
+        using context: ModelContext
+    ) throws
 
     // Sync
     /// Syncs both the metric catalog and the user's logged metric entry data from Firestore.
@@ -85,6 +95,11 @@ final class SQMetricsManager: SQMetricsManaging {
                         isArchived: def.isArchived,
                         emoji: def.emoji,
                         periods: def.periods,
+                        isSingleDailyValue: def.isSingleDailyValue,
+                        goalStyle: def.goalStyle,
+                        targetValue: def.targetValue,
+                        targetRangeMin: def.targetRangeMin,
+                        targetRangeMax: def.targetRangeMax,
                         isDefault: def.isDefault
                     )
                 )
@@ -200,6 +215,11 @@ final class SQMetricsManager: SQMetricsManaging {
                 isArchived: false,
                 emoji: definition.emoji,
                 periods: definition.periods,
+                isSingleDailyValue: definition.isSingleDailyValue,
+                goalStyle: definition.goalStyle,
+                targetValue: definition.targetValue,
+                targetRangeMin: definition.targetRangeMin,
+                targetRangeMax: definition.targetRangeMax,
                 isDefault: false
             )
         )
@@ -209,13 +229,27 @@ final class SQMetricsManager: SQMetricsManaging {
         SQLogger.shared.log("Created custom metric: \(definition.id)", .debug, context: .metricsManager)
     }
 
-    func updateMetric(id: String, title: String, emoji: String?, group: String, using context: ModelContext) throws {
+    func updateMetric(
+        id: String,
+        title: String,
+        emoji: String?,
+        group: String,
+        goalStyle: SQMetricGoalStyle,
+        targetValue: Float?,
+        targetRangeMin: Float?,
+        targetRangeMax: Float?,
+        using context: ModelContext
+    ) throws {
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
         entity.title = title
         entity.emoji = emoji
         entity.groupRaw = group
+        entity.goalStyleRaw = goalStyle.rawValue
+        entity.targetValue = targetValue
+        entity.targetRangeMinValue = targetRangeMin
+        entity.targetRangeMaxValue = targetRangeMax
         entity.updatedAt = .now
         try saveContextAndNotify(context)
         if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
@@ -265,13 +299,15 @@ final class SQMetricsManager: SQMetricsManaging {
         return .noSyncNeeded
     }
 
-    /// One-time push of all local metrics that existed before the per-mutation push
-    /// system was added. Gated by a metadata flag so it runs exactly once.
+    /// One-time push of all local metrics for schema/bootstrap migrations.
+    /// Bumping the key forces a single backfill for existing users when new fields
+    /// need to be written to Firestore.
     private func bootstrapPushIfNeeded(context: ModelContext) async {
-        let key = "metric-definitions-bootstrap"
+        let key = "metric-definitions-bootstrap-v2-goals"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
         )
+
         guard (try? context.fetch(descriptor))?.first == nil else { return }
 
         let allEntities = (try? context.fetch(FetchDescriptor<SQMetricDefinitionEntity>())) ?? []
@@ -351,6 +387,11 @@ final class SQMetricsManager: SQMetricsManaging {
                     isArchived: def.isArchived,
                     emoji: def.emoji,
                     periods: def.periods,
+                    isSingleDailyValue: def.isSingleDailyValue,
+                    goalStyle: def.goalStyle,
+                    targetValue: def.targetValue,
+                    targetRangeMin: def.targetRangeMin,
+                    targetRangeMax: def.targetRangeMax,
                     isDefault: def.isDefault
                 )
                 entity.updatedAt = def.updatedAt
@@ -450,6 +491,10 @@ final class SQMetricsManager: SQMetricsManaging {
                         emoji: preset.emoji,
                         periods: preset.periods,
                         isSingleDailyValue: preset.isSingleDailyValue,
+                        goalStyle: preset.goalStyle,
+                        targetValue: preset.targetValue,
+                        targetRangeMin: preset.targetRangeMin,
+                        targetRangeMax: preset.targetRangeMax,
                         isDefault: preset.isDefault
                     )
                 )
@@ -469,6 +514,22 @@ final class SQMetricsManager: SQMetricsManaging {
                 }
                 if entity.isDefault != preset.isDefault {
                     entity.isDefault = preset.isDefault
+                    didChange = true
+                }
+                if entity.goalStyleRaw != preset.goalStyle.rawValue {
+                    entity.goalStyleRaw = preset.goalStyle.rawValue
+                    didChange = true
+                }
+                if entity.targetValue != preset.targetValue {
+                    entity.targetValue = preset.targetValue
+                    didChange = true
+                }
+                if entity.targetRangeMinValue != preset.targetRangeMin {
+                    entity.targetRangeMinValue = preset.targetRangeMin
+                    didChange = true
+                }
+                if entity.targetRangeMaxValue != preset.targetRangeMax {
+                    entity.targetRangeMaxValue = preset.targetRangeMax
                     didChange = true
                 }
                 // Upgrade legacy binary metrics to scale 0–10
@@ -522,76 +583,76 @@ final class SQMetricsManager: SQMetricsManaging {
             .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds,
                   group: SQDefaultGroup.stats.rawValue, min: 0, max: 1000, step: 0.1,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
-                  emoji: "⚖️", periods: both, isSingleDailyValue: true),
+                  emoji: "⚖️", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             // MARK: Self — independent morning + evening values (how you feel changes throughout the day)
             .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "😊", periods: both),
+                  emoji: "😊", periods: both, goalStyle: .justTrack),
 
             .init(id: SQMetricId.mentalClarity, title: "Mental Clarity", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🧠", periods: both),
+                  emoji: "🧠", periods: both, goalStyle: .justTrack),
 
             .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "⚡", periods: both),
+                  emoji: "⚡", periods: both, goalStyle: .justTrack),
 
             .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "💪", periods: both),
+                  emoji: "💪", periods: both, goalStyle: .justTrack),
 
             // MARK: Sleep — single daily value for last night's sleep; editable from either session
             .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
-                  emoji: "😴", periods: both, isSingleDailyValue: true),
+                  emoji: "😴", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             .init(id: SQMetricId.sleepHours, title: "Sleep Hours", kind: .number, unit: .hours,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.5,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
-                  emoji: "🌙", periods: both, isSingleDailyValue: true),
+                  emoji: "🌙", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             // MARK: Positive Habits — independent morning + evening tracking
             .init(id: SQMetricId.nutrition, title: "Nutrition", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🥗", periods: eveningOnly),
+                  emoji: "🥗", periods: eveningOnly, goalStyle: .buildUp, targetValue: 1),
 
             .init(id: SQMetricId.meditation, title: "Meditation", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "🧘", periods: both),
+                  emoji: "🧘", periods: both, goalStyle: .buildUp, targetValue: 1),
 
             // MARK: Vices — independent morning + evening tracking
             .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🍺", periods: both),
+                  emoji: "🍺", periods: both, goalStyle: .avoidIt),
 
             .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "☕", periods: both),
+                  emoji: "☕", periods: both, goalStyle: .avoidIt),
 
             .init(id: SQMetricId.weed, title: "Weed", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "🌿", periods: both),
+                  emoji: "🌿", periods: both, goalStyle: .avoidIt),
 
             .init(id: SQMetricId.porn, title: "Porn", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  periods: both),
+                  periods: both, goalStyle: .avoidIt),
 
             .init(id: SQMetricId.nicotine, title: "Nicotine", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "🚬", periods: both),
+                  emoji: "🚬", periods: both, goalStyle: .avoidIt),
         ]
     }
 }

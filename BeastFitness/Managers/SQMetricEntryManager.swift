@@ -13,6 +13,10 @@ import BeastFitnessCore
 protocol SQMetricEntryManaging: AnyObject {
     var hub: EventHub { get }
 
+    /// Primary manager for canonical metric value + note storage and Firestore sync.
+    /// Dashboard analytics and cross-device sync should prefer this manager over the
+    /// legacy SQDailyCheckInManager / SQDailyCheckInEntity path.
+
     /// Saves a set of metric entries and an optional note for the day to local storage and Firestore.
     func save(entries: [SQMetricEntry], note: SQDailyNote?, to context: ModelContext) async throws
 
@@ -24,6 +28,9 @@ protocol SQMetricEntryManaging: AnyObject {
 
     /// Syncs metric entries and notes from Firestore if needed.
     func syncIfNeeded(for timeRange: SQTimeRange, context: ModelContext) async throws -> SyncResult
+
+    /// Builds per-day dashboard stats from the canonical metric entry store for a date range.
+    func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats]
 }
 
 // MARK: - Implementation
@@ -93,6 +100,42 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     func getNote(for anchorDayKey: String, context: ModelContext) throws -> SQDailyNote? {
         try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
+    }
+
+    func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats] {
+        let entries = try SQMetricEntryEntity.getAll(from: startDate, to: endDate, context: context)
+        let notes = try SQDailyNoteEntity.getAll(from: startDate, to: endDate, context: context)
+
+        var valuesByDay = [String: [String: SQMetricEntry]]()
+        for entry in entries {
+            var metricMap = valuesByDay[entry.anchorDayKey, default: [:]]
+            if let existing = metricMap[entry.metricId] {
+                if entry.recordedAt > existing.recordedAt {
+                    metricMap[entry.metricId] = entry
+                }
+            } else {
+                metricMap[entry.metricId] = entry
+            }
+            valuesByDay[entry.anchorDayKey] = metricMap
+        }
+
+        let notesByDay = Dictionary(uniqueKeysWithValues: notes.map { ($0.anchorDayKey, $0.content) })
+        let dayKeys = Set(valuesByDay.keys).union(notesByDay.keys).sorted()
+
+        return dayKeys.compactMap { dayKey in
+            let dayDate = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey)
+            guard let dayDate else { return nil }
+
+            let values = valuesByDay[dayKey, default: [:]].mapValues(\.rawValue)
+            guard !values.isEmpty || notesByDay[dayKey] != nil else { return nil }
+
+            return SQDailyCheckInStats(
+                date: dayDate,
+                period: nil,
+                values: values,
+                notes: notesByDay[dayKey]
+            )
+        }
     }
 
     // MARK: - Sync

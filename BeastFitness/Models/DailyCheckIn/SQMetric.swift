@@ -26,6 +26,17 @@ enum SQMetricUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown     // Fallback for unrecognized values from Firestore
 }
 
+// MARK: - SQMetricGoalStyle
+
+enum SQMetricGoalStyle: String, Codable, CaseIterable, UnfrozenEnum {
+    case justTrack
+    case buildUp
+    case keepLow
+    case avoidIt
+    case stayInRange
+    case unknown
+}
+
 // MARK: - SQMetricPeriod
 
 /// Determines which check-in screen a metric appears on.
@@ -74,6 +85,14 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     /// Use for measurements that represent a single daily fact (e.g. sleep hours, weight).
     /// When `false`, morning and evening sessions each write to their own independent entry.
     var isSingleDailyValue: Bool
+    /// User-configured success semantics for detail screens, streaks, and future insights.
+    var goalStyle: SQMetricGoalStyle
+    /// Threshold used by single-value goal styles such as `.buildUp` and `.keepLow`.
+    var targetValue: Float?
+    /// Lower bound used by `.stayInRange`.
+    var targetRangeMin: Float?
+    /// Upper bound used by `.stayInRange`.
+    var targetRangeMax: Float?
     var updatedAt: Date                 // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
@@ -94,6 +113,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         emoji: String? = nil,
         periods: Set<SQMetricPeriod> = [.morning],
         isSingleDailyValue: Bool = false,
+        goalStyle: SQMetricGoalStyle = .justTrack,
+        targetValue: Float? = nil,
+        targetRangeMin: Float? = nil,
+        targetRangeMax: Float? = nil,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -112,6 +135,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.emoji = emoji
         self.periods = periods
         self.isSingleDailyValue = isSingleDailyValue
+        self.goalStyle = goalStyle
+        self.targetValue = targetValue
+        self.targetRangeMin = targetRangeMin
+        self.targetRangeMax = targetRangeMax
         self.updatedAt = updatedAt
     }
 
@@ -133,6 +160,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         isArchived        = try  c.decode(Bool.self,               forKey: .isArchived)
         emoji             = try  c.decodeIfPresent(String.self,    forKey: .emoji)
         isSingleDailyValue = (try c.decodeIfPresent(Bool.self,     forKey: .isSingleDailyValue)) ?? false
+        goalStyle         = (try c.decodeIfPresent(SQMetricGoalStyle.self, forKey: .goalStyle)) ?? .justTrack
+        targetValue       = try  c.decodeIfPresent(Float.self,     forKey: .targetValue)
+        targetRangeMin    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMin)
+        targetRangeMax    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMax)
         updatedAt         = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
 
         // Decode periods: try new array format first, then fall back to legacy single-period field
@@ -164,6 +195,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         try c.encode(isArchived,        forKey: .isArchived)
         try c.encodeIfPresent(emoji,    forKey: .emoji)
         try c.encode(isSingleDailyValue, forKey: .isSingleDailyValue)
+        try c.encode(goalStyle,         forKey: .goalStyle)
+        try c.encodeIfPresent(targetValue, forKey: .targetValue)
+        try c.encodeIfPresent(targetRangeMin, forKey: .targetRangeMin)
+        try c.encodeIfPresent(targetRangeMax, forKey: .targetRangeMax)
         try c.encode(updatedAt,         forKey: .updatedAt)
         // Encode periods as a sorted array for deterministic output
         try c.encode(periods.filter { $0 != .unknown }.map(\.rawValue).sorted(), forKey: .periods)
@@ -174,6 +209,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         case id, title, kind, unit, group, min, max, step
         case isPreset, isEnabled, isDefault, sortOrder, isArchived, emoji, updatedAt
         case isSingleDailyValue
+        case goalStyle, targetValue, targetRangeMin, targetRangeMax
         case periods   // new format: array (encode + decode)
         case period    // legacy format: single string (decode only)
     }

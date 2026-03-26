@@ -34,6 +34,10 @@ extension SyncResult {
 }
 
 protocol SQDailyCheckInManaging {
+    /// Transitional compatibility manager for legacy SQDailyCheckInStats-based UI flows.
+    /// New sync and analytics code should prefer SQMetricEntryManager, while this manager
+    /// continues to bridge older screens until SQDailyCheckInEntity is fully removed.
+
     /// Saves a daily check in locally and to the server.
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to modelContext: ModelContext) async throws
     /// Gets daily check in stats for a specific check-in period.

@@ -189,6 +189,8 @@
 		F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */; };
 		F6ABC4EA2EDFCE5500D3E679 /* Int+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */; };
 		F6ABC4EC2EE1DEDB00D3E679 /* SQDailyCheckInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */; };
+		F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */; };
+		F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */; };
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
 		F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */; };
 		F6C5FCED2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */; };
@@ -474,6 +476,8 @@
 		F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInEntity.swift; sourceTree = "<group>"; };
 		F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Extensions.swift"; sourceTree = "<group>"; };
 		F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInManager.swift; sourceTree = "<group>"; };
+		F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailController.swift; sourceTree = "<group>"; };
+		F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailView.swift; sourceTree = "<group>"; };
 		F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserState.swift; sourceTree = "<group>"; };
 		F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSyncMetadataEntity.swift; sourceTree = "<group>"; };
 		F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFirestoreMetricsManager.swift; sourceTree = "<group>"; };
@@ -1315,6 +1319,22 @@
 			path = DailyCheckIn;
 			sourceTree = "<group>";
 		};
+		F6C2E0372F74579700A44D72 /* MetricsDetail */ = {
+			isa = PBXGroup;
+			children = (
+				F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */,
+			);
+			path = MetricsDetail;
+			sourceTree = "<group>";
+		};
+		F6C2E03A2F74580C00A44D72 /* MetricsDetail */ = {
+			isa = PBXGroup;
+			children = (
+				F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */,
+			);
+			path = MetricsDetail;
+			sourceTree = "<group>";
+		};
 		F6C5FCEA2F2C3F2A00BF1022 /* Sync */ = {
 			isa = PBXGroup;
 			children = (
@@ -1446,6 +1466,7 @@
 				F6A848BA2CBD950E00B09AD5 /* Shared */,
 				F639F0C72F3ECCF8004AC701 /* Leaderboard */,
 				F6268ADF2F6B823000087C0F /* Profile */,
+				F6C2E0372F74579700A44D72 /* MetricsDetail */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -1470,6 +1491,7 @@
 				F639F1612F493374004AC701 /* DropDownMenu */,
 				F639F16C2F4BC6BD004AC701 /* WorkoutReview */,
 				F6268AE22F6B824700087C0F /* Profile */,
+				F6C2E03A2F74580C00A44D72 /* MetricsDetail */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1794,6 +1816,7 @@
 				F6A848962CB4ABE300B09AD5 /* SQWorkoutSession.swift in Sources */,
 				F61593BD2EF376A700223A63 /* SQToastView.swift in Sources */,
 				F639F1662F49649B004AC701 /* SQLeaderboardMode.swift in Sources */,
+				F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */,
 				F679BC542EE7321A00A2F249 /* SQUserIcon.swift in Sources */,
 				F639F1682F4BC668004AC701 /* SQWorkoutProcessedEntity.swift in Sources */,
 				F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */,
@@ -1947,6 +1970,7 @@
 				F60C50A42F4FCBE600CB9510 /* SQWorkoutReviewController.swift in Sources */,
 				F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */,
 				F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */,
+				F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */,
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,

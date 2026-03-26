@@ -33,6 +33,11 @@ final class SQMetricDefinitionEntity {
     /// When true, one entry per calendar day shared across all check-in sessions (e.g. sleep, weight).
     /// Default false allows lightweight migration of pre-existing rows.
     var isSingleDailyValue: Bool = false
+    /// Stored as raw value for forward-compatible enum decoding.
+    var goalStyleRaw: String = SQMetricGoalStyle.justTrack.rawValue
+    var targetValue: Float?
+    var targetRangeMinValue: Float?
+    var targetRangeMaxValue: Float?
 
     // Optional: for Firestore sync later
     var updatedAt: Date
@@ -53,6 +58,10 @@ final class SQMetricDefinitionEntity {
         emoji: String? = nil,
         periods: Set<SQMetricPeriod> = [.morning],
         isSingleDailyValue: Bool = false,
+        goalStyle: SQMetricGoalStyle = .justTrack,
+        targetValue: Float? = nil,
+        targetRangeMin: Float? = nil,
+        targetRangeMax: Float? = nil,
         isDefault: Bool = false
     ) {
         self.id = id
@@ -70,6 +79,10 @@ final class SQMetricDefinitionEntity {
         self.emoji = emoji
         self.periodRaw = Self.serialize(periods)
         self.isSingleDailyValue = isSingleDailyValue
+        self.goalStyleRaw = goalStyle.rawValue
+        self.targetValue = targetValue
+        self.targetRangeMinValue = targetRangeMin
+        self.targetRangeMaxValue = targetRangeMax
         self.isDefault = isDefault
         self.updatedAt = .now
     }
@@ -78,6 +91,7 @@ final class SQMetricDefinitionEntity {
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
+    var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }
 
     /// Parses `periodRaw` (comma-separated) into a set of periods.
     /// Handles legacy single-value strings ("morning", "evening") and new multi-value strings.
@@ -114,6 +128,10 @@ extension SQMetricDefinitionEntity {
             emoji: emoji,
             periods: periods,
             isSingleDailyValue: isSingleDailyValue,
+            goalStyle: goalStyle,
+            targetValue: targetValue,
+            targetRangeMin: targetRangeMinValue,
+            targetRangeMax: targetRangeMaxValue,
             updatedAt: updatedAt
         )
     }
@@ -135,6 +153,10 @@ extension SQMetricDefinitionEntity {
         emoji = def.emoji
         periodRaw = Self.serialize(def.periods)
         isSingleDailyValue = def.isSingleDailyValue
+        goalStyleRaw = def.goalStyle.rawValue
+        targetValue = def.targetValue
+        targetRangeMinValue = def.targetRangeMin
+        targetRangeMaxValue = def.targetRangeMax
         updatedAt = def.updatedAt
     }
 

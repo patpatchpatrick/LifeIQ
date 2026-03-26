@@ -170,6 +170,42 @@ struct SQMetricFormView: View {
         }
     }
 
+    // MARK: - Goal
+
+    @ViewBuilder
+    var goalRows: some View {
+        labeledRow(label: "Goal") {
+            SQDropDownMenu(menuViewModel: viewModel.goalMenuViewModel, isDisabled: false)
+        }
+
+        Text(viewModel.goalHelperText)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textTertiary)
+
+        if viewModel.showGoalTargetField {
+            labeledRow(label: viewModel.goalTargetLabel) {
+                SQUITextField(viewModel: viewModel.goalTargetField)
+            }
+        }
+
+        if viewModel.showGoalRangeFields {
+            labeledRow(label: "Target Min") {
+                SQUITextField(viewModel: viewModel.goalRangeMinField)
+            }
+            labeledRow(label: "Target Max") {
+                SQUITextField(viewModel: viewModel.goalRangeMaxField)
+            }
+        }
+
+        if let summary = viewModel.goalSuccessSummary {
+            Text(summary)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.accent(1))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, .SQSpace.s)
+        }
+    }
+
     // MARK: - Save Button
 
     @ViewBuilder
@@ -217,6 +253,7 @@ struct SQMetricFormView: View {
                 emojiInputRow
                 groupRow
                 periodRow
+                goalRows
 
                 Divider()
                     .sqTintColor(.divider(1))

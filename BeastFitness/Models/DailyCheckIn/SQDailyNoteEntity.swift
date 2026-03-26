@@ -63,4 +63,15 @@ extension SQDailyNoteEntity {
         )
         return try context.fetch(descriptor).map { $0.toNote() }
     }
+
+    static func getAll(from startDate: Date, to endDate: Date, context: ModelContext) throws -> [SQDailyNote] {
+        let startKey = startDate.anchorDayKey()
+        let endKey = endDate.anchorDayKey()
+        let descriptor = FetchDescriptor<SQDailyNoteEntity>(
+            predicate: #Predicate {
+                $0.anchorDayKey >= startKey && $0.anchorDayKey <= endKey
+            }
+        )
+        return try context.fetch(descriptor).map { $0.toNote() }
+    }
 }

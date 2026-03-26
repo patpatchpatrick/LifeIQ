@@ -26,12 +26,14 @@ final class SQDashboardController: SQDashboardInterface {
     let navState: NavigationStating
     let userState: SQUserStating
     let dailyCheckInManager: SQDailyCheckInManaging
+    let metricEntryManager: SQMetricEntryManaging
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
     let statsManager: SQWorkoutStatsManaging
     let sleepAggregationService: SQSleepAggregationService
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
+    private var pendingForcedRefresh = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     
     
@@ -43,6 +45,7 @@ final class SQDashboardController: SQDashboardInterface {
         navState: NavigationStating,
         userState: SQUserStating = SQAppState.shared.userState,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
+        metricEntryManager: SQMetricEntryManaging = SQAppState.shared.metricEntryManager,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
@@ -52,6 +55,7 @@ final class SQDashboardController: SQDashboardInterface {
         self.navState = navState
         self.userState = userState
         self.dailyCheckInManager = dailyCheckInManager
+        self.metricEntryManager = metricEntryManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.statsManager = statsManager
@@ -119,6 +123,14 @@ final class SQDashboardController: SQDashboardInterface {
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
         guard !hasLoadedUI || shouldForceRefresh else { return }
         guard !isLoadUIInProgress else {
+            if shouldForceRefresh {
+                pendingForcedRefresh = true
+                SQLogger.shared.log(
+                    "Dashboard load in progress. Queuing a forced refresh for after completion.",
+                    .debug,
+                    context: .dashboard
+                )
+            }
             SQLogger.shared.log(
                 "Dashboard load already in progress. Skipping duplicate request.",
                 .debug,
@@ -130,6 +142,12 @@ final class SQDashboardController: SQDashboardInterface {
         isLoadUIInProgress = true
         defer {
             isLoadUIInProgress = false
+            if pendingForcedRefresh {
+                pendingForcedRefresh = false
+                Task { @MainActor in
+                    await self.loadUI(for: context, shouldForceRefresh: true)
+                }
+            }
         }
 
         hasLoadedUI = true
@@ -193,49 +211,49 @@ final class SQDashboardController: SQDashboardInterface {
             let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, period: nil, context: context)
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
-            let todaysCheckIns = try SQDailyCheckInEntity.getAll(
+            let todaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.today.startDate,
                 to: SQTimeRange.today.endDate,
                 context: context
             )
 
-            let past7DaysCheckIns = try SQDailyCheckInEntity.getAll(
+            let past7DaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.pastWeek.startDate,
                 to: SQTimeRange.pastWeek.endDate,
                 context: context
             )
 
-            let past30DaysCheckIns = try SQDailyCheckInEntity.getAll(
+            let past30DaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.past30Days.startDate,
                 to: SQTimeRange.past30Days.endDate,
                 context: context
             )
 
-            let pastYearCheckIns = try SQDailyCheckInEntity.getAll(
+            let pastYearCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.pastYear.startDate,
                 to: SQTimeRange.pastYear.endDate,
                 context: context
             )
 
-            let allTimeCheckIns = try SQDailyCheckInEntity.getAll(
+            let allTimeCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.allTime.startDate,
                 to: SQTimeRange.allTime.endDate,
                 context: context
             )
 
-            let weekBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+            let weekBeforeLastCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.weekBeforeLast.startDate,
                 to: SQTimeRange.weekBeforeLast.endDate,
                 context: context
             )
 
-            let thirtyDaysBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+            let thirtyDaysBeforeLastCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.thirtyDaysBeforeLast.startDate,
                 to: SQTimeRange.thirtyDaysBeforeLast.endDate,
                 context: context
             )
 
-            let yearBeforeLastCheckIns = try SQDailyCheckInEntity.getAll(
+            let yearBeforeLastCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.yearBeforeLast.startDate,
                 to: SQTimeRange.yearBeforeLast.endDate,
                 context: context
@@ -417,7 +435,9 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         let stats = checkIns
-        let allDefinitions = SQMetricsManager.shared.dailyCheckInMetrics()
+        let allDefinitions = SQMetricsManager.shared.dailyCheckInMetrics().sorted {
+            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+        }
 
         SQLogger.shared.log(
             "Building Metrics subsection for \(timeRange.rawValue): current check-ins = \(stats.count), prior check-ins = \(priorCheckIns.count), definitions = \(allDefinitions.count)",

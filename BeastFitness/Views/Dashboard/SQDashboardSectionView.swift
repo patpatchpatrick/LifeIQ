@@ -118,39 +118,55 @@ struct SQDashboardSectionView: View {
     }
 
     private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
-        let mode: SQLeaderboardMode?
-        let title: String
-
         if let statsViewModel = viewModel as? SQDashboardMetricStatsRowViewModel {
-            // Stats rows carry separate quantityType/activityType — construct mode inline
             if let qt = statsViewModel.quantityType, let at = statsViewModel.activityType {
-                mode = .workoutQuantity(qt, at)
-            } else {
-                mode = nil
+                SQLogger.shared.log(
+                    "Displaying leaderboard for '\(statsViewModel.title)'",
+                    .debug,
+                    context: .dashboard
+                )
+                SQAppState.shared.dashboardState.displayLeaderboard(mode: .workoutQuantity(qt, at))
+                return
             }
-            title = statsViewModel.title
-        } else if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
-            mode = performanceViewModel.leaderboardMode
-            title = performanceViewModel.title
-        } else {
-            return
-        }
 
-        guard let mode else {
+            let metricExists = SQMetricsManager.shared
+                .allMetrics(includeArchived: true)
+                .contains { $0.id == statsViewModel.metricId }
+
+            guard metricExists else {
+                SQLogger.shared.log(
+                    "Cannot display metric detail: metric '\(statsViewModel.title)' was not found in the metric catalog",
+                    .debug,
+                    context: .dashboard
+                )
+                return
+            }
+
             SQLogger.shared.log(
-                "Cannot display leaderboard: metric '\(title)' does not have a leaderboard mode",
+                "Displaying metric detail for '\(statsViewModel.title)'",
                 .debug,
                 context: .dashboard
             )
+            SQAppState.shared.dashboardState.displayMetricDetail(metricId: statsViewModel.metricId)
             return
         }
 
-        SQLogger.shared.log(
-            "Displaying leaderboard for '\(title)'",
-            .debug,
-            context: .dashboard
-        )
+        if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
+            guard let mode = performanceViewModel.leaderboardMode else {
+                SQLogger.shared.log(
+                    "Cannot display leaderboard: metric '\(performanceViewModel.title)' does not have a leaderboard mode",
+                    .debug,
+                    context: .dashboard
+                )
+                return
+            }
 
-        SQAppState.shared.dashboardState.displayLeaderboard(mode: mode)
+            SQLogger.shared.log(
+                "Displaying leaderboard for '\(performanceViewModel.title)'",
+                .debug,
+                context: .dashboard
+            )
+            SQAppState.shared.dashboardState.displayLeaderboard(mode: mode)
+        }
     }
 }

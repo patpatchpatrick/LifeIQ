@@ -42,6 +42,7 @@ protocol DashboardStating: AnyObject {
     func navigateToWorkoutView(with workouts: [SQWorkoutSessionable])
 
     func displayLeaderboard(mode: SQLeaderboardMode)
+    func displayMetricDetail(metricId: String)
 }
 
 @MainActor
@@ -153,5 +154,15 @@ protocol DashboardStating: AnyObject {
         )
         
         hub.domainEvents.send(.pushDashboardRoute(.leaderboard(controller: leaderboardController)))
+    }
+
+    func displayMetricDetail(metricId: String) {
+        let metricDetailController = SQMetricDetailController(
+            hub: hub,
+            metricId: metricId,
+            initialTimeRange: selectedTimeRange
+        )
+
+        hub.domainEvents.send(.pushDashboardRoute(.metricDetail(controller: metricDetailController)))
     }
 }

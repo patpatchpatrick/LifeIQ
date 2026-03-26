@@ -85,6 +85,12 @@ final class SQMetricFormViewModel {
             calculateValidity()
         }
     }
+    var selectedGoalStyle: SQMetricGoalStyle = .justTrack {
+        didSet {
+            updateGoalMenuSelection()
+            calculateValidity()
+        }
+    }
     /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
     var selectedPeriods: Set<SQMetricPeriod> = [.morning]
     /// When both periods are selected, whether this is a single shared daily value or independent per-session.
@@ -100,10 +106,14 @@ final class SQMetricFormViewModel {
     let minField: SQUITextFieldViewModel
     let maxField: SQUITextFieldViewModel
     let stepField: SQUITextFieldViewModel
+    let goalTargetField: SQUITextFieldViewModel
+    let goalRangeMinField: SQUITextFieldViewModel
+    let goalRangeMaxField: SQUITextFieldViewModel
 
     var groupMenuViewModel: SQDropDownMenuViewModel
     var unitMenuViewModel: SQDropDownMenuViewModel
     var kindMenuViewModel: SQDropDownMenuViewModel
+    var goalMenuViewModel: SQDropDownMenuViewModel
     var trackingMenuViewModel: SQDropDownMenuViewModel
     let periodMultiSelectViewModel: SQMultiSelectViewModel
 
@@ -132,6 +142,7 @@ final class SQMetricFormViewModel {
         var initialSelectedKind: SQMetricKind = .scale
         var initialSelectedUnit: SQMetricUnit = .none
         var initialSelectedGroup: String = SQDefaultGroup.general.rawValue
+        var initialSelectedGoalStyle: SQMetricGoalStyle = .justTrack
         var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning]
         var initialIsSingleDailyValue: Bool = false
 
@@ -200,6 +211,42 @@ final class SQMetricFormViewModel {
             errorHandler: { _ in nil }
         )
 
+        self.goalTargetField = SQUITextFieldViewModel(
+            placeholder: "Value",
+            font: SQFont(type: .body).uiFont,
+            keyboardType: .decimalPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
+        self.goalRangeMinField = SQUITextFieldViewModel(
+            placeholder: "Min",
+            font: SQFont(type: .body).uiFont,
+            keyboardType: .decimalPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
+        self.goalRangeMaxField = SQUITextFieldViewModel(
+            placeholder: "Max",
+            font: SQFont(type: .body).uiFont,
+            keyboardType: .decimalPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
         // New group text input
         self.newGroupField = SQUITextFieldViewModel(
             placeholder: "Group name",
@@ -220,11 +267,15 @@ final class SQMetricFormViewModel {
             initialSelectedKind = existing.kind
             initialSelectedUnit = existing.unit
             initialSelectedGroup = existing.group
+            initialSelectedGoalStyle = existing.goalStyle
             initialSelectedPeriods = existing.periods
             initialIsSingleDailyValue = existing.isSingleDailyValue
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
             maxField.setText(existing.max.map { Self.formatFloat($0) } ?? "")
             stepField.setText(existing.step.map { Self.formatFloat($0) } ?? "")
+            goalTargetField.setText(existing.targetValue.map { Self.formatFloat($0) } ?? "")
+            goalRangeMinField.setText(existing.targetRangeMin.map { Self.formatFloat($0) } ?? "")
+            goalRangeMaxField.setText(existing.targetRangeMax.map { Self.formatFloat($0) } ?? "")
         } else {
             // Default values for create
             minField.setText("0")
@@ -235,6 +286,7 @@ final class SQMetricFormViewModel {
         selectedKind = initialSelectedKind
         selectedUnit = initialSelectedUnit
         selectedGroup = initialSelectedGroup
+        selectedGoalStyle = initialSelectedGoalStyle
         selectedPeriods = initialSelectedPeriods
         isSingleDailyValue = initialIsSingleDailyValue
 
@@ -255,6 +307,12 @@ final class SQMetricFormViewModel {
         self.kindMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(for: initialSelectedKind)),
             items: kindItems
+        ) { _ in }
+
+        let goalItems = Self.goalDisplayItems
+        self.goalMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: initialSelectedGoalStyle)),
+            items: goalItems
         ) { _ in }
 
         self.trackingMenuViewModel = SQDropDownMenuViewModel(
@@ -292,6 +350,66 @@ final class SQMetricFormViewModel {
     /// Whether unit picker should be visible
     var showUnit: Bool {
         selectedKind == .number
+    }
+
+    var showGoalTargetField: Bool {
+        selectedGoalStyle == .buildUp || selectedGoalStyle == .keepLow
+    }
+
+    var showGoalRangeFields: Bool {
+        selectedGoalStyle == .stayInRange
+    }
+
+    var goalTargetLabel: String {
+        switch selectedGoalStyle {
+        case .buildUp:
+            return "At Least"
+        case .keepLow:
+            return "At Most"
+        default:
+            return "Target"
+        }
+    }
+
+    var goalHelperText: String {
+        switch selectedGoalStyle {
+        case .justTrack:
+            return "Shows trend and consistency data without treating any value as a success or failure."
+        case .buildUp:
+            return "A successful day counts when this metric is at or above the value below."
+        case .keepLow:
+            return "A successful day counts when this metric is at or below the value below."
+        case .avoidIt:
+            return "A successful day counts when this metric is exactly 0."
+        case .stayInRange:
+            return "A successful day counts when this metric stays inside the target range."
+        case .unknown:
+            return ""
+        }
+    }
+
+    var goalSuccessSummary: String? {
+        let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? "this metric"
+            : titleField.text
+
+        switch selectedGoalStyle {
+        case .justTrack:
+            return nil
+        case .buildUp:
+            guard let target = parsedGoalTargetValue else { return nil }
+            return "Successful day: \(title) >= \(Self.formatFloat(target))"
+        case .keepLow:
+            guard let target = parsedGoalTargetValue else { return nil }
+            return "Successful day: \(title) <= \(Self.formatFloat(target))"
+        case .avoidIt:
+            return "Successful day: \(title) = 0"
+        case .stayInRange:
+            guard let min = parsedGoalRangeMin, let max = parsedGoalRangeMax else { return nil }
+            return "Successful day: \(title) between \(Self.formatFloat(min)) and \(Self.formatFloat(max))"
+        case .unknown:
+            return nil
+        }
     }
 
     /// All unique groups currently in use, plus well-known defaults, sorted alphabetically.
@@ -362,7 +480,17 @@ final class SQMetricFormViewModel {
 
             case .edit(let existing):
                 let emoji = emojiField.text.isEmpty ? nil : emojiField.text
-                try metricsManager.updateMetric(id: existing.id, title: titleField.text, emoji: emoji, group: selectedGroup, using: context)
+                try metricsManager.updateMetric(
+                    id: existing.id,
+                    title: titleField.text,
+                    emoji: emoji,
+                    group: selectedGroup,
+                    goalStyle: selectedGoalStyle,
+                    targetValue: resolvedGoalTargetValue,
+                    targetRangeMin: resolvedGoalRangeMin,
+                    targetRangeMax: resolvedGoalRangeMax,
+                    using: context
+                )
             }
         } catch {
             // Error handling — caller can observe isLoading reset
@@ -475,6 +603,11 @@ final class SQMetricFormViewModel {
             }
         }
 
+        if firstError == nil {
+            let result = validateGoalFieldsDetailed()
+            if !result.isValid { firstError = result.message }
+        }
+
         isFormValid = firstError == nil
         saveDisabledMessage = isFormValid ? nil : (firstError ?? "Please fix the errors above.")
     }
@@ -485,6 +618,9 @@ final class SQMetricFormViewModel {
         minField.delegate = self
         maxField.delegate = self
         stepField.delegate = self
+        goalTargetField.delegate = self
+        goalRangeMinField.delegate = self
+        goalRangeMaxField.delegate = self
         newGroupField.delegate = self
 
         groupMenuViewModel = SQDropDownMenuViewModel(
@@ -506,6 +642,13 @@ final class SQMetricFormViewModel {
             items: Self.kindDisplayItems
         ) { [weak self] title in
             self?.selectedKind = Self.kind(fromDisplayName: title)
+        }
+
+        goalMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: selectedGoalStyle)),
+            items: Self.goalDisplayItems
+        ) { [weak self] title in
+            self?.selectedGoalStyle = Self.goalStyle(fromDisplayName: title)
         }
 
         trackingMenuViewModel = SQDropDownMenuViewModel(
@@ -581,6 +724,13 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private func updateGoalMenuSelection() {
+        let title = Self.displayName(for: selectedGoalStyle)
+        if goalMenuViewModel.mainButton.title != title {
+            goalMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
     private func updateTrackingMenuSelection() {
         let title = Self.displayName(forTrackingShared: isSingleDailyValue)
         if trackingMenuViewModel.mainButton.title != title {
@@ -608,7 +758,11 @@ final class SQMetricFormViewModel {
                 isArchived: false,
                 emoji: emoji,
                 periods: selectedPeriods,
-                isSingleDailyValue: isSingleDailyValue
+                isSingleDailyValue: isSingleDailyValue,
+                goalStyle: selectedGoalStyle,
+                targetValue: resolvedGoalTargetValue,
+                targetRangeMin: resolvedGoalRangeMin,
+                targetRangeMax: resolvedGoalRangeMax
             )
 
         case .number:
@@ -627,7 +781,11 @@ final class SQMetricFormViewModel {
                 isArchived: false,
                 emoji: emoji,
                 periods: selectedPeriods,
-                isSingleDailyValue: isSingleDailyValue
+                isSingleDailyValue: isSingleDailyValue,
+                goalStyle: selectedGoalStyle,
+                targetValue: resolvedGoalTargetValue,
+                targetRangeMin: resolvedGoalRangeMin,
+                targetRangeMax: resolvedGoalRangeMax
             )
 
         default:
@@ -645,7 +803,11 @@ final class SQMetricFormViewModel {
                 isArchived: false,
                 emoji: emoji,
                 periods: selectedPeriods,
-                isSingleDailyValue: isSingleDailyValue
+                isSingleDailyValue: isSingleDailyValue,
+                goalStyle: selectedGoalStyle,
+                targetValue: resolvedGoalTargetValue,
+                targetRangeMin: resolvedGoalRangeMin,
+                targetRangeMax: resolvedGoalRangeMax
             )
         }
     }
@@ -681,6 +843,45 @@ final class SQMetricFormViewModel {
         }
         if let step = Float(stepField.text) {
             guard step > 0 else { return (false, "Step must be greater than 0.") }
+        }
+        return (true, nil)
+    }
+
+    private func validateGoalFieldsDetailed() -> (isValid: Bool, message: String?) {
+        switch selectedGoalStyle {
+        case .justTrack, .avoidIt:
+            return (true, nil)
+        case .buildUp, .keepLow:
+            guard let value = parsedGoalTargetValue else {
+                return (false, "Enter a value for the selected goal.")
+            }
+            return validateGoalValueWithinBounds(value, label: "Goal")
+        case .stayInRange:
+            guard let min = parsedGoalRangeMin else {
+                return (false, "Enter a minimum value for the goal range.")
+            }
+            guard let max = parsedGoalRangeMax else {
+                return (false, "Enter a maximum value for the goal range.")
+            }
+            guard max >= min else {
+                return (false, "Goal max must be greater than or equal to goal min.")
+            }
+            let minValidation = validateGoalValueWithinBounds(min, label: "Goal min")
+            if !minValidation.isValid { return minValidation }
+            let maxValidation = validateGoalValueWithinBounds(max, label: "Goal max")
+            if !maxValidation.isValid { return maxValidation }
+            return (true, nil)
+        case .unknown:
+            return (false, "Select a valid goal.")
+        }
+    }
+
+    private func validateGoalValueWithinBounds(_ value: Float, label: String) -> (isValid: Bool, message: String?) {
+        if let min = metricLowerBound, value < min {
+            return (false, "\(label) must be at least \(Self.formatFloat(min)).")
+        }
+        if let max = metricUpperBound, value > max {
+            return (false, "\(label) must be at most \(Self.formatFloat(max)).")
         }
         return (true, nil)
     }
@@ -786,6 +987,45 @@ final class SQMetricFormViewModel {
         calculateValidity()
     }
 
+    private var metricLowerBound: Float? {
+        if case .edit(let def) = mode { return def.min }
+        return Float(minField.text)
+    }
+
+    private var metricUpperBound: Float? {
+        if case .edit(let def) = mode { return def.max }
+        return Float(maxField.text)
+    }
+
+    private var parsedGoalTargetValue: Float? {
+        goalTargetField.text.isEmpty ? nil : Float(goalTargetField.text)
+    }
+
+    private var parsedGoalRangeMin: Float? {
+        goalRangeMinField.text.isEmpty ? nil : Float(goalRangeMinField.text)
+    }
+
+    private var parsedGoalRangeMax: Float? {
+        goalRangeMaxField.text.isEmpty ? nil : Float(goalRangeMaxField.text)
+    }
+
+    private var resolvedGoalTargetValue: Float? {
+        switch selectedGoalStyle {
+        case .buildUp, .keepLow:
+            return parsedGoalTargetValue
+        default:
+            return nil
+        }
+    }
+
+    private var resolvedGoalRangeMin: Float? {
+        selectedGoalStyle == .stayInRange ? parsedGoalRangeMin : nil
+    }
+
+    private var resolvedGoalRangeMax: Float? {
+        selectedGoalStyle == .stayInRange ? parsedGoalRangeMax : nil
+    }
+
     private static func formatFloat(_ value: Float) -> String {
         if value.rounded() == value { return "\(Int(value))" }
         return String(format: "%.1f", Double(value))
@@ -800,6 +1040,16 @@ final class SQMetricFormViewModel {
     private static var kindDisplayItems: [SQDropDownMenuViewModel.Item] {
         selectableKindsStatic
             .map { SQDropDownMenuViewModel.Item(title: displayName(for: $0)) }
+    }
+
+    private static var goalDisplayItems: [SQDropDownMenuViewModel.Item] {
+        [
+            .init(title: displayName(for: .justTrack)),
+            .init(title: displayName(for: .buildUp)),
+            .init(title: displayName(for: .keepLow)),
+            .init(title: displayName(for: .avoidIt)),
+            .init(title: displayName(for: .stayInRange)),
+        ]
     }
 
     private static var trackingDisplayItems: [SQDropDownMenuViewModel.Item] {
@@ -835,6 +1085,23 @@ final class SQMetricFormViewModel {
         kind.rawValue.capitalized
     }
 
+    private static func displayName(for goalStyle: SQMetricGoalStyle) -> String {
+        switch goalStyle {
+        case .justTrack:
+            return "Just Track It"
+        case .buildUp:
+            return "Build This Up"
+        case .keepLow:
+            return "Keep This Low"
+        case .avoidIt:
+            return "Avoid It"
+        case .stayInRange:
+            return "Stay In A Range"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
     private static func displayName(forTrackingShared isShared: Bool) -> String {
         isShared ? "Shared" : "Independent"
     }
@@ -847,6 +1114,16 @@ final class SQMetricFormViewModel {
 
     private static func kind(fromDisplayName title: String) -> SQMetricKind {
         selectableKindsStatic.first(where: { displayName(for: $0) == title }) ?? .scale
+    }
+
+    private static func goalStyle(fromDisplayName title: String) -> SQMetricGoalStyle {
+        [
+            SQMetricGoalStyle.justTrack,
+            .buildUp,
+            .keepLow,
+            .avoidIt,
+            .stayInRange,
+        ].first(where: { displayName(for: $0) == title }) ?? .justTrack
     }
 
     private static func isTrackingShared(fromDisplayName title: String) -> Bool {
