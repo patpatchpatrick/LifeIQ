@@ -14,16 +14,13 @@ struct SQDashboardStatRow: View {
         data.icon.count == 1
     }
 
-    private var changeColor: SQColor {
-        guard let pct = data.changePercent else { return .textTertiary }
-        return pct >= 0 ? .colorNeonGreen : .colorNeonRed
+    private var changeTone: SQDashboardTrendTone {
+        guard let pct = data.changePercent else { return .neutral }
+        return pct >= 0 ? .positive : .negative
     }
 
     private var sparklineLineColor: Color {
-        guard let pct = data.changePercent else {
-            return SQColor.textTertiary.color.opacity(0.5)
-        }
-        return pct >= 0 ? SQColor.colorNeonGreen.color : SQColor.colorNeonRed.color
+        SQColor.dashboardGlowBlue.color.opacity(0.58)
     }
 
     @ViewBuilder
@@ -39,17 +36,11 @@ struct SQDashboardStatRow: View {
             }
 
             if let pct = data.changePercent {
-                HStack(spacing: 2) {
-                    SQImageView(image: .init(
-                        symbol: pct >= 0 ? .chevronUp : .chevronDown,
-                        symbolStyle: .colorWithFont(changeColor, font: .bodyExtraSmall)
-                    ))
-                    .frame(width: 10, height: 10)
-
-                    Text(String(format: "%.1f%%", abs(pct * 100)))
-                        .font(.sqFont(.bodyExtraSmall))
-                        .sqForegroundColor(changeColor)
-                }
+                SQDashboardTrendBadge(
+                    text: String(format: "%.1f%%", abs(pct * 100)),
+                    tone: changeTone,
+                    symbol: pct >= 0 ? .arrowUp : .arrowDown
+                )
             }
         }
         .frame(maxWidth: .infinity * 0.8, maxHeight: .infinity, alignment: .trailing)
@@ -99,6 +90,64 @@ struct SQDashboardStatRow: View {
 
     var body: some View {
         mainBody
+    }
+}
+
+struct SQDashboardTrendBadge: View {
+    let text: String
+    let tone: SQDashboardTrendTone
+    let symbol: SQImageSymbol?
+
+    private var fillColor: Color {
+        switch tone {
+        case .positive:
+            return tone.accentColor.color.opacity(SQColor.isDarkMode ? 0.14 : 0.12)
+        case .negative:
+            return tone.accentColor.color.opacity(SQColor.isDarkMode ? 0.12 : 0.10)
+        case .neutral:
+            return SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.85 : 1)
+        }
+    }
+
+    private var strokeColor: Color {
+        switch tone {
+        case .positive, .negative:
+            return tone.accentColor.color.opacity(SQColor.isDarkMode ? 0.28 : 0.22)
+        case .neutral:
+            return SQColor.glassStroke.color
+        }
+    }
+
+    private var textColor: SQColor {
+        tone == .neutral ? .textSecondary : .textPrimary
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let symbol {
+                SQImageView(
+                    image: .init(
+                        symbol: symbol,
+                        symbolStyle: .colorWithFont(tone.accentColor, font: .bodyExtraSmall)
+                    )
+                )
+                .frame(width: 10, height: 10)
+            }
+
+            Text(text)
+                .font(.sqFont(.bodyExtraSmall))
+                .sqForegroundColor(textColor)
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, .SQSpace.s)
+        .background(
+            Capsule(style: .continuous)
+                .fill(fillColor)
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(strokeColor, lineWidth: 1)
+        )
     }
 }
 

@@ -32,7 +32,14 @@ final class SQDashboardWorkoutTotalsRowViewModel: SQDashboardRowViewModel {
     
     struct TotalValueAndTrend {
         let value: AttributedString
-        let trend: AttributedString
+        let trend: TrendSummary?
+    }
+
+    struct TrendSummary {
+        let prefix: String
+        let emphasizedValue: String?
+        let suffix: String
+        let tone: SQDashboardTrendTone
     }
     
     struct ChartDataPoint: Identifiable {
@@ -156,15 +163,10 @@ private extension SQDashboardWorkoutTotalsRowViewModel {
         priorTimeRange: SQTimeRange,
         currentSeconds: Double,
         previousSeconds: Double
-    ) -> AttributedString {
+    ) -> TrendSummary? {
         // No prior data
         guard previousSeconds > 0 else {
-            /// Return an empty string if we don't have previous day's data
-            return AttributedString.build(
-                with: "",
-                font: SQFont(type: .bodySmall).font,
-                color: SQColor.textSecondary.color
-            )
+            return nil
         }
 
         let delta = currentSeconds - previousSeconds
@@ -173,48 +175,23 @@ private extension SQDashboardWorkoutTotalsRowViewModel {
 
         // If basically flat
         if abs(percent) < 0.01 {
-            return AttributedString.build(
-                with: "About the same as \(priorTimeRange.title)",
-                font: SQFont(type: .bodySmall).font,
-                color: SQColor.textSecondary.color
+            return TrendSummary(
+                prefix: "About the same",
+                emphasizedValue: nil,
+                suffix: "as \(priorTimeRange.title.lowercased())",
+                tone: .neutral
             )
         }
 
         let direction = percent > 0 ? "Up" : "Down"
         let percentString = abs(percent).toPercentageString() // e.g. "52.0%"
 
-        // Colors/fonts
-        let baseFont = SQFont(type: .bodySmall).font
-        let baseColor = SQColor.textPrimary.color
-        let pctColor = SQColor.colorGreenRed(percent: percent * 4).color
-        let pctFont = SQFont(type: .bodySmallBold).font
-
-        // Build pieces: "Up " + "52%" + " from last week"
-        var result = AttributedString()
-
-        let prefix = AttributedString.build(
-            with: "\(direction) ",
-            font: baseFont,
-            color: baseColor
+        return TrendSummary(
+            prefix: direction,
+            emphasizedValue: percentString,
+            suffix: "from \(priorTimeRange.title.lowercased())",
+            tone: percent > 0 ? .positive : .negative
         )
-
-        let percentAttr = AttributedString.build(
-            with: percentString,            // already includes "%"
-            font: pctFont,
-            color: pctColor
-        )
-
-        let suffix = AttributedString.build(
-            with: " from \(priorTimeRange.title.lowercased())",
-            font: baseFont,
-            color: baseColor
-        )
-
-        result.append(prefix)
-        result.append(percentAttr)
-        result.append(suffix)
-
-        return result
     }
     
     static func buildChartDataPoints(

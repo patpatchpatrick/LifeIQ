@@ -15,21 +15,19 @@ struct SQDashboardPerformanceRow: View {
         data.icon.count == 1
     }
 
-    // Color for percentile rank based on performance
-    private var rankColor: SQColor {
+    private var rankTone: SQDashboardTrendTone {
         guard let rank = data.percentileRank else {
-            return .textSecondary
+            return .neutral
         }
-        return rank >= 0.5 ? .colorNeonGreen : .colorNeonRed
+        return rank >= 0.5 ? .positive : .negative
     }
 
-    // Format percentile as "Top X%"
-    private var percentileText: String {
+    private var topPercentText: String {
         guard let rank = data.percentileRank else {
-            return "N/A"
+            return ""
         }
         let topPercent = Int((1.0 - rank) * 100)
-        return "Top \(topPercent)%"
+        return "\(topPercent)%"
     }
 
     var mainBody: some View {
@@ -48,10 +46,6 @@ struct SQDashboardPerformanceRow: View {
                             )
                         )
                         .frame(width: 16, height: 16)
-                    } else {
-                        Image(systemName: "questionmark.circle")
-                            .font(.sqFont(.bodySmall))
-                            .sqForegroundColor(.textSecondary)
                     }
                 }
                 .frame(width: 24)
@@ -77,10 +71,22 @@ struct SQDashboardPerformanceRow: View {
             .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
 
             // Column 3: Percentile Rank (30%)
-            HStack(spacing: 8) {
-                Text(percentileText)
-                    .font(.sqFont(.bodyExtraSmall))
-                    .sqForegroundColor(rankColor)
+            HStack(spacing: .SQSpace.xs) {
+                if data.percentileRank != nil {
+                    Text("Top")
+                        .font(.sqFont(.bodyExtraSmall))
+                        .sqForegroundColor(.textSecondary)
+
+                    SQDashboardTrendBadge(
+                        text: topPercentText,
+                        tone: rankTone,
+                        symbol: nil
+                    )
+                } else {
+                    Text("N/A")
+                        .font(.sqFont(.bodyExtraSmall))
+                        .sqForegroundColor(.textTertiary)
+                }
             }
             .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
         }

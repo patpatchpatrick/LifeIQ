@@ -17,6 +17,23 @@ final class SQColorManager {
     }
 }
 
+enum SQDashboardTrendTone: Equatable {
+    case positive
+    case negative
+    case neutral
+
+    var accentColor: SQColor {
+        switch self {
+        case .positive:
+            return .dashboardGlowBlue
+        case .negative:
+            return .dashboardTrendWarm
+        case .neutral:
+            return .textSecondary
+        }
+    }
+}
+
 indirect enum SQColor {
     static var isDarkMode = true
 
@@ -43,6 +60,7 @@ indirect enum SQColor {
     case dashboardGradientEnd
     case dashboardGlowBlue
     case dashboardGlowMint
+    case dashboardTrendWarm
 
     // MARK: - Glass Surfaces
     case glassCardTint
@@ -183,6 +201,10 @@ indirect enum SQColor {
             return Self.isDarkMode
                 ? UIColor(hexString: "#8BF0CB")!
                 : UIColor(hexString: "#C9F7E5")!
+        case .dashboardTrendWarm:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#F0C2B8")!
+                : UIColor(hexString: "#C48B7E")!
 
         // MARK: - Glass Surfaces
         case .glassCardTint:

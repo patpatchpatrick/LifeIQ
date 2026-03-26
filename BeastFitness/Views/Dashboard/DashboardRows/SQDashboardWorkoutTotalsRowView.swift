@@ -33,7 +33,33 @@ struct SQDashboardWorkoutTotalsRowView: View {
     var totalValuesAndTrendsStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
-            Text(viewModel.currentValueAndTrend.trend)
+
+            if let trend = viewModel.currentValueAndTrend.trend {
+                trendSummaryView(trend)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func trendSummaryView(_ trend: SQDashboardWorkoutTotalsRowViewModel.TrendSummary) -> some View {
+        if let emphasizedValue = trend.emphasizedValue {
+            HStack(spacing: .SQSpace.xs) {
+                Text(trend.prefix)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+
+                SQDashboardTrendBadge(
+                    text: emphasizedValue,
+                    tone: trend.tone,
+                    symbol: trend.tone == .neutral ? nil : (trend.tone == .positive ? .arrowUp : .arrowDown)
+                )
+
+                Text(trend.suffix)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+        } else {
+            Text("\(trend.prefix) \(trend.suffix)")
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
         }
