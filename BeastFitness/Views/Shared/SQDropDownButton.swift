@@ -38,8 +38,10 @@ struct SQDropDownButton: View {
     
     var body: some View {
         button
-            .padding(4)
-            .background(showBackground ? SQColor.backgroundTertiaryLight.color : Color.clear)
-            .cornerRadius(8)
+            .padding(.horizontal, .SQSpace.m)
+            .padding(.vertical, .SQSpace.s)
+            .if(showBackground) {
+                $0.sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.l)
+            }
     }
 }

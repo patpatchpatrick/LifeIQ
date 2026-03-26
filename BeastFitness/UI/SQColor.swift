@@ -11,7 +11,7 @@ import SwiftUI
 final class SQColorManager {
     static let shared = SQColorManager()
     let isDarkMode: Bool
-    
+
     init() {
         isDarkMode = UIViewController().traitCollection.userInterfaceStyle == .dark
     }
@@ -36,6 +36,19 @@ indirect enum SQColor {
     case backgroundSecondaryLight
     case backgroundTertiaryDark
     case backgroundTertiaryLight
+
+    // MARK: - Dashboard Atmosphere
+    case dashboardGradientStart
+    case dashboardGradientMid
+    case dashboardGradientEnd
+    case dashboardGlowBlue
+    case dashboardGlowMint
+
+    // MARK: - Glass Surfaces
+    case glassCardTint
+    case glassPopoverTint
+    case glassStroke
+    case glassStrokeStrong
 
     // MARK: - Alert Backgrounds
     case backgroundWarning
@@ -148,6 +161,46 @@ indirect enum SQColor {
             return Self.isDarkMode
                 ? UIColor(hexString: "#2E2E2E")!
                 : UIColor(hexString: "#FAFAFA")!
+
+        // MARK: - Dashboard Atmosphere
+        case .dashboardGradientStart:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#07141A")!
+                : UIColor(hexString: "#F7FBFC")!
+        case .dashboardGradientMid:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#0C2630")!
+                : UIColor(hexString: "#EAF6F2")!
+        case .dashboardGradientEnd:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#15424A")!
+                : UIColor(hexString: "#E7F0FA")!
+        case .dashboardGlowBlue:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#6FD7FF")!
+                : UIColor(hexString: "#B5E8FF")!
+        case .dashboardGlowMint:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#8BF0CB")!
+                : UIColor(hexString: "#C9F7E5")!
+
+        // MARK: - Glass Surfaces
+        case .glassCardTint:
+            return Self.isDarkMode
+                ? UIColor.white.withAlphaComponent(0.10)
+                : UIColor.white.withAlphaComponent(0.58)
+        case .glassPopoverTint:
+            return Self.isDarkMode
+                ? UIColor.white.withAlphaComponent(0.16)
+                : UIColor.white.withAlphaComponent(0.72)
+        case .glassStroke:
+            return Self.isDarkMode
+                ? UIColor.white.withAlphaComponent(0.14)
+                : UIColor.white.withAlphaComponent(0.52)
+        case .glassStrokeStrong:
+            return Self.isDarkMode
+                ? UIColor.white.withAlphaComponent(0.24)
+                : UIColor.white.withAlphaComponent(0.72)
 
             
 

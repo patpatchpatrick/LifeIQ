@@ -238,6 +238,7 @@
 		F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E092CABA03200C2B90B /* View+Extensions.swift */; };
 		F6F94E0C2CABA1E700C2B90B /* SQWorkout+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */; };
 		F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F94E0E2CB3147C00C2B90B /* SQColor.swift */; };
+		F710F2D82F8F6B66003299AB /* SQGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F710F2D72F8F6B66003299AB /* SQGlass.swift */; };
 		F6FE15802F5686120023CF5C /* SQWorkoutStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -525,6 +526,7 @@
 		F6F94E092CABA03200C2B90B /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0B2CABA1E700C2B90B /* SQWorkout+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQWorkout+Extensions.swift"; sourceTree = "<group>"; };
 		F6F94E0E2CB3147C00C2B90B /* SQColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQColor.swift; sourceTree = "<group>"; };
+		F710F2D72F8F6B66003299AB /* SQGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQGlass.swift; sourceTree = "<group>"; };
 		F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutStatsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1522,6 +1524,7 @@
 			isa = PBXGroup;
 			children = (
 				F6F94E0E2CB3147C00C2B90B /* SQColor.swift */,
+				F710F2D72F8F6B66003299AB /* SQGlass.swift */,
 				F6A848892CB3241900B09AD5 /* SQFont.swift */,
 				F6A8488F2CB4A55700B09AD5 /* SQImage.swift */,
 			);
@@ -1833,6 +1836,7 @@
 				F61591F92EE9D98F00223A63 /* SQWorkoutSession+VisibleStats.swift in Sources */,
 				F639B7E22ED799E800199C69 /* String+Extensions.swift in Sources */,
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
+				F710F2D82F8F6B66003299AB /* SQGlass.swift in Sources */,
 				F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */,
 				F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */,
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,

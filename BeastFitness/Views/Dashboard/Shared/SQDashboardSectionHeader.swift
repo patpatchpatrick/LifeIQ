@@ -34,7 +34,6 @@ struct SQDashboardSectionHeader: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 44)
-            .sqBackgroundColor(.background)
         }
         .buttonStyle(.plain)
     }

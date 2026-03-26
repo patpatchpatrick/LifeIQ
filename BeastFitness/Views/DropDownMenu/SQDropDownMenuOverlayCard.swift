@@ -50,8 +50,6 @@ struct SQDropDownMenuOverlayCard: View {
         }
         .frame(minWidth: 160)
         .fixedSize(horizontal: false, vertical: true)
-        .sqBackgroundColor(.backgroundSecondary)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 4)
+        .sqGlassSurface(level: .floating, cornerRadius: .SQCornerRadius.xl)
     }
 }

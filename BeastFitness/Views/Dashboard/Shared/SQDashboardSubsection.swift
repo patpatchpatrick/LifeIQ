@@ -86,8 +86,7 @@ struct SQDashboardSubsection<Content: View>: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .sqBackgroundColor(.backgroundSecondary)
-        .cornerRadius(12)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 }
 

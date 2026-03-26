@@ -88,6 +88,5 @@ struct SQDashboardPerformanceRow: View {
 
     var body: some View {
         mainBody
-        .sqBackgroundColor(.backgroundSecondary)
     }
 }
