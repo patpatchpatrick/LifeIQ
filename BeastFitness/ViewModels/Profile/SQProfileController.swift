@@ -122,6 +122,7 @@ protocol SQProfileInterface: AnyObject {
     }
 
     func settingsTapped() {
-        hub.domainEvents.send(.displaySettings)
+        let controller = SQSettingsController(state: SQAppState.shared.settingsState)
+        hub.domainEvents.send(.pushDashboardRoute(.settings(controller: controller)))
     }
 }

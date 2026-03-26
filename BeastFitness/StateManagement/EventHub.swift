@@ -15,8 +15,6 @@ enum DomainEvent {
     case dismissDashboardNavStack
     
     case changeTab(NavigationState.Tab)
-    
-    case displaySettings
 }
 
 enum WorkoutEvent {

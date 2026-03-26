@@ -14,6 +14,7 @@ protocol SQSettingsInterface { }
 @MainActor
 @Observable
 final class SQSettingsController: SQSettingsInterface {
+    let id = UUID().uuidString
     let state: SettingsStating
     var navigationPath = NavigationPath()
     private(set) var rows: [SQSettingsRowViewModel] = []

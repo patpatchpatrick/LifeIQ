@@ -10,7 +10,6 @@ import SwiftUI
 struct SQRootTabView: View {
     @State private var viewModel: SQRootTabViewModel
     @Environment(\.modelContext) private var modelContext
-    var navigationState: NavigationStating { viewModel.navigationState }
     
     init(appState: SQAppState) {
         _viewModel = .init(initialValue: .init(appState: appState))
@@ -35,6 +34,8 @@ struct SQRootTabView: View {
             SQProfileView(controller: controller)
         case .login(controller: let controller):
             SQLoginView(controller: controller)
+        case .settings(controller: let controller):
+            SQSettingsView(controller: controller)
         }
     }
     
@@ -50,17 +51,8 @@ struct SQRootTabView: View {
             }
     }
     
-    var mainTabViewWithSheets: some View {
-        dashboardViewWithNavSheet
-            .sheet(isPresented: .init(
-                get: { navigationState.isSettingsSheetVisible },
-                set: { isVisible in navigationState.toggleSettingsSheetVisibility(isVisible) })) {
-                    SQSettingsView(controller: .default)
-                }
-    }
-    
     var body: some View {
-        mainTabViewWithSheets
+        dashboardViewWithNavSheet
         .frame(maxHeight: .infinity)
         .background(Color.purple)
         .accentColor(SQColor.textPrimary.color)

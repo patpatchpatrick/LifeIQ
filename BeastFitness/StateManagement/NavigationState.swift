@@ -16,17 +16,12 @@ protocol NavigationStating: AnyObject {
     var selectedTab: NavigationState.Tab { get }
     var selectedTabPublisher: AnyPublisher<NavigationState.Tab, Never> { get }
     func changeTab(to tab: NavigationState.Tab)
-    
-    var isSettingsSheetVisible: Bool { get }
-    func toggleSettingsSheetVisibility(_ isVisible: Bool)
 }
 
 @MainActor
 @Observable final class NavigationState: NavigationStating {
     private let hub: EventHub
     private var cancellables = Set<AnyCancellable>()
-    
-    private(set) var isSettingsSheetVisible: Bool = false
     
     var dashboardRootSheetView: SQNavRoute.DashboardRoute? {
         didSet {
@@ -61,10 +56,6 @@ protocol NavigationStating: AnyObject {
                     self.selectedTab = tab
                 }
                 
-            case .displaySettings:
-                
-                toggleSettingsSheetVisibility(true)
-                
             case .pushDashboardRoute(let route):
                 
                 if dashboardRootSheetView == nil {
@@ -96,9 +87,6 @@ protocol NavigationStating: AnyObject {
         hub.domainEvents.send(.changeTab(tab))
     }
     
-    func toggleSettingsSheetVisibility(_ isVisible: Bool) {
-        isSettingsSheetVisible = isVisible
-    }
 }
 
 struct SQNavRoute {
@@ -111,6 +99,7 @@ struct SQNavRoute {
         case metricDetail(controller: SQMetricDetailController)
         case profile(controller: SQProfileController)
         case login(controller: SQLoginController)
+        case settings(controller: SQSettingsController)
         
         var id: String {
             switch self {
@@ -132,6 +121,8 @@ struct SQNavRoute {
                 return "profile-\(controller.id)"
             case .login(let controller):
                 return "login-\(controller.id)"
+            case .settings(let controller):
+                return "settings-\(controller.id)"
             }
         }
         

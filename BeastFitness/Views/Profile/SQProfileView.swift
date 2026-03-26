@@ -208,6 +208,7 @@ struct SQProfileView: View {
                 ) {
                     vm.tapped()
                 }
+                .padding(.top, .SQSpace.m)
             }
         }
     }
