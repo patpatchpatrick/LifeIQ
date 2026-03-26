@@ -84,6 +84,7 @@ struct SQDashboardPerformanceRow: View {
             }
             .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
         }
+        .padding(.vertical, .SQSpace.s)
     }
 
     var body: some View {

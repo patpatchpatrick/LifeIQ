@@ -516,7 +516,7 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             titleButton: titleButton,
-            columnHeaders: ["Metric", "Avg Score", timeRange.dashboardChangePctHeader]
+            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader]
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys
@@ -558,7 +558,7 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: ["All": fakeRows],
             dropDownViewModel: nil,
             titleButton: nil,
-            columnHeaders: ["Metric", "Avg Score", timeRange.dashboardChangePctHeader]
+            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader]
         )
         sectionViewModel.isLocked = true
         sectionViewModel.onLockedTap = { [weak self] in
@@ -642,7 +642,7 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Performance",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
-            columnHeaders: ["Stat", "Best Score", "Rank"]
+            columnHeaders: ["", "Best Score", "Rank"]
         )
     }
 

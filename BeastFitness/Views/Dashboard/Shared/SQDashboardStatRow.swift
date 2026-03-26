@@ -59,11 +59,8 @@ struct SQDashboardStatRow: View {
         HStack(spacing: .SQSpace.l) {
             // Column 1: Icon + Title
             HStack(spacing: 8) {
-                Group {
-                    if isEmoji {
-                        Text(data.icon)
-                            .font(.sqFont(.bodyLarge))
-                    } else if let symbol = SQImageSymbol(rawValue: data.icon) {
+                if !isEmoji {
+                    if let symbol = SQImageSymbol(rawValue: data.icon) {
                         SQImageView(
                             image: .init(
                                 symbol: symbol,
@@ -71,17 +68,13 @@ struct SQDashboardStatRow: View {
                             )
                         )
                         .frame(width: 16, height: 16)
-                    } else {
-                        Image(systemName: "questionmark.circle")
-                            .font(.sqFont(.bodySmall))
-                            .sqForegroundColor(.textSecondary)
                     }
                 }
-                .frame(width: 24)
 
                 Text(data.title)
                     .font(.sqFont(.body))
                     .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -101,6 +94,7 @@ struct SQDashboardStatRow: View {
             trendColumn
                 .padding(.leading, .SQSpace.m)
         }
+        .padding(.vertical, .SQSpace.s)
     }
 
     var body: some View {

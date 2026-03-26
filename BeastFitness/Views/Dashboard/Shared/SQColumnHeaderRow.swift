@@ -32,16 +32,17 @@ struct SQColumnHeaderRow: View {
     var body: some View {
         HStack(spacing: 12) { // Same spacing as SQDashboardStatRow
             ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
-                Text(column.title)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textTertiary)
+                Text(column.title.isEmpty ? " " : column.title.uppercased())
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textDisabled)
                     .frame(
                         maxWidth: index == 0 ? .infinity : .infinity * 0.75,
                         alignment: column.alignment == .leading ? .leading : .trailing
                     )
             }
         }
-        .padding(.bottom, 8) // Space between header and first row
+        .padding(.top, .SQSpace.s)
+        .padding(.bottom, .SQSpace.l)
     }
 }
 
