@@ -33,6 +33,12 @@ final class SQAuthManager: SQAuthManaging {
                 await SQUserManager.shared.handleAuthStateChange(firebaseUser: firebaseUser, userState: userState)
             }
         }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            guard !userState.hasResolvedInitialAuthState else { return }
+            userState.setLoggedOut()
+        }
     }
 
     // MARK: - Auth Operations

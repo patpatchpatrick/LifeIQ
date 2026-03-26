@@ -73,6 +73,11 @@ final class SQDashboardController: SQDashboardInterface {
                 state.selectedTimeRange = selectedRange
             }
         }
+
+        if !userState.hasResolvedInitialAuthState {
+            state.updateSectionGroups(to: SQDashboardSectionGroupViewModel.mock)
+            state.setLoading(true)
+        }
         
         self.handleEventSubscriptions(hub: state.hub)
     }
@@ -98,10 +103,14 @@ final class SQDashboardController: SQDashboardInterface {
         }.store(in: &cancellables)
 
         hub.userEvents.sink { [weak self] event in
-            guard let self, self.hasLoadedUI else { return }
+            guard let self else { return }
             switch event {
             case .loginStateChanged:
-                self.refreshFromGlobalContext()
+                if self.hasLoadedUI {
+                    self.refreshFromGlobalContext()
+                } else if let modelContext = SQAppState.shared.modelContext {
+                    Task { await self.loadUI(for: modelContext) }
+                }
             }
         }.store(in: &cancellables)
 
@@ -121,6 +130,14 @@ final class SQDashboardController: SQDashboardInterface {
     }
     
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
+        guard userState.hasResolvedInitialAuthState else {
+            SQLogger.shared.log(
+                "Skipping dashboard load until initial auth state resolves.",
+                .debug,
+                context: .dashboard
+            )
+            return
+        }
         guard !hasLoadedUI || shouldForceRefresh else { return }
         guard !isLoadUIInProgress else {
             if shouldForceRefresh {

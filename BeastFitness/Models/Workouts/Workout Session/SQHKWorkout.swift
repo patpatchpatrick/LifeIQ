@@ -67,7 +67,6 @@ struct SQHKWorkout: SQWorkoutSourcable {
 
         case .sqPaceRunning, .sqTotalVolumeLifted:
             guard let totalDistance = sumOutputFor(.distanceWalkingRunning), let activeDuration else { return nil }
-            print("PTD1 Distance: \(totalDistance) \(activeDuration)")
             return activeDuration / totalDistance
 
         case .sqFastestPace:
