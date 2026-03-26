@@ -516,7 +516,8 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             titleButton: titleButton,
-            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader]
+            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader],
+            maxVisibleRows: 4
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys
@@ -558,7 +559,8 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: ["All": fakeRows],
             dropDownViewModel: nil,
             titleButton: nil,
-            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader]
+            columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader],
+            maxVisibleRows: 4
         )
         sectionViewModel.isLocked = true
         sectionViewModel.onLockedTap = { [weak self] in
@@ -642,7 +644,8 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Performance",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
-            columnHeaders: ["", "Best Score", "Rank"]
+            columnHeaders: ["", "Best Score", "Rank"],
+            maxVisibleRows: 4
         )
     }
 

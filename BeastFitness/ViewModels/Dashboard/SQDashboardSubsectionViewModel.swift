@@ -23,8 +23,10 @@ import SwiftUI
     var titleButton: TitleButtonViewModel?
     var columnHeaders: [String]?
     var rowSpacing: CGFloat?
+    var maxVisibleRows: Int?
     var isLocked: Bool = false
     var onLockedTap: (() -> Void)? = nil
+    private(set) var isShowingAllRows: Bool = false
     private(set) var rowsByFilter: [String: [SQDashboardRowViewModel]]
     private(set) var activeFilter: String
     private(set) var activeRows: [SQDashboardRowViewModel]
@@ -36,7 +38,8 @@ import SwiftUI
         dropDownViewModel: SQDropDownMenuViewModel? = nil,
         titleButton: TitleButtonViewModel? = nil,
         columnHeaders: [String]? = nil,
-        rowSpacing: CGFloat? = nil
+        rowSpacing: CGFloat? = nil,
+        maxVisibleRows: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -45,6 +48,7 @@ import SwiftUI
         self.titleButton = titleButton
         self.columnHeaders = columnHeaders
         self.rowSpacing = rowSpacing
+        self.maxVisibleRows = maxVisibleRows
         self.isCollapsed = false
 
         // Set activeFilter to first key in rowsByFilter or "All"
@@ -59,10 +63,31 @@ import SwiftUI
         isCollapsed.toggle()
     }
 
+    var visibleRows: [SQDashboardRowViewModel] {
+        guard let maxVisibleRows, !isShowingAllRows else { return activeRows }
+        return Array(activeRows.prefix(maxVisibleRows))
+    }
+
+    var canToggleVisibleRows: Bool {
+        guard let maxVisibleRows else { return false }
+        return activeRows.count > maxVisibleRows
+    }
+
+    var seeMoreTitle: String {
+        isShowingAllRows ? "See less" : "See more"
+    }
+
+    func toggleShowingAllRows() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isShowingAllRows.toggle()
+        }
+    }
+
     func updateActiveFilter(_ filter: String) {
         withAnimation(.easeInOut(duration: 0.2)) {
             activeFilter = filter
             activeRows = rowsByFilter[filter] ?? []
+            isShowingAllRows = false
         }
     }
 }

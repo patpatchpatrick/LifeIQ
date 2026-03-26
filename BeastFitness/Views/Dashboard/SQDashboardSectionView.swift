@@ -42,7 +42,7 @@ struct SQDashboardSectionView: View {
 
                     ZStack(alignment: .center) {
                         VStack(spacing: section.rowSpacing ?? SQDashboardView.uiConfig.sectionRowSpacing) {
-                            ForEach(Array(section.activeRows.enumerated()), id: \.offset) { offset, row in
+                            ForEach(Array(section.visibleRows.enumerated()), id: \.offset) { offset, row in
                                 switch row.rowType {
                                 case .metricStats:
                                     if let vm = row as? SQDashboardMetricStatsRowViewModel {
@@ -112,6 +112,29 @@ struct SQDashboardSectionView: View {
                     }
                     .id(section.activeFilter)
                     .transition(.opacity)
+
+                    if section.canToggleVisibleRows && !section.isLocked {
+                        Button {
+                            section.toggleShowingAllRows()
+                        } label: {
+                            HStack(spacing: .SQSpace.s) {
+                                Text(section.seeMoreTitle)
+                                    .sqFont(.bodySmallSemiBold)
+                                    .sqForegroundColor(.textPrimary)
+
+                                SQImageView(
+                                    image: .init(
+                                        symbol: section.isShowingAllRows ? .chevronUp : .chevronDown,
+                                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                                    )
+                                )
+                                .frame(width: 10, height: 10)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, .SQSpace.xl)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }
