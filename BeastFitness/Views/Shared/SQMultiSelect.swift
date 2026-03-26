@@ -9,24 +9,36 @@ struct SQMultiSelect: View {
     @ObservedObject var viewModel: SQMultiSelectViewModel
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .SQSpace.s) {
             ForEach(viewModel.items) { item in
                 let isOn = viewModel.isSelected(item)
                 Button {
                     viewModel.toggle(item)
                 } label: {
                     Text(item.title)
-                        .sqFont(.bodySmall)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .foregroundStyle(isOn ? SQColor.textPrimary.color : SQColor.textSecondary.color)
-                        .background(isOn ? SQColor.backgroundSecondary.color : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(isOn ? .dashboardGlowBlueForeground : .textSecondary)
+                        .padding(.horizontal, .SQSpace.m)
+                        .padding(.vertical, .SQSpace.s)
+                        .background(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .fill(
+                                    isOn
+                                        ? SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.22 : 0.14)
+                                        : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.96)
+                                )
+                        )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isOn ? SQColor.textPrimary.color.opacity(0.3) : SQColor.textSecondary.color.opacity(0.2), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(
+                                    isOn
+                                        ? SQColor.dashboardGlowBlue.color.opacity(0.42)
+                                        : SQColor.glassStroke.color,
+                                    lineWidth: 1
+                                )
                         )
                 }
+                .buttonStyle(.plain)
             }
         }
     }

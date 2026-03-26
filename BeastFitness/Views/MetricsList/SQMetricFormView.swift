@@ -12,93 +12,138 @@ struct SQMetricFormView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isConfirmingDelete = false
 
-    // MARK: - Emoji Circle
-
     @ViewBuilder
-    var emojiCircle: some View {
-        ZStack {
-            Circle()
-                .sqForegroundColor(.backgroundSecondaryLight)
-                .frame(width: 72, height: 72)
+    private var emojiTile: some View {
+        Button {
+            viewModel.emojiField.focus()
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
+                    .frame(width: 86, height: 86)
 
-            if !viewModel.emojiField.text.isEmpty {
-                Text(viewModel.emojiField.text)
-                    .font(.system(size: 32))
-            } else {
-                Image(systemName: "smiley")
-                    .font(.system(size: 28, weight: .semibold))
-                    .sqForegroundColor(.textSecondary)
+                if !viewModel.emojiField.text.isEmpty {
+                    Text(viewModel.emojiField.text)
+                        .font(.system(size: 32))
+                } else {
+                    SQImageView(
+                        image: .init(
+                            symbol: .faceSmiling,
+                            symbolStyle: .colorWithFont(.textSecondary, font: .title3)
+                        )
+                    )
+                    .frame(width: 24, height: 24)
+                }
             }
         }
-        .onTapGesture {
-            viewModel.emojiField.focus()
-        }
+        .buttonStyle(.plain)
     }
 
-    // MARK: - Emoji Input
-
-    /// Compact single-character input row — visually distinct from other fields
     @ViewBuilder
-    var emojiInputRow: some View {
-        labeledRow(label: "Emoji") {
+    private var heroCard: some View {
+        VStack(spacing: .SQSpace.m) {
+            emojiTile
+
+            Text("Tap to set an icon for this metric.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, .SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private func iconActionButton(symbol: SQImageSymbol, foregroundColor: SQColor, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                .frame(width: 34, height: 34)
+                .overlay(
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+                .overlay(
+                    SQImageView(
+                        image: .init(
+                            symbol: symbol,
+                            symbolStyle: .colorWithFont(foregroundColor, font: .bodySmall)
+                        )
+                    )
+                    .frame(width: 12, height: 12)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func toolbarIconButton(symbol: SQImageSymbol, foregroundColor: SQColor, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            SQImageView(
+                image: .init(
+                    symbol: symbol,
+                    symbolStyle: .colorWithFont(foregroundColor, font: .bodySmall)
+                )
+            )
+            .frame(width: 14, height: 14)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var emojiInputRow: some View {
+        labeledRow(label: "Icon") {
             SQUITextField(viewModel: viewModel.emojiField)
         }
     }
 
-    // MARK: - Title
-
     @ViewBuilder
-    var titleRow: some View {
+    private var titleRow: some View {
         labeledRow(label: "Title") {
             SQUITextField(viewModel: viewModel.titleField)
         }
     }
 
-    // MARK: - Group Picker
-
     @ViewBuilder
-    var groupRow: some View {
+    private var groupRow: some View {
         labeledRow(label: "Group") {
             if viewModel.isAddingNewGroup {
                 HStack(spacing: .SQSpace.s) {
                     SQUITextField(viewModel: viewModel.newGroupField)
 
-                    Button(action: { viewModel.confirmNewGroup() }) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .sqForegroundColor(.accent(1))
+                    iconActionButton(symbol: .checkmarkCircleFill, foregroundColor: .dashboardGlowBlueForeground) {
+                        viewModel.confirmNewGroup()
                     }
-                    .buttonStyle(.plain)
 
-                    Button(action: { viewModel.cancelNewGroup() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .sqForegroundColor(.textTertiary)
+                    iconActionButton(symbol: .xmarkCircleFill, foregroundColor: .textSecondary) {
+                        viewModel.cancelNewGroup()
                     }
-                    .buttonStyle(.plain)
                 }
             } else {
                 HStack(spacing: .SQSpace.s) {
                     SQDropDownMenu(menuViewModel: viewModel.groupMenuViewModel, isDisabled: false)
 
-                    Button(action: { viewModel.isAddingNewGroup = true }) {
-                        Image(systemName: "plus.circle")
-                            .sqForegroundColor(.textSecondary)
+                    iconActionButton(symbol: .plusCircle, foregroundColor: .textPrimary) {
+                        viewModel.isAddingNewGroup = true
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
-    // MARK: - Period Picker (create only) / Static (edit)
-
     @ViewBuilder
-    var periodRow: some View {
+    private var periodRow: some View {
         if viewModel.isStructurallyEditable {
             labeledRow(label: "Check-In Period") {
                 SQMultiSelect(viewModel: viewModel.periodMultiSelectViewModel)
             }
+
             if viewModel.selectedPeriods.count > 1 {
-                labeledRow(label: "Check-In Period Tracking") {
+                labeledRow(label: "Tracking") {
                     SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
                 }
             }
@@ -107,10 +152,8 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Kind Picker (create only) / Static (edit)
-
     @ViewBuilder
-    var kindRow: some View {
+    private var kindRow: some View {
         if viewModel.isStructurallyEditable {
             labeledRow(label: "Type") {
                 SQDropDownMenu(menuViewModel: viewModel.kindMenuViewModel, isDisabled: false)
@@ -120,10 +163,8 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Unit Picker (create + number only) / Static (edit)
-
     @ViewBuilder
-    var unitRow: some View {
+    private var unitRow: some View {
         if viewModel.showUnit {
             if viewModel.isStructurallyEditable {
                 labeledRow(label: "Unit") {
@@ -135,30 +176,26 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Numeric Range Fields
-
     @ViewBuilder
-    var numericRows: some View {
+    private var numericRows: some View {
         if viewModel.showNumericRange {
             if viewModel.isStructurallyEditable {
                 labeledRow(label: "Min") {
                     SQUITextField(viewModel: viewModel.minField)
                 }
+
                 labeledRow(label: "Max") {
                     SQUITextField(viewModel: viewModel.maxField)
                 }
-                if viewModel.selectedKind == .scale {
-                    labeledRow(label: "Step") {
+
+                labeledRow(label: "Step") {
+                    VStack(alignment: .leading, spacing: .SQSpace.xs) {
                         SQUITextField(viewModel: viewModel.stepField)
-                    }
-                } else {
-                    labeledRow(label: "Step") {
-                        HStack(spacing: .SQSpace.m) {
-                            SQUITextField(viewModel: viewModel.stepField)
-                                .frame(maxWidth: 80)
-                            Text("(decimal precision)")
+
+                        if viewModel.selectedKind == .number {
+                            Text("Used as decimal precision.")
                                 .sqFont(.bodyExtraSmall)
-                                .sqForegroundColor(.textTertiary)
+                                .sqForegroundColor(.textSecondary)
                         }
                     }
                 }
@@ -170,17 +207,15 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Goal
-
     @ViewBuilder
-    var goalRows: some View {
+    private var goalRows: some View {
         labeledRow(label: "Goal") {
             SQDropDownMenu(menuViewModel: viewModel.goalMenuViewModel, isDisabled: false)
         }
 
         Text(viewModel.goalHelperText)
             .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textTertiary)
+            .sqForegroundColor(.textSecondary)
 
         if viewModel.showGoalTargetField {
             labeledRow(label: viewModel.goalTargetLabel) {
@@ -192,6 +227,7 @@ struct SQMetricFormView: View {
             labeledRow(label: "Target Min") {
                 SQUITextField(viewModel: viewModel.goalRangeMinField)
             }
+
             labeledRow(label: "Target Max") {
                 SQUITextField(viewModel: viewModel.goalRangeMaxField)
             }
@@ -200,25 +236,51 @@ struct SQMetricFormView: View {
         if let summary = viewModel.goalSuccessSummary {
             Text(summary)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.accent(1))
+                .sqForegroundColor(.dashboardGlowBlue)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, .SQSpace.s)
+                .padding(.top, .SQSpace.xs)
         }
     }
 
-    // MARK: - Save Button
+    @ViewBuilder
+    private func formSection(
+        title: String,
+        subtitle: String? = nil,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text(title)
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                content()
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
 
     @ViewBuilder
-    var saveButton: some View {
+    private var saveButton: some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             if !viewModel.canSave, let message = viewModel.saveDisabledMessage {
                 Text(message)
                     .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.colorErrorRed)
+                    .sqForegroundColor(.textError)
                     .padding(.horizontal, .SQSpace.xl)
             }
 
             SQButton(
+                style: .glassPrimary,
                 shouldHugContent: false,
                 title: "Save",
                 isDisabled: !viewModel.canSave,
@@ -237,46 +299,52 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Body
-
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: .SQSpace.xl) {
-                // Emoji circle at top (centered)
-                emojiCircle
-                    .frame(maxWidth: .infinity)
+            VStack(alignment: .leading, spacing: .SQSpace.l) {
+                heroCard
 
-                Divider()
-                    .sqTintColor(.divider(1))
+                formSection(title: "Basics", subtitle: "Name, icon, and grouping.") {
+                    titleRow
+                    emojiInputRow
+                    groupRow
+                }
 
-                titleRow
-                emojiInputRow
-                groupRow
-                periodRow
-                goalRows
+                formSection(title: "Check-In", subtitle: "Where this metric shows up.") {
+                    periodRow
+                    goalRows
+                }
 
-                Divider()
-                    .sqTintColor(.divider(1))
-
-                kindRow
-                unitRow
-                numericRows
+                formSection(title: "Format", subtitle: "Value type, units, and range.") {
+                    kindRow
+                    unitRow
+                    numericRows
+                }
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)
+            .padding(.bottom, .SQSpace.xxl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(viewModel.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .background(SQColor.backgroundSheet.color)
+        .background {
+            SQSheetBackground()
+        }
         .safeAreaInset(edge: .bottom) {
-            saveButton
+            VStack(spacing: 0) {
+                Divider()
+                    .sqTintColor(.glassStroke)
+
+                saveButton
+            }
+            .background(.ultraThinMaterial)
         }
         .toolbar {
             if viewModel.canDelete {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isConfirmingDelete = true }) {
-                        Image(systemName: "trash")
+                ToolbarItem(placement: .topBarTrailing) {
+                    toolbarIconButton(symbol: .trash, foregroundColor: .textPrimary) {
+                        isConfirmingDelete = true
                     }
                 }
             }
@@ -291,14 +359,13 @@ struct SQMetricFormView: View {
         }
     }
 
-    // MARK: - Helpers
-
     @ViewBuilder
     private func labeledRow(label: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(label)
-                .sqFont(.bodySmall)
+            Text(label.uppercased())
+                .sqFont(.headerSmall)
                 .sqForegroundColor(.textSecondary)
+
             content()
         }
     }
@@ -306,16 +373,24 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private func staticRow(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(label)
-                .sqFont(.bodySmall)
+            Text(label.uppercased())
+                .sqFont(.headerSmall)
                 .sqForegroundColor(.textSecondary)
+
             Text(value)
                 .sqFont(.body)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                .opacity(0.5)
-                .cornerRadius(.SQCornerRadius.m)
+                .padding(.horizontal, .SQSpace.m)
+                .padding(.vertical, .SQSpace.m)
+                .background(
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.76 : 0.96))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
         }
     }
 }

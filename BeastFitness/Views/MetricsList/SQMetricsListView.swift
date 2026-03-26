@@ -13,6 +13,20 @@ struct SQMetricsListView: View {
     @Environment(\.modelContext) private var modelContext
 
     @ViewBuilder
+    private func toolbarIconButton(symbol: SQImageSymbol, foregroundColor: SQColor, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            SQImageView(
+                image: .init(
+                    symbol: symbol,
+                    symbolStyle: .colorWithFont(foregroundColor, font: .bodySmall)
+                )
+            )
+            .frame(width: 14, height: 14)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
     func trackingButton(isTracked: Bool) -> some View {
         HStack(spacing: .SQSpace.xs) {
             SQImageView(
@@ -119,27 +133,9 @@ struct SQMetricsListView: View {
             )
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    toolbarIconButton(symbol: .plus, foregroundColor: .textPrimary) {
                         controller.createMetricTapped()
-                    } label: {
-                        RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                            .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
-                            )
-                            .overlay(
-                                SQImageView(
-                                    image: .init(
-                                        symbol: .plus,
-                                        symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
-                                    )
-                                )
-                                .frame(width: 12, height: 12)
-                            )
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .task {
