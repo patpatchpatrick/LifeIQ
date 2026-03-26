@@ -179,18 +179,30 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             priorStats = []
         }
 
-        let points = currentStats
-            .compactMap { stat -> DayValuePoint? in
-                guard let value = stat.values[metricId] else { return nil }
-                return .init(id: stat.uniqueDateKey, date: stat.date, value: Double(value))
-            }
-            .sorted { $0.date < $1.date }
+        let allTimeStats: [SQDailyCheckInStats]
+        if selectedTimeRange == .allTime {
+            allTimeStats = currentStats
+        } else {
+            allTimeStats = try await metricEntryManager.getDailyCheckInStats(
+                from: SQTimeRange.allTime.startDate,
+                to: SQTimeRange.allTime.endDate,
+                context: context
+            )
+        }
+
+        let points = buildPoints(from: currentStats)
+        let allTimePoints = buildPoints(from: allTimeStats)
 
         let priorValues = priorStats.compactMap { $0.values[metricId].map(Double.init) }
 
         chartTitle = definition.title
         chartSubtitle = buildChartSubtitle(for: points)
-        sections = buildSections(definition: definition, points: points, priorValues: priorValues)
+        sections = buildSections(
+            definition: definition,
+            points: points,
+            allTimePoints: allTimePoints,
+            priorValues: priorValues
+        )
         buildChart(points: points, definition: definition)
     }
 
@@ -205,6 +217,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
     private func buildSections(
         definition: SQMetricDefinition,
         points: [DayValuePoint],
+        allTimePoints: [DayValuePoint],
         priorValues: [Double]
     ) -> [Section] {
         guard !points.isEmpty else { return [] }
@@ -233,28 +246,52 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let daysLogged = points.count
         let windowDays = max(1, dayCountForWindow(points: points))
         let loggingRate = Double(daysLogged) / Double(windowDays)
+        let allTimeLoggedDates = allTimePoints.map(\.date)
         let consistency = Section(
             id: "consistency",
             title: "Consistency",
             items: [
                 .init(id: "consistency-days-logged", title: "Days Logged", value: "\(daysLogged)", detail: nil, valueColor: .textPrimary),
                 .init(id: "consistency-logging-rate", title: "Logging Rate", value: String(format: "%.0f%%", loggingRate * 100), detail: nil, valueColor: .textPrimary),
-                .init(id: "consistency-log-streak", title: "Log Streak", value: "\(currentConsecutiveDayCount(for: points.map(\.date))) days", detail: nil, valueColor: .textPrimary),
-                .init(id: "consistency-last-logged", title: "Last Logged", value: points.last?.date.formattedString(with: .medium) ?? "—", detail: nil, valueColor: .textPrimary)
+                .init(
+                    id: "consistency-log-streak",
+                    title: "Log Streak",
+                    value: "\(currentConsecutiveDayCount(for: allTimeLoggedDates)) days",
+                    detail: selectedTimeRange == .allTime ? nil : "All time",
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "consistency-last-logged",
+                    title: "Last Logged",
+                    value: allTimePoints.last?.date.formattedString(with: .medium) ?? "—",
+                    detail: selectedTimeRange == .allTime ? nil : "All time",
+                    valueColor: .textPrimary
+                )
             ]
         )
 
         var builtSections = [overview, consistency]
         if definition.goalStyle != .justTrack {
-            builtSections.append(buildGoalSection(definition: definition, points: points))
+            builtSections.append(
+                buildGoalSection(
+                    definition: definition,
+                    points: points,
+                    allTimePoints: allTimePoints
+                )
+            )
         }
         return builtSections
     }
 
-    private func buildGoalSection(definition: SQMetricDefinition, points: [DayValuePoint]) -> Section {
+    private func buildGoalSection(
+        definition: SQMetricDefinition,
+        points: [DayValuePoint],
+        allTimePoints: [DayValuePoint]
+    ) -> Section {
         let successPoints = points.filter { isSuccessful(value: $0.value, definition: definition) }
-        let failures = points.filter { !isSuccessful(value: $0.value, definition: definition) }
         let successRate = points.isEmpty ? 0 : Double(successPoints.count) / Double(points.count)
+        let allTimeSuccessPoints = allTimePoints.filter { isSuccessful(value: $0.value, definition: definition) }
+        let allTimeFailures = allTimePoints.filter { !isSuccessful(value: $0.value, definition: definition) }
 
         let currentStreakTitle: String
         let bestStreakTitle: String
@@ -267,8 +304,8 @@ final class SQMetricDetailController: SQMetricDetailInterface {
 
         switch definition.goalStyle {
         case .avoidIt:
-            let currentAvoidance = currentAvoidanceWindow(for: points)
-            let bestAvoidance = bestAvoidanceWindow(for: points)
+            let currentAvoidance = currentAvoidanceWindow(for: allTimePoints)
+            let bestAvoidance = bestAvoidanceWindow(for: allTimePoints)
             currentStreakTitle = "Days Avoided"
             bestStreakTitle = "Best Avoidance"
             successRateTitle = "Zero Days"
@@ -284,10 +321,10 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             bestStreakTitle = "Best Streak"
             successRateTitle = "Success Rate"
             lastFailureTitle = "Last Miss"
-            currentStreakValue = "\(currentSuccessStreak(for: points, definition: definition)) days"
-            bestStreakValue = "\(longestConsecutiveDayCount(for: successPoints.map(\.date))) days"
-            currentStreakDetail = nil
-            bestStreakDetail = nil
+            currentStreakValue = "\(currentSuccessStreak(for: allTimePoints, definition: definition)) days"
+            bestStreakValue = "\(longestConsecutiveDayCount(for: allTimeSuccessPoints.map(\.date))) days"
+            currentStreakDetail = selectedTimeRange == .allTime ? nil : "All time"
+            bestStreakDetail = selectedTimeRange == .allTime ? nil : "All time"
         }
 
         return Section(
@@ -297,7 +334,13 @@ final class SQMetricDetailController: SQMetricDetailInterface {
                 .init(id: "streaks-current", title: currentStreakTitle, value: currentStreakValue, detail: currentStreakDetail, valueColor: .textPrimary),
                 .init(id: "streaks-best", title: bestStreakTitle, value: bestStreakValue, detail: bestStreakDetail, valueColor: .textPrimary),
                 .init(id: "streaks-rate", title: successRateTitle, value: String(format: "%.0f%%", successRate * 100), detail: nil, valueColor: .textPrimary),
-                .init(id: "streaks-last-failure", title: lastFailureTitle, value: failures.last?.date.formattedString(with: .medium) ?? "Never", detail: nil, valueColor: .textPrimary)
+                .init(
+                    id: "streaks-last-failure",
+                    title: lastFailureTitle,
+                    value: allTimeFailures.last?.date.formattedString(with: .medium) ?? "Never",
+                    detail: selectedTimeRange == .allTime ? nil : "All time",
+                    valueColor: .textPrimary
+                )
             ]
         )
     }
@@ -557,6 +600,15 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             value: String(format: "%@%.1f%%", percent >= 0 ? "+" : "", percent),
             color: color
         )
+    }
+
+    private func buildPoints(from stats: [SQDailyCheckInStats]) -> [DayValuePoint] {
+        stats
+            .compactMap { stat -> DayValuePoint? in
+                guard let value = stat.values[metricId] else { return nil }
+                return .init(id: stat.uniqueDateKey, date: stat.date, value: Double(value))
+            }
+            .sorted { $0.date < $1.date }
     }
 
     private func currentAvoidanceWindow(for points: [DayValuePoint]) -> AvoidanceWindow? {
