@@ -10,14 +10,29 @@ import SwiftUI
 struct SQDailyCheckInView: View {
     @Bindable var viewModel: SQDailyCheckInViewModel
     @Environment(\.modelContext) private var modelContext
+
+    @ViewBuilder
+    private var introSection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            Text("\(viewModel.period.rawValue.capitalized) Check-In")
+                .sqFont(.title2)
+                .sqForegroundColor(.textPrimary)
+
+            Text(viewModel.isEditingPastDate ? "Editing a previous check-in." : "Capture today’s metrics and notes.")
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textSecondary)
+        }
+        .padding(.horizontal, .SQSpace.xl)
+        .padding(.top, .SQSpace.l)
+    }
     
     @ViewBuilder
     var mainStack: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xxl) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             ForEach(viewModel.rows) { row in
                 SQDailyCheckInRow(viewModel: row)
                     .disabled(row.isDisabled)
-                    .opacity(row.isDisabled ? 0.5 : 1)
+                    .opacity(row.isDisabled ? 0.45 : 1)
             }
         }
     }
@@ -25,13 +40,18 @@ struct SQDailyCheckInView: View {
     @ViewBuilder
     var mainScroll: some View {
         VStack(alignment: .leading, spacing: 0) {
+            introSection
+
             dateSelectionButton
                 .padding(.horizontal, .SQSpace.xl)
-                .padding(.vertical, .SQSpace.m)
+                .padding(.top, .SQSpace.l)
+                .padding(.bottom, .SQSpace.m)
 
             ScrollView {
                 mainStack
-                    .padding(.SQSpace.xl)
+                    .padding(.horizontal, .SQSpace.xl)
+                    .padding(.top, .SQSpace.s)
+                    .padding(.bottom, .SQSpace.xxl)
             }
         }
     }
@@ -43,12 +63,15 @@ struct SQDailyCheckInView: View {
         } label: {
             HStack(spacing: .SQSpace.s) {
                 Text(viewModel.targetDate.formattedString(with: .long))
-                    .sqFont(.body)
+                    .sqFont(.bodySemiBold)
                     .sqForegroundColor(.textPrimary)
 
                 SQImageView(image: .init(symbol: .chevronDown, symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)))
                     .frame(width: 10)
             }
+            .padding(.vertical, .SQSpace.m)
+            .padding(.horizontal, .SQSpace.l)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
         }
         .buttonStyle(.plain)
     }
@@ -61,6 +84,7 @@ struct SQDailyCheckInView: View {
             isLoading: viewModel.isLoading,
             action: { Task { await viewModel.submitTapped(modelContext: modelContext) } })
             .padding(.horizontal, .SQSpace.xl)
+            .padding(.top, .SQSpace.m)
             .padding(.bottom, .SQSpace.l)
     }
     
@@ -84,9 +108,17 @@ struct SQDailyCheckInView: View {
                         }
                     }
                 }
-                .background(SQColor.backgroundSheet.color)
+                .background {
+                    SQSheetBackground()
+                }
                 .safeAreaInset(edge: .bottom) {
-                    submitButton
+                    VStack(spacing: 0) {
+                        Divider()
+                            .sqTintColor(.glassStroke)
+
+                        submitButton
+                    }
+                    .background(.ultraThinMaterial)
                 }
                 .sheet(isPresented: $viewModel.isAddMetricSheetDisplayed) {
                     SQMetricsListView(controller: viewModel.metricsListController)

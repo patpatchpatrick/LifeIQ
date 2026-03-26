@@ -10,28 +10,35 @@ import SwiftUI
 struct SQDailyCheckInSegmentedControl: View {
     @Bindable var viewModel: SQDailyCheckInRowSegmentedControlViewModel
 
-    private let circleSize: CGFloat = 26
-
     @ViewBuilder
     var circleRow: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: .SQSpace.s) {
             ForEach(viewModel.segments) { segment in
                 let isSelected = viewModel.selectedSegment?.id == segment.id
                 Button {
-                    viewModel.selectedSegment = segment
+                    viewModel.selectedSegment = isSelected ? nil : segment
                 } label: {
-                    Group {
-                        if isSelected {
-                            Text(segment.title)
-                                .sqFont(.bodySemiBold)
-                                .sqForegroundColor(.colorGreenPct(percent: 1.0))
-                        } else {
-                            Circle()
-                                .strokeBorder(SQColor.textPrimary.color.opacity(0.4), lineWidth: 1.5)
-                                .frame(width: circleSize, height: circleSize)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    Text(segment.title)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(isSelected ? .textPrimary : .textSecondary)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .fill(
+                                    isSelected
+                                        ? SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.18 : 0.14)
+                                        : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.95)
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(
+                                    isSelected
+                                        ? SQColor.dashboardGlowBlue.color.opacity(0.42)
+                                        : SQColor.glassStroke.color,
+                                    lineWidth: 1
+                                )
+                        )
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -43,16 +50,16 @@ struct SQDailyCheckInSegmentedControl: View {
     func scaleStack(scaleConfig: SQDailyCheckInRowSegmentedControlViewModel.ScaleConfig) -> some View {
         HStack {
             Text(scaleConfig.minText)
-                .sqFont(.bodySmall)
+                .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
 
             Spacer()
 
             Text(scaleConfig.maxText)
-                .sqFont(.bodySmall)
+                .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
         }
-        .opacity(0.6)
+        .opacity(0.72)
     }
 
     var body: some View {
@@ -95,4 +102,3 @@ struct SQDailyCheckInSegmentedControl: View {
 //        .padding()
 //        .preferredColorScheme(.dark)
 //}
-

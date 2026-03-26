@@ -9,32 +9,54 @@ import SwiftUI
 
 struct SQDailyCheckInRow: View {
     @Bindable var viewModel: SQDailyCheckInRowViewModel
-    
-    let circleBadgeHeight: CGFloat = 25
-    
+
+    @ViewBuilder
+    private var numberBadge: some View {
+        if !viewModel.number.isEmpty {
+            Text(viewModel.number)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.85 : 1))
+                )
+                .overlay(
+                    Circle()
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+        }
+    }
+
     @ViewBuilder
     var titleStack: some View {
         HStack(spacing: .SQSpace.s) {
+            numberBadge
+
             Text(viewModel.title)
-                .sqFont(.bodyLarge)
-                .sqForegroundColor(.textSecondary)
-            
+                .sqFont(.bodySemiBold)
+                .sqForegroundColor(.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
             Spacer()
-            
-//            if viewModel.isCompleted {
-//                Circle()
-//                    .sqForegroundColor(.colorGreenDarkBorder)
-//                    .frame(width: circleBadgeHeight, height: circleBadgeHeight)
-//                    .overlay {
-//                        SQImageView(
-//                            image: .init(
-//                                symbol: .checkmark,
-//                                symbolStyle: .colorWithFont(.textPrimary, font: .bodyBold)
-//                            )
-//                        )
-//                        .frame(width: 12)
-//                    }
-//            }
+
+            if viewModel.isCompleted {
+                ZStack {
+                    Circle()
+                        .fill(SQColor.dashboardGlowMint.color.opacity(0.16))
+
+                    Circle()
+                        .stroke(SQColor.dashboardGlowMint.color.opacity(0.45), lineWidth: 1)
+
+                    SQImageView(
+                        image: .init(
+                            symbol: .checkmark,
+                            symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)
+                        )
+                    )
+                }
+                .frame(width: 22, height: 22)
+            }
         }
     }
     
@@ -52,7 +74,7 @@ struct SQDailyCheckInRow: View {
     var vertStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             titleStack
-            
+
             customInputField
         }
     }
@@ -61,10 +83,7 @@ struct SQDailyCheckInRow: View {
     var borderedContainer: some View {
         vertStack
             .padding(.SQSpace.l)
-            .sqBackgroundColor(
-                .backgroundSecondary
-            )
-            .cornerRadius(.SQCornerRadius.l)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
     
     var body: some View {
