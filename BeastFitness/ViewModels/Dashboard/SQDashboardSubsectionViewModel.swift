@@ -13,6 +13,7 @@ import SwiftUI
     /// View model for a title button in the subsection header
     struct TitleButtonViewModel {
         let icon: SQImageSymbol
+        let title: String?
         let onTap: () -> Void
     }
 

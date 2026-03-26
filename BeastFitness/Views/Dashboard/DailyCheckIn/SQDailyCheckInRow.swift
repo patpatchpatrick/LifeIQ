@@ -51,9 +51,10 @@ struct SQDailyCheckInRow: View {
                     SQImageView(
                         image: .init(
                             symbol: .checkmark,
-                            symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)
+                            symbolStyle: .colorWithFont(.textPrimary, font: .headerSmall)
                         )
                     )
+                    .frame(width: 10, height: 10)
                 }
                 .frame(width: 22, height: 22)
             }

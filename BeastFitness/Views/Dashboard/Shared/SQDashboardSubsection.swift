@@ -48,13 +48,31 @@ struct SQDashboardSubsection<Content: View>: View {
                         Button {
                             titleButton.onTap()
                         } label: {
-                            SQImageView(
-                                image: .init(
-                                    symbol: titleButton.icon,
-                                    symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                            HStack(spacing: .SQSpace.xs) {
+                                SQImageView(
+                                    image: .init(
+                                        symbol: titleButton.icon,
+                                        symbolStyle: .colorWithFont(.textPrimary, font: .headerSmall)
+                                    )
                                 )
+                                .frame(width: 10, height: 10)
+
+                                if let title = titleButton.title {
+                                    Text(title)
+                                        .sqFont(.bodyExtraSmall)
+                                        .sqForegroundColor(.textPrimary)
+                                }
+                            }
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, .SQSpace.s)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
                             )
-                            .frame(width: 16, height: 16)
+                            .overlay(
+                                Capsule(style: .continuous)
+                                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                     }

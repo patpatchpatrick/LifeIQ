@@ -28,51 +28,101 @@ struct SQDatePickerModal: View {
         return Calendar.current.isDate(entry.date, inSameDayAs: selectedDate) && entry.period == selectedPeriod
     }
 
+    private var titleText: String {
+        "Select Check-In"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
-                Text("Select Date")
-                    .sqFont(.title2)
-                    .sqForegroundColor(.textPrimary)
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text(titleText)
+                        .sqFont(.title2)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("Choose a date and period to edit or review.")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
 
                 Spacer()
 
                 Button {
                     onDismiss()
                 } label: {
-                    Image(systemName: SQImageSymbol.xMark.rawValue)
-                        .sqForegroundColor(.textSecondary)
-                        .padding(.SQSpace.s)
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.8 : 1))
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        )
+                        .overlay(
+                            SQImageView(
+                                image: .init(
+                                    symbol: .xMark,
+                                    symbolStyle: .colorWithFont(.textSecondary, font: .headerSmall)
+                                )
+                            )
+                            .frame(width: 12, height: 12)
+                        )
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.SQSpace.l)
+            .padding(.SQSpace.xl)
 
             Divider()
+                .sqTintColor(.glassStroke)
 
-            // Date list
             ScrollView {
-                VStack(spacing: .SQSpace.xs) {
+                VStack(spacing: .SQSpace.s) {
                     ForEach(dateEntries) { entry in
                         Button {
                             onDateSelected(entry.date, entry.period)
                             onDismiss()
                         } label: {
                             HStack(spacing: .SQSpace.m) {
-                                // Completion indicator circle
-                                Circle()
-                                    .fill(entry.isCompleted
-                                          ? Color.green
-                                          : Color.gray.opacity(0.3))
-                                    .frame(width: 8, height: 8)
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            entry.isCompleted
+                                                ? SQColor.dashboardGlowMint.color.opacity(0.16)
+                                                : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.7 : 0.96)
+                                        )
+
+                                    Circle()
+                                        .stroke(
+                                            entry.isCompleted
+                                                ? SQColor.dashboardGlowMint.color.opacity(0.45)
+                                                : SQColor.glassStroke.color,
+                                            lineWidth: 1
+                                        )
+
+                                    if entry.isCompleted {
+                                        SQImageView(
+                                            image: .init(
+                                                symbol: .checkmark,
+                                                symbolStyle: .colorWithFont(.textPrimary, font: .headerSmall)
+                                            )
+                                        )
+                                        .frame(width: 10, height: 10)
+                                    }
+                                }
+                                .frame(width: 18, height: 18)
 
                                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
                                     Text(entry.displayText)
-                                        .sqFont(.body)
+                                        .sqFont(.bodySemiBold)
                                         .sqForegroundColor(.textPrimary)
 
-                                    if entry.isToday {
-                                        Text("Today")
+                                    HStack(spacing: .SQSpace.xs) {
+                                        if entry.isToday {
+                                            Text("Today")
+                                                .sqFont(.bodyExtraSmall)
+                                                .sqForegroundColor(.textSecondary)
+                                        }
+
+                                        Text(entry.period.rawValue.capitalized)
                                             .sqFont(.bodyExtraSmall)
                                             .sqForegroundColor(.textSecondary)
                                     }
@@ -80,27 +130,61 @@ struct SQDatePickerModal: View {
 
                                 Spacer()
 
-                                Image(systemName: SQImageSymbol.chevronRight.rawValue)
-                                    .sqFont(.bodyExtraSmall)
-                                    .sqForegroundColor(.textSecondary)
+                                if isSelected(entry) {
+                                    SQDashboardTrendBadge(
+                                        text: "Selected",
+                                        tone: .positive,
+                                        symbol: nil
+                                    )
+                                } else {
+                                    SQImageView(
+                                        image: .init(
+                                            symbol: .chevronRight,
+                                            symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
+                                        )
+                                    )
+                                    .frame(width: 8)
+                                }
                             }
-                            .padding(.SQSpace.m)
-                            .background(isSelected(entry) ? SQColor.accent(1).color.opacity(0.15) : SQColor.backgroundSecondary.color)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: .SQCornerRadius.s)
-                                    .stroke(isSelected(entry) ? SQColor.accent(1).color : Color.clear, lineWidth: 1.5)
+                            .padding(.SQSpace.l)
+                            .background(
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                                    .fill(
+                                        isSelected(entry)
+                                            ? SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.14 : 0.10)
+                                            : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.96)
+                                    )
                             )
-                            .cornerRadius(.SQCornerRadius.s)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                                    .stroke(
+                                        isSelected(entry)
+                                            ? SQColor.dashboardGlowBlue.color.opacity(0.40)
+                                            : SQColor.glassStroke.color,
+                                        lineWidth: 1
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.SQSpace.l)
+                .padding(.SQSpace.xl)
             }
         }
-        .frame(maxWidth: 500, maxHeight: 600)
-        .sqBackgroundColor(.background)
-        .cornerRadius(.SQCornerRadius.m)
-        .shadow(radius: 20)
+        .frame(maxWidth: 520, maxHeight: 620)
+        .background {
+            ZStack {
+                SQSheetBackground()
+
+                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                    .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.58 : 0.84))
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous))
+        .shadow(color: Color.black.opacity(0.22), radius: 24, x: 0, y: 10)
     }
 }

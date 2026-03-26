@@ -502,7 +502,7 @@ final class SQDashboardController: SQDashboardInterface {
         let titleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel? = {
             guard timeRange == .today else { return nil }
 
-            return .init(icon: .edit) { [weak self] in
+            return .init(icon: .edit, title: "Edit") { [weak self] in
                 guard let self else { return }
                 Task { @MainActor in
                     await self.displayDailyCheckInSheet(for: context)

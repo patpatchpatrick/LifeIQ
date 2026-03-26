@@ -50,11 +50,11 @@ struct SQButton: View {
                 Text(title)
                     .multilineTextAlignment(.leading)
                     .font(.sqFont(.bodyBold))
-                    .foregroundColor(SQColor.textPrimary.color)
+                    .foregroundColor(style.foregroundColor.color)
             }
             
             if let icon {
-                SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(.textPrimary, font: .body)))
+                SQImageView(image: .init(symbol: icon, symbolStyle: .colorWithFont(style.foregroundColor, font: .body)))
                     .frame(height: 15)
             }
         }
@@ -67,7 +67,7 @@ struct SQButton: View {
         if isLoading {
             ProgressView()
                 .progressViewStyle(.circular)
-                .tint(SQColor.textPrimary.color)
+                .tint(style.foregroundColor.color)
         }
     }
     
@@ -87,13 +87,49 @@ struct SQButton: View {
         .if(widthHeight == nil) {
             $0.padding(style.innerPadding)
         }
-        .background(
-            (isDisabled || isLoading)
+        .background(backgroundView)
+        .overlay(overlayView)
+        .cornerRadius(style.cornerRadius)
+        .opacity(isDisabled ? 0.5 : 1)
+    }
+
+    @ViewBuilder
+    private var backgroundView: some View {
+        let backgroundColor = (isDisabled || isLoading)
             ? style.disabledBackgroundColor.color
             : style.backgroundColor.color
-        )
-        .cornerRadius(8)
-        .opacity(isDisabled ? 0.5 : 1)
+
+        if style == .glassPrimary {
+            RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                .fill(backgroundColor)
+        } else {
+            RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                .fill(backgroundColor)
+        }
+    }
+
+    @ViewBuilder
+    private var overlayView: some View {
+        if style == .glassPrimary {
+            RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(SQColor.isDarkMode ? 0.18 : 0.28),
+                            Color.white.opacity(0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .mask(
+                    RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                        .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                )
+        }
     }
     
     var body: some View {
@@ -104,10 +140,11 @@ struct SQButton: View {
     }
     
     // MARK: - Style
-    enum Style {
+    enum Style: Equatable {
         case primary
         case primarySmall
         case secondary
+        case glassPrimary
         
         var backgroundColor: SQColor {
             switch self {
@@ -115,19 +152,44 @@ struct SQButton: View {
                 .accent(1)
             case .secondary:
                 .backgroundSecondary
+            case .glassPrimary:
+                .dashboardGlowBlue
+            }
+        }
+
+        var foregroundColor: SQColor {
+            switch self {
+            case .glassPrimary:
+                .dashboardGlowBlueForeground
+            default:
+                .textPrimary
             }
         }
         
         var disabledBackgroundColor: SQColor {
-            .textDisabled
+            switch self {
+            case .glassPrimary:
+                .glassCardTint
+            default:
+                .textDisabled
+            }
         }
         
         var innerPadding: CGFloat {
             switch self {
-            case .primary, .secondary:
+            case .primary, .secondary, .glassPrimary:
                 .SQSpace.l
             case .primarySmall:
                 .SQSpace.m
+            }
+        }
+
+        var cornerRadius: CGFloat {
+            switch self {
+            case .glassPrimary:
+                .SQCornerRadius.xl
+            default:
+                8
             }
         }
     }

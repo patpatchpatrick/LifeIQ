@@ -238,9 +238,10 @@ struct SQChartLegendToggle: View {
                         SQImageView(
                             image: .init(
                                 symbol: .checkmark,
-                                symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)
+                                symbolStyle: .colorWithFont(.textPrimary, font: .headerSmall)
                             )
                         )
+                        .frame(width: 9, height: 9)
                     }
                 }
                 .frame(width: 16, height: 16)

@@ -64,6 +64,7 @@ indirect enum SQColor {
     case dashboardGlowBlue
     case dashboardGlowMint
     case dashboardTrendWarm
+    case dashboardGlowBlueForeground
 
     // MARK: - Glass Surfaces
     case glassCardTint
@@ -220,6 +221,10 @@ indirect enum SQColor {
             return Self.isDarkMode
                 ? UIColor(hexString: "#F0C2B8")!
                 : UIColor(hexString: "#C48B7E")!
+        case .dashboardGlowBlueForeground:
+            return Self.isDarkMode
+                ? UIColor(hexString: "#04161C")!
+                : UIColor(hexString: "#12343C")!
 
         // MARK: - Glass Surfaces
         case .glassCardTint:

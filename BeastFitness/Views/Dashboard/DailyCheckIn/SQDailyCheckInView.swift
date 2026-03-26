@@ -12,21 +12,6 @@ struct SQDailyCheckInView: View {
     @Environment(\.modelContext) private var modelContext
 
     @ViewBuilder
-    private var introSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text("\(viewModel.period.rawValue.capitalized) Check-In")
-                .sqFont(.title2)
-                .sqForegroundColor(.textPrimary)
-
-            Text(viewModel.isEditingPastDate ? "Editing a previous check-in." : "Capture today’s metrics and notes.")
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
-        }
-        .padding(.horizontal, .SQSpace.xl)
-        .padding(.top, .SQSpace.l)
-    }
-    
-    @ViewBuilder
     var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             ForEach(viewModel.rows) { row in
@@ -40,8 +25,6 @@ struct SQDailyCheckInView: View {
     @ViewBuilder
     var mainScroll: some View {
         VStack(alignment: .leading, spacing: 0) {
-            introSection
-
             dateSelectionButton
                 .padding(.horizontal, .SQSpace.xl)
                 .padding(.top, .SQSpace.l)
@@ -78,6 +61,7 @@ struct SQDailyCheckInView: View {
 
     var submitButton: some View {
         SQButton(
+            style: .glassPrimary,
             shouldHugContent: false,
             title: viewModel.isEditingPastDate ? "Update" : "Submit",
             isDisabled: !viewModel.canSubmit,
