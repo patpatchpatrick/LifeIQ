@@ -110,15 +110,34 @@ struct SQFont {
             self == .bodyItalic
         }
 
+        fileprivate var usesRoundedDesign: Bool {
+            switch self {
+            case .titleNav, .title1, .title2, .title3:
+                return true
+            default:
+                return false
+            }
+        }
+
         fileprivate func makeUIFont() -> UIFont {
             if isItalic {
                 return .italicSystemFont(ofSize: pointSize)
-            } else if weight == .bold {
-                return .boldSystemFont(ofSize: pointSize)
-            } else if weight == .regular {
-                return .systemFont(ofSize: pointSize)
             } else {
-                return .systemFont(ofSize: pointSize, weight: weight)
+                let baseFont: UIFont
+                if weight == .bold {
+                    baseFont = .boldSystemFont(ofSize: pointSize)
+                } else if weight == .regular {
+                    baseFont = .systemFont(ofSize: pointSize)
+                } else {
+                    baseFont = .systemFont(ofSize: pointSize, weight: weight)
+                }
+
+                guard usesRoundedDesign,
+                      let roundedDescriptor = baseFont.fontDescriptor.withDesign(.rounded) else {
+                    return baseFont
+                }
+
+                return UIFont(descriptor: roundedDescriptor, size: pointSize)
             }
         }
     }
