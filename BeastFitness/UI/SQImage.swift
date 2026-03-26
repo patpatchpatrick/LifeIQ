@@ -148,6 +148,7 @@ enum SQImageSymbol: String {
     case gear                = "gear"
     case heart               = "heart.fill"
     case eye                 = "eye"
+    case eyeSlash            = "eye.slash"
     case moonFill            = "moon.fill"
     case moonZzzFill         = "moon.zzz.fill"
     case bedDoubleFill       = "bed.double.fill"

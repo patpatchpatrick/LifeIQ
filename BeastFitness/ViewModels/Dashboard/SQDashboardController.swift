@@ -31,6 +31,7 @@ final class SQDashboardController: SQDashboardInterface {
     let statsManager: SQWorkoutStatsManaging
     let sleepAggregationService: SQSleepAggregationService
     private(set) var hasLoadedUI = false
+    private var isLoadUIInProgress = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     
     
@@ -117,6 +118,20 @@ final class SQDashboardController: SQDashboardInterface {
     
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
         guard !hasLoadedUI || shouldForceRefresh else { return }
+        guard !isLoadUIInProgress else {
+            SQLogger.shared.log(
+                "Dashboard load already in progress. Skipping duplicate request.",
+                .debug,
+                context: .dashboard
+            )
+            return
+        }
+
+        isLoadUIInProgress = true
+        defer {
+            isLoadUIInProgress = false
+        }
+
         hasLoadedUI = true
 
         // Show mock skeleton while real data loads
@@ -221,7 +236,7 @@ final class SQDashboardController: SQDashboardInterface {
             )
 
             // Set the daily check-in CTA view model if no stats exist
-            if dailyCheckInStats == nil {
+            if dailyCheckInStats == nil, userState.isLoggedIn {
                 state.updateDailyCheckInCtaViewModel(.init(
                     icon: .init(symbol: .checkmark),
                     title: "Complete your daily check-in",

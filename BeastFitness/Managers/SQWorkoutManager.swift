@@ -10,6 +10,7 @@ import Foundation
 import HealthKit
 import BeastFitnessCore
 
+@MainActor
 protocol SQWorkoutManaging {
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext, saveToCloud: Bool) async throws
     func deleteWorkout(workout: SQWorkoutSessionable, from modelContext: ModelContext) async throws
@@ -20,6 +21,7 @@ protocol SQWorkoutManaging {
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String>
 }
 
+@MainActor
 final class SQWorkoutManager: SQWorkoutManaging {
     static let shared = SQWorkoutManager()
 
@@ -81,7 +83,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 let hkWorkout = try await healthKitManager.saveWorkout(workout: workout)
                 /// Set the ID on the workout so that it can be referenced from SwiftData using the hkWorkoutId
                 workout.updateHkWorkoutId(hkWorkout?.uuid.uuidString)
-                await healthKitManager.invalidateCache()
+                healthKitManager.invalidateCache()
                 SQLogger.shared.log("Invalidated HK cache after saving workout", .debug, context: .workoutManager)
             } catch {
                 throw SQError.standard(withDescription: "Could not save workout to HealthKit due to error: \(error.localizedDescription).")
@@ -190,4 +192,3 @@ final class SQWorkoutManager: SQWorkoutManaging {
         SQWorkoutProcessedEntity.fetchProcessedSourceIds(context: context)
     }
 }
-

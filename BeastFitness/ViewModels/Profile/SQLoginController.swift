@@ -76,6 +76,7 @@ protocol SQLoginInterface: AnyObject {
             autocorrectionType: .no,
             isSecureTextEntry: true,
             returnKeyType: .done,
+            shouldShowCharacterCount: false,
             textChangeFormatter: .maxLength(128),
             validationRule: .custom(Self.isValidPassword),
             errorHandler: { text in

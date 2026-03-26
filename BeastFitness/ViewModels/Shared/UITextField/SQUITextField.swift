@@ -99,6 +99,7 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
                      for: .editingChanged)
 
         viewModel.bind(textField: tf)
+        context.coordinator.configureSecureToggleIfNeeded(for: tf)
         return tf
     }
 
@@ -110,6 +111,7 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
 
         // Keep config current (in case you swap VM props)
         viewModel.bind(textField: uiView)
+        context.coordinator.configureSecureToggleIfNeeded(for: uiView)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -119,6 +121,7 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
     final class Coordinator: NSObject, UITextFieldDelegate {
         let viewModel: SQUITextFieldViewModel
         private var pendingSelectAll: DispatchWorkItem?
+        private weak var secureToggleButton: UIButton?
 
         init(viewModel: SQUITextFieldViewModel) {
             self.viewModel = viewModel
@@ -130,6 +133,50 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
 
         @objc func textDidChange(_ sender: UITextField) {
             viewModel.userDidEditText(sender.text ?? "")
+        }
+
+        @objc func secureToggleTapped() {
+            viewModel.toggleSecureTextVisibility()
+            updateSecureToggleImage()
+        }
+
+        func configureSecureToggleIfNeeded(for textField: UITextField) {
+            guard viewModel.shouldShowSecureTextToggle else {
+                secureToggleButton = nil
+                textField.rightView = nil
+                textField.rightViewMode = .never
+                return
+            }
+
+            let button: UIButton
+            if let existingButton = secureToggleButton {
+                button = existingButton
+            } else {
+                let createdButton = UIButton(type: .system)
+                createdButton.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
+                createdButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+                createdButton.addTarget(self, action: #selector(secureToggleTapped), for: .touchUpInside)
+                secureToggleButton = createdButton
+                button = createdButton
+            }
+
+            button.tintColor = viewModel.uiConfig.placeholderColor.uiColor
+            button.setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: 12, weight: .regular),
+                forImageIn: .normal
+            )
+            textField.rightView = button
+            textField.rightViewMode = .always
+            updateSecureToggleImage()
+        }
+
+        private func updateSecureToggleImage() {
+            guard let button = secureToggleButton else { return }
+            button.setImage(
+                SQImage(symbol: viewModel.secureTextToggleSymbol, color: viewModel.uiConfig.placeholderColor).image,
+                for: .normal
+            )
+            button.accessibilityLabel = viewModel.isSecureTextVisible ? "Hide password" : "Show password"
         }
 
         func textFieldDidBeginEditing(_ textField: UITextField) {
@@ -161,4 +208,3 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
         }
     }
 }
-

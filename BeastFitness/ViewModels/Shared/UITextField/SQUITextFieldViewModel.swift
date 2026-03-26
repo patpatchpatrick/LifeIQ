@@ -31,6 +31,7 @@ final class SQUITextFieldViewModel: ObservableObject {
     let returnKeyType: UIReturnKeyType
 
     let selectAllOnFocus: Bool
+    let shouldShowCharacterCount: Bool
     let maxCharacterCountToShow: Int?
 
     let uiConfig: UIConfig
@@ -52,6 +53,7 @@ final class SQUITextFieldViewModel: ObservableObject {
 
     @Published private(set) var text: String = ""
     @Published private(set) var borderColor: SQColor?
+    @Published private(set) var isSecureTextVisible: Bool = false
 
     var previousText: String = ""
 
@@ -70,6 +72,7 @@ final class SQUITextFieldViewModel: ObservableObject {
         isSecureTextEntry: Bool = false,
         returnKeyType: UIReturnKeyType = .done,
         selectAllOnFocus: Bool = false,
+        shouldShowCharacterCount: Bool = true,
         textChangeFormatter: TextChangeFormatter = .default,
         validationRule: SQTextValidationRule? = nil,
         errorHandler: @escaping (String) -> String? = { _ in nil }
@@ -83,12 +86,13 @@ final class SQUITextFieldViewModel: ObservableObject {
         self.isSecureTextEntry = isSecureTextEntry
         self.returnKeyType = returnKeyType
         self.selectAllOnFocus = selectAllOnFocus
+        self.shouldShowCharacterCount = shouldShowCharacterCount
 
         self.textChangeFormatter = textChangeFormatter
         self.validationRule = validationRule
         self.errorHandler = errorHandler
 
-        self.maxCharacterCountToShow = textChangeFormatter.maxLengthLimit
+        self.maxCharacterCountToShow = shouldShowCharacterCount ? textChangeFormatter.maxLengthLimit : nil
         self.borderColor = uiConfig.unfocusedBorderColor
     }
 
@@ -124,6 +128,24 @@ final class SQUITextFieldViewModel: ObservableObject {
 
     func blur() {
         boundTextField?.resignFirstResponder()
+    }
+
+    func toggleSecureTextVisibility() {
+        guard isSecureTextEntry else { return }
+
+        isSecureTextVisible.toggle()
+
+        guard let textField = boundTextField else { return }
+
+        let existingText = textField.text
+        let wasFirstResponder = textField.isFirstResponder
+        textField.isSecureTextEntry = isSecureTextEntryEnabled
+        textField.text = existingText
+
+        guard wasFirstResponder else { return }
+        textField.becomeFirstResponder()
+        let endPosition = textField.endOfDocument
+        textField.selectedTextRange = textField.textRange(from: endPosition, to: endPosition)
     }
 
     // MARK: - Events (from UITextField)
@@ -178,6 +200,18 @@ final class SQUITextFieldViewModel: ObservableObject {
         return errorHandler(text) == nil
     }
 
+    var shouldShowSecureTextToggle: Bool {
+        isSecureTextEntry
+    }
+
+    var secureTextToggleSymbol: SQImageSymbol {
+        isSecureTextVisible ? .eyeSlash : .eye
+    }
+
+    var isSecureTextEntryEnabled: Bool {
+        isSecureTextEntry && !isSecureTextVisible
+    }
+
     // MARK: - Private
 
     private func refreshStateAndError(isFocused: Bool) {
@@ -216,7 +250,7 @@ final class SQUITextFieldViewModel: ObservableObject {
         tf.keyboardType = keyboardType
         tf.autocapitalizationType = autocapitalizationType
         tf.autocorrectionType = autocorrectionType
-        tf.isSecureTextEntry = isSecureTextEntry
+        tf.isSecureTextEntry = isSecureTextEntryEnabled
         tf.returnKeyType = returnKeyType
     }
 
