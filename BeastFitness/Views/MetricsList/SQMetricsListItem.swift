@@ -15,31 +15,39 @@ struct SQMetricsListItem: View {
     @ViewBuilder
     var metricIcon: some View {
         ZStack {
-            Circle()
-                .sqForegroundColor(.backgroundSecondaryLight)
-                .frame(width: 48, height: 48)
+            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.86 : 0.96))
+                .overlay(
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+                .frame(width: 44, height: 44)
 
             if let emoji = viewModel.emoji, !emoji.isEmpty {
                 Text(emoji)
-                    .font(.system(size: 24))
+                    .font(.system(size: 21))
             } else {
-                Image(systemName: iconName)
-                    .font(.system(size: 18, weight: .semibold))
-                    .sqForegroundColor(.textPrimary)
+                SQImageView(
+                    image: .init(
+                        symbol: iconSymbol,
+                        symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                    )
+                )
+                .frame(width: 18, height: 18)
             }
         }
     }
 
-    private var iconName: String {
+    private var iconSymbol: SQImageSymbol {
         // Simple semantic mapping; easy to evolve later
         if viewModel.subtitle.lowercased().contains("scale") {
-            return "slider.horizontal.3"
+            return .sliderHorizontal3
         } else if viewModel.subtitle.lowercased().contains("number") {
-            return "number"
+            return .number
         } else if viewModel.subtitle.lowercased().contains("binary") {
-            return "checkmark.circle"
+            return .checkmarkCircle
         } else {
-            return "circle.grid.2x2"
+            return .circleGrid2x2
         }
     }
 
@@ -47,13 +55,13 @@ struct SQMetricsListItem: View {
 
     @ViewBuilder
     var titleAndSubtitle: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
             Text(viewModel.title)
-                .sqFont(.title3)
+                .sqFont(.bodySemiBold)
                 .sqForegroundColor(.textPrimary)
 
             Text(viewModel.subtitle)
-                .sqFont(.bodySmall)
+                .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
         }
     }
@@ -67,10 +75,17 @@ struct SQMetricsListItem: View {
             titleAndSubtitle
 
             Spacer(minLength: .SQSpace.m)
+
+            SQImageView(
+                image: .init(
+                    symbol: .chevronRight,
+                    symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
+                )
+            )
+            .frame(width: 8, height: 12)
         }
         .padding(.horizontal, .SQSpace.l)
-        .padding(.vertical, .SQSpace.m)
-        .background(SQColor.backgroundSheet.color)
+        .padding(.vertical, .SQSpace.l)
         .contentShape(Rectangle())
     }
 }
