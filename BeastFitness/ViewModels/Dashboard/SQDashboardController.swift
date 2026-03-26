@@ -908,10 +908,10 @@ final class SQDashboardController: SQDashboardInterface {
         guard let latestNight = data.latestNight else { return nil }
 
         let lanes: [TimelineChartLane] = [
-            .init(id: SQSleepPhase.awake.rawValue, title: "Awake", color: SQColor.textWarning.color),
-            .init(id: SQSleepPhase.rem.rawValue, title: "REM", color: SQColor.accentNeutral1.color),
-            .init(id: SQSleepPhase.core.rawValue, title: "Core", color: SQColor.accent(1).color),
-            .init(id: SQSleepPhase.deep.rawValue, title: "Deep", color: SQColor.accentNeutral4.color)
+            .init(id: SQSleepPhase.awake.rawValue, title: "Awake", color: SQColor.dashboardTrendWarm.color),
+            .init(id: SQSleepPhase.rem.rawValue, title: "REM", color: SQColor.dashboardGlowBlue.color),
+            .init(id: SQSleepPhase.core.rawValue, title: "Core", color: Color.white.opacity(SQColor.isDarkMode ? 0.88 : 0.72)),
+            .init(id: SQSleepPhase.deep.rawValue, title: "Deep", color: SQColor.dashboardGlowMint.color)
         ]
 
         let segments = latestNight.segments.map { segment in

@@ -19,7 +19,11 @@ struct SQDashboardSleepPhaseTimelineRowView: View {
                 lanes: viewModel.lanes,
                 segments: viewModel.segments,
                 startDate: viewModel.startDate,
-                endDate: viewModel.endDate
+                endDate: viewModel.endDate,
+                laneLabelWidth: 56,
+                laneSpacing: 12,
+                laneHeight: 12,
+                visualStyle: .glass
             )
             .frame(height: 120)
         }
