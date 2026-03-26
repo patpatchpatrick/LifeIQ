@@ -6,135 +6,161 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SQWorkoutSummaryView: View {
     @State var controller: SQWorkoutSummaryController
     @Environment(\.modelContext) private var modelContext
-    
-    var backgroundColor: SQColor = .background
-    var screenWidth: CGFloat { UIScreen.main.bounds.width }
-    let mainStackHorizPadding: CGFloat = .SQSpace.xxl
-    var statColumnWidth: CGFloat { (screenWidth - mainStackHorizPadding * 2.0 - .SQSpace.l * 2) / CGFloat(controller.state.workoutStatRowColumnCount) }
 
     @State private var routeSectionCollapsed = false
     @State private var performanceSectionCollapsed = false
     @State private var statsSectionCollapsed = false
-
-    // Scroll-tracking for review mode nav title fade
     @State private var reviewScrollOffset: CGFloat = 0
+
+    private var mainStackHorizPadding: CGFloat { .SQSpace.l }
 
     private var reviewNavTitleOpacity: Double {
         let threshold: CGFloat = 80
         return Double(max(0, min(1, 1 - reviewScrollOffset / threshold)))
     }
-    
-    @ViewBuilder
-    var userNameAndDateRow: some View {
-        HStack(spacing: .SQSpace.l) {
-            
-            SQUserIcon(user: controller.state.user ?? .mock)
-                .redacted(controller.state.user == nil, reason: .placeholder)
-            
-            VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                Text(controller.state.userFullName ?? SQUser.mock.name)
-                    .sqFont(.title3)
-                    .sqForegroundColor(.textPrimary)
-                    .redacted(controller.state.userFullName == nil, reason: .placeholder)
-                
-                Text(controller.state.workoutStartDate?.formattedString(with: .full) ?? Date.now.formattedString(with: .full))
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .redacted(controller.state.workoutStartDate == nil, reason: .placeholder)
-            }
-            
-            Spacer()
-        }
-    }
-    
-    // MARK: - Review Header
 
     @ViewBuilder
-    var reviewHeader: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xxl) {
-            if !controller.reviewHighlights.isEmpty {
-                reviewHighlightsSection
-            }
-            Divider()
-            reviewQuestionsSection
-            Divider()
-        }
-    }
-
-    @ViewBuilder
-    var reviewHighlightsSection: some View {
+    private var workoutHeroCard: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
-            ForEach(controller.reviewHighlights) { highlight in
-                HStack(alignment: .top, spacing: .SQSpace.s) {
-                    Text("•")
-                        .sqFont(.body)
-                        .sqForegroundColor(highlightColor(for: highlight.sentiment))
+            HStack(spacing: .SQSpace.m) {
+                SQUserIcon(user: controller.state.user ?? .mock)
+                    .redacted(controller.state.user == nil, reason: .placeholder)
 
-                    highlight.segments.reduce(Text("")) { result, segment in
-                        result + Text(segment.text)
-                            .foregroundColor(
-                                segment.isStatistic
-                                    ? highlightColor(for: highlight.sentiment).color
-                                    : SQColor.textPrimary.color
-                            )
-                            .bold(segment.isStatistic)
-                    }
-                    .sqFont(.body)
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text(controller.state.userFullName ?? SQUser.mock.name)
+                        .sqFont(.title4)
+                        .sqForegroundColor(.textPrimary)
+                        .redacted(controller.state.userFullName == nil, reason: .placeholder)
+
+                    Text(controller.state.workoutStartDate?.formattedString(with: .full) ?? Date.now.formattedString(with: .full))
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .redacted(controller.state.workoutStartDate == nil, reason: .placeholder)
+                }
+
+                Spacer()
+            }
+
+            if controller.mode == .review {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text("Post-Workout Review")
+                        .sqFont(.title2)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("Capture a few details while the session is still fresh.")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    Text(controller.state.workoutTitle ?? "My workout")
+                        .sqFont(.title2)
+                        .sqForegroundColor(.textPrimary)
+                        .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
+
+                    workoutReviewDisplay
                 }
             }
         }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private var reviewHeader: some View {
+        VStack(spacing: .SQSpace.l) {
+            if !controller.reviewHighlights.isEmpty {
+                reviewHighlightsSection
+            }
+
+            reviewQuestionsSection
+        }
+    }
+
+    @ViewBuilder
+    private var reviewHighlightsSection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Highlights")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                ForEach(controller.reviewHighlights) { highlight in
+                    HStack(alignment: .top, spacing: .SQSpace.s) {
+                        Circle()
+                            .fill(highlightColor(for: highlight.sentiment).color.opacity(0.9))
+                            .frame(width: 6, height: 6)
+                            .padding(.top, 6)
+
+                        highlight.segments.reduce(Text("")) { result, segment in
+                            result + Text(segment.text)
+                                .foregroundColor(
+                                    segment.isStatistic
+                                        ? highlightColor(for: highlight.sentiment).color
+                                        : SQColor.textPrimary.color
+                                )
+                                .bold(segment.isStatistic)
+                        }
+                        .sqFont(.bodySmall)
+                    }
+                }
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private func highlightColor(for sentiment: SQWorkoutReviewHighlight.Sentiment) -> SQColor {
         switch sentiment {
-        case .positive: return .colorGreenPct(percent: 1, base: .textPrimary)
-        case .negative: return .textError
-        case .neutral:  return .textPrimary
+        case .positive: return .dashboardGlowMint
+        case .negative: return .dashboardTrendWarm
+        case .neutral:  return .dashboardGlowBlue
         }
     }
-    
+
     @ViewBuilder
-    func questionTitle(title: String) -> some View {
-        Text(title)
-            .sqFont(.body)
+    private func questionTitle(title: String) -> some View {
+        Text(title.uppercased())
+            .sqFont(.headerSmall)
             .sqForegroundColor(.textSecondary)
-            .padding(.bottom, .SQSpace.s)
+            .padding(.bottom, .SQSpace.xs)
     }
 
     @ViewBuilder
-    var reviewQuestionsSection: some View {
+    private var reviewQuestionsSection: some View {
         let bindable = Bindable(controller)
-        VStack(alignment: .leading, spacing: 0) {
-            Text("A couple quick performance questions…")
-                .sqFont(.title2)
-                .sqForegroundColor(.textPrimary)
-                .padding(.bottom, .SQSpace.s)
-            Text("These help track your data to provide better insights")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
-                .padding(.bottom, .SQSpace.xxl)
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text("Quick Check-In")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("These responses help BeastFitness build better insights over time.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
 
             SQUITextField(viewModel: controller.titleViewModel)
-                .padding(.bottom, .SQSpace.xxl)
-
             SQTextField(viewModel: controller.notesViewModel)
-                .padding(.bottom, .SQSpace.xxl)
 
-            HStack(spacing: .SQSpace.s) {
-                
-                SQUITextField(viewModel: controller.temperatureViewModel, width: 60)
-                
-                Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
-                    .sqFont(.body)
-                    .sqForegroundColor(.textSecondary)
-                
-                Spacer()
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                questionTitle(title: "Temperature")
+
+                HStack(spacing: .SQSpace.s) {
+                    SQUITextField(viewModel: controller.temperatureViewModel, width: 72)
+
+                    Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    Spacer()
+                }
             }
-            .padding(.bottom, .SQSpace.xxl)
 
             reviewRatingRow(
                 title: "How did you perform?",
@@ -143,7 +169,6 @@ struct SQWorkoutSummaryView: View {
                 scaleMin: "Very low",
                 scaleMax: "Very high"
             )
-            .padding(.bottom, .SQSpace.xxl)
 
             reviewRatingRow(
                 title: "How hard was it?",
@@ -152,12 +177,13 @@ struct SQWorkoutSummaryView: View {
                 scaleMin: "Easy",
                 scaleMax: "Max effort"
             )
-            .padding(.bottom, .SQSpace.m)
         }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     @ViewBuilder
-    func reviewRatingRow(
+    private func reviewRatingRow(
         title: String,
         segments: [SQSegmentedControlSegment],
         selection: Binding<SQSegmentedControlSegment?>,
@@ -175,23 +201,20 @@ struct SQWorkoutSummaryView: View {
 
             HStack {
                 Text(scaleMin)
-                    .sqFont(.bodySmall)
+                    .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
+
                 Spacer()
+
                 Text(scaleMax)
-                    .sqFont(.bodySmall)
+                    .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
         }
     }
 
-    // MARK: - Workout Review Display (standard mode only)
-
-    /// Shows saved review data (notes, temperature, performance, effort) below the
-    /// workout title when not in review mode. Hidden in review mode because the user
-    /// is actively editing those fields there.
     @ViewBuilder
-    var workoutReviewDisplay: some View {
+    private var workoutReviewDisplay: some View {
         let workout = controller.state.currentWorkout
         let notes = workout?.reviewNotes
         let temperatureCelsius = workout?.temperatureCelsius
@@ -208,80 +231,63 @@ struct SQWorkoutSummaryView: View {
         let difficultySegment = difficultyRating.flatMap { rating in
             SQWorkoutSummaryController.difficultySegments.first { $0.ratingValue == rating }
         }
-        let hasChips = fahrenheit != nil || performanceSegment != nil || difficultySegment != nil
 
-        if hasNotes || hasChips {
-            VStack(alignment: .leading, spacing: .SQSpace.xl) {
-                if hasNotes, let notes {
-                    Text(notes)
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            if hasNotes, let notes {
+                Text(notes)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: .SQSpace.s) {
+                if let fahrenheit {
+                    workoutMetaChip(title: "Temp", value: "\(Int(fahrenheit.rounded()))°F")
                 }
 
-                if hasChips {
-                    HStack(spacing: .SQSpace.l) {
-                        if let fahrenheit {
-                            HStack(spacing: .SQSpace.xs) {
-                                Text("🌡️")
-                                    .sqFont(.body)
-                                Text("\(Int(fahrenheit.rounded()))°F")
-                                    .sqFont(.bodySmall)
-                                    .sqForegroundColor(.textSecondary)
-                            }
-                        }
+                if let seg = performanceSegment {
+                    workoutMetaChip(title: "Performance", value: seg.title)
+                }
 
-                        if let seg = performanceSegment {
-                            HStack(spacing: .SQSpace.xs) {
-                                Text(seg.title)
-                                    .sqFont(.body)
-                                Text("Performance")
-                                    .sqFont(.bodyExtraSmall)
-                                    .sqForegroundColor(.textTertiary)
-                            }
-                        }
-
-                        if let seg = difficultySegment {
-                            HStack(spacing: .SQSpace.xs) {
-                                Text(seg.title)
-                                    .sqFont(.body)
-                                Text("Effort")
-                                    .sqFont(.bodyExtraSmall)
-                                    .sqForegroundColor(.textTertiary)
-                            }
-                        }
-                    }
+                if let seg = difficultySegment {
+                    workoutMetaChip(title: "Effort", value: seg.title)
                 }
             }
         }
     }
 
     @ViewBuilder
-    var mainStack: some View {
-        VStack(alignment: .leading, spacing: 0) {
+    private func workoutMetaChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            Text(value)
+                .sqFont(.bodySmallSemiBold)
+                .sqForegroundColor(.textPrimary)
+        }
+        .padding(.horizontal, .SQSpace.m)
+        .padding(.vertical, .SQSpace.s)
+        .background(
+            Capsule(style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.80 : 0.96))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var mainStack: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            workoutHeroCard
+
             if controller.mode == .review {
                 reviewHeader
-                    .padding(.bottom, .SQSpace.xl)
             }
 
-            userNameAndDateRow
-                .padding(.bottom, .SQSpace.xl)
-            
-            if controller.mode != .review {
-                VStack(alignment: .leading, spacing: 0) {
-                    
-                    Text(controller.state.workoutTitle ?? "My workout")
-                        .sqFont(.title3)
-                        .sqForegroundColor(.textPrimary)
-                        .redacted(controller.state.workoutTitle == nil, reason: .placeholder)
-                        .padding(.bottom, .SQSpace.m)
-
-                    workoutReviewDisplay
-                        .padding(.bottom, .SQSpace.s)
-                }
-                .padding(.bottom, .SQSpace.xl)
-            }
-            
             if controller.state.shouldShowRouteView {
                 SQDashboardSubsection(title: "Route", isCollapsed: $routeSectionCollapsed) {
                     SQWorkoutRouteMapView(
@@ -290,9 +296,8 @@ struct SQWorkoutSummaryView: View {
                         errorMessage: controller.state.routeLoadErrorMessage
                     )
                 }
-                .padding(.bottom, .SQSpace.xl)
             }
-            
+
             SQDashboardSubsection(title: "Stats", isCollapsed: $statsSectionCollapsed) {
                 VStack(spacing: .SQSpace.l) {
                     ForEach(controller.state.workoutStatsRows) { row in
@@ -300,7 +305,6 @@ struct SQWorkoutSummaryView: View {
                     }
                 }
             }
-            .padding(.bottom, .SQSpace.xl)
 
             if controller.state.shouldShowPerformanceSection {
                 SQDashboardSubsection(title: "Performance", isCollapsed: $performanceSectionCollapsed) {
@@ -314,16 +318,17 @@ struct SQWorkoutSummaryView: View {
                         }
                     }
                 }
-                .padding(.bottom, .SQSpace.xl)
             }
         }
     }
-    
+
     @ViewBuilder
-    var mainScroll: some View {
+    private var mainScroll: some View {
         ScrollView {
             mainStack
-                .padding(mainStackHorizPadding)
+                .padding(.horizontal, mainStackHorizPadding)
+                .padding(.top, .SQSpace.l)
+                .padding(.bottom, .SQSpace.xl)
         }
         .onScrollGeometryChange(for: CGFloat.self) { geo in
             geo.contentOffset.y + geo.contentInsets.top
@@ -332,11 +337,14 @@ struct SQWorkoutSummaryView: View {
             reviewScrollOffset = max(0, newValue)
         }
     }
+
     var body: some View {
         mainScroll
             .dismissKeyboardOnBackgroundTap()
             .redacted(controller.state.isLoading, reason: .placeholder)
-            .background(backgroundColor.color)
+            .background {
+                SQSheetBackground()
+            }
             .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -363,14 +371,19 @@ struct SQWorkoutSummaryView: View {
                         }
                         Button {
                             Task { @MainActor in
-                              await controller.deleteWorkout(from: modelContext)
+                                await controller.deleteWorkout(from: modelContext)
                             }
                         } label: {
                             Label("Delete workout", systemImage: SQImageSymbol.xCircle.rawValue)
                         }
                     } label: {
-                        Image(systemName: SQImageSymbol.ellipsisCircle.rawValue)
-                            .imageScale(.large)
+                        SQImageView(
+                            image: .init(
+                                symbol: .ellipsisCircle,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                            )
+                        )
+                        .frame(width: 18, height: 18)
                     }
                 }
             }
@@ -380,28 +393,27 @@ struct SQWorkoutSummaryView: View {
 struct SQWorkoutSummaryStatsRow: View {
     let row: SQWorkoutSummaryStatRow
     let columnWidth: CGFloat
-    
+
     @ViewBuilder
     func buildStat(_ stat: SQWorkoutSessionVisibleStat) -> some View {
         VStack(alignment: .center, spacing: .SQSpace.s) {
             Text(stat.title)
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
-            
+
             Text(stat.value)
                 .sqFont(.bodySmallBold)
                 .sqForegroundColor(.textPrimary)
         }
         .frame(width: columnWidth)
     }
-    
+
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(Array(row.visibleStats.enumerated()), id: \.1) { (index, visibleStat) in
+            ForEach(Array(row.visibleStats.enumerated()), id: \.1) { (_, visibleStat) in
                 buildStat(visibleStat)
             }
-            
-            /// Left align the stats iif there aren't exactly 3
+
             if row.visibleStats.count < 3 {
                 Spacer()
             }

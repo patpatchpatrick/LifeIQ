@@ -54,10 +54,10 @@ struct SQWorkoutRouteMapView: View {
                 } else if let polyline {
                     Map(position: $cameraPosition) {
                         MapPolyline(polyline)
-                            .stroke(SQColor.accent(1).color.opacity(0.25), lineWidth: 10)
+                            .stroke(SQColor.dashboardGlowBlue.color.opacity(0.18), lineWidth: 10)
 
                         MapPolyline(polyline)
-                            .stroke(SQColor.accent(1).color, lineWidth: 4)
+                            .stroke(SQColor.dashboardGlowBlue.color, lineWidth: 4)
 
                         if let first = cleanedLocations.first?.coordinate {
                             Marker("Start", coordinate: first)
@@ -68,6 +68,10 @@ struct SQWorkoutRouteMapView: View {
                     }
                     .frame(height: mapHeight)
                     .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
                     .onAppear {
                         cameraPosition = .rect(padded(polyline.boundingMapRect))
                     }

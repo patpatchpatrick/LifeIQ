@@ -15,11 +15,16 @@ struct SQUserIcon: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color(SQColor.backgroundTertiaryLight.color))
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.84 : 0.96))
+                .overlay(
+                    Circle()
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
             
             Text((user.name.first ?? .init("")).uppercased())
                 .sqFont(.bodySemiBold)
+                .sqForegroundColor(.textPrimary)
         }
-        .frame(width: 34, height: 34)
+        .frame(width: 42, height: 42)
     }
 }

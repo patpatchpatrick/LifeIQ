@@ -7,18 +7,53 @@ import SwiftUI
 struct SQEditWorkoutView: View {
     @State var controller: SQEditWorkoutController
 
-    // MARK: - Helpers
-
     @ViewBuilder
-    func questionTitle(title: String) -> some View {
-        Text(title)
-            .sqFont(.body)
-            .sqForegroundColor(.textSecondary)
-            .padding(.bottom, .SQSpace.s)
+    private var heroCard: some View {
+        VStack(spacing: .SQSpace.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.84 : 0.96))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
+                    .frame(width: 78, height: 78)
+
+                SQImageView(
+                    image: .init(
+                        symbol: .pencil,
+                        symbolStyle: .colorWithFont(.textPrimary, font: .title3)
+                    )
+                )
+                .frame(width: 22, height: 22)
+            }
+
+            VStack(spacing: .SQSpace.xs) {
+                Text("Edit Workout")
+                    .sqFont(.title2)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("Update the workout title, notes, conditions, and effort details.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, .SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     @ViewBuilder
-    func ratingRow(
+    private func questionTitle(title: String) -> some View {
+        Text(title.uppercased())
+            .sqFont(.headerSmall)
+            .sqForegroundColor(.textSecondary)
+            .padding(.bottom, .SQSpace.xs)
+    }
+
+    @ViewBuilder
+    private func ratingRow(
         title: String,
         segments: [SQSegmentedControlSegment],
         selection: Binding<SQSegmentedControlSegment?>,
@@ -36,78 +71,141 @@ struct SQEditWorkoutView: View {
 
             HStack {
                 Text(scaleMin)
-                    .sqFont(.bodySmall)
+                    .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
+
                 Spacer()
+
                 Text(scaleMax)
-                    .sqFont(.bodySmall)
+                    .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
         }
     }
-
-    // MARK: - Form
 
     @ViewBuilder
-    var formContent: some View {
+    private func formSection(
+        title: String,
+        subtitle: String? = nil,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text(title)
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                content()
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private var formContent: some View {
         let bindable = Bindable(controller)
 
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            heroCard
 
-            SQUITextField(viewModel: controller.titleViewModel)
-                .padding(.bottom, .SQSpace.xxl)
+            formSection(title: "Details", subtitle: "Name, notes, and weather context.") {
+                SQUITextField(viewModel: controller.titleViewModel)
+                SQTextField(viewModel: controller.notesViewModel)
 
-            SQTextField(viewModel: controller.notesViewModel)
-                .padding(.bottom, .SQSpace.xxl)
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    questionTitle(title: "Temperature")
 
-            HStack(spacing: .SQSpace.s) {
-                SQUITextField(viewModel: controller.temperatureViewModel, width: 100)
+                    HStack(spacing: .SQSpace.s) {
+                        SQUITextField(viewModel: controller.temperatureViewModel, width: 96)
 
-                Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
-                    .sqFont(.body)
-                    .sqForegroundColor(.textSecondary)
+                        Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
+                            .sqFont(.bodySmall)
+                            .sqForegroundColor(.textSecondary)
 
-                Spacer()
+                        Spacer()
+                    }
+                }
             }
-            .padding(.bottom, .SQSpace.xxl)
 
-            ratingRow(
-                title: "How did you perform?",
-                segments: SQEditWorkoutController.performanceSegments,
-                selection: bindable.selectedPerformance,
-                scaleMin: "Very low",
-                scaleMax: "Very high"
-            )
-            .padding(.bottom, .SQSpace.xxl)
+            formSection(title: "Ratings", subtitle: "Capture performance and effort for future insights.") {
+                ratingRow(
+                    title: "How did you perform?",
+                    segments: SQEditWorkoutController.performanceSegments,
+                    selection: bindable.selectedPerformance,
+                    scaleMin: "Very low",
+                    scaleMax: "Very high"
+                )
 
-            ratingRow(
-                title: "How hard was it?",
-                segments: SQEditWorkoutController.difficultySegments,
-                selection: bindable.selectedDifficulty,
-                scaleMin: "Easy",
-                scaleMax: "Max effort"
-            )
+                ratingRow(
+                    title: "How hard was it?",
+                    segments: SQEditWorkoutController.difficultySegments,
+                    selection: bindable.selectedDifficulty,
+                    scaleMin: "Easy",
+                    scaleMax: "Max effort"
+                )
+            }
         }
     }
 
-    // MARK: - Body
+    @ViewBuilder
+    private var bottomAction: some View {
+        SQButton(
+            style: .glassPrimary,
+            shouldHugContent: false,
+            title: "Done"
+        ) {
+            controller.dismiss()
+        }
+        .padding(.horizontal, .SQSpace.xl)
+        .padding(.top, .SQSpace.m)
+        .padding(.bottom, .SQSpace.l)
+    }
 
     var body: some View {
         ScrollView {
             formContent
-                .padding(.SQSpace.xxl)
+                .padding(.horizontal, .SQSpace.l)
+                .padding(.top, .SQSpace.l)
+                .padding(.bottom, .SQSpace.xl)
         }
         .dismissKeyboardOnBackgroundTap()
-        .sqBackgroundColor(.background)
+        .background {
+            SQSheetBackground()
+        }
         .navigationTitle("Edit Workout")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 0) {
+                Divider()
+                    .sqTintColor(.glassStroke)
+
+                bottomAction
+            }
+            .background(.ultraThinMaterial)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     controller.dismiss()
                 } label: {
-                    Image(systemName: SQImageSymbol.checkmark.rawValue)
+                    SQImageView(
+                        image: .init(
+                            symbol: .checkmark,
+                            symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                        )
+                    )
+                    .frame(width: 14, height: 14)
                 }
+                .buttonStyle(.plain)
             }
         }
         .onAppear {

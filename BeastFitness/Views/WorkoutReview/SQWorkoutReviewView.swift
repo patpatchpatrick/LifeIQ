@@ -13,8 +13,7 @@ struct SQWorkoutReviewView: View {
     @ViewBuilder
     func workoutView(workout: SQWorkoutSessionable) -> some View {
         SQWorkoutSummaryView(
-            controller: .init(workout: workout, mode: .review),
-            backgroundColor: .backgroundSheet
+            controller: .init(workout: workout, mode: .review)
         )
         .safeAreaInset(edge: .bottom, spacing: 0) {
             actionBar

@@ -33,8 +33,8 @@ struct SQSegmentedControl<Label: View>: View  {
     var height: CGFloat = 38
     var width: CGFloat = 38
     var wrapsContent: Bool = false
-    var activeColor: SQColor = .colorGreenPct(percent: 1, base: .textPrimary)
-    var inactiveColor: SQColor = .textPrimary
+    var activeColor: SQColor = .dashboardGlowBlue
+    var inactiveColor: SQColor = .glassStroke
     var textColor: Color = SQColor.textPrimary.color
     var inactiveTextColor: Color = SQColor.textSecondary.color
 
@@ -70,10 +70,22 @@ struct SQSegmentedControl<Label: View>: View  {
                     }
                 } label: {
                     sizeAdjustedLabel(segment)
-                        .sqBorder(
-                            selection == segment ? activeColor : inactiveColor,
-                            width: 1,
-                            cornerRadius: .SQCornerRadius.s
+                        .background(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .fill(
+                                    selection == segment
+                                        ? activeColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.12)
+                                        : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.76 : 0.96)
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(
+                                    selection == segment
+                                        ? activeColor.color.opacity(0.44)
+                                        : inactiveColor.color,
+                                    lineWidth: 1
+                                )
                         )
                 }
                 .buttonStyle(.plain)

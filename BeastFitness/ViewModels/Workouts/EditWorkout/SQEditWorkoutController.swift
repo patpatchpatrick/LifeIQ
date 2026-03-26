@@ -24,7 +24,7 @@ final class SQEditWorkoutController: Identifiable {
         autoCorrectionEnabled: true
     )
     let temperatureViewModel: SQUITextFieldViewModel = SQUITextFieldViewModel(
-        placeholder: "Temperature (e.g. 72)",
+        placeholder: "72",
         font: SQFont(type: .body).uiFont,
         keyboardType: .decimalPad,
         autocapitalizationType: .none,
