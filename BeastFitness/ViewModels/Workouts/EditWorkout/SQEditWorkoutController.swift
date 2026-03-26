@@ -179,7 +179,7 @@ final class SQEditWorkoutController: Identifiable {
 
         Task {
             do {
-                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: false)
+                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
                 SQLogger.shared.log("Auto-saved edit workout data", .debug, context: .workoutSession)
                 SQAppState.shared.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {

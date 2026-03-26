@@ -22,9 +22,10 @@ struct SQConcreteWorkoutSessionOverridableData: SQWorkoutSessionOverridableData 
 protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
     /// The app's internal stable identifier for this workout session.
     ///
-    /// For **HealthKit workouts**: defaults to `workoutSource.sourcableData.sourceId`
-    /// (the HK UUID), so `id == sourceId` for all HK workouts whether or not they've
-    /// been saved to SwiftData. The SwiftData entity stores this as its primary key.
+    /// For **HealthKit workouts**: defaults to `workoutSource.sourcableData.sourceId`.
+    /// For workouts created by Beast, this may be the HealthKit sync identifier rather
+    /// than the raw HK UUID so the workout can be matched across devices. The SwiftData
+    /// entity stores this as its primary key.
     ///
     /// For **manual workouts**: a UUID generated at creation time. Also equals
     /// `sourceId` since the convenience init defaults `id` to `sourceId`.
@@ -32,8 +33,9 @@ protocol SQWorkoutSessionable: SQWorkoutSessionOverridableData {
 
     /// The HealthKit `HKWorkout.uuid.uuidString` for this workout.
     ///
-    /// - For workouts **fetched from HealthKit**: equals `id` and `sourceId` (all three
-    ///   are the same HK UUID).
+    /// - For workouts **fetched from HealthKit**: often equals `sourceId`, but Beast-created
+    ///   workouts may use a HealthKit sync identifier as `sourceId` so cross-device sync can
+    ///   use a stable app-defined key.
     /// - For **manual workouts saved to HealthKit**: differs from `id`/`sourceId`
     ///   (which are the app's internal UUID). `hkWorkoutId` is assigned by HealthKit
     ///   after the workout is saved and may be nil until then.

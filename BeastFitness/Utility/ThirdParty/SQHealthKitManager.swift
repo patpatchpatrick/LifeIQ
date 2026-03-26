@@ -120,6 +120,8 @@ final class SQHealthKitManager: SQHealthKitManaging {
             configuration: configuration,
             device: .local()
         )
+
+        try await builder.addMetadata(workoutMetadata(for: workout))
         
         try await builder.beginCollection(at: startDate)
         
@@ -161,6 +163,19 @@ final class SQHealthKitManager: SQHealthKitManaging {
             SQLogger.shared.log("Save workout to HealthKit failed with error: \(error)", .debug, context: .healthKit)
             throw error
         }
+    }
+
+    private func workoutMetadata(for workout: SQWorkoutSessionable) -> [String: Any] {
+        var metadata: [String: Any] = [
+            HKMetadataKeySyncIdentifier: workout.id,
+            HKMetadataKeySyncVersion: 1
+        ]
+
+        if UUID(uuidString: workout.id) != nil {
+            metadata[HKMetadataKeyExternalUUID] = workout.id
+        }
+
+        return metadata
     }
     
     func deleteWorkout(with healthKitId: String) async throws {

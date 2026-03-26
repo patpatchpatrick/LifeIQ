@@ -318,9 +318,7 @@ extension SQWorkoutSummaryController {
 
         Task {
             do {
-                // TODO: PTD - saveToCloud: false here — review data is local-only until the
-                // workout sync pipeline is ready. See matching TODO in SQWorkoutSessionEntity.
-                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: false)
+                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
                 state.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {
                 SQLogger.shared.log(
@@ -377,4 +375,3 @@ extension SQWorkoutSummaryController {
         }
     }
 }
-

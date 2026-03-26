@@ -36,6 +36,10 @@ final class SQUserManager: SQUserManaging {
         let user = SQUser(id: firebaseUser.uid, name: "", email: firebaseUser.email ?? "")
         userState.setLoggedIn(user)
         SQLogger.shared.log("✅ Auth state: user logged in (\(firebaseUser.uid))", .info, context: .network, isPriority: true)
+
+        if let modelContext = SQAppState.shared.modelContext {
+            await SQWorkoutManager.shared.syncWorkoutsIfNeeded(context: modelContext, force: true)
+        }
     }
 
     // MARK: - User Document

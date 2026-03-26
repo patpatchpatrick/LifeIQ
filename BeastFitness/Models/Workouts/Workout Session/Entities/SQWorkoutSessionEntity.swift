@@ -17,6 +17,7 @@ final class SQWorkoutSessionEntity {
     
     @Attribute(.unique) var workoutId: String     // UUID string
     var hkWorkoutId: String?
+    var sourceRaw: String?
 
     var title: String?
     
@@ -45,10 +46,6 @@ final class SQWorkoutSessionEntity {
     var syncStatusRaw: String?
     var remoteId: String?
 
-    // Review data — saved locally only.
-    // TODO: PTD - Cloud sync for workout review data is not yet wired up. Review fields
-    // should only be persisted locally until the workout sync pipeline is ready. Before
-    // adding cloud save, remove this TODO and hook into the sync flow.
     var reviewNotes: String?
     var ratingUserPerformance: Float?
     var ratingDifficulty: Float?
@@ -58,6 +55,7 @@ final class SQWorkoutSessionEntity {
         self.workoutId = session.id
         self.title = session.title
         self.hkWorkoutId = session.hkWorkoutId
+        self.sourceRaw = session.workoutSource.rawSource.rawValue
         self.activityTypeRaw = Int(session.activityType.rawValue)
         
         self.deviceRaw = session.device?.name
@@ -81,11 +79,36 @@ final class SQWorkoutSessionEntity {
         self.ratingDifficulty = session.ratingDifficulty
         self.temperatureCelsius = session.temperatureCelsius
     }
+
+    init(from document: SQWorkoutSyncDocument) {
+        self.workoutId = document.workoutId
+        self.hkWorkoutId = document.hkWorkoutId
+        self.sourceRaw = document.sourceRaw
+        self.title = document.title
+        self.activityTypeRaw = document.activityTypeRaw
+        self.deviceRaw = document.deviceRaw
+        self.activeDuration = document.activeDuration
+        self.startDate = document.startDate
+        self.endDate = document.endDate
+        self.totalCalories = document.totalCalories
+        self.averageHeartRate = document.averageHeartRate
+        self.detailsData = document.detailsData
+        self.createdAt = document.createdAt
+        self.updatedAt = document.updatedAt
+        self.deletedAt = document.deletedAt
+        self.syncStatusRaw = SQSyncStatus.synced.rawValue
+        self.remoteId = document.remoteId
+        self.reviewNotes = document.reviewNotes
+        self.ratingUserPerformance = document.ratingUserPerformance
+        self.ratingDifficulty = document.ratingDifficulty
+        self.temperatureCelsius = document.temperatureCelsius
+    }
     
     func update(from session: SQWorkoutSessionable) {
         hkWorkoutId = session.hkWorkoutId
+        sourceRaw = session.workoutSource.rawSource.rawValue
         
-        title = session.visibleTitle
+        title = session.title
         activityTypeRaw = Int(session.activityType.rawValue)
         
         deviceRaw = session.device?.name
@@ -98,16 +121,41 @@ final class SQWorkoutSessionEntity {
         
         detailsData = Self.encodeDetails(session.details)
         
-        createdAt = session.updateMetadata?.createdAt
-        updatedAt = session.updateMetadata?.updatedAt
-        deletedAt = session.updateMetadata?.deletedAt
-        syncStatusRaw = session.updateMetadata?.syncStatus?.rawValue
-        remoteId = session.updateMetadata?.remoteId
+        if let metadata = session.updateMetadata {
+            createdAt = metadata.createdAt
+            updatedAt = metadata.updatedAt
+            deletedAt = metadata.deletedAt
+            syncStatusRaw = metadata.syncStatus?.rawValue
+            remoteId = metadata.remoteId
+        }
 
         reviewNotes = session.reviewNotes
         ratingUserPerformance = session.ratingUserPerformance
         ratingDifficulty = session.ratingDifficulty
         temperatureCelsius = session.temperatureCelsius
+    }
+
+    func update(from document: SQWorkoutSyncDocument) {
+        hkWorkoutId = document.hkWorkoutId
+        sourceRaw = document.sourceRaw
+        title = document.title
+        activityTypeRaw = document.activityTypeRaw
+        deviceRaw = document.deviceRaw
+        activeDuration = document.activeDuration
+        startDate = document.startDate
+        endDate = document.endDate
+        totalCalories = document.totalCalories
+        averageHeartRate = document.averageHeartRate
+        detailsData = document.detailsData
+        createdAt = document.createdAt
+        updatedAt = document.updatedAt
+        deletedAt = document.deletedAt
+        syncStatusRaw = SQSyncStatus.synced.rawValue
+        remoteId = document.remoteId
+        reviewNotes = document.reviewNotes
+        ratingUserPerformance = document.ratingUserPerformance
+        ratingDifficulty = document.ratingDifficulty
+        temperatureCelsius = document.temperatureCelsius
     }
 
     func toSession(workoutSource: SQWorkoutSource?) throws -> SQWorkoutSession {
@@ -119,22 +167,25 @@ final class SQWorkoutSessionEntity {
         var workoutSource = workoutSource
         
         if workoutSource == nil {
-            guard let details else {
-                /// If we aren't given the 3rd party workout source data, then we expect the workout to have manual details saved. If both are missing, then something went wrong.
-                SQLogger.shared.log("Missing both workout source and details when attempting to decode workout.", .error, context: .workoutSession)
+            if inferredSourceRaw == .manual {
+                workoutSource = .manual(.init(
+                    sourceId: workoutId,
+                    activityType: activityType,
+                    device: device,
+                    startDate: startDate,
+                    endDate: endDate,
+                    activeDuration: activeDuration,
+                    averageHeartRate: averageHeartRate,
+                    totalCalories: totalCalories,
+                    details: details))
+            } else {
+                SQLogger.shared.log(
+                    "Missing source workout when attempting to decode non-manual workout \(workoutId)",
+                    .error,
+                    context: .workoutSession
+                )
                 throw SQError.standard
             }
-            
-            workoutSource = .manual(.init(
-                sourceId: workoutId,
-                activityType: activityType,
-                device: device,
-                startDate: startDate,
-                endDate: endDate,
-                activeDuration: activeDuration,
-                averageHeartRate: averageHeartRate,
-                totalCalories: totalCalories,
-                details: details))
         }
         
         guard let workoutSource else {
@@ -171,6 +222,89 @@ final class SQWorkoutSessionEntity {
         )
 
         return session
+    }
+
+    var inferredSourceRaw: SQWorkoutSourceRaw {
+        if let sourceRaw, let raw = SQWorkoutSourceRaw(rawValue: sourceRaw) {
+            return raw
+        }
+        if hkWorkoutId != nil {
+            return .hkWorkout
+        }
+        return .manual
+    }
+
+    var syncStatus: SQSyncStatus? {
+        guard let syncStatusRaw else { return nil }
+        return SQSyncStatus(rawValue: syncStatusRaw)
+    }
+
+    func markPendingUpload(now: Date = .now) {
+        if createdAt == nil {
+            createdAt = now
+        }
+        updatedAt = now
+        deletedAt = nil
+        syncStatusRaw = SQSyncStatus.pendingUpload.rawValue
+        remoteId = remoteId ?? workoutId
+    }
+
+    func markPendingDelete(now: Date = .now) {
+        if createdAt == nil {
+            createdAt = now
+        }
+        updatedAt = now
+        deletedAt = now
+        syncStatusRaw = SQSyncStatus.pendingDelete.rawValue
+        remoteId = remoteId ?? workoutId
+    }
+
+    func markSynced(remoteId: String? = nil, updatedAt: Date? = nil) {
+        syncStatusRaw = SQSyncStatus.synced.rawValue
+        self.remoteId = remoteId ?? self.remoteId ?? workoutId
+        if let updatedAt {
+            self.updatedAt = updatedAt
+        }
+        if createdAt == nil {
+            createdAt = self.updatedAt ?? .now
+        }
+    }
+
+    func shouldMergeRemoteDocument(_ document: SQWorkoutSyncDocument) -> Bool {
+        switch syncStatus {
+        case .pendingUpload, .pendingDelete, .failed:
+            return false
+        case .synced, .unknown, .none:
+            guard let localUpdatedAt = updatedAt else { return true }
+            return document.updatedAt >= localUpdatedAt
+        }
+    }
+
+    func toSyncDocument() -> SQWorkoutSyncDocument? {
+        guard let createdAt, let updatedAt else { return nil }
+
+        return SQWorkoutSyncDocument(
+            workoutId: workoutId,
+            remoteId: remoteId ?? workoutId,
+            hkWorkoutId: hkWorkoutId,
+            sourceRaw: inferredSourceRaw.rawValue,
+            title: title,
+            activityTypeRaw: activityTypeRaw,
+            deviceRaw: deviceRaw,
+            activeDuration: activeDuration,
+            startDate: startDate,
+            endDate: endDate,
+            totalCalories: totalCalories,
+            averageHeartRate: averageHeartRate,
+            detailsData: detailsData,
+            reviewNotes: reviewNotes,
+            ratingUserPerformance: ratingUserPerformance,
+            ratingDifficulty: ratingDifficulty,
+            temperatureCelsius: temperatureCelsius,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt
+        )
     }
 }
 
@@ -241,6 +375,77 @@ extension SQWorkoutSessionEntity {
         }
         
         try context.save()
+    }
+
+    static func upsert(remoteDocument: SQWorkoutSyncDocument, in context: ModelContext) throws {
+        let key = remoteDocument.workoutId
+        let workoutIdDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate { $0.workoutId == key }
+        )
+        let existingByWorkoutId = try context.fetch(workoutIdDescriptor).first
+
+        let existing: SQWorkoutSessionEntity?
+        if let existingByWorkoutId {
+            existing = existingByWorkoutId
+        } else if let hkWorkoutId = remoteDocument.hkWorkoutId {
+            let hkDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+                predicate: #Predicate { $0.hkWorkoutId == hkWorkoutId }
+            )
+            existing = try context.fetch(hkDescriptor).first
+        } else {
+            existing = nil
+        }
+
+        if let existing {
+            guard existing.shouldMergeRemoteDocument(remoteDocument) else {
+                return
+            }
+            if existing.workoutId != remoteDocument.workoutId {
+                existing.workoutId = remoteDocument.workoutId
+            }
+            existing.update(from: remoteDocument)
+        } else {
+            context.insert(SQWorkoutSessionEntity(from: remoteDocument))
+        }
+
+        try context.save()
+    }
+
+    static func getEntity(workoutId: String, context: ModelContext) throws -> SQWorkoutSessionEntity? {
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate { $0.workoutId == workoutId }
+        )
+        return try context.fetch(descriptor).first
+    }
+
+    static func getPendingSyncEntities(context: ModelContext) throws -> [SQWorkoutSessionEntity] {
+        let pendingUpload = SQSyncStatus.pendingUpload.rawValue
+        let pendingDelete = SQSyncStatus.pendingDelete.rawValue
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate {
+                $0.syncStatusRaw == pendingUpload || $0.syncStatusRaw == pendingDelete
+            },
+            sortBy: [SortDescriptor(\.updatedAt, order: .forward)]
+        )
+        return try context.fetch(descriptor)
+    }
+
+    static func getManualWorkouts(
+        for timeRange: SQTimeRange,
+        context: ModelContext
+    ) throws -> [SQWorkoutSessionEntity] {
+        let manual = SQWorkoutSourceRaw.manual.rawValue
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate {
+                $0.deletedAt == nil
+                    && $0.sourceRaw == manual
+            },
+            sortBy: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        return try context.fetch(descriptor).filter { entity in
+            guard let startDate = entity.startDate else { return false }
+            return startDate >= timeRange.startDate && startDate <= timeRange.endDate
+        }
     }
 }
 
@@ -322,4 +527,3 @@ extension SQWorkoutSessionEntity {
         try context.save()
     }
 }
-

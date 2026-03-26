@@ -14,6 +14,7 @@ final class SQFirestoreMetricsManager {
     static let shared = SQFirestoreMetricsManager()
 
     private(set) var sessionReads: Int = 0
+    private(set) var sessionWrites: Int = 0
     private var sessionStartTime: Date = Date()
 
     private init() {}
@@ -33,9 +34,24 @@ final class SQFirestoreMetricsManager {
         )
     }
 
+    func recordWrites(_ count: Int, operation: String) {
+        sessionWrites += count
+
+        let sessionDuration = Date().timeIntervalSince(sessionStartTime)
+        let minutes = Int(sessionDuration / 60)
+
+        SQLogger.shared.log(
+            "📊 Firestore: \(count) writes for '\(operation)' | Session total: \(sessionWrites) writes (\(minutes)m)",
+            .info,
+            context: .network,
+            isPriority: true
+        )
+    }
+
     /// Reset metrics (e.g., for testing or new session)
     func reset() {
         sessionReads = 0
+        sessionWrites = 0
         sessionStartTime = Date()
         SQLogger.shared.log(
             "🔄 Firestore metrics reset",
@@ -48,6 +64,6 @@ final class SQFirestoreMetricsManager {
     var summary: String {
         let sessionDuration = Date().timeIntervalSince(sessionStartTime)
         let minutes = Int(sessionDuration / 60)
-        return "Session: \(sessionReads) reads in \(minutes)m"
+        return "Session: \(sessionReads) reads, \(sessionWrites) writes in \(minutes)m"
     }
 }

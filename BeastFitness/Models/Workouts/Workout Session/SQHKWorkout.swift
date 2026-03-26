@@ -35,7 +35,8 @@ struct SQHKWorkout: SQWorkoutSourcable {
     static var isVerbosePaceLoggingEnabled: Bool = false
 
     init(hkWorkout: HKWorkout) {
-        self.sourceId = hkWorkout.uuid.uuidString
+        let syncIdentifier = hkWorkout.metadata?[HKMetadataKeySyncIdentifier] as? String
+        self.sourceId = syncIdentifier ?? hkWorkout.uuid.uuidString
         self.hkWorkout = hkWorkout
     }
     

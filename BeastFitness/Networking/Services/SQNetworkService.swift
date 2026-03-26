@@ -167,6 +167,30 @@ extension SQNetworkService {
             return decoded
         }
 
+        if type is [SQWorkoutSyncDocument].Type {
+            let decoded = documents.compactMap { document -> SQWorkoutSyncDocument? in
+                do {
+                    return try document.data(as: SQWorkoutSyncDocument.self)
+                } catch {
+                    SQLogger.shared.log(
+                        "Skipping workout document '\(document.documentID)' - doesn't match current model: \(error.localizedDescription)",
+                        .warning,
+                        context: .workoutManager
+                    )
+                    return nil
+                }
+            }
+
+            Task { @MainActor in
+                SQFirestoreMetricsManager.shared.recordReads(
+                    documents.count,
+                    operation: "Fetch workout metadata"
+                )
+            }
+
+            return decoded
+        }
+
         throw SQNetworkError.invalidResponseType(
             expected: "a supported array type",
             got: String(describing: type)
