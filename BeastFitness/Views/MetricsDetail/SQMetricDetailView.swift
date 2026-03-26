@@ -151,8 +151,15 @@ private struct SQMetricDetailCardView: View {
 
                         Text(item.value)
                             .sqFont(.bodySmallSemiBold)
-                            .sqForegroundColor(.textPrimary)
+                            .sqForegroundColor(item.valueColor)
                             .frame(maxWidth: .infinity, alignment: .leading)
+
+                        if let detail = item.detail {
+                            Text(detail)
+                                .sqFont(.bodyExtraSmall)
+                                .sqForegroundColor(.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                     .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
                     .padding(.SQSpace.m)

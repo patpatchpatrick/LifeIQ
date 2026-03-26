@@ -19,6 +19,22 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let id: String
         let title: String
         let value: String
+        let detail: String?
+        let valueColor: SQColor
+
+        init(
+            id: String,
+            title: String,
+            value: String,
+            detail: String? = nil,
+            valueColor: SQColor = .textPrimary
+        ) {
+            self.id = id
+            self.title = title
+            self.value = value
+            self.detail = detail
+            self.valueColor = valueColor
+        }
     }
 
     struct Section: Identifiable {
@@ -31,6 +47,17 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let id: String
         let date: Date
         let value: Double
+    }
+
+    private struct TrendSummary {
+        let value: String
+        let color: SQColor
+    }
+
+    private struct AvoidanceWindow {
+        let startDate: Date
+        let endDate: Date
+        let dayCount: Int
     }
 
     let id = UUID().uuidString
@@ -185,16 +212,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let values = points.map(\.value)
         let average = values.average ?? 0
         let median = values.median ?? average
-        let trendValue: String = {
-            guard
-                let currentAverage = values.average,
-                let priorAverage = priorValues.average,
-                priorAverage != 0
-            else { return "—" }
-
-            let percent = ((currentAverage - priorAverage) / priorAverage) * 100
-            return String(format: "%@%.1f%%", percent >= 0 ? "+" : "", percent)
-        }()
+        let trendSummary = buildTrendSummary(currentValues: values, priorValues: priorValues)
 
         let rangeValue: String = {
             guard let min = values.min(), let max = values.max() else { return "—" }
@@ -205,10 +223,10 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             id: "overview",
             title: "Overview",
             items: [
-                .init(id: "overview-average", title: "Average", value: Self.formatMetricValue(average, definition: definition)),
-                .init(id: "overview-median", title: "Median", value: Self.formatMetricValue(median, definition: definition)),
-                .init(id: "overview-trend", title: "Trend", value: trendValue),
-                .init(id: "overview-range", title: "Range", value: rangeValue)
+                .init(id: "overview-average", title: "Average", value: Self.formatMetricValue(average, definition: definition), detail: nil, valueColor: .textPrimary),
+                .init(id: "overview-median", title: "Median", value: Self.formatMetricValue(median, definition: definition), detail: nil, valueColor: .textPrimary),
+                .init(id: "overview-trend", title: "Trend", value: trendSummary.value, detail: nil, valueColor: trendSummary.color),
+                .init(id: "overview-range", title: "Range", value: rangeValue, detail: nil, valueColor: .textPrimary)
             ]
         )
 
@@ -219,10 +237,10 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             id: "consistency",
             title: "Consistency",
             items: [
-                .init(id: "consistency-days-logged", title: "Days Logged", value: "\(daysLogged)"),
-                .init(id: "consistency-logging-rate", title: "Logging Rate", value: String(format: "%.0f%%", loggingRate * 100)),
-                .init(id: "consistency-log-streak", title: "Log Streak", value: "\(currentConsecutiveDayCount(for: points.map(\.date))) days"),
-                .init(id: "consistency-last-logged", title: "Last Logged", value: points.last?.date.formattedString(with: .medium) ?? "—")
+                .init(id: "consistency-days-logged", title: "Days Logged", value: "\(daysLogged)", detail: nil, valueColor: .textPrimary),
+                .init(id: "consistency-logging-rate", title: "Logging Rate", value: String(format: "%.0f%%", loggingRate * 100), detail: nil, valueColor: .textPrimary),
+                .init(id: "consistency-log-streak", title: "Log Streak", value: "\(currentConsecutiveDayCount(for: points.map(\.date))) days", detail: nil, valueColor: .textPrimary),
+                .init(id: "consistency-last-logged", title: "Last Logged", value: points.last?.date.formattedString(with: .medium) ?? "—", detail: nil, valueColor: .textPrimary)
             ]
         )
 
@@ -242,28 +260,44 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         let bestStreakTitle: String
         let successRateTitle: String
         let lastFailureTitle: String
+        let currentStreakValue: String
+        let bestStreakValue: String
+        let currentStreakDetail: String?
+        let bestStreakDetail: String?
 
         switch definition.goalStyle {
         case .avoidIt:
+            let currentAvoidance = currentAvoidanceWindow(for: points)
+            let bestAvoidance = bestAvoidanceWindow(for: points)
             currentStreakTitle = "Days Avoided"
             bestStreakTitle = "Best Avoidance"
             successRateTitle = "Zero Days"
             lastFailureTitle = "Last Non-Zero"
+            currentStreakValue = "\(currentAvoidance?.dayCount ?? 0) days"
+            bestStreakValue = "\(bestAvoidance?.dayCount ?? 0) days"
+            currentStreakDetail = currentAvoidance.map { "Started \($0.startDate.formattedString(with: .short))" }
+            bestStreakDetail = bestAvoidance.map {
+                "\($0.startDate.formattedString(with: .short)) - \($0.endDate.formattedString(with: .short))"
+            }
         default:
             currentStreakTitle = "Current Streak"
             bestStreakTitle = "Best Streak"
             successRateTitle = "Success Rate"
             lastFailureTitle = "Last Miss"
+            currentStreakValue = "\(currentSuccessStreak(for: points, definition: definition)) days"
+            bestStreakValue = "\(longestConsecutiveDayCount(for: successPoints.map(\.date))) days"
+            currentStreakDetail = nil
+            bestStreakDetail = nil
         }
 
         return Section(
             id: "streaks",
             title: "Streaks",
             items: [
-                .init(id: "streaks-current", title: currentStreakTitle, value: "\(currentSuccessStreak(for: points, definition: definition)) days"),
-                .init(id: "streaks-best", title: bestStreakTitle, value: "\(longestConsecutiveDayCount(for: successPoints.map(\.date))) days"),
-                .init(id: "streaks-rate", title: successRateTitle, value: String(format: "%.0f%%", successRate * 100)),
-                .init(id: "streaks-last-failure", title: lastFailureTitle, value: failures.last?.date.formattedString(with: .medium) ?? "Never")
+                .init(id: "streaks-current", title: currentStreakTitle, value: currentStreakValue, detail: currentStreakDetail, valueColor: .textPrimary),
+                .init(id: "streaks-best", title: bestStreakTitle, value: bestStreakValue, detail: bestStreakDetail, valueColor: .textPrimary),
+                .init(id: "streaks-rate", title: successRateTitle, value: String(format: "%.0f%%", successRate * 100), detail: nil, valueColor: .textPrimary),
+                .init(id: "streaks-last-failure", title: lastFailureTitle, value: failures.last?.date.formattedString(with: .medium) ?? "Never", detail: nil, valueColor: .textPrimary)
             ]
         )
     }
@@ -500,6 +534,76 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         }
 
         return streak
+    }
+
+    private func buildTrendSummary(currentValues: [Double], priorValues: [Double]) -> TrendSummary {
+        guard
+            let currentAverage = currentValues.average,
+            let priorAverage = priorValues.average,
+            priorAverage != 0
+        else {
+            return .init(value: "—", color: .textSecondary)
+        }
+
+        let percent = ((currentAverage - priorAverage) / priorAverage) * 100
+        let color: SQColor = percent >= 0 ? .colorNeonGreen : .colorNeonRed
+        return .init(
+            value: String(format: "%@%.1f%%", percent >= 0 ? "+" : "", percent),
+            color: color
+        )
+    }
+
+    private func currentAvoidanceWindow(for points: [DayValuePoint]) -> AvoidanceWindow? {
+        let sorted = points.sorted { $0.date < $1.date }
+        guard let first = sorted.first, let last = sorted.last else { return nil }
+        guard last.value == 0 else { return nil }
+
+        let calendar = Calendar.current
+        let lastDate = calendar.startOfDay(for: last.date)
+
+        if let lastNonZero = sorted.dropLast().last(where: { $0.value != 0 }) {
+            let lastNonZeroDate = calendar.startOfDay(for: lastNonZero.date)
+            let dayCount = calendar.dateComponents([.day], from: lastNonZeroDate, to: lastDate).day ?? 0
+            let startDate = calendar.date(byAdding: .day, value: 1, to: lastNonZeroDate) ?? lastDate
+            return .init(startDate: startDate, endDate: lastDate, dayCount: dayCount)
+        }
+
+        let firstDate = calendar.startOfDay(for: first.date)
+        let dayCount = (calendar.dateComponents([.day], from: firstDate, to: lastDate).day ?? 0) + 1
+        return .init(startDate: firstDate, endDate: lastDate, dayCount: dayCount)
+    }
+
+    private func bestAvoidanceWindow(for points: [DayValuePoint]) -> AvoidanceWindow? {
+        let sorted = points.sorted { $0.date < $1.date }
+        guard let first = sorted.first else { return nil }
+
+        let calendar = Calendar.current
+        let firstDate = calendar.startOfDay(for: first.date)
+        var bestWindow: AvoidanceWindow?
+        var lastNonZeroDate: Date? = nil
+
+        for point in sorted {
+            let currentDate = calendar.startOfDay(for: point.date)
+            if point.value == 0 {
+                let window: AvoidanceWindow
+                if let lastNonZeroDate {
+                    let dayCount = calendar.dateComponents([.day], from: lastNonZeroDate, to: currentDate).day ?? 0
+                    let startDate = calendar.date(byAdding: .day, value: 1, to: lastNonZeroDate) ?? currentDate
+                    window = .init(startDate: startDate, endDate: currentDate, dayCount: dayCount)
+                } else {
+                    let dayCount = (calendar.dateComponents([.day], from: firstDate, to: currentDate).day ?? 0) + 1
+                    window = .init(startDate: firstDate, endDate: currentDate, dayCount: dayCount)
+                }
+
+                if bestWindow == nil || window.dayCount > (bestWindow?.dayCount ?? 0) {
+                    bestWindow = window
+                }
+            } else {
+                lastNonZeroDate = currentDate
+            }
+        }
+
+        return bestWindow
     }
 
     private func normalizedUniqueDates(_ dates: [Date]) -> [Date] {
