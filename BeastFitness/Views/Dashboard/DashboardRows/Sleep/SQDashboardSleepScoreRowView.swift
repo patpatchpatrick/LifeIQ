@@ -88,14 +88,14 @@ private struct SQSleepScorePieChart: View {
         }
         .frame(width: Self.chartSize, height: Self.chartSize)
         .onAppear {
-            rebuildModel(shouldAnimate: true)
+            rebuildModel()
         }
         .onChange(of: rebuildKey) { _, _ in
-            rebuildModel(shouldAnimate: false)
+            rebuildModel()
         }
     }
 
-    private func rebuildModel(shouldAnimate: Bool) {
+    private func rebuildModel() {
         let sectionConfigs = buildSectionConfigs()
         let model = PieChartModel(
             sections: sectionConfigs,
@@ -120,15 +120,6 @@ private struct SQSleepScorePieChart: View {
 
         pieChartModel = model
         selectedComponentId = nil
-
-        guard let model else { return }
-        if shouldAnimate {
-            Task { @MainActor in
-                await model.animateAppearance()
-            }
-        } else {
-            model.pieSections = model.expectedPieSections
-        }
     }
 
     private func buildSectionConfigs() -> [PieChartSectionConfig] {

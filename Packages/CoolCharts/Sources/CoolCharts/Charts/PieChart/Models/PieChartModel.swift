@@ -77,7 +77,7 @@ public final class PieChartModel: ObservableObject {
         }
         
         self.expectedPieSections = pieSections
-        self.pieSections = []
+        self.pieSections = pieSections
         self.focusedSectionId = nil
         self.sectionAlignment = sectionAlignment
         self.initialStartAngleDegrees = initialStartAngleDegrees
@@ -85,21 +85,7 @@ public final class PieChartModel: ObservableObject {
     }
     
     public func animateAppearance() async {
-        
-        pieSections = []
-        for section in expectedPieSections {
-            pieSections.append(section)
-            
-            withAnimation {
-                pieSections = pieSections.map {
-                    var section = $0
-                    section.endAngleDegrees = section.expectedEndAngleDegrees
-                    return section
-                }
-            }
-
-            try? await Task.sleep(for: .seconds(0.1))
-        }
+        pieSections = expectedPieSections
     }
     
     public func sectionFocused(sectionId: String?, shouldCallFocusCompletionHandler: Bool = true) {

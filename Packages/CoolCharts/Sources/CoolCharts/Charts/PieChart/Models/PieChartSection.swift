@@ -82,7 +82,7 @@ public struct PieChartSection: Identifiable, Sendable {
         self.chartMaxStrokeWidth = chartMaxStrokeWidth
         self.startAngleDegrees = startAngleDegrees
         self.expectedEndAngleDegrees = endAngleDegrees
-        self.endAngleDegrees = startAngleDegrees /// Start at the start angle until it's animated
+        self.endAngleDegrees = endAngleDegrees
         self.radialFillPercent = radialFillPercent
         self.radialUnfilledColor = radialUnfilledColor
     }
