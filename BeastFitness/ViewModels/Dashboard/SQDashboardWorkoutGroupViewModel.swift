@@ -10,13 +10,19 @@ import HealthKit
 
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
+    struct WorkoutStatItem: Identifiable, Hashable {
+        let id: String
+        let title: String
+        let value: AttributedString
+    }
+
     let dashboardState = SQAppState.shared.dashboardState
     let workouts: SQWorkouts
     let id = UUID()
     let title: String
     let subtitle: String?
     let workoutImageSymbol: SQImageSymbol
-    let workoutStatsString: AttributedString
+    let workoutStatsItems: [WorkoutStatItem]
 
     init(activityType: HKWorkoutActivityType, workouts: SQWorkouts) {
         self.workouts = workouts
@@ -36,35 +42,8 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
             }
         }
         workoutImageSymbol = workouts.workouts.compactMap { $0.activityType.imageSymbol }.first ?? .questionmarkCircle
-        
-        // Assign slightly different neutral colors to each stat’s descriptor
-        let outputColor   = SQColor.accentNeutral1.color
-        let timeColor     = SQColor.accentNeutral2.color
-        let caloriesColor = SQColor.accentNeutral3.color
-        let hrColor       = SQColor.accentNeutral4.color
-        
-        // Format individual stats with those descriptor colors
-        let output   = workouts.formattedTotalOutput(valueColor: outputColor, unitColor: outputColor)
-        let time     = workouts.formattedTime(valueColor: timeColor, unitColor: timeColor)
-        let calories = workouts.formattedCalories(valueColor: caloriesColor, unitColor: caloriesColor)
-        let heartRate = workouts.formattedHeartRate(valueColor: hrColor, unitColor: hrColor)
-        
-        // Combine them with comma separation
-        var combined = AttributedString("")
-        let stats = [output, time, calories, heartRate].compactMap { $0 }
-        
-        for (idx, stat) in stats.enumerated() {
-            if idx > 0 {
-                combined.append(
-                    AttributedString.build(with: ", ",
-                           font: SQFont(type: .bodySmall).font,
-                           color: SQColor.textTertiary.color)
-                )
-            }
-            combined.append(stat)
-        }
-        
-        self.workoutStatsString = combined
+
+        self.workoutStatsItems = Self.buildWorkoutStatItems(for: workouts)
     }
     
     func displayWorkoutsSheet() {
@@ -77,5 +56,66 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
     
     nonisolated static func == (lhs: SQDashboardWorkoutGroupViewModel, rhs: SQDashboardWorkoutGroupViewModel) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+private extension SQDashboardWorkoutGroupViewModel {
+    static func buildWorkoutStatItems(for workouts: SQWorkouts) -> [WorkoutStatItem] {
+        let valueFont = SQFont(type: .bodySmallSemiBold).font
+        let unitFont = SQFont(type: .bodyExtraSmall).font
+        let valueColor = SQColor.textPrimary.color
+        let unitColor = SQColor.textSecondary.color
+
+        let statDefinitions: [(id: String, title: String, value: AttributedString?)] = [
+            (
+                id: "output",
+                title: "Output",
+                value: workouts.formattedTotalOutput(
+                    valueFont: valueFont,
+                    unitFont: unitFont,
+                    valueColor: valueColor,
+                    unitColor: unitColor
+                )
+            ),
+            (
+                id: "time",
+                title: "Time",
+                value: workouts.formattedTime(
+                    valueFont: valueFont,
+                    unitFont: unitFont,
+                    valueColor: valueColor,
+                    unitColor: unitColor
+                )
+            ),
+            (
+                id: "calories",
+                title: "Calories",
+                value: workouts.formattedCalories(
+                    valueFont: valueFont,
+                    unitFont: unitFont,
+                    valueColor: valueColor,
+                    unitColor: unitColor
+                )
+            ),
+            (
+                id: "heart-rate",
+                title: "Avg HR",
+                value: workouts.formattedHeartRate(
+                    valueFont: valueFont,
+                    unitFont: unitFont,
+                    valueColor: valueColor,
+                    unitColor: unitColor
+                )
+            )
+        ]
+
+        return statDefinitions.compactMap { definition in
+            guard let value = definition.value else { return nil }
+            return WorkoutStatItem(
+                id: definition.id,
+                title: definition.title,
+                value: value
+            )
+        }
     }
 }

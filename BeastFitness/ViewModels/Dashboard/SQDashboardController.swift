@@ -733,7 +733,8 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Activities",
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
-            rowSpacing: .SQSpace.l
+            rowSpacing: .SQSpace.l,
+            maxVisibleRows: 4
         )
         
         dropDownViewModel.itemSelectionHandler = { selectedFilter in

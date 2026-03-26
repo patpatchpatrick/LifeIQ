@@ -57,22 +57,33 @@ import SwiftUI
 
 struct SQDashboardWorkoutGroupView: View {
     let viewModel: SQDashboardWorkoutGroupViewModel
-    
+    private let statColumns = [
+        GridItem(.adaptive(minimum: 86), spacing: .SQSpace.s, alignment: .leading)
+    ]
+
     @ViewBuilder
     var workoutImage: some View {
-        ZStack {
-            Circle()
-                .sqForegroundColor(.backgroundSecondaryLight)
-                .frame(width: 40)
-            
-            SQImageView(image: .init(symbol: viewModel.workoutImageSymbol, symbolStyle: .colorWithFont(.textPrimary, font: .body)))
-                .frame(width: 20)
-        }
+        RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+            .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 1))
+            .frame(width: 38, height: 38)
+            .overlay(
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
+            )
+            .overlay(
+                SQImageView(
+                    image: .init(
+                        symbol: viewModel.workoutImageSymbol,
+                        symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .body)
+                    )
+                )
+                .frame(width: 18, height: 18)
+            )
     }
     
     @ViewBuilder
     var workoutTitleAndDescription: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
             Text(viewModel.title)
                 .sqFont(.bodyBold)
                 .sqForegroundColor(.textPrimary)
@@ -84,9 +95,40 @@ struct SQDashboardWorkoutGroupView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
-            
-            Text(viewModel.workoutStatsString)
+
+            if !viewModel.workoutStatsItems.isEmpty {
+                LazyVGrid(columns: statColumns, alignment: .leading, spacing: .SQSpace.s) {
+                    ForEach(viewModel.workoutStatsItems) { item in
+                        workoutStatItem(item)
+                    }
+                }
+                .padding(.top, .SQSpace.xs)
+            }
         }
+    }
+
+    @ViewBuilder
+    private func workoutStatItem(_ item: SQDashboardWorkoutGroupViewModel.WorkoutStatItem) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(item.title.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            Text(item.value)
+                .sqFont(.bodySmall)
+                .sqForegroundColor(.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, .SQSpace.s)
+        .padding(.horizontal, .SQSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.65 : 0.95))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+        )
     }
     
     var mainHStack: some View {
@@ -104,6 +146,7 @@ struct SQDashboardWorkoutGroupView: View {
         Button(
             action: viewModel.displayWorkoutsSheet,
             label: { mainHStack })
+        .buttonStyle(.plain)
     }
 }
 
