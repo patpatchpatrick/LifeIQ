@@ -12,8 +12,10 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
         let title: String
         let valueText: String
         let detailText: String
+        let attributedDetailText: AttributedString?
         let tone: SQDashboardTrendTone
         let symbol: SQImageSymbol?
+        let alert: SQAlertViewModel?
     }
 
     let score: Int

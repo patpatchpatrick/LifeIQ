@@ -178,6 +178,21 @@ private struct SQBodyBatteryDriverCard: View {
     }
 
     var body: some View {
+        Group {
+            if let alert = driver.alert {
+                Button {
+                    SQAppState.shared.hub.alertEvents.send(.present(alert))
+                } label: {
+                    cardContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                cardContent
+            }
+        }
+    }
+
+    private var cardContent: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xs) {
             Text(driver.title.uppercased())
                 .sqFont(.bodyExtraSmall)
@@ -199,10 +214,18 @@ private struct SQBodyBatteryDriverCard: View {
                     .sqForegroundColor(.textPrimary)
             }
 
-            Text(driver.detailText)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
-                .lineLimit(2)
+            if let attributedDetailText = driver.attributedDetailText {
+                Text(attributedDetailText)
+                    .sqFont(.bodyExtraSmall)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(driver.detailText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, .SQSpace.m)

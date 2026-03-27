@@ -22,7 +22,11 @@ struct SQAlertCard: View {
                         .sqForegroundColor(.textPrimary)
                         .multilineTextAlignment(.center)
 
-                    if let subtitle = alert.subtitle, !subtitle.isEmpty {
+                    if let attributedSubtitle = alert.attributedSubtitle {
+                        Text(attributedSubtitle)
+                            .sqFont(.body)
+                            .multilineTextAlignment(.center)
+                    } else if let subtitle = alert.subtitle, !subtitle.isEmpty {
                         Text(subtitle)
                             .sqFont(.body)
                             .sqForegroundColor(.textSecondary)

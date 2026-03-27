@@ -66,7 +66,8 @@ final class SQDashboardController: SQDashboardInterface {
         self.sleepAggregationService = sleepAggregationService
         self.bodyBatteryService = bodyBatteryService ?? SQBodyBatteryService(
             metricEntryManager: metricEntryManager,
-            sleepAggregationService: sleepAggregationService
+            sleepAggregationService: sleepAggregationService,
+            healthKitManager: healthKitManager
         )
         self.heartRateService = heartRateService ?? SQHeartRateService(
             healthKitManager: healthKitManager

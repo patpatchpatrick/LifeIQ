@@ -28,9 +28,9 @@ extension SQDashboardSectionGroupViewModel {
             headline: "Recovery is carrying you",
             summary: "Strong sleep recharge is keeping your energy reserves elevated, though recent training is eating into some of it.",
             drivers: [
-                .init(title: "Sleep", valueText: "+41", detailText: "Recharge from last night", tone: .positive, symbol: .arrowUp),
-                .init(title: "Strain", valueText: "-11", detailText: "Today + carryover load", tone: .negative, symbol: .arrowDown),
-                .init(title: "Check-ins", valueText: "+4", detailText: "Energy, soreness, habits", tone: .positive, symbol: .arrowUp)
+                .init(title: "Sleep", valueText: "+41", detailText: "Sleep Score 79 last night", attributedDetailText: buildBodyBatteryMockDetail([.plain("Sleep Score "), .highlight("79"), .plain(" last night")]), tone: .positive, symbol: .arrowUp, alert: nil),
+                .init(title: "Strain", valueText: "-11", detailText: "11 pts from 2 today, 1 yesterday", attributedDetailText: buildBodyBatteryMockDetail([.highlight("11 pts"), .plain(" from "), .highlight("2"), .plain(" today, "), .highlight("1"), .plain(" yesterday")]), tone: .negative, symbol: .arrowDown, alert: nil),
+                .init(title: "Check-ins", valueText: "+4", detailText: "+4 from today's signals", attributedDetailText: buildBodyBatteryMockDetail([.highlight("+4"), .plain(" from today's signals")]), tone: .positive, symbol: .arrowUp, alert: nil)
             ],
             footer: "Estimated from last night’s sleep, current workout strain, and today’s recovery signals."
         )
@@ -240,5 +240,21 @@ extension SQDashboardSectionGroupViewModel {
             title: "Heart",
             sections: [section]
         )
+    }
+
+    private enum BodyBatteryMockTextSegment {
+        case plain(String)
+        case highlight(String)
+    }
+
+    private static func buildBodyBatteryMockDetail(_ segments: [BodyBatteryMockTextSegment]) -> AttributedString {
+        segments.reduce(into: AttributedString()) { result, segment in
+            switch segment {
+            case .plain(let text):
+                result += AttributedString.build(with: text, color: SQColor.textSecondary.color)
+            case .highlight(let text):
+                result += AttributedString.build(with: text, color: SQColor.dashboardGlowBlue.color)
+            }
+        }
     }
 }

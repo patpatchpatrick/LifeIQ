@@ -35,6 +35,7 @@ struct SQAlertViewModel: Identifiable, Equatable {
     let id: UUID
     let title: String
     let subtitle: String?
+    let attributedSubtitle: AttributedString?
     let primary: Action
     let secondary: Action?
     let canDismiss: Bool
@@ -49,6 +50,7 @@ struct SQAlertViewModel: Identifiable, Equatable {
         id: UUID = UUID(),
         title: String,
         subtitle: String? = nil,
+        attributedSubtitle: AttributedString? = nil,
         primary: Action,
         secondary: Action? = nil,
         canDismiss: Bool = false,
@@ -57,6 +59,7 @@ struct SQAlertViewModel: Identifiable, Equatable {
         self.id = id
         self.title = title
         self.subtitle = subtitle
+        self.attributedSubtitle = attributedSubtitle
         self.primary = primary
         self.secondary = secondary
         self.canDismiss = canDismiss
@@ -70,6 +73,7 @@ struct SQAlertViewModel: Identifiable, Equatable {
         lhs.id == rhs.id &&
         lhs.title == rhs.title &&
         lhs.subtitle == rhs.subtitle &&
+        lhs.attributedSubtitle?.stringValue == rhs.attributedSubtitle?.stringValue &&
         lhs.primary.title == rhs.primary.title &&
         lhs.primary.role == rhs.primary.role &&
         lhs.secondary?.title == rhs.secondary?.title &&
