@@ -10,7 +10,35 @@ import SwiftUI
 extension SQDashboardSectionGroupViewModel {
 
     static var mock: [SQDashboardSectionGroupViewModel] {
-        [mockDailyStats, mockSleep, mockWorkouts]
+        [mockOverview, mockDailyStats, mockSleep, mockWorkouts]
+    }
+
+    private static var mockOverview: SQDashboardSectionGroupViewModel {
+        let bodyBatteryRow = SQDashboardBodyBatteryRowViewModel(
+            score: 78,
+            statusTitle: "Solid",
+            statusTone: .positive,
+            headline: "Recovery is carrying you",
+            summary: "Strong sleep recharge is keeping your energy reserves elevated, though recent training is eating into some of it.",
+            drivers: [
+                .init(title: "Sleep", valueText: "+41", detailText: "Recharge from last night", tone: .positive, symbol: .arrowUp),
+                .init(title: "Strain", valueText: "-11", detailText: "Today + carryover load", tone: .negative, symbol: .arrowDown),
+                .init(title: "Check-ins", valueText: "+4", detailText: "Energy, soreness, habits", tone: .positive, symbol: .arrowUp)
+            ],
+            footer: "Estimated from last night’s sleep, current workout strain, and today’s recovery signals."
+        )
+
+        let bodyBatterySection = SQDashboardSubsectionViewModel(
+            id: "body-battery",
+            title: "Body Battery",
+            rowsByFilter: ["All": [bodyBatteryRow]]
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "overview",
+            title: "Overview",
+            sections: [bodyBatterySection]
+        )
     }
 
     // MARK: - Daily Stats
