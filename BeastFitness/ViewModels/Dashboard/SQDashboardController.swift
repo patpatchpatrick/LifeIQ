@@ -220,12 +220,12 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
-            // period: nil → return stats if *any* entries exist today regardless of session.
-            // This means the CTA disappears after the first completed check-in (morning or evening),
-            // even if the other session hasn't been filled in yet. Update to use
-            // DashboardState.checkInPeriod(for: .now) if the CTA should remain visible
-            // until the *current* session's check-in is also complete.
-            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(for: .now, period: nil, context: context)
+            let currentCheckInPeriod = DashboardState.checkInPeriod(for: .now)
+            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
+                for: .now,
+                period: currentCheckInPeriod,
+                context: context
+            )
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
             let todaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
@@ -280,7 +280,7 @@ final class SQDashboardController: SQDashboardInterface {
             if dailyCheckInStats == nil, userState.isLoggedIn {
                 state.updateDailyCheckInCtaViewModel(.init(
                     icon: .init(symbol: .checkmark),
-                    title: "Complete your daily check-in",
+                    title: "Complete your \(title(for: currentCheckInPeriod)) check-in",
                     onTap: {
                         Task { await self.displayDailyCheckInSheet(for: context) }
                     }
@@ -968,6 +968,17 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return "\(minutes)m"
+    }
+
+    private func title(for period: SQMetricPeriod) -> String {
+        switch period {
+        case .morning:
+            return "Morning"
+        case .evening:
+            return "Evening"
+        case .unknown:
+            return "Daily"
+        }
     }
 
     private func sleepScoreDetailPrefix(for nightCount: Int, timeRange: AppTimeRange) -> String {

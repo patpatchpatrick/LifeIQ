@@ -95,7 +95,7 @@ protocol DashboardStating: AnyObject {
     
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date? = nil) {
         let targetDate = date ?? .now
-        let period = Self.checkInPeriod(for: .now)
+        let period = Self.checkInPeriod(for: targetDate)
 
         dailyCheckInViewModel = .init(
             eventHub: SQAppState.shared.hub,
