@@ -16,19 +16,46 @@ protocol SQSettingsInterface { }
 final class SQSettingsController: SQSettingsInterface {
     let id = UUID().uuidString
     let state: SettingsStating
+    let dashboardState: DashboardStating
+    private let dashboardLayoutService: SQDashboardLayoutServicing
     var navigationPath = NavigationPath()
     private(set) var rows: [SQSettingsRowViewModel] = []
 
     @MainActor
     static let `default` = SQSettingsController(state: SQAppState.shared.settingsState)
 
-    init(state: SettingsStating) {
+    init(
+        state: SettingsStating,
+        dashboardState: DashboardStating = SQAppState.shared.dashboardState,
+        dashboardLayoutService: SQDashboardLayoutServicing? = nil
+    ) {
         self.state = state
+        self.dashboardState = dashboardState
+        self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         buildRows()
     }
 
     private func buildRows() {
         rows = [
+            .init(
+                title: "Customize dashboard",
+                subtitle: "Reorder, hide, and restore dashboard sections and subsections.",
+                showsChevron: true
+            ) { [weak self] in
+                guard let self else { return }
+                let controller = SQDashboardLayoutController(
+                    availableGroups: self.dashboardState.availableLayoutGroups,
+                    layoutService: self.dashboardLayoutService
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.dashboardState.updateSectionGroups(
+                        to: self.dashboardLayoutService.apply(to: self.dashboardState.uncustomizedSectionGroups)
+                    )
+                }
+
+                self.state.hub.domainEvents.send(.pushDashboardRoute(.dashboardLayout(controller: controller)))
+            },
+
             .init(
                 title: "Clear hidden workouts",
                 subtitle: "Shows workouts you previously hid after failing to delete in HealthKit.",

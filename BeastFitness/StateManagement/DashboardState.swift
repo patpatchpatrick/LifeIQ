@@ -28,6 +28,8 @@ protocol DashboardStating: AnyObject {
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     var dailyCheckInCtaViewModel: SQCallToActionViewModel? { get }
+    var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] { get }
+    var uncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] { get }
 
     /// Actions
     func changeTab(to tab: NavigationState.Tab)
@@ -35,6 +37,8 @@ protocol DashboardStating: AnyObject {
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?)
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
+    func updateAvailableLayoutGroups(_ groups: [SQDashboardLayoutGroupDescriptor])
+    func updateUncustomizedSectionGroups(_ groups: [SQDashboardSectionGroupViewModel])
 
     func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel])
     func setLoading(_ isLoading: Bool)
@@ -54,6 +58,8 @@ protocol DashboardStating: AnyObject {
 
     private(set) var dailyCheckInViewModel: SQDailyCheckInViewModel?
     private(set) var sectionGroups: [SQDashboardSectionGroupViewModel] = []
+    private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
+    private(set) var uncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
 
     private let selectedTimeRangeSubject = PassthroughSubject<AppTimeRange, Never>()
     var selectedTimeRangePublisher: AnyPublisher<AppTimeRange, Never> {
@@ -79,6 +85,14 @@ protocol DashboardStating: AnyObject {
 
     func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel]) {
         self.sectionGroups = sectionGroups
+    }
+
+    func updateAvailableLayoutGroups(_ groups: [SQDashboardLayoutGroupDescriptor]) {
+        availableLayoutGroups = groups
+    }
+
+    func updateUncustomizedSectionGroups(_ groups: [SQDashboardSectionGroupViewModel]) {
+        uncustomizedSectionGroups = groups
     }
 
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?) {

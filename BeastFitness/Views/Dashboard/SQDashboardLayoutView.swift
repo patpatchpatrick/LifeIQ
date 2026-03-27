@@ -58,10 +58,25 @@ struct SQDashboardLayoutView: View {
         }
         .navigationTitle("Customize Dashboard")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") {
+                Button {
                     controller.dismiss()
+                } label: {
+                    ZStack {
+                        Color.clear
+
+                        SQImageView(
+                            image: .init(
+                                symbol: .chevronLeft,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .title3)
+                            )
+                        )
+                        .frame(width: 16, height: 22)
+                    }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
                 }
             }
 

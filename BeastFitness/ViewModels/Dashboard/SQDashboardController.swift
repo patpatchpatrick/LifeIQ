@@ -94,7 +94,9 @@ final class SQDashboardController: SQDashboardInterface {
         if !userState.hasResolvedInitialAuthState {
             let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
             latestUncustomizedSectionGroups = mockGroups
+            state.updateUncustomizedSectionGroups(mockGroups)
             availableLayoutGroups = self.dashboardLayoutService.descriptors(from: mockGroups)
+            state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGroups))
             state.setLoading(true)
         }
@@ -161,7 +163,7 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func applyLayoutCustomizationToCurrentState() {
-        state.updateSectionGroups(to: dashboardLayoutService.apply(to: latestUncustomizedSectionGroups))
+        state.updateSectionGroups(to: dashboardLayoutService.apply(to: state.uncustomizedSectionGroups))
     }
     
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
@@ -207,7 +209,9 @@ final class SQDashboardController: SQDashboardInterface {
         // Show mock skeleton while real data loads
         let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
         latestUncustomizedSectionGroups = mockGroups
+        state.updateUncustomizedSectionGroups(mockGroups)
         availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
+        state.updateAvailableLayoutGroups(availableLayoutGroups)
         state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
         state.setLoading(true)
 
@@ -393,7 +397,9 @@ final class SQDashboardController: SQDashboardInterface {
                 context: context
             )
             latestUncustomizedSectionGroups = sectionGroups
+            state.updateUncustomizedSectionGroups(sectionGroups)
             availableLayoutGroups = dashboardLayoutService.descriptors(from: sectionGroups)
+            state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: dashboardLayoutService.apply(to: sectionGroups))
 
             // Clear loading state
