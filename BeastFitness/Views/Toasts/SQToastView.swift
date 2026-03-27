@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct SQToastHostView: View {
     @Bindable var toasts: SQToastState
 
@@ -43,46 +41,92 @@ struct SQToastHostView: View {
     }
 }
 
-
-import SwiftUI
-
 struct SQToastView: View {
     let toast: SQToastViewModel
     let onDismiss: () -> Void
 
-    private var backgroundColor: Color {
+    private var accentColor: SQColor {
         switch toast.style {
         case .success:
-            return Color.green
+            return .dashboardGlowMint
         case .error:
-            return Color.red
+            return .dashboardTrendWarm
         case .warning:
-            return Color.orange
+            return .textWarning
         case .normal:
-            return Color.black.opacity(0.85)
+            return .dashboardGlowBlue
         }
     }
 
-    private var foregroundColor: Color {
+    private var statusTitle: String {
         switch toast.style {
-        case .success, .error, .warning:
-            return .white
+        case .success:
+            return "Success"
+        case .error:
+            return "Error"
+        case .warning:
+            return "Notice"
         case .normal:
-            return .white
+            return "Update"
+        }
+    }
+
+    private var symbol: SQImageSymbol {
+        switch toast.style {
+        case .success:
+            return .checkmarkCircleFill
+        case .error:
+            return .xmarkCircleFill
+        case .warning:
+            return .exclamationmarkTriangleFill
+        case .normal:
+            return .exclamationmarkCircle
         }
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: .SQSpace.m) {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.20 : 0.14))
+                .frame(width: 36, height: 36)
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                        .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                }
+                .overlay {
+                    SQImageView(
+                        image: .init(
+                            symbol: symbol,
+                            symbolStyle: .colorWithFont(accentColor, font: .body)
+                        )
+                    )
+                    .frame(width: 18, height: 18)
+                }
+
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text(statusTitle)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(accentColor)
+                    .padding(.horizontal, .SQSpace.s)
+                    .padding(.vertical, 4)
+                    .background {
+                        Capsule(style: .continuous)
+                            .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.16 : 0.12))
+                            .overlay {
+                                Capsule(style: .continuous)
+                                    .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                            }
+                    }
+
                 Text(toast.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(foregroundColor)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textPrimary)
 
                 if let subtitle = toast.subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.footnote)
-                        .foregroundColor(foregroundColor.opacity(0.9))
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -90,18 +134,59 @@ struct SQToastView: View {
 
             if toast.isUserDismissable {
                 Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundColor(foregroundColor)
-                        .padding(8)
+                    Circle()
+                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.16 : 0.12))
+                        .frame(width: 28, height: 28)
+                        .overlay {
+                            Circle()
+                                .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                        }
+                        .overlay {
+                            SQImageView(
+                                image: .init(
+                                    symbol: .xMark,
+                                    symbolStyle: .colorWithFont(accentColor, font: .bodyExtraSmall)
+                                )
+                            )
+                            .frame(width: 10, height: 10)
+                        }
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(14)
-        .background(backgroundColor)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(radius: 18)
+        .padding(.horizontal, .SQSpace.l)
+        .padding(.vertical, .SQSpace.m)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.96 : 1))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(SQColor.isDarkMode ? 0.08 : 0.14),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .overlay(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.s, style: .continuous)
+                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.9 : 0.7))
+                        .frame(width: 4)
+                        .padding(.vertical, .SQSpace.m)
+                        .padding(.leading, .SQSpace.s)
+                }
+        }
+        .sqGlassSurface(level: .floating, cornerRadius: .SQCornerRadius.xl)
+        .shadow(
+            color: accentColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.16),
+            radius: 24,
+            x: 0,
+            y: 12
+        )
         .contentShape(Rectangle())
         .onTapGesture {
             if toast.isUserDismissable {
@@ -110,4 +195,3 @@ struct SQToastView: View {
         }
     }
 }
-
