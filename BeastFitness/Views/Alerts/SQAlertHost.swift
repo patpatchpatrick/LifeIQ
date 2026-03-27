@@ -14,10 +14,22 @@ struct SQAlertHost: View {
     var body: some View {
         ZStack {
             if let alert = alerts.current {
-                Color.black.opacity(0.45)
+                ZStack {
+                    Color.black.opacity(SQColor.isDarkMode ? 0.36 : 0.18)
+
+                    LinearGradient(
+                        colors: [
+                            SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.08 : 0.12),
+                            Color.clear,
+                            SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.05 : 0.08)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+                    .background(.ultraThinMaterial)
                     .ignoresSafeArea()
                     .onTapGesture {
-                        // Optional: dismiss on tap outside (many apps do)
                         alerts.dismissCurrent()
                     }
 
@@ -27,10 +39,10 @@ struct SQAlertHost: View {
                     onSecondary: { handleSecondary(alert) },
                     onDismiss: { alerts.dismiss(alert) }
                 )
-                .transition(.scale(scale: 0.97).combined(with: .opacity))
+                .transition(.scale(scale: 0.96).combined(with: .opacity))
             }
         }
-        .animation(.easeInOut(duration: 0.15), value: alerts.isPresented)
+        .animation(.easeInOut(duration: 0.18), value: alerts.isPresented)
         .zIndex(10_000)
     }
 
