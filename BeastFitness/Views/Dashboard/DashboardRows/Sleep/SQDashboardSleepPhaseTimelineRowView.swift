@@ -11,10 +11,6 @@ struct SQDashboardSleepPhaseTimelineRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(viewModel.title)
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
-
             TimelineChartView(
                 lanes: viewModel.lanes,
                 segments: viewModel.segments,

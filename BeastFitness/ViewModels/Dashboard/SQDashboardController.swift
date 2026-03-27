@@ -773,6 +773,10 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSections.append(summarySection)
         }
 
+        if let timelineSection = buildSleepTimelineSubsection(with: data) {
+            sleepSections.append(timelineSection)
+        }
+
         if let phasesSection = buildSleepPhasesSubsection(with: data) {
             sleepSections.append(phasesSection)
         }
@@ -889,10 +893,6 @@ final class SQDashboardController: SQDashboardInterface {
             rows.append(row)
         }
 
-        if state.selectedTimeRange == .today, let timelineRow = buildSleepPhaseTimelineRow(with: data) {
-            rows.append(timelineRow)
-        }
-
         guard !rows.isEmpty else { return nil }
 
         return SQDashboardSubsectionViewModel(
@@ -901,6 +901,18 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: ["All": rows],
             dropDownViewModel: nil,
             columnHeaders: ["Phase", "Avg Duration", state.selectedTimeRange.dashboardChangePctHeader]
+        )
+    }
+
+    private func buildSleepTimelineSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
+        guard state.selectedTimeRange == .today,
+              let timelineRow = buildSleepPhaseTimelineRow(with: data) else { return nil }
+
+        return SQDashboardSubsectionViewModel(
+            id: "sleep-timeline",
+            title: "Sleep Timeline",
+            rowsByFilter: ["All": [timelineRow]],
+            dropDownViewModel: nil
         )
     }
 
