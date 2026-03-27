@@ -16,7 +16,7 @@ extension SQDashboardSectionGroupViewModel {
             groups.append(mockOverview)
         }
 
-        groups.append(contentsOf: [mockDailyStats, mockSleep, mockWorkouts])
+        groups.append(contentsOf: [mockDailyStats, mockSleep, mockHeart, mockWorkouts])
         return groups
     }
 
@@ -217,6 +217,28 @@ extension SQDashboardSectionGroupViewModel {
             id: "workouts",
             title: "Workouts",
             sections: [totalsSection, activitiesSection]
+        )
+    }
+
+    private static var mockHeart: SQDashboardSectionGroupViewModel {
+        let row = SQDashboardHeartSummaryRowViewModel(
+            items: [
+                .init(id: "resting", title: "Resting Avg", value: "58", unit: "bpm", detail: "Average resting in 7 days"),
+                .init(id: "low", title: "Lowest", value: "46", unit: "bpm", detail: "Lowest recorded in 7 days"),
+                .init(id: "high", title: "Highest", value: "171", unit: "bpm", detail: "Peak recorded in 7 days")
+            ]
+        )
+
+        let section = SQDashboardSubsectionViewModel(
+            id: "heart-rate",
+            title: "Heart Rate",
+            rowsByFilter: ["All": [row]]
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "heart",
+            title: "Heart",
+            sections: [section]
         )
     }
 }

@@ -233,4 +233,12 @@ extension SQWorkoutSessionable {
     var ratingDifficulty: Float? { nil }
     var temperatureCelsius: Double? { nil }
     func setReviewData(notes: String?, ratingUserPerformance: Float?, ratingDifficulty: Float?, temperature: Double?) {}
+
+    /// Filters obviously invalid or impossible average workout heart-rate values.
+    var plausibleAverageHeartRate: Double? {
+        guard let averageHeartRate, averageHeartRate >= 30, averageHeartRate <= 240 else {
+            return nil
+        }
+        return averageHeartRate
+    }
 }

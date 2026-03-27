@@ -233,9 +233,10 @@ private extension SQWorkouts {
         var totalAvgHeartRateTimesSeconds = 0.0
 
         workouts.forEach { workout in
+            guard let avgHR = workout.plausibleAverageHeartRate else { return }
             let duration = workout.activeDuration ?? 0
+            guard duration > 0 else { return }
             totalTime += duration
-            let avgHR = workout.averageHeartRate ?? 0
             totalAvgHeartRateTimesSeconds += avgHR * duration
         }
 

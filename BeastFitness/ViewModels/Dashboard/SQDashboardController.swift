@@ -32,6 +32,7 @@ final class SQDashboardController: SQDashboardInterface {
     let statsManager: SQWorkoutStatsManaging
     let sleepAggregationService: SQSleepAggregationService
     let bodyBatteryService: SQBodyBatteryServicing
+    let heartRateService: SQHeartRateServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
     private var pendingForcedRefresh = false
@@ -51,7 +52,8 @@ final class SQDashboardController: SQDashboardInterface {
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
-        bodyBatteryService: SQBodyBatteryServicing? = nil
+        bodyBatteryService: SQBodyBatteryServicing? = nil,
+        heartRateService: SQHeartRateServicing? = nil
     ) {
         self.state = state
         self.navState = navState
@@ -65,6 +67,9 @@ final class SQDashboardController: SQDashboardInterface {
         self.bodyBatteryService = bodyBatteryService ?? SQBodyBatteryService(
             metricEntryManager: metricEntryManager,
             sleepAggregationService: sleepAggregationService
+        )
+        self.heartRateService = heartRateService ?? SQHeartRateService(
+            healthKitManager: healthKitManager
         )
         
         let items = AppTimeRange.allCases
@@ -1216,6 +1221,10 @@ final class SQDashboardController: SQDashboardInterface {
         if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)
         }
+
+        if let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange) {
+            sectionGroups.append(heartGroup)
+        }
         
         var workoutsSections: [SQDashboardSubsectionViewModel] = []
         
@@ -1271,6 +1280,24 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Body Battery",
             rowsByFilter: ["All": [row]],
             dropDownViewModel: nil
+        )
+    }
+
+    private func buildHeartSectionGroup(timeRange: SQTimeRange) async throws -> SQDashboardSectionGroupViewModel? {
+        guard let row = try await heartRateService.buildDashboardRowViewModel(for: timeRange) else {
+            return nil
+        }
+
+        let section = SQDashboardSubsectionViewModel(
+            id: "heart-rate",
+            title: "Heart Rate",
+            rowsByFilter: ["All": [row]]
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: "heart",
+            title: "Heart",
+            sections: [section]
         )
     }
 

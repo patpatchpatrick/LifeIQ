@@ -91,6 +91,9 @@ extension SQWorkoutSession {
         case .average:
 
             guard let output = workoutSource.sourcableData.avgOutputFor(quantityType) else { return nil }
+            if quantityType == .heartRate, (output < 30 || output > 240) {
+                return nil
+            }
 
             return .init(
                 quantityType: quantityType,

@@ -137,7 +137,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let caloriesPenalty = max(0, (workout.totalCalories ?? 0) / 180)
         let heartRateBonus: Double
 
-        if let averageHeartRate = workout.averageHeartRate {
+        if let averageHeartRate = workout.plausibleAverageHeartRate {
             heartRateBonus = clamp((averageHeartRate - 130) / 18, min: 0, max: 6)
         } else {
             heartRateBonus = 0

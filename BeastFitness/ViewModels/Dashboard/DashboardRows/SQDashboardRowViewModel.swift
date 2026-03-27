@@ -9,6 +9,7 @@ import Foundation
 
 enum SQDashboardRowType {
     case bodyBattery
+    case heartSummary
     case metricStats
     case metricPerformance
     case workoutTotals
@@ -20,6 +21,7 @@ enum SQDashboardRowType {
 
 enum SQDashboardRowIdentifier {
     case bodyBattery
+    case heartSummary
     case metricStats
     case metricPerformance
     case workoutTotals

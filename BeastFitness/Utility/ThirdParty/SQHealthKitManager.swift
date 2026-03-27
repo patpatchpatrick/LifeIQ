@@ -52,6 +52,12 @@ protocol SQHealthKitManaging {
     /// Fetch sleep stage segments overlapping the provided interval.
     /// The caller can then aggregate by nights/time ranges.
     func fetchSleepSegments(from startDate: Date, to endDate: Date) async throws -> [SQSleepStageSegment]
+
+    /// Daily average/min/max heart-rate summaries for the selected range.
+    func fetchDailyHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary]
+
+    /// Daily resting heart-rate summaries for the selected range.
+    func fetchDailyRestingHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary]
 }
 
 

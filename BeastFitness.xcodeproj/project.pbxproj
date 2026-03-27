@@ -119,6 +119,7 @@
 		F67F09F42F08565A00D7BB90 /* SQMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09F32F08565800D7BB90 /* SQMetric.swift */; };
 		F67F09F62F08567000D7BB90 /* SQMetricDefinitionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09F52F08566B00D7BB90 /* SQMetricDefinitionEntity.swift */; };
 		F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09F72F0859CF00D7BB90 /* SQHealthKitManager+VO2Max.swift */; };
+		F6B2B0092F92440100A1B001 /* SQHealthKitManager+HeartRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */; };
 		F67F0A002F08759C00D7BB90 /* SQMetricListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09FF2F08759500D7BB90 /* SQMetricListController.swift */; };
 		F67F0A062F0876E600D7BB90 /* SQMetricsListState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A052F0876DF00D7BB90 /* SQMetricsListState.swift */; };
 		F67F0A082F08774000D7BB90 /* SQMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */; };
@@ -151,6 +152,9 @@
 		F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */; };
 		F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */; };
 		F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */; };
+		F6B2B0072F92440100A1B001 /* SQHeartRateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */; };
+		F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */; };
+		F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */; };
 		F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */; };
 		F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */ = {isa = PBXBuildFile; productRef = F6993E012F2BFD9800B5FF81 /* CoolCharts */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -416,6 +420,7 @@
 		F67F09F32F08565800D7BB90 /* SQMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetric.swift; sourceTree = "<group>"; };
 		F67F09F52F08566B00D7BB90 /* SQMetricDefinitionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDefinitionEntity.swift; sourceTree = "<group>"; };
 		F67F09F72F0859CF00D7BB90 /* SQHealthKitManager+VO2Max.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+VO2Max.swift"; sourceTree = "<group>"; };
+		F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+HeartRate.swift"; sourceTree = "<group>"; };
 		F67F09FF2F08759500D7BB90 /* SQMetricListController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricListController.swift; sourceTree = "<group>"; };
 		F67F0A052F0876DF00D7BB90 /* SQMetricsListState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListState.swift; sourceTree = "<group>"; };
 		F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsManager.swift; sourceTree = "<group>"; };
@@ -448,6 +453,9 @@
 		F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryRowConfig.swift; sourceTree = "<group>"; };
 		F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowView.swift; sourceTree = "<group>"; };
+		F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHeartRateService.swift; sourceTree = "<group>"; };
+		F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowViewModel.swift; sourceTree = "<group>"; };
+		F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowView.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQBodyBatteryService.swift; sourceTree = "<group>"; };
@@ -658,6 +666,7 @@
 				F6940F242F379E7F0008A2A0 /* SQDashboardWorkoutTotalsRowViewModel.swift */,
 				F6940F222F379C090008A2A0 /* SQDashboardMetricStatsRowViewModel.swift */,
 				F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */,
+				F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */,
 				F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */,
 				F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */,
 				F6E179892F57DA400099CAF2 /* Sleep */,
@@ -670,6 +679,7 @@
 			children = (
 				F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */,
 				F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */,
+				F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */,
 				F6940F282F37A5560008A2A0 /* SQDashboardWorkoutTotalsRowView.swift */,
 				F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */,
 				F6E1798E2F57DA5A0099CAF2 /* Sleep */,
@@ -1202,6 +1212,7 @@
 			isa = PBXGroup;
 			children = (
 				F67F09F72F0859CF00D7BB90 /* SQHealthKitManager+VO2Max.swift */,
+				F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */,
 				F6A848A02CB6032B00B09AD5 /* SQStravaImport.swift */,
 				F6A848AF2CBD86A100B09AD5 /* SQHealthKitManager.swift */,
 				F6DF8DFC2CCB0F99005CC48B /* SQHealthKitManager+Sleep.swift */,
@@ -1222,6 +1233,7 @@
 			children = (
 				F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */,
 				F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */,
+				F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
 				F61593C32EF37A8600223A63 /* Toast */,
@@ -1847,6 +1859,7 @@
 				F6F94E0F2CB3147C00C2B90B /* SQColor.swift in Sources */,
 				F710F2D82F8F6B66003299AB /* SQGlass.swift in Sources */,
 				F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */,
+				F6B2B0092F92440100A1B001 /* SQHealthKitManager+HeartRate.swift in Sources */,
 				F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */,
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
 				F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */,
@@ -1887,6 +1900,7 @@
 				F639F0FD2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift in Sources */,
 				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
 				F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */,
+				F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */,
 				F6E179B32F6384DB0099CAF2 /* SQMultiSelect.swift in Sources */,
 				F65E77FB2F2C0D6E005050B2 /* SQDailyCheckInVitalRow.swift in Sources */,
 				F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */,
@@ -1943,6 +1957,7 @@
 				F629CE712EE49AAF0002330C /* SQManualWorkout.swift in Sources */,
 				F67F0A422F0D827700D7BB90 /* SQTag.swift in Sources */,
 				F6B2B0052F92430100A1B001 /* SQBodyBatteryService.swift in Sources */,
+				F6B2B0072F92440100A1B001 /* SQHeartRateService.swift in Sources */,
 				F615921C2EF0C71F00223A63 /* SQWorkoutMetric.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */,
@@ -1982,6 +1997,7 @@
 				F68C80562F365A0C00327250 /* SQDashboardSubsection.swift in Sources */,
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,
 				F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */,
+				F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F60C50A42F4FCBE600CB9510 /* SQWorkoutReviewController.swift in Sources */,
 				F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */,

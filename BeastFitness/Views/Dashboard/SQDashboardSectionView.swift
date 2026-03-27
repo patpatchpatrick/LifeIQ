@@ -49,6 +49,11 @@ struct SQDashboardSectionView: View {
                                         SQDashboardBodyBatteryRowView(viewModel: vm)
                                     }
 
+                                case .heartSummary:
+                                    if let vm = row as? SQDashboardHeartSummaryRowViewModel {
+                                        SQDashboardHeartSummaryRowView(viewModel: vm)
+                                    }
+
                                 case .metricStats:
                                     if let vm = row as? SQDashboardMetricStatsRowViewModel {
                                         Button(action: { handleMetricRowTap(vm) }) {
