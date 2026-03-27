@@ -38,12 +38,14 @@ extension SQDashboardSectionGroupViewModel {
         let bodyBatterySection = SQDashboardSubsectionViewModel(
             id: "body-battery",
             title: "Body Battery",
+            defaultPriority: 10,
             rowsByFilter: ["All": [bodyBatteryRow]]
         )
 
         return SQDashboardSectionGroupViewModel(
             id: "overview",
             title: "Overview",
+            defaultPriority: 10,
             sections: [bodyBatterySection]
         )
     }
@@ -97,6 +99,7 @@ extension SQDashboardSectionGroupViewModel {
         let metricsSection = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
+            defaultPriority: 10,
             rowsByFilter: ["All": mockRows],
             columnHeaders: ["Metric", "Avg Score", "vs Prior"]
         )
@@ -104,6 +107,7 @@ extension SQDashboardSectionGroupViewModel {
         return SQDashboardSectionGroupViewModel(
             id: "daily-stats",
             title: "Daily Stats",
+            defaultPriority: 20,
             sections: [metricsSection]
         )
     }
@@ -152,12 +156,14 @@ extension SQDashboardSectionGroupViewModel {
         let scoreSection = SQDashboardSubsectionViewModel(
             id: "sleep-score",
             title: "Sleep Score",
+            defaultPriority: 10,
             rowsByFilter: ["All": [scoreRow]]
         )
 
         let phasesSection = SQDashboardSubsectionViewModel(
             id: "sleep-phases",
             title: "Sleep Phases",
+            defaultPriority: 40,
             rowsByFilter: ["All": phasesRows],
             columnHeaders: ["Phase", "Avg Duration", "vs Prior"]
         )
@@ -165,12 +171,14 @@ extension SQDashboardSectionGroupViewModel {
         let summarySection = SQDashboardSubsectionViewModel(
             id: "sleep-summary",
             title: "Sleep Summary",
+            defaultPriority: 20,
             rowsByFilter: ["All": [summaryRow]]
         )
 
         return SQDashboardSectionGroupViewModel(
             id: "sleep",
             title: "Sleep",
+            defaultPriority: 30,
             sections: [scoreSection, summarySection, phasesSection]
         )
     }
@@ -194,6 +202,7 @@ extension SQDashboardSectionGroupViewModel {
         let totalsSection = SQDashboardSubsectionViewModel(
             id: "totals",
             title: "Totals",
+            defaultPriority: 10,
             rowsByFilter: ["Time": [totalsRow]],
             dropDownViewModel: totalsDropdown
         )
@@ -209,6 +218,7 @@ extension SQDashboardSectionGroupViewModel {
         let activitiesSection = SQDashboardSubsectionViewModel(
             id: "activities",
             title: "Activities",
+            defaultPriority: 20,
             rowsByFilter: ["All": [activityRow]],
             dropDownViewModel: activitiesDropdown
         )
@@ -216,6 +226,7 @@ extension SQDashboardSectionGroupViewModel {
         return SQDashboardSectionGroupViewModel(
             id: "workouts",
             title: "Workouts",
+            defaultPriority: 50,
             sections: [totalsSection, activitiesSection]
         )
     }
@@ -232,12 +243,14 @@ extension SQDashboardSectionGroupViewModel {
         let section = SQDashboardSubsectionViewModel(
             id: "heart-rate",
             title: "Heart Rate",
+            defaultPriority: 10,
             rowsByFilter: ["All": [row]]
         )
 
         return SQDashboardSectionGroupViewModel(
             id: "heart",
             title: "Heart",
+            defaultPriority: 40,
             sections: [section]
         )
     }

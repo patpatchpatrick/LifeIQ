@@ -152,6 +152,9 @@
 		F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */; };
 		F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */; };
 		F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */; };
+		F7D100012F94000100AA1001 /* SQDashboardLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */; };
+		F7D100032F94000100AA1001 /* SQDashboardLayoutController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */; };
+		F7D100052F94000100AA1001 /* SQDashboardLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */; };
 		F6B2B0072F92440100A1B001 /* SQHeartRateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */; };
 		F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */; };
 		F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */; };
@@ -453,6 +456,9 @@
 		F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryRowConfig.swift; sourceTree = "<group>"; };
 		F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowView.swift; sourceTree = "<group>"; };
+		F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutService.swift; sourceTree = "<group>"; };
+		F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutController.swift; sourceTree = "<group>"; };
+		F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutView.swift; sourceTree = "<group>"; };
 		F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHeartRateService.swift; sourceTree = "<group>"; };
 		F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowView.swift; sourceTree = "<group>"; };
@@ -631,6 +637,7 @@
 				F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */,
 				F602DA3B2EC4E9F400404878 /* DashboardRows */,
 				F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */,
+				F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */,
 				F6940F1C2F36AE7B0008A2A0 /* SQDashboardSectionGroupViewModel.swift */,
 				F6940F1E2F36B0F50008A2A0 /* SQDashboardSubsectionViewModel.swift */,
 				F60196492F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift */,
@@ -651,6 +658,7 @@
 			children = (
 				F6E90B4A2ED55193003441B5 /* DailyCheckIn */,
 				F602DA402EC4EAA100404878 /* DashboardRows */,
+				F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */,
 				F602DA392EC4118600404878 /* SQDashboardView.swift */,
 				F68C80512F365A0C00327250 /* Shared */,
 				F6940F182F36AC0F0008A2A0 /* SQDashboardSectionGroupView.swift */,
@@ -1233,6 +1241,7 @@
 			children = (
 				F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */,
 				F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */,
+				F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */,
 				F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
@@ -1967,8 +1976,10 @@
 				F67F09F62F08567000D7BB90 /* SQMetricDefinitionEntity.swift in Sources */,
 				F6C5FD822F32C3F200BF1022 /* SQMetricFormView.swift in Sources */,
 				F6C5FDB02F33A0FD00BF1022 /* SQMetricDefinitionService.swift in Sources */,
+				F7D100012F94000100AA1001 /* SQDashboardLayoutService.swift in Sources */,
 				F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */,
 				F61592312EF3628E00223A63 /* SQAlertState.swift in Sources */,
+				F7D100032F94000100AA1001 /* SQDashboardLayoutController.swift in Sources */,
 				F68D702D2F01D86900543561 /* SQPicker.swift in Sources */,
 				F639F1012F4277E8004AC701 /* SQDashboardPerformanceRow.swift in Sources */,
 				F6E058992F049940006C1CE0 /* SQWatchWorkoutPayload+Extensions.swift in Sources */,
@@ -1998,6 +2009,7 @@
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,
 				F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */,
 				F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */,
+				F7D100052F94000100AA1001 /* SQDashboardLayoutView.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
 				F60C50A42F4FCBE600CB9510 /* SQWorkoutReviewController.swift in Sources */,
 				F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */,

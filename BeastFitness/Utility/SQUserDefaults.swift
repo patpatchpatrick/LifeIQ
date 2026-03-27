@@ -22,6 +22,9 @@ final class SQUserDefaults {
     /// Date the app was first installed on this device
     private static let keyAppInstallDate = "app.install-date"
 
+    /// Persisted dashboard layout preferences
+    private static let keyDashboardLayoutPreferences = "dashboard.layout.preferences"
+
     // MARK: - Private helpers (Workouts)
 
     private var hiddenWorkoutIds: Set<String> {
@@ -43,6 +46,11 @@ final class SQUserDefaults {
         set {
             UserDefaults.standard.set(newValue, forKey: Self.keyRecentExercisesLastUsedAt)
         }
+    }
+
+    private var dashboardLayoutPreferencesData: Data? {
+        get { UserDefaults.standard.data(forKey: Self.keyDashboardLayoutPreferences) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.keyDashboardLayoutPreferences) }
     }
 
     // MARK: - Public API (Workouts)
@@ -107,5 +115,18 @@ final class SQUserDefaults {
         guard UserDefaults.standard.object(forKey: Self.keyAppInstallDate) == nil else { return }
         UserDefaults.standard.set(Date(), forKey: Self.keyAppInstallDate)
     }
-}
 
+    // MARK: - Public API (Dashboard Layout)
+
+    func getDashboardLayoutPreferencesData() -> Data? {
+        dashboardLayoutPreferencesData
+    }
+
+    func setDashboardLayoutPreferencesData(_ data: Data?) {
+        dashboardLayoutPreferencesData = data
+    }
+
+    func clearDashboardLayoutPreferences() {
+        UserDefaults.standard.removeObject(forKey: Self.keyDashboardLayoutPreferences)
+    }
+}

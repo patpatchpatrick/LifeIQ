@@ -33,10 +33,13 @@ final class SQDashboardController: SQDashboardInterface {
     let sleepAggregationService: SQSleepAggregationService
     let bodyBatteryService: SQBodyBatteryServicing
     let heartRateService: SQHeartRateServicing
+    let dashboardLayoutService: SQDashboardLayoutServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
     private var pendingForcedRefresh = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
+    private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
+    private var latestUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
     
     
     @MainActor
@@ -53,7 +56,8 @@ final class SQDashboardController: SQDashboardInterface {
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
         bodyBatteryService: SQBodyBatteryServicing? = nil,
-        heartRateService: SQHeartRateServicing? = nil
+        heartRateService: SQHeartRateServicing? = nil,
+        dashboardLayoutService: SQDashboardLayoutServicing? = nil
     ) {
         self.state = state
         self.navState = navState
@@ -72,6 +76,7 @@ final class SQDashboardController: SQDashboardInterface {
         self.heartRateService = heartRateService ?? SQHeartRateService(
             healthKitManager: healthKitManager
         )
+        self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -87,7 +92,10 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         if !userState.hasResolvedInitialAuthState {
-            state.updateSectionGroups(to: SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange))
+            let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+            latestUncustomizedSectionGroups = mockGroups
+            availableLayoutGroups = self.dashboardLayoutService.descriptors(from: mockGroups)
+            state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGroups))
             state.setLoading(true)
         }
         
@@ -101,6 +109,17 @@ final class SQDashboardController: SQDashboardInterface {
     func handleAuthButtonTap() {
         let controller = SQProfileController(userState: userState)
         state.hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
+    }
+
+    func handleLayoutButtonTap() {
+        let controller = SQDashboardLayoutController(
+            availableGroups: availableLayoutGroups,
+            layoutService: dashboardLayoutService
+        ) { [weak self] in
+            self?.applyLayoutCustomizationToCurrentState()
+        }
+
+        state.hub.domainEvents.send(.pushDashboardRoute(.dashboardLayout(controller: controller)))
     }
     
     private func handleEventSubscriptions(hub: EventHub) {
@@ -139,6 +158,10 @@ final class SQDashboardController: SQDashboardInterface {
     private func refreshFromGlobalContext() {
         guard let modelContext = SQAppState.shared.modelContext else { return }
         Task { await self.loadUI(for: modelContext, shouldForceRefresh: true) }
+    }
+
+    private func applyLayoutCustomizationToCurrentState() {
+        state.updateSectionGroups(to: dashboardLayoutService.apply(to: latestUncustomizedSectionGroups))
     }
     
     func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
@@ -182,7 +205,10 @@ final class SQDashboardController: SQDashboardInterface {
         hasLoadedUI = true
 
         // Show mock skeleton while real data loads
-        state.updateSectionGroups(to: SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange))
+        let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+        latestUncustomizedSectionGroups = mockGroups
+        availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
+        state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
         state.setLoading(true)
 
         do {
@@ -366,7 +392,9 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange: priorTimeRange,
                 context: context
             )
-            state.updateSectionGroups(to: sectionGroups)
+            latestUncustomizedSectionGroups = sectionGroups
+            availableLayoutGroups = dashboardLayoutService.descriptors(from: sectionGroups)
+            state.updateSectionGroups(to: dashboardLayoutService.apply(to: sectionGroups))
 
             // Clear loading state
             state.setLoading(false)
@@ -527,6 +555,7 @@ final class SQDashboardController: SQDashboardInterface {
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
+            defaultPriority: 10,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             titleButton: titleButton,
@@ -570,6 +599,7 @@ final class SQDashboardController: SQDashboardInterface {
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
+            defaultPriority: 10,
             rowsByFilter: ["All": fakeRows],
             dropDownViewModel: nil,
             titleButton: nil,
@@ -656,6 +686,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSubsectionViewModel(
             id: "performance",
             title: "Performance",
+            defaultPriority: 20,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
             columnHeaders: ["", "Best Score", "Rank"],
@@ -691,6 +722,7 @@ final class SQDashboardController: SQDashboardInterface {
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "totals",
             title: "Totals",
+            defaultPriority: 10,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel
         )
@@ -745,6 +777,7 @@ final class SQDashboardController: SQDashboardInterface {
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "activities",
             title: "Activities",
+            defaultPriority: 20,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             rowSpacing: .SQSpace.l,
@@ -800,6 +833,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSectionGroupViewModel(
             id: "sleep",
             title: "Sleep",
+            defaultPriority: 30,
             sections: sleepSections
         )
     }
@@ -852,6 +886,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSubsectionViewModel(
             id: "sleep-score",
             title: data.currentNights.count > 1 ? "Average Sleep Score" : "Sleep Score",
+            defaultPriority: 10,
             rowsByFilter: ["All": [scoreRow]],
             dropDownViewModel: nil
         )
@@ -888,6 +923,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSubsectionViewModel(
             id: "sleep-summary",
             title: "Sleep Summary",
+            defaultPriority: 20,
             rowsByFilter: ["All": [summaryRow]],
             dropDownViewModel: nil
         )
@@ -924,6 +960,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSubsectionViewModel(
             id: "sleep-phases",
             title: "Sleep Phases",
+            defaultPriority: 40,
             rowsByFilter: ["All": rows],
             dropDownViewModel: nil,
             columnHeaders: ["Phase", "Avg Duration", state.selectedTimeRange.dashboardChangePctHeader]
@@ -937,6 +974,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSubsectionViewModel(
             id: "sleep-timeline",
             title: "Sleep Timeline",
+            defaultPriority: 30,
             rowsByFilter: ["All": [timelineRow]],
             dropDownViewModel: nil
         )
@@ -1214,6 +1252,7 @@ final class SQDashboardController: SQDashboardInterface {
             let dailyStatsGroup = SQDashboardSectionGroupViewModel(
                 id: "daily-stats",
                 title: "Daily Stats",
+                defaultPriority: 20,
                 sections: dailyStatsSections
             )
             sectionGroups.append(dailyStatsGroup)
@@ -1243,6 +1282,7 @@ final class SQDashboardController: SQDashboardInterface {
         let workoutsGroup = SQDashboardSectionGroupViewModel(
             id: "workouts",
             title: "Workouts",
+            defaultPriority: 50,
             sections: workoutsSections
         )
         
@@ -1269,6 +1309,7 @@ final class SQDashboardController: SQDashboardInterface {
         return SQDashboardSectionGroupViewModel(
             id: "overview",
             title: "Overview",
+            defaultPriority: 10,
             sections: [buildBodyBatterySubsection(row: row)]
         )
     }
@@ -1279,6 +1320,7 @@ final class SQDashboardController: SQDashboardInterface {
         SQDashboardSubsectionViewModel(
             id: "body-battery",
             title: "Body Battery",
+            defaultPriority: 10,
             rowsByFilter: ["All": [row]],
             dropDownViewModel: nil
         )
@@ -1292,12 +1334,14 @@ final class SQDashboardController: SQDashboardInterface {
         let section = SQDashboardSubsectionViewModel(
             id: "heart-rate",
             title: "Heart Rate",
+            defaultPriority: 10,
             rowsByFilter: ["All": [row]]
         )
 
         return SQDashboardSectionGroupViewModel(
             id: "heart",
             title: "Heart",
+            defaultPriority: 40,
             sections: [section]
         )
     }

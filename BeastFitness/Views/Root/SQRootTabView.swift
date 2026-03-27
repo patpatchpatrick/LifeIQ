@@ -36,6 +36,8 @@ struct SQRootTabView: View {
             SQLoginView(controller: controller)
         case .settings(controller: let controller):
             SQSettingsView(controller: controller)
+        case .dashboardLayout(controller: let controller):
+            SQDashboardLayoutView(controller: controller)
         }
     }
     

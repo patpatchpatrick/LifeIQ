@@ -25,6 +25,19 @@ struct SQDashboardView: View {
                     Spacer()
 
                     Button {
+                        controller.handleLayoutButtonTap()
+                    } label: {
+                        SQImageView(
+                            image: .init(
+                                symbol: .sliderHorizontal3,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                            )
+                        )
+                        .frame(width: 20, height: 20)
+                    }
+                    .accessibilityLabel("Customize dashboard")
+
+                    Button {
                         controller.handleAuthButtonTap()
                     } label: {
                         SQImageView(

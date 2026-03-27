@@ -19,6 +19,7 @@ import SwiftUI
 
     let id: String
     let title: String
+    let defaultPriority: Int
     var isCollapsed: Bool
     var dropDownViewModel: SQDropDownMenuViewModel?
     var titleButton: TitleButtonViewModel?
@@ -35,6 +36,7 @@ import SwiftUI
     init(
         id: String,
         title: String,
+        defaultPriority: Int = 0,
         rowsByFilter: [String: [SQDashboardRowViewModel]],
         dropDownViewModel: SQDropDownMenuViewModel? = nil,
         titleButton: TitleButtonViewModel? = nil,
@@ -44,6 +46,7 @@ import SwiftUI
     ) {
         self.id = id
         self.title = title
+        self.defaultPriority = defaultPriority
         self.rowsByFilter = rowsByFilter
         self.dropDownViewModel = dropDownViewModel
         self.titleButton = titleButton
