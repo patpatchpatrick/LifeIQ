@@ -794,6 +794,7 @@ final class SQDashboardController: SQDashboardInterface {
         guard let averageScore = data.averageScore else { return nil }
 
         let totalScore = averageScore.totalScore
+        let detailPrefix = sleepScoreDetailPrefix(for: data.currentNights.count, timeRange: state.selectedTimeRange)
 
         let scoreRow = SQDashboardSleepScoreRowViewModel(
             totalScore: totalScore,
@@ -804,21 +805,32 @@ final class SQDashboardController: SQDashboardInterface {
                     title: "Duration",
                     score: averageScore.durationScore,
                     maxScore: SQSleepScoreBreakdown.maxDurationScore,
-                    color: .accent(1)
+                    color: .accent(1),
+                    detailText: durationDetailText(for: data.currentNights, prefix: detailPrefix)
                 ),
                 .init(
-                    id: "bedtime",
-                    title: "Bedtime",
-                    score: averageScore.bedtimeScore,
-                    maxScore: SQSleepScoreBreakdown.maxBedtimeScore,
-                    color: .accentNeutral1
+                    id: "efficiency",
+                    title: "Efficiency",
+                    score: averageScore.efficiencyScore,
+                    maxScore: SQSleepScoreBreakdown.maxEfficiencyScore,
+                    color: .accentNeutral1,
+                    detailText: efficiencyDetailText(for: data.currentNights, prefix: detailPrefix)
                 ),
                 .init(
-                    id: "interruptions",
-                    title: "Interruptions",
-                    score: averageScore.interruptionsScore,
-                    maxScore: SQSleepScoreBreakdown.maxInterruptionsScore,
-                    color: .accentNeutral4
+                    id: "fragmentation",
+                    title: "Fragmentation",
+                    score: averageScore.fragmentationScore,
+                    maxScore: SQSleepScoreBreakdown.maxFragmentationScore,
+                    color: .accentNeutral4,
+                    detailText: fragmentationDetailText(for: data.currentNights, prefix: detailPrefix)
+                ),
+                .init(
+                    id: "architecture",
+                    title: "Architecture",
+                    score: averageScore.architectureScore,
+                    maxScore: SQSleepScoreBreakdown.maxArchitectureScore,
+                    color: .dashboardGlowMint,
+                    detailText: architectureDetailText(for: data.currentNights, prefix: detailPrefix)
                 )
             ]
         )
@@ -956,6 +968,115 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return "\(minutes)m"
+    }
+
+    private func sleepScoreDetailPrefix(for nightCount: Int, timeRange: AppTimeRange) -> String {
+        guard nightCount > 1 else { return "Last night" }
+
+        switch timeRange {
+        case .today:
+            return "Last night"
+        case .allTime:
+            return "Across \(nightCount) nights"
+        default:
+            return "Across the last \(nightCount) nights"
+        }
+    }
+
+    private func durationDetailText(for nights: [SQSleepNight], prefix: String) -> AttributedString {
+        let averageSleep = nights.map(\.totalSleepDuration).average ?? 0
+        return buildSleepDetailText([
+            .plain("\(prefix), average sleep was "),
+            .highlight(formattedDuration(averageSleep)),
+            .plain(". This score compares sleep time against an "),
+            .highlight("8h"),
+            .plain(" target, so shorter nights pull it down.")
+        ])
+    }
+
+    private func efficiencyDetailText(for nights: [SQSleepNight], prefix: String) -> AttributedString {
+        let totalSleep = nights.map(\.totalSleepDuration).reduce(0, +)
+        let totalTimeInBed = nights.map(\.timeInBedDuration).reduce(0, +)
+        guard totalTimeInBed > 0 else {
+            return buildSleepDetailText([
+                .plain("\(prefix), efficiency could not be calculated because time-in-bed data was unavailable.")
+            ])
+        }
+
+        let efficiency = totalSleep / totalTimeInBed
+        return buildSleepDetailText([
+            .plain("\(prefix), about "),
+            .highlight(efficiency.toPercentageString(decimals: 0)),
+            .plain(" of time in bed was spent asleep ("),
+            .highlight(formattedDuration(totalSleep / Double(max(1, nights.count)))),
+            .plain(" asleep out of "),
+            .highlight(formattedDuration(totalTimeInBed / Double(max(1, nights.count)))),
+            .plain(" in bed on average).")
+        ])
+    }
+
+    private func fragmentationDetailText(for nights: [SQSleepNight], prefix: String) -> AttributedString {
+        let awakeMinutes = nights.map { $0.phaseDuration(for: .awake) / 60.0 }
+        let awakePeriods = nights.map { Double($0.segments.filter { $0.phase == .awake }.count) }
+        let averageAwakeMinutes = awakeMinutes.average ?? 0
+        let averageAwakePeriods = awakePeriods.average ?? 0
+        let roundedPeriods = max(0, Int(averageAwakePeriods.rounded()))
+
+        if nights.count == 1 {
+            let periodLabel = roundedPeriods == 1 ? "awake period" : "awake periods"
+            return buildSleepDetailText([
+                .plain("\(prefix), sleep was interrupted by "),
+                .highlight("\(roundedPeriods)"),
+                .plain(" \(periodLabel) totaling "),
+                .highlight(formattedDuration(averageAwakeMinutes * 60)),
+                .plain(". More interruptions or awake time lower this score.")
+            ])
+        }
+
+        let periodLabel = roundedPeriods == 1 ? "awake period" : "awake periods"
+        return buildSleepDetailText([
+            .plain("\(prefix), there were about "),
+            .highlight("\(roundedPeriods)"),
+            .plain(" \(periodLabel) per night totaling "),
+            .highlight(formattedDuration(averageAwakeMinutes * 60)),
+            .plain(" awake on average. More broken-up sleep lowers this score.")
+        ])
+    }
+
+    private func architectureDetailText(for nights: [SQSleepNight], prefix: String) -> AttributedString {
+        let totalSleep = nights.map(\.totalSleepDuration).reduce(0, +)
+        guard totalSleep > 0 else {
+            return buildSleepDetailText([
+                .plain("\(prefix), architecture could not be calculated because no sleep-phase data was available.")
+            ])
+        }
+
+        let remShare = nights.map { $0.phaseDuration(for: .rem) }.reduce(0, +) / totalSleep
+        let deepShare = nights.map { $0.phaseDuration(for: .deep) }.reduce(0, +) / totalSleep
+
+        return buildSleepDetailText([
+            .plain("\(prefix), REM made up "),
+            .highlight(remShare.toPercentageString(decimals: 0)),
+            .plain(" and Deep sleep made up "),
+            .highlight(deepShare.toPercentageString(decimals: 0)),
+            .plain(" of total sleep. This score rewards a balanced restorative mix.")
+        ])
+    }
+
+    private enum SleepDetailSegment {
+        case plain(String)
+        case highlight(String)
+    }
+
+    private func buildSleepDetailText(_ segments: [SleepDetailSegment]) -> AttributedString {
+        segments.reduce(into: AttributedString()) { result, segment in
+            switch segment {
+            case .plain(let text):
+                result += AttributedString.build(with: text, color: SQColor.textSecondary.color)
+            case .highlight(let text):
+                result += AttributedString.build(with: text, color: SQColor.dashboardGlowBlue.color)
+            }
+        }
     }
 
     private func averageBedtimeTime(of dates: [Date]) -> Date? {

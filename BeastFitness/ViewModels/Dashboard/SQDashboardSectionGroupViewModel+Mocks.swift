@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 @MainActor
 extension SQDashboardSectionGroupViewModel {
@@ -79,9 +80,10 @@ extension SQDashboardSectionGroupViewModel {
             totalScore: 78,
             scoreLabel: "78/100",
             components: [
-                .init(id: "duration", title: "Duration", score: 39, maxScore: 50, color: .accent(1)),
-                .init(id: "bedtime", title: "Bedtime", score: 23, maxScore: 30, color: .accentNeutral1),
-                .init(id: "interruptions", title: "Interruptions", score: 16, maxScore: 20, color: .accentNeutral4)
+                .init(id: "duration", title: "Duration", score: 31, maxScore: 40, color: .accent(1), detailText: AttributedString("Across the last 7 nights, average sleep was 7h 48m. This score compares sleep time against an 8h target, so shorter nights pull it down.")),
+                .init(id: "efficiency", title: "Efficiency", score: 20, maxScore: 25, color: .accentNeutral1, detailText: AttributedString("Across the last 7 nights, about 88% of time in bed was spent asleep (7h 48m asleep out of 8h 52m in bed on average).")),
+                .init(id: "fragmentation", title: "Fragmentation", score: 15, maxScore: 20, color: .accentNeutral4, detailText: AttributedString("Across the last 7 nights, there were about 3 awake periods per night totaling 34m awake on average. More broken-up sleep lowers this score.")),
+                .init(id: "architecture", title: "Architecture", score: 12, maxScore: 15, color: .dashboardGlowMint, detailText: AttributedString("Across the last 7 nights, REM made up 23% and Deep sleep made up 15% of total sleep. This score rewards a balanced restorative mix."))
             ]
         )
 

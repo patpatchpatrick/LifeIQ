@@ -62,9 +62,10 @@ struct SQSleepAggregationService {
         let latestNight = currentNights.sorted(by: { $0.wakeDay > $1.wakeDay }).first
         let scores = currentNights.map(score(for:))
         let averageScore: SQSleepScoreBreakdown? = scores.isEmpty ? nil : .init(
-            durationScore: scores.map(\.durationScore).average,
-            bedtimeScore: scores.map(\.bedtimeScore).average,
-            interruptionsScore: scores.map(\.interruptionsScore).average
+            durationScore: scores.map(\.durationScore).average ?? 0,
+            efficiencyScore: scores.map(\.efficiencyScore).average ?? 0,
+            fragmentationScore: scores.map(\.fragmentationScore).average ?? 0,
+            architectureScore: scores.map(\.architectureScore).average ?? 0
         )
 
         let phaseAggregates = SQSleepPhase.allCases.map { phase in
@@ -73,8 +74,8 @@ struct SQSleepAggregationService {
 
             return SQSleepPhaseAggregate(
                 phase: phase,
-                averageDuration: currentDurations.average,
-                priorAverageDuration: priorDurations.isEmpty ? nil : priorDurations.average,
+                averageDuration: currentDurations.average ?? 0,
+                priorAverageDuration: priorDurations.average,
                 sparklineDataHours: currentDurations.map { $0 / 3600.0 }
             )
         }
@@ -92,24 +93,26 @@ struct SQSleepAggregationService {
         let durationHours = night.totalSleepDuration / 3600.0
         let durationScore = min(
             SQSleepScoreBreakdown.maxDurationScore,
-            max(0, (durationHours / 7.75) * SQSleepScoreBreakdown.maxDurationScore)
+            max(0, (durationHours / 8.0) * SQSleepScoreBreakdown.maxDurationScore)
         )
 
-        let bedtimeScore = bedtimeScoreFor(startDate: night.sleepStartDate)
+        let efficiencyScore = efficiencyScore(for: night)
+        let architectureScore = architectureScore(for: night)
 
         let awakeMinutes = night.phaseDuration(for: .awake) / 60.0
         let awakeSegments = night.segments.filter { $0.phase == .awake }.count
         let interruptionsPenalty = Double(max(awakeSegments - 1, 0)) * 1.2
         let awakePenalty = awakeMinutes * 0.05
-        let interruptionsScore = max(
+        let fragmentationScore = max(
             0,
-            SQSleepScoreBreakdown.maxInterruptionsScore - interruptionsPenalty - awakePenalty
+            SQSleepScoreBreakdown.maxFragmentationScore - interruptionsPenalty - awakePenalty
         )
 
         return SQSleepScoreBreakdown(
             durationScore: durationScore,
-            bedtimeScore: bedtimeScore,
-            interruptionsScore: interruptionsScore
+            efficiencyScore: efficiencyScore,
+            fragmentationScore: fragmentationScore,
+            architectureScore: architectureScore
         )
     }
 
@@ -226,35 +229,34 @@ struct SQSleepAggregationService {
         return DateInterval(start: bestBlock.start, end: bestBlock.end)
     }
 
-    private func bedtimeScoreFor(startDate: Date) -> Double {
-        let components = calendar.dateComponents([.hour, .minute], from: startDate)
-        let hour = components.hour ?? 0
-        let minute = components.minute ?? 0
+    private func efficiencyScore(for night: SQSleepNight) -> Double {
+        let timeInBed = night.timeInBedDuration
+        guard timeInBed > 0 else { return 0 }
 
-        // Represent post-midnight bedtimes as continuation of previous night.
-        var bedtimeMinutes = hour * 60 + minute
-        if bedtimeMinutes < 12 * 60 {
-            bedtimeMinutes += 24 * 60
-        }
+        let efficiency = night.totalSleepDuration / timeInBed
+        let normalizedEfficiency = (efficiency - 0.72) / 0.20
 
-        let idealStart = 22 * 60            // 10:00 PM
-        let idealEnd = 26 * 60              // 2:00 AM
-        let toleranceEarly = 20 * 60        // 8:00 PM
-        let toleranceLate = 29 * 60         // 5:00 AM
+        return max(0, min(1, normalizedEfficiency)) * SQSleepScoreBreakdown.maxEfficiencyScore
+    }
 
-        if bedtimeMinutes >= idealStart && bedtimeMinutes <= idealEnd {
-            return SQSleepScoreBreakdown.maxBedtimeScore
-        }
+    private func architectureScore(for night: SQSleepNight) -> Double {
+        let totalSleep = night.totalSleepDuration
+        guard totalSleep > 0 else { return 0 }
 
-        if bedtimeMinutes < idealStart {
-            let span = Double(idealStart - toleranceEarly)
-            let progress = Double(bedtimeMinutes - toleranceEarly) / max(1, span)
-            return max(0, min(1, progress)) * SQSleepScoreBreakdown.maxBedtimeScore
-        }
+        let remShare = night.phaseDuration(for: .rem) / totalSleep
+        let deepShare = night.phaseDuration(for: .deep) / totalSleep
 
-        let span = Double(toleranceLate - idealEnd)
-        let progress = Double(toleranceLate - bedtimeMinutes) / max(1, span)
-        return max(0, min(1, progress)) * SQSleepScoreBreakdown.maxBedtimeScore
+        let remFit = normalizedRangeFit(value: remShare, target: 0.24, tolerance: 0.12)
+        let deepFit = normalizedRangeFit(value: deepShare, target: 0.16, tolerance: 0.10)
+        let blendedFit = (remFit * 0.55) + (deepFit * 0.45)
+
+        return blendedFit * SQSleepScoreBreakdown.maxArchitectureScore
+    }
+
+    private func normalizedRangeFit(value: Double, target: Double, tolerance: Double) -> Double {
+        guard tolerance > 0 else { return 0 }
+        let deviation = abs(value - target)
+        return max(0, min(1, 1 - (deviation / tolerance)))
     }
 
     private func latestCompletedWakeDay(now: Date) -> Date {
@@ -290,12 +292,5 @@ struct SQSleepAggregationService {
     private func nightWindowEnd(for wakeDay: Date) -> Date {
         let dayStart = calendar.startOfDay(for: wakeDay)
         return calendar.date(byAdding: .hour, value: 12, to: dayStart) ?? dayStart
-    }
-}
-
-private extension Array where Element == Double {
-    var average: Double {
-        guard !isEmpty else { return 0 }
-        return reduce(0, +) / Double(count)
     }
 }

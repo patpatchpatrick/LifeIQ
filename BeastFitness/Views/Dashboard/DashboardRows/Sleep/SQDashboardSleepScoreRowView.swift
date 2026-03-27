@@ -14,6 +14,8 @@ struct SQDashboardSleepScoreRowView: View {
         case 0:
             return SQColor.dashboardGlowBlue.color.opacity(0.95)
         case 1:
+            return SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.92)
+        case 2:
             return Color.white.opacity(SQColor.isDarkMode ? 0.72 : 0.82)
         default:
             return Color.white.opacity(SQColor.isDarkMode ? 0.46 : 0.62)
@@ -21,36 +23,101 @@ struct SQDashboardSleepScoreRowView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: .SQSpace.xl) {
-            SQSleepScorePieChart(
-                components: viewModel.components,
-                totalLabel: viewModel.scoreLabel,
-                isInteractive: viewModel.isSliceSelectionEnabled,
-                colorProvider: componentColor(for:)
-            )
-            .frame(width: 148, height: 148)
+        let selectedComponent = viewModel.components.first(where: { $0.id == viewModel.selectedComponentId })
 
-            Spacer()
+        return VStack(alignment: .leading, spacing: .SQSpace.l) {
+            HStack(alignment: .center, spacing: .SQSpace.xl) {
+                SQSleepScorePieChart(
+                    components: viewModel.components,
+                    totalLabel: viewModel.scoreLabel,
+                    isInteractive: viewModel.isSliceSelectionEnabled,
+                    selectedComponentId: viewModel.selectedComponentId,
+                    colorProvider: componentColor(for:),
+                    onSelectionChanged: { componentId in
+                        viewModel.selectedComponentId = componentId
+                    }
+                )
+                .frame(width: 148, height: 148)
 
-            VStack(alignment: .leading, spacing: .SQSpace.m) {
-                ForEach(Array(viewModel.components.enumerated()), id: \.element.id) { index, component in
-                    HStack(alignment: .firstTextBaseline, spacing: .SQSpace.m) {
-                        Capsule(style: .continuous)
-                            .fill(componentColor(for: index))
-                            .frame(width: 16, height: 4)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(component.title)
-                                .sqFont(.bodyExtraSmall)
-                                .sqForegroundColor(.textSecondary)
-                            Text("\(Int(component.score))/\(Int(component.maxScore))")
-                                .sqFont(.bodySmallSemiBold)
-                                .sqForegroundColor(.textPrimary)
+                Spacer()
+
+                VStack(alignment: .leading, spacing: .SQSpace.m) {
+                    ForEach(Array(viewModel.components.enumerated()), id: \.element.id) { index, component in
+                        let isSelected = viewModel.selectedComponentId == component.id
+
+                        Button {
+                            viewModel.toggleSelection(for: component.id)
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.m) {
+                                Capsule(style: .continuous)
+                                    .fill(componentColor(for: index))
+                                    .frame(width: 16, height: 4)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(component.title)
+                                        .sqFont(.bodyExtraSmall)
+                                        .sqForegroundColor(isSelected ? .textPrimary : .textSecondary)
+                                    Text("\(Int(component.score))/\(Int(component.maxScore))")
+                                        .sqFont(.bodySmallSemiBold)
+                                        .sqForegroundColor(.textPrimary)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, .SQSpace.m)
+                            .padding(.vertical, .SQSpace.s)
+                            .background {
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                                    .fill(
+                                        isSelected
+                                        ? SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.92 : 1)
+                                        : Color.clear
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                                            .stroke(
+                                                isSelected
+                                                ? SQColor.glassStrokeStrong.color
+                                                : Color.white.opacity(0.001),
+                                                lineWidth: 1
+                                            )
+                                    }
+                            }
+                            .opacity(viewModel.selectedComponentId == nil || isSelected ? 1 : 0.62)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.vertical, .SQSpace.s)
             }
-            .padding(.vertical, .SQSpace.s)
+
+            if let selectedComponent {
+                HStack(alignment: .top, spacing: .SQSpace.m) {
+                    Capsule(style: .continuous)
+                        .fill(componentColor(for: componentIndex(for: selectedComponent.id)))
+                        .frame(width: 18, height: 5)
+                        .padding(.top, 7)
+
+                    Text(selectedComponent.detailText)
+                        .sqFont(.bodyExtraSmall)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, .SQSpace.l)
+                .padding(.vertical, .SQSpace.m)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.96))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        }
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
         }
+        .animation(.easeInOut(duration: 0.18), value: viewModel.selectedComponentId)
+    }
+
+    private func componentIndex(for componentId: String) -> Int {
+        viewModel.components.firstIndex(where: { $0.id == componentId }) ?? 0
     }
 }
 
@@ -60,9 +127,10 @@ private struct SQSleepScorePieChart: View {
     let components: [SQDashboardSleepScoreRowViewModel.Component]
     let totalLabel: String
     let isInteractive: Bool
+    let selectedComponentId: String?
     let colorProvider: (Int) -> Color
+    let onSelectionChanged: (String?) -> Void
 
-    @State private var selectedComponentId: String?
     @State private var pieChartModel: PieChartModel?
 
     private var rebuildKey: String {
@@ -115,8 +183,7 @@ private struct SQSleepScorePieChart: View {
             }
             .frame(width: Self.centerDiscSize - 12)
             .onTapGesture {
-                selectedComponentId = nil
-                pieChartModel?.sectionFocused(sectionId: nil, shouldCallFocusCompletionHandler: false)
+                onSelectionChanged(nil)
             }
         }
         .frame(width: Self.chartSize, height: Self.chartSize)
@@ -125,6 +192,10 @@ private struct SQSleepScorePieChart: View {
         }
         .onChange(of: rebuildKey) { _, _ in
             rebuildModel()
+        }
+        .onChange(of: selectedComponentId) { _, newValue in
+            guard let pieChartModel, pieChartModel.focusedSectionId != newValue else { return }
+            pieChartModel.sectionFocused(sectionId: newValue, shouldCallFocusCompletionHandler: false)
         }
     }
 
@@ -141,7 +212,7 @@ private struct SQSleepScorePieChart: View {
             sections: sectionConfigs,
             sectionIdTapped: { sectionId in
                 guard isInteractive else { return }
-                selectedComponentId = sectionId.map(Self.componentId(from:))
+                onSelectionChanged(sectionId.map(Self.componentId(from:)))
             },
             sectionAlignment: .center,
             widthHeight: Self.chartSize,
@@ -159,7 +230,9 @@ private struct SQSleepScorePieChart: View {
         }
 
         pieChartModel = model
-        selectedComponentId = nil
+        if pieChartModel?.focusedSectionId != selectedComponentId {
+            pieChartModel?.sectionFocused(sectionId: selectedComponentId, shouldCallFocusCompletionHandler: false)
+        }
     }
 
     private func buildSectionConfigs() -> [PieChartSectionConfig] {

@@ -51,6 +51,10 @@ struct SQSleepNight: Identifiable, Sendable {
         phaseDuration(for: .rem) + phaseDuration(for: .core) + phaseDuration(for: .deep)
     }
 
+    var timeInBedDuration: TimeInterval {
+        max(wakeDate.timeIntervalSince(sleepStartDate), 0)
+    }
+
     func phaseDuration(for phase: SQSleepPhase) -> TimeInterval {
         segments
             .filter { $0.phase == phase }
@@ -67,16 +71,18 @@ struct SQSleepNight: Identifiable, Sendable {
 }
 
 struct SQSleepScoreBreakdown: Sendable {
-    static let maxDurationScore = 50.0
-    static let maxBedtimeScore = 30.0
-    static let maxInterruptionsScore = 20.0
+    static let maxDurationScore = 40.0
+    static let maxEfficiencyScore = 25.0
+    static let maxFragmentationScore = 20.0
+    static let maxArchitectureScore = 15.0
 
     let durationScore: Double
-    let bedtimeScore: Double
-    let interruptionsScore: Double
+    let efficiencyScore: Double
+    let fragmentationScore: Double
+    let architectureScore: Double
 
     var totalScore: Double {
-        durationScore + bedtimeScore + interruptionsScore
+        durationScore + efficiencyScore + fragmentationScore + architectureScore
     }
 }
 

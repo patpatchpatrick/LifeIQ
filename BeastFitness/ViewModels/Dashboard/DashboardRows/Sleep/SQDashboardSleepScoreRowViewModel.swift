@@ -13,12 +13,14 @@ final class SQDashboardSleepScoreRowViewModel: SQDashboardRowViewModel {
         let score: Double
         let maxScore: Double
         let color: SQColor
+        let detailText: AttributedString
     }
 
     let totalScore: Double
     let scoreLabel: String
     let components: [Component]
     let isSliceSelectionEnabled: Bool
+    var selectedComponentId: String?
 
     init(
         totalScore: Double,
@@ -30,7 +32,17 @@ final class SQDashboardSleepScoreRowViewModel: SQDashboardRowViewModel {
         self.scoreLabel = scoreLabel
         self.components = components
         self.isSliceSelectionEnabled = isSliceSelectionEnabled
+        self.selectedComponentId = nil
 
         super.init(rowId: .sleepScore, rowType: .sleepScore)
+    }
+
+    func toggleSelection(for componentId: String?) {
+        guard isSliceSelectionEnabled else { return }
+        if selectedComponentId == componentId {
+            selectedComponentId = nil
+        } else {
+            selectedComponentId = componentId
+        }
     }
 }
