@@ -9,8 +9,15 @@ import SwiftUI
 @MainActor
 extension SQDashboardSectionGroupViewModel {
 
-    static var mock: [SQDashboardSectionGroupViewModel] {
-        [mockOverview, mockDailyStats, mockSleep, mockWorkouts]
+    static func mock(for timeRange: AppTimeRange) -> [SQDashboardSectionGroupViewModel] {
+        var groups = [SQDashboardSectionGroupViewModel]()
+
+        if timeRange == .today {
+            groups.append(mockOverview)
+        }
+
+        groups.append(contentsOf: [mockDailyStats, mockSleep, mockWorkouts])
+        return groups
     }
 
     private static var mockOverview: SQDashboardSectionGroupViewModel {
