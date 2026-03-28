@@ -37,6 +37,18 @@ enum SQMetricGoalStyle: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
+// MARK: - SQMetricBodyBatteryEffect
+
+/// Optional user-defined contribution to the Body Battery score.
+/// Preset recovery signals are handled separately in the scoring service;
+/// this config is primarily for custom metrics that should nudge the score.
+enum SQMetricBodyBatteryEffect: String, Codable, CaseIterable, UnfrozenEnum {
+    case none
+    case boostsWhenHigh
+    case drainsWhenHigh
+    case unknown
+}
+
 // MARK: - SQMetricPeriod
 
 /// Determines which check-in screen a metric appears on.
@@ -93,6 +105,9 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     var targetRangeMin: Float?
     /// Upper bound used by `.stayInRange`.
     var targetRangeMax: Float?
+    /// Optional custom contribution to Body Battery. This is aggressively capped
+    /// inside the scoring service so many custom metrics cannot overwhelm the score.
+    var bodyBatteryEffect: SQMetricBodyBatteryEffect
     var updatedAt: Date                 // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
@@ -117,6 +132,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetValue: Float? = nil,
         targetRangeMin: Float? = nil,
         targetRangeMax: Float? = nil,
+        bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -139,6 +155,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.targetValue = targetValue
         self.targetRangeMin = targetRangeMin
         self.targetRangeMax = targetRangeMax
+        self.bodyBatteryEffect = bodyBatteryEffect
         self.updatedAt = updatedAt
     }
 
@@ -164,6 +181,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetValue       = try  c.decodeIfPresent(Float.self,     forKey: .targetValue)
         targetRangeMin    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMin)
         targetRangeMax    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMax)
+        bodyBatteryEffect = (try c.decodeIfPresent(SQMetricBodyBatteryEffect.self, forKey: .bodyBatteryEffect)) ?? .none
         updatedAt         = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
 
         // Decode periods: try new array format first, then fall back to legacy single-period field
@@ -199,6 +217,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         try c.encodeIfPresent(targetValue, forKey: .targetValue)
         try c.encodeIfPresent(targetRangeMin, forKey: .targetRangeMin)
         try c.encodeIfPresent(targetRangeMax, forKey: .targetRangeMax)
+        try c.encode(bodyBatteryEffect, forKey: .bodyBatteryEffect)
         try c.encode(updatedAt,         forKey: .updatedAt)
         // Encode periods as a sorted array for deterministic output
         try c.encode(periods.filter { $0 != .unknown }.map(\.rawValue).sorted(), forKey: .periods)
@@ -210,6 +229,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         case isPreset, isEnabled, isDefault, sortOrder, isArchived, emoji, updatedAt
         case isSingleDailyValue
         case goalStyle, targetValue, targetRangeMin, targetRangeMax
+        case bodyBatteryEffect
         case periods   // new format: array (encode + decode)
         case period    // legacy format: single string (decode only)
     }

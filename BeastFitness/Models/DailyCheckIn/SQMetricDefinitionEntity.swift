@@ -38,6 +38,8 @@ final class SQMetricDefinitionEntity {
     var targetValue: Float?
     var targetRangeMinValue: Float?
     var targetRangeMaxValue: Float?
+    /// Stored as raw value for forward-compatible enum decoding.
+    var bodyBatteryEffectRaw: String = SQMetricBodyBatteryEffect.none.rawValue
 
     // Optional: for Firestore sync later
     var updatedAt: Date
@@ -62,6 +64,7 @@ final class SQMetricDefinitionEntity {
         targetValue: Float? = nil,
         targetRangeMin: Float? = nil,
         targetRangeMax: Float? = nil,
+        bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
         isDefault: Bool = false
     ) {
         self.id = id
@@ -83,6 +86,7 @@ final class SQMetricDefinitionEntity {
         self.targetValue = targetValue
         self.targetRangeMinValue = targetRangeMin
         self.targetRangeMaxValue = targetRangeMax
+        self.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
         self.isDefault = isDefault
         self.updatedAt = .now
     }
@@ -92,6 +96,7 @@ extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }
+    var bodyBatteryEffect: SQMetricBodyBatteryEffect { SQMetricBodyBatteryEffect(unfrozenRawValue: bodyBatteryEffectRaw) }
 
     /// Parses `periodRaw` (comma-separated) into a set of periods.
     /// Handles legacy single-value strings ("morning", "evening") and new multi-value strings.
@@ -132,6 +137,7 @@ extension SQMetricDefinitionEntity {
             targetValue: targetValue,
             targetRangeMin: targetRangeMinValue,
             targetRangeMax: targetRangeMaxValue,
+            bodyBatteryEffect: bodyBatteryEffect,
             updatedAt: updatedAt
         )
     }
@@ -157,6 +163,7 @@ extension SQMetricDefinitionEntity {
         targetValue = def.targetValue
         targetRangeMinValue = def.targetRangeMin
         targetRangeMaxValue = def.targetRangeMax
+        bodyBatteryEffectRaw = def.bodyBatteryEffect.rawValue
         updatedAt = def.updatedAt
     }
 

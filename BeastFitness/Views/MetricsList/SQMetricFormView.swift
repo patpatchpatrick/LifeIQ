@@ -10,7 +10,6 @@ struct SQMetricFormView: View {
     @State var viewModel: SQMetricFormViewModel
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @State private var isConfirmingDelete = false
 
     @ViewBuilder
     private var emojiTile: some View {
@@ -94,6 +93,21 @@ struct SQMetricFormView: View {
         .buttonStyle(.plain)
     }
 
+    private func presentDeleteMetricAlert() {
+        let alert = SQAlertViewModel(
+            title: "Delete Metric?",
+            subtitle: "This will remove the metric from your daily check-in. Past check-in data is preserved.",
+            primary: .init(title: "Delete", role: .destructive) { _ in
+                viewModel.deleteTapped(using: modelContext)
+                dismiss()
+            },
+            secondary: .init(title: "Cancel", role: .cancel),
+            canDismiss: true
+        )
+
+        SQAppState.shared.hub.alertEvents.send(.present(alert))
+    }
+
     @ViewBuilder
     private var emojiInputRow: some View {
         labeledRow(label: "Icon") {
@@ -143,8 +157,14 @@ struct SQMetricFormView: View {
             }
 
             if viewModel.selectedPeriods.count > 1 {
-                labeledRow(label: "Tracking") {
-                    SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    labeledRow(label: "Tracking") {
+                        SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
+                    }
+
+                    Text(viewModel.trackingHelperText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
                 }
             }
         } else {
@@ -243,6 +263,25 @@ struct SQMetricFormView: View {
     }
 
     @ViewBuilder
+    private var bodyBatteryRows: some View {
+        labeledRow(label: "Effect") {
+            SQDropDownMenu(menuViewModel: viewModel.bodyBatteryMenuViewModel, isDisabled: false)
+        }
+
+        Text(viewModel.bodyBatteryHelperText)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textSecondary)
+
+        if let summary = viewModel.bodyBatterySummary {
+            Text(summary)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.dashboardGlowBlue)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, .SQSpace.xs)
+        }
+    }
+
+    @ViewBuilder
     private func formSection(
         title: String,
         subtitle: String? = nil,
@@ -264,7 +303,9 @@ struct SQMetricFormView: View {
             VStack(alignment: .leading, spacing: .SQSpace.m) {
                 content()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
@@ -320,6 +361,12 @@ struct SQMetricFormView: View {
                     unitRow
                     numericRows
                 }
+
+                if viewModel.showsBodyBatteryControls {
+                    formSection(title: "Body Battery", subtitle: "Optional: let this metric nudge the daily score.") {
+                        bodyBatteryRows
+                    }
+                }
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)
@@ -344,18 +391,10 @@ struct SQMetricFormView: View {
             if viewModel.canDelete {
                 ToolbarItem(placement: .topBarTrailing) {
                     toolbarIconButton(symbol: .trash, foregroundColor: .textPrimary) {
-                        isConfirmingDelete = true
+                        presentDeleteMetricAlert()
                     }
                 }
             }
-        }
-        .confirmationDialog("Delete Metric", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                viewModel.deleteTapped(using: modelContext)
-                dismiss()
-            }
-        } message: {
-            Text("This will remove the metric from your daily check-in. Past check-in data is preserved.")
         }
     }
 

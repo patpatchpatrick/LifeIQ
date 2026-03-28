@@ -41,6 +41,7 @@ protocol SQMetricsManaging: AnyObject {
         targetValue: Float?,
         targetRangeMin: Float?,
         targetRangeMax: Float?,
+        bodyBatteryEffect: SQMetricBodyBatteryEffect,
         using context: ModelContext
     ) throws
 
@@ -100,6 +101,7 @@ final class SQMetricsManager: SQMetricsManaging {
                         targetValue: def.targetValue,
                         targetRangeMin: def.targetRangeMin,
                         targetRangeMax: def.targetRangeMax,
+                        bodyBatteryEffect: def.bodyBatteryEffect,
                         isDefault: def.isDefault
                     )
                 )
@@ -220,6 +222,7 @@ final class SQMetricsManager: SQMetricsManaging {
                 targetValue: definition.targetValue,
                 targetRangeMin: definition.targetRangeMin,
                 targetRangeMax: definition.targetRangeMax,
+                bodyBatteryEffect: definition.bodyBatteryEffect,
                 isDefault: false
             )
         )
@@ -238,6 +241,7 @@ final class SQMetricsManager: SQMetricsManaging {
         targetValue: Float?,
         targetRangeMin: Float?,
         targetRangeMax: Float?,
+        bodyBatteryEffect: SQMetricBodyBatteryEffect,
         using context: ModelContext
     ) throws {
         try loadIfNeeded(using: context)
@@ -250,6 +254,7 @@ final class SQMetricsManager: SQMetricsManaging {
         entity.targetValue = targetValue
         entity.targetRangeMinValue = targetRangeMin
         entity.targetRangeMaxValue = targetRangeMax
+        entity.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
         entity.updatedAt = .now
         try saveContextAndNotify(context)
         if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
@@ -303,7 +308,7 @@ final class SQMetricsManager: SQMetricsManaging {
     /// Bumping the key forces a single backfill for existing users when new fields
     /// need to be written to Firestore.
     private func bootstrapPushIfNeeded(context: ModelContext) async {
-        let key = "metric-definitions-bootstrap-v2-goals"
+        let key = "metric-definitions-bootstrap-v4-body-battery-presets"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
         )
@@ -392,6 +397,7 @@ final class SQMetricsManager: SQMetricsManaging {
                     targetValue: def.targetValue,
                     targetRangeMin: def.targetRangeMin,
                     targetRangeMax: def.targetRangeMax,
+                    bodyBatteryEffect: def.bodyBatteryEffect,
                     isDefault: def.isDefault
                 )
                 entity.updatedAt = def.updatedAt
@@ -495,6 +501,7 @@ final class SQMetricsManager: SQMetricsManaging {
                         targetValue: preset.targetValue,
                         targetRangeMin: preset.targetRangeMin,
                         targetRangeMax: preset.targetRangeMax,
+                        bodyBatteryEffect: preset.bodyBatteryEffect,
                         isDefault: preset.isDefault
                     )
                 )
@@ -530,6 +537,10 @@ final class SQMetricsManager: SQMetricsManaging {
                 }
                 if entity.targetRangeMaxValue != preset.targetRangeMax {
                     entity.targetRangeMaxValue = preset.targetRangeMax
+                    didChange = true
+                }
+                if entity.bodyBatteryEffectRaw != preset.bodyBatteryEffect.rawValue {
+                    entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
                     didChange = true
                 }
                 // Upgrade legacy binary metrics to scale 0–10
@@ -599,12 +610,12 @@ final class SQMetricsManager: SQMetricsManaging {
             .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "⚡", periods: both, goalStyle: .justTrack),
+                  emoji: "⚡", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
 
             .init(id: SQMetricId.soreness, title: "Recovery", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "💪", periods: both, goalStyle: .justTrack),
+                  emoji: "💪", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
 
             // MARK: Sleep — single daily value for last night's sleep; editable from either session
             .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
@@ -621,7 +632,7 @@ final class SQMetricsManager: SQMetricsManaging {
             .init(id: SQMetricId.nutrition, title: "Nutrition", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🥗", periods: eveningOnly, goalStyle: .buildUp, targetValue: 1),
+                  emoji: "🥗", periods: eveningOnly, goalStyle: .buildUp, targetValue: 1, bodyBatteryEffect: .boostsWhenHigh),
 
             .init(id: SQMetricId.meditation, title: "Meditation", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
@@ -632,12 +643,12 @@ final class SQMetricsManager: SQMetricsManaging {
             .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🍺", periods: both, goalStyle: .avoidIt),
+                  emoji: "🍺", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh),
 
             .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "☕", periods: both, goalStyle: .avoidIt),
+                  emoji: "☕", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh),
 
             .init(id: SQMetricId.weed, title: "Weed", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,

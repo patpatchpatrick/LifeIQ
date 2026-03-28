@@ -91,6 +91,12 @@ final class SQMetricFormViewModel {
             calculateValidity()
         }
     }
+    var selectedBodyBatteryEffect: SQMetricBodyBatteryEffect = .none {
+        didSet {
+            updateBodyBatteryMenuSelection()
+            calculateValidity()
+        }
+    }
     /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
     var selectedPeriods: Set<SQMetricPeriod> = [.morning]
     /// When both periods are selected, whether this is a single shared daily value or independent per-session.
@@ -114,6 +120,7 @@ final class SQMetricFormViewModel {
     var unitMenuViewModel: SQDropDownMenuViewModel
     var kindMenuViewModel: SQDropDownMenuViewModel
     var goalMenuViewModel: SQDropDownMenuViewModel
+    var bodyBatteryMenuViewModel: SQDropDownMenuViewModel
     var trackingMenuViewModel: SQDropDownMenuViewModel
     let periodMultiSelectViewModel: SQMultiSelectViewModel
 
@@ -143,6 +150,7 @@ final class SQMetricFormViewModel {
         var initialSelectedUnit: SQMetricUnit = .none
         var initialSelectedGroup: String = SQDefaultGroup.general.rawValue
         var initialSelectedGoalStyle: SQMetricGoalStyle = .justTrack
+        var initialSelectedBodyBatteryEffect: SQMetricBodyBatteryEffect = .none
         var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning]
         var initialIsSingleDailyValue: Bool = false
 
@@ -268,6 +276,7 @@ final class SQMetricFormViewModel {
             initialSelectedUnit = existing.unit
             initialSelectedGroup = existing.group
             initialSelectedGoalStyle = existing.goalStyle
+            initialSelectedBodyBatteryEffect = existing.bodyBatteryEffect
             initialSelectedPeriods = existing.periods
             initialIsSingleDailyValue = existing.isSingleDailyValue
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
@@ -287,6 +296,7 @@ final class SQMetricFormViewModel {
         selectedUnit = initialSelectedUnit
         selectedGroup = initialSelectedGroup
         selectedGoalStyle = initialSelectedGoalStyle
+        selectedBodyBatteryEffect = initialSelectedBodyBatteryEffect
         selectedPeriods = initialSelectedPeriods
         isSingleDailyValue = initialIsSingleDailyValue
 
@@ -313,6 +323,12 @@ final class SQMetricFormViewModel {
         self.goalMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(for: initialSelectedGoalStyle)),
             items: goalItems
+        ) { _ in }
+
+        let bodyBatteryItems = Self.bodyBatteryDisplayItems
+        self.bodyBatteryMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: initialSelectedBodyBatteryEffect)),
+            items: bodyBatteryItems
         ) { _ in }
 
         self.trackingMenuViewModel = SQDropDownMenuViewModel(
@@ -360,6 +376,15 @@ final class SQMetricFormViewModel {
         selectedGoalStyle == .stayInRange
     }
 
+    var showsBodyBatteryControls: Bool {
+        switch mode {
+        case .create:
+            return true
+        case .edit(let def):
+            return !def.isPreset
+        }
+    }
+
     var goalTargetLabel: String {
         switch selectedGoalStyle {
         case .buildUp:
@@ -385,6 +410,36 @@ final class SQMetricFormViewModel {
             return "A successful day counts when this metric stays inside the target range."
         case .unknown:
             return ""
+        }
+    }
+
+    var bodyBatteryHelperText: String {
+        switch selectedBodyBatteryEffect {
+        case .none:
+            return "Optional. Leave this off unless the metric should meaningfully nudge daily energy or recovery."
+        case .boostsWhenHigh:
+            return "Higher values will lift Body Battery. The impact is normalized to this metric’s range and aggressively capped."
+        case .drainsWhenHigh:
+            return "Higher values will drain Body Battery. The impact is normalized to this metric’s range and aggressively capped."
+        case .unknown:
+            return ""
+        }
+    }
+
+    var bodyBatterySummary: String? {
+        let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? "This metric"
+            : titleField.text
+
+        switch selectedBodyBatteryEffect {
+        case .none:
+            return nil
+        case .boostsWhenHigh:
+            return "\(title) will help Body Battery when you log higher values."
+        case .drainsWhenHigh:
+            return "\(title) will lower Body Battery when you log higher values."
+        case .unknown:
+            return nil
         }
     }
 
@@ -441,6 +496,12 @@ final class SQMetricFormViewModel {
         }
     }
 
+    var trackingHelperText: String {
+        isSingleDailyValue
+            ? "Shared means both check-ins edit the same daily value. Use this for things like weight or last night’s sleep."
+            : "Independent means morning and evening each keep their own value. Use this for signals that can change through the day."
+    }
+
     var currentKind: SQMetricKind {
         if case .edit(let def) = mode { return def.kind }
         return selectedKind
@@ -489,6 +550,7 @@ final class SQMetricFormViewModel {
                     targetValue: resolvedGoalTargetValue,
                     targetRangeMin: resolvedGoalRangeMin,
                     targetRangeMax: resolvedGoalRangeMax,
+                    bodyBatteryEffect: selectedBodyBatteryEffect,
                     using: context
                 )
             }
@@ -608,6 +670,11 @@ final class SQMetricFormViewModel {
             if !result.isValid { firstError = result.message }
         }
 
+        if firstError == nil {
+            let result = validateBodyBatteryFieldsDetailed()
+            if !result.isValid { firstError = result.message }
+        }
+
         isFormValid = firstError == nil
         saveDisabledMessage = isFormValid ? nil : (firstError ?? "Please fix the errors above.")
     }
@@ -649,6 +716,13 @@ final class SQMetricFormViewModel {
             items: Self.goalDisplayItems
         ) { [weak self] title in
             self?.selectedGoalStyle = Self.goalStyle(fromDisplayName: title)
+        }
+
+        bodyBatteryMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: selectedBodyBatteryEffect)),
+            items: Self.bodyBatteryDisplayItems
+        ) { [weak self] title in
+            self?.selectedBodyBatteryEffect = Self.bodyBatteryEffect(fromDisplayName: title)
         }
 
         trackingMenuViewModel = SQDropDownMenuViewModel(
@@ -731,6 +805,13 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private func updateBodyBatteryMenuSelection() {
+        let title = Self.displayName(for: selectedBodyBatteryEffect)
+        if bodyBatteryMenuViewModel.mainButton.title != title {
+            bodyBatteryMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
     private func updateTrackingMenuSelection() {
         let title = Self.displayName(forTrackingShared: isSingleDailyValue)
         if trackingMenuViewModel.mainButton.title != title {
@@ -762,7 +843,8 @@ final class SQMetricFormViewModel {
                 goalStyle: selectedGoalStyle,
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
-                targetRangeMax: resolvedGoalRangeMax
+                targetRangeMax: resolvedGoalRangeMax,
+                bodyBatteryEffect: selectedBodyBatteryEffect
             )
 
         case .number:
@@ -785,7 +867,8 @@ final class SQMetricFormViewModel {
                 goalStyle: selectedGoalStyle,
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
-                targetRangeMax: resolvedGoalRangeMax
+                targetRangeMax: resolvedGoalRangeMax,
+                bodyBatteryEffect: selectedBodyBatteryEffect
             )
 
         default:
@@ -807,7 +890,8 @@ final class SQMetricFormViewModel {
                 goalStyle: selectedGoalStyle,
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
-                targetRangeMax: resolvedGoalRangeMax
+                targetRangeMax: resolvedGoalRangeMax,
+                bodyBatteryEffect: selectedBodyBatteryEffect
             )
         }
     }
@@ -883,6 +967,21 @@ final class SQMetricFormViewModel {
         if let max = metricUpperBound, value > max {
             return (false, "\(label) must be at most \(Self.formatFloat(max)).")
         }
+        return (true, nil)
+    }
+
+    private func validateBodyBatteryFieldsDetailed() -> (isValid: Bool, message: String?) {
+        guard showsBodyBatteryControls else { return (true, nil) }
+        guard selectedBodyBatteryEffect != .none else { return (true, nil) }
+
+        guard let min = metricLowerBound, let max = metricUpperBound else {
+            return (false, "Body Battery metrics need both Min and Max values so their impact can be normalized.")
+        }
+
+        guard max > min else {
+            return (false, "Body Battery metrics need Max to be greater than Min.")
+        }
+
         return (true, nil)
     }
 
@@ -1052,6 +1151,14 @@ final class SQMetricFormViewModel {
         ]
     }
 
+    private static var bodyBatteryDisplayItems: [SQDropDownMenuViewModel.Item] {
+        [
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.none)),
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.boostsWhenHigh)),
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.drainsWhenHigh)),
+        ]
+    }
+
     private static var trackingDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
             .init(title: "Independent"),
@@ -1102,6 +1209,19 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private static func displayName(for effect: SQMetricBodyBatteryEffect) -> String {
+        switch effect {
+        case .none:
+            return "No Effect"
+        case .boostsWhenHigh:
+            return "Higher Values Help"
+        case .drainsWhenHigh:
+            return "Higher Values Hurt"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
     private static func displayName(forTrackingShared isShared: Bool) -> String {
         isShared ? "Shared" : "Independent"
     }
@@ -1124,6 +1244,14 @@ final class SQMetricFormViewModel {
             .avoidIt,
             .stayInRange,
         ].first(where: { displayName(for: $0) == title }) ?? .justTrack
+    }
+
+    private static func bodyBatteryEffect(fromDisplayName title: String) -> SQMetricBodyBatteryEffect {
+        [
+            SQMetricBodyBatteryEffect.none,
+            .boostsWhenHigh,
+            .drainsWhenHigh,
+        ].first(where: { displayName(for: $0) == title }) ?? .none
     }
 
     private static func isTrackingShared(fromDisplayName title: String) -> Bool {

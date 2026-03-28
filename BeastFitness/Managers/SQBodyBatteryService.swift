@@ -21,15 +21,18 @@ protocol SQBodyBatteryServicing {
 @MainActor
 final class SQBodyBatteryService: SQBodyBatteryServicing {
     private let metricEntryManager: SQMetricEntryManaging
+    private let metricsManager: SQMetricsManaging
     private let sleepAggregationService: SQSleepAggregationService
     private let healthKitManager: SQHealthKitManaging
 
     init(
         metricEntryManager: SQMetricEntryManaging,
+        metricsManager: SQMetricsManaging = SQMetricsManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared
     ) {
         self.metricEntryManager = metricEntryManager
+        self.metricsManager = metricsManager
         self.sleepAggregationService = sleepAggregationService
         self.healthKitManager = healthKitManager
     }
@@ -80,8 +83,12 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         )
         let totalStrain = todaysStrain + carryoverStrain
 
-        let habitAdjustment = bodyBatteryHabitAdjustment(from: todaysCheckIns.last?.values ?? [:])
-        let rawScore = 28 + sleepRecharge + habitAdjustment + heartRecovery.adjustment - totalStrain
+        let todaysCheckInValues = todaysCheckIns.last?.values ?? [:]
+        let checkInAdjustment = bodyBatteryCheckInAdjustment(
+            from: todaysCheckInValues,
+            metrics: metricsManager.allMetrics(includeArchived: false)
+        )
+        let rawScore = 28 + sleepRecharge + checkInAdjustment.totalAdjustment + heartRecovery.adjustment - totalStrain
         let score = Int(clamp(rawScore.rounded(), min: 5, max: 100))
 
         let statusTone: SQDashboardTrendTone
@@ -118,7 +125,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             summary: bodyBatterySummary(
                 sleepRecharge: sleepRecharge,
                 totalStrain: totalStrain,
-                habitAdjustment: habitAdjustment,
+                habitAdjustment: checkInAdjustment.totalAdjustment,
                 heartAdjustment: heartRecovery.adjustment
             ),
             drivers: [
@@ -153,12 +160,12 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 ),
                 .init(
                     title: "Check-ins",
-                    valueText: signedValueText(for: habitAdjustment),
-                    detailText: habitAdjustment == 0 ? "No strong recovery signal" : "Energy, soreness, habits",
-                    attributedDetailText: checkInsDriverDetailText(habitAdjustment: habitAdjustment),
-                    tone: tone(for: habitAdjustment),
-                    symbol: symbol(for: habitAdjustment),
-                    alert: checkInsAlert(habitAdjustment: habitAdjustment)
+                    valueText: signedValueText(for: checkInAdjustment.totalAdjustment),
+                    detailText: checkInsDriverDetailLabel(checkInAdjustment: checkInAdjustment),
+                    attributedDetailText: checkInsDriverDetailText(checkInAdjustment: checkInAdjustment),
+                    tone: tone(for: checkInAdjustment.totalAdjustment),
+                    symbol: symbol(for: checkInAdjustment.totalAdjustment),
+                    alert: checkInsAlert(checkInAdjustment: checkInAdjustment)
                 ),
                 .init(
                     title: "Heart",
@@ -188,18 +195,77 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         return clamp((activeMinutes / 11) + caloriesPenalty + heartRateBonus, min: 0, max: 18)
     }
 
-    private func bodyBatteryHabitAdjustment(from values: [String: Float]) -> Double {
+    private struct CheckInAdjustment {
+        let presetAdjustment: Double
+        let customAdjustment: Double
+        let customMetricTitles: [String]
+        let totalAdjustment: Double
+
+        var hasCustomSignals: Bool {
+            !customMetricTitles.isEmpty
+        }
+    }
+
+    private func bodyBatteryPresetAdjustment(from values: [String: Float]) -> Double {
         let energyBoost = values[SQMetricId.energy].map { clamp((Double($0) - 5.5) * 1.5, min: -7, max: 7) } ?? 0
-        let sorenessBoost = values[SQMetricId.soreness].map { clamp((Double($0) - 5.0) * 1.2, min: -6, max: 6) } ?? 0
+        let recoveryBoost = values[SQMetricId.soreness].map { clamp((Double($0) - 5.0) * 1.2, min: -6, max: 6) } ?? 0
         let nutritionBoost = values[SQMetricId.nutrition].map { clamp((Double($0) - 5.0) * 0.7, min: 0, max: 4) } ?? 0
         let alcoholPenalty = values[SQMetricId.alcohol].map { clamp(Double($0) * 1.5, min: 0, max: 12) } ?? 0
         let caffeinePenalty = values[SQMetricId.caffeine].map { clamp((Double($0) - 6.0) * 0.8, min: 0, max: 4) } ?? 0
 
         return clamp(
-            energyBoost + sorenessBoost + nutritionBoost - alcoholPenalty - caffeinePenalty,
-            min: -18,
-            max: 12
+            energyBoost + recoveryBoost + nutritionBoost - alcoholPenalty - caffeinePenalty,
+            min: -16,
+            max: 10
         )
+    }
+
+    private func bodyBatteryCheckInAdjustment(
+        from values: [String: Float],
+        metrics: [SQMetricDefinition]
+    ) -> CheckInAdjustment {
+        let presetAdjustment = bodyBatteryPresetAdjustment(from: values)
+
+        let customSignals = metrics.compactMap { metric -> (title: String, adjustment: Double)? in
+            guard !metric.isPreset else { return nil }
+            guard metric.bodyBatteryEffect != .none, metric.bodyBatteryEffect != .unknown else { return nil }
+            guard let value = values[metric.id] else { return nil }
+            guard let adjustment = customMetricAdjustment(for: metric, value: value) else { return nil }
+            guard adjustment != 0 else { return nil }
+            return (metric.title, adjustment)
+        }
+
+        let rawCustomAdjustment = customSignals.reduce(0.0) { $0 + $1.adjustment }
+        let customAdjustment = clamp(rawCustomAdjustment, min: -6, max: 6)
+
+        return .init(
+            presetAdjustment: presetAdjustment,
+            customAdjustment: customAdjustment,
+            customMetricTitles: customSignals.map(\.title),
+            totalAdjustment: clamp(presetAdjustment + customAdjustment, min: -18, max: 12)
+        )
+    }
+
+    private func customMetricAdjustment(for metric: SQMetricDefinition, value: Float) -> Double? {
+        guard let min = metric.min, let max = metric.max, max > min else {
+            return nil
+        }
+
+        let normalized = clamp(
+            (Double(value) - Double(min)) / Double(max - min),
+            min: 0,
+            max: 1
+        )
+        let centered = (normalized - 0.5) * 2
+
+        switch metric.bodyBatteryEffect {
+        case .boostsWhenHigh:
+            return clamp(centered * 2, min: -2, max: 2)
+        case .drainsWhenHigh:
+            return clamp(-centered * 2, min: -2, max: 2)
+        case .none, .unknown:
+            return nil
+        }
     }
 
     private func bodyBatterySummary(
@@ -371,23 +437,50 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         )
     }
 
-    private func checkInsAlert(habitAdjustment: Double) -> SQAlertViewModel {
-        let subtitle = "Check-ins adjust Body Battery using Energy, Soreness, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: habitAdjustment)) point(s)."
-        let attributedSubtitle = buildBodyBatteryText([
-            .plain("Check-ins adjust Body Battery using "),
-            .highlight("Energy"),
-            .plain(", "),
-            .highlight("Soreness"),
-            .plain(", "),
-            .highlight("Nutrition"),
-            .plain(", "),
-            .highlight("Alcohol"),
-            .plain(", and "),
-            .highlight("Caffeine"),
-            .plain(". Today those signals changed the score by "),
-            .highlight(signedValueText(for: habitAdjustment)),
-            .plain(" point(s).")
-        ])
+    private func checkInsAlert(checkInAdjustment: CheckInAdjustment) -> SQAlertViewModel {
+        let customSummary = customMetricSummary(for: checkInAdjustment.customMetricTitles)
+        let subtitle: String
+        let attributedSubtitle: AttributedString
+
+        if let customSummary {
+            subtitle = "Check-ins adjust Body Battery using Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s). Custom metric impact is capped so those signals stay supportive instead of dominating the score."
+            attributedSubtitle = buildBodyBatteryText([
+                .plain("Check-ins adjust Body Battery using "),
+                .highlight("Energy"),
+                .plain(", "),
+                .highlight("Recovery"),
+                .plain(", "),
+                .highlight("Nutrition"),
+                .plain(", "),
+                .highlight("Alcohol"),
+                .plain(", "),
+                .highlight("Caffeine"),
+                .plain(", and custom metrics like "),
+                .highlight(customSummary),
+                .plain(". Today those signals changed the score by "),
+                .highlight(signedValueText(for: checkInAdjustment.totalAdjustment)),
+                .plain(" point(s). Custom metric impact is "),
+                .highlight("capped"),
+                .plain(" so those signals stay supportive instead of dominating the score.")
+            ])
+        } else {
+            subtitle = "Check-ins adjust Body Battery using Energy, Recovery, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
+            attributedSubtitle = buildBodyBatteryText([
+                .plain("Check-ins adjust Body Battery using "),
+                .highlight("Energy"),
+                .plain(", "),
+                .highlight("Recovery"),
+                .plain(", "),
+                .highlight("Nutrition"),
+                .plain(", "),
+                .highlight("Alcohol"),
+                .plain(", and "),
+                .highlight("Caffeine"),
+                .plain(". Today those signals changed the score by "),
+                .highlight(signedValueText(for: checkInAdjustment.totalAdjustment)),
+                .plain(" point(s).")
+            ])
+        }
 
         return .init(
             title: "Recovery Signals",
@@ -405,7 +498,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let attributedSubtitle: AttributedString
 
         if !heartRecovery.hasSignal {
-            subtitle = "Body Battery can use resting heart rate when Health access is allowed and Health has collected enough background heart data. Make sure Heart Rate and Resting Heart Rate permissions are enabled in Apple Health and that a compatible device is recording heart data regularly."
+            subtitle = "Body Battery can use resting heart rate when Health access is allowed and Health has collected enough background heart data. Make sure Heart Rate and Resting Heart Rate permissions are enabled and that a compatible device is recording heart data regularly."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Body Battery can use "),
                 .highlight("resting heart rate"),
@@ -413,7 +506,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .highlight("Heart Rate"),
                 .plain(" and "),
                 .highlight("Resting Heart Rate"),
-                .plain(" permissions are enabled in Apple Health and that a compatible device is recording heart data regularly.")
+                .plain(" permissions are enabled and that a compatible device is recording heart data regularly.")
             ])
         } else if !heartRecovery.hasTodayData {
             let baselineText = heartRecovery.baselineAverage.map { "\(Int($0.rounded())) bpm" } ?? "your recent baseline"
@@ -485,13 +578,48 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         ])
     }
 
-    private func checkInsDriverDetailText(habitAdjustment: Double) -> AttributedString? {
-        guard habitAdjustment != 0 else { return nil }
+    private func checkInsDriverDetailLabel(checkInAdjustment: CheckInAdjustment) -> String {
+        if checkInAdjustment.hasCustomSignals {
+            return "Recovery + \(checkInAdjustment.customMetricTitles.count) custom"
+        }
+
+        if checkInAdjustment.totalAdjustment == 0 {
+            return "No strong recovery signal"
+        }
+
+        return "Energy, Recovery, habits"
+    }
+
+    private func checkInsDriverDetailText(checkInAdjustment: CheckInAdjustment) -> AttributedString? {
+        if checkInAdjustment.hasCustomSignals {
+            return buildBodyBatteryText([
+                .highlight(signedValueText(for: checkInAdjustment.totalAdjustment)),
+                .plain(" from "),
+                .highlight("\(checkInAdjustment.customMetricTitles.count)"),
+                .plain(" custom + preset signals")
+            ])
+        }
+
+        guard checkInAdjustment.totalAdjustment != 0 else { return nil }
 
         return buildBodyBatteryText([
-            .highlight(signedValueText(for: habitAdjustment)),
+            .highlight(signedValueText(for: checkInAdjustment.totalAdjustment)),
             .plain(" from today's recovery signals")
         ])
+    }
+
+    private func customMetricSummary(for titles: [String]) -> String? {
+        guard !titles.isEmpty else { return nil }
+        if titles.count == 1 {
+            return titles[0]
+        }
+        if titles.count == 2 {
+            return "\(titles[0]) and \(titles[1])"
+        }
+
+        let visibleTitles = titles.prefix(2)
+        let remainingCount = titles.count - visibleTitles.count
+        return "\(visibleTitles.joined(separator: ", ")), and \(remainingCount) more"
     }
 
     private func heartDriverDetailText(
