@@ -318,6 +318,10 @@ extension SQWorkoutStatsManager {
             )
         }
 
+        if row.id.contains(SQQuantityType.heartRate.id) {
+            return buildHeartRatePercentileHighlight(for: row, percentile: percentile)
+        }
+
         let topPercent = Int(round((1.0 - percentile) * 100))
         let pctileInt = Int(round(percentile * 100))
         let ordinal = ordinalString(for: pctileInt)
@@ -358,6 +362,54 @@ extension SQWorkoutStatsManager {
                     .init(text: ")", isStatistic: false)
                 ],
                 sentiment: .negative
+            )
+        }
+    }
+
+    private func buildHeartRatePercentileHighlight(
+        for row: SQPerformanceRowData,
+        percentile: Double
+    ) -> SQWorkoutReviewHighlight {
+        let topPercent = Int(round((1.0 - percentile) * 100))
+        let pctileInt = Int(round(percentile * 100))
+        let ordinal = ordinalString(for: pctileInt)
+
+        switch percentile {
+        case 0.90...:
+            return SQWorkoutReviewHighlight(
+                segments: [
+                    .init(text: "Top ", isStatistic: false),
+                    .init(text: "\(topPercent)%", isStatistic: true),
+                    .init(text: " for \(row.title) — higher than your usual range", isStatistic: false)
+                ],
+                sentiment: .neutral
+            )
+        case 0.65...:
+            return SQWorkoutReviewHighlight(
+                segments: [
+                    .init(text: "Top ", isStatistic: false),
+                    .init(text: "\(topPercent)%", isStatistic: true),
+                    .init(text: " for \(row.title)", isStatistic: false)
+                ],
+                sentiment: .neutral
+            )
+        case 0.35...:
+            return SQWorkoutReviewHighlight(
+                segments: [
+                    .init(text: "Typical \(row.title) (", isStatistic: false),
+                    .init(text: "~\(ordinal) %ile", isStatistic: true),
+                    .init(text: ")", isStatistic: false)
+                ],
+                sentiment: .neutral
+            )
+        default:
+            return SQWorkoutReviewHighlight(
+                segments: [
+                    .init(text: "Lower \(row.title) (", isStatistic: false),
+                    .init(text: "\(ordinal) %ile", isStatistic: true),
+                    .init(text: ")", isStatistic: false)
+                ],
+                sentiment: .neutral
             )
         }
     }

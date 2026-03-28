@@ -111,6 +111,7 @@ struct SQWorkoutSummaryView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
@@ -178,6 +179,7 @@ struct SQWorkoutSummaryView: View {
                 scaleMax: "Max effort"
             )
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }

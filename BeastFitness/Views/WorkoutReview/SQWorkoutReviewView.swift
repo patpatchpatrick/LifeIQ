@@ -36,41 +36,45 @@ struct SQWorkoutReviewView: View {
 
     @ViewBuilder
     var actionBar: some View {
-        HStack(spacing: .SQSpace.m) {
-            if reviewState.queueCount > 1 {
-                
-                SQButton(
-                    shouldHugContent: false,
-                    title: "Skip Remaining",
-                    action: {
-                        reviewState.markAllAsProcessed(context: modelContext)
-                    }
-                )
+        VStack(spacing: 0) {
+            Divider()
+                .sqTintColor(.glassStroke)
 
-                Spacer()
+            HStack(spacing: .SQSpace.m) {
+                if reviewState.queueCount > 1 {
+                    SQButton(
+                        style: .secondary,
+                        shouldHugContent: false,
+                        title: "Skip Remaining",
+                        action: {
+                            reviewState.markAllAsProcessed(context: modelContext)
+                        }
+                    )
 
-                SQButton(
-                    shouldHugContent: false,
-                    title: "Review Next",
-                    action: {
-                        reviewState.markCurrentAsProcessed(context: modelContext)
-                    }
-                )
-            } else {
-                Spacer()
-                
-                SQButton(
-                    shouldHugContent: false,
-                    title: "Done",
-                    action: {
-                        reviewState.markCurrentAsProcessed(context: modelContext)
-                    }
-                )
+                    SQButton(
+                        style: .glassPrimary,
+                        shouldHugContent: false,
+                        title: "Review Next",
+                        action: {
+                            reviewState.markCurrentAsProcessed(context: modelContext)
+                        }
+                    )
+                } else {
+                    SQButton(
+                        style: .glassPrimary,
+                        shouldHugContent: false,
+                        title: "Done",
+                        action: {
+                            reviewState.markCurrentAsProcessed(context: modelContext)
+                        }
+                    )
+                }
             }
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.top, .SQSpace.m)
+            .padding(.bottom, .SQSpace.l)
         }
-        .padding(.horizontal, .SQSpace.xl)
-        .padding(.vertical, .SQSpace.l)
-        .background(SQColor.backgroundSheet.color)
+        .background(.ultraThinMaterial)
         .interactiveDismissDisabled()
     }
 
