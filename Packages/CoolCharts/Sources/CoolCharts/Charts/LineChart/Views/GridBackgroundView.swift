@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 public struct GridConfig {
     let numberOfHorizontalLines: Int
@@ -13,13 +14,25 @@ public struct GridConfig {
     let lineColor: Color
     let xLabelBuilder: ((CGFloat) -> String)?
     let yLabelBuilder: ((CGFloat) -> String)?
+    let showRangeLabels: Bool
+    let rangeLabelBuilder: ((CGFloat) -> String)?
     
-    public init(numberOfHorizontalLines: Int = 3, numberOfVerticalLines: Int = 3, lineColor: Color = .gray.opacity(0.2), xLabelBuilder: ((CGFloat) -> String)? = nil, yLabelBuilder:  ((CGFloat) -> String)? = nil) {
+    public init(
+        numberOfHorizontalLines: Int = 3,
+        numberOfVerticalLines: Int = 3,
+        lineColor: Color = .gray.opacity(0.2),
+        xLabelBuilder: ((CGFloat) -> String)? = nil,
+        yLabelBuilder:  ((CGFloat) -> String)? = nil,
+        showRangeLabels: Bool = true,
+        rangeLabelBuilder: ((CGFloat) -> String)? = nil
+    ) {
         self.numberOfHorizontalLines = numberOfHorizontalLines
         self.numberOfVerticalLines = numberOfVerticalLines
         self.lineColor = lineColor
         self.xLabelBuilder = xLabelBuilder
         self.yLabelBuilder = yLabelBuilder
+        self.showRangeLabels = showRangeLabels
+        self.rangeLabelBuilder = rangeLabelBuilder
     }
 }
 
@@ -89,6 +102,43 @@ struct GridBackgroundView: View {
                     }
                 }
 
+                if gridConfig.showRangeLabels {
+                    let topLabel = buildRangeLabel(for: yMax)
+                    let bottomLabel = buildRangeLabel(for: yMin)
+                    let labelsAreEqual = topLabel == bottomLabel
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(topLabel)
+                            .font(lineChartModel.uiConfig.fontConfig.font)
+                            .foregroundColor(lineChartModel.uiConfig.colorConfig.textSecondary.opacity(0.45))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(lineChartModel.uiConfig.colorConfig.backgroundPrimary.opacity(0.22))
+                            )
+
+                        Spacer()
+
+                        if !labelsAreEqual {
+                            Text(bottomLabel)
+                                .font(lineChartModel.uiConfig.fontConfig.font)
+                                .foregroundColor(lineChartModel.uiConfig.colorConfig.textSecondary.opacity(0.38))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(lineChartModel.uiConfig.colorConfig.backgroundPrimary.opacity(0.16))
+                                )
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .padding(.leading, 6)
+                    .padding(.top, 2)
+                    .padding(.bottom, 8)
+                    .allowsHitTesting(false)
+                }
+
                 // X-axis labels (bottom)
                 if let xLabelBuilder = gridConfig.xLabelBuilder {
                     ForEach(0...numberOfVerticalLines, id: \.self) { i in
@@ -104,5 +154,20 @@ struct GridBackgroundView: View {
             }
         }
         .frame(width: lineChartModel.width, height: lineChartModel.height)
+    }
+
+    private func buildRangeLabel(for value: CGFloat) -> String {
+        if let rangeLabelBuilder = gridConfig.rangeLabelBuilder {
+            return rangeLabelBuilder(value)
+        }
+
+        let number = Double(value)
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        formatter.maximumFractionDigits = abs(number) >= 100 ? 0 : (abs(number) >= 10 ? 1 : 2)
+        formatter.minimumFractionDigits = 0
+
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 }
