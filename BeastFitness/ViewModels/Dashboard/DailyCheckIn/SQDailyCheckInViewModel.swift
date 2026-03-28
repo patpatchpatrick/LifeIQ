@@ -477,17 +477,17 @@ final class SQDailyCheckInViewModel: Identifiable {
             let dateString = dateFormatter.string(from: normalizedDate)
 
             for entryPeriod in [SQMetricPeriod.morning, .evening] {
-                let stats = try? await dailyCheckInManager.getDailyCheckInStats(
+                let isCompleted = (try? await dailyCheckInManager.hasCompletedCheckIn(
                     for: normalizedDate,
                     period: entryPeriod,
                     context: modelContext
-                )
+                )) ?? false
                 entries.append(SQDatePickerModal.DateEntry(
                     date: normalizedDate,
                     displayText: "\(dateString) — \(entryPeriod.rawValue.capitalized)",
                     period: entryPeriod,
                     isToday: isToday,
-                    isCompleted: stats != nil
+                    isCompleted: isCompleted
                 ))
             }
         }

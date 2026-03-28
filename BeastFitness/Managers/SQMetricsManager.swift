@@ -601,7 +601,7 @@ final class SQMetricsManager: SQMetricsManaging {
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "⚡", periods: both, goalStyle: .justTrack),
 
-            .init(id: SQMetricId.soreness, title: "Soreness / Recovery", kind: .scale, unit: .none,
+            .init(id: SQMetricId.soreness, title: "Recovery", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "💪", periods: both, goalStyle: .justTrack),

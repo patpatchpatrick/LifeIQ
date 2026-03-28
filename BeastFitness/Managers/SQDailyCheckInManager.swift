@@ -45,6 +45,8 @@ protocol SQDailyCheckInManaging {
     /// - For periodic metrics: returns only entries recorded in the given period.
     /// Pass `period: nil` to return all entries for the day (used for completion checks).
     func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats?
+    /// Returns whether the user has explicitly submitted the requested check-in session.
+    func hasCompletedCheckIn(for date: Date, period: SQMetricPeriod, context: ModelContext) async throws -> Bool
     /// Smart sync that checks Core Data first and only syncs from Firestore if needed
     func syncDailyCheckInsIfNeeded(for timeRange: SQTimeRange, context: ModelContext) async throws -> SyncResult
 }
@@ -107,6 +109,15 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         }
 
         try SQMetricEntryEntity.upsert(entries, in: modelContext)
+        // Record an explicit local completion marker for this session so the dashboard
+        // can distinguish morning vs evening completion even when some metric values
+        // are shared across both check-ins.
+        try SQDailyCheckInSessionEntity.upsert(
+            date: stats.date,
+            period: submissionPeriod,
+            completedAt: now,
+            in: modelContext
+        )
 
         if let notesText = stats.notes, !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let note = SQDailyNote(anchorDayKey: anchorDayKey, content: notesText)
@@ -163,6 +174,22 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         }
         let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
         return values.isEmpty ? nil : SQDailyCheckInStats(date: date, period: period, values: values, notes: note?.content)
+    }
+
+    func hasCompletedCheckIn(for date: Date, period: SQMetricPeriod, context: ModelContext) async throws -> Bool {
+        // Prefer the explicit local completion marker. Fallbacks only exist so older
+        // local data continues to behave until the user submits again on the new model.
+        if try SQDailyCheckInSessionEntity.exists(for: date, period: period, context: context) {
+            return true
+        }
+
+        let anchorDayKey = date.anchorDayKey()
+        let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
+        if !entries.isEmpty {
+            return entries.contains(where: { $0.period == period })
+        }
+
+        return try SQDailyCheckInEntity.get(for: date, context: context) != nil
     }
 
     // MARK: - Smart Sync

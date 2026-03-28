@@ -263,11 +263,11 @@ final class SQDashboardController: SQDashboardInterface {
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
             let currentCheckInPeriod = DashboardState.checkInPeriod(for: .now)
-            let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
+            let hasCompletedCurrentCheckIn = (try? await dailyCheckInManager.hasCompletedCheckIn(
                 for: .now,
                 period: currentCheckInPeriod,
                 context: context
-            )
+            )) ?? false
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
             let todaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
@@ -319,7 +319,7 @@ final class SQDashboardController: SQDashboardInterface {
             )
 
             // Set the daily check-in CTA view model if no stats exist
-            if dailyCheckInStats == nil, userState.isLoggedIn {
+            if !hasCompletedCurrentCheckIn, userState.isLoggedIn {
                 state.updateDailyCheckInCtaViewModel(.init(
                     icon: .init(symbol: .checkmark),
                     title: "Complete your \(title(for: currentCheckInPeriod)) check-in",
@@ -608,7 +608,7 @@ final class SQDashboardController: SQDashboardInterface {
             ("mood",    "😊", "Mood",    "/10"),
             ("energy",  "⚡️", "Energy",  "/10"),
             ("sleep",   "😴", "Sleep",   "hrs"),
-            ("soreness","🦵", "Soreness","/10"),
+            ("soreness","🦵", "Recovery","/10"),
             ("clarity", "🧠", "Clarity", "/10")
         ]
         let fakeRows = presets.enumerated().map { index, preset in
