@@ -30,6 +30,18 @@ struct SQUserIcon: View {
             return .bodySemiBold
         }
     }
+
+    private var monogramText: String {
+        let preferredSource = user.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallbackSource = user.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let source = preferredSource.isEmpty ? fallbackSource : preferredSource
+
+        guard let firstCharacter = source.first else {
+            return "?"
+        }
+
+        return String(firstCharacter).uppercased()
+    }
     
     var body: some View {
         ZStack {
@@ -40,7 +52,7 @@ struct SQUserIcon: View {
                         .stroke(SQColor.glassStroke.color, lineWidth: 1)
                 )
             
-            Text((user.name.first ?? .init("")).uppercased())
+            Text(monogramText)
                 .sqFont(monogramFont)
                 .sqForegroundColor(.textPrimary)
         }

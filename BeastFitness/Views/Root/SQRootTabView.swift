@@ -63,6 +63,9 @@ struct SQRootTabView: View {
         .background(Color.purple)
         .accentColor(SQColor.textPrimary.color)
         .onOpenURL(perform: { url in
+            if SQAuthManager.shared.handleGoogleSignIn(url: url) {
+                return
+            }
             viewModel.deepLinkManager.handleUriDeepLink(for: url)
         })
         .task {

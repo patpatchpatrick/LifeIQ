@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GoogleSignInSwift
 
 struct SQLoginView: View {
     @State var controller: SQLoginController
@@ -86,6 +87,34 @@ struct SQLoginView: View {
     }
 
     @ViewBuilder
+    private var socialAuthCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Continue With")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("Use a connected account for a faster sign-in flow.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+
+            GoogleSignInButton(
+                scheme: SQColor.isDarkMode ? .dark : .light,
+                style: .wide,
+                state: controller.isLoading ? .disabled : .normal
+            ) {
+                controller.googleButtonTapped()
+            }
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous))
+            .buttonStyle(.plain)
+            .background(Color.clear)
+            .shadow(color: .clear, radius: 0)
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
     private var alternateModeRow: some View {
         HStack(spacing: .SQSpace.xs) {
             Text(alternatePrompt)
@@ -126,6 +155,7 @@ struct SQLoginView: View {
             VStack(spacing: .SQSpace.l) {
                 heroCard
                 formCard
+                socialAuthCard
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)

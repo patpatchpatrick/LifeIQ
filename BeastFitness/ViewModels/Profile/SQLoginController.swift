@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import FirebaseAuth
 import BeastFitnessCore
 
 enum SQLoginMode: String {
@@ -93,6 +94,10 @@ protocol SQLoginInterface: AnyObject {
         Task { await loginOrSignUp() }
     }
 
+    func googleButtonTapped() {
+        Task { await loginOrSignUpWithGoogle() }
+    }
+
     private func loginOrSignUp() async {
         guard !isLoading else { return }
         guard inputsAreValid() else { return }
@@ -103,12 +108,29 @@ protocol SQLoginInterface: AnyObject {
         do {
             switch mode {
             case .login:
-                try await login()
+                let result = try await login()
+                try await completeAuthentication(result: result, fallbackEmail: emailViewModel.text)
             case .signup:
-                try await signUp()
+                let result = try await signUp()
+                try await completeAuthentication(result: result, fallbackEmail: emailViewModel.text)
             }
         } catch {
-            hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
+            presentAuthError(error)
+        }
+    }
+
+    private func loginOrSignUpWithGoogle() async {
+        guard !isLoading else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let presentingViewController = try currentPresentingViewController()
+            let result = try await SQAuthManager.shared.signInWithGoogle(presentingViewController: presentingViewController)
+            try await completeAuthentication(result: result, fallbackEmail: result.user.email)
+        } catch {
+            presentAuthError(error)
         }
     }
 
@@ -124,37 +146,76 @@ protocol SQLoginInterface: AnyObject {
         return true
     }
 
-    private func login() async throws {
+    private func login() async throws -> AuthDataResult {
                 
         let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            let result = try await SQAuthManager.shared.signIn(email: email, password: passwordViewModel.text)
-            
-            SQLogger.shared.log("User logged in successfully", .info, context: .loginSignup)
-            
-            hub.toastEvents.send(.present(.init(title: "Login successful!", style: .success)))
-            hub.domainEvents.send(.dismissDashboardNavStack)
+            return try await SQAuthManager.shared.signIn(email: email, password: passwordViewModel.text)
         } catch {
             throw SQAuthError.from(error)
         }
     }
 
-    private func signUp() async throws {
+    private func signUp() async throws -> AuthDataResult {
         let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            let result = try await SQAuthManager.shared.createUser(email: email, password: passwordViewModel.text)
-            let user = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: email)
-            SQUserDefaults.shared.markPendingOnboarding(for: result.user.uid)
-            SQAppState.shared.userState.updateLoggedInUser(user, hasLoadedProfile: true)
-            
-            SQLogger.shared.log("User signed in successfully", .info, context: .loginSignup)
-            
-            hub.toastEvents.send(.present(.init(title: "Signup successful!", style: .success)))
-            hub.domainEvents.send(.dismissDashboardNavStack)
-            
+            return try await SQAuthManager.shared.createUser(email: email, password: passwordViewModel.text)
         } catch {
             throw SQAuthError.from(error)
         }
+    }
+
+    private func completeAuthentication(result: AuthDataResult, fallbackEmail: String?) async throws {
+        let trimmedFallbackEmail = fallbackEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedEmail = result.user.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? trimmedFallbackEmail
+        let isNewUser = result.additionalUserInfo?.isNewUser == true
+
+        if isNewUser {
+            guard let resolvedEmail, !resolvedEmail.isEmpty else {
+                throw SQAuthError(description: "Could not determine your account email.")
+            }
+
+            let user = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: resolvedEmail)
+            SQUserDefaults.shared.markPendingOnboarding(for: result.user.uid)
+            SQAppState.shared.userState.updateLoggedInUser(user, hasLoadedProfile: true)
+
+            SQLogger.shared.log("User signed up successfully", .info, context: .loginSignup)
+            hub.toastEvents.send(.present(.init(title: "Signup successful!", style: .success)))
+        } else {
+            if let existingUser = try? await SQUserManager.shared.fetchUser(uid: result.user.uid) {
+                SQAppState.shared.userState.updateLoggedInUser(existingUser, hasLoadedProfile: true)
+            }
+
+            SQLogger.shared.log("User logged in successfully", .info, context: .loginSignup)
+            hub.toastEvents.send(.present(.init(title: "Login successful!", style: .success)))
+        }
+
+        hub.domainEvents.send(.dismissDashboardNavStack)
+    }
+
+    private func presentAuthError(_ error: Error) {
+        if let authError = error as? SQAuthError {
+            guard authError.shouldPresentToUser else { return }
+            hub.alertEvents.send(.present(.init(authError)))
+            return
+        }
+
+        hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
+    }
+
+    private func currentPresentingViewController() throws -> UIViewController {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+              let rootViewController = scene.windows.first(where: \.isKeyWindow)?.rootViewController else {
+            throw SQAuthError(description: "Could not start Google Sign-In because no active view was available.")
+        }
+
+        var presentingViewController = rootViewController
+        while let presentedViewController = presentingViewController.presentedViewController {
+            presentingViewController = presentedViewController
+        }
+        return presentingViewController
     }
 
     private static func isValidEmail(_ text: String) -> Bool {

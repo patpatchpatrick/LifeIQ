@@ -7,11 +7,16 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseCore
+import GoogleSignIn
+import UIKit
 
 @MainActor
 protocol SQAuthManaging: AnyObject {
     func signIn(email: String, password: String) async throws -> AuthDataResult
     func createUser(email: String, password: String) async throws -> AuthDataResult
+    func signInWithGoogle(presentingViewController: UIViewController) async throws -> AuthDataResult
+    func handleGoogleSignIn(url: URL) -> Bool
     func signOut() throws
 }
 
@@ -51,7 +56,39 @@ final class SQAuthManager: SQAuthManaging {
         try await Auth.auth().createUser(withEmail: email, password: password)
     }
 
+    func signInWithGoogle(presentingViewController: UIViewController) async throws -> AuthDataResult {
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            throw SQAuthError(description: "Google Sign-In is not configured for this app.")
+        }
+
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+
+        let signInResult: GIDSignInResult
+        do {
+            signInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController)
+        } catch {
+            throw SQAuthError.fromGoogle(error)
+        }
+
+        let googleUser = signInResult.user
+        guard let idToken = googleUser.idToken?.tokenString else {
+            throw SQAuthError(description: "Google Sign-In did not return an ID token.")
+        }
+
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: googleUser.accessToken.tokenString
+        )
+
+        return try await Auth.auth().signIn(with: credential)
+    }
+
+    func handleGoogleSignIn(url: URL) -> Bool {
+        GIDSignIn.sharedInstance.handle(url)
+    }
+
     func signOut() throws {
+        GIDSignIn.sharedInstance.signOut()
         try Auth.auth().signOut()
     }
 }
@@ -61,10 +98,12 @@ final class SQAuthManager: SQAuthManaging {
 struct SQAuthError: SQUserFacingError {
     let userFacingTitle: String
     let userFacingDescription: String
+    let shouldPresentToUser: Bool
 
-    init(description: String, title: String = "Authentication Error") {
+    init(description: String, title: String = "Authentication Error", shouldPresentToUser: Bool = true) {
         self.userFacingTitle = title
         self.userFacingDescription = description
+        self.shouldPresentToUser = shouldPresentToUser
     }
 
     static func from(_ error: Error) -> SQAuthError {
@@ -87,5 +126,20 @@ struct SQAuthError: SQUserFacingError {
         default:
             return .init(description: "Something went wrong. Please try again.")
         }
+    }
+
+    static func fromGoogle(_ error: Error) -> SQAuthError {
+        if let error = error as? SQAuthError {
+            return error
+        }
+
+        let nsError = error as NSError
+        let localizedDescription = nsError.localizedDescription.lowercased()
+        if nsError.domain == kGIDSignInErrorDomain,
+           (localizedDescription.contains("canceled") || localizedDescription.contains("cancelled")) {
+            return .init(description: "Google Sign-In was canceled.", shouldPresentToUser: false)
+        }
+
+        return .init(description: nsError.localizedDescription)
     }
 }
