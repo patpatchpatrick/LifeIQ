@@ -558,6 +558,28 @@ final class SQDashboardController: SQDashboardInterface {
             }
         }()
 
+        let metricsEmptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel = {
+            let emptyStateTitle: String
+            if timeRange == .today {
+                let currentCheckInPeriod = DashboardState.checkInPeriod(for: .now)
+                emptyStateTitle = "Complete your \(title(for: currentCheckInPeriod)) check-in"
+            } else {
+                emptyStateTitle = "Log your next daily check-in"
+            }
+
+            return .init(
+                title: emptyStateTitle,
+                subtitle: "Track your daily metrics to populate this section.",
+                icon: .checkmarkCircle,
+                onTap: { [weak self] in
+                    guard let self else { return }
+                    Task { @MainActor in
+                        await self.displayDailyCheckInSheet(for: context)
+                    }
+                }
+            )
+        }()
+
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "metrics",
             title: "Metrics",
@@ -566,7 +588,8 @@ final class SQDashboardController: SQDashboardInterface {
             dropDownViewModel: dropDownViewModel,
             titleButton: titleButton,
             columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader],
-            maxVisibleRows: 4
+            maxVisibleRows: 4,
+            emptyState: metricsEmptyState
         )
 
         // ✅ Pass the title (String) to match rowsByFilter keys

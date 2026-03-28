@@ -30,4 +30,15 @@ final class SQDashboardSectionGroupViewModel: Identifiable {
     func toggleExpanded() {
         isExpanded.toggle()
     }
+
+    func cloned() -> SQDashboardSectionGroupViewModel {
+        let clonedGroup = SQDashboardSectionGroupViewModel(
+            id: id,
+            title: title,
+            defaultPriority: defaultPriority,
+            sections: sections.map { $0.cloned() }
+        )
+        clonedGroup.isExpanded = isExpanded
+        return clonedGroup
+    }
 }

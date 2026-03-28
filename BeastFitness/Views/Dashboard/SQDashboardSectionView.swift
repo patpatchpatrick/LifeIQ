@@ -26,7 +26,11 @@ struct SQDashboardSectionView: View {
             titleButton: section.titleButton
         ) {
             if section.activeRows.isEmpty {
-                SQSubsectionEmptyState(message: "No data available")
+                if let emptyState = section.emptyState {
+                    SQSubsectionEmptyState(viewModel: emptyState)
+                } else {
+                    SQSubsectionEmptyState(message: "No data available")
+                }
             } else {
                 VStack(spacing: 0) {
                     // Render column headers if provided, outside the rows VStack

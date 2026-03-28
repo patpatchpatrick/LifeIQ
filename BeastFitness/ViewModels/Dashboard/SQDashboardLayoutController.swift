@@ -65,6 +65,13 @@ final class SQDashboardLayoutController: SQDashboardLayoutInterface, Identifiabl
         onLayoutUpdated()
     }
 
+    func displaySubsections(for groupId: String) {
+        hub.domainEvents.send(.pushDashboardRoute(.dashboardSubsectionLayout(
+            controller: self,
+            groupId: groupId
+        )))
+    }
+
     func dismiss() {
         hub.domainEvents.send(.popDashboardRoute)
     }

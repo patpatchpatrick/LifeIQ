@@ -29,6 +29,10 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 - **Workouts** history and summaries
 - **Daily stats/habits** that we track ourselves (e.g., mood, alcohol use, energy levels, etc.)
 
+### Dashboard View Model Cloning
+
+Dashboard layout customization clones dashboard section and subsection view models before applying saved ordering and visibility. Keep that clone logic centralized on the view models themselves via shared copy APIs, not duplicated field-by-field inside services. Otherwise new properties can be added to the primary models and silently dropped in the customized dashboard path.
+
 ### Daily Check-In Metrics Organization
 
 Metrics have a `group: String` property on `SQMetricDefinition`. Groups are user-facing strings and fully dynamic — users can create their own. Well-known defaults are defined in `SQDefaultGroup` (`BeastFitness/Models/DailyCheckIn/SQMetric.swift`):

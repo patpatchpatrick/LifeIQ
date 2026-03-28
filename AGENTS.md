@@ -107,6 +107,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Subsection card: `SQDashboardSubsectionViewModel`
 - Keep group composition logic centralized in `SQDashboardController.buildSectionGroups(...)`.
 - Prefer extending existing row infrastructure (for example `SQDashboardMetricStatsRowViewModel`) before introducing custom row types.
+- Dashboard layout customization clones section/subsection view models before applying order/visibility. Keep cloning centralized on the view models themselves (`cloned()` / copy API) rather than reconstructing them field-by-field in services, so new properties cannot be silently dropped.
 
 Current intended dashboard structure:
 - `Daily Stats`: `Metrics`, `Performance`

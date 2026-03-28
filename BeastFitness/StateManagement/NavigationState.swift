@@ -101,6 +101,7 @@ struct SQNavRoute {
         case login(controller: SQLoginController)
         case settings(controller: SQSettingsController)
         case dashboardLayout(controller: SQDashboardLayoutController)
+        case dashboardSubsectionLayout(controller: SQDashboardLayoutController, groupId: String)
         
         var id: String {
             switch self {
@@ -126,6 +127,8 @@ struct SQNavRoute {
                 return "settings-\(controller.id)"
             case .dashboardLayout(let controller):
                 return "dashboardLayout-\(controller.id)"
+            case .dashboardSubsectionLayout(let controller, let groupId):
+                return "dashboardSubsectionLayout-\(controller.id)-\(groupId)"
             }
         }
         

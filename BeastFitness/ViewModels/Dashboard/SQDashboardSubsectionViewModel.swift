@@ -10,6 +10,13 @@ import SwiftUI
 
 @MainActor
 @Observable final class SQDashboardSubsectionViewModel: Identifiable {
+    struct EmptyStateViewModel {
+        let title: String
+        let subtitle: String?
+        let icon: SQImageSymbol
+        let onTap: (() -> Void)?
+    }
+
     /// View model for a title button in the subsection header
     struct TitleButtonViewModel {
         let icon: SQImageSymbol
@@ -26,6 +33,7 @@ import SwiftUI
     var columnHeaders: [String]?
     var rowSpacing: CGFloat?
     var maxVisibleRows: Int?
+    var emptyState: EmptyStateViewModel?
     var isLocked: Bool = false
     var onLockedTap: (() -> Void)? = nil
     private(set) var isShowingAllRows: Bool = false
@@ -42,7 +50,8 @@ import SwiftUI
         titleButton: TitleButtonViewModel? = nil,
         columnHeaders: [String]? = nil,
         rowSpacing: CGFloat? = nil,
-        maxVisibleRows: Int? = nil
+        maxVisibleRows: Int? = nil,
+        emptyState: EmptyStateViewModel? = nil
     ) {
         self.id = id
         self.title = title
@@ -53,6 +62,7 @@ import SwiftUI
         self.columnHeaders = columnHeaders
         self.rowSpacing = rowSpacing
         self.maxVisibleRows = maxVisibleRows
+        self.emptyState = emptyState
         self.isCollapsed = false
 
         // Set activeFilter to first key in rowsByFilter or "All"
@@ -93,5 +103,52 @@ import SwiftUI
             activeRows = rowsByFilter[filter] ?? []
             isShowingAllRows = false
         }
+    }
+
+    func cloned() -> SQDashboardSubsectionViewModel {
+        let clonedDropDown = Self.cloneDropDown(dropDownViewModel)
+
+        let clonedSection = SQDashboardSubsectionViewModel(
+            id: id,
+            title: title,
+            defaultPriority: defaultPriority,
+            rowsByFilter: rowsByFilter,
+            dropDownViewModel: clonedDropDown,
+            titleButton: titleButton,
+            columnHeaders: columnHeaders,
+            rowSpacing: rowSpacing,
+            maxVisibleRows: maxVisibleRows,
+            emptyState: emptyState
+        )
+
+        clonedSection.isCollapsed = isCollapsed
+        clonedSection.isLocked = isLocked
+        clonedSection.onLockedTap = onLockedTap
+
+        if clonedSection.activeFilter != activeFilter {
+            clonedSection.updateActiveFilter(activeFilter)
+        }
+
+        if isShowingAllRows {
+            clonedSection.toggleShowingAllRows()
+        }
+
+        if let clonedDropDown {
+            clonedDropDown.itemSelectionHandler = { [weak clonedSection] selectedFilter in
+                clonedSection?.updateActiveFilter(selectedFilter)
+            }
+        }
+
+        return clonedSection
+    }
+
+    private static func cloneDropDown(_ dropDown: SQDropDownMenuViewModel?) -> SQDropDownMenuViewModel? {
+        guard let dropDown else { return nil }
+
+        return SQDropDownMenuViewModel(
+            defaultItem: dropDown.defaultItem,
+            items: dropDown.items,
+            itemSelectionHandler: { _ in }
+        )
     }
 }

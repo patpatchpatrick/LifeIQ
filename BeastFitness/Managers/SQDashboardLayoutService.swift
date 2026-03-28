@@ -317,62 +317,6 @@ final class SQDashboardLayoutService: SQDashboardLayoutServicing {
     }
 
     private func clonedGroups(from groups: [SQDashboardSectionGroupViewModel]) -> [SQDashboardSectionGroupViewModel] {
-        groups.map { group in
-            let clonedSections = group.sections.map { cloneSubsection($0) }
-            let clonedGroup = SQDashboardSectionGroupViewModel(
-                id: group.id,
-                title: group.title,
-                defaultPriority: group.defaultPriority,
-                sections: clonedSections
-            )
-            clonedGroup.isExpanded = group.isExpanded
-            return clonedGroup
-        }
-    }
-
-    private func cloneSubsection(_ section: SQDashboardSubsectionViewModel) -> SQDashboardSubsectionViewModel {
-        let clonedDropDown = cloneDropDown(section.dropDownViewModel)
-
-        let clonedSection = SQDashboardSubsectionViewModel(
-            id: section.id,
-            title: section.title,
-            defaultPriority: section.defaultPriority,
-            rowsByFilter: section.rowsByFilter,
-            dropDownViewModel: clonedDropDown,
-            titleButton: section.titleButton,
-            columnHeaders: section.columnHeaders,
-            rowSpacing: section.rowSpacing,
-            maxVisibleRows: section.maxVisibleRows
-        )
-
-        clonedSection.isCollapsed = section.isCollapsed
-        clonedSection.isLocked = section.isLocked
-        clonedSection.onLockedTap = section.onLockedTap
-
-        if clonedSection.activeFilter != section.activeFilter {
-            clonedSection.updateActiveFilter(section.activeFilter)
-        }
-
-        if section.isShowingAllRows {
-            clonedSection.toggleShowingAllRows()
-        }
-
-        if let clonedDropDown {
-            clonedDropDown.itemSelectionHandler = { [weak clonedSection] selectedFilter in
-                clonedSection?.updateActiveFilter(selectedFilter)
-            }
-        }
-
-        return clonedSection
-    }
-
-    private func cloneDropDown(_ dropDown: SQDropDownMenuViewModel?) -> SQDropDownMenuViewModel? {
-        guard let dropDown else { return nil }
-
-        return SQDropDownMenuViewModel(
-            defaultItem: dropDown.defaultItem,
-            items: dropDown.items,
-            itemSelectionHandler: { _ in }
-        )
+        groups.map { $0.cloned() }
     }
 }

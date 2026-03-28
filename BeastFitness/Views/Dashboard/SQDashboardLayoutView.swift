@@ -24,32 +24,6 @@ struct SQDashboardLayoutView: View {
                 }
                 .onMove(perform: controller.moveGroups)
             }
-
-            ForEach(controller.editableGroups) { group in
-                Section {
-                    ForEach(group.subsections) { subsection in
-                        subsectionRow(subsection, in: group)
-                            .listRowInsets(.init(top: .SQSpace.s, leading: .SQSpace.xl, bottom: .SQSpace.s, trailing: .SQSpace.l))
-                            .listRowBackground(Color.clear)
-                    }
-                    .onMove { source, destination in
-                        controller.moveSubsections(in: group.id, from: source, to: destination)
-                    }
-                } header: {
-                    HStack {
-                        Text(group.title)
-                            .sqFont(.headerSmall)
-                            .sqForegroundColor(.textSecondary)
-
-                        Spacer()
-
-                        Text(group.isHidden ? "Hidden" : "Visible")
-                            .sqFont(.bodyExtraSmall)
-                            .sqForegroundColor(group.isHidden ? .textTertiary : .textSecondary)
-                    }
-                    .padding(.horizontal, .SQSpace.l)
-                }
-            }
         }
         .environment(\.editMode, .constant(.active))
         .scrollContentBackground(.hidden)
@@ -113,7 +87,7 @@ struct SQDashboardLayoutView: View {
                         .sqFont(.bodySemiBold)
                         .sqForegroundColor(.textPrimary)
 
-                    Text("Drag sections and subsections into the order you want. Hide anything you don’t want on the dashboard. New app sections fall back to their built-in default priority.")
+                    Text("Drag sections into the order you want, hide anything you don’t want on the dashboard, and tap into a section to manage its subsections. New app sections fall back to their built-in default priority.")
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -126,7 +100,7 @@ struct SQDashboardLayoutView: View {
 
     private func groupRow(_ group: SQDashboardLayoutEditableGroup) -> some View {
         HStack(spacing: .SQSpace.m) {
-            visibilityButton(isHidden: group.isHidden) {
+            SQDashboardLayoutVisibilityButton(isHidden: group.isHidden) {
                 controller.toggleGroupVisibility(group.id)
             }
 
@@ -141,9 +115,97 @@ struct SQDashboardLayoutView: View {
             }
 
             Spacer(minLength: .SQSpace.m)
+
+            Button {
+                controller.displaySubsections(for: group.id)
+            } label: {
+                HStack(spacing: .SQSpace.xs) {
+                    Text("Subsections")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+
+                    SQImageView(
+                        image: .init(
+                            symbol: .chevronRight,
+                            symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 10, height: 10)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, .SQSpace.s)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, .SQSpace.l)
         .padding(.vertical, .SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+}
+
+struct SQDashboardSubsectionLayoutView: View {
+    @Bindable var controller: SQDashboardLayoutController
+    let groupId: String
+
+    private var groupIndex: Int? {
+        controller.editableGroups.firstIndex(where: { $0.id == groupId })
+    }
+
+    private var group: SQDashboardLayoutEditableGroup? {
+        guard let groupIndex else { return nil }
+        return controller.editableGroups[groupIndex]
+    }
+
+    var body: some View {
+        List {
+            if let group {
+                Section {
+                    subsectionOverviewCard(group)
+                        .listRowInsets(.init(top: .SQSpace.l, leading: .SQSpace.l, bottom: .SQSpace.m, trailing: .SQSpace.l))
+                        .listRowBackground(Color.clear)
+                }
+
+                Section("Subsections") {
+                    ForEach(group.subsections) { subsection in
+                        subsectionRow(subsection, in: group)
+                            .listRowInsets(.init(top: .SQSpace.s, leading: .SQSpace.l, bottom: .SQSpace.s, trailing: .SQSpace.l))
+                            .listRowBackground(Color.clear)
+                    }
+                    .onMove { source, destination in
+                        controller.moveSubsections(in: group.id, from: source, to: destination)
+                    }
+                }
+            }
+        }
+        .environment(\.editMode, .constant(.active))
+        .scrollContentBackground(.hidden)
+        .background {
+            SQSheetBackground()
+        }
+        .navigationTitle(group?.title ?? "Subsections")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func subsectionOverviewCard(_ group: SQDashboardLayoutEditableGroup) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Reorder and hide \(group.title.lowercased()) content")
+                .sqFont(.bodySemiBold)
+                .sqForegroundColor(.textPrimary)
+
+            Text("Drag subsections into the order you want for \(group.title). Hide any subsection you don’t want on the dashboard.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
@@ -152,7 +214,7 @@ struct SQDashboardLayoutView: View {
         in group: SQDashboardLayoutEditableGroup
     ) -> some View {
         HStack(spacing: .SQSpace.m) {
-            visibilityButton(isHidden: subsection.isHidden) {
+            SQDashboardLayoutVisibilityButton(isHidden: subsection.isHidden) {
                 controller.toggleSubsectionVisibility(groupId: group.id, subsectionId: subsection.id)
             }
 
@@ -172,8 +234,13 @@ struct SQDashboardLayoutView: View {
         .padding(.vertical, .SQSpace.m)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
+}
 
-    private func visibilityButton(isHidden: Bool, action: @escaping () -> Void) -> some View {
+private struct SQDashboardLayoutVisibilityButton: View {
+    let isHidden: Bool
+    let action: () -> Void
+
+    var body: some View {
         Button(action: action) {
             RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
                 .fill(
