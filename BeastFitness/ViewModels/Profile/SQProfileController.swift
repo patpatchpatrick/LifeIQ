@@ -68,6 +68,9 @@ protocol SQProfileInterface: AnyObject {
                 switch event {
                 case .loginStateChanged:
                     self?.refreshUI()
+                case .profileUpdated:
+                    // No-op
+                    break
                 }
             }
             .store(in: &cancellables)

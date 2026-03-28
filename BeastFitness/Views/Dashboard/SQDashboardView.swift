@@ -40,13 +40,17 @@ struct SQDashboardView: View {
                     Button {
                         controller.handleAuthButtonTap()
                     } label: {
-                        SQImageView(
-                            image: .init(
-                                symbol: controller.authButtonSymbol,
-                                symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                        if let user = controller.userState.loggedInUser {
+                            SQUserIcon(user: user, size: 30)
+                        } else {
+                            SQImageView(
+                                image: .init(
+                                    symbol: controller.authButtonSymbol,
+                                    symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                                )
                             )
-                        )
-                        .frame(width: 28, height: 28)
+                            .frame(width: 28, height: 28)
+                        }
                     }
                     .accessibilityLabel(controller.userState.isLoggedIn ? "Profile" : "Sign in")
                 }

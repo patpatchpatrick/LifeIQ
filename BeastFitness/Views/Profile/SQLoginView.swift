@@ -15,7 +15,7 @@ struct SQLoginView: View {
         case .login:
             return "Access your account to sync data and keep your dashboard personalized."
         case .signup:
-            return "Create an account to save your progress and sync your BeastFitness data."
+            return "Create an account to save your progress and sync your health and workout data."
         }
     }
 
@@ -77,7 +77,7 @@ struct SQLoginView: View {
                 SQUITextField(viewModel: controller.passwordViewModel)
             }
 
-            Text(controller.mode == .signup ? "Use at least 8 characters with upper, lower, and a number." : "Enter the email and password tied to your BeastFitness account.")
+            Text(controller.mode == .signup ? "Use at least 8 characters with upper, lower, and a number." : "Enter the email and password tied to your account.")
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
         }

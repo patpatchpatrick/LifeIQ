@@ -99,6 +99,7 @@ struct SQNavRoute {
         case metricDetail(controller: SQMetricDetailController)
         case profile(controller: SQProfileController)
         case login(controller: SQLoginController)
+        case onboarding(controller: SQOnboardingController)
         case settings(controller: SQSettingsController)
         case dashboardLayout(controller: SQDashboardLayoutController)
         case dashboardSubsectionLayout(controller: SQDashboardLayoutController, groupId: String)
@@ -123,6 +124,8 @@ struct SQNavRoute {
                 return "profile-\(controller.id)"
             case .login(let controller):
                 return "login-\(controller.id)"
+            case .onboarding(let controller):
+                return "onboarding-\(controller.id)"
             case .settings(let controller):
                 return "settings-\(controller.id)"
             case .dashboardLayout(let controller):

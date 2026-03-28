@@ -24,26 +24,65 @@ struct SQWorkoutSummaryView: View {
         return Double(max(0, min(1, 1 - reviewScrollOffset / threshold)))
     }
 
+    private var workoutDateText: String {
+        controller.state.workoutStartDate?.formattedString(with: .full) ?? Date.now.formattedString(with: .full)
+    }
+
+    private var heroTitleText: String {
+        if let userFullName = controller.state.userFullName, !userFullName.isEmpty {
+            return userFullName
+        }
+        return controller.state.isLoggedIn ? "Your workout" : "Local workout"
+    }
+
     @ViewBuilder
     private var workoutHeroCard: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             HStack(spacing: .SQSpace.m) {
-                SQUserIcon(user: controller.state.user ?? .mock)
-                    .redacted(controller.state.user == nil, reason: .placeholder)
+                if let user = controller.state.user {
+                    SQUserIcon(user: user)
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.84 : 0.96))
+                            .overlay(
+                                Circle()
+                                    .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                            )
+
+                        SQImageView(
+                            image: .init(
+                                symbol: .personCircle,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                            )
+                        )
+                        .frame(width: 20, height: 20)
+                    }
+                    .frame(width: 42, height: 42)
+                }
 
                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                    Text(controller.state.userFullName ?? SQUser.mock.name)
+                    Text(heroTitleText)
                         .sqFont(.title4)
                         .sqForegroundColor(.textPrimary)
-                        .redacted(controller.state.userFullName == nil, reason: .placeholder)
 
-                    Text(controller.state.workoutStartDate?.formattedString(with: .full) ?? Date.now.formattedString(with: .full))
+                    Text(workoutDateText)
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
-                        .redacted(controller.state.workoutStartDate == nil, reason: .placeholder)
                 }
 
                 Spacer()
+            }
+
+            if !controller.state.isLoggedIn {
+                HStack(spacing: .SQSpace.s) {
+                    workoutMetaChip(title: "Storage", value: "Local only")
+
+                    Text("Sign in to sync workout edits across devices.")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             if controller.mode == .review {
@@ -141,7 +180,7 @@ struct SQWorkoutSummaryView: View {
                     .sqFont(.title4)
                     .sqForegroundColor(.textPrimary)
 
-                Text("These responses help BeastFitness build better insights over time.")
+                Text("These responses help build better insights over time.")
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }

@@ -10,8 +10,24 @@ import Foundation
 final class SQUserService: SQNetworkService {
 
     static func createUser(uid: String, email: String) async throws -> SQUser {
-        let user = SQUser(id: uid, name: "", email: email)
+        let user = SQUser(
+            id: uid,
+            name: "",
+            email: email,
+            firstName: nil,
+            lastName: nil,
+            dateOfBirth: nil,
+            heightInInches: nil,
+            weightInPounds: nil,
+            onboardingCompletedAt: nil,
+            onboardingStatus: .pending
+        )
         let _: SQVoidWrite = try await performRequest(SQUserRoute.createUser(user))
+        return user
+    }
+
+    static func saveUser(_ user: SQUser) async throws -> SQUser {
+        let _: SQVoidWrite = try await performRequest(SQUserRoute.saveUser(user))
         return user
     }
 

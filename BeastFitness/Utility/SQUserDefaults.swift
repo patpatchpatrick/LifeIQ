@@ -25,6 +25,9 @@ final class SQUserDefaults {
     /// Persisted dashboard layout preferences
     private static let keyDashboardLayoutPreferences = "dashboard.layout.preferences"
 
+    /// User IDs that should be forced through onboarding after a fresh signup until setup is completed.
+    private static let keyPendingOnboardingUserIds = "user.pending-onboarding.ids"
+
     // MARK: - Private helpers (Workouts)
 
     private var hiddenWorkoutIds: Set<String> {
@@ -51,6 +54,11 @@ final class SQUserDefaults {
     private var dashboardLayoutPreferencesData: Data? {
         get { UserDefaults.standard.data(forKey: Self.keyDashboardLayoutPreferences) }
         set { UserDefaults.standard.set(newValue, forKey: Self.keyDashboardLayoutPreferences) }
+    }
+
+    private var pendingOnboardingUserIdsValue: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: Self.keyPendingOnboardingUserIds) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: Self.keyPendingOnboardingUserIds) }
     }
 
     // MARK: - Public API (Workouts)
@@ -128,5 +136,27 @@ final class SQUserDefaults {
 
     func clearDashboardLayoutPreferences() {
         UserDefaults.standard.removeObject(forKey: Self.keyDashboardLayoutPreferences)
+    }
+
+    // MARK: - Public API (Onboarding)
+
+    var pendingOnboardingUserIds: Set<String> {
+        pendingOnboardingUserIdsValue
+    }
+
+    func markPendingOnboarding(for userId: String) {
+        var ids = pendingOnboardingUserIdsValue
+        ids.insert(userId)
+        pendingOnboardingUserIdsValue = ids
+    }
+
+    func hasPendingOnboarding(for userId: String) -> Bool {
+        pendingOnboardingUserIdsValue.contains(userId)
+    }
+
+    func clearPendingOnboarding(for userId: String) {
+        var ids = pendingOnboardingUserIdsValue
+        ids.remove(userId)
+        pendingOnboardingUserIdsValue = ids
     }
 }

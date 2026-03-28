@@ -1,0 +1,211 @@
+//
+//  SQOnboardingView.swift
+//  BeastFitness
+//
+
+import SwiftUI
+
+struct SQOnboardingView: View {
+    @State var controller: SQOnboardingController
+
+    private var dateOfBirthBinding: Binding<Date> {
+        Binding(
+            get: { controller.selectedDateOfBirth },
+            set: { controller.selectedDateOfBirth = $0 }
+        )
+    }
+
+    private var includesDateOfBirthBinding: Binding<Bool> {
+        Binding(
+            get: { controller.includesDateOfBirth },
+            set: { controller.includesDateOfBirth = $0 }
+        )
+    }
+
+    @ViewBuilder
+    private var heroCard: some View {
+        VStack(spacing: .SQSpace.m) {
+            ZStack {
+                Circle()
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.86 : 0.96))
+                    .overlay(
+                        Circle()
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
+                    .frame(width: 82, height: 82)
+
+                SQImageView(
+                    image: .init(
+                        symbol: .personCircleFill,
+                        symbolStyle: .colorWithFont(.textPrimary, font: .title2)
+                    )
+                )
+                .frame(width: 34, height: 34)
+            }
+
+            VStack(spacing: .SQSpace.xs) {
+                Text("Set up your profile")
+                    .sqFont(.title2)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("A little more context helps personalize insights, scores, and trends.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, .SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private var profileCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Profile")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                labeledRow(label: "First Name") {
+                    SQUITextField(viewModel: controller.firstNameField)
+                }
+
+                labeledRow(label: "Last Name") {
+                    SQUITextField(viewModel: controller.lastNameField)
+                }
+
+                labeledRow(label: "Height") {
+                    HStack(spacing: .SQSpace.m) {
+                        compactHeightField(label: "Ft", viewModel: controller.heightFeetField)
+                        compactHeightField(label: "In", viewModel: controller.heightInchesField)
+                    }
+                }
+
+                labeledRow(label: "Weight") {
+                    SQUITextField(viewModel: controller.weightField)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private var optionalInfoCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Optional")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Toggle(isOn: includesDateOfBirthBinding) {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text("Add date of birth")
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("Optional, but useful for age-aware insights later.")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+            .tint(SQColor.dashboardGlowBlue.color)
+
+            if controller.includesDateOfBirth {
+                DatePicker(
+                    "Date of Birth",
+                    selection: dateOfBirthBinding,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .padding(.top, .SQSpace.xs)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private var bottomAction: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            if !controller.canSave, let message = controller.saveDisabledMessage {
+                Text(message)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textError)
+                    .padding(.horizontal, .SQSpace.xl)
+            }
+
+            SQButton(
+                style: .glassPrimary,
+                shouldHugContent: false,
+                title: "Finish Setup",
+                isLoading: controller.isLoading
+            ) {
+                Task {
+                    await controller.completeTapped()
+                }
+            }
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.bottom, .SQSpace.l)
+        }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: .SQSpace.l) {
+                heroCard
+                profileCard
+                optionalInfoCard
+            }
+            .padding(.horizontal, .SQSpace.l)
+            .padding(.top, .SQSpace.l)
+            .padding(.bottom, .SQSpace.xl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(controller.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .interactiveDismissDisabled()
+        .disabled(controller.isLoading)
+        .opacity(controller.isLoading ? 0.6 : 1)
+        .background {
+            SQSheetBackground()
+        }
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 0) {
+                Divider()
+                    .sqTintColor(.glassStroke)
+
+                bottomAction
+            }
+            .background(.ultraThinMaterial)
+        }
+    }
+
+    @ViewBuilder
+    private func labeledRow(label: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            Text(label.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func compactHeightField(label: String, viewModel: SQUITextFieldViewModel) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            Text(label.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            SQUITextField(viewModel: viewModel)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

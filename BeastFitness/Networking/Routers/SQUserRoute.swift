@@ -9,6 +9,7 @@ import FirebaseFirestore
 
 enum SQUserRoute {
     case createUser(SQUser)
+    case saveUser(SQUser)
     case fetchUser(uid: String)
 }
 
@@ -18,6 +19,8 @@ extension SQUserRoute: SQFirestoreRoute {
         switch self {
         case .createUser(let user):
             return user
+        case .saveUser(let user):
+            return user
         case .fetchUser:
             return nil
         }
@@ -26,6 +29,8 @@ extension SQUserRoute: SQFirestoreRoute {
     func reference(in db: Firestore) -> SQFirestoreReference {
         switch self {
         case .createUser(let user):
+            return .documentWrite(db.collection("users").document(user.id))
+        case .saveUser(let user):
             return .documentWrite(db.collection("users").document(user.id))
         case .fetchUser(let uid):
             return .documentRead(db.collection("users").document(uid))

@@ -34,6 +34,8 @@ struct SQRootTabView: View {
             SQProfileView(controller: controller)
         case .login(controller: let controller):
             SQLoginView(controller: controller)
+        case .onboarding(controller: let controller):
+            SQOnboardingView(controller: controller)
         case .settings(controller: let controller):
             SQSettingsView(controller: controller)
         case .dashboardLayout(controller: let controller):

@@ -58,22 +58,26 @@ struct SQProfileView: View {
     @ViewBuilder
     private var heroCard: some View {
         VStack(spacing: .SQSpace.m) {
-            ZStack {
-                Circle()
-                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.86 : 0.96))
-                    .overlay(
-                        Circle()
-                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
-                    )
-                    .frame(width: 78, height: 78)
+            if let user = controller.userState.loggedInUser {
+                SQUserIcon(user: user, size: 78)
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.86 : 0.96))
+                        .overlay(
+                            Circle()
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        )
+                        .frame(width: 78, height: 78)
 
-                SQImageView(
-                    image: .init(
-                        symbol: .personCircleFill,
-                        symbolStyle: .colorWithFont(.textPrimary, font: .title2)
+                    SQImageView(
+                        image: .init(
+                            symbol: .personCircleFill,
+                            symbolStyle: .colorWithFont(.textPrimary, font: .title2)
+                        )
                     )
-                )
-                .frame(width: 34, height: 34)
+                    .frame(width: 34, height: 34)
+                }
             }
 
             VStack(spacing: .SQSpace.xs) {

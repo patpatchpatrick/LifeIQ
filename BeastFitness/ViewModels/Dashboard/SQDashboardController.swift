@@ -138,7 +138,7 @@ final class SQDashboardController: SQDashboardInterface {
         hub.userEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .loginStateChanged:
+            case .loginStateChanged, .profileUpdated:
                 if self.hasLoadedUI {
                     self.refreshFromGlobalContext()
                 } else if let modelContext = SQAppState.shared.modelContext {
@@ -405,8 +405,10 @@ final class SQDashboardController: SQDashboardInterface {
             // Clear loading state
             state.setLoading(false)
 
-            // Emit any unreviewed recent workouts for the new workout review modal
-            processNewWorkoutReviews(workouts: past30DaysWorkouts, context: context)
+            presentHighestPriorityDashboardRouteIfNeeded(
+                workouts: past30DaysWorkouts,
+                context: context
+            )
         } catch {
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
 
@@ -435,6 +437,31 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     // MARK: - New Workout Review Processing
+
+    private func presentHighestPriorityDashboardRouteIfNeeded(
+        workouts: [SQWorkoutSessionable],
+        context: ModelContext
+    ) {
+        guard navState.dashboardRootSheetView == nil else { return }
+
+        if shouldPresentOnboarding {
+            let controller = SQOnboardingController()
+            state.hub.domainEvents.send(.pushDashboardRoute(.onboarding(controller: controller)))
+            return
+        }
+
+        processNewWorkoutReviews(workouts: workouts, context: context)
+    }
+
+    private var shouldPresentOnboarding: Bool {
+        guard userState.isLoggedIn, let user = userState.loggedInUser else { return false }
+
+        if userState.hasLoadedUserProfile, user.requiresOnboarding {
+            return true
+        }
+
+        return SQUserDefaults.shared.hasPendingOnboarding(for: user.id)
+    }
 
     private func processNewWorkoutReviews(
         workouts: [SQWorkoutSessionable],
@@ -478,8 +505,6 @@ final class SQDashboardController: SQDashboardInterface {
 //            total += 1
 //            if total >= 2 { break }
 //        }
-        print("PTD process new workout launch!")
-        
         if navState.dashboardRootSheetView == nil {
             state.hub.domainEvents.send(.pushDashboardRoute(.workoutReview(workouts: sorted)))
         }

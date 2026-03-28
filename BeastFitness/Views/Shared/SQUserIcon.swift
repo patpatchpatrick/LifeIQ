@@ -11,6 +11,25 @@ import SwiftUI
 
 struct SQUserIcon: View {
     let user: SQUser
+    let size: CGFloat
+
+    init(user: SQUser, size: CGFloat = 42) {
+        self.user = user
+        self.size = size
+    }
+
+    private var monogramFont: SQFont.FontType {
+        switch size {
+        case 72...:
+            return .title1
+        case 56...:
+            return .title2
+        case 44...:
+            return .title3
+        default:
+            return .bodySemiBold
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -22,9 +41,9 @@ struct SQUserIcon: View {
                 )
             
             Text((user.name.first ?? .init("")).uppercased())
-                .sqFont(.bodySemiBold)
+                .sqFont(monogramFont)
                 .sqForegroundColor(.textPrimary)
         }
-        .frame(width: 42, height: 42)
+        .frame(width: size, height: size)
     }
 }

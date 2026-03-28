@@ -18,6 +18,7 @@ protocol WorkoutSummaryStating: AnyObject {
     var hub: EventHub { get }
     var user: SQUser? { get }
     var userFullName: String? { get }
+    var isLoggedIn: Bool { get }
     var workoutStartDate: Date? { get }
     var workoutTitle: String? { get }
     var workoutStatsRows: [SQPerformanceRowData] { get }
@@ -43,11 +44,13 @@ protocol WorkoutSummaryStating: AnyObject {
 @MainActor
 @Observable final class WorkoutSummaryState: WorkoutSummaryStating {
     let hub: EventHub
+    private let userState: SQUserStating
     private var cancellables = Set<AnyCancellable>()
 
     private(set) var currentWorkout: (any SQWorkoutSessionable)?
     private(set) var user: SQUser?
     private(set) var userFullName: String?
+    private(set) var isLoggedIn: Bool = false
     private(set) var workoutStartDate: Date?
     private(set) var workoutTitle: String?
     private(set) var workoutStatsRows: [SQPerformanceRowData] = []
@@ -66,8 +69,10 @@ protocol WorkoutSummaryStating: AnyObject {
 
     var shouldShowPerformanceSection: Bool { !performanceRowData.isEmpty }
 
-    init(hub: EventHub) {
+    init(hub: EventHub, userState: SQUserStating = SQAppState.shared.userState) {
         self.hub = hub
+        self.userState = userState
+        updateUserContext()
         handleEventSubscriptions()
     }
 
@@ -87,13 +92,26 @@ protocol WorkoutSummaryStating: AnyObject {
             }
 
         }.store(in: &cancellables)
+
+        hub.userEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .loginStateChanged, .profileUpdated:
+                updateUserContext()
+            }
+        }.store(in: &cancellables)
+    }
+
+    private func updateUserContext() {
+        user = userState.loggedInUser
+        userFullName = user?.fullName
+        isLoggedIn = userState.isLoggedIn
     }
 
     func load(workout: any SQWorkoutSessionable) async {
         SQLogger.shared.log("Loading workout summary with workout with id: \(workout.id) and title: \(String(describing: workout.title))", .debug, context: .workoutSummary)
         currentWorkout = workout
-        user = SQUser.mock
-        userFullName = SQUser.mock.name // PTD replace with user's name
+        updateUserContext()
         workoutStartDate = workout.startDate
         workoutTitle = workout.visibleTitle
 
@@ -106,7 +124,7 @@ protocol WorkoutSummaryStating: AnyObject {
         isLoadingRoute = false
         
         currentWorkout = nil
-        userFullName = nil
+        updateUserContext()
         workoutStartDate = nil
         workoutTitle = nil
         workoutStatsRows = []

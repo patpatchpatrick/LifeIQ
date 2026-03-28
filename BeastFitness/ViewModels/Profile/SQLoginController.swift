@@ -143,7 +143,9 @@ protocol SQLoginInterface: AnyObject {
         let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
             let result = try await SQAuthManager.shared.createUser(email: email, password: passwordViewModel.text)
-            _ = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: email)
+            let user = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: email)
+            SQUserDefaults.shared.markPendingOnboarding(for: result.user.uid)
+            SQAppState.shared.userState.updateLoggedInUser(user, hasLoadedProfile: true)
             
             SQLogger.shared.log("User signed in successfully", .info, context: .loginSignup)
             
