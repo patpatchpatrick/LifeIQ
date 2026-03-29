@@ -49,6 +49,10 @@ protocol SQWorkoutScoreServicing {
 
 @MainActor
 final class SQWorkoutScoreService: SQWorkoutScoreServicing {
+    /// Normalized running inputs used by both premium scores.
+    ///
+    /// `Performance` is driven primarily by the derived `vdot`.
+    /// `Difficulty` compares the other fields against the runner's own history.
     fileprivate struct RunningSample {
         let workout: SQWorkoutSessionable
         let distanceMiles: Double
@@ -126,6 +130,8 @@ private extension SQWorkoutScoreService {
         subtitle: String,
         footerContext: FooterContext
     ) -> SQWorkoutPremiumInsightsModel {
+        // Both scores are always calculated, even for locked users, so the future
+        // premium gate can simply switch between live values and teaser presentation.
         let performanceValue = performanceScore(for: sample, historicalSamples: historicalSamples)
         let difficultyValue = difficultyScore(for: sample, historicalSamples: historicalSamples)
 
@@ -218,6 +224,12 @@ private extension SQWorkoutScoreService {
             return nil
         }
 
+        // Daniels-style VDOT estimate:
+        // 1. Convert the run into average velocity.
+        // 2. Estimate oxygen cost at that velocity.
+        // 3. Estimate the percentage of VO2 max that could be sustained for the
+        //    workout duration.
+        // 4. Divide cost by sustain percentage to get a fitness/performance proxy.
         let durationMinutes = durationSeconds / 60
         let distanceMeters = distanceMiles * SQDistance.mile.meters
         let velocityMetersPerMinute = distanceMeters / durationMinutes
@@ -245,12 +257,19 @@ private extension SQWorkoutScoreService {
 private extension SQWorkoutScoreService {
     func performanceScore(for sample: RunningSample, historicalSamples: [RunningSample]) -> Int {
         let historicalVdots = historicalSamples.map(\.vdot)
+
+        // Absolute component:
+        // Maps the workout's VDOT into a broad 28...70 running-fitness band so the
+        // score still behaves reasonably for users with limited history.
         let absoluteComponent = normalized(
             value: sample.vdot,
             minValue: 28,
             maxValue: 70
         ) * 100
 
+        // Relative component:
+        // Compares this run's VDOT to the user's own running history. This makes the
+        // score feel personal instead of only rewarding globally fast runners.
         let percentileComponent = (SQPercentileCalculator.calculatePercentile(
             currentBest: sample.vdot,
             historicalValues: historicalVdots,
@@ -258,6 +277,9 @@ private extension SQWorkoutScoreService {
         ) ?? (absoluteComponent / 100)) * 100
 
         let blendedScore: Double
+        // Once we have enough historical runs, personal percentile matters more than
+        // the absolute VDOT band. Before that, lean more heavily on the absolute score
+        // so early scores are still stable.
         if historicalVdots.count >= 5 {
             blendedScore = (percentileComponent * 0.65) + (absoluteComponent * 0.35)
         } else {
@@ -291,6 +313,10 @@ private extension SQWorkoutScoreService {
             return fallbackDifficultyScore(for: sample)
         }
 
+        // Difficulty is intentionally baseline-relative.
+        // A 6-mile run may be easy for one user and very demanding for another, so the
+        // score compares the run to the user's own typical distance, duration, pace,
+        // and heart rate rather than using only global thresholds.
         let baselineDistance = average(of: comparisonSamples.map(\.distanceMiles)) ?? sample.distanceMiles
         let baselineDuration = average(of: comparisonSamples.map(\.durationSeconds)) ?? sample.durationSeconds
         let baselinePace = average(of: comparisonSamples.map(\.paceSecondsPerMile)) ?? sample.paceSecondsPerMile
@@ -313,11 +339,15 @@ private extension SQWorkoutScoreService {
             (paceLoad * 0.30) +
             (heartRateLoad * 0.15)
 
+        // The load blend is then normalized into a 0...100 score. We clamp each
+        // component earlier so one outlier input cannot dominate the final result.
         let normalizedScore = normalized(value: blendedLoad, minValue: 0.65, maxValue: 1.45) * 100
         return Int(clamp(normalizedScore.rounded(), min: 1, max: 100))
     }
 
     func fallbackDifficultyScore(for sample: RunningSample) -> Int {
+        // Fallback for runners with little or no history. This uses absolute heuristics
+        // so the score is still usable before we have a personal baseline.
         let distanceComponent = normalized(value: sample.distanceMiles, minValue: 1, maxValue: 10) * 35
         let durationComponent = normalized(value: sample.durationSeconds, minValue: 15 * 60, maxValue: 90 * 60) * 25
         let paceComponent = normalized(value: 11 * 60 - sample.paceSecondsPerMile, minValue: 0, maxValue: 5 * 60) * 25
