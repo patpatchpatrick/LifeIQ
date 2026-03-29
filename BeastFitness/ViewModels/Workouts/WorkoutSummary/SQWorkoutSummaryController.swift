@@ -229,6 +229,11 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.hub.domainEvents.send(.pushDashboardRoute(.editWorkout(workout: baseWorkout)))
     }
 
+    func displayPremiumInsightDetail(for score: SQWorkoutPremiumInsightScore) {
+        let controller = SQWorkoutInsightDetailController(model: score.detailModel)
+        state.hub.domainEvents.send(.pushDashboardRoute(.workoutInsightDetail(controller: controller)))
+    }
+
     func deleteWorkout(from modelContext: ModelContext) async {
         guard let baseWorkout = state.currentWorkout else {
             SQLogger.shared.log("Workout missing. Can't delete workout.", .error, context: .workoutSummary)

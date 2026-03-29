@@ -90,7 +90,10 @@ struct SQDashboardSectionView: View {
 
                                 case .workoutPremiumInsights:
                                     if let vm = row as? SQDashboardWorkoutPremiumInsightRowViewModel {
-                                        SQWorkoutPremiumInsightsView(model: vm.model)
+                                        SQWorkoutPremiumInsightsView(
+                                            model: vm.model,
+                                            onScoreInfoTap: vm.onScoreInfoTap
+                                        )
                                     }
 
                                 case .activityList:

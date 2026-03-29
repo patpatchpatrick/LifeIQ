@@ -861,13 +861,22 @@ final class SQDashboardController: SQDashboardInterface {
             return nil
         }
 
-        let row = SQDashboardWorkoutPremiumInsightRowViewModel(model: model)
+        let row = SQDashboardWorkoutPremiumInsightRowViewModel(
+            model: model
+        ) { [weak self] score in
+            self?.displayWorkoutInsightDetail(score.detailModel)
+        }
         return SQDashboardSubsectionViewModel(
             id: "run-insights",
             title: "Run Insights",
             defaultPriority: 5,
             rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
         )
+    }
+
+    private func displayWorkoutInsightDetail(_ model: SQWorkoutPremiumInsightDetailModel) {
+        let controller = SQWorkoutInsightDetailController(model: model)
+        state.hub.domainEvents.send(.pushDashboardRoute(.workoutInsightDetail(controller: controller)))
     }
 
     // MARK: - Sleep Builders

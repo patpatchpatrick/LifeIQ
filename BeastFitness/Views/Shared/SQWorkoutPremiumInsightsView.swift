@@ -7,10 +7,19 @@ import SwiftUI
 
 struct SQWorkoutPremiumInsightsView: View {
     let model: SQWorkoutPremiumInsightsModel
+    let onScoreInfoTap: ((SQWorkoutPremiumInsightScore) -> Void)?
 
     private let scoreColumns = [
         GridItem(.adaptive(minimum: 150), spacing: .SQSpace.s, alignment: .leading)
     ]
+
+    init(
+        model: SQWorkoutPremiumInsightsModel,
+        onScoreInfoTap: ((SQWorkoutPremiumInsightScore) -> Void)? = nil
+    ) {
+        self.model = model
+        self.onScoreInfoTap = onScoreInfoTap
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
@@ -63,9 +72,28 @@ struct SQWorkoutPremiumInsightsView: View {
 
     private func scoreCard(_ score: SQWorkoutPremiumInsightScore) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(score.title.uppercased())
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
+            HStack(alignment: .top, spacing: .SQSpace.s) {
+                Text(score.title.uppercased())
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                Spacer(minLength: 0)
+
+                if let onScoreInfoTap {
+                    Button {
+                        onScoreInfoTap(score)
+                    } label: {
+                        SQImageView(
+                            image: .init(
+                                symbol: .questionmarkCircle,
+                                symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                            )
+                        )
+                        .frame(width: 18, height: 18)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(score.value)")

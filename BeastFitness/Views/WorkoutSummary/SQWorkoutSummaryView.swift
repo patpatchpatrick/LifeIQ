@@ -327,7 +327,12 @@ struct SQWorkoutSummaryView: View {
 
             if let premiumInsightsModel = controller.premiumInsightsModel {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQWorkoutPremiumInsightsView(model: premiumInsightsModel)
+                    SQWorkoutPremiumInsightsView(
+                        model: premiumInsightsModel,
+                        onScoreInfoTap: { score in
+                            controller.displayPremiumInsightDetail(for: score)
+                        }
+                    )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.SQSpace.l)

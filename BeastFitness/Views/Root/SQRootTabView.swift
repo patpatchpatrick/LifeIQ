@@ -22,6 +22,8 @@ struct SQRootTabView: View {
             SQWorkoutReviewView(reviewState: .init(hub: SQAppState.shared.hub, workouts: workouts))
         case .workoutSummary(let controller):
             SQWorkoutSummaryView(controller: controller)
+        case .workoutInsightDetail(let controller):
+            SQWorkoutInsightDetailView(controller: controller)
         case .editWorkout(workout: let workout):
             SQEditWorkoutView(controller: .init(workout: workout))
         case .workoutsList(workouts: let workouts):

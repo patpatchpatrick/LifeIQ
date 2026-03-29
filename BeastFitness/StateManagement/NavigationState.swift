@@ -93,6 +93,7 @@ struct SQNavRoute {
     enum DashboardRoute: Identifiable, Hashable, Equatable {
         case workoutsList(workouts: [SQWorkoutSessionable])
         case workoutSummary(controller: SQWorkoutSummaryController)
+        case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
@@ -114,6 +115,8 @@ struct SQNavRoute {
                 return "workoutReview-\(workoutsIds)"
             case .workoutSummary(let controller):
                 return "workoutSummary-\(controller.id)"
+            case .workoutInsightDetail(let controller):
+                return "workoutInsightDetail-\(controller.id)"
             case .editWorkout(let workout):
                 return "editWorkout-\(workout.id)"
             case .leaderboard(controller: let controller):
