@@ -88,6 +88,11 @@ struct SQDashboardSectionView: View {
                                         SQDashboardWorkoutTotalsRowView(viewModel: vm)
                                     }
 
+                                case .workoutPremiumInsights:
+                                    if let vm = row as? SQDashboardWorkoutPremiumInsightRowViewModel {
+                                        SQWorkoutPremiumInsightsView(model: vm.model)
+                                    }
+
                                 case .activityList:
                                     if let vm = row as? SQDashboardActivityRowViewModel {
                                         SQDashboardActivityListRowView(viewModel: vm)

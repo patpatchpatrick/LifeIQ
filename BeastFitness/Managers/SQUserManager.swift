@@ -52,6 +52,7 @@ final class SQUserManager: SQUserManaging {
                 dateOfBirth: nil,
                 heightInInches: nil,
                 weightInPounds: nil,
+                subscriptionLevel: nil,
                 onboardingCompletedAt: nil,
                 onboardingStatus: nil
             )

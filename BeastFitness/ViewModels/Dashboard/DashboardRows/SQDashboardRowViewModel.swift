@@ -12,6 +12,7 @@ enum SQDashboardRowType {
     case heartSummary
     case metricStats
     case metricPerformance
+    case workoutPremiumInsights
     case workoutTotals
     case activityList
     case sleepScore
@@ -24,6 +25,7 @@ enum SQDashboardRowIdentifier {
     case heartSummary
     case metricStats
     case metricPerformance
+    case workoutPremiumInsights
     case workoutTotals
     case activityList
     case sleepScore

@@ -181,6 +181,7 @@ import BeastFitnessCore
             dateOfBirth: includesDateOfBirth ? selectedDateOfBirth : nil,
             heightInInches: height,
             weightInPounds: weight,
+            subscriptionLevel: existingUser.subscriptionLevel,
             onboardingCompletedAt: .now,
             onboardingStatus: .completed
         )

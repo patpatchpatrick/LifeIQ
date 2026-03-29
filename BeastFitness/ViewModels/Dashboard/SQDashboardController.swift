@@ -33,6 +33,7 @@ final class SQDashboardController: SQDashboardInterface {
     let sleepAggregationService: SQSleepAggregationService
     let bodyBatteryService: SQBodyBatteryServicing
     let heartRateService: SQHeartRateServicing
+    let workoutScoreService: SQWorkoutScoreServicing
     let dashboardLayoutService: SQDashboardLayoutServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
@@ -57,6 +58,7 @@ final class SQDashboardController: SQDashboardInterface {
         sleepAggregationService: SQSleepAggregationService = .init(),
         bodyBatteryService: SQBodyBatteryServicing? = nil,
         heartRateService: SQHeartRateServicing? = nil,
+        workoutScoreService: SQWorkoutScoreServicing? = nil,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil
     ) {
         self.state = state
@@ -76,6 +78,7 @@ final class SQDashboardController: SQDashboardInterface {
         self.heartRateService = heartRateService ?? SQHeartRateService(
             healthKitManager: healthKitManager
         )
+        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         
         let items = AppTimeRange.allCases
@@ -846,6 +849,27 @@ final class SQDashboardController: SQDashboardInterface {
         return sectionViewModel
     }
 
+    private func buildRunInsightsSubsection(
+        workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> SQDashboardSubsectionViewModel? {
+        guard let model = await workoutScoreService.dashboardInsights(
+            for: workouts,
+            allTimeWorkouts: allTimeWorkouts,
+            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+        ) else {
+            return nil
+        }
+
+        let row = SQDashboardWorkoutPremiumInsightRowViewModel(model: model)
+        return SQDashboardSubsectionViewModel(
+            id: "run-insights",
+            title: "Run Insights",
+            defaultPriority: 5,
+            rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
+        )
+    }
+
     // MARK: - Sleep Builders
 
     private func buildSleepDashboardData(for timeRange: AppTimeRange) async throws -> SQSleepDashboardData? {
@@ -1321,6 +1345,13 @@ final class SQDashboardController: SQDashboardInterface {
         }
         
         var workoutsSections: [SQDashboardSubsectionViewModel] = []
+
+        if let runInsightsSection = await buildRunInsightsSubsection(
+            workouts: workouts,
+            allTimeWorkouts: allTimeWorkouts
+        ) {
+            workoutsSections.append(runInsightsSection)
+        }
         
         // Add Totals subsection
         if let totalsSection = buildTotalsSubsection(config: .init(timeRange: timeRange, priorTimeRange: priorTimeRange), workouts: workouts, priorWorkouts: priorWorkouts) {

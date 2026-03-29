@@ -325,6 +325,15 @@ struct SQWorkoutSummaryView: View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             workoutHeroCard
 
+            if let premiumInsightsModel = controller.premiumInsightsModel {
+                VStack(alignment: .leading, spacing: .SQSpace.m) {
+                    SQWorkoutPremiumInsightsView(model: premiumInsightsModel)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.SQSpace.l)
+                .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+            }
+
             if controller.mode == .review {
                 reviewHeader
             }

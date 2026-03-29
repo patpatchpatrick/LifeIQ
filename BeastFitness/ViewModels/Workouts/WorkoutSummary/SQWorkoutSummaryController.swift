@@ -68,6 +68,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         textChangeFormatter: .decimal(maxDecimalPlaces: 1)
     )
     var reviewHighlights: [SQWorkoutReviewHighlight] = []
+    var premiumInsightsModel: SQWorkoutPremiumInsightsModel?
 
     let navigationTitle: String
     private var cancellables = Set<AnyCancellable>()
@@ -92,6 +93,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
     private let statsManager: SQWorkoutStatsManaging
+    private let workoutScoreService: SQWorkoutScoreServicing
     private let workout: SQWorkoutSessionable
     
     var navTitle: String {
@@ -102,12 +104,20 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     }
     let showNavEditWorkoutButton: Bool
 
-    init(workoutManager: SQWorkoutManaging = SQWorkoutManager.shared, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared, statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared, workout: SQWorkoutSessionable, mode: SQWorkoutSummaryMode = .standard) {
+    init(
+        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
+        healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
+        statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
+        workoutScoreService: SQWorkoutScoreServicing? = nil,
+        workout: SQWorkoutSessionable,
+        mode: SQWorkoutSummaryMode = .standard
+    ) {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.workout = workout
         self.statsManager = statsManager
+        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
         self.mode = mode
         self.navigationTitle = mode == .review ? "" : "Workout summary"
         self.titleViewModel = SQUITextFieldViewModel(
@@ -145,6 +155,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         await state.load(workout: workout)
         await loadRouteIfNeeded()
         await loadPerformanceDataIfNeeded(workout: workout)
+        await loadPremiumInsightsIfNeeded(workout: workout)
         state.isLoading = false
 
         if mode == .review {
@@ -335,6 +346,29 @@ extension SQWorkoutSummaryController {
 // MARK: - Route Handling
 
 extension SQWorkoutSummaryController {
+
+    func loadPremiumInsightsIfNeeded(workout: SQWorkoutSessionable) async {
+        guard let modelContext = SQAppState.shared.modelContext else {
+            premiumInsightsModel = nil
+            return
+        }
+
+        do {
+            let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
+            premiumInsightsModel = await workoutScoreService.insights(
+                for: workout,
+                allTimeWorkouts: allTimeWorkouts,
+                isPremiumUnlocked: SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+            )
+        } catch {
+            premiumInsightsModel = nil
+            SQLogger.shared.log(
+                "Failed to load premium workout insights: \(error.localizedDescription)",
+                .debug,
+                context: .workoutSummary
+            )
+        }
+    }
 
     func loadRouteIfNeeded() async {
         guard !state.isLoadingRoute, state.routeLocations.isEmpty else { return }
