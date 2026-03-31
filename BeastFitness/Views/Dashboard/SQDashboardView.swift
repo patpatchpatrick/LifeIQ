@@ -14,6 +14,10 @@ struct SQDashboardView: View {
     @State private var shouldRefreshOnNextActive = false
     static let uiConfig = UIConfig()
 
+    private var shouldShowDashboardErrorState: Bool {
+        !controller.state.isLoading && controller.state.availableLayoutGroups.isEmpty
+    }
+
     var mainScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -67,10 +71,23 @@ struct SQDashboardView: View {
                         .padding(.bottom, 16)
                 }
 
-                // Main sections - always rendered so mock data shows as a redacted skeleton
-                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                    ForEach(controller.state.sectionGroups) { sectionGroup in
-                        SQDashboardSectionGroupView(sectionGroup: sectionGroup)
+                if shouldShowDashboardErrorState {
+                    SQSubsectionEmptyState(
+                        viewModel: .init(
+                            title: "Dashboard data couldn't load",
+                            subtitle: "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > Beast Fitness and make sure Health access is enabled. After that, pull to refresh and try again.",
+                            icon: .exclamationmarkTriangle,
+                            onTap: nil
+                        )
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                } else {
+                    // Main sections - always rendered so mock data shows as a redacted skeleton
+                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        ForEach(controller.state.sectionGroups) { sectionGroup in
+                            SQDashboardSectionGroupView(sectionGroup: sectionGroup)
+                        }
                     }
                 }
 

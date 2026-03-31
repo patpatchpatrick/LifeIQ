@@ -41,7 +41,10 @@ final class SQDashboardController: SQDashboardInterface {
     private var pendingRefreshShowsLoadingState = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
-    private var latestUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
+    private var lastLoadedSectionGroups: [SQDashboardSectionGroupViewModel] = []
+    private var lastLoadedUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
+    private var lastLoadedAvailableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
+    private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
     
     
     @MainActor
@@ -102,7 +105,6 @@ final class SQDashboardController: SQDashboardInterface {
 
         if !userState.hasResolvedInitialAuthState {
             let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
-            latestUncustomizedSectionGroups = mockGroups
             state.updateUncustomizedSectionGroups(mockGroups)
             availableLayoutGroups = self.dashboardLayoutService.descriptors(from: mockGroups)
             state.updateAvailableLayoutGroups(availableLayoutGroups)
@@ -236,7 +238,6 @@ final class SQDashboardController: SQDashboardInterface {
         if showLoadingState {
             // Show mock skeleton while real data loads.
             let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
-            latestUncustomizedSectionGroups = mockGroups
             state.updateUncustomizedSectionGroups(mockGroups)
             availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
             state.updateAvailableLayoutGroups(availableLayoutGroups)
@@ -434,11 +435,17 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange: priorTimeRange,
                 context: context
             )
-            latestUncustomizedSectionGroups = sectionGroups
+            let appliedSectionGroups = dashboardLayoutService.apply(to: sectionGroups)
+            let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: sectionGroups)
+
             state.updateUncustomizedSectionGroups(sectionGroups)
-            availableLayoutGroups = dashboardLayoutService.descriptors(from: sectionGroups)
+            availableLayoutGroups = updatedAvailableLayoutGroups
             state.updateAvailableLayoutGroups(availableLayoutGroups)
-            state.updateSectionGroups(to: dashboardLayoutService.apply(to: sectionGroups))
+            state.updateSectionGroups(to: appliedSectionGroups)
+            lastLoadedUncustomizedSectionGroups = sectionGroups
+            lastLoadedSectionGroups = appliedSectionGroups
+            lastLoadedAvailableLayoutGroups = updatedAvailableLayoutGroups
+            lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
 
             if showLoadingState {
                 state.setLoading(false)
@@ -451,12 +458,18 @@ final class SQDashboardController: SQDashboardInterface {
         } catch {
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
 
+            /// Restore the last loaded data, to ensure that we're never showing mock data whenever we get errors fetching healthKit data
+            state.updateDailyCheckInCtaViewModel(lastLoadedDailyCheckInCtaViewModel)
+            state.updateUncustomizedSectionGroups(lastLoadedUncustomizedSectionGroups)
+            availableLayoutGroups = lastLoadedAvailableLayoutGroups
+            state.updateAvailableLayoutGroups(lastLoadedAvailableLayoutGroups)
+            state.updateSectionGroups(to: lastLoadedSectionGroups)
+
             if showLoadingState {
                 state.setLoading(false)
             }
 
-            // TODO: - PTD allow refreshes if there is an error here
-            state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: error.localizedDescription))))
+            presentDashboardLoadError(error, context: context)
         }
     }
     
@@ -481,6 +494,36 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     // MARK: - New Workout Review Processing
+
+    private func presentDashboardLoadError(_ error: Error, context: ModelContext) {
+        let alert = SQAlertViewModel(
+            title: "Couldn't load dashboard",
+            subtitle: dashboardLoadFailureMessage(for: error),
+            primary: .init(title: "Retry") { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.loadUI(
+                        for: context,
+                        shouldForceRefresh: true,
+                        showLoadingState: true
+                    )
+                }
+            },
+            secondary: .init(title: "Cancel", role: .cancel),
+            canDismiss: true
+        )
+
+        state.hub.alertEvents.send(.present(alert))
+    }
+
+    private func dashboardLoadFailureMessage(for error: Error) -> String {
+        let baseMessage = "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > Beast Fitness and make sure Health access is enabled. After that, try again."
+        let detail = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !detail.isEmpty else { return baseMessage }
+
+        return "\(baseMessage)\n\nError: \(detail)"
+    }
 
     private func presentHighestPriorityDashboardRouteIfNeeded(
         workouts: [SQWorkoutSessionable],
