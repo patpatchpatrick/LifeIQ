@@ -18,6 +18,7 @@ actor SQWorkoutSessionMetadataManager {
     static let shared = SQWorkoutSessionMetadataManager()
 
     private var metricCache: [String: [SQQuantityType: SQWorkoutMetric]] = [:]
+    private var heartRateZoneSummaryCache: [String: SQHeartRateWorkoutZoneSummary] = [:]
 
     func cachedMetric(for quantityType: SQQuantityType, sourceId: String) -> SQWorkoutMetric? {
         metricCache[sourceId, default: [:]][quantityType]
@@ -27,8 +28,17 @@ actor SQWorkoutSessionMetadataManager {
         metricCache[sourceId, default: [:]][quantityType] = metric
     }
 
+    func cachedHeartRateZoneSummary(for sourceId: String) -> SQHeartRateWorkoutZoneSummary? {
+        heartRateZoneSummaryCache[sourceId]
+    }
+
+    func cacheHeartRateZoneSummary(_ summary: SQHeartRateWorkoutZoneSummary, for sourceId: String) {
+        heartRateZoneSummaryCache[sourceId] = summary
+    }
+
     func invalidate() {
         metricCache.removeAll()
+        heartRateZoneSummaryCache.removeAll()
         SQLogger.shared.log("Workout session metadata cache invalidated", .debug, context: .workoutManager)
     }
 }

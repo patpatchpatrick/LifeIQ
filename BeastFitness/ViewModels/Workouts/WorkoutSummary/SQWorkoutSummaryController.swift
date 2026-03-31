@@ -112,12 +112,16 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         workout: SQWorkoutSessionable,
         mode: SQWorkoutSummaryMode = .standard
     ) {
+        let resolvedHeartRateService = SQHeartRateService(healthKitManager: healthKitManager)
+
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.workout = workout
         self.statsManager = statsManager
-        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
+        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService(
+            heartRateService: resolvedHeartRateService
+        )
         self.mode = mode
         self.navigationTitle = mode == .review ? "" : "Workout summary"
         self.titleViewModel = SQUITextFieldViewModel(

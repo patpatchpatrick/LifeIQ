@@ -62,6 +62,11 @@ final class SQDashboardController: SQDashboardInterface {
         workoutScoreService: SQWorkoutScoreServicing? = nil,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil
     ) {
+        let resolvedHeartRateService = heartRateService ?? SQHeartRateService(
+            healthKitManager: healthKitManager,
+            userState: userState
+        )
+
         self.state = state
         self.navState = navState
         self.userState = userState
@@ -76,10 +81,10 @@ final class SQDashboardController: SQDashboardInterface {
             sleepAggregationService: sleepAggregationService,
             healthKitManager: healthKitManager
         )
-        self.heartRateService = heartRateService ?? SQHeartRateService(
-            healthKitManager: healthKitManager
+        self.heartRateService = resolvedHeartRateService
+        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService(
+            heartRateService: resolvedHeartRateService
         )
-        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         
         let items = AppTimeRange.allCases

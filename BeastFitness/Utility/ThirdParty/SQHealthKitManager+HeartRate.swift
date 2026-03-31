@@ -13,6 +13,16 @@ struct SQHeartRateDailySummary: Sendable {
     let maximum: Double?
 }
 
+struct SQHeartRateIntervalSummary: Sendable {
+    let startDate: Date
+    let endDate: Date
+    let average: Double
+
+    var durationSeconds: Double {
+        max(0, endDate.timeIntervalSince(startDate))
+    }
+}
+
 extension SQHealthKitManager {
     func fetchDailyHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary] {
         try await fetchDailyHeartRateSummaries(
@@ -30,6 +40,97 @@ extension SQHealthKitManager {
             options: [.discreteAverage],
             validRange: 25...120
         )
+    }
+
+    func fetchWorkoutHeartRateSummaries(for workout: HKWorkout) async throws -> [SQHeartRateIntervalSummary] {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw SQHealthKitError.healthDataUnavailable
+        }
+
+        guard let quantityType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            return []
+        }
+
+        try await Self.healthStore.requestAuthorization(
+            toShare: Set<HKSampleType>(),
+            read: Set<HKObjectType>([quantityType])
+        )
+
+        let timePredicate = HKQuery.predicateForSamples(
+            withStart: workout.startDate,
+            end: workout.endDate,
+            options: [.strictStartDate, .strictEndDate]
+        )
+        let sourcePredicate = HKQuery.predicateForObjects(from: workout)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [timePredicate, sourcePredicate])
+        let calendar = Calendar.current
+        let anchorDate = calendar.date(
+            bySettingHour: calendar.component(.hour, from: workout.startDate),
+            minute: calendar.component(.minute, from: workout.startDate),
+            second: 0,
+            of: workout.startDate
+        ) ?? workout.startDate
+        let interval = DateComponents(minute: 1)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: quantityType,
+                quantitySamplePredicate: predicate,
+                options: [.discreteAverage],
+                anchorDate: anchorDate,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let results else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                let unit = HKUnit.count().unitDivided(by: .minute())
+                var summaries = [SQHeartRateIntervalSummary]()
+
+                results.enumerateStatistics(from: workout.startDate, to: workout.endDate) { stats, _ in
+                    guard let average = stats.averageQuantity()?.doubleValue(for: unit) else {
+                        return
+                    }
+
+                    guard (25...240).contains(average) else {
+                        return
+                    }
+
+                    let endDate = min(stats.endDate, workout.endDate)
+                    guard endDate > stats.startDate else {
+                        return
+                    }
+
+                    summaries.append(
+                        SQHeartRateIntervalSummary(
+                            startDate: stats.startDate,
+                            endDate: endDate,
+                            average: average
+                        )
+                    )
+                }
+
+                continuation.resume(returning: summaries.sorted { $0.startDate < $1.startDate })
+            }
+
+            Self.healthStore.execute(query)
+        }
+    }
+
+    func fetchWorkoutHeartRateSummaries(for healthKitId: String) async throws -> [SQHeartRateIntervalSummary] {
+        guard let workout = try await fetchWorkout(with: healthKitId) else {
+            return []
+        }
+
+        return try await fetchWorkoutHeartRateSummaries(for: workout)
     }
 
     private func fetchDailyHeartRateSummaries(
@@ -106,6 +207,37 @@ extension SQHealthKitManager {
                 }
 
                 continuation.resume(returning: summaries.sorted { $0.date < $1.date })
+            }
+
+            Self.healthStore.execute(query)
+        }
+    }
+
+    private func fetchWorkout(with healthKitId: String) async throws -> HKWorkout? {
+        guard let uuid = UUID(uuidString: healthKitId) else {
+            return nil
+        }
+
+        let sampleType = HKObjectType.workoutType()
+        try await Self.healthStore.requestAuthorization(
+            toShare: Set<HKSampleType>(),
+            read: Set<HKObjectType>([sampleType])
+        )
+        let predicate = HKQuery.predicateForObject(with: uuid)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: sampleType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                continuation.resume(returning: (samples as? [HKWorkout])?.first)
             }
 
             Self.healthStore.execute(query)

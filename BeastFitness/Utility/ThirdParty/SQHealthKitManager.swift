@@ -58,6 +58,12 @@ protocol SQHealthKitManaging {
 
     /// Daily resting heart-rate summaries for the selected range.
     func fetchDailyRestingHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary]
+
+    /// Per-interval heart-rate averages for a workout.
+    func fetchWorkoutHeartRateSummaries(for workout: HKWorkout) async throws -> [SQHeartRateIntervalSummary]
+
+    /// Same, but you pass your saved HealthKit UUID string.
+    func fetchWorkoutHeartRateSummaries(for healthKitId: String) async throws -> [SQHeartRateIntervalSummary]
 }
 
 

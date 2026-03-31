@@ -83,7 +83,13 @@ extension SQWorkoutStatsManager {
         do {
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
             let sameActivityWorkouts = allTimeWorkouts.filter { $0.activityType == workout.activityType }
-            let workoutScoreService = await SQWorkoutScoreService()
+            let userState = await SQAppState.shared.userState
+            let workoutScoreService = await SQWorkoutScoreService(
+                heartRateService: SQHeartRateService(
+                    healthKitManager: healthKitManager,
+                    userState: userState
+                )
+            )
 
             // VO2 Max — special case, not a workout metric
             if workout.activityType.impactsVO2MaxData {
@@ -129,7 +135,7 @@ extension SQWorkoutStatsManager {
 
             rows.append(contentsOf: await workoutScoreService.dashboardPerformanceRows(
                 for: [workout],
-                allTimeWorkouts: sameActivityWorkouts,
+                allTimeWorkouts: allTimeWorkouts,
                 isPremiumUnlocked: isPremiumUnlocked
             ))
 
@@ -153,7 +159,13 @@ extension SQWorkoutStatsManager {
         let sameActivityAllTimeWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
         let metricTypes = metrics(for: activityType)
         var rows: [SQPerformanceRowData] = []
-        let workoutScoreService = await SQWorkoutScoreService()
+        let userState = await SQAppState.shared.userState
+        let workoutScoreService = await SQWorkoutScoreService(
+            heartRateService: SQHeartRateService(
+                healthKitManager: healthKitManager,
+                userState: userState
+            )
+        )
 
         for quantityType in metricTypes {
             let periodMetrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
