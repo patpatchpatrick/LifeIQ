@@ -703,10 +703,11 @@ final class SQDashboardController: SQDashboardInterface {
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
-        allTimeWorkouts: [SQWorkoutSessionable],
-        timeRange: SQTimeRange
+        allTimeWorkouts: [SQWorkoutSessionable]
     ) async -> SQDashboardSubsectionViewModel? {
-        var rows: [SQDashboardMetricPerformanceRowViewModel] = []
+        var sharedRows = [SQDashboardMetricPerformanceRowViewModel]()
+        var activityRowsByFilter = [String: [SQDashboardMetricPerformanceRowViewModel]]()
+        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
 
         // Add VO2 Max row if we have samples
         if !vo2MaxSamples.isEmpty {
@@ -733,21 +734,25 @@ final class SQDashboardController: SQDashboardInterface {
                 percentileRank: percentileRank,
                 leaderboardMode: .vo2Max
             )
-            rows.append(vo2MaxRow)
+            sharedRows.append(vo2MaxRow)
         }
         
         // Build performance rows per activity type using the stats manager
-        let uniqueActivityTypes = Set(workouts.map { $0.activityType })
+        let uniqueActivityTypes = Array(Set(workouts.map(\.activityType)))
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
         for activityType in uniqueActivityTypes {
             let activityWorkouts = workouts.filter { $0.activityType == activityType }
             guard !activityWorkouts.isEmpty else { continue }
+            let allTimeActivityWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
+            var activityRows = [SQDashboardMetricPerformanceRowViewModel]()
 
             let performanceRows = await statsManager.loadPerformanceRows(
                 for: activityType,
                 in: activityWorkouts,
                 allTimeWorkouts: allTimeWorkouts
             )
-            rows.append(contentsOf: performanceRows.map { rowData in
+            activityRows.append(contentsOf: performanceRows.map { rowData in
                 SQDashboardMetricPerformanceRowViewModel(
                     metricId: rowData.id,
                     icon: rowData.icon,
@@ -759,42 +764,69 @@ final class SQDashboardController: SQDashboardInterface {
                     isPremiumLocked: rowData.isPremiumLocked
                 )
             })
+
+            let workoutScoreRows = await workoutScoreService.dashboardPerformanceRows(
+                for: activityWorkouts,
+                allTimeWorkouts: allTimeActivityWorkouts,
+                isPremiumUnlocked: isPremiumUnlocked
+            )
+            activityRows.append(contentsOf: workoutScoreRows.map { rowData in
+                SQDashboardMetricPerformanceRowViewModel(
+                    metricId: rowData.id,
+                    icon: rowData.icon,
+                    title: rowData.title,
+                    bestValue: rowData.bestValue,
+                    unit: rowData.unit,
+                    percentileRank: rowData.percentileRank,
+                    leaderboardMode: rowData.leaderboardMode,
+                    isPremiumLocked: rowData.isPremiumLocked
+                )
+            })
+
+            guard !activityRows.isEmpty else { continue }
+            activityRowsByFilter[activityType.name] = activityRows
         }
 
-        let workoutScoreRows = await workoutScoreService.dashboardPerformanceRows(
-            for: workouts,
-            allTimeWorkouts: allTimeWorkouts,
-            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
-        )
-        rows.append(contentsOf: workoutScoreRows.map { rowData in
-            SQDashboardMetricPerformanceRowViewModel(
-                metricId: rowData.id,
-                icon: rowData.icon,
-                title: rowData.title,
-                bestValue: rowData.bestValue,
-                unit: rowData.unit,
-                percentileRank: rowData.percentileRank,
-                leaderboardMode: rowData.leaderboardMode,
-                isPremiumLocked: rowData.isPremiumLocked
-            )
-        })
-
         // Skip section if no performance data at all
-        guard !rows.isEmpty else { return nil }
+        let allRows = sharedRows + uniqueActivityTypes.flatMap { activityRowsByFilter[$0.name] ?? [] }
+        guard !allRows.isEmpty else { return nil }
 
-        // Build rowsByFilter dictionary (no filters for Performance)
-        let rowsByFilter: [String: [SQDashboardMetricPerformanceRowViewModel]] = ["All": rows]
+        // Build rowsByFilter dictionary with an activity filter like Metrics.
+        var rowsByFilter: [String: [SQDashboardMetricPerformanceRowViewModel]] = [
+            "All": allRows
+        ]
+        for (filter, rows) in activityRowsByFilter {
+            rowsByFilter[filter] = sharedRows + rows
+        }
+
+        let filterItems = [SQDropDownMenuViewModel.Item(title: "All")] + activityRowsByFilter.keys
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .map { SQDropDownMenuViewModel.Item(title: $0) }
+
+        let dropDownViewModel: SQDropDownMenuViewModel? = filterItems.count > 1
+            ? SQDropDownMenuViewModel(
+                defaultItem: .init(title: "All"),
+                items: filterItems,
+                itemSelectionHandler: { _ in }
+            )
+            : nil
 
         // Return section view model
-        return SQDashboardSubsectionViewModel(
+        let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "performance",
             title: "Performance",
             defaultPriority: 20,
             rowsByFilter: rowsByFilter,
-            dropDownViewModel: nil,  // No filter dropdown for performance
+            dropDownViewModel: dropDownViewModel,
             columnHeaders: ["", "Score", "Rank"],
             maxVisibleRows: 4
         )
+
+        dropDownViewModel?.itemSelectionHandler = { selectedFilter in
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        return sectionViewModel
     }
 
     // MARK: - Totals Subsection Builder
@@ -1388,8 +1420,7 @@ final class SQDashboardController: SQDashboardInterface {
             vo2MaxSamples: vo2MaxSamples,
             vo2MaxAllTime: vo2MaxAllTime,
             workouts: workouts,
-            allTimeWorkouts: allTimeWorkouts,
-            timeRange: timeRange
+            allTimeWorkouts: allTimeWorkouts
         ) {
             dailyStatsSections.append(performanceSection)
         }
