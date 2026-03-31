@@ -14,7 +14,7 @@ import CoolCharts
 
 @MainActor
 protocol SQDashboardInterface {
-    func loadUI(for context: ModelContext, shouldForceRefresh: Bool) async
+    func loadUI(for context: ModelContext, shouldForceRefresh: Bool, showLoadingState: Bool) async
     func refreshUI(for context: ModelContext) async
     func displayDailyCheckInSheet(for context: ModelContext, date: Date?) async
 }
@@ -38,6 +38,7 @@ final class SQDashboardController: SQDashboardInterface {
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
     private var pendingForcedRefresh = false
+    private var pendingRefreshShowsLoadingState = false
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
     private var latestUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
@@ -155,21 +156,32 @@ final class SQDashboardController: SQDashboardInterface {
             .sink { [weak self] _ in
                 guard let self else { return }
                 SQLogger.shared.log("Time range changed, reloading dashboard", .debug, context: .dashboard)
-                self.refreshFromGlobalContext()
+                guard let modelContext = SQAppState.shared.modelContext else { return }
+                Task {
+                    await self.loadUI(
+                        for: modelContext,
+                        shouldForceRefresh: true,
+                        showLoadingState: true
+                    )
+                }
             }
             .store(in: &cancellables)
     }
 
     private func refreshFromGlobalContext() {
         guard let modelContext = SQAppState.shared.modelContext else { return }
-        Task { await self.loadUI(for: modelContext, shouldForceRefresh: true) }
+        Task { await self.refreshUI(for: modelContext) }
     }
 
     private func applyLayoutCustomizationToCurrentState() {
         state.updateSectionGroups(to: dashboardLayoutService.apply(to: state.uncustomizedSectionGroups))
     }
     
-    func loadUI(for context: ModelContext, shouldForceRefresh: Bool = false) async {
+    func loadUI(
+        for context: ModelContext,
+        shouldForceRefresh: Bool = false,
+        showLoadingState: Bool = true
+    ) async {
         guard userState.hasResolvedInitialAuthState else {
             SQLogger.shared.log(
                 "Skipping dashboard load until initial auth state resolves.",
@@ -182,6 +194,7 @@ final class SQDashboardController: SQDashboardInterface {
         guard !isLoadUIInProgress else {
             if shouldForceRefresh {
                 pendingForcedRefresh = true
+                pendingRefreshShowsLoadingState = pendingRefreshShowsLoadingState || showLoadingState
                 SQLogger.shared.log(
                     "Dashboard load in progress. Queuing a forced refresh for after completion.",
                     .debug,
@@ -201,22 +214,30 @@ final class SQDashboardController: SQDashboardInterface {
             isLoadUIInProgress = false
             if pendingForcedRefresh {
                 pendingForcedRefresh = false
+                let queuedRefreshShowsLoadingState = pendingRefreshShowsLoadingState
+                pendingRefreshShowsLoadingState = false
                 Task { @MainActor in
-                    await self.loadUI(for: context, shouldForceRefresh: true)
+                    await self.loadUI(
+                        for: context,
+                        shouldForceRefresh: true,
+                        showLoadingState: queuedRefreshShowsLoadingState
+                    )
                 }
             }
         }
 
         hasLoadedUI = true
 
-        // Show mock skeleton while real data loads
-        let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
-        latestUncustomizedSectionGroups = mockGroups
-        state.updateUncustomizedSectionGroups(mockGroups)
-        availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
-        state.updateAvailableLayoutGroups(availableLayoutGroups)
-        state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
-        state.setLoading(true)
+        if showLoadingState {
+            // Show mock skeleton while real data loads.
+            let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+            latestUncustomizedSectionGroups = mockGroups
+            state.updateUncustomizedSectionGroups(mockGroups)
+            availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
+            state.updateAvailableLayoutGroups(availableLayoutGroups)
+            state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
+            state.setLoading(true)
+        }
 
         do {
             // Sync daily check-ins from Firestore
@@ -405,8 +426,9 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: dashboardLayoutService.apply(to: sectionGroups))
 
-            // Clear loading state
-            state.setLoading(false)
+            if showLoadingState {
+                state.setLoading(false)
+            }
 
             presentHighestPriorityDashboardRouteIfNeeded(
                 workouts: past30DaysWorkouts,
@@ -415,8 +437,9 @@ final class SQDashboardController: SQDashboardInterface {
         } catch {
             SQLogger.shared.log("Error loading dashboard", .error, context: .dashboard)
 
-            // Clear loading state on error
-            state.setLoading(false)
+            if showLoadingState {
+                state.setLoading(false)
+            }
 
             // TODO: - PTD allow refreshes if there is an error here
             state.hub.alertEvents.send(.present(.init(SQError.standard(withDescription: error.localizedDescription))))
@@ -425,7 +448,11 @@ final class SQDashboardController: SQDashboardInterface {
     
     func refreshUI(for context: ModelContext) async {
         SQLogger.shared.log("Refreshing dashboard", .debug, context: .dashboard)
-        await loadUI(for: context, shouldForceRefresh: true)
+        await loadUI(
+            for: context,
+            shouldForceRefresh: true,
+            showLoadingState: false
+        )
     }
     
     func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {

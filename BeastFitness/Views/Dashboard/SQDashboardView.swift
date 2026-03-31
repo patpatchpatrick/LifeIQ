@@ -9,7 +9,9 @@ import SwiftUI
 
 struct SQDashboardView: View {
     @Bindable var controller: SQDashboardController
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var modelContext
+    @State private var shouldRefreshOnNextActive = false
     static let uiConfig = UIConfig()
 
     var mainScroll: some View {
@@ -75,6 +77,9 @@ struct SQDashboardView: View {
                 Spacer()
             }
         }
+        .refreshable {
+            await controller.refreshUI(for: modelContext)
+        }
     }
 
     var body: some View {
@@ -88,6 +93,22 @@ struct SQDashboardView: View {
             .disabled(controller.state.isLoading)
             .task {
                 await controller.loadUI(for: modelContext)
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
+                case .background:
+                    shouldRefreshOnNextActive = true
+                case .active:
+                    guard shouldRefreshOnNextActive, controller.hasLoadedUI else { return }
+                    shouldRefreshOnNextActive = false
+                    Task {
+                        await controller.refreshUI(for: modelContext)
+                    }
+                case .inactive:
+                    break
+                @unknown default:
+                    break
+                }
             }
             .sheet(isPresented: .init(
                 get: { controller.state.isDailyCheckInSheetVisible },

@@ -502,7 +502,7 @@ private extension SQWorkoutScoreService {
                     id: "personalized-performance",
                     title: "Personalized",
                     value: "\(breakdown.personalizedScore)/100",
-                    caption: "Current ranking against your own running history. This can shift as your baseline evolves.",
+                    caption: "Current ranking against \(max(breakdown.historicalRunCount, 1)) run(s) in your history. This can shift as your baseline evolves.",
                     accentColor: .dashboardGlowMint
                 )
             ],
