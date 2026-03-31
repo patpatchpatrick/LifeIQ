@@ -53,8 +53,8 @@ enum SQMetricBodyBatteryEffect: String, Codable, CaseIterable, UnfrozenEnum {
 
 /// Determines which check-in screen a metric appears on.
 enum SQMetricPeriod: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
-    case morning   // Appears on the morning check-in screen (logged before noon)
-    case evening   // Appears on the evening check-in screen (logged at noon or later)
+    case morning   // Appears on the morning check-in screen
+    case evening   // Appears on the evening check-in screen
     case unknown   // Fallback for unrecognized values from Firestore
 }
 

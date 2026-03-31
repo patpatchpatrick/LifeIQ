@@ -124,11 +124,27 @@ protocol DashboardStating: AnyObject {
         toggleDailyCheckInSheetVisibility(true)
     }
 
-    /// Determines the check-in period based on current device time.
-    /// Before noon → morning; noon or after → evening.
+    /// Determines which check-in flow to open for the current time.
+    /// Keep the morning flow available until late afternoon so users can finish it later in the day.
     static func checkInPeriod(for date: Date) -> SQMetricPeriod {
         let hour = Calendar.current.component(.hour, from: date)
-        return hour < 12 ? .morning : .evening
+        return hour < 16 ? .morning : .evening
+    }
+
+    /// Determines whether the dashboard should actively prompt for a check-in.
+    /// Morning prompts remain through noon; evening prompts start at 4 PM.
+    static func checkInPromptPeriod(for date: Date) -> SQMetricPeriod? {
+        let hour = Calendar.current.component(.hour, from: date)
+
+        if hour < 13 {
+            return .morning
+        }
+
+        if hour >= 16 {
+            return .evening
+        }
+
+        return nil
     }
     
     func navigateToWorkoutView(with workouts: [any SQWorkoutSessionable]) {

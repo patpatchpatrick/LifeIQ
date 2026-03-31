@@ -291,12 +291,17 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
-            let currentCheckInPeriod = DashboardState.checkInPeriod(for: .now)
-            let hasCompletedCurrentCheckIn = (try? await dailyCheckInManager.hasCompletedCheckIn(
-                for: .now,
-                period: currentCheckInPeriod,
-                context: context
-            )) ?? false
+            let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(for: .now)
+            let hasCompletedCurrentCheckIn: Bool
+            if let currentCheckInPromptPeriod {
+                hasCompletedCurrentCheckIn = (try? await dailyCheckInManager.hasCompletedCheckIn(
+                    for: .now,
+                    period: currentCheckInPromptPeriod,
+                    context: context
+                )) ?? false
+            } else {
+                hasCompletedCurrentCheckIn = true
+            }
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
             let todaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
@@ -348,10 +353,14 @@ final class SQDashboardController: SQDashboardInterface {
             )
 
             // Set the daily check-in CTA view model if no stats exist
-            if !hasCompletedCurrentCheckIn, userState.isLoggedIn {
+            if
+                let currentCheckInPromptPeriod,
+                !hasCompletedCurrentCheckIn,
+                userState.isLoggedIn
+            {
                 state.updateDailyCheckInCtaViewModel(.init(
                     icon: .init(symbol: .checkmark),
-                    title: "Complete your \(title(for: currentCheckInPeriod)) check-in",
+                    title: "Complete your \(title(for: currentCheckInPromptPeriod)) check-in",
                     onTap: {
                         Task { await self.displayDailyCheckInSheet(for: context) }
                     }
@@ -621,8 +630,11 @@ final class SQDashboardController: SQDashboardInterface {
         let metricsEmptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel = {
             let emptyStateTitle: String
             if timeRange == .today {
-                let currentCheckInPeriod = DashboardState.checkInPeriod(for: .now)
-                emptyStateTitle = "Complete your \(title(for: currentCheckInPeriod)) check-in"
+                if let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(for: .now) {
+                    emptyStateTitle = "Complete your \(title(for: currentCheckInPromptPeriod)) check-in"
+                } else {
+                    emptyStateTitle = "Log your next daily check-in"
+                }
             } else {
                 emptyStateTitle = "Log your next daily check-in"
             }

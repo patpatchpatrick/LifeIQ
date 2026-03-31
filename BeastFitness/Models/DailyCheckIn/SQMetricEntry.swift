@@ -96,7 +96,7 @@ extension SQMetricEntry {
         let tz = TimeZone.current
         let anchorDayKey = recordedAt.anchorDayKey(in: tz)
         let hour = Calendar.current.component(.hour, from: recordedAt)
-        let submissionPeriod: SQMetricPeriod = hour < 12 ? .morning : .evening
+        let submissionPeriod: SQMetricPeriod = hour < 16 ? .morning : .evening
         let stableId = stableEntryId(
             metricId: metricId,
             anchorDayKey: anchorDayKey,
