@@ -292,11 +292,19 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
-            let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(for: .now)
+            let sleepSchedule = userState.loggedInUser?.sleepSchedule
+            let currentCheckInDate = DashboardState.currentCheckInDate(
+                for: .now,
+                sleepSchedule: sleepSchedule
+            )
+            let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
+                for: .now,
+                sleepSchedule: sleepSchedule
+            )
             let hasCompletedCurrentCheckIn: Bool
             if let currentCheckInPromptPeriod {
                 hasCompletedCurrentCheckIn = (try? await dailyCheckInManager.hasCompletedCheckIn(
-                    for: .now,
+                    for: currentCheckInDate,
                     period: currentCheckInPromptPeriod,
                     context: context
                 )) ?? false
@@ -483,14 +491,26 @@ final class SQDashboardController: SQDashboardInterface {
     }
     
     func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {
-        let targetDate = date ?? .now
-        let checkInPeriod = DashboardState.checkInPeriod(for: targetDate)
+        let sleepSchedule = userState.loggedInUser?.sleepSchedule
+        let referenceDate = date ?? .now
+        let targetDate = date ?? DashboardState.currentCheckInDate(
+            for: referenceDate,
+            sleepSchedule: sleepSchedule
+        )
+        let checkInPeriod = DashboardState.checkInPeriod(
+            for: referenceDate,
+            sleepSchedule: sleepSchedule
+        )
         let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
             for: targetDate,
             period: checkInPeriod,
             context: context
         )
-        state.displayDailyCheckInSheet(with: dailyCheckInStats, for: targetDate)
+        state.displayDailyCheckInSheet(
+            with: dailyCheckInStats,
+            for: targetDate,
+            period: checkInPeriod
+        )
     }
 
     // MARK: - New Workout Review Processing
@@ -523,6 +543,18 @@ final class SQDashboardController: SQDashboardInterface {
         guard !detail.isEmpty else { return baseMessage }
 
         return "\(baseMessage)\n\nError: \(detail)"
+    }
+
+    private func presentGuestSleepAccuracyAlert() {
+        let alert = SQAlertViewModel(
+            title: "Guest Sleep Data",
+            subtitle: "Sleep data can still appear in guest mode, but your sleep score, bedtime grouping, and check-in timing may be less accurate until you create an account and save your usual sleep and wake times.",
+            primary: .ok,
+            secondary: nil,
+            canDismiss: true
+        )
+
+        state.hub.alertEvents.send(.present(alert))
     }
 
     private func presentHighestPriorityDashboardRouteIfNeeded(
@@ -673,7 +705,10 @@ final class SQDashboardController: SQDashboardInterface {
         let metricsEmptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel = {
             let emptyStateTitle: String
             if timeRange == .today {
-                if let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(for: .now) {
+                if let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
+                    for: .now,
+                    sleepSchedule: userState.loggedInUser?.sleepSchedule
+                ) {
                     emptyStateTitle = "Complete your \(title(for: currentCheckInPromptPeriod)) check-in"
                 } else {
                     emptyStateTitle = "Log your next daily check-in"
@@ -1016,7 +1051,11 @@ final class SQDashboardController: SQDashboardInterface {
     // MARK: - Sleep Builders
 
     private func buildSleepDashboardData(for timeRange: AppTimeRange) async throws -> SQSleepDashboardData? {
-        let window = sleepAggregationService.makeDashboardWindow(for: timeRange)
+        let sleepSchedule = userState.loggedInUser?.sleepSchedule
+        let window = sleepAggregationService.makeDashboardWindow(
+            for: timeRange,
+            sleepSchedule: sleepSchedule
+        )
         let sleepSegments = try await healthKitManager.fetchSleepSegments(
             from: window.fetchStartDate,
             to: window.fetchEndDate
@@ -1024,7 +1063,8 @@ final class SQDashboardController: SQDashboardInterface {
 
         let dashboardData = sleepAggregationService.buildDashboardData(
             segments: sleepSegments,
-            window: window
+            window: window,
+            sleepSchedule: sleepSchedule
         )
 
         return dashboardData.currentNights.isEmpty ? nil : dashboardData
@@ -1109,7 +1149,12 @@ final class SQDashboardController: SQDashboardInterface {
             title: data.currentNights.count > 1 ? "Average Sleep Score" : "Sleep Score",
             defaultPriority: 10,
             rowsByFilter: ["All": [scoreRow]],
-            dropDownViewModel: nil
+            dropDownViewModel: nil,
+            titleButton: userState.isLoggedIn
+            ? nil
+            : .init(icon: .infoCircle, title: "Guest") { [weak self] in
+                self?.presentGuestSleepAccuracyAlert()
+            }
         )
     }
 
@@ -1119,9 +1164,16 @@ final class SQDashboardController: SQDashboardInterface {
         let isAverageWindow = data.currentNights.count > 1
         let totalSleepSeconds = data.currentNights.map(\.totalSleepDuration).reduce(0, +)
         let averageSleepSeconds = totalSleepSeconds / Double(max(1, data.currentNights.count))
+        let sleepSchedule = userState.loggedInUser?.sleepSchedule
 
-        let averageSleepStart = averageBedtimeTime(of: data.currentNights.map(\.sleepStartDate))
-        let averageWakeTime = averageWakeTime(of: data.currentNights.map(\.wakeDate))
+        let averageSleepStart = averageBedtimeTime(
+            of: data.currentNights.map(\.sleepStartDate),
+            sleepSchedule: sleepSchedule
+        )
+        let averageWakeTime = averageWakeTime(
+            of: data.currentNights.map(\.wakeDate),
+            sleepSchedule: sleepSchedule
+        )
 
         let summaryRow = SQDashboardSleepSummaryRowViewModel(items: [
             .init(
@@ -1363,57 +1415,65 @@ final class SQDashboardController: SQDashboardInterface {
         }
     }
 
-    private func averageBedtimeTime(of dates: [Date]) -> Date? {
+    private func averageBedtimeTime(
+        of dates: [Date],
+        sleepSchedule: SQSleepSchedule?
+    ) -> Date? {
+        guard !dates.isEmpty else { return nil }
+
+        let fallbackAnchorMinutes = 23 * 60
+        return averageTime(
+            of: dates,
+            anchorMinutes: sleepSchedule?.sleepTime.minutesSinceMidnight ?? fallbackAnchorMinutes
+        )
+    }
+
+    private func averageWakeTime(
+        of dates: [Date],
+        sleepSchedule: SQSleepSchedule?
+    ) -> Date? {
+        guard !dates.isEmpty else { return nil }
+
+        return averageTime(
+            of: dates,
+            anchorMinutes: sleepSchedule?.wakeTime.minutesSinceMidnight ?? (7 * 60)
+        )
+    }
+
+    private func averageTime(of dates: [Date], anchorMinutes: Int) -> Date? {
         guard !dates.isEmpty else { return nil }
 
         let calendar = Calendar.current
         let anchorDay = calendar.startOfDay(for: dates[0])
         let secondsInDay = 24.0 * 60.0 * 60.0
+        let anchorSeconds = Double(anchorMinutes * 60)
 
-        let adjustedSeconds = dates.compactMap { date -> Double? in
+        let adjustedSeconds = dates.map { date -> Double in
             let components = calendar.dateComponents([.hour, .minute, .second], from: date)
             let hour = components.hour ?? 0
             let minute = components.minute ?? 0
             let second = components.second ?? 0
-            let totalSeconds = Double(hour * 3600 + minute * 60 + second)
+            var totalSeconds = Double(hour * 3600 + minute * 60 + second)
 
-            // Bedtimes after midnight should be treated as late-night continuation.
-            let normalizedSeconds = totalSeconds < (12.0 * 3600.0) ? totalSeconds + secondsInDay : totalSeconds
+            if (totalSeconds - anchorSeconds) < (-secondsInDay / 2.0) {
+                totalSeconds += secondsInDay
+            } else if (totalSeconds - anchorSeconds) > (secondsInDay / 2.0) {
+                totalSeconds -= secondsInDay
+            }
 
-            // Keep only likely nighttime bedtimes (6:00 PM to 5:00 AM next day).
-            // This avoids daytime naps/skewed sessions polluting long-range averages.
-            let lowerBound = 18.0 * 3600.0
-            let upperBound = 29.0 * 3600.0
-            guard normalizedSeconds >= lowerBound, normalizedSeconds <= upperBound else { return nil }
-
-            return normalizedSeconds
+            return totalSeconds
         }
 
-        guard !adjustedSeconds.isEmpty else { return nil }
-
-        let averageSecondsAdjusted = adjustedSeconds.reduce(0, +) / Double(adjustedSeconds.count)
-        let averageSeconds = averageSecondsAdjusted.truncatingRemainder(dividingBy: secondsInDay)
+        let averageSeconds = positiveModulo(
+            adjustedSeconds.reduce(0, +) / Double(adjustedSeconds.count),
+            modulus: secondsInDay
+        )
         return anchorDay.addingTimeInterval(averageSeconds)
     }
 
-    private func averageWakeTime(of dates: [Date]) -> Date? {
-        guard !dates.isEmpty else { return nil }
-
-        let calendar = Calendar.current
-        let anchorDay = calendar.startOfDay(for: dates[0])
-        let secondsInDay = 24.0 * 60.0 * 60.0
-
-        let secondsValues = dates.map { date -> Double in
-            let components = calendar.dateComponents([.hour, .minute, .second], from: date)
-            let hour = components.hour ?? 0
-            let minute = components.minute ?? 0
-            let second = components.second ?? 0
-            return Double(hour * 3600 + minute * 60 + second)
-        }
-
-        let averageSeconds = (secondsValues.reduce(0, +) / Double(secondsValues.count))
-            .truncatingRemainder(dividingBy: secondsInDay)
-        return anchorDay.addingTimeInterval(averageSeconds)
+    private func positiveModulo(_ value: Double, modulus: Double) -> Double {
+        let remainder = value.truncatingRemainder(dividingBy: modulus)
+        return remainder >= 0 ? remainder : remainder + modulus
     }
 
     // MARK: - Section Groups Builder

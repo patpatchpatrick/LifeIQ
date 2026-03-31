@@ -15,8 +15,12 @@ struct SQSleepDashboardWindow {
 struct SQSleepAggregationService {
     private let calendar = Calendar.current
 
-    func makeDashboardWindow(for timeRange: AppTimeRange, now: Date = .now) -> SQSleepDashboardWindow {
-        let anchorWakeDay = latestCompletedWakeDay(now: now)
+    func makeDashboardWindow(
+        for timeRange: AppTimeRange,
+        now: Date = .now,
+        sleepSchedule: SQSleepSchedule? = nil
+    ) -> SQSleepDashboardWindow {
+        let anchorWakeDay = latestCompletedWakeDay(now: now, sleepSchedule: sleepSchedule)
         let currentCount = nightCount(for: timeRange)
 
         let currentWakeDays = (0..<currentCount).compactMap { offset in
@@ -41,8 +45,8 @@ struct SQSleepAggregationService {
         let earliestWakeDay = allWakeDays.first ?? anchorWakeDay
         let latestWakeDay = allWakeDays.last ?? anchorWakeDay
 
-        let fetchStartDate = nightWindowStart(for: earliestWakeDay)
-        let fetchEndDate = nightWindowEnd(for: latestWakeDay)
+        let fetchStartDate = nightWindowStart(for: earliestWakeDay, sleepSchedule: sleepSchedule)
+        let fetchEndDate = nightWindowEnd(for: latestWakeDay, sleepSchedule: sleepSchedule)
 
         return SQSleepDashboardWindow(
             currentWakeDays: currentWakeDays,
@@ -54,10 +58,19 @@ struct SQSleepAggregationService {
 
     func buildDashboardData(
         segments: [SQSleepStageSegment],
-        window: SQSleepDashboardWindow
+        window: SQSleepDashboardWindow,
+        sleepSchedule: SQSleepSchedule? = nil
     ) -> SQSleepDashboardData {
-        let currentNights = buildNights(for: window.currentWakeDays, using: segments)
-        let priorNights = buildNights(for: window.priorWakeDays, using: segments)
+        let currentNights = buildNights(
+            for: window.currentWakeDays,
+            using: segments,
+            sleepSchedule: sleepSchedule
+        )
+        let priorNights = buildNights(
+            for: window.priorWakeDays,
+            using: segments,
+            sleepSchedule: sleepSchedule
+        )
 
         let latestNight = currentNights.sorted(by: { $0.wakeDay > $1.wakeDay }).first
         let scores = currentNights.map(score(for:))
@@ -118,11 +131,12 @@ struct SQSleepAggregationService {
 
     private func buildNights(
         for wakeDays: [Date],
-        using segments: [SQSleepStageSegment]
+        using segments: [SQSleepStageSegment],
+        sleepSchedule: SQSleepSchedule?
     ) -> [SQSleepNight] {
         wakeDays.compactMap { wakeDay in
-            let nightStart = nightWindowStart(for: wakeDay)
-            let nightEnd = nightWindowEnd(for: wakeDay)
+            let nightStart = nightWindowStart(for: wakeDay, sleepSchedule: sleepSchedule)
+            let nightEnd = nightWindowEnd(for: wakeDay, sleepSchedule: sleepSchedule)
 
             let clippedSegments = segments.compactMap { segment -> SQSleepStageSegment? in
                 let overlapStart = max(segment.startDate, nightStart)
@@ -136,7 +150,8 @@ struct SQSleepAggregationService {
 
             guard let primaryBlockInterval = primarySleepBlockInterval(
                 from: clippedSegments,
-                wakeDay: wakeDay
+                wakeDay: wakeDay,
+                sleepSchedule: sleepSchedule
             ) else {
                 return nil
             }
@@ -173,7 +188,8 @@ struct SQSleepAggregationService {
 
     private func primarySleepBlockInterval(
         from segments: [SQSleepStageSegment],
-        wakeDay: Date
+        wakeDay: Date,
+        sleepSchedule: SQSleepSchedule?
     ) -> DateInterval? {
         let nonAwakeSegments = segments
             .filter { $0.phase != .awake }
@@ -212,6 +228,40 @@ struct SQSleepAggregationService {
             }
         }
         blocks.append(currentBlock)
+
+        if let sleepSchedule {
+            let expectedInterval = expectedSleepInterval(for: wakeDay, sleepSchedule: sleepSchedule)
+            let candidateInterval = DateInterval(
+                start: expectedInterval.start.addingTimeInterval(-(4 * 60 * 60)),
+                end: expectedInterval.end.addingTimeInterval(4 * 60 * 60)
+            )
+            func overlapDuration(for block: SleepBlock) -> TimeInterval {
+                let blockInterval = DateInterval(start: block.start, end: block.end)
+                return blockInterval.intersection(with: candidateInterval)?.duration ?? 0
+            }
+
+            let candidateBlocks = blocks.filter { block in
+                let blockInterval = DateInterval(start: block.start, end: block.end)
+                return blockInterval.intersection(with: candidateInterval) != nil
+            }
+
+            let preferredBlocks = candidateBlocks.isEmpty ? blocks : candidateBlocks
+
+            guard let bestBlock = preferredBlocks.max(by: { lhs, rhs in
+                let lhsOverlap = overlapDuration(for: lhs)
+                let rhsOverlap = overlapDuration(for: rhs)
+
+                if lhsOverlap == rhsOverlap {
+                    return lhs.sleepDuration < rhs.sleepDuration
+                }
+
+                return lhsOverlap < rhsOverlap
+            }) else {
+                return nil
+            }
+
+            return DateInterval(start: bestBlock.start, end: bestBlock.end)
+        }
 
         let wakeDayStart = calendar.startOfDay(for: wakeDay)
         let overnightStartCutoff = calendar.date(byAdding: .hour, value: 5, to: wakeDayStart) ?? wakeDayStart
@@ -259,12 +309,19 @@ struct SQSleepAggregationService {
         return max(0, min(1, 1 - (deviation / tolerance)))
     }
 
-    private func latestCompletedWakeDay(now: Date) -> Date {
+    private func latestCompletedWakeDay(now: Date, sleepSchedule: SQSleepSchedule?) -> Date {
         let startOfToday = calendar.startOfDay(for: now)
-        let hour = calendar.component(.hour, from: now)
 
-        // Use today's wake day once we're past early-morning hours so
-        // the dashboard reflects the just-completed night after waking.
+        if let sleepSchedule {
+            let todaysWakeDate = sleepSchedule.wakeTime.date(on: startOfToday, calendar: calendar)
+            if now >= todaysWakeDate {
+                return startOfToday
+            }
+
+            return calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
+        }
+
+        let hour = calendar.component(.hour, from: now)
         if hour < 4 {
             return calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
         }
@@ -282,15 +339,49 @@ struct SQSleepAggregationService {
         }
     }
 
-    private func nightWindowStart(for wakeDay: Date) -> Date {
+    private func nightWindowStart(for wakeDay: Date, sleepSchedule: SQSleepSchedule?) -> Date {
+        if let sleepSchedule {
+            return expectedSleepInterval(for: wakeDay, sleepSchedule: sleepSchedule)
+                .start
+                .addingTimeInterval(-(6 * 60 * 60))
+        }
+
         let dayStart = calendar.startOfDay(for: wakeDay)
         // A wake day's sleep should come from the prior evening/night, not the prior morning.
         // Starting at 6 PM previous day avoids attributing yesterday-morning sleep to today's wake day.
         return calendar.date(byAdding: .hour, value: -6, to: dayStart) ?? dayStart
     }
 
-    private func nightWindowEnd(for wakeDay: Date) -> Date {
+    private func nightWindowEnd(for wakeDay: Date, sleepSchedule: SQSleepSchedule?) -> Date {
+        if let sleepSchedule {
+            return expectedSleepInterval(for: wakeDay, sleepSchedule: sleepSchedule)
+                .end
+                .addingTimeInterval(6 * 60 * 60)
+        }
+
         let dayStart = calendar.startOfDay(for: wakeDay)
         return calendar.date(byAdding: .hour, value: 12, to: dayStart) ?? dayStart
+    }
+
+    private func expectedSleepInterval(
+        for wakeDay: Date,
+        sleepSchedule: SQSleepSchedule
+    ) -> DateInterval {
+        let wakeDayStart = calendar.startOfDay(for: wakeDay)
+        let wakeDate = sleepSchedule.wakeTime.date(on: wakeDayStart, calendar: calendar)
+
+        let sleepAnchorDay: Date
+        if sleepSchedule.sleepCrossesMidnight {
+            sleepAnchorDay = calendar.date(byAdding: .day, value: -1, to: wakeDayStart) ?? wakeDayStart
+        } else {
+            sleepAnchorDay = wakeDayStart
+        }
+
+        let sleepDate = sleepSchedule.sleepTime.date(on: sleepAnchorDay, calendar: calendar)
+        let adjustedWakeDate = wakeDate > sleepDate
+            ? wakeDate
+            : calendar.date(byAdding: .day, value: 1, to: wakeDate) ?? wakeDate
+
+        return DateInterval(start: sleepDate, end: adjustedWakeDate)
     }
 }

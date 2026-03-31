@@ -22,6 +22,20 @@ struct SQOnboardingView: View {
         )
     }
 
+    private var sleepTimeBinding: Binding<Date> {
+        Binding(
+            get: { controller.selectedSleepTime },
+            set: { controller.selectedSleepTime = $0 }
+        )
+    }
+
+    private var wakeTimeBinding: Binding<Date> {
+        Binding(
+            get: { controller.selectedWakeTime },
+            set: { controller.selectedWakeTime = $0 }
+        )
+    }
+
     @ViewBuilder
     private var heroCard: some View {
         VStack(spacing: .SQSpace.m) {
@@ -130,6 +144,46 @@ struct SQOnboardingView: View {
     }
 
     @ViewBuilder
+    private var sleepScheduleCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Sleep Schedule")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("Set your typical sleep and wake times so sleep scoring and check-in timing match your routine.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+
+            labeledRow(label: "Typical Sleep Time") {
+                DatePicker(
+                    "",
+                    selection: sleepTimeBinding,
+                    displayedComponents: [.hourAndMinute]
+                )
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+            }
+
+            labeledRow(label: "Typical Wake Time") {
+                DatePicker(
+                    "",
+                    selection: wakeTimeBinding,
+                    displayedComponents: [.hourAndMinute]
+                )
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
     private var bottomAction: some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             if !controller.canSave, let message = controller.saveDisabledMessage {
@@ -159,6 +213,7 @@ struct SQOnboardingView: View {
             VStack(spacing: .SQSpace.l) {
                 heroCard
                 profileCard
+                sleepScheduleCard
                 optionalInfoCard
             }
             .padding(.horizontal, .SQSpace.l)

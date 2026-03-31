@@ -12,6 +12,47 @@ enum SQOnboardingStatus: String, Codable {
     case completed
 }
 
+struct SQTimeOfDay: Codable, Equatable, Hashable {
+    let hour: Int
+    let minute: Int
+
+    init(hour: Int, minute: Int) {
+        self.hour = min(max(hour, 0), 23)
+        self.minute = min(max(minute, 0), 59)
+    }
+
+    init(date: Date, calendar: Calendar = .current) {
+        let components = calendar.dateComponents([.hour, .minute], from: date)
+        self.init(
+            hour: components.hour ?? 0,
+            minute: components.minute ?? 0
+        )
+    }
+
+    var minutesSinceMidnight: Int {
+        (hour * 60) + minute
+    }
+
+    func date(on day: Date, calendar: Calendar = .current) -> Date {
+        let startOfDay = calendar.startOfDay(for: day)
+        return calendar.date(byAdding: .minute, value: minutesSinceMidnight, to: startOfDay) ?? startOfDay
+    }
+}
+
+struct SQSleepSchedule: Codable, Equatable, Hashable {
+    let sleepTime: SQTimeOfDay
+    let wakeTime: SQTimeOfDay
+
+    static let onboardingDefault = SQSleepSchedule(
+        sleepTime: .init(hour: 23, minute: 0),
+        wakeTime: .init(hour: 7, minute: 0)
+    )
+
+    var sleepCrossesMidnight: Bool {
+        sleepTime.minutesSinceMidnight >= wakeTime.minutesSinceMidnight
+    }
+}
+
 enum SQSubscriptionLevel: String, Codable {
     case free
     case premium
@@ -30,6 +71,7 @@ struct SQUser: Codable, Equatable {
     let dateOfBirth: Date?
     let heightInInches: Double?
     let weightInPounds: Double?
+    let sleepSchedule: SQSleepSchedule?
     let subscriptionLevel: SQSubscriptionLevel?
     let onboardingCompletedAt: Date?
     let onboardingStatus: SQOnboardingStatus?
@@ -73,6 +115,7 @@ extension SQUser {
         dateOfBirth: nil,
         heightInInches: 72,
         weightInPounds: 185,
+        sleepSchedule: .onboardingDefault,
         subscriptionLevel: .appDefault,
         onboardingCompletedAt: .now,
         onboardingStatus: .completed

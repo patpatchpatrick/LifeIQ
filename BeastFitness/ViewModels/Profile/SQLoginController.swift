@@ -191,6 +191,8 @@ protocol SQLoginInterface: AnyObject {
         }
 
         hub.domainEvents.send(.dismissDashboardNavStack)
+        await Task.yield()
+        hub.userEvents.send(.profileUpdated)
     }
 
     private func presentAuthError(_ error: Error) {

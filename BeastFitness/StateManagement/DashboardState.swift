@@ -35,7 +35,7 @@ protocol DashboardStating: AnyObject {
     func changeTab(to tab: NavigationState.Tab)
 
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
-    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?)
+    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?, period: SQMetricPeriod?)
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
     func updateAvailableLayoutGroups(_ groups: [SQDashboardLayoutGroupDescriptor])
     func updateUncustomizedSectionGroups(_ groups: [SQDashboardSectionGroupViewModel])
@@ -107,15 +107,19 @@ protocol DashboardStating: AnyObject {
         isDailyCheckInSheetVisible = isVisible
     }
     
-    func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date? = nil) {
+    func displayDailyCheckInSheet(
+        with stats: SQDailyCheckInStats?,
+        for date: Date? = nil,
+        period: SQMetricPeriod? = nil
+    ) {
         let targetDate = date ?? .now
-        let period = Self.checkInPeriod(for: targetDate)
+        let resolvedPeriod = period ?? Self.checkInPeriod(for: targetDate)
 
         dailyCheckInViewModel = .init(
             eventHub: SQAppState.shared.hub,
             stats: stats,
             targetDate: targetDate,
-            period: period,
+            period: resolvedPeriod,
             metricsManager: SQMetricsManager.shared,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
@@ -125,26 +129,108 @@ protocol DashboardStating: AnyObject {
     }
 
     /// Determines which check-in flow to open for the current time.
-    /// Keep the morning flow available until late afternoon so users can finish it later in the day.
-    static func checkInPeriod(for date: Date) -> SQMetricPeriod {
-        let hour = Calendar.current.component(.hour, from: date)
-        return hour < 16 ? .morning : .evening
-    }
+    /// Uses the user's usual sleep schedule when available; otherwise falls back to fixed daytime cutoffs.
+    static func checkInPeriod(for date: Date, sleepSchedule: SQSleepSchedule? = nil) -> SQMetricPeriod {
+        guard let sleepSchedule else {
+            let hour = Calendar.current.component(.hour, from: date)
+            return hour < 16 ? .morning : .evening
+        }
 
-    /// Determines whether the dashboard should actively prompt for a check-in.
-    /// Morning prompts remain through noon; evening prompts start at 4 PM.
-    static func checkInPromptPeriod(for date: Date) -> SQMetricPeriod? {
-        let hour = Calendar.current.component(.hour, from: date)
+        let currentMinutes = minutesSinceMidnight(for: date)
+        let wakeMinutes = sleepSchedule.wakeTime.minutesSinceMidnight
+        let eveningStartMinutes = positiveModulo(
+            sleepSchedule.sleepTime.minutesSinceMidnight - (7 * 60)
+        )
 
-        if hour < 13 {
+        if isWithinCircularRange(
+            currentMinutes,
+            start: wakeMinutes,
+            end: eveningStartMinutes
+        ) {
             return .morning
         }
 
-        if hour >= 16 {
+        return .evening
+    }
+
+    /// Determines whether the dashboard should actively prompt for a check-in.
+    /// Uses schedule-relative windows when available, with fixed daytime cutoffs as the fallback.
+    static func checkInPromptPeriod(for date: Date, sleepSchedule: SQSleepSchedule? = nil) -> SQMetricPeriod? {
+        guard let sleepSchedule else {
+            let hour = Calendar.current.component(.hour, from: date)
+
+            if hour < 13 {
+                return .morning
+            }
+
+            if hour >= 16 {
+                return .evening
+            }
+
+            return nil
+        }
+
+        let currentMinutes = minutesSinceMidnight(for: date)
+        let wakeMinutes = sleepSchedule.wakeTime.minutesSinceMidnight
+        let sleepMinutes = sleepSchedule.sleepTime.minutesSinceMidnight
+        let morningPromptEndMinutes = positiveModulo(wakeMinutes + (5 * 60))
+        let eveningPromptStartMinutes = positiveModulo(sleepMinutes - (7 * 60))
+
+        if isWithinCircularRange(
+            currentMinutes,
+            start: wakeMinutes,
+            end: morningPromptEndMinutes
+        ) {
+            return .morning
+        }
+
+        if isWithinCircularRange(
+            currentMinutes,
+            start: eveningPromptStartMinutes,
+            end: sleepMinutes
+        ) {
             return .evening
         }
 
         return nil
+    }
+
+    /// Returns the calendar date that should own the user's current check-in session.
+    static func currentCheckInDate(for date: Date, sleepSchedule: SQSleepSchedule? = nil) -> Date {
+        guard let sleepSchedule else {
+            return date
+        }
+
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: date)
+        let currentMinutes = minutesSinceMidnight(for: date)
+        let wakeMinutes = sleepSchedule.wakeTime.minutesSinceMidnight
+
+        if currentMinutes >= wakeMinutes {
+            return startOfToday
+        }
+
+        return calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
+    }
+
+    private static func minutesSinceMidnight(for date: Date) -> Int {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return ((components.hour ?? 0) * 60) + (components.minute ?? 0)
+    }
+
+    private static func positiveModulo(_ value: Int, modulus: Int = 24 * 60) -> Int {
+        let remainder = value % modulus
+        return remainder >= 0 ? remainder : remainder + modulus
+    }
+
+    private static func isWithinCircularRange(_ value: Int, start: Int, end: Int) -> Bool {
+        guard start != end else { return false }
+
+        if start < end {
+            return value >= start && value < end
+        }
+
+        return value >= start || value < end
     }
     
     func navigateToWorkoutView(with workouts: [any SQWorkoutSessionable]) {

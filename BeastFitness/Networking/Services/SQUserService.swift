@@ -19,6 +19,7 @@ final class SQUserService: SQNetworkService {
             dateOfBirth: nil,
             heightInInches: nil,
             weightInPounds: nil,
+            sleepSchedule: nil,
             subscriptionLevel: .appDefault,
             onboardingCompletedAt: nil,
             onboardingStatus: .pending

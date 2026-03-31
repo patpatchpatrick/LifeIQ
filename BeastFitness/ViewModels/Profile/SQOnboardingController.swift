@@ -16,6 +16,8 @@ import BeastFitnessCore
     var isLoading = false
     var includesDateOfBirth: Bool
     var selectedDateOfBirth: Date
+    var selectedSleepTime: Date
+    var selectedWakeTime: Date
 
     let firstNameField: SQUITextFieldViewModel
     let lastNameField: SQUITextFieldViewModel
@@ -36,9 +38,12 @@ import BeastFitnessCore
 
         let existingUser = userState.loggedInUser
         let initialDateOfBirth = existingUser?.dateOfBirth ?? Calendar.current.date(byAdding: .year, value: -25, to: .now) ?? .now
+        let initialSleepSchedule = existingUser?.sleepSchedule ?? .onboardingDefault
 
         self.includesDateOfBirth = existingUser?.dateOfBirth != nil || existingUser?.onboardingStatus != .completed
         self.selectedDateOfBirth = initialDateOfBirth
+        self.selectedSleepTime = initialSleepSchedule.sleepTime.date(on: .now)
+        self.selectedWakeTime = initialSleepSchedule.wakeTime.date(on: .now)
 
         self.firstNameField = SQUITextFieldViewModel(
             placeholder: "First name",
@@ -129,6 +134,7 @@ import BeastFitnessCore
         guard !firstNameField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         guard totalHeightInInches != nil else { return false }
         guard let weight = Double(weightField.text), weight > 0 else { return false }
+        guard sleepTimeOfDay != wakeTimeOfDay else { return false }
         return true
     }
 
@@ -148,7 +154,18 @@ import BeastFitnessCore
         if Double(weightField.text) == nil || (Double(weightField.text) ?? 0) <= 0 {
             return "Enter a valid weight in pounds."
         }
+        if sleepTimeOfDay == wakeTimeOfDay {
+            return "Sleep time and wake time should be different."
+        }
         return nil
+    }
+
+    private var sleepTimeOfDay: SQTimeOfDay {
+        SQTimeOfDay(date: selectedSleepTime)
+    }
+
+    private var wakeTimeOfDay: SQTimeOfDay {
+        SQTimeOfDay(date: selectedWakeTime)
     }
 
     func completeTapped() async {
@@ -181,6 +198,10 @@ import BeastFitnessCore
             dateOfBirth: includesDateOfBirth ? selectedDateOfBirth : nil,
             heightInInches: height,
             weightInPounds: weight,
+            sleepSchedule: .init(
+                sleepTime: sleepTimeOfDay,
+                wakeTime: wakeTimeOfDay
+            ),
             subscriptionLevel: existingUser.subscriptionLevel,
             onboardingCompletedAt: .now,
             onboardingStatus: .completed
