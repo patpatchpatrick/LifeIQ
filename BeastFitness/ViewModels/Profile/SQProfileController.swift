@@ -69,8 +69,7 @@ protocol SQProfileInterface: AnyObject {
                 case .loginStateChanged:
                     self?.refreshUI()
                 case .profileUpdated:
-                    // No-op
-                    break
+                    self?.refreshUI()
                 }
             }
             .store(in: &cancellables)

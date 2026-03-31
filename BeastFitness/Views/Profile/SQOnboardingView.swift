@@ -58,11 +58,11 @@ struct SQOnboardingView: View {
             }
 
             VStack(spacing: .SQSpace.xs) {
-                Text("Set up your profile")
+                Text(controller.heroTitle)
                     .sqFont(.title2)
                     .sqForegroundColor(.textPrimary)
 
-                Text("A little more context helps personalize insights, scores, and trends.")
+                Text(controller.heroSubtitle)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .multilineTextAlignment(.center)
@@ -196,7 +196,7 @@ struct SQOnboardingView: View {
             SQButton(
                 style: .glassPrimary,
                 shouldHugContent: false,
-                title: "Finish Setup",
+                title: controller.saveButtonTitle,
                 isLoading: controller.isLoading
             ) {
                 Task {
@@ -223,7 +223,7 @@ struct SQOnboardingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(controller.title)
         .navigationBarTitleDisplayMode(.inline)
-        .interactiveDismissDisabled()
+        .interactiveDismissDisabled(controller.shouldPreventInteractiveDismiss)
         .disabled(controller.isLoading)
         .opacity(controller.isLoading ? 0.6 : 1)
         .background {

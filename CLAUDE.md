@@ -49,6 +49,12 @@ The dashboard renders a collapsible section per group, ordered by the first metr
 - Shared code such as extensions, utilities (e.g., logging), and reusable business logic should generally live in **BeastFitnessCore** so it can be reused across app targets/modules.
 - We use a local package called **CoolCharts** for all chart/graph components. Any chart visualizations should be added to or used from CoolCharts.
 
+## Onboarding/Profile Editing Sync
+
+- `SQOnboardingView` is the shared form for both initial onboarding and later profile-stat editing from Settings.
+- Keep onboarding fields and save behavior aligned between `SQOnboardingView`, `SQOnboardingController`, and the Settings-launched edit flow.
+- Do not introduce a separate profile-stats editor that can drift from onboarding unless explicitly intended.
+
 ### Time Range Utilities
 
 **SQTimeRange** provides standardized date ranges for querying data:

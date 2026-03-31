@@ -59,6 +59,12 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Use `hub.domainEvents.send(.pushDashboardRoute(...))` for dashboard sheet routes and handle them in `SQRootTabView`.
 - For user-facing errors, use `hub.alertEvents` with `SQAlertViewModel`, typically `hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))`.
 
+## Onboarding/Profile Editing
+
+- `SQOnboardingView` is the shared editor for both first-run onboarding and later profile-stat editing from Settings.
+- Keep the editable fields in `SQOnboardingView`, `SQOnboardingController`, and the Settings entry point in sync. Do not create a separate profile-stats form that can drift from onboarding.
+- If onboarding fields change, ensure the Settings-launched edit flow exposes the same fields and save behavior.
+
 ## Date formatting
 
 - Always use `SQDateFormatters` (or Date extension helpers).

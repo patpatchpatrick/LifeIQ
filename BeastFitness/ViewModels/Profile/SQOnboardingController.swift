@@ -9,10 +9,16 @@ import BeastFitnessCore
 
 @MainActor
 @Observable final class SQOnboardingController: Identifiable {
+    enum Mode {
+        case setup
+        case editProfile
+    }
+
     let id = UUID().uuidString
     let hub: EventHub
     let userState: SQUserStating
 
+    let mode: Mode
     var isLoading = false
     var includesDateOfBirth: Bool
     var selectedDateOfBirth: Date
@@ -28,10 +34,12 @@ import BeastFitnessCore
     private let userManager: SQUserManaging
 
     init(
+        mode: Mode = .setup,
         userState: SQUserStating = SQAppState.shared.userState,
         userManager: SQUserManaging = SQUserManager.shared,
         hub: EventHub = SQAppState.shared.hub
     ) {
+        self.mode = mode
         self.userState = userState
         self.userManager = userManager
         self.hub = hub
@@ -114,7 +122,45 @@ import BeastFitnessCore
         weightField.setText(existingUser?.weightInPounds.map(Self.format) ?? "")
     }
 
-    var title: String { "Complete Setup" }
+    var title: String {
+        switch mode {
+        case .setup:
+            return "Complete Setup"
+        case .editProfile:
+            return "Edit Profile"
+        }
+    }
+
+    var heroTitle: String {
+        switch mode {
+        case .setup:
+            return "Set up your profile"
+        case .editProfile:
+            return "Update your profile"
+        }
+    }
+
+    var heroSubtitle: String {
+        switch mode {
+        case .setup:
+            return "A little more context helps personalize insights, scores, and trends."
+        case .editProfile:
+            return "Keep your personal stats and sleep schedule current so insights stay accurate."
+        }
+    }
+
+    var saveButtonTitle: String {
+        switch mode {
+        case .setup:
+            return "Finish Setup"
+        case .editProfile:
+            return "Save Changes"
+        }
+    }
+
+    var shouldPreventInteractiveDismiss: Bool {
+        mode == .setup
+    }
 
     private var parsedHeightFeet: Int? {
         Int(heightFeetField.text)
@@ -210,9 +256,19 @@ import BeastFitnessCore
         do {
             let savedUser = try await userManager.saveUser(updatedUser)
             SQUserDefaults.shared.clearPendingOnboarding(for: savedUser.id)
-            hub.domainEvents.send(.dismissDashboardNavStack)
-            userState.setLoggedIn(savedUser, hasLoadedProfile: true)
-            hub.toastEvents.send(.present(.init(title: "Setup complete", style: .success)))
+            userState.updateLoggedInUser(savedUser, hasLoadedProfile: true)
+
+            switch mode {
+            case .setup:
+                hub.domainEvents.send(.dismissDashboardNavStack)
+                hub.toastEvents.send(.present(.init(title: "Setup complete", style: .success)))
+            case .editProfile:
+                hub.domainEvents.send(.popDashboardRoute)
+                hub.toastEvents.send(.present(.init(title: "Profile updated", style: .success)))
+            }
+
+            await Task.yield()
+            hub.userEvents.send(.profileUpdated)
         } catch {
             hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
         }

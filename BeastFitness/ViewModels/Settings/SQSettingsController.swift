@@ -17,6 +17,7 @@ final class SQSettingsController: SQSettingsInterface {
     let id = UUID().uuidString
     let state: SettingsStating
     let dashboardState: DashboardStating
+    let userState: SQUserStating
     private let dashboardLayoutService: SQDashboardLayoutServicing
     var navigationPath = NavigationPath()
     private(set) var rows: [SQSettingsRowViewModel] = []
@@ -27,16 +28,34 @@ final class SQSettingsController: SQSettingsInterface {
     init(
         state: SettingsStating,
         dashboardState: DashboardStating = SQAppState.shared.dashboardState,
+        userState: SQUserStating = SQAppState.shared.userState,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil
     ) {
         self.state = state
         self.dashboardState = dashboardState
+        self.userState = userState
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         buildRows()
     }
 
     private func buildRows() {
-        rows = [
+        var builtRows: [SQSettingsRowViewModel] = []
+
+        if userState.isLoggedIn {
+            builtRows.append(
+                .init(
+                    title: "Edit profile stats",
+                    subtitle: "Update your name, height, weight, birth date, and sleep schedule.",
+                    showsChevron: true
+                ) { [weak self] in
+                    guard let self else { return }
+                    let controller = SQOnboardingController(mode: .editProfile)
+                    self.state.hub.domainEvents.send(.pushDashboardRoute(.onboarding(controller: controller)))
+                }
+            )
+        }
+
+        builtRows.append(contentsOf: [
             .init(
                 title: "Customize dashboard",
                 subtitle: "Reorder, hide, and restore dashboard sections and subsections.",
@@ -77,7 +96,9 @@ final class SQSettingsController: SQSettingsInterface {
             ) { [weak self] in
                 self?.navigationPath.append(SQNavRoute.Settings.nested)
             }
-        ]
+        ])
+
+        rows = builtRows
     }
 
     func popView() {
