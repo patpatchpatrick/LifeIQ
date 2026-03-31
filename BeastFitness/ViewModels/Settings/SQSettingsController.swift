@@ -80,12 +80,7 @@ final class SQSettingsController: SQSettingsInterface {
                 subtitle: "Shows workouts you previously hid after failing to delete in HealthKit.",
                 showsChevron: false
             ) { [weak self] in
-                guard let self else { return }
-                SQUserDefaults.shared.clearHiddenWorkouts()
-                self.state.hub.workoutEvents.send(.workoutsUpdated([:]))
-                self.state.hub.toastEvents.send(.present(.init(title: "Hidden workouts cleared", style: .success)))
-                // Optional: show your custom alert here later
-                // AppState.shared.alertState.present(...)
+                self?.confirmClearHiddenWorkouts()
             },
 
             // Example nested item for later:
@@ -99,6 +94,23 @@ final class SQSettingsController: SQSettingsInterface {
         ])
 
         rows = builtRows
+    }
+
+    private func confirmClearHiddenWorkouts() {
+        let alert = SQAlertViewModel(
+            title: "Clear hidden workouts?",
+            subtitle: "This will restore workouts you previously hid after a failed HealthKit delete, so they can appear in your workout lists again.",
+            primary: .init(title: "Clear", role: .destructive) { [weak self] _ in
+                guard let self else { return }
+                SQUserDefaults.shared.clearHiddenWorkouts()
+                self.state.hub.workoutEvents.send(.workoutsUpdated([:]))
+                self.state.hub.toastEvents.send(.present(.init(title: "Hidden workouts cleared", style: .success)))
+            },
+            secondary: .init(title: "Cancel", role: .cancel),
+            canDismiss: true
+        )
+
+        state.hub.alertEvents.send(.present(alert))
     }
 
     func popView() {
