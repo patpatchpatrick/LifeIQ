@@ -17,6 +17,27 @@ enum SQWorkoutSummaryMode: Equatable {
     case review
 }
 
+struct SQWorkoutHeartRateZonesViewModel {
+    struct ZoneItem: Identifiable {
+        let id: String
+        let zone: SQHeartRateZone
+        let title: String
+        let subtitle: String
+        let durationSeconds: Double
+        let contribution: Double
+        let rangeText: String
+        let color: SQColor
+    }
+
+    let title: String
+    let subtitle: String
+    let averageHeartRateText: String
+    let minimumHeartRateText: String
+    let maximumHeartRateText: String
+    let zoneItems: [ZoneItem]
+    let footnote: String
+}
+
 struct SQWorkoutReviewHighlight: Identifiable {
     let id = UUID()
     let segments: [Segment]
@@ -92,9 +113,11 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
 
     private let workoutManager: SQWorkoutManaging
     private let healthKitManager: SQHealthKitManaging
+    private let heartRateService: SQHeartRateServicing
     private let statsManager: SQWorkoutStatsManaging
     private let workoutScoreService: SQWorkoutScoreServicing
     private let workout: SQWorkoutSessionable
+    var heartRateZonesViewModel: SQWorkoutHeartRateZonesViewModel?
     
     var navTitle: String {
         switch mode {
@@ -117,6 +140,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.state = WorkoutSummaryState(hub: SQAppState.shared.hub)
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
+        self.heartRateService = resolvedHeartRateService
         self.workout = workout
         self.statsManager = statsManager
         self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService(
@@ -156,8 +180,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         hasLoaded = true
         state.isLoading = true
         state.reset()
+        heartRateZonesViewModel = nil
         await state.load(workout: workout)
         await loadRouteIfNeeded()
+        await loadHeartRateZonesIfNeeded(workout: workout)
         await loadPerformanceDataIfNeeded(workout: workout)
         await loadPremiumInsightsIfNeeded(workout: workout)
         state.isLoading = false
@@ -356,6 +382,34 @@ extension SQWorkoutSummaryController {
 
 extension SQWorkoutSummaryController {
 
+    func loadHeartRateZonesIfNeeded(workout: SQWorkoutSessionable) async {
+        guard let summary = await heartRateService.buildWorkoutZoneSummary(for: workout) else {
+            heartRateZonesViewModel = nil
+            return
+        }
+
+        heartRateZonesViewModel = .init(
+            title: "Heart Rate Zones",
+            subtitle: "Time spent in each zone during this workout.",
+            averageHeartRateText: "\(Int(summary.averageHeartRate.rounded())) bpm",
+            minimumHeartRateText: "\(Int(summary.minimumObservedHeartRate.rounded())) bpm",
+            maximumHeartRateText: "\(Int(summary.maximumObservedHeartRate.rounded())) bpm",
+            zoneItems: summary.distributions.map { distribution in
+                .init(
+                    id: distribution.zone.title,
+                    zone: distribution.zone,
+                    title: distribution.zone.title,
+                    subtitle: distribution.zone.subtitle,
+                    durationSeconds: distribution.durationSeconds,
+                    contribution: distribution.contribution,
+                    rangeText: rangeText(for: distribution.range),
+                    color: accentColor(for: distribution.zone)
+                )
+            },
+            footnote: "Zones are estimated from your profile age and observed workout heart rate. Harder zones contribute more to difficulty."
+        )
+    }
+
     func loadPremiumInsightsIfNeeded(workout: SQWorkoutSessionable) async {
         guard let modelContext = SQAppState.shared.modelContext else {
             premiumInsightsModel = nil
@@ -419,5 +473,30 @@ extension SQWorkoutSummaryController {
         if !rows.isEmpty {
             state.loadPerformanceData(rowData: rows)
         }
+    }
+}
+
+private extension SQWorkoutSummaryController {
+    func accentColor(for zone: SQHeartRateZone) -> SQColor {
+        switch zone {
+        case .zone1:
+            return .accentNeutral4
+        case .zone2:
+            return .dashboardGlowMint
+        case .zone3:
+            return .dashboardGlowBlue
+        case .zone4:
+            return .dashboardTrendWarm
+        case .zone5:
+            return .accentNeutral1
+        }
+    }
+
+    func rangeText(for range: SQHeartRateZoneRange) -> String {
+        if let upperBound = range.upperBound {
+            return "\(range.lowerBound)-\(upperBound - 1) bpm"
+        }
+
+        return "\(range.lowerBound)+ bpm"
     }
 }

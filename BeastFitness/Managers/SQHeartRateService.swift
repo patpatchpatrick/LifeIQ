@@ -101,6 +101,7 @@ struct SQHeartRateWorkoutZoneSummary: Sendable {
     let profile: SQHeartRateZoneProfile
     let distributions: [SQHeartRateZoneDistribution]
     let weightedLoad: Double
+    let minimumObservedHeartRate: Double
     let averageHeartRate: Double
     let maximumObservedHeartRate: Double
     let recordedDurationSeconds: Double
@@ -191,6 +192,7 @@ final class SQHeartRateService: SQHeartRateServicing {
             }
 
             let maximumObservedHeartRate = validIntervals.map(\.average).max() ?? 0
+            let minimumObservedHeartRate = validIntervals.map(\.average).min() ?? 0
             guard maximumObservedHeartRate > 0 else {
                 return nil
             }
@@ -228,6 +230,7 @@ final class SQHeartRateService: SQHeartRateServicing {
                 profile: profile,
                 distributions: distributions,
                 weightedLoad: weightedLoad,
+                minimumObservedHeartRate: minimumObservedHeartRate,
                 averageHeartRate: averageHeartRate,
                 maximumObservedHeartRate: maximumObservedHeartRate,
                 recordedDurationSeconds: recordedDurationSeconds

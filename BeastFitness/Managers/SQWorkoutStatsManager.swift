@@ -200,7 +200,7 @@ extension SQWorkoutStatsManager {
 
         rows.append(contentsOf: await workoutScoreService.dashboardPerformanceRows(
             for: periodWorkouts,
-            allTimeWorkouts: sameActivityAllTimeWorkouts,
+            allTimeWorkouts: allTimeWorkouts,
             isPremiumUnlocked: isPremiumUnlocked
         ))
 

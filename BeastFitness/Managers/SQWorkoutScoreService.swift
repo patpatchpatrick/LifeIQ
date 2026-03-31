@@ -254,13 +254,14 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                 let currentValues = scoredWorkouts.compactMap { scoredWorkout in
                     scoredWorkout.scores.first(where: { $0.kind == kind })?.value
                 }
-                guard let currentValue = currentValues.max() else { continue }
+                guard !currentValues.isEmpty else { continue }
+                let currentAverageValue = Double(currentValues.reduce(0, +)) / Double(currentValues.count)
 
                 let historicalValues = allTimeScoredWorkouts.compactMap { scoredWorkout in
                     scoredWorkout.scores.first(where: { $0.kind == kind })?.value
                 }.map(Double.init)
                 let percentileRank = SQPercentileCalculator.calculatePercentile(
-                    currentBest: Double(currentValue),
+                    currentBest: currentAverageValue,
                     historicalValues: historicalValues,
                     isLowerBetter: false
                 )
@@ -270,7 +271,7 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                         id: "\(activityType.name.lowercased())-\(kind.rawValue)-score",
                         icon: activityType.imageSymbol.rawValue,
                         title: kind.title,
-                        bestValue: "\(currentValue)",
+                        bestValue: String(format: "%.1f", currentAverageValue),
                         unit: "/100",
                         percentileRank: percentileRank,
                         leaderboardMode: .workoutScore(kind, activityType),
@@ -297,26 +298,28 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         var itemsByActivity = [HKWorkoutActivityType: [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]]()
 
         for (activityType, activityWorkouts) in workouts.workoutsByActivityType {
-            guard let latestWorkout = activityWorkouts.sorted(by: {
-                ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
-            }).first else {
-                continue
-            }
-            guard let scoredWorkout = await supportedWorkoutScores(
-                for: latestWorkout,
+            let scoredWorkouts = await loadSupportedWorkoutScores(
+                from: activityWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
                 footerContext: .dashboard
-            ) else {
+            )
+            guard !scoredWorkouts.isEmpty else {
                 continue
             }
 
-            itemsByActivity[activityType] = scoredWorkout.scores.map { score in
-                SQDashboardWorkoutGroupViewModel.WorkoutStatItem(
-                    id: "score-\(score.kind.rawValue)",
-                    title: score.title,
-                    value: attributedScoreValue(score.value),
+            itemsByActivity[activityType] = SQWorkoutScoreKind.allCases.compactMap { kind in
+                let values = scoredWorkouts.compactMap { scoredWorkout in
+                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                }
+                guard !values.isEmpty else { return nil }
+
+                let averageValue = Int((Double(values.reduce(0, +)) / Double(values.count)).rounded())
+                return SQDashboardWorkoutGroupViewModel.WorkoutStatItem(
+                    id: "avg-score-\(kind.rawValue)",
+                    title: "Avg \(kind.title)",
+                    value: attributedScoreValue(averageValue),
                     isPremiumLocked: !isPremiumUnlocked,
-                    accentColor: score.accentColor
+                    accentColor: kind.accentColor
                 )
             }
         }
