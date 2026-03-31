@@ -61,8 +61,8 @@ enum SQHeartRateZone: Int, CaseIterable, Identifiable, Sendable {
         case .zone1: return 1
         case .zone2: return 2
         case .zone3: return 4
-        case .zone4: return 7
-        case .zone5: return 10
+        case .zone4: return 10
+        case .zone5: return 18
         }
     }
 }

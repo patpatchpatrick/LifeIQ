@@ -971,7 +971,7 @@ private extension SQWorkoutScoreService {
     ) -> String {
         switch footerContext {
         case .dashboard:
-            return "Workout Insights"
+            return "Latest Workout"
         case .singleWorkout:
             if scores.count == 2 {
                 return "Performance & Difficulty"
