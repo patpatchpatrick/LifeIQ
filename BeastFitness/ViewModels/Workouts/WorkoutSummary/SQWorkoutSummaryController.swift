@@ -408,7 +408,10 @@ extension SQWorkoutSummaryController {
 extension SQWorkoutSummaryController {
 
     func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
-        let rows = await statsManager.loadPerformanceData(for: workout)
+        let rows = await statsManager.loadPerformanceData(
+            for: workout,
+            isPremiumUnlocked: SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+        )
         if !rows.isEmpty {
             state.loadPerformanceData(rowData: rows)
         }

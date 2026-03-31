@@ -12,8 +12,8 @@ import BeastFitnessCore
 
 protocol SQWorkoutStatsManaging {
     func metrics(for activityType: HKWorkoutActivityType) -> [SQQuantityType]
-    func loadPerformanceData(for workout: SQWorkoutSessionable) async -> [SQPerformanceRowData]
-    func loadPerformanceRows(for activityType: HKWorkoutActivityType, in periodWorkouts: [SQWorkoutSessionable], allTimeWorkouts: [SQWorkoutSessionable]) async -> [SQPerformanceRowData]
+    func loadPerformanceData(for workout: SQWorkoutSessionable, isPremiumUnlocked: Bool) async -> [SQPerformanceRowData]
+    func loadPerformanceRows(for activityType: HKWorkoutActivityType, in periodWorkouts: [SQWorkoutSessionable], allTimeWorkouts: [SQWorkoutSessionable], isPremiumUnlocked: Bool) async -> [SQPerformanceRowData]
     func generateHighlights(for workout: SQWorkoutSessionable, performanceData: [SQPerformanceRowData]) async -> [SQWorkoutReviewHighlight]
 }
 
@@ -70,7 +70,10 @@ extension SQWorkoutStatsManager {
 
 extension SQWorkoutStatsManager {
 
-    func loadPerformanceData(for workout: SQWorkoutSessionable) async -> [SQPerformanceRowData] {
+    func loadPerformanceData(
+        for workout: SQWorkoutSessionable,
+        isPremiumUnlocked: Bool
+    ) async -> [SQPerformanceRowData] {
         guard case .hkWorkout = workout.workoutSource else { return [] }
         guard let workoutEndDate = workout.endDate else { return [] }
         guard let modelContext = await SQAppState.shared.modelContext else { return [] }
@@ -80,6 +83,7 @@ extension SQWorkoutStatsManager {
         do {
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: modelContext)
             let sameActivityWorkouts = allTimeWorkouts.filter { $0.activityType == workout.activityType }
+            let workoutScoreService = await SQWorkoutScoreService()
 
             // VO2 Max — special case, not a workout metric
             if workout.activityType.impactsVO2MaxData {
@@ -123,6 +127,12 @@ extension SQWorkoutStatsManager {
                 rows.append(row)
             }
 
+            rows.append(contentsOf: await workoutScoreService.dashboardPerformanceRows(
+                for: [workout],
+                allTimeWorkouts: sameActivityWorkouts,
+                isPremiumUnlocked: isPremiumUnlocked
+            ))
+
         } catch {
             SQLogger.shared.log(
                 "Failed to load performance data: \(error.localizedDescription)",
@@ -131,17 +141,19 @@ extension SQWorkoutStatsManager {
             )
         }
 
-        return rows
+        return orderedPerformanceRows(rows, for: workout.activityType)
     }
 
     func loadPerformanceRows(
         for activityType: HKWorkoutActivityType,
         in periodWorkouts: [SQWorkoutSessionable],
-        allTimeWorkouts: [SQWorkoutSessionable]
+        allTimeWorkouts: [SQWorkoutSessionable],
+        isPremiumUnlocked: Bool
     ) async -> [SQPerformanceRowData] {
         let sameActivityAllTimeWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
         let metricTypes = metrics(for: activityType)
         var rows: [SQPerformanceRowData] = []
+        let workoutScoreService = await SQWorkoutScoreService()
 
         for quantityType in metricTypes {
             let periodMetrics = await withTaskGroup(of: SQWorkoutMetric?.self) { group in
@@ -174,7 +186,13 @@ extension SQWorkoutStatsManager {
             rows.append(row)
         }
 
-        return rows
+        rows.append(contentsOf: await workoutScoreService.dashboardPerformanceRows(
+            for: periodWorkouts,
+            allTimeWorkouts: sameActivityAllTimeWorkouts,
+            isPremiumUnlocked: isPremiumUnlocked
+        ))
+
+        return orderedPerformanceRows(rows, for: activityType)
     }
 
     // MARK: - Shared helper
@@ -213,6 +231,48 @@ extension SQWorkoutStatsManager {
             percentileRank: percentile,
             leaderboardMode: .workoutQuantity(quantityType, activityType)
         )
+    }
+
+    private func orderedPerformanceRows(
+        _ rows: [SQPerformanceRowData],
+        for activityType: HKWorkoutActivityType
+    ) -> [SQPerformanceRowData] {
+        let metricOrder = metrics(for: activityType)
+
+        return rows.sorted { lhs, rhs in
+            let leftPriority = performanceRowPriority(lhs, metricOrder: metricOrder)
+            let rightPriority = performanceRowPriority(rhs, metricOrder: metricOrder)
+
+            if leftPriority == rightPriority {
+                return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+            }
+
+            return leftPriority < rightPriority
+        }
+    }
+
+    private func performanceRowPriority(
+        _ row: SQPerformanceRowData,
+        metricOrder: [SQQuantityType]
+    ) -> Int {
+        if row.id == "vo2-max" {
+            return 0
+        }
+
+        if row.scoreKind == .performance {
+            return 10
+        }
+
+        if row.scoreKind == .difficulty {
+            return 11
+        }
+
+        if case .workoutQuantity(let quantityType, _) = row.leaderboardMode,
+           let metricIndex = metricOrder.firstIndex(of: quantityType) {
+            return 100 + metricIndex
+        }
+
+        return 1000
     }
 }
 

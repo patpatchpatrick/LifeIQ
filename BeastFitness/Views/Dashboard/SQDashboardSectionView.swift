@@ -78,7 +78,8 @@ struct SQDashboardSectionView: View {
                                                     unit: vm.unit,
                                                     percentileRank: vm.percentileRank,
                                                     leaderboardMode: vm.leaderboardMode,
-                                                    isPremiumLocked: vm.isPremiumLocked
+                                                    isPremiumLocked: vm.isPremiumLocked,
+                                                    scoreKind: vm.scoreKind
                                                 )
                                             )
                                         }

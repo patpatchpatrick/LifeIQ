@@ -265,7 +265,8 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                         unit: "/100",
                         percentileRank: percentileRank,
                         leaderboardMode: .workoutScore(kind, activityType),
-                        isPremiumLocked: !isPremiumUnlocked
+                        isPremiumLocked: !isPremiumUnlocked,
+                        scoreKind: kind
                     )
                 )
             }

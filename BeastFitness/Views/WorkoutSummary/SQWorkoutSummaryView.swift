@@ -364,7 +364,7 @@ struct SQWorkoutSummaryView: View {
             if controller.state.shouldShowPerformanceSection {
                 SQDashboardSubsection(title: "Performance", isCollapsed: $performanceSectionCollapsed) {
                     VStack(spacing: SQDashboardView.uiConfig.sectionRowSpacing) {
-                        SQColumnHeaderRow(columns: [.leading("Stat"), .trailing("Best Score"), .trailing("Rank")])
+                        SQColumnHeaderRow(columns: [.leading("Stat"), .trailing("Score"), .trailing("Rank")])
                         ForEach(controller.state.performanceRowData) { row in
                             SQDashboardPerformanceRow(data: row)
                                 .onTapGesture {

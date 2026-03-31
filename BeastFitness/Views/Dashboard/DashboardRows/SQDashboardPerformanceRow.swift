@@ -15,6 +15,14 @@ struct SQDashboardPerformanceRow: View {
         data.icon.count == 1
     }
 
+    private var premiumAccentColor: SQColor? {
+        data.scoreKind?.accentColor
+    }
+
+    private var isPremiumFeature: Bool {
+        data.scoreKind != nil
+    }
+
     private var rankTone: SQDashboardTrendTone {
         guard let rank = data.percentileRank else {
             return .neutral
@@ -79,7 +87,7 @@ struct SQDashboardPerformanceRow: View {
                         SQImageView(
                             image: .init(
                                 symbol: symbol,
-                                symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                                symbolStyle: .colorWithFont(premiumAccentColor ?? .textSecondary, font: .bodySmall)
                             )
                         )
                         .frame(width: 16, height: 16)
@@ -90,6 +98,22 @@ struct SQDashboardPerformanceRow: View {
                 Text(data.title)
                     .font(.sqFont(.body))
                     .sqForegroundColor(.textPrimary)
+
+                if isPremiumFeature {
+                    Text("Premium")
+                        .font(.sqFont(.bodyExtraSmall))
+                        .padding(.horizontal, .SQSpace.s)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill((premiumAccentColor ?? .dashboardGlowBlue).color.opacity(SQColor.isDarkMode ? 0.22 : 0.12))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .stroke((premiumAccentColor ?? .dashboardGlowBlue).color.opacity(0.4), lineWidth: 1)
+                        )
+                        .sqForegroundColor(.textPrimary)
+                }
 
                 Spacer()
             }
@@ -121,5 +145,30 @@ struct SQDashboardPerformanceRow: View {
 
     var body: some View {
         mainBody
+            .padding(.horizontal, isPremiumFeature ? .SQSpace.m : 0)
+            .padding(.vertical, isPremiumFeature ? .SQSpace.xs : 0)
+            .background {
+                if let premiumAccentColor {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.18 : 0.92))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(premiumAccentColor.color.opacity(SQColor.isDarkMode ? 0.45 : 0.28), lineWidth: 1)
+                        }
+                        .overlay(alignment: .topLeading) {
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            premiumAccentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.10),
+                                            Color.clear
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                }
+            }
     }
 }

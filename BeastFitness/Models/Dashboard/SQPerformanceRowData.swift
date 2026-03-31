@@ -15,6 +15,7 @@ struct SQPerformanceRowData: Identifiable {
     let percentileRank: Double?  // 0.0 to 1.0, nil if insufficient data
     let leaderboardMode: SQLeaderboardMode?
     let isPremiumLocked: Bool
+    let scoreKind: SQWorkoutScoreKind?
 
     init(
         id: String,
@@ -24,7 +25,8 @@ struct SQPerformanceRowData: Identifiable {
         unit: String,
         percentileRank: Double?,
         leaderboardMode: SQLeaderboardMode? = nil,
-        isPremiumLocked: Bool = false
+        isPremiumLocked: Bool = false,
+        scoreKind: SQWorkoutScoreKind? = nil
     ) {
         self.id = id
         self.icon = icon
@@ -34,5 +36,6 @@ struct SQPerformanceRowData: Identifiable {
         self.percentileRank = percentileRank
         self.leaderboardMode = leaderboardMode
         self.isPremiumLocked = isPremiumLocked
+        self.scoreKind = scoreKind
     }
 }

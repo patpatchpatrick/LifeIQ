@@ -707,7 +707,6 @@ final class SQDashboardController: SQDashboardInterface {
     ) async -> SQDashboardSubsectionViewModel? {
         var sharedRows = [SQDashboardMetricPerformanceRowViewModel]()
         var activityRowsByFilter = [String: [SQDashboardMetricPerformanceRowViewModel]]()
-        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
 
         // Add VO2 Max row if we have samples
         if !vo2MaxSamples.isEmpty {
@@ -744,13 +743,13 @@ final class SQDashboardController: SQDashboardInterface {
         for activityType in uniqueActivityTypes {
             let activityWorkouts = workouts.filter { $0.activityType == activityType }
             guard !activityWorkouts.isEmpty else { continue }
-            let allTimeActivityWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
             var activityRows = [SQDashboardMetricPerformanceRowViewModel]()
 
             let performanceRows = await statsManager.loadPerformanceRows(
                 for: activityType,
                 in: activityWorkouts,
-                allTimeWorkouts: allTimeWorkouts
+                allTimeWorkouts: allTimeWorkouts,
+                isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
             )
             activityRows.append(contentsOf: performanceRows.map { rowData in
                 SQDashboardMetricPerformanceRowViewModel(
@@ -761,25 +760,8 @@ final class SQDashboardController: SQDashboardInterface {
                     unit: rowData.unit,
                     percentileRank: rowData.percentileRank,
                     leaderboardMode: rowData.leaderboardMode,
-                    isPremiumLocked: rowData.isPremiumLocked
-                )
-            })
-
-            let workoutScoreRows = await workoutScoreService.dashboardPerformanceRows(
-                for: activityWorkouts,
-                allTimeWorkouts: allTimeActivityWorkouts,
-                isPremiumUnlocked: isPremiumUnlocked
-            )
-            activityRows.append(contentsOf: workoutScoreRows.map { rowData in
-                SQDashboardMetricPerformanceRowViewModel(
-                    metricId: rowData.id,
-                    icon: rowData.icon,
-                    title: rowData.title,
-                    bestValue: rowData.bestValue,
-                    unit: rowData.unit,
-                    percentileRank: rowData.percentileRank,
-                    leaderboardMode: rowData.leaderboardMode,
-                    isPremiumLocked: rowData.isPremiumLocked
+                    isPremiumLocked: rowData.isPremiumLocked,
+                    scoreKind: rowData.scoreKind
                 )
             })
 
