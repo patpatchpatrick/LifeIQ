@@ -155,12 +155,35 @@ struct SQLeaderboardView: View {
         if shouldShowEmptyView {
             emptyStateView
         } else {
-            VStack(spacing: .SQSpace.l) {
-                if let chartModel = controller.chartModel {
-                    chartSection(chartModel)
-                }
+            ZStack {
+                VStack(spacing: .SQSpace.l) {
+                    if let chartModel = controller.chartModel {
+                        chartSection(chartModel)
+                    }
 
-                leaderboardList
+                    leaderboardList
+                }
+                .blur(radius: controller.isPremiumLocked ? 8 : 0)
+                .allowsHitTesting(!controller.isPremiumLocked)
+
+                if controller.isPremiumLocked {
+                    Button(action: controller.premiumOverlayTapped) {
+                        VStack(spacing: .SQSpace.s) {
+                            Text("Premium workout scores")
+                                .sqFont(.bodySemiBold)
+                                .sqForegroundColor(.textPrimary)
+
+                            Text("Unlock performance and difficulty score leaderboards for your workouts.")
+                                .sqFont(.bodyExtraSmall)
+                                .sqForegroundColor(.textSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal, .SQSpace.xl)
+                        .padding(.vertical, .SQSpace.l)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)

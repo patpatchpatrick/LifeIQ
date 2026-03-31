@@ -114,20 +114,38 @@ struct SQDashboardWorkoutGroupView: View {
                 .sqFont(.headerSmall)
                 .sqForegroundColor(.textSecondary)
 
-            Text(item.value)
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textPrimary)
+            ZStack(alignment: .leading) {
+                Text(item.value)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textPrimary)
+                    .blur(radius: item.isPremiumLocked ? 5 : 0)
+
+                if item.isPremiumLocked {
+                    Text("Premium")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, .SQSpace.s)
         .padding(.horizontal, .SQSpace.m)
         .background(
             RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.65 : 0.95))
+                .fill(
+                    (item.accentColor?.color ?? SQColor.glassCardTint.color)
+                        .opacity(item.accentColor == nil
+                            ? (SQColor.isDarkMode ? 0.65 : 0.95)
+                            : (SQColor.isDarkMode ? 0.18 : 0.10))
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                .stroke(
+                    (item.accentColor?.color ?? SQColor.glassStroke.color)
+                        .opacity(item.accentColor == nil ? 1 : 0.45),
+                    lineWidth: 1
+                )
         )
     }
     

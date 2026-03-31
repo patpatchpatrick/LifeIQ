@@ -207,7 +207,11 @@ extension SQDashboardSectionGroupViewModel {
             dropDownViewModel: totalsDropdown
         )
 
-        let activityRow = SQDashboardActivityRowViewModel(workouts: mockWorkoutsList)
+        let activityRow = SQDashboardActivityRowViewModel(
+            workoutGroupViewModels: [
+                .init(activityType: .running, workouts: .init(workouts: mockWorkoutsList))
+            ]
+        )
 
         let activitiesDropdown = SQDropDownMenuViewModel(
             defaultItem: .init(title: "All"),

@@ -30,34 +30,9 @@ struct SQDashboardPerformanceRow: View {
         return "\(topPercent)%"
     }
 
-    var mainBody: some View {
+    @ViewBuilder
+    private var trailingColumns: some View {
         HStack(spacing: 12) {
-            // Column 1: Icon + Title (40%)
-            HStack(spacing: 8) {
-                Group {
-                    if isEmoji {
-                        Text(data.icon)
-                            .font(.sqFont(.bodyLarge))
-                    } else if let symbol = SQImageSymbol(rawValue: data.icon) {
-                        SQImageView(
-                            image: .init(
-                                symbol: symbol,
-                                symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
-                            )
-                        )
-                        .frame(width: 16, height: 16)
-                    }
-                }
-                .frame(width: 24)
-
-                Text(data.title)
-                    .font(.sqFont(.body))
-                    .sqForegroundColor(.textPrimary)
-
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
             // Column 2: Best Value + Unit (30%)
             HStack(spacing: 4) {
                 Text(data.bestValue)
@@ -89,6 +64,57 @@ struct SQDashboardPerformanceRow: View {
                 }
             }
             .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
+        }
+    }
+
+    var mainBody: some View {
+        HStack(spacing: 12) {
+            // Column 1: Icon + Title (40%)
+            HStack(spacing: 8) {
+                Group {
+                    if isEmoji {
+                        Text(data.icon)
+                            .font(.sqFont(.bodyLarge))
+                    } else if let symbol = SQImageSymbol(rawValue: data.icon) {
+                        SQImageView(
+                            image: .init(
+                                symbol: symbol,
+                                symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                            )
+                        )
+                        .frame(width: 16, height: 16)
+                    }
+                }
+                .frame(width: 24)
+
+                Text(data.title)
+                    .font(.sqFont(.body))
+                    .sqForegroundColor(.textPrimary)
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ZStack(alignment: .trailing) {
+                trailingColumns
+                    .blur(radius: data.isPremiumLocked ? 5 : 0)
+
+                if data.isPremiumLocked {
+                    Text("Premium")
+                        .font(.sqFont(.bodyExtraSmall))
+                        .padding(.horizontal, .SQSpace.s)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.9 : 1))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        )
+                        .sqForegroundColor(.textPrimary)
+                }
+            }
         }
         .padding(.vertical, .SQSpace.s)
     }

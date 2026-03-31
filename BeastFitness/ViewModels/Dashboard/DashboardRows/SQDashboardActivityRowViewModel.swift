@@ -13,11 +13,7 @@ final class SQDashboardActivityRowViewModel: SQDashboardRowViewModel {
     let ctaViewModel: SQCallToActionViewModel?
     
     
-    init(workouts: [SQWorkoutSessionable]) {
-        var workoutGroupViewModels = [SQDashboardWorkoutGroupViewModel]()
-        for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
-            workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
-        }
+    init(workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]) {
         self.workoutGroupViewModels = workoutGroupViewModels
         
         if workoutGroupViewModels.isEmpty {

@@ -5,7 +5,33 @@
 
 import Foundation
 import HealthKit
+import SwiftUI
 import BeastFitnessCore
+
+enum SQWorkoutScoreKind: String, CaseIterable, Identifiable {
+    case performance
+    case difficulty
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .performance:
+            return "Performance"
+        case .difficulty:
+            return "Difficulty"
+        }
+    }
+
+    var accentColor: SQColor {
+        switch self {
+        case .performance:
+            return .dashboardGlowBlue
+        case .difficulty:
+            return .dashboardTrendWarm
+        }
+    }
+}
 
 enum SQWorkoutPremiumInsightAvailability: Equatable {
     case available
@@ -14,6 +40,7 @@ enum SQWorkoutPremiumInsightAvailability: Equatable {
 
 struct SQWorkoutPremiumInsightScore: Identifiable {
     let id: String
+    let kind: SQWorkoutScoreKind
     let title: String
     let value: Int
     let headline: String
@@ -79,6 +106,25 @@ protocol SQWorkoutScoreServicing {
         allTimeWorkouts: [SQWorkoutSessionable],
         isPremiumUnlocked: Bool
     ) async -> SQWorkoutPremiumInsightsModel?
+
+    func dashboardPerformanceRows(
+        for workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
+        isPremiumUnlocked: Bool
+    ) async -> [SQPerformanceRowData]
+
+    func activityScoreItems(
+        for workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
+        isPremiumUnlocked: Bool
+    ) async -> [HKWorkoutActivityType: [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]]
+
+    func leaderboardRows(
+        for kind: SQWorkoutScoreKind,
+        activityType: HKWorkoutActivityType,
+        workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> [SQLeaderboardRowViewModel]
 }
 
 @MainActor
@@ -116,25 +162,32 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         let usedFallback: Bool
     }
 
+    fileprivate struct SupportedWorkoutScores {
+        let workout: SQWorkoutSessionable
+        let title: String
+        let subtitle: String
+        let footer: String
+        let scores: [SQWorkoutPremiumInsightScore]
+    }
+
     func insights(
         for workout: SQWorkoutSessionable,
         allTimeWorkouts: [SQWorkoutSessionable],
         isPremiumUnlocked: Bool
     ) async -> SQWorkoutPremiumInsightsModel? {
-        guard workout.activityType == .running else { return nil }
-        guard let sample = await makeRunningSample(for: workout) else { return nil }
-
-        let historicalSamples = await makeRunningSamples(
-            from: allTimeWorkouts.filter { $0.activityType == .running }
-        )
+        guard let scoredWorkout = await supportedWorkoutScores(
+            for: workout,
+            allTimeWorkouts: allTimeWorkouts,
+            footerContext: .singleWorkout
+        ) else {
+            return nil
+        }
 
         return buildInsightsModel(
-            sample: sample,
-            historicalSamples: historicalSamples,
+            from: scoredWorkout,
             isPremiumUnlocked: isPremiumUnlocked,
-            title: "Performance & Difficulty",
-            subtitle: workoutSubtitle(for: sample),
-            footerContext: .singleWorkout
+            lockedTitle: "Premium workout insights",
+            lockedSubtitle: "Unlock performance and difficulty scores for your workouts."
         )
     }
 
@@ -143,27 +196,170 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         allTimeWorkouts: [SQWorkoutSessionable],
         isPremiumUnlocked: Bool
     ) async -> SQWorkoutPremiumInsightsModel? {
-        let runningWorkouts = workouts
-            .filter { $0.activityType == .running }
-            .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
+        let sortedWorkouts = workouts.sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
 
-        guard let latestRun = runningWorkouts.first,
-              let sample = await makeRunningSample(for: latestRun) else {
-            return nil
+        for workout in sortedWorkouts {
+            guard let scoredWorkout = await supportedWorkoutScores(
+                for: workout,
+                allTimeWorkouts: allTimeWorkouts,
+                footerContext: .dashboard
+            ) else {
+                continue
+            }
+
+            return buildInsightsModel(
+                from: scoredWorkout,
+                isPremiumUnlocked: isPremiumUnlocked,
+                lockedTitle: "Premium performance insights",
+                lockedSubtitle: "Unlock performance and difficulty scores for your workouts."
+            )
         }
 
-        let historicalSamples = await makeRunningSamples(
-            from: allTimeWorkouts.filter { $0.activityType == .running }
-        )
+        return nil
+    }
 
-        return buildInsightsModel(
-            sample: sample,
-            historicalSamples: historicalSamples,
-            isPremiumUnlocked: isPremiumUnlocked,
-            title: "Latest Run",
-            subtitle: workoutSubtitle(for: sample),
+    func dashboardPerformanceRows(
+        for workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
+        isPremiumUnlocked: Bool
+    ) async -> [SQPerformanceRowData] {
+        let workoutsByActivity = workouts.workoutsByActivityType
+        var rows = [SQPerformanceRowData]()
+
+        for (activityType, activityWorkouts) in workoutsByActivity {
+            let allTimeActivityWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
+            let scoredWorkouts = await loadSupportedWorkoutScores(
+                from: activityWorkouts,
+                allTimeWorkouts: allTimeActivityWorkouts,
+                footerContext: .dashboard
+            )
+            guard !scoredWorkouts.isEmpty else { continue }
+
+            let allTimeScoredWorkouts = await loadSupportedWorkoutScores(
+                from: allTimeActivityWorkouts,
+                allTimeWorkouts: allTimeActivityWorkouts,
+                footerContext: .dashboard
+            )
+
+            for kind in SQWorkoutScoreKind.allCases {
+                let currentValues = scoredWorkouts.compactMap { scoredWorkout in
+                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                }
+                guard let currentValue = currentValues.max() else { continue }
+
+                let historicalValues = allTimeScoredWorkouts.compactMap { scoredWorkout in
+                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                }.map(Double.init)
+                let percentileRank = SQPercentileCalculator.calculatePercentile(
+                    currentBest: Double(currentValue),
+                    historicalValues: historicalValues,
+                    isLowerBetter: false
+                )
+
+                rows.append(
+                    SQPerformanceRowData(
+                        id: "\(activityType.name.lowercased())-\(kind.rawValue)-score",
+                        icon: activityType.imageSymbol.rawValue,
+                        title: kind.title,
+                        bestValue: "\(currentValue)",
+                        unit: "/100",
+                        percentileRank: percentileRank,
+                        leaderboardMode: .workoutScore(kind, activityType),
+                        isPremiumLocked: !isPremiumUnlocked
+                    )
+                )
+            }
+        }
+
+        return rows.sorted {
+            if $0.title == $1.title {
+                return $0.id < $1.id
+            }
+            return $0.title < $1.title
+        }
+    }
+
+    func activityScoreItems(
+        for workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
+        isPremiumUnlocked: Bool
+    ) async -> [HKWorkoutActivityType : [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]] {
+        var itemsByActivity = [HKWorkoutActivityType: [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]]()
+
+        for (activityType, activityWorkouts) in workouts.workoutsByActivityType {
+            guard let latestWorkout = activityWorkouts.sorted(by: {
+                ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast)
+            }).first else {
+                continue
+            }
+            let allTimeActivityWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
+            guard let scoredWorkout = await supportedWorkoutScores(
+                for: latestWorkout,
+                allTimeWorkouts: allTimeActivityWorkouts,
+                footerContext: .dashboard
+            ) else {
+                continue
+            }
+
+            itemsByActivity[activityType] = scoredWorkout.scores.map { score in
+                SQDashboardWorkoutGroupViewModel.WorkoutStatItem(
+                    id: "score-\(score.kind.rawValue)",
+                    title: score.title,
+                    value: attributedScoreValue(score.value),
+                    isPremiumLocked: !isPremiumUnlocked,
+                    accentColor: score.accentColor
+                )
+            }
+        }
+
+        return itemsByActivity
+    }
+
+    func leaderboardRows(
+        for kind: SQWorkoutScoreKind,
+        activityType: HKWorkoutActivityType,
+        workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> [SQLeaderboardRowViewModel] {
+        let filteredWorkouts = workouts.filter { $0.activityType == activityType }
+        let allTimeFilteredWorkouts = allTimeWorkouts.filter { $0.activityType == activityType }
+        let scoredWorkouts = await loadSupportedWorkoutScores(
+            from: filteredWorkouts,
+            allTimeWorkouts: allTimeFilteredWorkouts,
             footerContext: .dashboard
         )
+        let historicalValues = await loadSupportedWorkoutScores(
+            from: allTimeFilteredWorkouts,
+            allTimeWorkouts: allTimeFilteredWorkouts,
+            footerContext: .dashboard
+        ).compactMap { scoredWorkout in
+            scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+        }.map(Double.init)
+
+        let sortedScores = scoredWorkouts
+            .compactMap { scoredWorkout -> (SQWorkoutSessionable, SQWorkoutPremiumInsightScore)? in
+                guard let score = scoredWorkout.scores.first(where: { $0.kind == kind }) else { return nil }
+                return (scoredWorkout.workout, score)
+            }
+            .sorted { $0.1.value > $1.1.value }
+
+        return sortedScores.enumerated().map { index, item in
+            SQLeaderboardRowViewModel(
+                id: item.0.id,
+                rank: index + 1,
+                title: item.0.title ?? item.0.visibleTitle,
+                date: item.0.startDate ?? .now,
+                value: Double(item.1.value),
+                formattedScore: "\(item.1.value)",
+                unitString: "/100",
+                percentileRank: SQPercentileCalculator.calculatePercentile(
+                    currentBest: Double(item.1.value),
+                    historicalValues: historicalValues,
+                    isLowerBetter: false
+                ),
+                workout: item.0
+            )
+        }
     }
 }
 
@@ -176,13 +372,69 @@ private extension SQWorkoutScoreService {
     }
 
     func buildInsightsModel(
+        from scoredWorkout: SupportedWorkoutScores,
+        isPremiumUnlocked: Bool,
+        lockedTitle: String,
+        lockedSubtitle: String
+    ) -> SQWorkoutPremiumInsightsModel {
+        SQWorkoutPremiumInsightsModel(
+            title: scoredWorkout.title,
+            subtitle: scoredWorkout.subtitle,
+            badgeTitle: "Premium Insight",
+            availability: isPremiumUnlocked ? .available : .locked,
+            scores: isPremiumUnlocked ? scoredWorkout.scores : lockedPreviewScores(),
+            footer: isPremiumUnlocked
+                ? scoredWorkout.footer
+                : "Unlock personalized workout insights built from your output and training load.",
+            lockedTitle: isPremiumUnlocked ? nil : lockedTitle,
+            lockedSubtitle: isPremiumUnlocked ? nil : lockedSubtitle
+        )
+    }
+
+    func supportedWorkoutScores(
+        for workout: SQWorkoutSessionable,
+        allTimeWorkouts: [SQWorkoutSessionable],
+        footerContext: FooterContext
+    ) async -> SupportedWorkoutScores? {
+        switch workout.activityType {
+        case .running:
+            guard let sample = await makeRunningSample(for: workout) else { return nil }
+            let historicalSamples = await makeRunningSamples(
+                from: allTimeWorkouts.filter { $0.activityType == .running }
+            )
+            return buildRunningWorkoutScores(
+                sample: sample,
+                historicalSamples: historicalSamples,
+                footerContext: footerContext
+            )
+        default:
+            return nil
+        }
+    }
+
+    func loadSupportedWorkoutScores(
+        from workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable],
+        footerContext: FooterContext
+    ) async -> [SupportedWorkoutScores] {
+        var results = [SupportedWorkoutScores]()
+        for workout in workouts {
+            if let scoredWorkout = await supportedWorkoutScores(
+                for: workout,
+                allTimeWorkouts: allTimeWorkouts,
+                footerContext: footerContext
+            ) {
+                results.append(scoredWorkout)
+            }
+        }
+        return results
+    }
+
+    func buildRunningWorkoutScores(
         sample: RunningSample,
         historicalSamples: [RunningSample],
-        isPremiumUnlocked: Bool,
-        title: String,
-        subtitle: String,
         footerContext: FooterContext
-    ) -> SQWorkoutPremiumInsightsModel {
+    ) -> SupportedWorkoutScores {
         // Both scores are always calculated, even for locked users, so the future
         // premium gate can simply switch between live values and teaser presentation.
         let performanceBreakdown = performanceBreakdown(for: sample, historicalSamples: historicalSamples)
@@ -191,25 +443,25 @@ private extension SQWorkoutScoreService {
         let performanceScore = makePerformanceScore(sample: sample, breakdown: performanceBreakdown)
         let difficultyScore = makeDifficultyScore(sample: sample, breakdown: difficultyBreakdown)
 
-        let availability: SQWorkoutPremiumInsightAvailability = isPremiumUnlocked ? .available : .locked
+        let title: String
+        switch footerContext {
+        case .dashboard:
+            title = "Performance Insights"
+        case .singleWorkout:
+            title = "Performance & Difficulty"
+        }
 
-        return SQWorkoutPremiumInsightsModel(
+        return SupportedWorkoutScores(
+            workout: sample.workout,
             title: title,
-            subtitle: subtitle,
-            badgeTitle: "Premium Insight",
-            availability: availability,
-            scores: isPremiumUnlocked
-                ? [performanceScore, difficultyScore]
-                : lockedPreviewScores(),
-            footer: isPremiumUnlocked
-                ? footerText(
-                    performanceValue: performanceBreakdown.finalScore,
-                    difficultyValue: difficultyBreakdown.finalScore,
-                    context: footerContext
-                )
-                : "Unlock personalized running insights built from your pace, distance, and training load.",
-            lockedTitle: isPremiumUnlocked ? nil : "Premium running insights",
-            lockedSubtitle: isPremiumUnlocked ? nil : "Unlock performance and difficulty scores for your runs."
+            subtitle: dashboardSubtitle(for: sample, footerContext: footerContext),
+            footer: footerText(
+                performanceValue: performanceBreakdown.finalScore,
+                difficultyValue: difficultyBreakdown.finalScore,
+                activityType: sample.workout.activityType,
+                context: footerContext
+            ),
+            scores: [performanceScore, difficultyScore]
         )
     }
 
@@ -217,6 +469,7 @@ private extension SQWorkoutScoreService {
         [
             .init(
                 id: "performance-preview",
+                kind: .performance,
                 title: "Performance",
                 value: 84,
                 headline: "Strong effort",
@@ -226,6 +479,7 @@ private extension SQWorkoutScoreService {
             ),
             .init(
                 id: "difficulty-preview",
+                kind: .difficulty,
                 title: "Difficulty",
                 value: 71,
                 headline: "Challenging",
@@ -351,6 +605,7 @@ private extension SQWorkoutScoreService {
     ) -> SQWorkoutPremiumInsightScore {
         SQWorkoutPremiumInsightScore(
             id: "performance",
+            kind: .performance,
             title: "Performance",
             value: breakdown.finalScore,
             headline: performanceHeadline(for: breakdown.finalScore),
@@ -447,6 +702,7 @@ private extension SQWorkoutScoreService {
     ) -> SQWorkoutPremiumInsightScore {
         SQWorkoutPremiumInsightScore(
             id: "difficulty",
+            kind: .difficulty,
             title: "Difficulty",
             value: breakdown.finalScore,
             headline: difficultyHeadline(for: breakdown.finalScore),
@@ -714,14 +970,20 @@ private extension SQWorkoutScoreService {
         )
     }
 
-    func workoutSubtitle(for sample: RunningSample) -> String {
+    func dashboardSubtitle(for sample: RunningSample, footerContext: FooterContext) -> String {
         let dateText = sample.workout.startDate?.formattedString(with: .medium) ?? "Recent run"
-        return "\(sample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(sample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+        switch footerContext {
+        case .dashboard:
+            return "Running • \(sample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(sample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+        case .singleWorkout:
+            return "\(sample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(sample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+        }
     }
 
     func footerText(
         performanceValue: Int,
         difficultyValue: Int,
+        activityType: HKWorkoutActivityType,
         context: FooterContext
     ) -> String {
         let performanceSummary: String
@@ -739,16 +1001,17 @@ private extension SQWorkoutScoreService {
         case 80...:
             difficultySummary = "a high-load session"
         case 60...:
-            difficultySummary = "a meaningfully challenging run"
+            difficultySummary = "a meaningfully challenging session"
         default:
             difficultySummary = "a manageable training load"
         }
 
+        let activityName = activityType.name.lowercased()
         switch context {
         case .dashboard:
-            return "Latest running insight: performance looked \(performanceSummary), while difficulty landed as \(difficultySummary)."
+            return "Latest \(activityName) insight: performance looked \(performanceSummary), while difficulty landed as \(difficultySummary)."
         case .singleWorkout:
-            return "This run graded \(performanceSummary) for output, and registered as \(difficultySummary)."
+            return "This \(activityName) workout graded \(performanceSummary) for output, and registered as \(difficultySummary)."
         }
     }
 }
@@ -756,6 +1019,22 @@ private extension SQWorkoutScoreService {
 // MARK: - Helpers
 
 private extension SQWorkoutScoreService {
+    func attributedScoreValue(_ value: Int) -> AttributedString {
+        var result = AttributedString()
+
+        var score = AttributedString("\(value)")
+        score.font = SQFont(type: .bodySmallSemiBold).font
+        score.foregroundColor = SQColor.textPrimary.color
+        result.append(score)
+
+        var unit = AttributedString(" /100")
+        unit.font = SQFont(type: .bodyExtraSmall).font
+        unit.foregroundColor = SQColor.textSecondary.color
+        result.append(unit)
+
+        return result
+    }
+
     func average(of values: [Double]) -> Double? {
         guard !values.isEmpty else { return nil }
         return values.reduce(0, +) / Double(values.count)

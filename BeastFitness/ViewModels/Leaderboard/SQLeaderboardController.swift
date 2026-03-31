@@ -26,6 +26,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     var navigationPath = NavigationPath()
     private var cancellables = Set<AnyCancellable>()
     let workoutManager: SQWorkoutManaging
+    let workoutScoreService: SQWorkoutScoreServicing
     private(set) var hasLoadedUI = false
     private(set) var isLoading = false
     private(set) var selectedTimeRange: AppTimeRange
@@ -44,6 +45,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         mode.title
     }
 
+    var isPremiumLocked: Bool {
+        mode.requiresPremium && !(SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true)
+    }
+
     @MainActor
     static let `default` = SQLeaderboardController(
         hub: SQAppState.shared.hub,
@@ -55,12 +60,14 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         hub: EventHub,
         mode: SQLeaderboardMode,
         initialTimeRange: AppTimeRange = .allTime,
-        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared
+        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
+        workoutScoreService: SQWorkoutScoreServicing? = nil
     ) {
         self.hub = hub
         self.selectedTimeRange = initialTimeRange
         self.mode = mode
         self.workoutManager = workoutManager
+        self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
 
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -115,6 +122,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         switch mode {
         case .workoutQuantity(let quantityType, let activityType):
             loadSucceeded = await loadWorkoutQuantity(quantityType: quantityType, activityType: activityType, context: context)
+        case .workoutScore(let kind, let activityType):
+            loadSucceeded = await loadWorkoutScore(kind: kind, activityType: activityType, context: context)
         case .vo2Max:
             loadSucceeded = await loadVO2Max()
         }
@@ -144,6 +153,22 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 )
             }
             buildMockChart(mockValue: mockMetric.value)
+
+        case .workoutScore(let kind, _):
+            let mockValue = kind == .performance ? 84.0 : 71.0
+            rows = (1...10).map { index in
+                SQLeaderboardRowViewModel(
+                    id: "mock-row-\(index)",
+                    rank: index,
+                    title: "Loading...",
+                    date: mockDate,
+                    value: mockValue,
+                    formattedScore: "\(Int(mockValue.rounded()))",
+                    unitString: "/100",
+                    percentileRank: nil
+                )
+            }
+            buildMockChart(mockValue: mockValue)
 
         case .vo2Max:
             rows = (1...10).map { index in
@@ -279,6 +304,63 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         } catch {
             SQLogger.shared.log(
                 "Error loading leaderboard: \(error.localizedDescription)",
+                .error,
+                context: .workoutList
+            )
+
+            hub.alertEvents.send(.present(.init(
+                SQError.standard(withDescription: "Error loading leaderboard: \(error.localizedDescription)"),
+                handler: { [weak self] _ in
+                    self?.hub.domainEvents.send(.popDashboardRoute)
+                }
+            )))
+            return false
+        }
+    }
+
+    @discardableResult
+    private func loadWorkoutScore(
+        kind: SQWorkoutScoreKind,
+        activityType: HKWorkoutActivityType,
+        context: ModelContext
+    ) async -> Bool {
+        SQLogger.shared.log(
+            "Loading workout score leaderboard for \(kind.title) - \(activityType.name)",
+            .info,
+            context: .workoutList
+        )
+
+        do {
+            let currentWorkouts = try await workoutManager.getWorkouts(
+                for: selectedTimeRange.sqTimeRange,
+                modelContext: context
+            )
+            let allTimeWorkouts = try await workoutManager.getWorkouts(
+                for: .allTime,
+                modelContext: context
+            )
+
+            rows = await workoutScoreService.leaderboardRows(
+                for: kind,
+                activityType: activityType,
+                workouts: currentWorkouts,
+                allTimeWorkouts: allTimeWorkouts
+            )
+
+            chartTitle = "\(activityType.name) \(kind.title)"
+
+            let allDates = rows.map(\.date)
+            if let earliest = allDates.min(), let latest = allDates.max() {
+                chartSubtitle = "\(rows.count) workouts • \(earliest.formattedString(with: .medium)) - \(latest.formattedString(with: .medium)) • \(selectedTimeRange.rawValue)"
+            } else {
+                chartSubtitle = "\(rows.count) workouts • \(selectedTimeRange.rawValue)"
+            }
+
+            buildChart()
+            return true
+        } catch {
+            SQLogger.shared.log(
+                "Error loading workout score leaderboard: \(error.localizedDescription)",
                 .error,
                 context: .workoutList
             )
@@ -547,6 +629,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     func navigateToWorkout(_ row: SQLeaderboardRowViewModel) {
         guard let workout = row.workout else { return }
         hub.domainEvents.send(.pushDashboardRoute(.workoutSummary(controller: .init(workout: workout, mode: .standard))))
+    }
+
+    func premiumOverlayTapped() {
+        let controller = SQProfileController(userState: SQAppState.shared.userState)
+        hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
     }
 
     private func focusChartPoint(with id: String) {

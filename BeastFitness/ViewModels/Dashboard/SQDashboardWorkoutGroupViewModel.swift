@@ -10,10 +10,26 @@ import HealthKit
 
 @Observable @MainActor
 final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable {
-    struct WorkoutStatItem: Identifiable, Hashable {
+    struct WorkoutStatItem: Identifiable {
         let id: String
         let title: String
         let value: AttributedString
+        let isPremiumLocked: Bool
+        let accentColor: SQColor?
+
+        init(
+            id: String,
+            title: String,
+            value: AttributedString,
+            isPremiumLocked: Bool = false,
+            accentColor: SQColor? = nil
+        ) {
+            self.id = id
+            self.title = title
+            self.value = value
+            self.isPremiumLocked = isPremiumLocked
+            self.accentColor = accentColor
+        }
     }
 
     let dashboardState = SQAppState.shared.dashboardState
@@ -24,7 +40,11 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
     let workoutImageSymbol: SQImageSymbol
     let workoutStatsItems: [WorkoutStatItem]
 
-    init(activityType: HKWorkoutActivityType, workouts: SQWorkouts) {
+    init(
+        activityType: HKWorkoutActivityType,
+        workouts: SQWorkouts,
+        additionalStatItems: [WorkoutStatItem] = []
+    ) {
         self.workouts = workouts
 
         if workouts.workouts.count == 1, let single = workouts.workouts.first {
@@ -43,7 +63,7 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
         }
         workoutImageSymbol = workouts.workouts.compactMap { $0.activityType.imageSymbol }.first ?? .questionmarkCircle
 
-        self.workoutStatsItems = Self.buildWorkoutStatItems(for: workouts)
+        self.workoutStatsItems = Self.buildWorkoutStatItems(for: workouts) + additionalStatItems
     }
     
     func displayWorkoutsSheet() {

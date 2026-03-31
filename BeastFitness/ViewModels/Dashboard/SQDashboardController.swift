@@ -755,10 +755,29 @@ final class SQDashboardController: SQDashboardInterface {
                     bestValue: rowData.bestValue,
                     unit: rowData.unit,
                     percentileRank: rowData.percentileRank,
-                    leaderboardMode: rowData.leaderboardMode
+                    leaderboardMode: rowData.leaderboardMode,
+                    isPremiumLocked: rowData.isPremiumLocked
                 )
             })
         }
+
+        let workoutScoreRows = await workoutScoreService.dashboardPerformanceRows(
+            for: workouts,
+            allTimeWorkouts: allTimeWorkouts,
+            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+        )
+        rows.append(contentsOf: workoutScoreRows.map { rowData in
+            SQDashboardMetricPerformanceRowViewModel(
+                metricId: rowData.id,
+                icon: rowData.icon,
+                title: rowData.title,
+                bestValue: rowData.bestValue,
+                unit: rowData.unit,
+                percentileRank: rowData.percentileRank,
+                leaderboardMode: rowData.leaderboardMode,
+                isPremiumLocked: rowData.isPremiumLocked
+            )
+        })
 
         // Skip section if no performance data at all
         guard !rows.isEmpty else { return nil }
@@ -773,7 +792,7 @@ final class SQDashboardController: SQDashboardInterface {
             defaultPriority: 20,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: nil,  // No filter dropdown for performance
-            columnHeaders: ["", "Best Score", "Rank"],
+            columnHeaders: ["", "Score", "Rank"],
             maxVisibleRows: 4
         )
     }
@@ -821,7 +840,10 @@ final class SQDashboardController: SQDashboardInterface {
 
     // MARK: - Activities Subsection Builder
 
-    private func buildActivitiesSubsection(workouts: [SQWorkoutSessionable], timeRange: SQTimeRange) -> SQDashboardSubsectionViewModel? {
+    private func buildActivitiesSubsection(
+        workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> SQDashboardSubsectionViewModel? {
         // Skip if no workouts
         guard !workouts.isEmpty else { return nil }
 
@@ -845,9 +867,20 @@ final class SQDashboardController: SQDashboardInterface {
         // "All" filter: Aggregate stats for ALL workouts
         var allRows: [SQDashboardActivityRowViewModel] = []
 
+        let scoreItemsByActivity = await workoutScoreService.activityScoreItems(
+            for: workouts,
+            allTimeWorkouts: allTimeWorkouts,
+            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+        )
+
         for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
-            allRows.append(.init(workouts: workouts))
-            rowsByFilter[activityType.name] = [.init(workouts: workouts)]
+            let groupViewModel = SQDashboardWorkoutGroupViewModel(
+                activityType: activityType,
+                workouts: .init(workouts: workouts),
+                additionalStatItems: scoreItemsByActivity[activityType] ?? []
+            )
+            allRows.append(.init(workoutGroupViewModels: [groupViewModel]))
+            rowsByFilter[activityType.name] = [.init(workoutGroupViewModels: [groupViewModel])]
         }
         rowsByFilter["All"] = allRows
         
@@ -876,7 +909,7 @@ final class SQDashboardController: SQDashboardInterface {
         return sectionViewModel
     }
 
-    private func buildRunInsightsSubsection(
+    private func buildPerformanceInsightsSubsection(
         workouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable]
     ) async -> SQDashboardSubsectionViewModel? {
@@ -894,8 +927,8 @@ final class SQDashboardController: SQDashboardInterface {
             self?.displayWorkoutInsightDetail(score.detailModel)
         }
         return SQDashboardSubsectionViewModel(
-            id: "run-insights",
-            title: "Run Insights",
+            id: "performance-insights",
+            title: "Performance Insights",
             defaultPriority: 5,
             rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
         )
@@ -1382,7 +1415,7 @@ final class SQDashboardController: SQDashboardInterface {
         
         var workoutsSections: [SQDashboardSubsectionViewModel] = []
 
-        if let runInsightsSection = await buildRunInsightsSubsection(
+        if let runInsightsSection = await buildPerformanceInsightsSubsection(
             workouts: workouts,
             allTimeWorkouts: allTimeWorkouts
         ) {
@@ -1395,7 +1428,10 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         // Add Activities subsection
-        if let activitiesSection = buildActivitiesSubsection(workouts: workouts, timeRange: timeRange) {
+        if let activitiesSection = await buildActivitiesSubsection(
+            workouts: workouts,
+            allTimeWorkouts: allTimeWorkouts
+        ) {
             workoutsSections.append(activitiesSection)
         }
 

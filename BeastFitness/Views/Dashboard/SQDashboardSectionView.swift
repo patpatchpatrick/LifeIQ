@@ -76,7 +76,9 @@ struct SQDashboardSectionView: View {
                                                     title: vm.title,
                                                     bestValue: vm.bestValue,
                                                     unit: vm.unit,
-                                                    percentileRank: vm.percentileRank
+                                                    percentileRank: vm.percentileRank,
+                                                    leaderboardMode: vm.leaderboardMode,
+                                                    isPremiumLocked: vm.isPremiumLocked
                                                 )
                                             )
                                         }
