@@ -85,7 +85,7 @@ struct SQWorkoutPremiumInsightsView: View {
                     } label: {
                         SQImageView(
                             image: .init(
-                                symbol: .questionmarkCircle,
+                                symbol: .infoCircle,
                                 symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
                             )
                         )
