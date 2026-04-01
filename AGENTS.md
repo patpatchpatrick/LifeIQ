@@ -1,12 +1,19 @@
-# AGENTS.md (BeastFitness)
+# AGENTS.md (LifeIQ / BeastFitness Repo)
 
 This file translates the existing `CLAUDE.md` guidance into a Codex-friendly operating guide for this repository.
+
+## Brand direction
+
+- Product-facing app name is now `LifeIQ`.
+- The brand mascot is a glowing orb.
+- Prefer `LifeIQ` in user-facing copy, product discussion, and UI concepts.
+- Internal code identifiers, module names, bundle ids, and target names may still use `BeastFitness` until an explicit technical rename is requested.
 
 ## Repo and project context
 
 - This repository contains two apps:
-  - `BeastFitness` (iOS app, primary UI/product focus)
-  - `Beast Fitness Watch Watch App` (watchOS app)
+  - `LifeIQ` (iOS app, primary UI/product focus; current target/repo naming still uses `BeastFitness`)
+  - `LifeIQ Watch` (watchOS app; current target naming still uses `Beast Fitness Watch Watch App`)
 - Workout-related flows are cross-app. Keep iOS/watch payloads and state in sync when changing workout behavior.
 
 ## External reference project
@@ -119,6 +126,11 @@ Current intended dashboard structure:
 - `Daily Stats`: `Metrics`, `Performance`
 - `Sleep`: `Sleep Score`, `Sleep Summary`, `Sleep Phases`
 - `Workouts`: `Totals`, `Activities`
+
+Brand direction:
+- The glowing orb can be treated as the primary brand object in dashboard/header concepts.
+- If introducing orb-driven UI, prefer it as a focused status object or navigator rather than decorative filler.
+- Avoid renaming or reframing `Body Battery` into an orb metaphor unless the product copy and score semantics are intentionally redesigned together.
 
 Sleep-specific range semantics:
 - Use completed nights only, anchored to the latest completed wake day.

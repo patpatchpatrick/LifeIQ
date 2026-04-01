@@ -1,4 +1,11 @@
-# Agent Notes (BeastFitness)
+# Agent Notes (LifeIQ / BeastFitness Repo)
+
+## Brand direction
+
+- Product-facing app name is now **LifeIQ**.
+- The mascot is a **glowing orb**.
+- Prefer `LifeIQ` in user-facing copy, product concepts, and UI discussions.
+- Internal identifiers, target names, module names, and bundle ids may still use `BeastFitness` until an explicit technical rename is requested.
 
 ## Referenced projects
 
@@ -9,11 +16,11 @@
 This project contains **two apps** that work together:
 
 1. **BeastFitness**
-   - iOS app.
+   - iOS app for the LifeIQ product.
    - Primary focus for current UI/product work.
 
 2. **Beast Fitness Watch Watch App**
-   - watchOS app.
+   - watchOS app for LifeIQ.
    - Communicates with the iOS app for workout experiences.
 
 ## How they work together
@@ -28,6 +35,12 @@ We are currently focused on building a **strong, beautiful dashboard** in the iO
 - **HealthKit** statistics (e.g., performance metrics and trends)
 - **Workouts** history and summaries
 - **Daily stats/habits** that we track ourselves (e.g., mood, alcohol use, energy levels, etc.)
+
+### Brand/UI direction
+
+- The glowing orb can be treated as the central brand object in dashboard concepts and high-signal UI moments.
+- If used in navigation chrome, prefer it as a meaningful status or identity anchor rather than a decorative icon.
+- Do not rename or re-skin `Body Battery` into an orb metaphor unless the score model, explanation, and product copy are intentionally redesigned together.
 
 ### Dashboard View Model Cloning
 

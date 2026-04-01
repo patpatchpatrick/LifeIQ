@@ -537,7 +537,7 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func dashboardLoadFailureMessage(for error: Error) -> String {
-        let baseMessage = "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > Beast Fitness and make sure Health access is enabled. After that, try again."
+        let baseMessage = "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > LifeIQ and make sure Health access is enabled. After that, try again."
         let detail = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !detail.isEmpty else { return baseMessage }
