@@ -106,12 +106,12 @@
 		F679BA4B2EE4F41900A2F249 /* SQWorkoutsListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BA4A2EE4F41500A2F249 /* SQWorkoutsListItemViewModel.swift */; };
 		F679BC4D2EE4FB7100A2F249 /* SQWorkoutSummaryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC4C2EE4FB6300A2F249 /* SQWorkoutSummaryController.swift */; };
 		F679BC502EE4FC1D00A2F249 /* SQWorkoutSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC4F2EE4FC1900A2F249 /* SQWorkoutSummaryView.swift */; };
-		F679BC5C2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */; };
-		F679BC5E2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */; };
-		F679BC602F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */; };
 		F679BC522EE72F6600A2F249 /* WorkoutsSummaryState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC512EE72F6100A2F249 /* WorkoutsSummaryState.swift */; };
 		F679BC542EE7321A00A2F249 /* SQUserIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC532EE7321100A2F249 /* SQUserIcon.swift */; };
 		F679BC592EE7BDF800A2F249 /* exercises_all.json in Resources */ = {isa = PBXBuildFile; fileRef = F679BC582EE7BDF800A2F249 /* exercises_all.json */; };
+		F679BC5C2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */; };
+		F679BC5E2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */; };
+		F679BC602F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */; };
 		F679BDD32EE7C0C300A2F249 /* UnfrozenEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD22EE7C0BE00A2F249 /* UnfrozenEnum.swift */; };
 		F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD42EE7D3A700A2F249 /* ExercisesListState.swift */; };
 		F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD62EE7D46100A2F249 /* SQExercisesListView.swift */; };
@@ -154,6 +154,14 @@
 		F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */; };
 		F694AAE12F78862A00453F0A /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F694AAE02F78862A00453F0A /* GoogleSignIn */; };
 		F694AAE32F78862A00453F0A /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F694AAE22F78862A00453F0A /* GoogleSignInSwift */; };
+		F694AD8E2F7CCCFB00453F0A /* Sora-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD872F7CCCFB00453F0A /* Sora-ExtraLight.ttf */; };
+		F694AD8F2F7CCCFB00453F0A /* Sora-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD862F7CCCFB00453F0A /* Sora-ExtraBold.ttf */; };
+		F694AD902F7CCCFB00453F0A /* Sora-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD8A2F7CCCFB00453F0A /* Sora-Regular.ttf */; };
+		F694AD912F7CCCFB00453F0A /* Sora-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD892F7CCCFB00453F0A /* Sora-Medium.ttf */; };
+		F694AD922F7CCCFB00453F0A /* Sora-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD8C2F7CCCFB00453F0A /* Sora-Thin.ttf */; };
+		F694AD932F7CCCFB00453F0A /* Sora-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD882F7CCCFB00453F0A /* Sora-Light.ttf */; };
+		F694AD942F7CCCFB00453F0A /* Sora-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD852F7CCCFB00453F0A /* Sora-Bold.ttf */; };
+		F694AD952F7CCCFB00453F0A /* Sora-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD8B2F7CCCFB00453F0A /* Sora-SemiBold.ttf */; };
 		F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */; };
 		F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */ = {isa = PBXBuildFile; productRef = F6993E012F2BFD9800B5FF81 /* CoolCharts */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -201,9 +209,6 @@
 		F6B2B0092F92440100A1B001 /* SQHealthKitManager+HeartRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */; };
 		F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */; };
 		F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */; };
-		F7D1000A2F98010100AA1001 /* SQWorkoutScoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000B2F98010100AA1001 /* SQWorkoutScoreService.swift */; };
-		F7D1000C2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000D2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift */; };
-		F7D1000E2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000F2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift */; };
 		F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */; };
 		F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */; };
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
@@ -260,6 +265,9 @@
 		F7D100052F94000100AA1001 /* SQDashboardLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */; };
 		F7D100072F95000100AA1001 /* SQOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100062F95000100AA1001 /* SQOnboardingView.swift */; };
 		F7D100092F95000100AA1001 /* SQOnboardingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D100082F95000100AA1001 /* SQOnboardingController.swift */; };
+		F7D1000A2F98010100AA1001 /* SQWorkoutScoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000B2F98010100AA1001 /* SQWorkoutScoreService.swift */; };
+		F7D1000C2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000D2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift */; };
+		F7D1000E2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1000F2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -420,12 +428,12 @@
 		F679BA4A2EE4F41500A2F249 /* SQWorkoutsListItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutsListItemViewModel.swift; sourceTree = "<group>"; };
 		F679BC4C2EE4FB6300A2F249 /* SQWorkoutSummaryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSummaryController.swift; sourceTree = "<group>"; };
 		F679BC4F2EE4FC1900A2F249 /* SQWorkoutSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSummaryView.swift; sourceTree = "<group>"; };
-		F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailController.swift; sourceTree = "<group>"; };
-		F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailView.swift; sourceTree = "<group>"; };
-		F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutHeartRateZonesView.swift; sourceTree = "<group>"; };
 		F679BC512EE72F6100A2F249 /* WorkoutsSummaryState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsSummaryState.swift; sourceTree = "<group>"; };
 		F679BC532EE7321100A2F249 /* SQUserIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserIcon.swift; sourceTree = "<group>"; };
 		F679BC582EE7BDF800A2F249 /* exercises_all.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = exercises_all.json; sourceTree = "<group>"; };
+		F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailController.swift; sourceTree = "<group>"; };
+		F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailView.swift; sourceTree = "<group>"; };
+		F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutHeartRateZonesView.swift; sourceTree = "<group>"; };
 		F679BDD22EE7C0BE00A2F249 /* UnfrozenEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnfrozenEnum.swift; sourceTree = "<group>"; };
 		F679BDD42EE7D3A700A2F249 /* ExercisesListState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisesListState.swift; sourceTree = "<group>"; };
 		F679BDD62EE7D46100A2F249 /* SQExercisesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesListView.swift; sourceTree = "<group>"; };
@@ -466,6 +474,14 @@
 		F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardActivityListRowView.swift; sourceTree = "<group>"; };
 		F6940F2C2F37B12D0008A2A0 /* SQDashboardWorkoutGroupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutGroupViewModel.swift; sourceTree = "<group>"; };
 		F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryRowConfig.swift; sourceTree = "<group>"; };
+		F694AD852F7CCCFB00453F0A /* Sora-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Bold.ttf"; sourceTree = "<group>"; };
+		F694AD862F7CCCFB00453F0A /* Sora-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-ExtraBold.ttf"; sourceTree = "<group>"; };
+		F694AD872F7CCCFB00453F0A /* Sora-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-ExtraLight.ttf"; sourceTree = "<group>"; };
+		F694AD882F7CCCFB00453F0A /* Sora-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Light.ttf"; sourceTree = "<group>"; };
+		F694AD892F7CCCFB00453F0A /* Sora-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Medium.ttf"; sourceTree = "<group>"; };
+		F694AD8A2F7CCCFB00453F0A /* Sora-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Regular.ttf"; sourceTree = "<group>"; };
+		F694AD8B2F7CCCFB00453F0A /* Sora-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-SemiBold.ttf"; sourceTree = "<group>"; };
+		F694AD8C2F7CCCFB00453F0A /* Sora-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Thin.ttf"; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
@@ -561,11 +577,11 @@
 		F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutService.swift; sourceTree = "<group>"; };
 		F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutController.swift; sourceTree = "<group>"; };
 		F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardLayoutView.swift; sourceTree = "<group>"; };
+		F7D100062F95000100AA1001 /* SQOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOnboardingView.swift; sourceTree = "<group>"; };
+		F7D100082F95000100AA1001 /* SQOnboardingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOnboardingController.swift; sourceTree = "<group>"; };
 		F7D1000B2F98010100AA1001 /* SQWorkoutScoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutScoreService.swift; sourceTree = "<group>"; };
 		F7D1000D2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutPremiumInsightsView.swift; sourceTree = "<group>"; };
 		F7D1000F2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutPremiumInsightRowViewModel.swift; sourceTree = "<group>"; };
-		F7D100062F95000100AA1001 /* SQOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOnboardingView.swift; sourceTree = "<group>"; };
-		F7D100082F95000100AA1001 /* SQOnboardingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQOnboardingController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1109,6 +1125,7 @@
 		F679BC552EE7BDD500A2F249 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				F694AD842F7CCCE100453F0A /* Fonts */,
 				F679BC582EE7BDF800A2F249 /* exercises_all.json */,
 			);
 			path = Resources;
@@ -1188,6 +1205,29 @@
 				F639F0FA2F4272AA004AC701 /* SQPerformanceRowData.swift */,
 			);
 			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		F694AD842F7CCCE100453F0A /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				F694AD8D2F7CCCFB00453F0A /* Sora */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		F694AD8D2F7CCCFB00453F0A /* Sora */ = {
+			isa = PBXGroup;
+			children = (
+				F694AD852F7CCCFB00453F0A /* Sora-Bold.ttf */,
+				F694AD862F7CCCFB00453F0A /* Sora-ExtraBold.ttf */,
+				F694AD872F7CCCFB00453F0A /* Sora-ExtraLight.ttf */,
+				F694AD882F7CCCFB00453F0A /* Sora-Light.ttf */,
+				F694AD892F7CCCFB00453F0A /* Sora-Medium.ttf */,
+				F694AD8A2F7CCCFB00453F0A /* Sora-Regular.ttf */,
+				F694AD8B2F7CCCFB00453F0A /* Sora-SemiBold.ttf */,
+				F694AD8C2F7CCCFB00453F0A /* Sora-Thin.ttf */,
+			);
+			path = Sora;
 			sourceTree = "<group>";
 		};
 		F6A312092EF60DEB00A2E5F7 /* Frameworks */ = {
@@ -1810,6 +1850,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				F657E2B02CA50D7E00E72926 /* Preview Assets.xcassets in Resources */,
+				F694AD8E2F7CCCFB00453F0A /* Sora-ExtraLight.ttf in Resources */,
+				F694AD8F2F7CCCFB00453F0A /* Sora-ExtraBold.ttf in Resources */,
+				F694AD902F7CCCFB00453F0A /* Sora-Regular.ttf in Resources */,
+				F694AD912F7CCCFB00453F0A /* Sora-Medium.ttf in Resources */,
+				F694AD922F7CCCFB00453F0A /* Sora-Thin.ttf in Resources */,
+				F694AD932F7CCCFB00453F0A /* Sora-Light.ttf in Resources */,
+				F694AD942F7CCCFB00453F0A /* Sora-Bold.ttf in Resources */,
+				F694AD952F7CCCFB00453F0A /* Sora-SemiBold.ttf in Resources */,
 				F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */,
 				F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info.plist in Resources */,
 				F679BC592EE7BDF800A2F249 /* exercises_all.json in Resources */,
