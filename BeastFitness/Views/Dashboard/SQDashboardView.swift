@@ -82,7 +82,8 @@ struct SQDashboardView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                     .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                 }
 
@@ -197,8 +198,8 @@ private struct SQLifeScoreHeroCard: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 8)
-        .padding(.bottom, 20)
+        .padding(.top, 18)
+        .padding(.bottom, 10)
     }
 }
 
@@ -210,21 +211,33 @@ private struct SQLifeScoreOrbView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isAnimating = false
 
-    private var outerGlowSize: CGFloat { size * 0.92 }
-    private var orbSize: CGFloat { size * 0.68 }
-    private var highlightSize: CGFloat { max(10, size * 0.12) }
+    private var auraSize: CGFloat { size * 0.98 }
+    private var orbSize: CGFloat { size * 0.72 }
+    private var currentLineWidth: CGFloat { max(6, size * 0.055) }
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.36 : 0.22), lineWidth: size * 0.11)
-                .frame(width: outerGlowSize, height: outerGlowSize)
-                .blur(radius: isAnimating ? size * 0.10 : size * 0.06)
-                .scaleEffect(isAnimating ? 1.04 : 0.98)
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.clear,
+                            viewModel.state.secondaryColor.color.opacity(SQColor.isDarkMode ? 0.10 : 0.08),
+                            viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.34 : 0.24),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: auraSize * 0.12,
+                        endRadius: auraSize * 0.52
+                    )
+                )
+                .frame(width: auraSize, height: auraSize)
+                .blur(radius: isAnimating ? size * 0.10 : size * 0.07)
+                .scaleEffect(isAnimating ? 1.06 : 0.99)
                 .opacity(isAnimating ? 0.96 : 0.78)
                 .shadow(
                     color: viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.45 : 0.24),
-                    radius: isAnimating ? size * 0.18 : size * 0.10,
+                    radius: isAnimating ? size * 0.22 : size * 0.14,
                     x: 0,
                     y: 0
                 )
@@ -233,37 +246,121 @@ private struct SQLifeScoreOrbView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.white.opacity(SQColor.isDarkMode ? 0.14 : 0.10),
-                            viewModel.state.secondaryColor.color.opacity(SQColor.isDarkMode ? 0.06 : 0.04),
+                            Color.white.opacity(SQColor.isDarkMode ? 0.10 : 0.08),
+                            viewModel.state.secondaryColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.14),
+                            viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.18),
                             Color.clear,
-                            viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.72 : 0.54)
+                            viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.74 : 0.56)
                         ],
-                        center: .init(x: 0.36, y: 0.30),
+                        center: .init(x: 0.47, y: 0.44),
                         startRadius: 1,
-                        endRadius: orbSize * 0.68
+                        endRadius: orbSize * 0.74
                     )
                 )
                 .frame(width: orbSize, height: orbSize)
                 .overlay {
                     Circle()
-                        .stroke(Color.white.opacity(SQColor.isDarkMode ? 0.34 : 0.60), lineWidth: 1)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.95),
+                                    viewModel.state.secondaryColor.color.opacity(0.55),
+                                    viewModel.state.primaryColor.color.opacity(0.88)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.4
+                        )
+                        .blur(radius: 0.4)
                 }
-                .overlay(alignment: .topLeading) {
+                .overlay {
                     Circle()
-                        .fill(Color.white.opacity(SQColor.isDarkMode ? 0.56 : 0.76))
-                        .frame(width: highlightSize, height: highlightSize)
-                        .blur(radius: 1.2)
-                        .offset(x: orbSize * 0.16, y: orbSize * 0.18)
+                        .stroke(
+                            AngularGradient(
+                                colors: [
+                                    viewModel.state.primaryColor.color.opacity(0.0),
+                                    viewModel.state.primaryColor.color.opacity(0.60),
+                                    Color.white.opacity(0.85),
+                                    viewModel.state.secondaryColor.color.opacity(0.55),
+                                    viewModel.state.primaryColor.color.opacity(0.0)
+                                ],
+                                center: .center
+                            ),
+                            lineWidth: currentLineWidth
+                        )
+                        .frame(width: orbSize * 0.90, height: orbSize * 0.90)
+                        .blur(radius: 7)
+                        .rotationEffect(.degrees(isAnimating ? 18 : -12))
+                        .scaleEffect(isAnimating ? 1.02 : 0.98)
                 }
 
+            Group {
+                Circle()
+                    .trim(from: 0.10, to: 0.58)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.06),
+                                viewModel.state.secondaryColor.color.opacity(0.65),
+                                viewModel.state.primaryColor.color.opacity(0.10)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: currentLineWidth, lineCap: .round)
+                    )
+                    .frame(width: orbSize * 0.76, height: orbSize * 0.76)
+                    .rotationEffect(.degrees(isAnimating ? 142 : 116))
+                    .blur(radius: 2.4)
+
+                Circle()
+                    .trim(from: 0.28, to: 0.76)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.clear,
+                                viewModel.state.primaryColor.color.opacity(0.46),
+                                Color.white.opacity(0.30),
+                                Color.clear
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: currentLineWidth * 0.7, lineCap: .round)
+                    )
+                    .frame(width: orbSize * 0.58, height: orbSize * 0.58)
+                    .rotationEffect(.degrees(isAnimating ? -38 : -12))
+                    .blur(radius: 1.8)
+            }
+            .blendMode(.plusLighter)
+
             Circle()
-                .fill(SQColor.background.color.opacity(SQColor.isDarkMode ? 0.30 : 0.18))
-                .frame(width: orbSize * 0.42, height: orbSize * 0.42)
-                .blur(radius: 2)
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.white.opacity(0.03),
+                            viewModel.state.secondaryColor.color.opacity(0.08),
+                            SQColor.background.color.opacity(SQColor.isDarkMode ? 0.06 : 0.04),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: orbSize * 0.22
+                    )
+                )
+                .frame(width: orbSize * 0.54, height: orbSize * 0.54)
+                .blur(radius: 6)
 
             Text(viewModel.scoreText)
                 .sqFont(scoreFont)
                 .sqForegroundColor(.textPrimary)
+                .shadow(
+                    color: viewModel.state.primaryColor.color.opacity(0.22),
+                    radius: 10,
+                    x: 0,
+                    y: 0
+                )
         }
         .frame(width: size, height: size)
         .onAppear {
