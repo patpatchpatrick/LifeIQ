@@ -12,7 +12,6 @@
 		F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA292EC40EC700404878 /* EventHub.swift */; };
 		F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2B2EC40ED400404878 /* NavigationState.swift */; };
 		F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */; };
-		F694B0032F7CD8A100453F0A /* SQDashboardController+LifeScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */; };
 		F602DA312EC40FB800404878 /* DashboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA302EC40FB600404878 /* DashboardState.swift */; };
 		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
 		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
@@ -153,7 +152,6 @@
 		F6940F2B2F37A6730008A2A0 /* SQDashboardActivityListRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */; };
 		F6940F2D2F37B1310008A2A0 /* SQDashboardWorkoutGroupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2C2F37B12D0008A2A0 /* SQDashboardWorkoutGroupViewModel.swift */; };
 		F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */; };
-		F694B0012F7CD80100453F0A /* SQLifeScoreViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0002F7CD80100453F0A /* SQLifeScoreViewModel.swift */; };
 		F694AAE12F78862A00453F0A /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F694AAE02F78862A00453F0A /* GoogleSignIn */; };
 		F694AAE32F78862A00453F0A /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F694AAE22F78862A00453F0A /* GoogleSignInSwift */; };
 		F694AD8E2F7CCCFB00453F0A /* Sora-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD872F7CCCFB00453F0A /* Sora-ExtraLight.ttf */; };
@@ -164,6 +162,9 @@
 		F694AD932F7CCCFB00453F0A /* Sora-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD882F7CCCFB00453F0A /* Sora-Light.ttf */; };
 		F694AD942F7CCCFB00453F0A /* Sora-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD852F7CCCFB00453F0A /* Sora-Bold.ttf */; };
 		F694AD952F7CCCFB00453F0A /* Sora-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F694AD8B2F7CCCFB00453F0A /* Sora-SemiBold.ttf */; };
+		F694AE962F7D92D500453F0A /* GoogleService-Info-Prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = F694AE952F7D92D500453F0A /* GoogleService-Info-Prod.plist */; };
+		F694B0012F7CD80100453F0A /* SQLifeScoreViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0002F7CD80100453F0A /* SQLifeScoreViewModel.swift */; };
+		F694B0032F7CD8A100453F0A /* SQDashboardController+LifeScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */; };
 		F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */; };
 		F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */ = {isa = PBXBuildFile; productRef = F6993E012F2BFD9800B5FF81 /* CoolCharts */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -190,7 +191,7 @@
 		F6A848BC2CBD957600B09AD5 /* SQButtonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */; };
 		F6A848BF2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */; };
 		F6A848C12CBDC50100B09AD5 /* SQTimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */; };
-		F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */; };
+		F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist */; };
 		F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2602EDE54C900D3E679 /* FirebaseAnalytics */; };
 		F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2622EDE54C900D3E679 /* FirebaseAuth */; };
 		F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2642EDE54C900D3E679 /* FirebaseFirestore */; };
@@ -330,7 +331,6 @@
 		F602DA292EC40EC700404878 /* EventHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHub.swift; sourceTree = "<group>"; };
 		F602DA2B2EC40ED400404878 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardController.swift; sourceTree = "<group>"; };
-		F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardController+LifeScore.swift"; sourceTree = "<group>"; };
 		F602DA302EC40FB600404878 /* DashboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardState.swift; sourceTree = "<group>"; };
 		F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabViewModel.swift; sourceTree = "<group>"; };
 		F602DA362EC4110D00404878 /* SQRootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabView.swift; sourceTree = "<group>"; };
@@ -477,7 +477,6 @@
 		F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardActivityListRowView.swift; sourceTree = "<group>"; };
 		F6940F2C2F37B12D0008A2A0 /* SQDashboardWorkoutGroupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutGroupViewModel.swift; sourceTree = "<group>"; };
 		F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardWorkoutSummaryRowConfig.swift; sourceTree = "<group>"; };
-		F694B0002F7CD80100453F0A /* SQLifeScoreViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreViewModel.swift; sourceTree = "<group>"; };
 		F694AD852F7CCCFB00453F0A /* Sora-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Bold.ttf"; sourceTree = "<group>"; };
 		F694AD862F7CCCFB00453F0A /* Sora-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-ExtraBold.ttf"; sourceTree = "<group>"; };
 		F694AD872F7CCCFB00453F0A /* Sora-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-ExtraLight.ttf"; sourceTree = "<group>"; };
@@ -486,6 +485,9 @@
 		F694AD8A2F7CCCFB00453F0A /* Sora-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Regular.ttf"; sourceTree = "<group>"; };
 		F694AD8B2F7CCCFB00453F0A /* Sora-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-SemiBold.ttf"; sourceTree = "<group>"; };
 		F694AD8C2F7CCCFB00453F0A /* Sora-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Sora-Thin.ttf"; sourceTree = "<group>"; };
+		F694AE952F7D92D500453F0A /* GoogleService-Info-Prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-Prod.plist"; sourceTree = "<group>"; };
+		F694B0002F7CD80100453F0A /* SQLifeScoreViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreViewModel.swift; sourceTree = "<group>"; };
+		F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardController+LifeScore.swift"; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
@@ -509,7 +511,7 @@
 		F6A848BB2CBD957600B09AD5 /* SQButtonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQButtonViewModel.swift; sourceTree = "<group>"; };
 		F6A848BE2CBD95A400B09AD5 /* SQDropDownMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDropDownMenuViewModel.swift; sourceTree = "<group>"; };
 		F6A848C02CBDC50100B09AD5 /* SQTimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQTimeRange.swift; sourceTree = "<group>"; };
-		F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-Staging.plist"; sourceTree = "<group>"; };
 		F6ABC3562EDE58B800D3E679 /* SQRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRouter.swift; sourceTree = "<group>"; };
 		F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNetworkService.swift; sourceTree = "<group>"; };
 		F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInService.swift; sourceTree = "<group>"; };
@@ -1048,7 +1050,6 @@
 				F602DA262EC40EB100404878 /* StateManagement */,
 				F6A848A42CB608C400B09AD5 /* CoreFiles */,
 				F6A848A32CB6066100B09AD5 /* Info.plist */,
-				F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info.plist */,
 				F6F94E0D2CB3146F00C2B90B /* UI */,
 				F6F94E012CAB9AA100C2B90B /* Extensions */,
 				F6F94E002CAB9A7B00C2B90B /* Views */,
@@ -1130,6 +1131,7 @@
 		F679BC552EE7BDD500A2F249 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				F694AE922F7D8EC400453F0A /* GooglePList */,
 				F694AD842F7CCCE100453F0A /* Fonts */,
 				F679BC582EE7BDF800A2F249 /* exercises_all.json */,
 			);
@@ -1234,6 +1236,15 @@
 				F694AD8C2F7CCCFB00453F0A /* Sora-Thin.ttf */,
 			);
 			path = Sora;
+			sourceTree = "<group>";
+		};
+		F694AE922F7D8EC400453F0A /* GooglePList */ = {
+			isa = PBXGroup;
+			children = (
+				F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist */,
+				F694AE952F7D92D500453F0A /* GoogleService-Info-Prod.plist */,
+			);
+			path = GooglePList;
 			sourceTree = "<group>";
 		};
 		F6A312092EF60DEB00A2E5F7 /* Frameworks */ = {
@@ -1862,10 +1873,11 @@
 				F694AD912F7CCCFB00453F0A /* Sora-Medium.ttf in Resources */,
 				F694AD922F7CCCFB00453F0A /* Sora-Thin.ttf in Resources */,
 				F694AD932F7CCCFB00453F0A /* Sora-Light.ttf in Resources */,
+				F694AE962F7D92D500453F0A /* GoogleService-Info-Prod.plist in Resources */,
 				F694AD942F7CCCFB00453F0A /* Sora-Bold.ttf in Resources */,
 				F694AD952F7CCCFB00453F0A /* Sora-SemiBold.ttf in Resources */,
 				F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */,
-				F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info.plist in Resources */,
+				F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist in Resources */,
 				F679BC592EE7BDF800A2F249 /* exercises_all.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2204,7 +2216,7 @@
 		F61593EF2EF4BD8400223A63 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = StagingAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2215,18 +2227,18 @@
 				EXCLUDED_ARCHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_CFBundleDisplayName = "LifeIQ Staging";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
@@ -2241,7 +2253,7 @@
 		F61593F02EF4BD8400223A63 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = StagingAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2252,18 +2264,18 @@
 				EXCLUDED_ARCHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_CFBundleDisplayName = "LifeIQ Staging";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
@@ -2412,6 +2424,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				SDKROOT = iphoneos;
+				LIFEIQ_FIREBASE_ENVIRONMENT = staging;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -2469,6 +2482,7 @@
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				SDKROOT = iphoneos;
+				LIFEIQ_FIREBASE_ENVIRONMENT = prod;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -2489,6 +2503,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeastFitness/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -2503,7 +2518,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -2527,6 +2542,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeastFitness/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -2541,7 +2557,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitness;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -2626,6 +2642,708 @@
 			};
 			name = Release;
 		};
+		F694AF212F7DA20100453F0A /* Debug Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LIFEIQ_FIREBASE_ENVIRONMENT = staging;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Debug Staging";
+		};
+		F694AF222F7DA20100453F0A /* Release Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LIFEIQ_FIREBASE_ENVIRONMENT = staging;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Release Staging";
+		};
+		F694AF232F7DA20100453F0A /* Debug Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LIFEIQ_FIREBASE_ENVIRONMENT = prod;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Debug Prod";
+		};
+		F694AF242F7DA20100453F0A /* Release Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LIFEIQ_FIREBASE_ENVIRONMENT = prod;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Release Prod";
+		};
+		F694AF252F7DA20100453F0A /* Debug Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app.staging;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.staging.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = "Debug Staging";
+		};
+		F694AF262F7DA20100453F0A /* Release Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app.staging;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.staging.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = "Release Staging";
+		};
+		F694AF272F7DA20100453F0A /* Debug Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = "Debug Prod";
+		};
+		F694AF282F7DA20100453F0A /* Release Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Beast Fitness Watch Watch App/Beast Fitness Watch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Beast-Fitness-Watch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to share your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.lifeiq.app;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = "Release Prod";
+		};
+		F694AF292F7DA20100453F0A /* Debug Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = StagingAppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "LifeIQ Staging";
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.staging;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug Staging";
+		};
+		F694AF2A2F7DA20100453F0A /* Release Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = StagingAppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "LifeIQ Staging";
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app.staging;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release Staging";
+		};
+		F694AF2B2F7DA20100453F0A /* Debug Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug Prod";
+		};
+		F694AF2C2F7DA20100453F0A /* Release Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeastFitness/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LifeIQ;
+				INFOPLIST_KEY_LIFEIQ_FIREBASE_ENVIRONMENT = "$(LIFEIQ_FIREBASE_ENVIRONMENT)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow this app to update your Health data";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lifeiq.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release Prod";
+		};
+		F694AF2D2F7DA20100453F0A /* Debug Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeastFitness.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeastFitness";
+			};
+			name = "Debug Staging";
+		};
+		F694AF2E2F7DA20100453F0A /* Release Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeastFitness.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeastFitness";
+			};
+			name = "Release Staging";
+		};
+		F694AF2F2F7DA20100453F0A /* Debug Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeastFitness.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeastFitness";
+			};
+			name = "Debug Prod";
+		};
+		F694AF302F7DA20100453F0A /* Release Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeastFitness.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeastFitness";
+			};
+			name = "Release Prod";
+		};
+		F694AF312F7DA20100453F0A /* Debug Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BeastFitness;
+			};
+			name = "Debug Staging";
+		};
+		F694AF322F7DA20100453F0A /* Release Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BeastFitness;
+			};
+			name = "Release Staging";
+		};
+		F694AF332F7DA20100453F0A /* Debug Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BeastFitness;
+			};
+			name = "Debug Prod";
+		};
+		F694AF342F7DA20100453F0A /* Release Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5FXSK8WB9T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.patpatchpatrick.BeastFitness.BeastFitnessUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BeastFitness;
+			};
+			name = "Release Prod";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2634,6 +3352,10 @@
 			buildConfigurations = (
 				F61593EF2EF4BD8400223A63 /* Debug */,
 				F61593F02EF4BD8400223A63 /* Release */,
+				F694AF252F7DA20100453F0A /* Debug Staging */,
+				F694AF262F7DA20100453F0A /* Release Staging */,
+				F694AF272F7DA20100453F0A /* Debug Prod */,
+				F694AF282F7DA20100453F0A /* Release Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2661,6 +3383,10 @@
 			buildConfigurations = (
 				F657E2C72CA50D7E00E72926 /* Debug */,
 				F657E2C82CA50D7E00E72926 /* Release */,
+				F694AF212F7DA20100453F0A /* Debug Staging */,
+				F694AF222F7DA20100453F0A /* Release Staging */,
+				F694AF232F7DA20100453F0A /* Debug Prod */,
+				F694AF242F7DA20100453F0A /* Release Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2670,6 +3396,10 @@
 			buildConfigurations = (
 				F657E2CA2CA50D7E00E72926 /* Debug */,
 				F657E2CB2CA50D7E00E72926 /* Release */,
+				F694AF292F7DA20100453F0A /* Debug Staging */,
+				F694AF2A2F7DA20100453F0A /* Release Staging */,
+				F694AF2B2F7DA20100453F0A /* Debug Prod */,
+				F694AF2C2F7DA20100453F0A /* Release Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2679,6 +3409,10 @@
 			buildConfigurations = (
 				F657E2CD2CA50D7E00E72926 /* Debug */,
 				F657E2CE2CA50D7E00E72926 /* Release */,
+				F694AF2D2F7DA20100453F0A /* Debug Staging */,
+				F694AF2E2F7DA20100453F0A /* Release Staging */,
+				F694AF2F2F7DA20100453F0A /* Debug Prod */,
+				F694AF302F7DA20100453F0A /* Release Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2688,6 +3422,10 @@
 			buildConfigurations = (
 				F657E2D02CA50D7E00E72926 /* Debug */,
 				F657E2D12CA50D7E00E72926 /* Release */,
+				F694AF312F7DA20100453F0A /* Debug Staging */,
+				F694AF322F7DA20100453F0A /* Release Staging */,
+				F694AF332F7DA20100453F0A /* Debug Prod */,
+				F694AF342F7DA20100453F0A /* Release Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

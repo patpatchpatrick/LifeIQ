@@ -27,6 +27,8 @@
 	<array>
 		<string>strava</string>
 	</array>
+	<key>LIFEIQ_FIREBASE_ENVIRONMENT</key>
+	<string>$(LIFEIQ_FIREBASE_ENVIRONMENT)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Sora-Bold.ttf</string>
