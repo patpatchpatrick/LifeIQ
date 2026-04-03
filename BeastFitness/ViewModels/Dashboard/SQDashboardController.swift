@@ -27,6 +27,7 @@ final class SQDashboardController: SQDashboardInterface {
     let userState: SQUserStating
     let dailyCheckInManager: SQDailyCheckInManaging
     let metricEntryManager: SQMetricEntryManaging
+    let metricsManager: SQMetricsManaging
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
     let statsManager: SQWorkoutStatsManaging
@@ -58,6 +59,7 @@ final class SQDashboardController: SQDashboardInterface {
         userState: SQUserStating = SQAppState.shared.userState,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         metricEntryManager: SQMetricEntryManaging = SQAppState.shared.metricEntryManager,
+        metricsManager: SQMetricsManaging = SQMetricsManager.shared,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
@@ -77,6 +79,7 @@ final class SQDashboardController: SQDashboardInterface {
         self.userState = userState
         self.dailyCheckInManager = dailyCheckInManager
         self.metricEntryManager = metricEntryManager
+        self.metricsManager = metricsManager
         self.workoutManager = workoutManager
         self.healthKitManager = healthKitManager
         self.statsManager = statsManager
@@ -248,6 +251,8 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         do {
+            try metricsManager.loadIfNeeded(using: context)
+
             // Sync daily check-ins from Firestore
             let timeRange = state.selectedTimeRange.sqTimeRange
             
@@ -431,7 +436,6 @@ final class SQDashboardController: SQDashboardInterface {
             )
 
             lifeScoreViewModel = buildLifeScoreViewModel(
-                todaysCheckIns: todaysCheckIns,
                 past7DaysCheckIns: past7DaysCheckIns,
                 todaysWorkouts: todaysWorkouts,
                 lastWeekWorkouts: lastWeekWorkouts,
@@ -902,13 +906,15 @@ final class SQDashboardController: SQDashboardInterface {
             : nil
 
         // Return section view model
+        let scoreColumnTitle = state.selectedTimeRange == .today ? "Score" : "AVG SCORE"
+
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "performance",
             title: "Performance",
             defaultPriority: 20,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
-            columnHeaders: ["", "Score", "Rank"],
+            columnHeaders: ["", scoreColumnTitle, "Rank"],
             maxVisibleRows: 4
         )
 

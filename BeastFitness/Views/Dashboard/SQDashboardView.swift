@@ -18,6 +18,10 @@ struct SQDashboardView: View {
         !controller.state.isLoading && controller.state.availableLayoutGroups.isEmpty
     }
 
+    private var displayedLifeScoreViewModel: SQLifeScoreViewModel? {
+        controller.lifeScoreViewModel ?? (controller.state.isLoading ? .mock : nil)
+    }
+
     var mainScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -74,17 +78,23 @@ struct SQDashboardView: View {
                 .padding(.top, 10)
                 .padding(.bottom, 10)
 
-                if let lifeScoreViewModel = controller.lifeScoreViewModel {
-                    Button {
-                        controller.handleLifeScoreTap()
-                    } label: {
-                        SQLifeScoreHeroCard(viewModel: lifeScoreViewModel)
+                if let lifeScoreViewModel = displayedLifeScoreViewModel {
+                    Group {
+                        if controller.lifeScoreViewModel != nil && !controller.state.isLoading {
+                            Button {
+                                controller.handleLifeScoreTap()
+                            } label: {
+                                SQLifeScoreHeroCard(viewModel: lifeScoreViewModel)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
+                        } else {
+                            SQLifeScoreHeroCard(viewModel: lifeScoreViewModel)
+                        }
                     }
-                    .buttonStyle(.plain)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 8)
-                    .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                 }
 
                 // Daily Check-In CTA Banner - hide while loading

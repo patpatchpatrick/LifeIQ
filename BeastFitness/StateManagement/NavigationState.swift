@@ -94,6 +94,7 @@ struct SQNavRoute {
         case workoutsList(workouts: [SQWorkoutSessionable])
         case workoutSummary(controller: SQWorkoutSummaryController)
         case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
+        case lifeScoreDetail(controller: SQLifeScoreDetailController)
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
@@ -117,6 +118,8 @@ struct SQNavRoute {
                 return "workoutSummary-\(controller.id)"
             case .workoutInsightDetail(let controller):
                 return "workoutInsightDetail-\(controller.id)"
+            case .lifeScoreDetail(let controller):
+                return "lifeScoreDetail-\(controller.id)"
             case .editWorkout(let workout):
                 return "editWorkout-\(workout.id)"
             case .leaderboard(controller: let controller):

@@ -5,12 +5,38 @@
 
 import Foundation
 
+enum SQLifeScoreSignalEffect {
+    case positive
+    case negative
+    case neutral
+
+    var color: SQColor {
+        switch self {
+        case .positive:
+            return .dashboardGlowMint
+        case .negative:
+            return .colorErrorRed
+        case .neutral:
+            return .dashboardTrendWarm
+        }
+    }
+}
+
+struct SQLifeScoreDetailItem: Identifiable {
+    let id: String
+    let title: String
+    let valueText: String
+    let summary: String
+    let effect: SQLifeScoreSignalEffect
+}
+
 struct SQLifeScoreComponent: Identifiable {
     let id: String
     let title: String
     let score: Int
     let summary: String
     let weight: Double
+    let detailItems: [SQLifeScoreDetailItem]
 }
 
 enum SQLifeScoreState {
@@ -87,6 +113,14 @@ struct SQLifeScoreViewModel {
     let subtitle: String
     let components: [SQLifeScoreComponent]
     let availableWeight: Double
+
+    static let mock = SQLifeScoreViewModel(
+        score: 76,
+        state: .steady,
+        subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
+        components: [],
+        availableWeight: 100
+    )
 
     var scoreText: String {
         if let score {

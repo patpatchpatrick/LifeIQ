@@ -12,6 +12,8 @@
 		F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA292EC40EC700404878 /* EventHub.swift */; };
 		F602DA2C2EC40ED500404878 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2B2EC40ED400404878 /* NavigationState.swift */; };
 		F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */; };
+		F694B0112F7E010100453F0A /* SQLifeScoreDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */; };
+		F694B0132F7E010100453F0A /* SQLifeScoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */; };
 		F602DA312EC40FB800404878 /* DashboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA302EC40FB600404878 /* DashboardState.swift */; };
 		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
 		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
@@ -331,6 +333,8 @@
 		F602DA292EC40EC700404878 /* EventHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHub.swift; sourceTree = "<group>"; };
 		F602DA2B2EC40ED400404878 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardController.swift; sourceTree = "<group>"; };
+		F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailController.swift; sourceTree = "<group>"; };
+		F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailView.swift; sourceTree = "<group>"; };
 		F602DA302EC40FB600404878 /* DashboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardState.swift; sourceTree = "<group>"; };
 		F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabViewModel.swift; sourceTree = "<group>"; };
 		F602DA362EC4110D00404878 /* SQRootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabView.swift; sourceTree = "<group>"; };
@@ -679,6 +683,7 @@
 				F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */,
 				F602DA3B2EC4E9F400404878 /* DashboardRows */,
 				F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */,
+				F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */,
 				F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */,
 				F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */,
 				F6940F1C2F36AE7B0008A2A0 /* SQDashboardSectionGroupViewModel.swift */,
@@ -702,6 +707,7 @@
 				F6E90B4A2ED55193003441B5 /* DailyCheckIn */,
 				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */,
+				F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */,
 				F602DA392EC4118600404878 /* SQDashboardView.swift */,
 				F68C80512F365A0C00327250 /* Shared */,
 				F6940F182F36AC0F0008A2A0 /* SQDashboardSectionGroupView.swift */,
@@ -2000,6 +2006,7 @@
 				F639F15F2F493246004AC701 /* SQDropDownMenuState.swift in Sources */,
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6940F2B2F37A6730008A2A0 /* SQDashboardActivityListRowView.swift in Sources */,
+				F694B0132F7E010100453F0A /* SQLifeScoreDetailView.swift in Sources */,
 				F694B0012F7CD80100453F0A /* SQLifeScoreViewModel.swift in Sources */,
 				F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */,
 				F6C5FDAE2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift in Sources */,
@@ -2152,6 +2159,7 @@
 				F639B7E02ED798E300199C69 /* SQTextFieldViewModel.swift in Sources */,
 				F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */,
 				F694B0032F7CD8A100453F0A /* SQDashboardController+LifeScore.swift in Sources */,
+				F694B0112F7E010100453F0A /* SQLifeScoreDetailController.swift in Sources */,
 				F61591FB2EEA48E100223A63 /* SQWorkoutSession+Mocks.swift in Sources */,
 				F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */,
 				F679BC4D2EE4FB7100A2F249 /* SQWorkoutSummaryController.swift in Sources */,
