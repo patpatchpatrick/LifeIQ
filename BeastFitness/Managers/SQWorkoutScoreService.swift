@@ -131,9 +131,7 @@ protocol SQWorkoutScoreServicing {
 final class SQWorkoutScoreService: SQWorkoutScoreServicing {
     private let heartRateService: SQHeartRateServicing
 
-    /// Normalized running inputs used by both premium scores.
-    ///
-    /// `Performance` is driven primarily by the derived `vdot`.
+    /// Running-specific performance inputs.
     fileprivate struct RunningSample {
         let workout: SQWorkoutSessionable
         let distanceMiles: Double
@@ -144,11 +142,44 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         let vdot: Double
     }
 
+    fileprivate struct CyclingSample {
+        let workout: SQWorkoutSessionable
+        let distanceMiles: Double
+        let durationSeconds: Double
+        let averageHeartRate: Double?
+        let calories: Double?
+        let averageSpeedMilesPerHour: Double
+        let outputEstimate: Double
+    }
+
+    fileprivate enum PerformanceSample {
+        case running(RunningSample)
+        case cycling(CyclingSample)
+
+        var workout: SQWorkoutSessionable {
+            switch self {
+            case .running(let sample):
+                return sample.workout
+            case .cycling(let sample):
+                return sample.workout
+            }
+        }
+
+        var historyValue: Double {
+            switch self {
+            case .running(let sample):
+                return sample.vdot
+            case .cycling(let sample):
+                return sample.outputEstimate
+            }
+        }
+    }
+
     fileprivate struct PerformanceBreakdown {
         let finalScore: Int
         let percentileRank: Double?
-        let vdot: Double
-        let historicalRunCount: Int
+        let referenceValue: Double
+        let historicalWorkoutCount: Int
         let usedFallback: Bool
     }
 
@@ -396,7 +427,7 @@ private extension SQWorkoutScoreService {
             availability: isPremiumUnlocked ? .available : .locked,
             scores: isPremiumUnlocked
                 ? scoredWorkout.scores
-                : scoredWorkout.scores.map { lockedPreviewScore(for: $0.kind) },
+                : scoredWorkout.scores.map { lockedPreviewScore(for: $0.kind, activityType: scoredWorkout.workout.activityType) },
             footer: isPremiumUnlocked
                 ? scoredWorkout.footer
                 : "Unlock personalized workout insights built from your output and training load.",
@@ -410,17 +441,17 @@ private extension SQWorkoutScoreService {
         allTimeWorkouts: [SQWorkoutSessionable],
         footerContext: FooterContext
     ) async -> SupportedWorkoutScores? {
-        async let historicalRunSamplesTask = makeRunningSamples(
-            from: allTimeWorkouts.filter { $0.activityType == .running }
+        async let historicalPerformanceSamplesTask = makePerformanceSamples(
+            from: allTimeWorkouts.filter { $0.activityType == workout.activityType }
         )
         async let historicalDifficultySamplesTask = makeDifficultySamples(from: allTimeWorkouts)
 
-        let historicalRunSamples = await historicalRunSamplesTask
+        let historicalPerformanceSamples = await historicalPerformanceSamplesTask
         let historicalDifficultySamples = await historicalDifficultySamplesTask
 
         return await supportedWorkoutScores(
             for: workout,
-            historicalRunSamples: historicalRunSamples,
+            historicalPerformanceSamples: historicalPerformanceSamples,
             historicalDifficultySamples: historicalDifficultySamples,
             footerContext: footerContext
         )
@@ -428,24 +459,24 @@ private extension SQWorkoutScoreService {
 
     func supportedWorkoutScores(
         for workout: SQWorkoutSessionable,
-        historicalRunSamples: [RunningSample],
+        historicalPerformanceSamples: [PerformanceSample],
         historicalDifficultySamples: [DifficultySample],
         footerContext: FooterContext
     ) async -> SupportedWorkoutScores? {
-        async let runningSampleTask = makeRunningSample(for: workout)
+        async let performanceSampleTask = makePerformanceSample(for: workout)
         async let difficultySampleTask = makeDifficultySample(for: workout)
 
-        let runningSample = await runningSampleTask
+        let performanceSample = await performanceSampleTask
         let difficultySample = await difficultySampleTask
 
         var scores = [SQWorkoutPremiumInsightScore]()
 
-        if let runningSample {
+        if let performanceSample {
             let performanceBreakdown = performanceBreakdown(
-                for: runningSample,
-                historicalSamples: historicalRunSamples
+                for: performanceSample,
+                historicalSamples: historicalPerformanceSamples
             )
-            scores.append(makePerformanceScore(sample: runningSample, breakdown: performanceBreakdown))
+            scores.append(makePerformanceScore(sample: performanceSample, breakdown: performanceBreakdown))
         }
 
         if let difficultySample {
@@ -465,7 +496,7 @@ private extension SQWorkoutScoreService {
             title: insightsTitle(for: scores, footerContext: footerContext),
             subtitle: insightsSubtitle(
                 for: workout,
-                runningSample: runningSample,
+                performanceSample: performanceSample,
                 difficultySample: difficultySample,
                 footerContext: footerContext
             ),
@@ -483,19 +514,24 @@ private extension SQWorkoutScoreService {
         allTimeWorkouts: [SQWorkoutSessionable],
         footerContext: FooterContext
     ) async -> [SupportedWorkoutScores] {
-        async let historicalRunSamplesTask = makeRunningSamples(
-            from: allTimeWorkouts.filter { $0.activityType == .running }
-        )
         async let historicalDifficultySamplesTask = makeDifficultySamples(from: allTimeWorkouts)
 
-        let historicalRunSamples = await historicalRunSamplesTask
         let historicalDifficultySamples = await historicalDifficultySamplesTask
+        let uniqueActivityTypes = Set(workouts.map(\.activityType))
+        var historicalPerformanceSamplesByActivityType = [HKWorkoutActivityType: [PerformanceSample]]()
+
+        for activityType in uniqueActivityTypes {
+            historicalPerformanceSamplesByActivityType[activityType] = await makePerformanceSamples(
+                from: allTimeWorkouts.filter { $0.activityType == activityType }
+            )
+        }
+
         var results = [SupportedWorkoutScores]()
 
         for workout in workouts {
             if let scoredWorkout = await supportedWorkoutScores(
                 for: workout,
-                historicalRunSamples: historicalRunSamples,
+                historicalPerformanceSamples: historicalPerformanceSamplesByActivityType[workout.activityType] ?? [],
                 historicalDifficultySamples: historicalDifficultySamples,
                 footerContext: footerContext
             ) {
@@ -505,7 +541,10 @@ private extension SQWorkoutScoreService {
         return results
     }
 
-    func lockedPreviewScore(for kind: SQWorkoutScoreKind) -> SQWorkoutPremiumInsightScore {
+    func lockedPreviewScore(
+        for kind: SQWorkoutScoreKind,
+        activityType: HKWorkoutActivityType
+    ) -> SQWorkoutPremiumInsightScore {
         switch kind {
         case .performance:
             return .init(
@@ -514,9 +553,11 @@ private extension SQWorkoutScoreService {
                 title: "Performance",
                 value: 84,
                 headline: "Strong effort",
-                detail: "VDOT-inspired pace and distance score.",
+                detail: activityType == .cycling
+                    ? "Personalized cycling output score."
+                    : "VDOT-inspired pace and distance score.",
                 accentColor: .dashboardGlowBlue,
-                detailModel: lockedPerformanceDetailModel()
+                detailModel: lockedPerformanceDetailModel(for: activityType)
             )
         case .difficulty:
             return .init(
@@ -533,17 +574,29 @@ private extension SQWorkoutScoreService {
     }
 }
 
-// MARK: - Running Samples
+// MARK: - Performance Samples
 
 private extension SQWorkoutScoreService {
-    func makeRunningSamples(from workouts: [SQWorkoutSessionable]) async -> [RunningSample] {
-        var samples = [RunningSample]()
+    func makePerformanceSamples(from workouts: [SQWorkoutSessionable]) async -> [PerformanceSample] {
+        var samples = [PerformanceSample]()
         for workout in workouts {
-            if let sample = await makeRunningSample(for: workout) {
+            if let sample = await makePerformanceSample(for: workout) {
                 samples.append(sample)
             }
         }
         return samples
+    }
+
+    func makePerformanceSample(for workout: SQWorkoutSessionable) async -> PerformanceSample? {
+        if let runningSample = await makeRunningSample(for: workout) {
+            return .running(runningSample)
+        }
+
+        if let cyclingSample = await makeCyclingSample(for: workout) {
+            return .cycling(cyclingSample)
+        }
+
+        return nil
     }
 
     func makeRunningSample(for workout: SQWorkoutSessionable) async -> RunningSample? {
@@ -589,6 +642,39 @@ private extension SQWorkoutScoreService {
         )
     }
 
+    func makeCyclingSample(for workout: SQWorkoutSessionable) async -> CyclingSample? {
+        guard workout.activityType == .cycling else { return nil }
+        guard let distanceMetric = await workout.getMetric(for: .distanceCycling) else {
+            return nil
+        }
+
+        let distanceMiles = distanceMetric.value
+        let durationSeconds = workout.activeDuration
+            ?? workout.endDate?.timeIntervalSince(workout.startDate ?? .now)
+            ?? 0
+        guard distanceMiles >= 5, durationSeconds >= 15 * 60 else {
+            return nil
+        }
+
+        let durationHours = durationSeconds / 3600
+        guard durationHours > 0 else { return nil }
+
+        let averageSpeedMilesPerHour = distanceMiles / durationHours
+        let distanceFactor = normalized(value: distanceMiles, minValue: 8, maxValue: 40)
+        let durationFactor = normalized(value: durationSeconds / 60, minValue: 20, maxValue: 150)
+        let sustainFactor = 0.55 + (distanceFactor * 0.20) + (durationFactor * 0.25)
+
+        return CyclingSample(
+            workout: workout,
+            distanceMiles: distanceMiles,
+            durationSeconds: durationSeconds,
+            averageHeartRate: workout.plausibleAverageHeartRate,
+            calories: workout.totalCalories,
+            averageSpeedMilesPerHour: averageSpeedMilesPerHour,
+            outputEstimate: averageSpeedMilesPerHour * sustainFactor
+        )
+    }
+
     func makeDifficultySamples(from workouts: [SQWorkoutSessionable]) async -> [DifficultySample] {
         var samples = [DifficultySample]()
         for workout in workouts {
@@ -622,11 +708,11 @@ private extension SQWorkoutScoreService {
 // MARK: - Performance
 
 private extension SQWorkoutScoreService {
-    func performanceBreakdown(for sample: RunningSample, historicalSamples: [RunningSample]) -> PerformanceBreakdown {
-        let historicalVdots = historicalSamples.map(\.vdot)
+    func performanceBreakdown(for sample: PerformanceSample, historicalSamples: [PerformanceSample]) -> PerformanceBreakdown {
+        let historicalValues = historicalSamples.map(\.historyValue)
         let percentileRank = SQPercentileCalculator.calculatePercentile(
-            currentBest: sample.vdot,
-            historicalValues: historicalVdots,
+            currentBest: sample.historyValue,
+            historicalValues: historicalValues,
             isLowerBetter: false
         )
         let usedFallback = percentileRank == nil
@@ -635,14 +721,14 @@ private extension SQWorkoutScoreService {
         return .init(
             finalScore: finalScore,
             percentileRank: percentileRank,
-            vdot: sample.vdot,
-            historicalRunCount: historicalVdots.count,
+            referenceValue: sample.historyValue,
+            historicalWorkoutCount: historicalValues.count,
             usedFallback: usedFallback
         )
     }
 
     func makePerformanceScore(
-        sample: RunningSample,
+        sample: PerformanceSample,
         breakdown: PerformanceBreakdown
     ) -> SQWorkoutPremiumInsightScore {
         SQWorkoutPremiumInsightScore(
@@ -667,8 +753,13 @@ private extension SQWorkoutScoreService {
         }
     }
 
-    func performanceDetailText(for sample: RunningSample) -> String {
-        "VDOT \(sample.vdot.sqStringRoundedTo(places: 1)) • \(sample.paceSecondsPerMile.timeCode())/mi across \(sample.distanceMiles.sqStringRoundedTo(places: 1)) mi"
+    func performanceDetailText(for sample: PerformanceSample) -> String {
+        switch sample {
+        case .running(let runningSample):
+            return "VDOT \(runningSample.vdot.sqStringRoundedTo(places: 1)) • \(runningSample.paceSecondsPerMile.timeCode())/mi across \(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi"
+        case .cycling(let cyclingSample):
+            return "\(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi ride"
+        }
     }
 }
 
@@ -757,62 +848,119 @@ private extension SQWorkoutScoreService {
 
 private extension SQWorkoutScoreService {
     func performanceDetailModel(
-        for sample: RunningSample,
+        for sample: PerformanceSample,
         breakdown: PerformanceBreakdown
     ) -> SQWorkoutPremiumInsightDetailModel {
-        let percentileText: String = {
-            guard let percentileRank = breakdown.percentileRank else { return "Not enough run history yet." }
-            let topPercent = Int(((1 - percentileRank) * 100).rounded())
-            return "This run's VDOT ranks in your top \(topPercent)% of \(breakdown.historicalRunCount) logged run(s)."
-        }()
+        switch sample {
+        case .running(let runningSample):
+            let percentileText: String = {
+                guard let percentileRank = breakdown.percentileRank else { return "Not enough run history yet." }
+                let topPercent = Int(((1 - percentileRank) * 100).rounded())
+                return "This run's VDOT ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) logged run(s)."
+            }()
 
-        return .init(
-            title: "Performance Score",
-            subtitle: "How this run ranked against your other runs.",
-            summary: "Performance is a personalized score based on VDOT. Faster pace over meaningful distance improves VDOT, and your score reflects where that VDOT ranks in your run history.",
-            scoreCards: [],
-            components: [
-                .init(
-                    id: "overall",
-                    title: "Performance score",
-                    value: "\(breakdown.finalScore)/100",
-                    detail: percentileText,
-                    accentColor: .dashboardGlowBlue
-                ),
-                .init(
-                    id: "vdot",
-                    title: "VDOT estimate",
-                    value: breakdown.vdot.sqStringRoundedTo(places: 1),
-                    detail: "Derived from pace and duration using a Daniels-style running model. This is the main input behind your performance score.",
-                    accentColor: .accentNeutral1
-                ),
-                .init(
-                    id: "pace",
-                    title: "Pace",
-                    value: "\(sample.paceSecondsPerMile.timeCode())/mi",
-                    detail: "Faster sustained pace raises your VDOT and usually lifts the score quickly.",
-                    accentColor: .accentNeutral4
-                ),
-                .init(
-                    id: "distance",
-                    title: "Distance",
-                    value: "\(sample.distanceMiles.sqStringRoundedTo(places: 1)) mi",
-                    detail: "Meaningful distance makes the pace effort more representative than a very short burst.",
-                    accentColor: .dashboardGlowMint
-                ),
-                .init(
-                    id: "vdot-guide",
-                    title: "VDOT ranges",
-                    value: "Guide",
-                    detail: "60+: elite-level endurance output. 50-59: advanced recreational range. 40-49: strong healthy recreational range. 30-39: developing aerobic base. Under 30: early-stage endurance fitness.",
-                    accentColor: .dashboardGlowBlue
-                )
-            ],
-            examples: [],
-            footnote: breakdown.usedFallback
-                ? "Performance needs at least two scored runs before it can rank this effort against your own history. Until then, the score stays neutral and the VDOT estimate is shown for context."
-                : "Because performance is relative to your own run history, the same VDOT can score differently as your baseline improves."
-        )
+            return .init(
+                title: "Performance Score",
+                subtitle: "How this run ranked against your other runs.",
+                summary: "Performance is a personalized score based on VDOT. Faster pace over meaningful distance improves VDOT, and your score reflects where that VDOT ranks in your run history.",
+                scoreCards: [],
+                components: [
+                    .init(
+                        id: "overall",
+                        title: "Performance score",
+                        value: "\(breakdown.finalScore)/100",
+                        detail: percentileText,
+                        accentColor: .dashboardGlowBlue
+                    ),
+                    .init(
+                        id: "vdot",
+                        title: "VDOT estimate",
+                        value: breakdown.referenceValue.sqStringRoundedTo(places: 1),
+                        detail: "Derived from pace and duration using a Daniels-style running model. This is the main input behind your performance score.",
+                        accentColor: .accentNeutral1
+                    ),
+                    .init(
+                        id: "pace",
+                        title: "Pace",
+                        value: "\(runningSample.paceSecondsPerMile.timeCode())/mi",
+                        detail: "Faster sustained pace raises your VDOT and usually lifts the score quickly.",
+                        accentColor: .accentNeutral4
+                    ),
+                    .init(
+                        id: "distance",
+                        title: "Distance",
+                        value: "\(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi",
+                        detail: "Meaningful distance makes the pace effort more representative than a very short burst.",
+                        accentColor: .dashboardGlowMint
+                    ),
+                    .init(
+                        id: "vdot-guide",
+                        title: "VDOT ranges",
+                        value: "Guide",
+                        detail: "60+: elite-level endurance output. 50-59: advanced recreational range. 40-49: strong healthy recreational range. 30-39: developing aerobic base. Under 30: early-stage endurance fitness.",
+                        accentColor: .dashboardGlowBlue
+                    )
+                ],
+                examples: [],
+                footnote: breakdown.usedFallback
+                    ? "Performance needs at least two scored runs before it can rank this effort against your own history. Until then, the score stays neutral and the VDOT estimate is shown for context."
+                    : "Because performance is relative to your own run history, the same VDOT can score differently as your baseline improves."
+            )
+        case .cycling(let cyclingSample):
+            let percentileText: String = {
+                guard let percentileRank = breakdown.percentileRank else { return "Not enough ride history yet." }
+                let topPercent = Int(((1 - percentileRank) * 100).rounded())
+                return "This ride's output estimate ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) logged ride(s)."
+            }()
+
+            return .init(
+                title: "Performance Score",
+                subtitle: "How this ride ranked against your other rides.",
+                summary: "Performance is a personalized cycling score based on sustained speed over meaningful distance and duration. The score reflects where that ride output ranks in your cycling history.",
+                scoreCards: [],
+                components: [
+                    .init(
+                        id: "overall",
+                        title: "Performance score",
+                        value: "\(breakdown.finalScore)/100",
+                        detail: percentileText,
+                        accentColor: .dashboardGlowBlue
+                    ),
+                    .init(
+                        id: "cycling-output",
+                        title: "Cycling output estimate",
+                        value: breakdown.referenceValue.sqStringRoundedTo(places: 1),
+                        detail: "Built from average speed, distance, and duration so short rides do not outrank stronger sustained rides too easily.",
+                        accentColor: .accentNeutral1
+                    ),
+                    .init(
+                        id: "speed",
+                        title: "Average speed",
+                        value: "\(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph",
+                        detail: "Higher sustained speed is the main driver of the cycling performance estimate.",
+                        accentColor: .accentNeutral4
+                    ),
+                    .init(
+                        id: "distance",
+                        title: "Distance",
+                        value: "\(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi",
+                        detail: "More meaningful ride distance makes the speed signal more representative.",
+                        accentColor: .dashboardGlowMint
+                    ),
+                    .init(
+                        id: "duration",
+                        title: "Active duration",
+                        value: cyclingSample.durationSeconds.readableTime(),
+                        detail: "Longer sustained efforts increase the confidence that this was real output rather than a short burst.",
+                        accentColor: .dashboardGlowBlue
+                    )
+                ],
+                examples: [],
+                footnote: breakdown.usedFallback
+                    ? "Performance needs at least two scored rides before it can rank this effort against your own history. Until then, the score stays neutral and the cycling output estimate is shown for context."
+                    : "Because performance is relative to your own cycling history, the same ride speed can score differently as your baseline improves."
+            )
+        }
     }
 
     func difficultyDetailModel(
@@ -898,8 +1046,56 @@ private extension SQWorkoutScoreService {
         )
     }
 
-    func lockedPerformanceDetailModel() -> SQWorkoutPremiumInsightDetailModel {
-        .init(
+    func lockedPerformanceDetailModel(for activityType: HKWorkoutActivityType) -> SQWorkoutPremiumInsightDetailModel {
+        if activityType == .cycling {
+            return .init(
+                title: "Performance Score",
+                subtitle: "How this ride ranked against your other rides.",
+                summary: "Performance is a personalized cycling score based on sustained speed over meaningful distance and duration.",
+                scoreCards: [],
+                components: [
+                    .init(
+                        id: "overall",
+                        title: "Performance score",
+                        value: "--/100",
+                        detail: "Built from where this ride's output ranks against your ride history.",
+                        accentColor: .dashboardGlowBlue
+                    ),
+                    .init(
+                        id: "cycling-output",
+                        title: "Cycling output estimate",
+                        value: "Included",
+                        detail: "The score is centered around a distance-and-duration weighted cycling output estimate.",
+                        accentColor: .dashboardGlowBlue
+                    ),
+                    .init(
+                        id: "speed",
+                        title: "Average speed",
+                        value: "Included",
+                        detail: "Higher sustained speed lifts the ride performance estimate.",
+                        accentColor: .accentNeutral4
+                    ),
+                    .init(
+                        id: "distance",
+                        title: "Distance",
+                        value: "Included",
+                        detail: "A meaningful ride distance makes the speed signal more representative.",
+                        accentColor: .dashboardGlowMint
+                    ),
+                    .init(
+                        id: "duration",
+                        title: "Active duration",
+                        value: "Included",
+                        detail: "Longer sustained efforts carry more performance signal than short bursts.",
+                        accentColor: .dashboardGlowBlue
+                    )
+                ],
+                examples: [],
+                footnote: "Unlock premium to see your actual personalized cycling performance score and breakdown."
+            )
+        }
+
+        return .init(
             title: "Performance Score",
             subtitle: "How this run ranked against your other runs.",
             summary: "Performance is a personalized score based on VDOT. Faster pace over meaningful distance improves VDOT, and your score reflects where that VDOT ranks in your run history.",
@@ -985,18 +1181,28 @@ private extension SQWorkoutScoreService {
 
     func insightsSubtitle(
         for workout: SQWorkoutSessionable,
-        runningSample: RunningSample?,
+        performanceSample: PerformanceSample?,
         difficultySample: DifficultySample?,
         footerContext: FooterContext
     ) -> String {
         let dateText = workout.startDate?.formattedString(with: .medium) ?? "Recent workout"
 
-        if let runningSample {
-            switch footerContext {
-            case .dashboard:
-                return "\(workout.activityType.name) • \(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
-            case .singleWorkout:
-                return "\(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+        if let performanceSample {
+            switch performanceSample {
+            case .running(let runningSample):
+                switch footerContext {
+                case .dashboard:
+                    return "\(workout.activityType.name) • \(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+                case .singleWorkout:
+                    return "\(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+                }
+            case .cycling(let cyclingSample):
+                switch footerContext {
+                case .dashboard:
+                    return "\(workout.activityType.name) • \(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(dateText)"
+                case .singleWorkout:
+                    return "\(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(dateText)"
+                }
             }
         }
 
@@ -1038,9 +1244,9 @@ private extension SQWorkoutScoreService {
             let performanceSummary: String
             switch performanceScore.value {
             case 80...:
-                performanceSummary = "well above your recent running baseline"
+                performanceSummary = "well above your recent \(activityName) baseline"
             case 60...:
-                performanceSummary = "solid relative to your recent running baseline"
+                performanceSummary = "solid relative to your recent \(activityName) baseline"
             default:
                 performanceSummary = "closer to an easy or maintenance effort"
             }
