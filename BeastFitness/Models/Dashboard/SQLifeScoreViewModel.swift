@@ -127,7 +127,7 @@ struct SQLifeScoreViewModel {
             return "\(score)"
         }
 
-        return "--"
+        return "?"
     }
 
     var titleText: String {

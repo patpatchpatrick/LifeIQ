@@ -113,7 +113,7 @@ struct SQDashboardView: View {
                     SQSubsectionEmptyState(
                         viewModel: .init(
                             title: "Dashboard data couldn't load",
-                            subtitle: "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > LifeIQ and make sure Health access is enabled. After that, pull to refresh and try again.",
+                            subtitle: "Something went wrong while loading your dashboard. You may not have Health data yet, or some Health access may not be enabled. If you use Health data in LifeIQ, check Health app > Profile > Apps > LifeIQ, then pull to refresh and try again.",
                             icon: .exclamationmarkTriangle,
                             onTap: nil
                         )

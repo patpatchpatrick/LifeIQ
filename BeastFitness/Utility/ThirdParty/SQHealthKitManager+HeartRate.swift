@@ -51,10 +51,7 @@ extension SQHealthKitManager {
             return []
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: Set<HKSampleType>(),
-            read: Set<HKObjectType>([quantityType])
-        )
+        try await requestAppAuthorization()
 
         let timePredicate = HKQuery.predicateForSamples(
             withStart: workout.startDate,
@@ -147,10 +144,7 @@ extension SQHealthKitManager {
             return []
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: Set<HKSampleType>(),
-            read: Set<HKObjectType>([quantityType])
-        )
+        try await requestAppAuthorization()
 
         let predicate = HKQuery.predicateForSamples(
             withStart: timeRange.startDate,
@@ -219,10 +213,7 @@ extension SQHealthKitManager {
         }
 
         let sampleType = HKObjectType.workoutType()
-        try await Self.healthStore.requestAuthorization(
-            toShare: Set<HKSampleType>(),
-            read: Set<HKObjectType>([sampleType])
-        )
+        try await requestAppAuthorization()
         let predicate = HKQuery.predicateForObject(with: uuid)
 
         return try await withCheckedThrowingContinuation { continuation in

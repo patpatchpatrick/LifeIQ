@@ -21,7 +21,38 @@ enum SQHealthKitDashboardDomain {
     case heart
 }
 
+actor SQHealthKitAuthorizationCoordinator {
+    private var inFlightAuthorizationTask: Task<Void, Error>?
+
+    func authorize(healthStore: HKHealthStore, sampleTypes: Set<HKSampleType>) async throws {
+        if let inFlightAuthorizationTask {
+            try await inFlightAuthorizationTask.value
+            return
+        }
+
+        let task = Task { @MainActor in
+            let readTypes = Set(sampleTypes.map { $0 as HKObjectType })
+            try await healthStore.requestAuthorization(
+                toShare: sampleTypes,
+                read: readTypes
+            )
+        }
+
+        inFlightAuthorizationTask = task
+
+        do {
+            try await task.value
+            inFlightAuthorizationTask = nil
+        } catch {
+            inFlightAuthorizationTask = nil
+            throw error
+        }
+    }
+}
+
 protocol SQHealthKitManaging {
+    func requestAppAuthorization() async throws
+
     @discardableResult
     func saveWorkout(workout: SQWorkoutSessionable) async throws -> HKWorkout?
     func deleteWorkout(with healthKitId: String) async throws
@@ -84,6 +115,7 @@ protocol SQHealthKitManaging {
 final class SQHealthKitManager: SQHealthKitManaging {
     static let shared = SQHealthKitManager()
     static let healthStore: HKHealthStore = HKHealthStore()
+    private static let authorizationCoordinator = SQHealthKitAuthorizationCoordinator()
     
     let allTypesToReadWrite: Set<HKSampleType> = [
         HKObjectType.workoutType(),
@@ -94,6 +126,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         HKQuantityType(.distanceWalkingRunning),
         HKQuantityType(.distanceWheelchair),
         HKQuantityType(.heartRate),
+        HKQuantityType(.restingHeartRate),
         HKQuantityType(.vo2Max),
 
         HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
@@ -148,13 +181,21 @@ final class SQHealthKitManager: SQHealthKitManaging {
             ]
         case .heart:
             return [
-                HKQuantityType(.heartRate)
+                HKQuantityType(.heartRate),
+                HKQuantityType(.restingHeartRate)
             ]
         }
     }
 
     private func authorizationSampleTypes(for domain: SQHealthKitDashboardDomain) -> Set<HKSampleType> {
         Set(authorizationTypes(for: domain).compactMap { $0 as? HKSampleType })
+    }
+
+    func requestAppAuthorization() async throws {
+        try await Self.authorizationCoordinator.authorize(
+            healthStore: Self.healthStore,
+            sampleTypes: allTypesToReadWrite
+        )
     }
 
     @MainActor @discardableResult
@@ -169,10 +210,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
         let endDate = workout.endDate ?? .now
         
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         // TODO: - Finish configuration, add calories, heartRate, locationType, etc..
         let configuration = HKWorkoutConfiguration()
@@ -291,10 +329,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
             throw SQError.standard
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         let predicate = HKQuery.predicateForSamples(
             withStart: timeRange.startDate,
@@ -529,10 +564,7 @@ extension SQHealthKitManager {
     }
     
     func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation] {
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         let routes = try await fetchRoutes(for: workout)
         guard routes.isEmpty == false else { return [] }

@@ -52,8 +52,8 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         async let recentRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastWeek)
 
         let todaysCheckIns = try await todaysCheckInsTask
-        let todaysRestingSummaries = try await todaysRestingTask
-        let recentRestingSummaries = try await recentRestingTask
+        let todaysRestingSummaries = (try? await todaysRestingTask) ?? []
+        let recentRestingSummaries = (try? await recentRestingTask) ?? []
 
         let heartRecovery = heartRecoverySignal(
             todaysRestingSummaries: todaysRestingSummaries,

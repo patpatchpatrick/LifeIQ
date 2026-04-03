@@ -579,7 +579,7 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func dashboardLoadFailureMessage(for error: Error) -> String {
-        let baseMessage = "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > LifeIQ and make sure Health access is enabled. After that, try again."
+        let baseMessage = "Something went wrong while loading your dashboard. Open the Health app, tap your profile picture, then go to Apps > LifeIQ and make sure the data types you want are enabled. After that, come back here and tap Retry."
         let detail = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !detail.isEmpty else { return baseMessage }
@@ -599,8 +599,8 @@ final class SQDashboardController: SQDashboardInterface {
             priority: .high,
             badgeTitle: "Health Access",
             title: "Enable Health access for full dashboard insights",
-            subtitle: "Go to the Health app > Profile > Apps > LifeIQ and turn on the data types you want to use.",
-            actionText: "Tap to retry after enabling access",
+            subtitle: "Open the Health app > Profile > Apps > LifeIQ and enable the data types you want to use. Then come back here and retry.",
+            actionText: "Tap to retry",
             onTap: { [weak self] in
                 guard let self else { return }
                 Task { @MainActor in
@@ -1621,13 +1621,27 @@ final class SQDashboardController: SQDashboardInterface {
                     subsectionTitle: "Sleep Access Required",
                     icon: .bedDoubleFill,
                     message: "Sleep data is currently unavailable",
-                    detail: "Open the Health app > Profile > Apps > LifeIQ and enable Sleep access to restore this section.",
+                    detail: "Open the Health app > Profile > Apps > LifeIQ, enable Sleep, then come back here and tap to retry.",
                     context: context,
                     defaultPriority: 30
                 )
             )
         } else if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)
+        } else {
+            sectionGroups.append(
+                buildHealthAccessWarningSectionGroup(
+                    id: "sleep",
+                    title: "Sleep",
+                    subsectionId: "sleep-empty-warning",
+                    subsectionTitle: "Sleep Data Unavailable",
+                    icon: .bedDoubleFill,
+                    message: "No sleep data is available right now",
+                    detail: "You may not have any sleep data yet, or Health access may not be enabled for Sleep. If you use sleep data in LifeIQ, check Health app > Profile > Apps > LifeIQ, then come back here and tap to retry.",
+                    context: context,
+                    defaultPriority: 30
+                )
+            )
         }
 
         if heartAccessStatus == .unavailable {
@@ -1639,13 +1653,27 @@ final class SQDashboardController: SQDashboardInterface {
                     subsectionTitle: "Heart Access Required",
                     icon: .heart,
                     message: "Heart data is currently unavailable",
-                    detail: "Open the Health app > Profile > Apps > LifeIQ and enable Heart Rate access to restore this section.",
+                    detail: "Open the Health app > Profile > Apps > LifeIQ, enable Heart Rate, then come back here and tap to retry.",
                     context: context,
                     defaultPriority: 40
                 )
             )
         } else if let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange) {
             sectionGroups.append(heartGroup)
+        } else {
+            sectionGroups.append(
+                buildHealthAccessWarningSectionGroup(
+                    id: "heart",
+                    title: "Heart",
+                    subsectionId: "heart-empty-warning",
+                    subsectionTitle: "Heart Data Unavailable",
+                    icon: .heart,
+                    message: "No heart data is available right now",
+                    detail: "You may not have any heart data yet, or Health access may not be enabled for Heart Rate or Resting Heart Rate. If you use heart data in LifeIQ, check Health app > Profile > Apps > LifeIQ, then come back here and tap to retry.",
+                    context: context,
+                    defaultPriority: 40
+                )
+            )
         }
         
         var workoutsSections: [SQDashboardSubsectionViewModel] = []
@@ -1679,7 +1707,19 @@ final class SQDashboardController: SQDashboardInterface {
                 subsectionTitle: "Workout Access Required",
                 icon: .bicycle,
                 message: "Workout data is currently unavailable",
-                detail: "Open the Health app > Profile > Apps > LifeIQ and enable Workout access to restore this section.",
+                detail: "Open the Health app > Profile > Apps > LifeIQ, enable Workouts, then come back here and tap to retry.",
+                context: context,
+                defaultPriority: 50
+            )
+        } else if allTimeWorkouts.isEmpty {
+            workoutsGroup = buildHealthAccessWarningSectionGroup(
+                id: "workouts",
+                title: "Workouts",
+                subsectionId: "workouts-empty-warning",
+                subsectionTitle: "Workout Data Unavailable",
+                icon: .bicycle,
+                message: "No workout data is available right now",
+                detail: "You may not have any workouts yet, or Health access may not be enabled for Workouts. If you use workout data in LifeIQ, check Health app > Profile > Apps > LifeIQ, then come back here and tap to retry.",
                 context: context,
                 defaultPriority: 50
             )

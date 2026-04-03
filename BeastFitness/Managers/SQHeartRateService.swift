@@ -131,7 +131,7 @@ final class SQHeartRateService: SQHeartRateServicing {
         async let restingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(timeRange)
 
         let heartSummaries = try await heartTask
-        let restingSummaries = try await restingTask
+        let restingSummaries = (try? await restingTask) ?? []
 
         let averageResting = restingSummaries.compactMap(\.average).average
         let lowestHeartRate = heartSummaries.compactMap(\.minimum).min()

@@ -28,6 +28,7 @@ final class SQUserDefaults {
     /// User IDs that should be forced through onboarding after a fresh signup until setup is completed.
     private static let keyPendingOnboardingUserIds = "user.pending-onboarding.ids"
 
+
     // MARK: - Private helpers (Workouts)
 
     private var hiddenWorkoutIds: Set<String> {

@@ -15,10 +15,7 @@ extension SQHealthKitManager {
         }
 
         do {
-            try await Self.healthStore.requestAuthorization(
-                toShare: allTypesToReadWrite,
-                read: allTypesToReadWrite
-            )
+            try await requestAppAuthorization()
         } catch {
             SQLogger.shared.log(
                 "Error requesting healthStore auth for sleep: \(error.localizedDescription)",

@@ -49,11 +49,14 @@ extension SQDashboardController {
             ? components.reduce(0) { $0 + (Double($1.score) * $1.weight) } / totalWeight
             : nil
 
-        let roundedScore = weightedScore.map { Int($0.rounded()) }
-        let state = lifeScoreState(for: roundedScore, availableWeight: totalWeight)
+        let preliminaryScore = weightedScore.map { Int($0.rounded()) }
+        let state = lifeScoreState(for: preliminaryScore, availableWeight: totalWeight)
+        let roundedScore = state == .calibrating ? nil : preliminaryScore
 
         let subtitle: String
-        if !userState.isLoggedIn {
+        if components.isEmpty {
+            subtitle = "LifeIQ is still calibrating. Add Health data or check in a few times so the score has something real to work from."
+        } else if !userState.isLoggedIn {
             subtitle = "Early preview based on the signals available in guest mode."
         } else if totalWeight < 60 {
             subtitle = "LifeIQ is still calibrating because some of your usual signals are missing today."
@@ -186,6 +189,7 @@ extension SQDashboardController {
         lastWeekWorkouts: [SQWorkoutSessionable]
     ) -> SQLifeScoreComponent? {
         let activeWorkoutDays = Set(lastWeekWorkouts.compactMap { $0.startDate?.firebaseDailyDateKey }).count
+        guard activeWorkoutDays > 0 || !todaysWorkouts.isEmpty else { return nil }
         let todayWorkoutBonus = todaysWorkouts.isEmpty ? 0.0 : 8.0
         let rawScore = (Double(activeWorkoutDays) / 4.0) * 100.0 + todayWorkoutBonus
         let roundedScore = Int(clamp(rawScore, min: 0, max: 100).rounded())
@@ -214,6 +218,7 @@ extension SQDashboardController {
         guard userState.isLoggedIn else { return nil }
 
         let uniqueLoggedDays = Set(past7DaysCheckIns.map(\.uniqueDateKey)).count
+        guard uniqueLoggedDays > 0 || hasCompletedCurrentCheckIn else { return nil }
         let baseScore = (Double(uniqueLoggedDays) / 5.0) * 100.0
         let completionBonus = hasCompletedCurrentCheckIn ? 10.0 : 0.0
         let roundedScore = Int(clamp(baseScore + completionBonus, min: 0, max: 100).rounded())

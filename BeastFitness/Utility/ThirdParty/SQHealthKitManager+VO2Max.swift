@@ -24,10 +24,7 @@ extension SQHealthKitManager {
             throw SQHealthKitError.healthDataUnavailable
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max)!
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
@@ -73,10 +70,7 @@ extension SQHealthKitManager {
             throw SQHealthKitError.healthDataUnavailable
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max)!
         let predicate = HKQuery.predicateForSamples(
@@ -126,10 +120,7 @@ extension SQHealthKitManager {
             throw SQHealthKitError.healthDataUnavailable
         }
 
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
 
         guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
             throw SQHealthKitError.healthDataUnavailable
@@ -171,10 +162,7 @@ extension SQHealthKitManager {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
         guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -206,10 +194,7 @@ extension SQHealthKitManager {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
-        try await Self.healthStore.requestAuthorization(
-            toShare: allTypesToReadWrite,
-            read: allTypesToReadWrite
-        )
+        try await requestAppAuthorization()
         guard let vo2Type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else {
             throw SQHealthKitError.healthDataUnavailable
         }
