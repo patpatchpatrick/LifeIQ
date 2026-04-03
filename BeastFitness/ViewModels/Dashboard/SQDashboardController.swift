@@ -46,7 +46,9 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
     private var lastLoadedAvailableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
     private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
+    private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
+    var healthKitAccessCtaViewModel: SQCallToActionViewModel?
     var lifeScoreViewModel: SQLifeScoreViewModel?
     
     
@@ -239,6 +241,10 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         hasLoadedUI = true
+
+        if shouldForceRefresh {
+            healthKitManager.invalidateCache()
+        }
 
         if showLoadingState {
             // Show mock skeleton while real data loads.
@@ -434,6 +440,20 @@ final class SQDashboardController: SQDashboardInterface {
             let sleepDashboardData = try await buildSleepDashboardData(
                 for: state.selectedTimeRange
             )
+            async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
+            async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
+            async let workoutsAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .workouts)
+            let sleepAccessStatus = await sleepAccessStatusTask
+            let heartAccessStatus = await heartAccessStatusTask
+            let workoutsAccessStatus = await workoutsAccessStatusTask
+
+            healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
+                for: context,
+                hasAnyHealthKitSignal: !allTimeWorkouts.isEmpty
+                    || !vo2MaxAllTime.isEmpty
+                    || sleepDashboardData?.latestNight != nil
+                    || sleepDashboardData?.averageScore != nil
+            )
 
             lifeScoreViewModel = buildLifeScoreViewModel(
                 past7DaysCheckIns: past7DaysCheckIns,
@@ -454,6 +474,9 @@ final class SQDashboardController: SQDashboardInterface {
                 priorWorkouts: priorWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
                 sleepData: sleepDashboardData,
+                sleepAccessStatus: sleepAccessStatus,
+                heartAccessStatus: heartAccessStatus,
+                workoutsAccessStatus: workoutsAccessStatus,
                 timeRange: state.selectedTimeRange.sqTimeRange,
                 priorTimeRange: priorTimeRange,
                 context: context
@@ -469,6 +492,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedSectionGroups = appliedSectionGroups
             lastLoadedAvailableLayoutGroups = updatedAvailableLayoutGroups
             lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
+            lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
 
             if showLoadingState {
@@ -489,6 +513,7 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateAvailableLayoutGroups(lastLoadedAvailableLayoutGroups)
             state.updateSectionGroups(to: lastLoadedSectionGroups)
             lifeScoreViewModel = lastLoadedLifeScoreViewModel
+            healthKitAccessCtaViewModel = lastLoadedHealthKitAccessCtaViewModel
 
             if showLoadingState {
                 state.setLoading(false)
@@ -560,6 +585,33 @@ final class SQDashboardController: SQDashboardInterface {
         guard !detail.isEmpty else { return baseMessage }
 
         return "\(baseMessage)\n\nError: \(detail)"
+    }
+
+    private func buildHealthKitAccessCtaViewModel(
+        for context: ModelContext,
+        hasAnyHealthKitSignal: Bool
+    ) async -> SQCallToActionViewModel? {
+        let accessStatus = await healthKitManager.dashboardAccessStatus()
+        guard accessStatus == .unavailable, !hasAnyHealthKitSignal else { return nil }
+
+        return .init(
+            icon: .init(symbol: .heart),
+            priority: .high,
+            badgeTitle: "Health Access",
+            title: "Enable Health access for full dashboard insights",
+            subtitle: "Go to the Health app > Profile > Apps > LifeIQ and turn on the data types you want to use.",
+            actionText: "Tap to retry after enabling access",
+            onTap: { [weak self] in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.loadUI(
+                        for: context,
+                        shouldForceRefresh: true,
+                        showLoadingState: true
+                    )
+                }
+            }
+        )
     }
 
     private func presentGuestSleepAccuracyAlert() {
@@ -1508,6 +1560,9 @@ final class SQDashboardController: SQDashboardInterface {
         priorWorkouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
+        sleepAccessStatus: SQHealthKitDashboardAccessStatus,
+        heartAccessStatus: SQHealthKitDashboardAccessStatus,
+        workoutsAccessStatus: SQHealthKitDashboardAccessStatus,
         timeRange: SQTimeRange,
         priorTimeRange: SQTimeRange,
         context: ModelContext
@@ -1557,11 +1612,39 @@ final class SQDashboardController: SQDashboardInterface {
             sectionGroups.append(dailyStatsGroup)
         }
 
-        if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
+        if sleepAccessStatus == .unavailable {
+            sectionGroups.append(
+                buildHealthAccessWarningSectionGroup(
+                    id: "sleep",
+                    title: "Sleep",
+                    subsectionId: "sleep-access-warning",
+                    subsectionTitle: "Sleep Access Required",
+                    icon: .bedDoubleFill,
+                    message: "Sleep data is currently unavailable",
+                    detail: "Open the Health app > Profile > Apps > LifeIQ and enable Sleep access to restore this section.",
+                    context: context,
+                    defaultPriority: 30
+                )
+            )
+        } else if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)
         }
 
-        if let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange) {
+        if heartAccessStatus == .unavailable {
+            sectionGroups.append(
+                buildHealthAccessWarningSectionGroup(
+                    id: "heart",
+                    title: "Heart",
+                    subsectionId: "heart-access-warning",
+                    subsectionTitle: "Heart Access Required",
+                    icon: .heart,
+                    message: "Heart data is currently unavailable",
+                    detail: "Open the Health app > Profile > Apps > LifeIQ and enable Heart Rate access to restore this section.",
+                    context: context,
+                    defaultPriority: 40
+                )
+            )
+        } else if let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange) {
             sectionGroups.append(heartGroup)
         }
         
@@ -1587,17 +1670,72 @@ final class SQDashboardController: SQDashboardInterface {
             workoutsSections.append(activitiesSection)
         }
 
-        // Create Workouts section group (currently empty, will be populated later)
-        let workoutsGroup = SQDashboardSectionGroupViewModel(
-            id: "workouts",
-            title: "Workouts",
-            defaultPriority: 50,
-            sections: workoutsSections
-        )
+        let workoutsGroup: SQDashboardSectionGroupViewModel
+        if workoutsAccessStatus == .unavailable {
+            workoutsGroup = buildHealthAccessWarningSectionGroup(
+                id: "workouts",
+                title: "Workouts",
+                subsectionId: "workouts-access-warning",
+                subsectionTitle: "Workout Access Required",
+                icon: .bicycle,
+                message: "Workout data is currently unavailable",
+                detail: "Open the Health app > Profile > Apps > LifeIQ and enable Workout access to restore this section.",
+                context: context,
+                defaultPriority: 50
+            )
+        } else {
+            workoutsGroup = SQDashboardSectionGroupViewModel(
+                id: "workouts",
+                title: "Workouts",
+                defaultPriority: 50,
+                sections: workoutsSections
+            )
+        }
         
         sectionGroups.append(workoutsGroup)
 
         return sectionGroups
+    }
+
+    private func buildHealthAccessWarningSectionGroup(
+        id: String,
+        title: String,
+        subsectionId: String,
+        subsectionTitle: String,
+        icon: SQImageSymbol,
+        message: String,
+        detail: String,
+        context: ModelContext,
+        defaultPriority: Int? = nil
+    ) -> SQDashboardSectionGroupViewModel {
+        let subsection = SQDashboardSubsectionViewModel(
+            id: subsectionId,
+            title: subsectionTitle,
+            defaultPriority: 10,
+            rowsByFilter: ["All": []],
+            emptyState: .init(
+                title: message,
+                subtitle: detail,
+                icon: icon,
+                onTap: { [weak self] in
+                    guard let self else { return }
+                    Task { @MainActor in
+                        await self.loadUI(
+                            for: context,
+                            shouldForceRefresh: true,
+                            showLoadingState: true
+                        )
+                    }
+                }
+            )
+        )
+
+        return SQDashboardSectionGroupViewModel(
+            id: id,
+            title: title,
+            defaultPriority: defaultPriority ?? 30,
+            sections: [subsection]
+        )
     }
 
     private func buildOverviewSectionGroup(

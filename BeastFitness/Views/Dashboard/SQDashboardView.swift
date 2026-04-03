@@ -97,9 +97,13 @@ struct SQDashboardView: View {
                     .padding(.bottom, 8)
                 }
 
-                // Daily Check-In CTA Banner - hide while loading
                 if !controller.state.isLoading,
-                   let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
+                   let healthKitAccessCtaViewModel = controller.healthKitAccessCtaViewModel {
+                    SQCallToAction(viewModel: healthKitAccessCtaViewModel)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                } else if !controller.state.isLoading,
+                          let dailyCheckInCtaViewModel = controller.state.dailyCheckInCtaViewModel {
                     SQCallToAction(viewModel: dailyCheckInCtaViewModel)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)

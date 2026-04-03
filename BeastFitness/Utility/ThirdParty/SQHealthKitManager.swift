@@ -10,6 +10,17 @@ import HealthKit
 import BeastFitnessCore
 import CoreLocation
 
+enum SQHealthKitDashboardAccessStatus {
+    case available
+    case unavailable
+}
+
+enum SQHealthKitDashboardDomain {
+    case workouts
+    case sleep
+    case heart
+}
+
 protocol SQHealthKitManaging {
     @discardableResult
     func saveWorkout(workout: SQWorkoutSessionable) async throws -> HKWorkout?
@@ -64,6 +75,9 @@ protocol SQHealthKitManaging {
 
     /// Same, but you pass your saved HealthKit UUID string.
     func fetchWorkoutHeartRateSummaries(for healthKitId: String) async throws -> [SQHeartRateIntervalSummary]
+
+    func dashboardAccessStatus() async -> SQHealthKitDashboardAccessStatus
+    func dashboardAccessStatus(for domain: SQHealthKitDashboardDomain) async -> SQHealthKitDashboardAccessStatus
 }
 
 
@@ -105,6 +119,43 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
     private var workoutCache: [SQTimeRange: WorkoutCacheEntry] = [:]
     var vo2MaxCache: [SQTimeRange: VO2MaxCacheEntry] = [:]
+
+    private var dashboardAuthorizationTypes: Set<HKObjectType> {
+        [
+            HKObjectType.workoutType(),
+            HKQuantityType(.activeEnergyBurned),
+            HKQuantityType(.distanceCycling),
+            HKQuantityType(.distanceWalkingRunning),
+            HKQuantityType(.heartRate),
+            HKQuantityType(.vo2Max),
+            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+        ]
+    }
+
+    private var dashboardAuthorizationSampleTypes: Set<HKSampleType> {
+        Set(dashboardAuthorizationTypes.compactMap { $0 as? HKSampleType })
+    }
+
+    private func authorizationTypes(for domain: SQHealthKitDashboardDomain) -> Set<HKObjectType> {
+        switch domain {
+        case .workouts:
+            return [
+                HKObjectType.workoutType()
+            ]
+        case .sleep:
+            return [
+                HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+            ]
+        case .heart:
+            return [
+                HKQuantityType(.heartRate)
+            ]
+        }
+    }
+
+    private func authorizationSampleTypes(for domain: SQHealthKitDashboardDomain) -> Set<HKSampleType> {
+        Set(authorizationTypes(for: domain).compactMap { $0 as? HKSampleType })
+    }
 
     @MainActor @discardableResult
     func saveWorkout(
@@ -278,6 +329,79 @@ final class SQHealthKitManager: SQHealthKitManaging {
         workoutCache.removeAll()
         vo2MaxCache.removeAll()
         SQLogger.shared.log("HealthKit cache invalidated", .debug, context: .healthKit)
+    }
+
+    func dashboardAccessStatus() async -> SQHealthKitDashboardAccessStatus {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            return .unavailable
+        }
+
+        let authorizationStatuses = dashboardAuthorizationTypes.map { Self.healthStore.authorizationStatus(for: $0) }
+        if authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized }) {
+            return .available
+        }
+
+        do {
+            let requestStatus = try await Self.healthStore.statusForAuthorizationRequest(
+                toShare: dashboardAuthorizationSampleTypes,
+                read: dashboardAuthorizationTypes
+            )
+
+            switch requestStatus {
+            case .unnecessary:
+                return authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized })
+                    ? .available
+                    : .unavailable
+            case .shouldRequest, .unknown:
+                return .unavailable
+            @unknown default:
+                return .unavailable
+            }
+        } catch {
+            SQLogger.shared.log(
+                "Unable to determine HealthKit dashboard authorization status: \(error.localizedDescription)",
+                .error,
+                context: .healthKit
+            )
+            return .unavailable
+        }
+    }
+
+    func dashboardAccessStatus(for domain: SQHealthKitDashboardDomain) async -> SQHealthKitDashboardAccessStatus {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            return .unavailable
+        }
+
+        let domainTypes = authorizationTypes(for: domain)
+        let authorizationStatuses = domainTypes.map { Self.healthStore.authorizationStatus(for: $0) }
+        if authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized }) {
+            return .available
+        }
+
+        do {
+            let requestStatus = try await Self.healthStore.statusForAuthorizationRequest(
+                toShare: authorizationSampleTypes(for: domain),
+                read: domainTypes
+            )
+
+            switch requestStatus {
+            case .unnecessary:
+                return authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized })
+                    ? .available
+                    : .unavailable
+            case .shouldRequest, .unknown:
+                return .unavailable
+            @unknown default:
+                return .unavailable
+            }
+        } catch {
+            SQLogger.shared.log(
+                "Unable to determine HealthKit authorization status for domain \(String(describing: domain)): \(error.localizedDescription)",
+                .error,
+                context: .healthKit
+            )
+            return .unavailable
+        }
     }
 
     // MARK: - Anchors
