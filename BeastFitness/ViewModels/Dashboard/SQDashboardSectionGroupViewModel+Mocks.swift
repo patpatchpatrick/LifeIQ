@@ -13,14 +13,14 @@ extension SQDashboardSectionGroupViewModel {
         var groups = [SQDashboardSectionGroupViewModel]()
 
         if timeRange == .today {
-            groups.append(mockOverview)
+            groups.append(mockRecovery)
         }
 
         groups.append(contentsOf: [mockDailyStats, mockSleep, mockHeart, mockWorkouts])
         return groups
     }
 
-    private static var mockOverview: SQDashboardSectionGroupViewModel {
+    private static var mockRecovery: SQDashboardSectionGroupViewModel {
         let bodyBatteryRow = SQDashboardBodyBatteryRowViewModel(
             score: 78,
             statusTitle: "Solid",
@@ -36,16 +36,16 @@ extension SQDashboardSectionGroupViewModel {
         )
 
         let bodyBatterySection = SQDashboardSubsectionViewModel(
-            id: "body-battery",
-            title: "Body Battery",
+            id: "recovery-score",
+            title: "Recovery Score",
             defaultPriority: 10,
             rowsByFilter: ["All": [bodyBatteryRow]]
         )
 
         return SQDashboardSectionGroupViewModel(
-            id: "overview",
-            title: "Overview",
-            defaultPriority: 10,
+            id: "recovery",
+            title: "Recovery",
+            defaultPriority: 15,
             sections: [bodyBatterySection]
         )
     }

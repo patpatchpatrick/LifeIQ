@@ -363,7 +363,7 @@ struct SQMetricFormView: View {
                 }
 
                 if viewModel.showsBodyBatteryControls {
-                    formSection(title: "Body Battery", subtitle: "Optional: let this metric nudge the daily score.") {
+                    formSection(title: "Recovery Score", subtitle: "Optional: let this metric nudge the daily score.") {
                         bodyBatteryRows
                     }
                 }

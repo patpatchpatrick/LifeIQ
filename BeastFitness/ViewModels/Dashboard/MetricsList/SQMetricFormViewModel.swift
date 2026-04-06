@@ -418,9 +418,9 @@ final class SQMetricFormViewModel {
         case .none:
             return "Optional. Leave this off unless the metric should meaningfully nudge daily energy or recovery."
         case .boostsWhenHigh:
-            return "Higher values will lift Body Battery. The impact is normalized to this metric’s range and aggressively capped."
+            return "Higher values will lift Recovery Score. The impact is normalized to this metric’s range and aggressively capped."
         case .drainsWhenHigh:
-            return "Higher values will drain Body Battery. The impact is normalized to this metric’s range and aggressively capped."
+            return "Higher values will lower Recovery Score. The impact is normalized to this metric’s range and aggressively capped."
         case .unknown:
             return ""
         }
@@ -435,9 +435,9 @@ final class SQMetricFormViewModel {
         case .none:
             return nil
         case .boostsWhenHigh:
-            return "\(title) will help Body Battery when you log higher values."
+            return "\(title) will help Recovery Score when you log higher values."
         case .drainsWhenHigh:
-            return "\(title) will lower Body Battery when you log higher values."
+            return "\(title) will lower Recovery Score when you log higher values."
         case .unknown:
             return nil
         }
@@ -975,11 +975,11 @@ final class SQMetricFormViewModel {
         guard selectedBodyBatteryEffect != .none else { return (true, nil) }
 
         guard let min = metricLowerBound, let max = metricUpperBound else {
-            return (false, "Body Battery metrics need both Min and Max values so their impact can be normalized.")
+            return (false, "Recovery Score metrics need both Min and Max values so their impact can be normalized.")
         }
 
         guard max > min else {
-            return (false, "Body Battery metrics need Max to be greater than Min.")
+            return (false, "Recovery Score metrics need Max to be greater than Min.")
         }
 
         return (true, nil)

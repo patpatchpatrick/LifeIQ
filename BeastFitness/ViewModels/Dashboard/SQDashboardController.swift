@@ -1580,13 +1580,13 @@ final class SQDashboardController: SQDashboardInterface {
         var sectionGroups: [SQDashboardSectionGroupViewModel] = []
 
         if timeRange == .today,
-           let overviewGroup = try await buildOverviewSectionGroup(
+           let recoveryGroup = try await buildRecoverySectionGroup(
                 todaysWorkouts: todaysWorkouts,
                 yesterdaysWorkouts: yesterdaysWorkouts,
                 sleepData: sleepData,
                 context: context
            ) {
-            sectionGroups.append(overviewGroup)
+            sectionGroups.append(recoveryGroup)
         }
 
         // Build Daily Stats group
@@ -1600,16 +1600,6 @@ final class SQDashboardController: SQDashboardInterface {
             context: context
         )
         dailyStatsSections.append(metricsSection)
-
-        // Add Performance subsection
-        if let performanceSection = await buildPerformanceSubsection(
-            vo2MaxSamples: vo2MaxSamples,
-            vo2MaxAllTime: vo2MaxAllTime,
-            workouts: workouts,
-            allTimeWorkouts: allTimeWorkouts
-        ) {
-            dailyStatsSections.append(performanceSection)
-        }
 
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
@@ -1693,6 +1683,15 @@ final class SQDashboardController: SQDashboardInterface {
             allTimeWorkouts: allTimeWorkouts
         ) {
             workoutsSections.append(runInsightsSection)
+        }
+
+        if let performanceSection = await buildPerformanceSubsection(
+            vo2MaxSamples: vo2MaxSamples,
+            vo2MaxAllTime: vo2MaxAllTime,
+            workouts: workouts,
+            allTimeWorkouts: allTimeWorkouts
+        ) {
+            workoutsSections.append(performanceSection)
         }
         
         // Add Totals subsection
@@ -1788,7 +1787,7 @@ final class SQDashboardController: SQDashboardInterface {
         )
     }
 
-    private func buildOverviewSectionGroup(
+    private func buildRecoverySectionGroup(
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
@@ -1804,19 +1803,19 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return SQDashboardSectionGroupViewModel(
-            id: "overview",
-            title: "Overview",
-            defaultPriority: 10,
-            sections: [buildBodyBatterySubsection(row: row)]
+            id: "recovery",
+            title: "Recovery",
+            defaultPriority: 15,
+            sections: [buildRecoveryScoreSubsection(row: row)]
         )
     }
 
-    private func buildBodyBatterySubsection(
+    private func buildRecoveryScoreSubsection(
         row: SQDashboardBodyBatteryRowViewModel
     ) -> SQDashboardSubsectionViewModel {
         SQDashboardSubsectionViewModel(
-            id: "body-battery",
-            title: "Body Battery",
+            id: "recovery-score",
+            title: "Recovery Score",
             defaultPriority: 10,
             rowsByFilter: ["All": [row]],
             dropDownViewModel: nil

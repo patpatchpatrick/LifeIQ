@@ -110,7 +110,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         case 20..<40:
             statusTone = .negative
             statusTitle = "Low"
-            headline = "Battery is running low"
+            headline = "Recovery is fading"
         default:
             statusTone = .negative
             statusTitle = "Drained"
@@ -177,7 +177,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                     alert: heartAlert(heartRecovery: heartRecovery)
                 )
             ],
-            footer: "Estimated from last night’s sleep, resting heart rate, current workout strain, and today’s recovery signals."
+            footer: "Estimated from sleep, resting heart rate, workout strain, and today’s recovery signals."
         )
     }
 
@@ -380,16 +380,16 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let subtitle: String
         let attributedSubtitle: AttributedString
         if let latestSleepScore {
-            subtitle = "Sleep recharge is based on your latest Sleep Score. A score of \(Int(latestSleepScore.rounded())) contributed about \(Int(sleepRecharge.rounded())) points to Body Battery."
+            subtitle = "Sleep recharge is based on your latest Sleep Score. A score of \(Int(latestSleepScore.rounded())) contributed about \(Int(sleepRecharge.rounded())) points to Recovery Score."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Sleep recharge is based on your latest Sleep Score. A score of "),
                 .highlight("\(Int(latestSleepScore.rounded()))"),
                 .plain(" contributed about "),
                 .highlight("\(Int(sleepRecharge.rounded()))"),
-                .plain(" points to Body Battery.")
+                .plain(" points to Recovery Score.")
             ])
         } else {
-            subtitle = "Sleep recharge uses your latest completed night. When sleep data is available, stronger duration, efficiency, fragmentation, and architecture scores raise Body Battery."
+            subtitle = "Sleep recharge uses your latest completed night. When sleep data is available, stronger duration, efficiency, fragmentation, and architecture scores raise Recovery Score."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Sleep recharge uses your latest completed night. When sleep data is available, stronger "),
                 .highlight("duration"),
@@ -399,7 +399,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .highlight("fragmentation"),
                 .plain(", and "),
                 .highlight("architecture"),
-                .plain(" scores raise Body Battery.")
+                .plain(" scores raise Recovery Score.")
             ])
         }
 
@@ -417,9 +417,9 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         todaysWorkoutsCount: Int,
         yesterdaysWorkoutsCount: Int
     ) -> SQAlertViewModel {
-        let subtitle = "Strain lowers Body Battery based on recent workout duration, calories, and workout heart rate. Right now that penalty is \(Int(totalStrain.rounded())) points across \(todaysWorkoutsCount) workout(s) today and \(yesterdaysWorkoutsCount) yesterday."
+        let subtitle = "Strain lowers Recovery Score based on recent workout duration, calories, and workout heart rate. Right now that penalty is \(Int(totalStrain.rounded())) points across \(todaysWorkoutsCount) workout(s) today and \(yesterdaysWorkoutsCount) yesterday."
         let attributedSubtitle = buildBodyBatteryText([
-            .plain("Strain lowers Body Battery based on recent workout duration, calories, and workout heart rate. Right now that penalty is "),
+            .plain("Strain lowers Recovery Score based on recent workout duration, calories, and workout heart rate. Right now that penalty is "),
             .highlight("\(Int(totalStrain.rounded()))"),
             .plain(" points across "),
             .highlight("\(todaysWorkoutsCount)"),
@@ -443,9 +443,9 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let attributedSubtitle: AttributedString
 
         if let customSummary {
-            subtitle = "Check-ins adjust Body Battery using Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s). Custom metric impact is capped so those signals stay supportive instead of dominating the score."
+            subtitle = "Check-ins adjust Recovery Score using Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s). Custom metric impact is capped so those signals stay supportive instead of dominating the score."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Check-ins adjust Body Battery using "),
+                .plain("Check-ins adjust Recovery Score using "),
                 .highlight("Energy"),
                 .plain(", "),
                 .highlight("Recovery"),
@@ -464,9 +464,9 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .plain(" so those signals stay supportive instead of dominating the score.")
             ])
         } else {
-            subtitle = "Check-ins adjust Body Battery using Energy, Recovery, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
+            subtitle = "Check-ins adjust Recovery Score using Energy, Recovery, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Check-ins adjust Body Battery using "),
+                .plain("Check-ins adjust Recovery Score using "),
                 .highlight("Energy"),
                 .plain(", "),
                 .highlight("Recovery"),
@@ -498,9 +498,9 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let attributedSubtitle: AttributedString
 
         if !heartRecovery.hasSignal {
-            subtitle = "Body Battery can use resting heart rate when Health access is allowed and Health has collected enough background heart data. Make sure Heart Rate and Resting Heart Rate permissions are enabled and that a compatible device is recording heart data regularly."
+            subtitle = "Recovery Score can use resting heart rate when Health access is allowed and Health has collected enough background heart data. Make sure Heart Rate and Resting Heart Rate permissions are enabled and that a compatible device is recording heart data regularly."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Body Battery can use "),
+                .plain("Recovery Score can use "),
                 .highlight("resting heart rate"),
                 .plain(" when Health access is allowed and Health has collected enough background heart data. Make sure "),
                 .highlight("Heart Rate"),
@@ -517,26 +517,26 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .plain(", but not a resting HR for today yet. Resting heart rate is recorded automatically in the background when supported Health sources provide it; apps can read that data, but cannot force a new resting-heart-rate sample on demand.")
             ])
         } else if let todaysAverage = heartRecovery.todaysAverage, let baselineAverage = heartRecovery.baselineAverage {
-            subtitle = "Heart recovery compares today’s resting HR (\(Int(todaysAverage.rounded())) bpm) to your recent 7-day baseline (\(Int(baselineAverage.rounded())) bpm). Lower-than-baseline resting HR boosts Body Battery, while higher-than-baseline resting HR adds a recovery penalty."
+            subtitle = "Heart recovery compares today’s resting HR (\(Int(todaysAverage.rounded())) bpm) to your recent 7-day baseline (\(Int(baselineAverage.rounded())) bpm). Lower-than-baseline resting HR boosts Recovery Score, while higher-than-baseline resting HR adds a recovery penalty."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Heart recovery compares today’s resting HR ("),
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
                 .plain(") to your recent 7-day baseline ("),
                 .highlight("\(Int(baselineAverage.rounded())) bpm"),
-                .plain("). Lower-than-baseline resting HR boosts Body Battery, while higher-than-baseline resting HR adds a recovery penalty.")
+                .plain("). Lower-than-baseline resting HR boosts Recovery Score, while higher-than-baseline resting HR adds a recovery penalty.")
             ])
         } else if let todaysAverage = heartRecovery.todaysAverage {
-            subtitle = "Today’s resting HR is \(Int(todaysAverage.rounded())) bpm. Once more history is available, Body Battery will compare that value against your recent baseline to estimate recovery."
+            subtitle = "Today’s resting HR is \(Int(todaysAverage.rounded())) bpm. Once more history is available, Recovery Score will compare that value against your recent baseline to estimate recovery."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Today’s resting HR is "),
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
-                .plain(". Once more history is available, Body Battery will compare that value against your recent baseline to estimate recovery.")
+                .plain(". Once more history is available, Recovery Score will compare that value against your recent baseline to estimate recovery.")
             ])
         } else {
-            subtitle = "Resting heart rate is used as a recovery signal inside Body Battery when enough heart data is available."
+            subtitle = "Resting heart rate is used as a recovery signal inside Recovery Score when enough heart data is available."
             attributedSubtitle = buildBodyBatteryText([
                 .highlight("Resting heart rate"),
-                .plain(" is used as a recovery signal inside Body Battery when enough heart data is available.")
+                .plain(" is used as a recovery signal inside Recovery Score when enough heart data is available.")
             ])
         }
 

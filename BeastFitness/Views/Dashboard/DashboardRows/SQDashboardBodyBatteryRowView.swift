@@ -31,14 +31,12 @@ struct SQDashboardBodyBatteryRowView: View {
     }
 
     private let driverColumns = [
-        GridItem(.adaptive(minimum: 108), spacing: .SQSpace.s, alignment: .leading)
+        GridItem(.adaptive(minimum: 132), spacing: .SQSpace.s, alignment: .leading)
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
-            HStack(alignment: .center, spacing: .SQSpace.xl) {
-                SQBodyBatteryGauge(score: viewModel.score, accentColor: accentColor)
-
+            HStack(alignment: .top, spacing: .SQSpace.l) {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
                     SQDashboardTrendBadge(
                         text: viewModel.statusTitle,
@@ -53,15 +51,32 @@ struct SQDashboardBodyBatteryRowView: View {
                     Text(viewModel.summary)
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
+                        .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 0)
+
+                SQRecoveryScoreBadge(score: viewModel.score, accentColor: accentColor)
             }
 
-            LazyVGrid(columns: driverColumns, alignment: .leading, spacing: .SQSpace.s) {
-                ForEach(viewModel.drivers) { driver in
-                    SQBodyBatteryDriverCard(driver: driver)
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                HStack(spacing: .SQSpace.xs) {
+                    Text("Factors")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    Spacer()
+
+                    Text("Tap for detail")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textDisabled)
+                }
+
+                LazyVGrid(columns: driverColumns, alignment: .leading, spacing: .SQSpace.s) {
+                    ForEach(viewModel.drivers) { driver in
+                        SQBodyBatteryDriverCard(driver: driver)
+                    }
                 }
             }
 
@@ -72,94 +87,47 @@ struct SQDashboardBodyBatteryRowView: View {
     }
 }
 
-private struct SQBodyBatteryGauge: View {
+private struct SQRecoveryScoreBadge: View {
     let score: Int
     let accentColor: SQColor
 
-    private let bodyWidth: CGFloat = 132
-    private let bodyHeight: CGFloat = 160
-
     var body: some View {
-        VStack(spacing: .SQSpace.xs) {
-            Capsule(style: .continuous)
-                .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.55 : 0.32))
-                .frame(width: 44, height: 8)
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            accentColor.color.opacity(SQColor.isDarkMode ? 0.08 : 0.04),
+                            accentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.10),
+                            SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.98)
+                        ],
+                        center: .center,
+                        startRadius: 6,
+                        endRadius: 54
+                    )
+                )
                 .overlay {
-                    Capsule(style: .continuous)
-                        .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                    Circle()
+                        .stroke(accentColor.color.opacity(SQColor.isDarkMode ? 0.38 : 0.24), lineWidth: 1.5)
                 }
+                .shadow(
+                    color: accentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.08),
+                    radius: 14,
+                    x: 0,
+                    y: 8
+                )
 
-            ZStack {
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 1))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
-                    }
+            VStack(spacing: 2) {
+                Text("\(score)")
+                    .sqFont(.title2)
+                    .sqForegroundColor(.textPrimary)
 
-                GeometryReader { proxy in
-                    let fillHeight = max(18, (proxy.size.height - 16) * CGFloat(score) / 100)
-
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    accentColor.color.opacity(SQColor.isDarkMode ? 0.22 : 0.16),
-                                    accentColor.color.opacity(SQColor.isDarkMode ? 0.86 : 0.58)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(SQColor.isDarkMode ? 0.18 : 0.30),
-                                            Color.clear
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                        .frame(width: proxy.size.width - 18, height: fillHeight)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 8)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .allowsHitTesting(false)
-
-                VStack(spacing: 2) {
-                    Text("\(score)")
-                        .sqFont(.title1)
-                        .sqForegroundColor(.textPrimary)
-
-                    Text("Current")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                }
-                .padding(.horizontal, .SQSpace.m)
-                .padding(.vertical, .SQSpace.s)
-                .background {
-                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                        .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.92 : 1))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                                .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
-                        }
-                }
+                Text("RECOVERY")
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textSecondary)
             }
-            .frame(width: bodyWidth, height: bodyHeight)
-            .shadow(
-                color: accentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.10),
-                radius: 18,
-                x: 0,
-                y: 10
-            )
         }
+        .frame(width: 108, height: 108)
     }
 }
 
@@ -193,43 +161,48 @@ private struct SQBodyBatteryDriverCard: View {
     }
 
     private var cardContent: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xs) {
-            Text(driver.title.uppercased())
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
+        HStack(alignment: .center, spacing: .SQSpace.s) {
+            Circle()
+                .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.9 : 0.82))
+                .frame(width: 8, height: 8)
 
-            HStack(spacing: .SQSpace.xs) {
-                if let symbol = driver.symbol {
-                    SQImageView(
-                        image: .init(
-                            symbol: symbol,
-                            symbolStyle: .colorWithFont(accentColor, font: .bodyExtraSmall)
-                        )
-                    )
-                    .frame(width: 10, height: 10)
-                }
-
-                Text(driver.valueText)
-                    .sqFont(.bodySmallSemiBold)
-                    .sqForegroundColor(.textPrimary)
-            }
-
-            if let attributedDetailText = driver.attributedDetailText {
-                Text(attributedDetailText)
-                    .sqFont(.bodyExtraSmall)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text(driver.detailText)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(driver.title.uppercased())
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: .SQSpace.xs) {
+                    Text(driver.valueText)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+
+                    if let symbol = driver.symbol {
+                        SQImageView(
+                            image: .init(
+                                symbol: symbol,
+                                symbolStyle: .colorWithFont(accentColor, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 10, height: 10)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            if driver.alert != nil {
+                SQImageView(
+                    image: .init(
+                        symbol: .infoCircle,
+                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                    )
+                )
+                .frame(width: 12, height: 12)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, .SQSpace.m)
-        .padding(.vertical, .SQSpace.s)
+        .padding(.vertical, .SQSpace.m)
         .background {
             RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
                 .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.70 : 0.96))
