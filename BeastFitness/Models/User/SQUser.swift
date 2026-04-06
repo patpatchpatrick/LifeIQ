@@ -69,8 +69,9 @@ struct SQUser: Codable, Equatable {
     let firstName: String?
     let lastName: String?
     let dateOfBirth: Date?
-    let heightInInches: Double?
-    let weightInPounds: Double?
+    let heightCentimeters: Double?
+    let weightKilograms: Double?
+    let unitSystem: SQUnitSystem?
     let sleepSchedule: SQSleepSchedule?
     let subscriptionLevel: SQSubscriptionLevel?
     let onboardingCompletedAt: Date?
@@ -88,6 +89,18 @@ struct SQUser: Codable, Equatable {
 
     var hasPremiumAccess: Bool {
         effectiveSubscriptionLevel == .premium
+    }
+
+    var effectiveUnitSystem: SQUnitSystem {
+        unitSystem ?? SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale
+    }
+
+    var heightInInches: Double? {
+        SQUnit.centimeter.convert(heightCentimeters, to: .inch)
+    }
+
+    var weightInPounds: Double? {
+        SQUnit.kilogram.convert(weightKilograms, to: .pound)
     }
 
     var fullName: String {
@@ -113,8 +126,9 @@ extension SQUser {
         firstName: "Patrick",
         lastName: "Doyle",
         dateOfBirth: nil,
-        heightInInches: 72,
-        weightInPounds: 185,
+        heightCentimeters: 182.9,
+        weightKilograms: 83.9,
+        unitSystem: .imperial,
         sleepSchedule: .onboardingDefault,
         subscriptionLevel: .appDefault,
         onboardingCompletedAt: .now,

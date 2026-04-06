@@ -222,6 +222,34 @@ extension SQQuantityType {
             return .unknown
         }
     }
+
+    var preferredDisplayUnit: SQUnit? {
+        preferredDisplayUnit(for: SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale)
+    }
+
+    func preferredDisplayUnit(for unitSystem: SQUnitSystem) -> SQUnit? {
+        switch self {
+        case .distanceWalkingRunning,
+             .distanceCycling,
+             .distanceSwimming,
+             .distanceCrossCountrySkiing:
+            return unitSystem == .metric ? .kilometer : .mile
+
+        case .sqPaceRunning, .sqFastestPace:
+            return unitSystem == .metric ? .secondsPerKilometer : .secondsPerMile
+
+        case .sqTotalVolumeLifted:
+            return unitSystem == .metric ? .kilogram : .pound
+
+        case .distanceRowing,
+             .distanceDownhillSnowSports,
+             .flightsClimbed,
+             .activeKilocaloriesBurned,
+             .heartRate,
+             .unknown:
+            return unit
+        }
+    }
     
     /// Whether computed results for this metric should be cached in memory.
     ///

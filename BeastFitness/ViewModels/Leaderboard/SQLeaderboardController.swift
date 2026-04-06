@@ -271,8 +271,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                     title: item.workout.title ?? "Workout",
                     date: item.workout.startDate ?? Date(),
                     value: item.metric.value,
-                    formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.value),
-                    unitString: item.metric.unit.unitString ?? "",
+                    formattedScore: item.metric.displayableValue(for: quantityType, value: item.metric.displayValue),
+                    unitString: item.metric.displayUnit.unitString ?? "",
                     warningText: item.metric.warningText,
                     percentileRank: SQPercentileCalculator.calculatePercentile(
                         currentBest: item.metric.value,

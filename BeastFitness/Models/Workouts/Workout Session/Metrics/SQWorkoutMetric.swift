@@ -11,9 +11,21 @@ struct SQWorkoutMetric: Codable {
     let unit: SQUnit
     let value: Double
     let warningText: String?
+
+    var displayUnit: SQUnit {
+        quantityType.preferredDisplayUnit ?? unit
+    }
+
+    var displayValue: Double {
+        displayValue(forRawValue: value)
+    }
     
     var outputAndUnitString: String {
-        "\(displayableValue(for: quantityType, value: value)) \(unit.unitString ?? "")"
+        "\(displayableValue(for: quantityType, value: displayValue)) \(displayUnit.unitString ?? "")"
+    }
+
+    func displayValue(forRawValue rawValue: Double) -> Double {
+        unit.convert(rawValue, to: displayUnit) ?? rawValue
     }
     
     func displayableValue(for quantityType: SQQuantityType, value: Double) -> String {

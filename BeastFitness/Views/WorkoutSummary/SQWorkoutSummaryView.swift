@@ -196,7 +196,7 @@ struct SQWorkoutSummaryView: View {
                 HStack(spacing: .SQSpace.s) {
                     SQUITextField(viewModel: controller.temperatureViewModel, width: 72)
 
-                    Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
+                    Text(controller.temperatureUnit.unitString ?? "°")
                         .sqFont(.bodySmall)
                         .sqForegroundColor(.textSecondary)
 
@@ -265,8 +265,8 @@ struct SQWorkoutSummaryView: View {
         let difficultyRating = workout?.ratingDifficulty
 
         let hasNotes = !(notes?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
-        let fahrenheit: Double? = temperatureCelsius.flatMap {
-            SQUnit.degreesCelsius.convert($0, to: .degreesFahrenheit)
+        let displayTemperature: Double? = temperatureCelsius.flatMap {
+            SQUnit.degreesCelsius.convert($0, to: controller.temperatureUnit)
         }
         let performanceSegment = performanceRating.flatMap { rating in
             SQWorkoutSummaryController.performanceSegments.first { $0.ratingValue == rating }
@@ -284,8 +284,11 @@ struct SQWorkoutSummaryView: View {
             }
 
             HStack(spacing: .SQSpace.s) {
-                if let fahrenheit {
-                    workoutMetaChip(title: "Temp", value: "\(Int(fahrenheit.rounded()))°F")
+                if let displayTemperature {
+                    workoutMetaChip(
+                        title: "Temp",
+                        value: "\(Int(displayTemperature.rounded()))\(controller.temperatureUnit.unitString ?? "")"
+                    )
                 }
 
                 if let seg = performanceSegment {

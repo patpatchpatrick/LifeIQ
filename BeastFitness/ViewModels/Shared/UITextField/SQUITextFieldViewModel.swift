@@ -22,7 +22,7 @@ final class SQUITextFieldViewModel: ObservableObject {
 
     let id = UUID()
 
-    let placeholder: String
+    var placeholder: String
     let font: UIFont
     let keyboardType: UIKeyboardType
     let autocapitalizationType: UITextAutocapitalizationType
@@ -120,6 +120,13 @@ final class SQUITextFieldViewModel: ObservableObject {
         previousText = newText
         boundTextField?.text = newText
         refreshStateAndError(isFocused: boundTextField?.isFirstResponder ?? false)
+    }
+
+    func setPlaceholder(_ newPlaceholder: String) {
+        placeholder = newPlaceholder
+        if let boundTextField {
+            applyPlaceholder(to: boundTextField)
+        }
     }
 
     func focus() {

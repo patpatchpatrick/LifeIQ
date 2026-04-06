@@ -19,6 +19,7 @@ final class SQSettingsController: SQSettingsInterface {
     let dashboardState: DashboardStating
     let userState: SQUserStating
     private let dashboardLayoutService: SQDashboardLayoutServicing
+    private let userManager: SQUserManaging
     var navigationPath = NavigationPath()
     private(set) var rows: [SQSettingsRowViewModel] = []
 
@@ -29,12 +30,14 @@ final class SQSettingsController: SQSettingsInterface {
         state: SettingsStating,
         dashboardState: DashboardStating = SQAppState.shared.dashboardState,
         userState: SQUserStating = SQAppState.shared.userState,
-        dashboardLayoutService: SQDashboardLayoutServicing? = nil
+        dashboardLayoutService: SQDashboardLayoutServicing? = nil,
+        userManager: SQUserManaging = SQUserManager.shared
     ) {
         self.state = state
         self.dashboardState = dashboardState
         self.userState = userState
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
+        self.userManager = userManager
         buildRows()
     }
 
@@ -56,6 +59,14 @@ final class SQSettingsController: SQSettingsInterface {
         }
 
         builtRows.append(contentsOf: [
+            .init(
+                title: "Units",
+                subtitle: "Currently \(currentUnitSystem.title).",
+                showsChevron: true
+            ) { [weak self] in
+                self?.presentUnitSystemPicker()
+            },
+
             .init(
                 title: "Customize dashboard",
                 subtitle: "Reorder, hide, and restore dashboard sections and subsections.",
@@ -96,6 +107,10 @@ final class SQSettingsController: SQSettingsInterface {
         rows = builtRows
     }
 
+    private var currentUnitSystem: SQUnitSystem {
+        SQUnitSystemResolver.resolve(for: userState.loggedInUser)
+    }
+
     private func confirmClearHiddenWorkouts() {
         let alert = SQAlertViewModel(
             title: "Clear hidden workouts?",
@@ -111,6 +126,69 @@ final class SQSettingsController: SQSettingsInterface {
         )
 
         state.hub.alertEvents.send(.present(alert))
+    }
+
+    private func presentUnitSystemPicker() {
+        let dropDown = SQAlertDropDownViewModel(
+            title: "Units",
+            options: SQUnitSystem.allCases.map { .init(id: $0.rawValue, title: $0.title) },
+            defaultSelectedOptionId: currentUnitSystem.rawValue
+        )
+
+        let alert = SQAlertViewModel(
+            title: "Choose Units",
+            subtitle: "This changes how measurements appear throughout the app.",
+            primary: .init(title: "Save") { [weak self] context in
+                guard
+                    let self,
+                    let rawValue = context?.selectedDropDownId,
+                    let unitSystem = SQUnitSystem(rawValue: rawValue)
+                else { return }
+
+                Task { @MainActor in
+                    await self.saveUnitSystem(unitSystem)
+                }
+            },
+            secondary: .init(title: "Cancel", role: .cancel),
+            canDismiss: true,
+            dropDown: dropDown
+        )
+
+        state.hub.alertEvents.send(.present(alert))
+    }
+
+    private func saveUnitSystem(_ unitSystem: SQUnitSystem) async {
+        SQUserDefaults.shared.setPreferredUnitSystem(unitSystem)
+
+        if let user = userState.loggedInUser {
+            let updatedUser = SQUser(
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                dateOfBirth: user.dateOfBirth,
+                heightCentimeters: user.heightCentimeters,
+                weightKilograms: user.weightKilograms,
+                unitSystem: unitSystem,
+                sleepSchedule: user.sleepSchedule,
+                subscriptionLevel: user.subscriptionLevel,
+                onboardingCompletedAt: user.onboardingCompletedAt,
+                onboardingStatus: user.onboardingStatus
+            )
+
+            do {
+                let savedUser = try await userManager.saveUser(updatedUser)
+                userState.updateLoggedInUser(savedUser, hasLoadedProfile: true)
+                state.hub.userEvents.send(.profileUpdated)
+            } catch {
+                state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
+                return
+            }
+        }
+
+        buildRows()
+        state.hub.toastEvents.send(.present(.init(title: "Units updated", style: .success)))
     }
 
     func popView() {

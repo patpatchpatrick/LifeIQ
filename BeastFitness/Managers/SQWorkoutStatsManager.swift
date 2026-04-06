@@ -238,8 +238,11 @@ extension SQWorkoutStatsManager {
             id: "\(activityType.name.lowercased())-\(quantityType.id)",
             icon: activityType.imageSymbol.rawValue,
             title: sampleMetric.displayName,
-            bestValue: sampleMetric.displayableValue(for: quantityType, value: currentValue),
-            unit: sampleMetric.unit.unitString ?? "",
+            bestValue: sampleMetric.displayableValue(
+                for: quantityType,
+                value: sampleMetric.displayValue(forRawValue: currentValue)
+            ),
+            unit: sampleMetric.displayUnit.unitString ?? "",
             percentileRank: percentile,
             leaderboardMode: .workoutQuantity(quantityType, activityType)
         )

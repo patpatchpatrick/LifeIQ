@@ -158,8 +158,9 @@ private extension SQWorkouts {
             return (nil, nil)
         }
 
-        let value = totalOutput.sqShortString
-        let unit = first.coreMetric?.unit.unitString
+        let displayValue = first.coreMetric?.displayValue(forRawValue: totalOutput) ?? totalOutput
+        let value = displayValue.sqShortString
+        let unit = first.coreMetric?.displayUnit.unitString
         return (value, unit)
     }
 

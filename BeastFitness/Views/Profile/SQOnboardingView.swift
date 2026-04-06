@@ -8,6 +8,13 @@ import SwiftUI
 struct SQOnboardingView: View {
     @State var controller: SQOnboardingController
 
+    private var unitSystemBinding: Binding<SQUnitSystem> {
+        Binding(
+            get: { controller.selectedUnitSystem },
+            set: { controller.updateUnitSystem($0) }
+        )
+    }
+
     private var dateOfBirthBinding: Binding<Date> {
         Binding(
             get: { controller.selectedDateOfBirth },
@@ -74,6 +81,60 @@ struct SQOnboardingView: View {
     }
 
     @ViewBuilder
+    private var unitsCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Units")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("Choose how measurements should appear throughout LifeIQ.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+
+            HStack(spacing: .SQSpace.s) {
+                ForEach(controller.unitSystemOptions, id: \.rawValue) { option in
+                    Button {
+                        unitSystemBinding.wrappedValue = option
+                    } label: {
+                        VStack(spacing: .SQSpace.xs) {
+                            Text(option.title)
+                                .sqFont(.bodySmallSemiBold)
+                                .sqForegroundColor(controller.selectedUnitSystem == option ? .textPrimary : .textSecondary)
+
+                            Text(option == .imperial ? "ft, lb, °F" : "cm, kg, °C")
+                                .sqFont(.bodyExtraSmall)
+                                .sqForegroundColor(.textTertiary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .SQSpace.m)
+                        .background(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .fill(
+                                    controller.selectedUnitSystem == option
+                                    ? SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.22 : 0.14)
+                                    : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.92)
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(
+                                    controller.selectedUnitSystem == option
+                                    ? SQColor.dashboardGlowBlue.color.opacity(0.55)
+                                    : SQColor.glassStroke.color,
+                                    lineWidth: 1
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
     private var profileCard: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
             Text("Profile")
@@ -90,13 +151,23 @@ struct SQOnboardingView: View {
                 }
 
                 labeledRow(label: "Height") {
-                    HStack(spacing: .SQSpace.m) {
-                        compactHeightField(label: "Ft", viewModel: controller.heightFeetField)
-                        compactHeightField(label: "In", viewModel: controller.heightInchesField)
+                    if controller.showsHeightSecondaryField {
+                        HStack(spacing: .SQSpace.m) {
+                            compactHeightField(label: controller.heightPrimaryLabel, viewModel: controller.heightFeetField)
+                            compactHeightField(label: controller.heightSecondaryLabel ?? "", viewModel: controller.heightInchesField)
+                        }
+                    } else {
+                        HStack(spacing: .SQSpace.s) {
+                            SQUITextField(viewModel: controller.heightFeetField)
+
+                            Text(controller.heightPrimaryLabel.lowercased())
+                                .sqFont(.bodySmall)
+                                .sqForegroundColor(.textSecondary)
+                        }
                     }
                 }
 
-                labeledRow(label: "Weight") {
+                labeledRow(label: controller.weightLabel) {
                     SQUITextField(viewModel: controller.weightField)
                 }
             }
@@ -212,6 +283,7 @@ struct SQOnboardingView: View {
         ScrollView {
             VStack(spacing: .SQSpace.l) {
                 heroCard
+                unitsCard
                 profileCard
                 sleepScheduleCard
                 optionalInfoCard

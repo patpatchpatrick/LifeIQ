@@ -125,11 +125,11 @@ struct SQEditWorkoutView: View {
                     questionTitle(title: "Temperature")
 
                     HStack(spacing: .SQSpace.s) {
-                        SQUITextField(viewModel: controller.temperatureViewModel, width: 96)
+                    SQUITextField(viewModel: controller.temperatureViewModel, width: 96)
 
-                        Text(SQUnit.degreesFahrenheit.unitString ?? "°F")
-                            .sqFont(.bodySmall)
-                            .sqForegroundColor(.textSecondary)
+                    Text(controller.temperatureUnit.unitString ?? "°")
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textSecondary)
 
                         Spacer()
                     }

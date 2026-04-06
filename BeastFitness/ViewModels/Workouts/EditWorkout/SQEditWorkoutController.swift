@@ -60,6 +60,7 @@ final class SQEditWorkoutController: Identifiable {
 
     private let workout: SQWorkoutSessionable
     private let workoutManager: SQWorkoutManaging
+    private let userState: SQUserStating
     private var cancellables = Set<AnyCancellable>()
     private var isLoaded = false
 
@@ -67,10 +68,12 @@ final class SQEditWorkoutController: Identifiable {
 
     init(
         workout: SQWorkoutSessionable,
-        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared
+        workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
+        userState: SQUserStating = SQAppState.shared.userState
     ) {
         self.workout = workout
         self.workoutManager = workoutManager
+        self.userState = userState
         self.titleViewModel = SQUITextFieldViewModel(
             placeholder: workout.visibleTitle,
             font: SQFont(type: .body).uiFont,
@@ -78,12 +81,29 @@ final class SQEditWorkoutController: Identifiable {
             autocorrectionType: .yes,
             textChangeFormatter: .maxLength(SQWorkoutSession.titleMaxChars)
         )
+        self.temperatureViewModel.setPlaceholder(temperaturePlaceholder)
+    }
+
+    var temperatureUnit: SQUnit {
+        SQUnitSystemResolver.resolve(for: userState.loggedInUser).temperatureUnit
+    }
+
+    private var temperaturePlaceholder: String {
+        switch temperatureUnit {
+        case .degreesCelsius:
+            return "22"
+        case .degreesFahrenheit:
+            return "72"
+        default:
+            return "22"
+        }
     }
 
     // MARK: - Lifecycle
 
     func onAppear() {
         guard !isLoaded else { return }
+        temperatureViewModel.setPlaceholder(temperaturePlaceholder)
 
         // Fetch the entity fresh from SwiftData so we always display the latest saved values,
         // even if the workout object we received was created before recent edits (e.g. from
@@ -99,10 +119,10 @@ final class SQEditWorkoutController: Identifiable {
         titleViewModel.setText(titleText)
         notesViewModel.initializeText(notes ?? "")
 
-        let fahrenheitDecimalPlaces = 0
+        let roundedDecimalPlaces = 0
         if let celsius = temperatureCelsius,
-           let fahrenheit = SQUnit.degreesCelsius.convert(celsius, to: .degreesFahrenheit) {
-            temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: fahrenheitDecimalPlaces))
+           let displayTemperature = SQUnit.degreesCelsius.convert(celsius, to: temperatureUnit) {
+            temperatureViewModel.setText(displayTemperature.sqStringRoundedTo(places: roundedDecimalPlaces))
         }
 
         selectedPerformance = ratingUserPerformance.flatMap { rating in
@@ -161,10 +181,8 @@ final class SQEditWorkoutController: Identifiable {
               let modelContext = SQAppState.shared.modelContext else { return }
 
         let titleText = titleViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let temperatureFahrenheit = Double(temperatureViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines))
-        let temperatureCelsius = temperatureFahrenheit.flatMap {
-            SQUnit.degreesFahrenheit.convert($0, to: .degreesCelsius)
-        }
+        let displayTemperature = Double(temperatureViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines))
+        let temperatureCelsius = temperatureUnit.convert(displayTemperature, to: .degreesCelsius)
 
         workout.setReviewData(
             notes: notesViewModel.text.isEmpty ? nil : notesViewModel.text,

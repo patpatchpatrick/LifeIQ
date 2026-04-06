@@ -537,15 +537,41 @@ This design allows us to:
 
 ## Unit Handling
 
+**LifeIQ supports both Imperial and Metric unit systems.**
+
 **Always use `SQUnit` for any unit-based values** — Never write ad-hoc conversion math or unit strings inline. `SQUnit` provides:
 
 - **Conversion**: `SQUnit.convert(_:from:to:)` or the instance method `.convert(_:to:)` — type-safe, logs errors for incompatible unit types
 - **Unit strings**: `.unitString` — e.g. `"°F"`, `"/mi"`, `"bpm"` — use this for display labels
 - **HealthKit interop**: `.hkUnit` — maps to the corresponding `HKUnit`
 
-When adding a new measurable quantity (distance, weight, temperature, speed, etc.), add the relevant cases to `SQUnit` and `SQUnitType` first, then use them everywhere. This keeps all unit logic in one place and makes future unit-preference support (e.g. metric vs imperial) a single-layer change.
+When adding a new measurable quantity (distance, weight, temperature, speed, etc.), add the relevant cases to `SQUnit` and `SQUnitType` first, then use them everywhere. This keeps all unit logic in one place.
 
-**Storage convention**: Store values in a stable canonical unit (e.g. Celsius for temperature, meters for distance) and convert to the display unit at the presentation layer. This avoids needing to store the unit alongside every value.
+### Active Unit System
+
+When deciding which unit system is active, follow this exact precedence:
+
+1. `SQUser.unitSystem` for the logged-in user
+2. `SQUserDefaults.shared.preferredUnitSystem` as the local fallback
+3. `SQUnitSystem.defaultForCurrentLocale`
+
+Use `SQUnitSystemResolver.resolve(for:)` when you have a user object. Do not assume imperial defaults in feature code.
+
+### Storage Convention
+
+Store values in stable canonical units and convert only at input/output boundaries or in presentation. Current conventions include:
+
+- user height: `heightCentimeters`
+- user weight: `weightKilograms`
+- workout/manual temperature: `temperatureCelsius`
+
+This avoids needing to store the display unit alongside every value and lets users switch between Imperial and Metric later without data migration.
+
+### Input / Display Rule
+
+- Entry forms should show the active unit system to the user.
+- Before saving, convert user-entered values back into canonical storage units.
+- Shared display surfaces such as dashboard rows, workout summary, leaderboard, and score breakdowns should format values through the active unit system rather than embedding raw `mi`, `/mi`, `lb`, or `°F` strings.
 
 ## Coding style
 

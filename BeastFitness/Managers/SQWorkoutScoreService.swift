@@ -708,6 +708,28 @@ private extension SQWorkoutScoreService {
 // MARK: - Performance
 
 private extension SQWorkoutScoreService {
+    var preferredUnitSystem: SQUnitSystem {
+        SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale
+    }
+
+    func formattedDistance(_ miles: Double) -> String {
+        let unit = preferredUnitSystem == .metric ? SQUnit.kilometer : SQUnit.mile
+        let converted = SQUnit.mile.convert(miles, to: unit) ?? miles
+        return "\(converted.sqStringRoundedTo(places: 1)) \(unit == .kilometer ? "km" : "mi")"
+    }
+
+    func formattedPace(_ secondsPerMile: Double) -> String {
+        let unit = preferredUnitSystem == .metric ? SQUnit.secondsPerKilometer : SQUnit.secondsPerMile
+        let converted = SQUnit.secondsPerMile.convert(secondsPerMile, to: unit) ?? secondsPerMile
+        return "\(converted.timeCode())\(unit == .secondsPerKilometer ? "/km" : "/mi")"
+    }
+
+    func formattedSpeed(_ milesPerHour: Double) -> String {
+        let unit = preferredUnitSystem == .metric ? SQUnit.kilometer : SQUnit.mile
+        let converted = SQUnit.mile.convert(milesPerHour, to: unit) ?? milesPerHour
+        return "\(converted.sqStringRoundedTo(places: 1)) \(unit == .kilometer ? "km/h" : "mph")"
+    }
+
     func performanceBreakdown(for sample: PerformanceSample, historicalSamples: [PerformanceSample]) -> PerformanceBreakdown {
         let historicalValues = historicalSamples.map(\.historyValue)
         let percentileRank = SQPercentileCalculator.calculatePercentile(
@@ -756,9 +778,9 @@ private extension SQWorkoutScoreService {
     func performanceDetailText(for sample: PerformanceSample) -> String {
         switch sample {
         case .running(let runningSample):
-            return "VDOT \(runningSample.vdot.sqStringRoundedTo(places: 1)) • \(runningSample.paceSecondsPerMile.timeCode())/mi across \(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi"
+            return "VDOT \(runningSample.vdot.sqStringRoundedTo(places: 1)) • \(formattedPace(runningSample.paceSecondsPerMile)) across \(formattedDistance(runningSample.distanceMiles))"
         case .cycling(let cyclingSample):
-            return "\(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi ride"
+            return "\(formattedSpeed(cyclingSample.averageSpeedMilesPerHour)) • \(formattedDistance(cyclingSample.distanceMiles)) ride"
         }
     }
 }
@@ -882,14 +904,14 @@ private extension SQWorkoutScoreService {
                     .init(
                         id: "pace",
                         title: "Pace",
-                        value: "\(runningSample.paceSecondsPerMile.timeCode())/mi",
+                        value: formattedPace(runningSample.paceSecondsPerMile),
                         detail: "Faster sustained pace raises your VDOT and usually lifts the score quickly.",
                         accentColor: .accentNeutral4
                     ),
                     .init(
                         id: "distance",
                         title: "Distance",
-                        value: "\(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi",
+                        value: formattedDistance(runningSample.distanceMiles),
                         detail: "Meaningful distance makes the pace effort more representative than a very short burst.",
                         accentColor: .dashboardGlowMint
                     ),
@@ -936,14 +958,14 @@ private extension SQWorkoutScoreService {
                     .init(
                         id: "speed",
                         title: "Average speed",
-                        value: "\(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph",
+                        value: formattedSpeed(cyclingSample.averageSpeedMilesPerHour),
                         detail: "Higher sustained speed is the main driver of the cycling performance estimate.",
                         accentColor: .accentNeutral4
                     ),
                     .init(
                         id: "distance",
                         title: "Distance",
-                        value: "\(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi",
+                        value: formattedDistance(cyclingSample.distanceMiles),
                         detail: "More meaningful ride distance makes the speed signal more representative.",
                         accentColor: .dashboardGlowMint
                     ),
@@ -1192,16 +1214,16 @@ private extension SQWorkoutScoreService {
             case .running(let runningSample):
                 switch footerContext {
                 case .dashboard:
-                    return "\(workout.activityType.name) • \(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+                    return "\(workout.activityType.name) • \(formattedDistance(runningSample.distanceMiles)) • \(formattedPace(runningSample.paceSecondsPerMile)) • \(dateText)"
                 case .singleWorkout:
-                    return "\(runningSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(runningSample.paceSecondsPerMile.timeCode())/mi • \(dateText)"
+                    return "\(formattedDistance(runningSample.distanceMiles)) • \(formattedPace(runningSample.paceSecondsPerMile)) • \(dateText)"
                 }
             case .cycling(let cyclingSample):
                 switch footerContext {
                 case .dashboard:
-                    return "\(workout.activityType.name) • \(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(dateText)"
+                    return "\(workout.activityType.name) • \(formattedDistance(cyclingSample.distanceMiles)) • \(formattedSpeed(cyclingSample.averageSpeedMilesPerHour)) • \(dateText)"
                 case .singleWorkout:
-                    return "\(cyclingSample.distanceMiles.sqStringRoundedTo(places: 1)) mi • \(cyclingSample.averageSpeedMilesPerHour.sqStringRoundedTo(places: 1)) mph • \(dateText)"
+                    return "\(formattedDistance(cyclingSample.distanceMiles)) • \(formattedSpeed(cyclingSample.averageSpeedMilesPerHour)) • \(dateText)"
                 }
             }
         }

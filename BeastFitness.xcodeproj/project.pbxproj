@@ -14,6 +14,8 @@
 		F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */; };
 		F694B0112F7E010100453F0A /* SQLifeScoreDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */; };
 		F694B0132F7E010100453F0A /* SQLifeScoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */; };
+		F7E200012FA0010000AA2001 /* SQUnitSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E200022FA0010000AA2001 /* SQUnitSystem.swift */; };
+		F7E200032FA0010000AA2001 /* SQUnitSystemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E200042FA0010000AA2001 /* SQUnitSystemResolver.swift */; };
 		F602DA312EC40FB800404878 /* DashboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA302EC40FB600404878 /* DashboardState.swift */; };
 		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
 		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
@@ -492,6 +494,8 @@
 		F694AE952F7D92D500453F0A /* GoogleService-Info-Prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-Prod.plist"; sourceTree = "<group>"; };
 		F694B0002F7CD80100453F0A /* SQLifeScoreViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreViewModel.swift; sourceTree = "<group>"; };
 		F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardController+LifeScore.swift"; sourceTree = "<group>"; };
+		F7E200022FA0010000AA2001 /* SQUnitSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUnitSystem.swift; sourceTree = "<group>"; };
+		F7E200042FA0010000AA2001 /* SQUnitSystemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUnitSystemResolver.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
@@ -1423,6 +1427,7 @@
 			isa = PBXGroup;
 			children = (
 				F6ABC3612EDE654500D3E679 /* SQUser.swift */,
+				F7E200022FA0010000AA2001 /* SQUnitSystem.swift */,
 			);
 			path = User;
 			sourceTree = "<group>";
@@ -1569,6 +1574,7 @@
 			children = (
 				F639F1022F43D35B004AC701 /* Workouts */,
 				F615922E2EF35E2500223A63 /* SQUserDefaults.swift */,
+				F7E200042FA0010000AA2001 /* SQUnitSystemResolver.swift */,
 				F6A848A22CB6033100B09AD5 /* ThirdParty */,
 				F6A8489B2CB4DD5400B09AD5 /* Formatters */,
 				F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */,
@@ -1972,6 +1978,8 @@
 				F6B2B0092F92440100A1B001 /* SQHealthKitManager+HeartRate.swift in Sources */,
 				F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */,
 				F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */,
+				F7E200012FA0010000AA2001 /* SQUnitSystem.swift in Sources */,
+				F7E200032FA0010000AA2001 /* SQUnitSystemResolver.swift in Sources */,
 				F61592212EF0C76000223A63 /* SQWorkoutStrengthDetails.swift in Sources */,
 				F61592232EF0F08D00223A63 /* SQWorkoutSessionExerciseViewModel.swift in Sources */,
 				F6268B192F6F3BB700087C0F /* SQUserService.swift in Sources */,

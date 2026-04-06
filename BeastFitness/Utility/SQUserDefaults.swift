@@ -28,6 +28,9 @@ final class SQUserDefaults {
     /// User IDs that should be forced through onboarding after a fresh signup until setup is completed.
     private static let keyPendingOnboardingUserIds = "user.pending-onboarding.ids"
 
+    /// Local fallback for the user's preferred unit system, used in guest mode and before a profile loads.
+    private static let keyPreferredUnitSystem = "settings.preferred-unit-system"
+
 
     // MARK: - Private helpers (Workouts)
 
@@ -60,6 +63,19 @@ final class SQUserDefaults {
     private var pendingOnboardingUserIdsValue: Set<String> {
         get { Set(UserDefaults.standard.stringArray(forKey: Self.keyPendingOnboardingUserIds) ?? []) }
         set { UserDefaults.standard.set(Array(newValue), forKey: Self.keyPendingOnboardingUserIds) }
+    }
+
+    private var preferredUnitSystemValue: SQUnitSystem? {
+        get {
+            guard let rawValue = UserDefaults.standard.string(forKey: Self.keyPreferredUnitSystem) else {
+                return nil
+            }
+
+            return SQUnitSystem(rawValue: rawValue)
+        }
+        set {
+            UserDefaults.standard.set(newValue?.rawValue, forKey: Self.keyPreferredUnitSystem)
+        }
     }
 
     // MARK: - Public API (Workouts)
@@ -159,5 +175,13 @@ final class SQUserDefaults {
         var ids = pendingOnboardingUserIdsValue
         ids.remove(userId)
         pendingOnboardingUserIdsValue = ids
+    }
+
+    var preferredUnitSystem: SQUnitSystem? {
+        preferredUnitSystemValue
+    }
+
+    func setPreferredUnitSystem(_ unitSystem: SQUnitSystem?) {
+        preferredUnitSystemValue = unitSystem
     }
 }

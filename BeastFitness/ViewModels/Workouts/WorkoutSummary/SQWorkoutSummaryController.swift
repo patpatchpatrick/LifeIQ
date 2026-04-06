@@ -116,6 +116,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let heartRateService: SQHeartRateServicing
     private let statsManager: SQWorkoutStatsManaging
     private let workoutScoreService: SQWorkoutScoreServicing
+    private let userState: SQUserStating
     private let workout: SQWorkoutSessionable
     var heartRateZonesViewModel: SQWorkoutHeartRateZonesViewModel?
     
@@ -132,6 +133,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
         workoutScoreService: SQWorkoutScoreServicing? = nil,
+        userState: SQUserStating = SQAppState.shared.userState,
         workout: SQWorkoutSessionable,
         mode: SQWorkoutSummaryMode = .standard
     ) {
@@ -143,6 +145,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         self.heartRateService = resolvedHeartRateService
         self.workout = workout
         self.statsManager = statsManager
+        self.userState = userState
         self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService(
             heartRateService: resolvedHeartRateService
         )
@@ -166,11 +169,29 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             // Review mode is the source of saves, so suppress self-reload from its own events.
             state.shouldReactToWorkoutUpdates = false
         }
+
+        self.temperatureViewModel.setPlaceholder(temperaturePlaceholder)
         
         setupEventSubscriptions()
     }
+
+    var temperatureUnit: SQUnit {
+        SQUnitSystemResolver.resolve(for: userState.loggedInUser).temperatureUnit
+    }
+
+    private var temperaturePlaceholder: String {
+        switch temperatureUnit {
+        case .degreesCelsius:
+            return "22"
+        case .degreesFahrenheit:
+            return "72"
+        default:
+            return "22"
+        }
+    }
     
     func onAppear() async {
+        temperatureViewModel.setPlaceholder(temperaturePlaceholder)
         await load(workout: workout)
     }
 
@@ -192,14 +213,14 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             titleViewModel.setText(workout.visibleTitle)
             notesViewModel.initializeText(workout.reviewNotes ?? "")
             // Temperature: prefer stored value, then try HealthKit metadata
-            let farenheitRoundedDecimalPlaces = 0
+            let roundedTemperatureDecimalPlaces = 0
             if let stored = workout.temperatureCelsius,
-               let fahrenheit = SQUnit.degreesCelsius.convert(stored, to: .degreesFahrenheit) {
-                temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: farenheitRoundedDecimalPlaces))
+               let displayTemperature = SQUnit.degreesCelsius.convert(stored, to: temperatureUnit) {
+                temperatureViewModel.setText(displayTemperature.sqStringRoundedTo(places: roundedTemperatureDecimalPlaces))
             } else if case .hkWorkout(let hk) = workout.workoutSource,
                       let celsius = healthKitManager.weatherTemperatureCelsius(from: hk.hkWorkout),
-                      let fahrenheit = SQUnit.degreesCelsius.convert(celsius, to: .degreesFahrenheit) {
-                temperatureViewModel.setText(fahrenheit.sqStringRoundedTo(places: farenheitRoundedDecimalPlaces))
+                      let displayTemperature = SQUnit.degreesCelsius.convert(celsius, to: temperatureUnit) {
+                temperatureViewModel.setText(displayTemperature.sqStringRoundedTo(places: roundedTemperatureDecimalPlaces))
             }
 
             selectedPerformance = workout.ratingUserPerformance.flatMap { rating in
@@ -347,10 +368,8 @@ extension SQWorkoutSummaryController {
               let modelContext = SQAppState.shared.modelContext else { return }
 
         let titleText = titleViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let temperatureFahrenheit = Double(temperatureViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines))
-        let temperatureCelsius = temperatureFahrenheit.flatMap {
-            SQUnit.degreesFahrenheit.convert($0, to: .degreesCelsius)
-        }
+        let displayTemperature = Double(temperatureViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines))
+        let temperatureCelsius = temperatureUnit.convert(displayTemperature, to: .degreesCelsius)
         workout.setReviewData(
             notes: notesViewModel.text.isEmpty ? nil : notesViewModel.text,
             ratingUserPerformance: selectedPerformance?.ratingValue,

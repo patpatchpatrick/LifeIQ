@@ -37,6 +37,7 @@ final class SQUserManager: SQUserManaging {
 
         do {
             let user = try await SQUserService.fetchUser(uid: firebaseUser.uid)
+            SQUserDefaults.shared.setPreferredUnitSystem(user.unitSystem)
             if user.onboardingStatus == .completed {
                 SQUserDefaults.shared.clearPendingOnboarding(for: user.id)
             }
@@ -50,8 +51,9 @@ final class SQUserManager: SQUserManaging {
                 firstName: nil,
                 lastName: nil,
                 dateOfBirth: nil,
-                heightInInches: nil,
-                weightInPounds: nil,
+                heightCentimeters: nil,
+                weightKilograms: nil,
+                unitSystem: SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale,
                 sleepSchedule: nil,
                 subscriptionLevel: nil,
                 onboardingCompletedAt: nil,
@@ -77,6 +79,7 @@ final class SQUserManager: SQUserManaging {
 
     func saveUser(_ user: SQUser) async throws -> SQUser {
         let savedUser = try await SQUserService.saveUser(user)
+        SQUserDefaults.shared.setPreferredUnitSystem(savedUser.unitSystem)
         SQLogger.shared.log("✅ Saved user document for \(user.id)", .info, context: .network)
         return savedUser
     }

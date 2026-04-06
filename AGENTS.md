@@ -157,9 +157,21 @@ Charts convention:
 
 ## Units
 
+- LifeIQ supports both `Imperial` and `Metric` unit systems.
 - Always use `SQUnit` and `SQUnitType` for conversions and labels.
 - Never add ad-hoc conversion formulas or unit strings in feature code.
-- Store canonical units in persistence; convert for display in presentation layer.
+- Store canonical units in persistence; convert only at input/output boundaries and in presentation.
+- Current canonical storage conventions:
+  - user height: `heightCentimeters`
+  - user weight: `weightKilograms`
+  - workout/manual temperature: `temperatureCelsius`
+- Active unit-system resolution must follow this precedence:
+  1. `SQUser.unitSystem`
+  2. `SQUserDefaults.shared.preferredUnitSystem`
+  3. `SQUnitSystem.defaultForCurrentLocale`
+- Use `SQUnitSystemResolver.resolve(for:)` when user context is available.
+- In shared presentation code without a loaded user, use the same fallback chain rather than assuming imperial defaults.
+- Any new measurement-entry UI should collect values in the active display unit and convert back to canonical storage before saving.
 
 ## Coding style
 
