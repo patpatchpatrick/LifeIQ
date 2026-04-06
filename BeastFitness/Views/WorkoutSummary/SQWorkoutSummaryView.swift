@@ -326,22 +326,29 @@ struct SQWorkoutSummaryView: View {
     }
 
     @ViewBuilder
+    private var premiumInsightsSection: some View {
+        if let premiumInsightsModel = controller.premiumInsightsModel {
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                SQWorkoutPremiumInsightsView(
+                    model: premiumInsightsModel,
+                    onScoreInfoTap: { score in
+                        controller.displayPremiumInsightDetail(for: score)
+                    }
+                )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.SQSpace.l)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+        }
+    }
+
+    @ViewBuilder
     private var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             workoutHeroCard
 
-            if let premiumInsightsModel = controller.premiumInsightsModel {
-                VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQWorkoutPremiumInsightsView(
-                        model: premiumInsightsModel,
-                        onScoreInfoTap: { score in
-                            controller.displayPremiumInsightDetail(for: score)
-                        }
-                    )
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.SQSpace.l)
-                .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+            if controller.mode != .review {
+                premiumInsightsSection
             }
 
             if controller.mode == .review {
@@ -372,7 +379,15 @@ struct SQWorkoutSummaryView: View {
                 }
             }
 
+            if controller.mode == .review, !controller.state.shouldShowPerformanceSection {
+                premiumInsightsSection
+            }
+
             if controller.state.shouldShowPerformanceSection {
+                if controller.mode == .review {
+                    premiumInsightsSection
+                }
+
                 SQDashboardSubsection(title: "Performance", isCollapsed: $performanceSectionCollapsed) {
                     VStack(spacing: SQDashboardView.uiConfig.sectionRowSpacing) {
                         SQColumnHeaderRow(columns: [.leading("Stat"), .trailing("Score"), .trailing("Rank")])
