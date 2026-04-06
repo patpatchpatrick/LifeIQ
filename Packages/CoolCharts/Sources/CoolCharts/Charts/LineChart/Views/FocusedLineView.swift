@@ -49,16 +49,22 @@ struct FocusedLineCaptionView: View {
 
     var body: some View {
         captionStack
-            .padding(.SQSpace.s)
+            .padding(.horizontal, .SQSpace.m)
+            .padding(.vertical, .SQSpace.s)
             .background(
-                RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
-                    .fill(model.lineChartModel.uiConfig.colorConfig.backgroundSecondary.opacity(0.9))
+                ZStack {
+                    RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
+                        .fill(model.lineChartModel.uiConfig.colorConfig.backgroundPrimary.opacity(0.96))
+
+                    RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
+                        .fill(.ultraThinMaterial.opacity(0.72))
+                }
             )
             .overlay(
                 RoundedRectangle(cornerRadius: .SQSpace.l, style: .continuous)
-                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.24), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(0.24), radius: 16, x: 0, y: 6)
             .background(
                 GeometryReader { geo in
                     Color.clear.onAppear { captionWidth = geo.size.width }
@@ -84,6 +90,7 @@ struct FocusedLineCaptionItemView: View {
             Text(captionItem.lineTitle)
                 .font(captionItem.uiConfig.fontConfig.font)
                 .foregroundStyle(captionItem.uiConfig.colorConfig.textSecondary)
+                .shadow(color: Color.black.opacity(0.18), radius: 1.5, x: 0, y: 1)
         }
     }
     
@@ -94,10 +101,12 @@ struct FocusedLineCaptionItemView: View {
             Text(captionItem.yTitle)
                 .font(captionItem.uiConfig.fontConfig.boldFont)
                 .foregroundStyle(captionItem.uiConfig.colorConfig.textPrimary)
+                .shadow(color: Color.black.opacity(0.22), radius: 1.5, x: 0, y: 1)
             
             Text(captionItem.xTitle)
                 .font(captionItem.uiConfig.fontConfig.font)
                 .foregroundStyle(captionItem.uiConfig.colorConfig.textSecondary)
+                .shadow(color: Color.black.opacity(0.18), radius: 1.5, x: 0, y: 1)
         }
     }
     
