@@ -16,11 +16,12 @@ final class SQDailyCheckInTextEntryViewModel: SQDailyCheckInRowViewModel {
     init(
         field: SQDailyCheckInField,
         title: String,
+        subtitle: String? = nil,
         textFieldViewModel: SQTextFieldViewModel,
         onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         self.textFieldViewModel = textFieldViewModel
-        super.init(field: field, title: title, onFocused: onFocused)
+        super.init(field: field, title: title, subtitle: subtitle, onFocused: onFocused)
         textFieldViewModel.delegate = self
     }
     
@@ -46,4 +47,3 @@ extension SQDailyCheckInTextEntryViewModel: SQTextFieldViewModelDelegate {
         isCompleted = viewModel.isContentValid
     }
 }
-

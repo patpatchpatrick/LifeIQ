@@ -33,10 +33,19 @@ struct SQDailyCheckInRow: View {
         HStack(spacing: .SQSpace.s) {
             numberBadge
 
-            Text(viewModel.title)
-                .sqFont(.bodySemiBold)
-                .sqForegroundColor(.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text(viewModel.title)
+                    .sqFont(.bodySemiBold)
+                    .sqForegroundColor(.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let subtitle = viewModel.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
 
             Spacer()
 

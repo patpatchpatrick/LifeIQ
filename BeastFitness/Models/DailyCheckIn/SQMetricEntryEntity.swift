@@ -129,4 +129,31 @@ extension SQMetricEntryEntity {
         )
         return try context.fetch(descriptor).map { $0.toEntry() }
     }
+
+    static func delete(
+        for anchorDayKey: String,
+        metricIds: Set<String>,
+        period: SQMetricPeriod,
+        singleDailyMetricIds: Set<String>,
+        keepMetricIds: Set<String>,
+        in context: ModelContext
+    ) throws {
+        guard !metricIds.isEmpty else { return }
+
+        let descriptor = FetchDescriptor<SQMetricEntryEntity>(
+            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+        )
+        let entities = try context.fetch(descriptor)
+
+        for entity in entities {
+            guard metricIds.contains(entity.metricId) else { continue }
+            guard !keepMetricIds.contains(entity.metricId) else { continue }
+
+            if singleDailyMetricIds.contains(entity.metricId) || entity.period == period {
+                context.delete(entity)
+            }
+        }
+
+        try context.save()
+    }
 }

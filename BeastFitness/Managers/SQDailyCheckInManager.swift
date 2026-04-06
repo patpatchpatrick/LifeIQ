@@ -109,6 +109,20 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         }
 
         try SQMetricEntryEntity.upsert(entries, in: modelContext)
+        let formMetricIds = Set(
+            await metricsManager.dailyCheckInMetrics(for: submissionPeriod).map(\.id)
+        )
+        let singleDailyMetricIds = Set(
+            formMetricIds.filter { metricById[$0]?.isSingleDailyValue == true }
+        )
+        try SQMetricEntryEntity.delete(
+            for: anchorDayKey,
+            metricIds: formMetricIds,
+            period: submissionPeriod,
+            singleDailyMetricIds: singleDailyMetricIds,
+            keepMetricIds: Set(stats.values.keys),
+            in: modelContext
+        )
         // Record an explicit local completion marker for this session so the dashboard
         // can distinguish morning vs evening completion even when some metric values
         // are shared across both check-ins.
@@ -123,8 +137,7 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             let note = SQDailyNote(anchorDayKey: anchorDayKey, content: notesText)
             try SQDailyNoteEntity.upsert(note, in: modelContext)
         } else {
-            // Clear note locally if the user submitted an empty notes field
-            // (leave Firestore as-is; it'll be overwritten below)
+            try SQDailyNoteEntity.delete(for: anchorDayKey, in: modelContext)
         }
 
         // Legacy Firestore push
@@ -153,8 +166,10 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
         let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
 
         if entries.isEmpty {
-            // Fall back to legacy entity during transition period
-            return try SQDailyCheckInEntity.get(for: date, context: context)
+            // Fall back to legacy entity during transition period.
+            // Treat completely empty legacy rows as no saved check-in payload.
+            let legacyStats = try SQDailyCheckInEntity.get(for: date, context: context)
+            return normalizedStatsOrNil(legacyStats)
         }
 
         // Build SQDailyCheckInStats from new-format entries, respecting session period.
@@ -173,7 +188,9 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
             }
         }
         let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
-        return values.isEmpty ? nil : SQDailyCheckInStats(date: date, period: period, values: values, notes: note?.content)
+        return normalizedStatsOrNil(
+            SQDailyCheckInStats(date: date, period: period, values: values, notes: note?.content)
+        )
     }
 
     func hasCompletedCheckIn(for date: Date, period: SQMetricPeriod, context: ModelContext) async throws -> Bool {
@@ -364,5 +381,25 @@ final class SQDailyCheckInManager: SQDailyCheckInManaging {
                 isPriority: true
             )
         }
+    }
+}
+
+private extension SQDailyCheckInManager {
+    func normalizedStatsOrNil(_ stats: SQDailyCheckInStats?) -> SQDailyCheckInStats? {
+        guard let stats else { return nil }
+
+        let normalizedNotes = stats.notes?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !stats.values.isEmpty || normalizedNotes?.isEmpty == false else {
+            return nil
+        }
+
+        return SQDailyCheckInStats(
+            date: stats.date,
+            period: stats.period,
+            values: stats.values,
+            notes: normalizedNotes?.isEmpty == false ? normalizedNotes : nil
+        )
     }
 }

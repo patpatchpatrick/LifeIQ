@@ -85,10 +85,18 @@ struct SQDailyCheckInView: View {
                             .sqForegroundColor(.textPrimary)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            viewModel.addMetricTapped()
-                        } label: {
-                            Text("Edit")
+                        HStack(spacing: .SQSpace.m) {
+                            Button {
+                                viewModel.clearForm()
+                            } label: {
+                                Text("Clear")
+                            }
+
+                            Button {
+                                viewModel.addMetricTapped()
+                            } label: {
+                                Text("Edit")
+                            }
                         }
                     }
                 }

@@ -10,6 +10,13 @@ import SwiftUI
 import SwiftData
 import BeastFitnessCore
 
+private struct SQDailyCheckInSleepPrefill {
+    let values: [String: Float]
+    let metricIds: Set<String>
+
+    static let none = SQDailyCheckInSleepPrefill(values: [:], metricIds: [])
+}
+
 @Observable @MainActor
 final class SQDailyCheckInViewModel: Identifiable {
     typealias MetricId = SQMetricId
@@ -24,6 +31,9 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     private let dailyCheckInManager: SQDailyCheckInManaging
     private let metricsManager: SQMetricsManaging
+    private let healthKitManager: SQHealthKitManaging
+    private let sleepAggregationService: SQSleepAggregationService
+    private let userState: SQUserStating
 
     var isEditingPastDate: Bool {
         !Calendar.current.isDateInToday(targetDate)
@@ -32,6 +42,7 @@ final class SQDailyCheckInViewModel: Identifiable {
     private(set) var rows: [SQDailyCheckInRowViewModel] = []
     let onDismiss: () -> Void
     private(set) var isLoading: Bool = false
+    private(set) var didApplySleepPrefill: Bool = false
     /// The check-in period this view model represents (morning or evening).
     /// Starts as the default for this session; updated when the user picks a specific
     /// date+period from the date picker.
@@ -49,6 +60,9 @@ final class SQDailyCheckInViewModel: Identifiable {
         period: SQMetricPeriod,
         dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         metricsManager: SQMetricsManaging,
+        healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
+        sleepAggregationService: SQSleepAggregationService = .init(),
+        userState: SQUserStating = SQAppState.shared.userState,
         onDismiss: @escaping () -> Void
     ) {
         self.eventHub = eventHub
@@ -57,6 +71,9 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.period = period
         self.dailyCheckInManager = dailyCheckInManager
         self.metricsManager = metricsManager
+        self.healthKitManager = healthKitManager
+        self.sleepAggregationService = sleepAggregationService
+        self.userState = userState
         self.onDismiss = onDismiss
 
         handleEventSubscriptions(hub: eventHub)
@@ -92,17 +109,24 @@ final class SQDailyCheckInViewModel: Identifiable {
             period: period,
             context: modelContext
         )
-        self.stats = loadedStats
+        let sleepPrefill = await buildSleepPrefill(
+            for: date,
+            existingStats: loadedStats,
+            modelContext: modelContext
+        )
+        self.didApplySleepPrefill = !sleepPrefill.metricIds.isEmpty
+        let effectiveStats = mergedStats(savedStats: loadedStats, sleepPrefill: sleepPrefill)
+        self.stats = effectiveStats
 
         // Refresh rows with new stats
         do {
             try metricsManager.loadIfNeeded(using: modelContext)
-            self.rows = buildRows(for: loadedStats)
+            self.rows = buildRows(for: effectiveStats, sleepPrefillMetricIds: sleepPrefill.metricIds)
         } catch {
             eventHub.alertEvents.send(.present(.init(
                 SQError.standard(withDescription: "Error loading metrics: \(error.localizedDescription)")
             )))
-            self.rows = [buildNotesRow(stats: loadedStats)]
+            self.rows = [buildNotesRow(stats: effectiveStats)]
         }
     }
 
@@ -111,7 +135,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.modelContext = modelContext
         do {
             try metricsManager.loadIfNeeded(using: modelContext)
-            self.rows = buildRows(for: stats)
+            self.rows = buildRows(for: stats, sleepPrefillMetricIds: [])
         } catch {
             eventHub.alertEvents.send(.present(.init(
                 SQError.standard(withDescription: "Error loading metrics: \(error.localizedDescription)")
@@ -137,7 +161,10 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     // MARK: - Build Rows
 
-    func buildRows(for stats: SQDailyCheckInStats?) -> [SQDailyCheckInRowViewModel] {
+    func buildRows(
+        for stats: SQDailyCheckInStats?,
+        sleepPrefillMetricIds: Set<String>
+    ) -> [SQDailyCheckInRowViewModel] {
         var built: [SQDailyCheckInRowViewModel] = []
 
         let metrics = metricsManager.dailyCheckInMetrics(for: period)
@@ -171,7 +198,10 @@ final class SQDailyCheckInViewModel: Identifiable {
                 guard !segments.isEmpty else { continue }
                 let initial = Self.scaleInitialSelection(metricId: metric.id, stats: stats, segments: segments)
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
-                    field: field, title: displayTitle, segments: segments,
+                    field: field,
+                    title: displayTitle,
+                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
+                    segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )
@@ -186,6 +216,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
                     field: field,
                     title: displayTitle,
+                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
                     segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -198,6 +229,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 let row = SQDailyCheckInTextEntryViewModel(
                     field: field,
                     title: displayTitle,
+                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
                     textFieldViewModel: tf,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )
@@ -216,6 +248,14 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         for (idx, row) in built.enumerated() { row.number = String(idx + 1) }
         return built
+    }
+
+    private func subtitle(
+        for metric: SQMetricDefinition,
+        sleepPrefillMetricIds: Set<String>
+    ) -> String? {
+        guard sleepPrefillMetricIds.contains(metric.id) else { return nil }
+        return "Prefilled from the previous night's sleep. You can override it."
     }
 
     // MARK: - Scale Helpers
@@ -343,8 +383,18 @@ final class SQDailyCheckInViewModel: Identifiable {
     // MARK: - Form Submission
 
     var canSubmit: Bool {
-        // Allow submission if at least one row is completed
-        rows.contains { $0.isCompleted }
+        let formPayload = currentFormPayload()
+        if !formPayload.values.isEmpty || formPayload.notes != nil {
+            return true
+        }
+
+        let savedNotes = stats?.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let savedPayload = (
+            values: stats?.values ?? [:],
+            notes: savedNotes?.isEmpty == false ? savedNotes : nil
+        )
+
+        return formPayload.values != savedPayload.values || formPayload.notes != savedPayload.notes
     }
 
     func submitTapped(modelContext: ModelContext) async {
@@ -365,62 +415,13 @@ final class SQDailyCheckInViewModel: Identifiable {
             return
         }
 
-        // Make sure manager is loaded (so allMetrics() can resolve definitions)
-        do { try metricsManager.loadIfNeeded(using: modelContext) } catch {}
-
-        var values: [String: Float] = [:]
-        var notes: String? = nil
-
-        for row in rows {
-            switch row.field {
-
-            case .metric(let metricId):
-                guard let metric = metricsManager.allMetrics(includeArchived: true).first(where: { $0.id == metricId }) else { continue }
-
-                switch metric.kind {
-
-                case .binary:
-                    // Legacy: treated as scale at display time; read value same way as scale
-                    if
-                        let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel,
-                        let seg = segmented.selectedSegment,
-                        let v = Float(seg.id)
-                    {
-                        values[metricId] = v
-                    }
-
-                case .scale:
-                    if
-                        let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel,
-                        let seg = segmented.selectedSegment,
-                        let v = Float(seg.id)
-                    {
-                        values[metricId] = v
-                    }
-
-                case .number:
-                    if let textRow = row as? SQDailyCheckInTextEntryViewModel {
-                        let raw = textRow.textFieldViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if let v = Float(raw) { values[metricId] = v }
-                    }
-
-                case .unknown:
-                    break
-                }
-
-            case .notes:
-                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
-                    let text = textRow.textFieldViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    notes = text.isEmpty ? nil : text
-                }
-            }
-        }
+        let formPayload = currentFormPayload()
 
         let stats = SQDailyCheckInStats(
             date: targetDate,
             period: period,
-            values: values,
-            notes: notes
+            values: formPayload.values,
+            notes: formPayload.notes
         )
 
         SQLogger.shared.log("Submitting daily stats: \(stats)", .debug, context: .dailyCheckIn)
@@ -434,6 +435,62 @@ final class SQDailyCheckInViewModel: Identifiable {
                 .present(.init(SQError.standard(withDescription: "Error saving check in data: \(error.localizedDescription).")))
             )
         }
+    }
+
+    func clearForm() {
+        for row in rows {
+            switch row.field {
+            case .metric:
+                if let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel {
+                    segmented.selectedSegment = nil
+                    segmented.isCompleted = false
+                } else if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    textRow.textFieldViewModel.text = ""
+                    textRow.isCompleted = false
+                }
+            case .notes:
+                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    textRow.textFieldViewModel.text = ""
+                    textRow.isCompleted = false
+                }
+            }
+        }
+    }
+
+    private func currentFormPayload() -> (values: [String: Float], notes: String?) {
+        var values: [String: Float] = [:]
+        var notes: String?
+
+        for row in rows {
+            switch row.field {
+            case .metric(let metricId):
+                if
+                    let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel,
+                    let selectedSegment = segmented.selectedSegment,
+                    let value = Float(selectedSegment.id)
+                {
+                    values[metricId] = value
+                    continue
+                }
+
+                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    let trimmed = textRow.textFieldViewModel.text
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let value = Float(trimmed) {
+                        values[metricId] = value
+                    }
+                }
+
+            case .notes:
+                if let textRow = row as? SQDailyCheckInTextEntryViewModel {
+                    let trimmed = textRow.textFieldViewModel.text
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    notes = trimmed.isEmpty ? nil : trimmed
+                }
+            }
+        }
+
+        return (values: values, notes: notes)
     }
 
     func addMetricTapped() {
@@ -493,6 +550,77 @@ final class SQDailyCheckInViewModel: Identifiable {
         }
 
         return entries
+    }
+
+    private func mergedStats(
+        savedStats: SQDailyCheckInStats?,
+        sleepPrefill: SQDailyCheckInSleepPrefill
+    ) -> SQDailyCheckInStats? {
+        guard !sleepPrefill.values.isEmpty else { return savedStats }
+
+        var mergedValues = savedStats?.values ?? [:]
+        for (metricId, value) in sleepPrefill.values where mergedValues[metricId] == nil {
+            mergedValues[metricId] = value
+        }
+
+        guard !mergedValues.isEmpty || savedStats?.notes != nil else {
+            return nil
+        }
+
+        return SQDailyCheckInStats(
+            date: savedStats?.date ?? targetDate,
+            period: savedStats?.period ?? period,
+            values: mergedValues,
+            notes: savedStats?.notes
+        )
+    }
+
+    private func buildSleepPrefill(
+        for date: Date,
+        existingStats: SQDailyCheckInStats?,
+        modelContext: ModelContext
+    ) async -> SQDailyCheckInSleepPrefill {
+        let existingValues = existingStats?.values ?? [:]
+        let needsSleepQuality = existingValues[SQMetricId.sleepQuality] == nil
+        let needsSleepHours = existingValues[SQMetricId.sleepHours] == nil
+
+        guard needsSleepQuality || needsSleepHours else {
+            return .none
+        }
+
+        let sleepSchedule = userState.loggedInUser?.sleepSchedule
+        let window = sleepAggregationService.fetchWindow(for: date, sleepSchedule: sleepSchedule)
+        guard let segments = try? await healthKitManager.fetchSleepSegments(
+            from: window.start,
+            to: window.end
+        ) else {
+            return .none
+        }
+
+        guard let night = sleepAggregationService.buildNight(
+            for: date,
+            segments: segments,
+            sleepSchedule: sleepSchedule
+        ) else {
+            return .none
+        }
+
+        let score = sleepAggregationService.score(for: night)
+        var values = [String: Float]()
+        var metricIds = Set<String>()
+
+        if needsSleepQuality {
+            let sleepQuality = Float(max(0, min(10, Int(floor(score.totalScore / 10.0)))))
+            values[SQMetricId.sleepQuality] = sleepQuality
+            metricIds.insert(SQMetricId.sleepQuality)
+        }
+
+        if needsSleepHours {
+            values[SQMetricId.sleepHours] = Float(night.totalSleepDuration / 3600.0)
+            metricIds.insert(SQMetricId.sleepHours)
+        }
+
+        return .init(values: values, metricIds: metricIds)
     }
 }
 

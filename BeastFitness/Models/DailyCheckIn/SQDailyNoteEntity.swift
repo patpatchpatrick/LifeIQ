@@ -74,4 +74,16 @@ extension SQDailyNoteEntity {
         )
         return try context.fetch(descriptor).map { $0.toNote() }
     }
+
+    static func delete(for anchorDayKey: String, in context: ModelContext) throws {
+        let descriptor = FetchDescriptor<SQDailyNoteEntity>(
+            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+        )
+
+        for entity in try context.fetch(descriptor) {
+            context.delete(entity)
+        }
+
+        try context.save()
+    }
 }

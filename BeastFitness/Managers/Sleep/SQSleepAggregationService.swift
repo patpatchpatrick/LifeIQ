@@ -102,6 +102,30 @@ struct SQSleepAggregationService {
         )
     }
 
+    func buildNight(
+        for wakeDay: Date,
+        segments: [SQSleepStageSegment],
+        sleepSchedule: SQSleepSchedule? = nil
+    ) -> SQSleepNight? {
+        let normalizedWakeDay = calendar.startOfDay(for: wakeDay)
+        return buildNights(
+            for: [normalizedWakeDay],
+            using: segments,
+            sleepSchedule: sleepSchedule
+        ).first
+    }
+
+    func fetchWindow(
+        for wakeDay: Date,
+        sleepSchedule: SQSleepSchedule? = nil
+    ) -> DateInterval {
+        let normalizedWakeDay = calendar.startOfDay(for: wakeDay)
+        return DateInterval(
+            start: nightWindowStart(for: normalizedWakeDay, sleepSchedule: sleepSchedule),
+            end: nightWindowEnd(for: normalizedWakeDay, sleepSchedule: sleepSchedule)
+        )
+    }
+
     func score(for night: SQSleepNight) -> SQSleepScoreBreakdown {
         let durationHours = night.totalSleepDuration / 3600.0
         let durationScore = min(

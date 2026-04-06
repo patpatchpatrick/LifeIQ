@@ -39,6 +39,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
     init(
         field: SQDailyCheckInField,
         title: String,
+        subtitle: String? = nil,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [SQSegmentedControlSegment],
         initialSelection: SQSegmentedControlSegment? = nil,
@@ -48,7 +49,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         self.segments = segments
         self._selectedSegment = initialSelection
         self.scaleConfig = scaleConfig
-        super.init(field: field, title: title, onFocused: onFocused)
+        super.init(field: field, title: title, subtitle: subtitle, onFocused: onFocused)
         self.isCompleted = initialSelection != nil
     }
 
@@ -56,6 +57,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
     convenience init<Segment: SQCheckInSegmentable & Hashable>(
         field: SQDailyCheckInField,
         title: String,
+        subtitle: String? = nil,
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [Segment],
         initialSelection: Segment? = nil,
@@ -79,6 +81,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         self.init(
             field: field,
             title: title,
+            subtitle: subtitle,
             scaleConfig: scaleConfig,
             segments: mappedSegments,
             initialSelection: initialMappedSelection,
