@@ -154,45 +154,32 @@ protocol DashboardStating: AnyObject {
     }
 
     /// Determines whether the dashboard should actively prompt for a check-in.
-    /// Uses schedule-relative windows when available, with fixed daytime cutoffs as the fallback.
+    /// Uses a +/- 5 hour window around the user's wake time and sleep time. When both windows
+    /// overlap, the closer anchor wins, with sleep time winning ties so late-night hours do not
+    /// feel like "morning".
     static func checkInPromptPeriod(for date: Date, sleepSchedule: SQSleepSchedule? = nil) -> SQMetricPeriod? {
-        guard let sleepSchedule else {
-            let hour = Calendar.current.component(.hour, from: date)
-
-            if hour < 13 {
-                return .morning
-            }
-
-            if hour >= 16 {
-                return .evening
-            }
-
-            return nil
-        }
+        let sleepSchedule = sleepSchedule ?? .onboardingDefault
 
         let currentMinutes = minutesSinceMidnight(for: date)
         let wakeMinutes = sleepSchedule.wakeTime.minutesSinceMidnight
         let sleepMinutes = sleepSchedule.sleepTime.minutesSinceMidnight
-        let morningPromptEndMinutes = positiveModulo(wakeMinutes + (5 * 60))
-        let eveningPromptStartMinutes = positiveModulo(sleepMinutes - (7 * 60))
+        let windowRadiusMinutes = 5 * 60
+        let wakeDistance = circularDistance(from: currentMinutes, to: wakeMinutes)
+        let sleepDistance = circularDistance(from: currentMinutes, to: sleepMinutes)
 
-        if isWithinCircularRange(
-            currentMinutes,
-            start: wakeMinutes,
-            end: morningPromptEndMinutes
-        ) {
+        let isWithinMorningWindow = wakeDistance <= windowRadiusMinutes
+        let isWithinEveningWindow = sleepDistance <= windowRadiusMinutes
+
+        switch (isWithinMorningWindow, isWithinEveningWindow) {
+        case (true, false):
             return .morning
-        }
-
-        if isWithinCircularRange(
-            currentMinutes,
-            start: eveningPromptStartMinutes,
-            end: sleepMinutes
-        ) {
+        case (false, true):
             return .evening
+        case (true, true):
+            return sleepDistance <= wakeDistance ? .evening : .morning
+        case (false, false):
+            return nil
         }
-
-        return nil
     }
 
     /// Returns the calendar date that should own the user's current check-in session.
@@ -221,6 +208,12 @@ protocol DashboardStating: AnyObject {
     private static func positiveModulo(_ value: Int, modulus: Int = 24 * 60) -> Int {
         let remainder = value % modulus
         return remainder >= 0 ? remainder : remainder + modulus
+    }
+
+    private static func circularDistance(from value: Int, to anchor: Int, modulus: Int = 24 * 60) -> Int {
+        let forward = positiveModulo(anchor - value, modulus: modulus)
+        let backward = positiveModulo(value - anchor, modulus: modulus)
+        return min(forward, backward)
     }
 
     private static func isWithinCircularRange(_ value: Int, start: Int, end: Int) -> Bool {

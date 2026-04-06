@@ -539,10 +539,20 @@ final class SQDashboardController: SQDashboardInterface {
             for: referenceDate,
             sleepSchedule: sleepSchedule
         )
-        let checkInPeriod = DashboardState.checkInPeriod(
-            for: referenceDate,
-            sleepSchedule: sleepSchedule
-        )
+        let checkInPeriod: SQMetricPeriod = {
+            if date == nil,
+               let promptedPeriod = DashboardState.checkInPromptPeriod(
+                   for: referenceDate,
+                   sleepSchedule: sleepSchedule
+               ) {
+                return promptedPeriod
+            }
+
+            return DashboardState.checkInPeriod(
+                for: referenceDate,
+                sleepSchedule: sleepSchedule
+            )
+        }()
         let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
             for: targetDate,
             period: checkInPeriod,
