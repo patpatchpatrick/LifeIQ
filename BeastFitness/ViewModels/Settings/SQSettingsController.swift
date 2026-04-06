@@ -88,7 +88,7 @@ final class SQSettingsController: SQSettingsInterface {
 
             .init(
                 title: "Clear hidden workouts",
-                subtitle: "Shows workouts you previously hid after failing to delete in HealthKit.",
+                subtitle: "Restore workouts you previously hid so they appear in the app again.",
                 showsChevron: false
             ) { [weak self] in
                 self?.confirmClearHiddenWorkouts()
@@ -114,7 +114,7 @@ final class SQSettingsController: SQSettingsInterface {
     private func confirmClearHiddenWorkouts() {
         let alert = SQAlertViewModel(
             title: "Clear hidden workouts?",
-            subtitle: "This will restore workouts you previously hid after a failed HealthKit delete, so they can appear in your workout lists again.",
+            subtitle: "This will restore workouts you previously hid so they appear in the app again.",
             primary: .init(title: "Clear", role: .destructive) { [weak self] _ in
                 guard let self else { return }
                 SQUserDefaults.shared.clearHiddenWorkouts()
