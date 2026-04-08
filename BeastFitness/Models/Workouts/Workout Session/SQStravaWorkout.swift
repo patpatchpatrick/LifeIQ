@@ -61,7 +61,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
         case .sqPaceRunning, .sqFastestPace, .sqTotalVolumeLifted, .unknown:
-            // TODO: - PTD support strava running pace
+            // TODO: - support strava running pace
             return nil
         }
     }

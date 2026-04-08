@@ -152,6 +152,6 @@ extension SQWatchInterface: HKLiveWorkoutBuilderDelegate {
     }
     
     func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
-        print("PTD Did collect event", workoutBuilder)
+        print("Did collect event", workoutBuilder)
     }
 }

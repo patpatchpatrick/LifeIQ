@@ -10,7 +10,7 @@ import Foundation
 struct SQError: SQUserFacingError {
     static let genericErrorTitle: String = "Error"
     static let genericErrorDescription: String = "Something went wrong."
-    static let supportEmail = "support@beastfitness.com" //TODO: - PTD update this to be actual support email
+    static let supportEmail = "support@lifeiq.app" //TODO: - PTD update this to be actual support email
     let title: String
     let description: String
     let underylingError: Error?

@@ -168,7 +168,9 @@ final class SQWorkoutManager: SQWorkoutManaging {
                 try await healthKitManager.deleteWorkout(with: healthKitId)
                 SQLogger.shared.log("Successfully deleted workout from HealthKit: \(workout.id)-\(workout.visibleTitle)", .info, context: .workoutManager)
             } catch {
-                // TODO: - PTD if we can't delete workouts from healthkit, save the list of workouts we can't delete to SwiftData or Firestore so we can retry
+                // HealthKit deletion failures are expected to be rare here because we only attempt
+                // this path for workouts we believe are app-owned. If this fails, log it and let
+                // the caller decide whether to keep or hide the local workout state.
                 SQLogger.shared.log("Could not delete workout from HealthKit: \(error)", .error, context: .workoutManager)
             }
         }

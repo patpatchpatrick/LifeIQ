@@ -85,7 +85,6 @@ final class SQPassthroughWindow: UIWindow {
     /// When true, taps that hit the root hosting view pass through to the app.
     var isPassthroughEnabled: Bool = true
 
-    // TODO: - PTD make sure only the TOAST is tappable, not the entire region.. Currently the entire window intercepts all taps so the user can't interact with the main app when a toast is visible
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
 

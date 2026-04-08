@@ -11,6 +11,7 @@ import HealthKit
 import BeastFitnessCore
 import Combine
 
+/// DEPRECATED CONTROLLER
 @Observable
 @MainActor
 final class SQWorkoutSessionController: Identifiable {
@@ -89,7 +90,7 @@ final class SQWorkoutSessionController: Identifiable {
                 do {
                     try watchInterface.sendActiveWorkoutPayloadToWatch(payload)
                 } catch {
-                    // TODO: - PTD should we surface an error to user when active workout data fails to sync with the watch? Maybe after a few failures in a row, we show some type of warning
+                    //  - should we surface an error to user when active workout data fails to sync with the watch? Maybe after a few failures in a row, we show some type of warning
                 }
             }
         }.store(in: &cancellables)

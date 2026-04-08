@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-// PTD finish this view to load an actual image
-
 struct SQUserIcon: View {
     let user: SQUser
     let size: CGFloat
