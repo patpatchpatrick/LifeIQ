@@ -12,6 +12,15 @@ struct SQLeaderboardView: View {
     @State var controller: SQLeaderboardController
     @Environment(\.modelContext) private var modelContext
 
+    var navTitleView: some View {
+        Text(controller.title)
+            .sqFont(.title2)
+            .sqForegroundColor(.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.68)
+            .allowsTightening(true)
+    }
+
     // MARK: - Empty State
 
     var emptyStateView: some View {
@@ -198,6 +207,9 @@ struct SQLeaderboardView: View {
             .navigationTitle(controller.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    navTitleView
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     SQDropDownMenu(
                         menuViewModel: controller.timeRangeMenuViewModel,

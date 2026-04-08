@@ -215,27 +215,14 @@ struct LineChartGradientShape: Shape {
     }
     
     func linePath(in rect: CGRect) -> Path {
-        var path = Path()
         guard let firstPoint = model.coordinates.first, let lastPoint = model.coordinates.last else {
-            return path
+            return Path()
         }
 
-        // Start at the bottom of the chart directly below the first data point
-        path.move(to: .init(x: firstPoint.x, y: model.yFloor))
-        path.addLine(to: firstPoint)
-
-        SmoothLinePathBuilder.appendSmoothedPoints(
-            Array(model.coordinates.dropFirst()),
-            to: &path,
-            moveToFirstPoint: false
-        )
-
-        // Come back down to the bottom below the last data point
+        var path = SmoothLinePathBuilder.buildPath(points: model.coordinates)
         path.addLine(to: .init(x: lastPoint.x, y: model.yFloor))
-
-        // Close along the bottom back to the start
+        path.addLine(to: .init(x: firstPoint.x, y: model.yFloor))
         path.closeSubpath()
-
         return path
     }
 }

@@ -11,6 +11,15 @@ struct SQDailyCheckInView: View {
     @Bindable var viewModel: SQDailyCheckInViewModel
     @Environment(\.modelContext) private var modelContext
 
+    var navTitleView: some View {
+        Text("\(viewModel.period.rawValue.capitalized) Check-In")
+            .sqFont(.title2)
+            .sqForegroundColor(.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .allowsTightening(true)
+    }
+
     @ViewBuilder
     var mainStack: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
@@ -80,9 +89,7 @@ struct SQDailyCheckInView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("\(viewModel.period.rawValue.capitalized) Check-In")
-                            .sqFont(.titleNav)
-                            .sqForegroundColor(.textPrimary)
+                        navTitleView
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: .SQSpace.m) {
