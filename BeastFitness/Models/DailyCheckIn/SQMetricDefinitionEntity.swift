@@ -108,10 +108,18 @@ extension SQMetricDefinitionEntity {
     /// Translates legacy enum raw values ("state", "habits", "custom") to current group names.
     var group: String {
         switch groupRaw {
-        case "state":  return SQDefaultGroup.self_.rawValue   // was "Self" via old .personal alias
-        case "habits": return SQDefaultGroup.habit.rawValue
-        case "custom": return SQDefaultGroup.general.rawValue
-        default:       return groupRaw
+        case "state",
+             "Self",
+             SQDefaultGroup.personal.rawValue:
+            return SQDefaultGroup.self_.rawValue
+        case "habits",
+             SQDefaultGroup.habit.rawValue,
+             "Positive Habits":
+            return SQDefaultGroup.positiveHabits.rawValue
+        case "custom":
+            return SQDefaultGroup.general.rawValue
+        default:
+            return groupRaw
         }
     }
 

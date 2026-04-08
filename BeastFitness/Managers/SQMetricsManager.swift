@@ -596,7 +596,7 @@ final class SQMetricsManager: SQMetricsManaging {
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
                   emoji: "⚖️", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
-            // MARK: Self — independent morning + evening values (how you feel changes throughout the day)
+            // MARK: Mind & Body — independent morning + evening values
             .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
@@ -617,6 +617,26 @@ final class SQMetricsManager: SQMetricsManaging {
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "💪", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
 
+            .init(id: SQMetricId.stress, title: "Stress", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "😵", periods: both, goalStyle: .keepLow),
+
+            .init(id: SQMetricId.motivation, title: "Motivation", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🎯", periods: both, goalStyle: .buildUp, targetValue: 7),
+
+            .init(id: SQMetricId.anxiety, title: "Anxiety", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "😬", periods: both, goalStyle: .keepLow),
+
+            .init(id: SQMetricId.sickness, title: "Sickness", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🤒", periods: both, goalStyle: .keepLow),
+
             // MARK: Sleep — single daily value for last night's sleep; editable from either session
             .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 10, step: 1,
@@ -628,14 +648,24 @@ final class SQMetricsManager: SQMetricsManaging {
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
                   emoji: "🌙", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
-            // MARK: Positive Habits — independent morning + evening tracking
+            // MARK: Nutrition & Recovery — independent morning + evening tracking
             .init(id: SQMetricId.nutrition, title: "Nutrition", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "🥗", periods: eveningOnly, goalStyle: .buildUp, targetValue: 1, bodyBatteryEffect: .boostsWhenHigh),
 
-            .init(id: SQMetricId.meditation, title: "Meditation", kind: .scale, unit: .none,
+            .init(id: SQMetricId.hydration, title: "Hydration", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "💧", periods: both, goalStyle: .buildUp, targetValue: 7),
+
+            .init(id: SQMetricId.digestion, title: "Digestion", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🍽️", periods: both, goalStyle: .buildUp, targetValue: 7),
+
+            .init(id: SQMetricId.meditation, title: "Meditation", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.otherHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
                   emoji: "🧘", periods: both, goalStyle: .buildUp, targetValue: 1),
 

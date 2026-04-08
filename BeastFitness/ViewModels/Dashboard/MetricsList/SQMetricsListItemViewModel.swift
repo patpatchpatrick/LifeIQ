@@ -11,17 +11,21 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
     let id: String
     let title: String
     let subtitle: String
+    let groupTitle: String
     let metricId: String
     let isTracked: Bool
     let emoji: String?
+    let sortOrder: Int
 
     init(metric: SQMetricDefinition, isTracked: Bool) {
         self.id = metric.id
         self.metricId = metric.id
         self.title = metric.title
         self.subtitle = Self.buildSubtitle(for: metric)
+        self.groupTitle = metric.group
         self.isTracked = isTracked
         self.emoji = metric.emoji
+        self.sortOrder = metric.sortOrder
     }
 
     private static func buildSubtitle(for metric: SQMetricDefinition) -> String {

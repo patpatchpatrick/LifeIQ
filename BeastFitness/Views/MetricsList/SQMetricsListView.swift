@@ -81,7 +81,6 @@ struct SQMetricsListView: View {
             .buttonStyle(.plain)
             .padding(.trailing, .SQSpace.l)
         }
-        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     @ViewBuilder
@@ -101,14 +100,118 @@ struct SQMetricsListView: View {
     }
 
     @ViewBuilder
+    private var summaryCard: some View {
+        HStack(alignment: .center, spacing: .SQSpace.m) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text("Metric Library")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("Browse grouped defaults, see what's already active, or create your own custom metric.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(controller.trackedCount)")
+                    .sqFont(.title2)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("TRACKED")
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ section: SQMetricsListSectionViewModel) -> some View {
+        Button {
+            controller.toggleSection(section.id)
+        } label: {
+            HStack(spacing: .SQSpace.s) {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text(section.title)
+                        .sqFont(.bodySemiBold)
+                        .sqForegroundColor(.textPrimary)
+
+                    if let subtitle = section.subtitle {
+                        Text(subtitle)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                }
+
+                Spacer()
+
+                Text("\(section.count)")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, .SQSpace.s)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
+
+                SQImageView(
+                    image: .init(
+                        symbol: controller.isSectionCollapsed(section.id) ? .chevronDown : .chevronUp,
+                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                    )
+                )
+                .frame(width: 12, height: 12)
+            }
+            .padding(.horizontal, .SQSpace.l)
+            .padding(.top, .SQSpace.l)
+            .padding(.bottom, .SQSpace.m)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func metricSection(_ section: SQMetricsListSectionViewModel) -> some View {
+        VStack(spacing: 0) {
+            sectionHeader(section)
+
+            if !controller.isSectionCollapsed(section.id) {
+                VStack(spacing: 0) {
+                    ForEach(Array(section.rows.enumerated()), id: \.element.id) { index, row in
+                        metricRow(row)
+
+                        if index < section.rows.count - 1 {
+                            Divider()
+                                .padding(.leading, 60)
+                                .sqTintColor(.glassStroke)
+                        }
+                    }
+                }
+                .padding(.bottom, .SQSpace.s)
+            }
+        }
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    @ViewBuilder
     var mainScroll: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: .SQSpace.s) {
-                if controller.rows.isEmpty {
+            VStack(alignment: .leading, spacing: .SQSpace.l) {
+                summaryCard
+
+                if controller.sections.isEmpty {
                     emptyState
                 } else {
-                    ForEach(controller.rows) { row in
-                        metricRow(row)
+                    ForEach(controller.sections) { section in
+                        metricSection(section)
                     }
                 }
             }

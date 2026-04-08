@@ -64,9 +64,10 @@ enum SQMetricPeriod: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
 /// these are just the ones that ship with presets and appear in the picker by default.
 enum SQDefaultGroup: String, CaseIterable, UnfrozenEnum {
     case stats          = "Stats"            // One-time or infrequent physical measurements (e.g. weight)
-    case self_          = "Self"             // Daily mental/physical state metrics
+    case self_          = "Mind & Body"      // Daily mental/physical state metrics
     case sleep          = "Sleep"            // Sleep tracking metrics
-    case positiveHabits = "Positive Habits"  // Behaviors to build (nutrition, meditation)
+    case positiveHabits = "Nutrition & Recovery"  // Nutrition, hydration, digestion, etc.
+    case otherHabits    = "Other Habits"     // Meditation and other supportive routines
     case vices          = "Vices"            // Behaviors to monitor (alcohol, caffeine, etc.)
     case general        = "General"          // Fallback for user-created metrics
     case unknown        = "unknown"          // Fallback for unrecognized values from Firestore
@@ -243,19 +244,25 @@ enum SQMetricId {
     // MARK: Stats
     static let weight        = "metric.weight"          // number (pounds); morning + evening
 
-    // MARK: Self — enabled by default
+    // MARK: Mind & Body — core daily readiness signals
     static let mood          = "metric.mood"            // scale 0–10; morning + evening
     static let mentalClarity = "metric.mentalClarity"   // scale 0–10; morning + evening
     static let energy        = "metric.energy"          // scale 0–10; morning + evening
     static let soreness      = "metric.soreness"        // scale 0–10; morning + evening
+    static let stress        = "metric.stress"          // scale 0–10; morning + evening
+    static let motivation    = "metric.motivation"      // scale 0–10; morning + evening
+    static let anxiety       = "metric.anxiety"         // scale 0–10; morning + evening
+    static let sickness      = "metric.sickness"        // scale 0–10; morning + evening
 
     // MARK: Sleep
     static let sleepQuality  = "metric.sleepQuality"   // scale 0–10; morning + evening
     static let sleepHours    = "metric.sleepHours"     // number 0–24 hrs; morning + evening
 
-    // MARK: Positive Habits
+    // MARK: Nutrition & Recovery
+    static let hydration     = "metric.hydration"      // scale 0–10; morning + evening
+    static let digestion     = "metric.digestion"      // scale 0–10; morning + evening
     static let meditation    = "metric.meditation"     // scale 0–10; evening
-    static let nutrition     = "metric.nutrition"      // scale 0–10; evening — NEW
+    static let nutrition     = "metric.nutrition"      // scale 0–10; evening
 
     // MARK: Vices — alcohol and caffeine enabled by default
     static let alcohol       = "metric.alcohol"        // scale 0–10; evening

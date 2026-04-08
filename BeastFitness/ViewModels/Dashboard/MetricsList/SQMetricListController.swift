@@ -10,6 +10,16 @@ import SwiftData
 import Combine
 import BeastFitnessCore
 
+struct SQMetricsListSectionViewModel: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let subtitle: String?
+    let rows: [SQMetricsListItemViewModel]
+    let isTrackedSection: Bool
+
+    var count: Int { rows.count }
+}
+
 @Observable @MainActor
 final class SQMetricsListController {
     var searchText = "" {
@@ -24,6 +34,9 @@ final class SQMetricsListController {
 
     private(set) var rows: [SQMetricsListItemViewModel] = []
     private(set) var allRows: [SQMetricsListItemViewModel] = []
+    private(set) var sections: [SQMetricsListSectionViewModel] = []
+    private(set) var trackedCount: Int = 0
+    private var collapsedSectionIds = Set<String>()
 
     private var cancellables = Set<AnyCancellable>()
     private var modelContext: ModelContext?
@@ -86,21 +99,23 @@ final class SQMetricsListController {
 
             let allMetrics = metricsManager
                 .allMetrics(includeArchived: false)
-                .sorted { $0.sortOrder < $1.sortOrder }
-            
-            print("PTD Reload All Metrics", allMetrics.first(where: { $0.id == SQMetricId.soreness }))
+                .sorted {
+                    if $0.sortOrder == $1.sortOrder {
+                        return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+                    }
+                    return $0.sortOrder < $1.sortOrder
+                }
 
             let built: [SQMetricsListItemViewModel] = allMetrics.map { metric in
-                // ✅ IMPORTANT: don't force disable on tracked if we want toggle-to-untrack
-                // If you want to keep your VM's init that sets isDisabled = isTracked,
-                // we can override below.
-                let vm = SQMetricsListItemViewModel(metric: metric, isTracked: metricsManager.isMetricTracked(id: metric.id))
-
-                return vm
+                SQMetricsListItemViewModel(
+                    metric: metric,
+                    isTracked: metricsManager.isMetricTracked(id: metric.id)
+                )
             }
 
             self.allRows = built
             self.rows = built
+            self.trackedCount = built.filter(\.isTracked).count
             searchTextUpdated(searchText)
         } catch {
             // swallow for now, or emit alert
@@ -111,6 +126,7 @@ final class SQMetricsListController {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             rows = allRows
+            sections = buildSections(from: allRows)
             return
         }
 
@@ -123,14 +139,22 @@ final class SQMetricsListController {
             .filter { row in
                 let searchableText = [
                     row.title,
-                    row.subtitle
+                    row.subtitle,
+                    row.groupTitle
                 ]
                 .joined(separator: " ")
                 .lowercased()
 
                 return tokens.allSatisfy { searchableText.contains($0) }
             }
-            .sorted { $0.title < $1.title }
+            .sorted {
+                if $0.sortOrder == $1.sortOrder {
+                    return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+                }
+                return $0.sortOrder < $1.sortOrder
+            }
+
+        sections = buildSections(from: rows)
     }
 
     // MARK: - Navigation
@@ -156,23 +180,136 @@ final class SQMetricsListController {
             try metricsManager.loadIfNeeded(using: context)
 
             if metricsManager.isMetricTracked(id: row.metricId) {
-                print("PTD Disabling Metric", row.metricId)
                 try metricsManager.disableMetric(id: row.metricId, using: context)
             } else {
-                print("PTD Enabling Metric", row.metricId)
                 try metricsManager.enableMetric(id: row.metricId, using: context)
 
                 if let metric = metricsManager.allMetrics(includeArchived: false).first(where: { $0.id == row.metricId }) {
                     onMetricSelected?(metric)
                 }
             }
-            
-            print("PTD after toggle, isTracked:", metricsManager.isMetricTracked(id: row.metricId))
-
 
             reloadRows(using: context)
         } catch {
             // emit alert if desired
+        }
+    }
+
+    var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func isSectionCollapsed(_ sectionId: String) -> Bool {
+        !isSearching && collapsedSectionIds.contains(sectionId)
+    }
+
+    func toggleSection(_ sectionId: String) {
+        if collapsedSectionIds.contains(sectionId) {
+            collapsedSectionIds.remove(sectionId)
+        } else {
+            collapsedSectionIds.insert(sectionId)
+        }
+    }
+
+    private func buildSections(from rows: [SQMetricsListItemViewModel]) -> [SQMetricsListSectionViewModel] {
+        var builtSections: [SQMetricsListSectionViewModel] = []
+
+        let trackedRows = rows
+            .filter(\.isTracked)
+            .sorted(by: sortRows)
+
+        if !trackedRows.isEmpty {
+            builtSections.append(
+                .init(
+                    id: "tracked",
+                    title: "Currently Tracking",
+                    subtitle: "\(trackedRows.count) active metric\(trackedRows.count == 1 ? "" : "s")",
+                    rows: trackedRows,
+                    isTrackedSection: true
+                )
+            )
+        }
+
+        let untrackedRows = rows.filter { !$0.isTracked }
+        let groupedRows = Dictionary(grouping: untrackedRows, by: \.groupTitle)
+        let orderedGroupTitles = groupedRows.keys.sorted(by: sortGroups)
+
+        for groupTitle in orderedGroupTitles {
+            let groupRows = (groupedRows[groupTitle] ?? []).sorted(by: sortRows)
+            guard !groupRows.isEmpty else { continue }
+
+            builtSections.append(
+                .init(
+                    id: "group.\(groupTitle.lowercased())",
+                    title: groupTitle,
+                    subtitle: sectionSubtitle(for: groupTitle, count: groupRows.count),
+                    rows: groupRows,
+                    isTrackedSection: false
+                )
+            )
+        }
+
+        return builtSections
+    }
+
+    private func sortRows(_ lhs: SQMetricsListItemViewModel, _ rhs: SQMetricsListItemViewModel) -> Bool {
+        if lhs.sortOrder == rhs.sortOrder {
+            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+        }
+
+        return lhs.sortOrder < rhs.sortOrder
+    }
+
+    private func sortGroups(_ lhs: String, _ rhs: String) -> Bool {
+        let lhsPriority = groupPriority(for: lhs)
+        let rhsPriority = groupPriority(for: rhs)
+
+        if lhsPriority == rhsPriority {
+            return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+        }
+
+        return lhsPriority < rhsPriority
+    }
+
+    private func groupPriority(for title: String) -> Int {
+        switch title {
+        case SQDefaultGroup.stats.rawValue:
+            return 10
+        case SQDefaultGroup.self_.rawValue:
+            return 20
+        case SQDefaultGroup.sleep.rawValue:
+            return 30
+        case SQDefaultGroup.positiveHabits.rawValue:
+            return 40
+        case SQDefaultGroup.vices.rawValue:
+            return 50
+        case SQDefaultGroup.otherHabits.rawValue:
+            return 60
+        case SQDefaultGroup.general.rawValue:
+            return 70
+        default:
+            return 80
+        }
+    }
+
+    private func sectionSubtitle(for groupTitle: String, count: Int) -> String? {
+        let countText = "\(count) metric\(count == 1 ? "" : "s")"
+
+        switch groupTitle {
+        case SQDefaultGroup.self_.rawValue:
+            return "\(countText) for mood, readiness, and symptoms."
+        case SQDefaultGroup.sleep.rawValue:
+            return "\(countText) related to how you slept."
+        case SQDefaultGroup.positiveHabits.rawValue:
+            return "\(countText) for nutrition, hydration, and recovery habits."
+        case SQDefaultGroup.vices.rawValue:
+            return "\(countText) to monitor behaviors you may want to limit."
+        case SQDefaultGroup.otherHabits.rawValue:
+            return "\(countText) for supportive routines you want to build."
+        case SQDefaultGroup.stats.rawValue:
+            return "\(countText) for simple body measurements."
+        default:
+            return countText
         }
     }
 }
