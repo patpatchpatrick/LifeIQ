@@ -21,13 +21,13 @@ protocol SQBodyBatteryServicing {
 @MainActor
 final class SQBodyBatteryService: SQBodyBatteryServicing {
     private let metricEntryManager: SQMetricEntryManaging
-    private let metricsManager: SQMetricsManaging
+    private let metricsManager: SQMetricDefinitionManaging
     private let sleepAggregationService: SQSleepAggregationService
     private let healthKitManager: SQHealthKitManaging
 
     init(
         metricEntryManager: SQMetricEntryManaging,
-        metricsManager: SQMetricsManaging = SQMetricsManager.shared,
+        metricsManager: SQMetricDefinitionManaging = SQMetricDefinitionManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared
     ) {

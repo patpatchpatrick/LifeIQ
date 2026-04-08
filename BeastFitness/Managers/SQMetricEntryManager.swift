@@ -13,18 +13,19 @@ import BeastFitnessCore
 protocol SQMetricEntryManaging: AnyObject {
     var hub: EventHub { get }
 
-    /// Primary manager for canonical metric value + note storage and Firestore sync.
-    /// Dashboard analytics and cross-device sync should prefer this manager over the
-    /// legacy SQDailyCheckInManager / SQDailyCheckInEntity path.
+    /// Primary manager for canonical daily check-in value, note, and completion storage.
 
     /// Saves a set of metric entries and an optional note for the day to local storage and Firestore.
     func save(entries: [SQMetricEntry], note: SQDailyNote?, to context: ModelContext) async throws
+    func saveDailyCheckInStats(stats: SQDailyCheckInStats, to context: ModelContext) async throws
 
     /// Returns all entries for a given calendar day (all periods).
     func getEntries(for anchorDayKey: String, context: ModelContext) throws -> [SQMetricEntry]
 
     /// Returns the note for a given calendar day, or nil if none exists.
     func getNote(for anchorDayKey: String, context: ModelContext) throws -> SQDailyNote?
+    func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats?
+    func hasCompletedCheckIn(for date: Date, period: SQMetricPeriod, context: ModelContext) async throws -> Bool
 
     /// Syncs metric entries and notes from Firestore if needed.
     func syncIfNeeded(for timeRange: SQTimeRange, context: ModelContext) async throws -> SyncResult
@@ -81,7 +82,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         for dayKey in affectedDays {
             do {
                 let allDayEntries = try SQMetricEntryEntity.getAll(for: dayKey, context: context)
-                let noteContent = dayKey == note?.anchorDayKey ? note?.content : nil
+                let noteContent = try SQDailyNoteEntity.get(for: dayKey, context: context)?.content
                 let bucket = SQMetricEntryBucket(anchorDayKey: dayKey, entries: allDayEntries, note: noteContent)
                 try await entryService.saveEntryBucket(bucket, for: user)
             } catch {
@@ -92,6 +93,94 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         SQLogger.shared.log("Saved \(entries.count) entries in \(affectedDays.count) day bucket(s)", .info, context: .dailyCheckIn)
     }
 
+    func saveDailyCheckInStats(stats: SQDailyCheckInStats, to context: ModelContext) async throws {
+        try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
+
+        let allMetrics = SQMetricDefinitionManager.shared.allMetrics(includeArchived: true)
+        let metricById = Dictionary(uniqueKeysWithValues: allMetrics.map { ($0.id, $0) })
+        let timeZone = TimeZone.current
+        let anchorDayKey = stats.date.anchorDayKey(in: timeZone)
+        let submissionPeriod = stats.period ?? .morning
+        let recordedAt = Date.now
+
+        let entries: [SQMetricEntry] = stats.values.compactMap { metricId, rawValue in
+            guard let definition = metricById[metricId] else { return nil }
+
+            return SQMetricEntry(
+                id: SQMetricEntry.stableEntryId(
+                    metricId: metricId,
+                    anchorDayKey: anchorDayKey,
+                    period: submissionPeriod,
+                    isSingleDailyValue: definition.isSingleDailyValue
+                ),
+                metricId: metricId,
+                recordedAt: recordedAt,
+                anchorDayKey: anchorDayKey,
+                timeZoneIdentifier: timeZone.identifier,
+                period: submissionPeriod,
+                rawValue: rawValue,
+                normalizedScore: SQMetricEntry.normalizedScore(for: rawValue, definition: definition)
+            )
+        }
+
+        try SQMetricEntryEntity.upsert(entries, in: context)
+
+        let formMetricIds = Set(SQMetricDefinitionManager.shared.dailyCheckInMetrics(for: submissionPeriod).map(\.id))
+        let singleDailyMetricIds = Set(
+            formMetricIds.filter { metricById[$0]?.isSingleDailyValue == true }
+        )
+
+        /// Deletes metrics that were removed from the check in form by the user
+        try SQMetricEntryEntity.delete(
+            for: anchorDayKey,
+            metricIds: formMetricIds,
+            period: submissionPeriod,
+            singleDailyMetricIds: singleDailyMetricIds,
+            keepMetricIds: Set(stats.values.keys),
+            in: context
+        )
+
+        try SQDailyCheckInSessionEntity.upsert(
+            date: stats.date,
+            period: submissionPeriod,
+            completedAt: recordedAt,
+            in: context
+        )
+
+        let normalizedNotes = stats.notes?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let normalizedNotes, !normalizedNotes.isEmpty {
+            try SQDailyNoteEntity.upsert(
+                SQDailyNote(
+                    anchorDayKey: anchorDayKey,
+                    content: normalizedNotes,
+                    updatedAt: recordedAt
+                ),
+                in: context
+            )
+        } else {
+            try SQDailyNoteEntity.delete(for: anchorDayKey, in: context)
+        }
+
+        guard let user = SQAppState.shared.userState.loggedInUser else { return }
+
+        let allDayEntries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
+        let noteForDay = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
+        let bucket = SQMetricEntryBucket(
+            anchorDayKey: anchorDayKey,
+            entries: allDayEntries,
+            note: noteForDay?.content,
+            updatedAt: recordedAt
+        )
+        try await entryService.saveEntryBucket(bucket, for: user)
+
+        SQLogger.shared.log(
+            "Saved daily check-in for \(anchorDayKey) (\(submissionPeriod.rawValue)) with \(entries.count) entries",
+            .info,
+            context: .dailyCheckIn
+        )
+    }
+
     // MARK: - Read
 
     func getEntries(for anchorDayKey: String, context: ModelContext) throws -> [SQMetricEntry] {
@@ -100,6 +189,47 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     func getNote(for anchorDayKey: String, context: ModelContext) throws -> SQDailyNote? {
         try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
+    }
+
+    func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats? {
+        try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
+
+        let anchorDayKey = date.anchorDayKey()
+        let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
+        let note = try SQDailyNoteEntity.get(for: anchorDayKey, context: context)
+
+        guard !entries.isEmpty || note != nil else { return nil }
+
+        let metricById = Dictionary(
+            uniqueKeysWithValues: SQMetricDefinitionManager.shared.allMetrics(includeArchived: true).map { ($0.id, $0) }
+        )
+
+        var values: [String: Float] = [:]
+        for entry in entries {
+            let isSingleDaily = metricById[entry.metricId]?.isSingleDailyValue ?? false
+            if isSingleDaily || period == nil || entry.period == period {
+                values[entry.metricId] = entry.rawValue
+            }
+        }
+
+        return normalizedStatsOrNil(
+            SQDailyCheckInStats(
+                date: date,
+                period: period,
+                values: values,
+                notes: note?.content
+            )
+        )
+    }
+
+    func hasCompletedCheckIn(for date: Date, period: SQMetricPeriod, context: ModelContext) async throws -> Bool {
+        if try SQDailyCheckInSessionEntity.exists(for: date, period: period, context: context) {
+            return true
+        }
+
+        let anchorDayKey = date.anchorDayKey()
+        let entries = try SQMetricEntryEntity.getAll(for: anchorDayKey, context: context)
+        return entries.contains(where: { $0.period == period })
     }
 
     func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats] {
@@ -200,9 +330,19 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     /// Extracts notes embedded in buckets and upserts them into local SwiftData storage.
     private func upsertNotes(from buckets: [SQMetricEntryBucket], in context: ModelContext) throws {
         for bucket in buckets {
-            guard let content = bucket.note, !content.isEmpty else { continue }
-            let note = SQDailyNote(anchorDayKey: bucket.anchorDayKey, content: content, updatedAt: bucket.updatedAt)
-            try SQDailyNoteEntity.upsert(note, in: context)
+            let normalizedContent = bucket.note?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if let normalizedContent, !normalizedContent.isEmpty {
+                let note = SQDailyNote(
+                    anchorDayKey: bucket.anchorDayKey,
+                    content: normalizedContent,
+                    updatedAt: bucket.updatedAt
+                )
+                try SQDailyNoteEntity.upsert(note, in: context)
+            } else {
+                try SQDailyNoteEntity.delete(for: bucket.anchorDayKey, in: context)
+            }
         }
     }
 
@@ -240,5 +380,23 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         } catch {
             SQLogger.shared.log("Failed to save entry sync metadata: \(error)", .error, context: .dailyCheckIn)
         }
+    }
+
+    private func normalizedStatsOrNil(_ stats: SQDailyCheckInStats?) -> SQDailyCheckInStats? {
+        guard let stats else { return nil }
+
+        let normalizedNotes = stats.notes?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !stats.values.isEmpty || normalizedNotes?.isEmpty == false else {
+            return nil
+        }
+
+        return SQDailyCheckInStats(
+            date: stats.date,
+            period: stats.period,
+            values: stats.values,
+            notes: normalizedNotes?.isEmpty == false ? normalizedNotes : nil
+        )
     }
 }

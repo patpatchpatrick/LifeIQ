@@ -138,11 +138,11 @@ final class SQMetricFormViewModel {
 
     // MARK: - Dependencies
 
-    private let metricsManager: SQMetricsManaging
+    private let metricsManager: SQMetricDefinitionManaging
 
     // MARK: - Init
 
-    init(mode: Mode, metricsManager: SQMetricsManaging) {
+    init(mode: Mode, metricsManager: SQMetricDefinitionManaging) {
         self.mode = mode
         self.metricsManager = metricsManager
 
@@ -747,7 +747,7 @@ final class SQMetricFormViewModel {
         calculateValidity()
     }
 
-    private static func computeAvailableGroups(metricsManager: SQMetricsManaging, selectedGroup: String) -> [String] {
+    private static func computeAvailableGroups(metricsManager: SQMetricDefinitionManaging, selectedGroup: String) -> [String] {
         let legacyAndUnknown: Set<String> = [
             SQDefaultGroup.unknown.rawValue,
             SQDefaultGroup.habit.rawValue,

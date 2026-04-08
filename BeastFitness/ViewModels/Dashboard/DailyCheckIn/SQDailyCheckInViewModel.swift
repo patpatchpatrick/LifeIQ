@@ -29,8 +29,8 @@ final class SQDailyCheckInViewModel: Identifiable {
     let eventHub: EventHub
     let dashboardInterface: SQDashboardInterface = SQDashboardController.default
 
-    private let dailyCheckInManager: SQDailyCheckInManaging
-    private let metricsManager: SQMetricsManaging
+    private let metricEntryManager: SQMetricEntryManaging
+    private let metricsManager: SQMetricDefinitionManaging
     private let healthKitManager: SQHealthKitManaging
     private let sleepAggregationService: SQSleepAggregationService
     private let userState: SQUserStating
@@ -51,15 +51,15 @@ final class SQDailyCheckInViewModel: Identifiable {
     var isAddMetricSheetDisplayed: Bool = false
     let metricsListController = SQMetricsListController.default(
         state: SQAppState.shared.metricsListState,
-        metricsManager: SQMetricsManager.shared)
+        metricsManager: SQMetricDefinitionManager.shared)
 
     init(
         eventHub: EventHub,
         stats: SQDailyCheckInStats?,
         targetDate: Date = .now,
         period: SQMetricPeriod,
-        dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
-        metricsManager: SQMetricsManaging,
+        metricEntryManager: SQMetricEntryManaging = SQAppState.shared.metricEntryManager,
+        metricsManager: SQMetricDefinitionManaging,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
         userState: SQUserStating = SQAppState.shared.userState,
@@ -69,7 +69,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.stats = stats
         self.targetDate = targetDate
         self.period = period
-        self.dailyCheckInManager = dailyCheckInManager
+        self.metricEntryManager = metricEntryManager
         self.metricsManager = metricsManager
         self.healthKitManager = healthKitManager
         self.sleepAggregationService = sleepAggregationService
@@ -104,7 +104,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.targetDate = date
 
         // Load stats for the new date, filtered to the current check-in period
-        let loadedStats = try? await dailyCheckInManager.getDailyCheckInStats(
+        let loadedStats = try? await metricEntryManager.getDailyCheckInStats(
             for: date,
             period: period,
             context: modelContext
@@ -427,7 +427,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         SQLogger.shared.log("Submitting daily stats: \(stats)", .debug, context: .dailyCheckIn)
 
         do {
-            try await dailyCheckInManager.saveDailyCheckInStats(stats: stats, to: modelContext)
+            try await metricEntryManager.saveDailyCheckInStats(stats: stats, to: modelContext)
             await dashboardInterface.refreshUI(for: modelContext)
             onDismiss()
         } catch {
@@ -526,15 +526,15 @@ final class SQDailyCheckInViewModel: Identifiable {
         dateFormatter.locale = .current
         dateFormatter.dateFormat = "EEEE, MMMM d, yyyy"
 
-        // Build entries for today + past 30 days, two rows per day (morning then evening)
+        // Build entries for today + past 30 days.
         for i in 0...30 {
             guard let dayDate = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
             let normalizedDate = calendar.startOfDay(for: dayDate)
             let isToday = i == 0
             let dateString = dateFormatter.string(from: normalizedDate)
 
-            for entryPeriod in [SQMetricPeriod.morning, .evening] {
-                let isCompleted = (try? await dailyCheckInManager.hasCompletedCheckIn(
+            for entryPeriod in [SQMetricPeriod.evening, .morning] {
+                let isCompleted = (try? await metricEntryManager.hasCompletedCheckIn(
                     for: normalizedDate,
                     period: entryPeriod,
                     context: modelContext
@@ -549,7 +549,24 @@ final class SQDailyCheckInViewModel: Identifiable {
             }
         }
 
-        return entries
+        return entries.sorted {
+            if !Calendar.current.isDate($0.date, inSameDayAs: $1.date) {
+                return $0.date > $1.date
+            }
+
+            return periodSortOrder($0.period) > periodSortOrder($1.period)
+        }
+    }
+
+    private func periodSortOrder(_ period: SQMetricPeriod) -> Int {
+        switch period {
+        case .evening:
+            return 2
+        case .morning:
+            return 1
+        case .unknown:
+            return 0
+        }
     }
 
     private func mergedStats(

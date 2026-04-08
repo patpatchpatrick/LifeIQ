@@ -25,9 +25,8 @@ final class SQDashboardController: SQDashboardInterface {
     var state: DashboardStating
     let navState: NavigationStating
     let userState: SQUserStating
-    let dailyCheckInManager: SQDailyCheckInManaging
     let metricEntryManager: SQMetricEntryManaging
-    let metricsManager: SQMetricsManaging
+    let metricsManager: SQMetricDefinitionManaging
     let workoutManager: SQWorkoutManaging
     let healthKitManager: SQHealthKitManaging
     let statsManager: SQWorkoutStatsManaging
@@ -59,9 +58,8 @@ final class SQDashboardController: SQDashboardInterface {
         state: DashboardStating,
         navState: NavigationStating,
         userState: SQUserStating = SQAppState.shared.userState,
-        dailyCheckInManager: SQDailyCheckInManaging = SQDailyCheckInManager(),
         metricEntryManager: SQMetricEntryManaging = SQAppState.shared.metricEntryManager,
-        metricsManager: SQMetricsManaging = SQMetricsManager.shared,
+        metricsManager: SQMetricDefinitionManaging = SQMetricDefinitionManager.shared,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         statsManager: SQWorkoutStatsManaging = SQWorkoutStatsManager.shared,
@@ -79,7 +77,6 @@ final class SQDashboardController: SQDashboardInterface {
         self.state = state
         self.navState = navState
         self.userState = userState
-        self.dailyCheckInManager = dailyCheckInManager
         self.metricEntryManager = metricEntryManager
         self.metricsManager = metricsManager
         self.workoutManager = workoutManager
@@ -259,17 +256,8 @@ final class SQDashboardController: SQDashboardInterface {
         do {
             try metricsManager.loadIfNeeded(using: context)
 
-            // Sync daily check-ins from Firestore
-            let timeRange = state.selectedTimeRange.sqTimeRange
-            
             if userState.isLoggedIn {
-                
-                _ = try await dailyCheckInManager.syncDailyCheckInsIfNeeded(
-                    for: timeRange,
-                    context: context
-                )
-                
-                _ = try await SQMetricsManager.shared.syncMetricsIfNeeded(using: context)
+                _ = try await SQMetricDefinitionManager.shared.syncMetricsIfNeeded(using: context)
             }
 
             // Fetch VO2 Max samples for different time ranges
@@ -316,7 +304,7 @@ final class SQDashboardController: SQDashboardInterface {
             )
             let hasCompletedCurrentCheckIn: Bool
             if let currentCheckInPromptPeriod {
-                hasCompletedCurrentCheckIn = (try? await dailyCheckInManager.hasCompletedCheckIn(
+                hasCompletedCurrentCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
                     for: currentCheckInDate,
                     period: currentCheckInPromptPeriod,
                     context: context
@@ -553,7 +541,7 @@ final class SQDashboardController: SQDashboardInterface {
                 sleepSchedule: sleepSchedule
             )
         }()
-        let dailyCheckInStats = try? await dailyCheckInManager.getDailyCheckInStats(
+        let dailyCheckInStats = try? await metricEntryManager.getDailyCheckInStats(
             for: targetDate,
             period: checkInPeriod,
             context: context
@@ -742,7 +730,7 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         let stats = checkIns
-        let allDefinitions = SQMetricsManager.shared.dailyCheckInMetrics().sorted {
+        let allDefinitions = SQMetricDefinitionManager.shared.dailyCheckInMetrics().sorted {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
 

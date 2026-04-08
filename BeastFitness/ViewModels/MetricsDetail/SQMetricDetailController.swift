@@ -69,7 +69,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
 
     private let hub: EventHub
     private let metricId: String
-    private let metricsManager: SQMetricsManaging
+    private let metricsManager: SQMetricDefinitionManaging
     private let metricEntryManager: SQMetricEntryManaging
     private weak var modelContext: ModelContext?
 
@@ -92,7 +92,7 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         hub: EventHub,
         metricId: String,
         initialTimeRange: AppTimeRange,
-        metricsManager: SQMetricsManaging = SQMetricsManager.shared,
+        metricsManager: SQMetricDefinitionManaging = SQMetricDefinitionManager.shared,
         metricEntryManager: SQMetricEntryManaging = SQAppState.shared.metricEntryManager
     ) {
         self.hub = hub

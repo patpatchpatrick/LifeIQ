@@ -67,6 +67,7 @@
 		F7D1A1012FD1200100AA1001 /* SQAccountDeletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */; };
 		F7D1A1032FD1200100AA1001 /* SQDeleteAccountController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1022FD1200100AA1001 /* SQDeleteAccountController.swift */; };
 		F7D1A1052FD1200100AA1001 /* SQDeleteAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1042FD1200100AA1001 /* SQDeleteAccountView.swift */; };
+		F7D1A1112FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */; };
 		F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B162F6F3BAA00087C0F /* SQUserRoute.swift */; };
 		F6268B192F6F3BB700087C0F /* SQUserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B182F6F3BB700087C0F /* SQUserService.swift */; };
 		F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */; };
@@ -131,7 +132,7 @@
 		F67F09F82F0859D600D7BB90 /* SQHealthKitManager+VO2Max.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09F72F0859CF00D7BB90 /* SQHealthKitManager+VO2Max.swift */; };
 		F67F0A002F08759C00D7BB90 /* SQMetricListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F09FF2F08759500D7BB90 /* SQMetricListController.swift */; };
 		F67F0A062F0876E600D7BB90 /* SQMetricsListState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A052F0876DF00D7BB90 /* SQMetricsListState.swift */; };
-		F67F0A082F08774000D7BB90 /* SQMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */; };
+		F67F0A082F08774000D7BB90 /* SQMetricDefinitionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A072F08773D00D7BB90 /* SQMetricDefinitionManager.swift */; };
 		F67F0A0B2F087A0D00D7BB90 /* SQMetricsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0A2F087A0A00D7BB90 /* SQMetricsListView.swift */; };
 		F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */; };
 		F67F0A102F087C1400D7BB90 /* SQMetricsListItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */; };
@@ -204,14 +205,11 @@
 		F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2642EDE54C900D3E679 /* FirebaseFirestore */; };
 		F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3562EDE58B800D3E679 /* SQRouter.swift */; };
 		F6ABC35D2EDE594C00D3E679 /* SQNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */; };
-		F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */; };
 		F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3612EDE654500D3E679 /* SQUser.swift */; };
-		F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */; };
 		F6ABC3662EDE671C00D3E679 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */; };
 		F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */; };
-		F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */; };
+		F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInSessionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */; };
 		F6ABC4EA2EDFCE5500D3E679 /* Int+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */; };
-		F6ABC4EC2EE1DEDB00D3E679 /* SQDailyCheckInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */; };
 		F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */; };
 		F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */; };
 		F6B2B0052F92430100A1B001 /* SQBodyBatteryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */; };
@@ -253,7 +251,6 @@
 		F6E179A52F6357450099CAF2 /* SQDailyNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E1799E2F6357450099CAF2 /* SQDailyNote.swift */; };
 		F6E179A92F63575C0099CAF2 /* SQMetricEntryRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */; };
 		F6E179AC2F63576F0099CAF2 /* SQMetricEntryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */; };
-		F6E179B02F6357810099CAF2 /* SQMetricMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */; };
 		F6E179B12F6357810099CAF2 /* SQMetricEntryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */; };
 		F6E179B32F6384DB0099CAF2 /* SQMultiSelect.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */; };
 		F6E179B52F6384EE0099CAF2 /* SQMultiSelectViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */; };
@@ -395,6 +392,7 @@
 		F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAccountDeletionManager.swift; sourceTree = "<group>"; };
 		F7D1A1022FD1200100AA1001 /* SQDeleteAccountController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeleteAccountController.swift; sourceTree = "<group>"; };
 		F7D1A1042FD1200100AA1001 /* SQDeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeleteAccountView.swift; sourceTree = "<group>"; };
+		F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInLegacyEntity.swift; sourceTree = "<group>"; };
 		F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionView.swift; sourceTree = "<group>"; };
 		F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionController.swift; sourceTree = "<group>"; };
 		F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseView.swift; sourceTree = "<group>"; };
@@ -461,7 +459,7 @@
 		F67F09F72F0859CF00D7BB90 /* SQHealthKitManager+VO2Max.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+VO2Max.swift"; sourceTree = "<group>"; };
 		F67F09FF2F08759500D7BB90 /* SQMetricListController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricListController.swift; sourceTree = "<group>"; };
 		F67F0A052F0876DF00D7BB90 /* SQMetricsListState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListState.swift; sourceTree = "<group>"; };
-		F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsManager.swift; sourceTree = "<group>"; };
+		F67F0A072F08773D00D7BB90 /* SQMetricDefinitionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDefinitionManager.swift; sourceTree = "<group>"; };
 		F67F0A0A2F087A0A00D7BB90 /* SQMetricsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListView.swift; sourceTree = "<group>"; };
 		F67F0A0C2F087A7900D7BB90 /* SQMetricsListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItem.swift; sourceTree = "<group>"; };
 		F67F0A0F2F087C1000D7BB90 /* SQMetricsListItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricsListItemViewModel.swift; sourceTree = "<group>"; };
@@ -528,14 +526,11 @@
 		F6ABC25D2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-Staging.plist"; sourceTree = "<group>"; };
 		F6ABC3562EDE58B800D3E679 /* SQRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRouter.swift; sourceTree = "<group>"; };
 		F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQNetworkService.swift; sourceTree = "<group>"; };
-		F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInService.swift; sourceTree = "<group>"; };
 		F6ABC3612EDE654500D3E679 /* SQUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUser.swift; sourceTree = "<group>"; };
-		F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckinRoute.swift; sourceTree = "<group>"; };
 		F6ABC3652EDE671800D3E679 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInStats.swift; sourceTree = "<group>"; };
-		F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInEntity.swift; sourceTree = "<group>"; };
+		F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInSessionEntity.swift; sourceTree = "<group>"; };
 		F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Extensions.swift"; sourceTree = "<group>"; };
-		F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInManager.swift; sourceTree = "<group>"; };
 		F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowView.swift; sourceTree = "<group>"; };
 		F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQBodyBatteryService.swift; sourceTree = "<group>"; };
@@ -578,7 +573,6 @@
 		F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryRoute.swift; sourceTree = "<group>"; };
 		F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryService.swift; sourceTree = "<group>"; };
 		F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricEntryManager.swift; sourceTree = "<group>"; };
-		F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricMigrationManager.swift; sourceTree = "<group>"; };
 		F6E179B22F6384DB0099CAF2 /* SQMultiSelect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelect.swift; sourceTree = "<group>"; };
 		F6E179B42F6384EE0099CAF2 /* SQMultiSelectViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMultiSelectViewModel.swift; sourceTree = "<group>"; };
 		F6E909D12ED529D5003441B5 /* SQCallToAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCallToAction.swift; sourceTree = "<group>"; };
@@ -1341,7 +1335,7 @@
 		F6A848A72CB619E900B09AD5 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
-				F67F0A072F08773D00D7BB90 /* SQMetricsManager.swift */,
+				F67F0A072F08773D00D7BB90 /* SQMetricDefinitionManager.swift */,
 				F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */,
 				F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */,
 				F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */,
@@ -1352,7 +1346,6 @@
 				F61592302EF3628800223A63 /* SQAlertState.swift */,
 				F61592042EEE16AA00223A63 /* SQWorkoutManager.swift */,
 				F647A9032EE7DACC00DAA247 /* SQExercisesManager.swift */,
-				F6ABC4EB2EE1DED800D3E679 /* SQDailyCheckInManager.swift */,
 				F6A848A82CB619F700B09AD5 /* SQDeepLinkManager.swift */,
 				F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */,
 				F6C5FD762F3113D900BF1022 /* SQModalState.swift */,
@@ -1362,7 +1355,6 @@
 				F6E179922F57DAED0099CAF2 /* Sleep */,
 				F7D1000B2F98010100AA1001 /* SQWorkoutScoreService.swift */,
 				F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */,
-				F6E179AF2F6357810099CAF2 /* SQMetricMigrationManager.swift */,
 				F6268B122F6F3B9000087C0F /* SQAuthManager.swift */,
 				F6268B132F6F3B9000087C0F /* SQUserManager.swift */,
 			);
@@ -1410,7 +1402,6 @@
 		F6ABC3582EDE58FF00D3E679 /* Routers */ = {
 			isa = PBXGroup;
 			children = (
-				F6ABC3632EDE66D200D3E679 /* SQDailyCheckinRoute.swift */,
 				F6ABC3562EDE58B800D3E679 /* SQRouter.swift */,
 				F6C5FDAD2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift */,
 				F6E179A72F63575C0099CAF2 /* SQMetricEntryRoute.swift */,
@@ -1423,7 +1414,6 @@
 			isa = PBXGroup;
 			children = (
 				F61592062EEE179000223A63 /* SQWorkoutService.swift */,
-				F6ABC35E2EDE5DF300D3E679 /* SQDailyCheckInService.swift */,
 				F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */,
 				F6C5FDAF2F33A0FD00BF1022 /* SQMetricDefinitionService.swift */,
 				F6E179AB2F63576F0099CAF2 /* SQMetricEntryService.swift */,
@@ -1446,7 +1436,8 @@
 			children = (
 				F67F09F52F08566B00D7BB90 /* SQMetricDefinitionEntity.swift */,
 				F67F09F32F08565800D7BB90 /* SQMetric.swift */,
-				F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInEntity.swift */,
+				F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */,
+				F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */,
 				F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */,
 				F6E1799E2F6357450099CAF2 /* SQDailyNote.swift */,
 				F6E1799F2F6357450099CAF2 /* SQDailyNoteEntity.swift */,
@@ -1950,11 +1941,11 @@
 				F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */,
 				F615922F2EF35E2800223A63 /* SQUserDefaults.swift in Sources */,
 				F67F09F42F08565A00D7BB90 /* SQMetric.swift in Sources */,
+				F7D1A1112FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift in Sources */,
 				F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */,
 				F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */,
 				F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */,
-				F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInEntity.swift in Sources */,
-				F6ABC35F2EDE5DF700D3E679 /* SQDailyCheckInService.swift in Sources */,
+				F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInSessionEntity.swift in Sources */,
 				F6DF8DFD2CCB0FA0005CC48B /* SQHealthKitManager+Sleep.swift in Sources */,
 				F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */,
 				F67F0A0B2F087A0D00D7BB90 /* SQMetricsListView.swift in Sources */,
@@ -2002,7 +1993,6 @@
 				F61592342EF362FF00223A63 /* SQAlertViewModel.swift in Sources */,
 				F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */,
 				F6E1798A2F57DA400099CAF2 /* SQDashboardSleepScoreRowViewModel.swift in Sources */,
-				F6E179B02F6357810099CAF2 /* SQMetricMigrationManager.swift in Sources */,
 				F6E179B12F6357810099CAF2 /* SQMetricEntryManager.swift in Sources */,
 				F6E1798B2F57DA400099CAF2 /* SQDashboardSleepPhaseTimelineRowViewModel.swift in Sources */,
 				F67F0A0D2F087A7B00D7BB90 /* SQMetricsListItem.swift in Sources */,
@@ -2065,7 +2055,7 @@
 				F6268B152F6F3B9000087C0F /* SQAuthManager.swift in Sources */,
 				F7D1A1012FD1200100AA1001 /* SQAccountDeletionManager.swift in Sources */,
 				F679BDD92EE7D49500A2F249 /* SQExercisesListController.swift in Sources */,
-				F67F0A082F08774000D7BB90 /* SQMetricsManager.swift in Sources */,
+				F67F0A082F08774000D7BB90 /* SQMetricDefinitionManager.swift in Sources */,
 				F602DA2A2EC40EC800404878 /* EventHub.swift in Sources */,
 				F6940F1F2F36B0F50008A2A0 /* SQDashboardSubsectionViewModel.swift in Sources */,
 				F61592252EF0F0B100223A63 /* SQWorkoutSessionSetViewModel.swift in Sources */,
@@ -2111,7 +2101,6 @@
 				F6E909D22ED529DC003441B5 /* SQCallToAction.swift in Sources */,
 				F6940F2F2F37B14E0008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift in Sources */,
 				F67F0A7B2F0DE38800D7BB90 /* SQWorkoutSession+PrettyDescription.swift in Sources */,
-				F6ABC4EC2EE1DEDB00D3E679 /* SQDailyCheckInManager.swift in Sources */,
 				F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */,
 				F64B966D2F4E7E4900261004 /* SQWorkoutSessionMetadataManager.swift in Sources */,
 				F67F0A122F09DC8600D7BB90 /* SQWorkoutRouteMapView.swift in Sources */,
@@ -2126,7 +2115,6 @@
 				F6940F272F37A19A0008A2A0 /* SQDashboardActivityRowViewModel.swift in Sources */,
 				F639F0CD2F3ED11F004AC701 /* SQLeaderboardRowView.swift in Sources */,
 				F67F0A102F087C1400D7BB90 /* SQMetricsListItemViewModel.swift in Sources */,
-				F6ABC3642EDE66D600D3E679 /* SQDailyCheckinRoute.swift in Sources */,
 				F68C80522F365A0C00327250 /* SQSubsectionEmptyState.swift in Sources */,
 				F68C80532F365A0C00327250 /* SQDashboardSectionHeader.swift in Sources */,
 				F68C80552F365A0C00327250 /* SQDashboardStatRow.swift in Sources */,

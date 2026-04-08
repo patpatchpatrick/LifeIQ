@@ -168,7 +168,7 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
         try? modelContext.save()
 
         SQUserDefaults.shared.clearAccountScopedData(for: user.id)
-        SQMetricsManager.shared.reset()
+        SQMetricDefinitionManager.shared.reset()
         SQHealthKitManager.shared.invalidateCache()
         await SQWorkoutSessionMetadataManager.shared.invalidate()
 

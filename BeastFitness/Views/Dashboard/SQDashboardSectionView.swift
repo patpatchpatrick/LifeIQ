@@ -182,7 +182,7 @@ struct SQDashboardSectionView: View {
                 return
             }
 
-            let metricExists = SQMetricsManager.shared
+            let metricExists = SQMetricDefinitionManager.shared
                 .allMetrics(includeArchived: true)
                 .contains { $0.id == statsViewModel.metricId }
 

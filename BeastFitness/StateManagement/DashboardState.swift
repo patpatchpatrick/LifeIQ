@@ -120,7 +120,7 @@ protocol DashboardStating: AnyObject {
             stats: stats,
             targetDate: targetDate,
             period: resolvedPeriod,
-            metricsManager: SQMetricsManager.shared,
+            metricsManager: SQMetricDefinitionManager.shared,
             onDismiss: { [weak self] in
                 self?.toggleDailyCheckInSheetVisibility(false)
             })

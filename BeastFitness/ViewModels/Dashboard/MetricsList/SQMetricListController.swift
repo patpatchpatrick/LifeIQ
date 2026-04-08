@@ -29,7 +29,7 @@ final class SQMetricsListController {
     var navigationPath = NavigationPath()
     let state: SQMetricsListStating
 
-    let metricsManager: SQMetricsManaging
+    let metricsManager: SQMetricDefinitionManaging
     private(set) var hasLoadedUI = false
 
     private(set) var rows: [SQMetricsListItemViewModel] = []
@@ -48,7 +48,7 @@ final class SQMetricsListController {
     @MainActor
     static func `default`(
         state: SQMetricsListStating,
-        metricsManager: SQMetricsManaging,
+        metricsManager: SQMetricDefinitionManaging,
         onMetricSelected: ((SQMetricDefinition) -> Void)? = nil
     ) -> SQMetricsListController {
         .init(state: state, metricsManager: metricsManager, onMetricSelected: onMetricSelected)
@@ -56,7 +56,7 @@ final class SQMetricsListController {
 
     init(
         state: SQMetricsListStating,
-        metricsManager: SQMetricsManaging,
+        metricsManager: SQMetricDefinitionManaging,
         onMetricSelected: ((SQMetricDefinition) -> Void)? = nil
     ) {
         self.state = state

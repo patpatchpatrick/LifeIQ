@@ -1,5 +1,5 @@
 //
-//  SQMetricsManager.swift
+//  SQMetricDefinitionManager.swift
 //  BeastFitness
 //
 //  Created by Patrick Doyle on 1/2/26.
@@ -12,7 +12,7 @@ import BeastFitnessCore
 // MARK: - Protocol
 
 @MainActor
-protocol SQMetricsManaging: AnyObject {
+protocol SQMetricDefinitionManaging: AnyObject {
     var metrics: [SQMetricDefinition] { get }
 
     // Load / Seed
@@ -54,8 +54,8 @@ protocol SQMetricsManaging: AnyObject {
 // MARK: - Concrete Manager
 
 @MainActor
-final class SQMetricsManager: SQMetricsManaging {
-    static let shared: SQMetricsManaging = SQMetricsManager()
+final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
+    static let shared: SQMetricDefinitionManaging = SQMetricDefinitionManager()
 
     private var hub: EventHub { SQAppState.shared.hub }
     private let metricService: SQMetricDefinitionServicing.Type = SQMetricDefinitionService.self
