@@ -142,9 +142,9 @@ indirect enum SQColor {
         case .textPrimary:
             return Self.isDarkMode ? UIColor(hexString: "#E0E0E0")! : .black // light gray for dark mode
         case .textSecondary:
-            return Self.isDarkMode ? UIColor(hexString: "#B0B0B0")! : UIColor(hexString: "#6F6F6F")! // medium gray
+            return Self.isDarkMode ? UIColor(hexString: "#98A6AE")! : UIColor(hexString: "#6F6F6F")! // cooler slate gray
         case .textTertiary:
-            return Self.isDarkMode ? UIColor(hexString: "#7F7F7F")! : UIColor(hexString: "#A0A0A0")! // slightly lighter gray
+            return Self.isDarkMode ? UIColor(hexString: "#6D7880")! : UIColor(hexString: "#A0A0A0")! // subdued slate gray
         case .textDisabled:
             return Self.isDarkMode ? UIColor(hexString: "#4D4D4D")! : UIColor(hexString: "#B8B8B8")! // dimmed text for dark mode
         case .textWarning:
@@ -187,15 +187,15 @@ indirect enum SQColor {
         // MARK: - Dashboard Atmosphere
         case .dashboardGradientStart:
             return Self.isDarkMode
-                ? UIColor(hexString: "#07141A")!
+                ? UIColor(hexString: "#02070B")!
                 : UIColor(hexString: "#F7FBFC")!
         case .dashboardGradientMid:
             return Self.isDarkMode
-                ? UIColor(hexString: "#0C2630")!
+                ? UIColor(hexString: "#07131C")!
                 : UIColor(hexString: "#EAF6F2")!
         case .dashboardGradientEnd:
             return Self.isDarkMode
-                ? UIColor(hexString: "#15424A")!
+                ? UIColor(hexString: "#0D2430")!
                 : UIColor(hexString: "#E7F0FA")!
         case .sheetGradientStart:
             return Self.isDarkMode
@@ -211,15 +211,15 @@ indirect enum SQColor {
                 : UIColor(hexString: "#EAF0F6")!
         case .dashboardGlowBlue:
             return Self.isDarkMode
-                ? UIColor(hexString: "#6FD7FF")!
+                ? UIColor(hexString: "#59B8D7")!
                 : UIColor(hexString: "#B5E8FF")!
         case .dashboardGlowMint:
             return Self.isDarkMode
-                ? UIColor(hexString: "#8BF0CB")!
+                ? UIColor(hexString: "#6CCDAE")!
                 : UIColor(hexString: "#C9F7E5")!
         case .dashboardTrendWarm:
             return Self.isDarkMode
-                ? UIColor(hexString: "#F0C2B8")!
+                ? UIColor(hexString: "#D5A59B")!
                 : UIColor(hexString: "#C48B7E")!
         case .dashboardGlowBlueForeground:
             return Self.isDarkMode
@@ -229,19 +229,19 @@ indirect enum SQColor {
         // MARK: - Glass Surfaces
         case .glassCardTint:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.10)
+                ? UIColor.white.withAlphaComponent(0.06)
                 : UIColor.white.withAlphaComponent(0.58)
         case .glassPopoverTint:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.16)
+                ? UIColor.white.withAlphaComponent(0.12)
                 : UIColor.white.withAlphaComponent(0.72)
         case .glassStroke:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.14)
+                ? UIColor.white.withAlphaComponent(0.10)
                 : UIColor.white.withAlphaComponent(0.52)
         case .glassStrokeStrong:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.24)
+                ? UIColor.white.withAlphaComponent(0.18)
                 : UIColor.white.withAlphaComponent(0.72)
 
             
@@ -272,25 +272,25 @@ indirect enum SQColor {
         case .accentNeutral1:
             // Muted blue
             return Self.isDarkMode
-                ? UIColor(hexString: "#7FAAFF")!   // soft blue for dark
+                ? UIColor(hexString: "#6F8FC7")!   // smoky blue for dark
                 : UIColor(hexString: "#2F5EA8")!   // deeper blue for light
 
         case .accentNeutral2:
             // Muted orange
             return Self.isDarkMode
-                ? UIColor(hexString: "#FFB878")!   // warm soft orange
+                ? UIColor(hexString: "#C99866")!   // burnished orange for dark
                 : UIColor(hexString: "#C26A28")!   // richer orange in light
 
         case .accentNeutral3:
             // Muted yellow / gold
             return Self.isDarkMode
-                ? UIColor(hexString: "#FFE38A")!   // soft golden yellow
+                ? UIColor(hexString: "#D4BC72")!   // muted brass for dark
                 : UIColor(hexString: "#C49526")!   // darker golden in light
 
         case .accentNeutral4:
             // Muted red
             return Self.isDarkMode
-                ? UIColor(hexString: "#ff8093")!   // soft red
+                ? UIColor(hexString: "#C88C97")!   // dusty rose for dark
                 : UIColor(hexString: "#ff8093")!
 
         // MARK: - Metrics & Color Utilities

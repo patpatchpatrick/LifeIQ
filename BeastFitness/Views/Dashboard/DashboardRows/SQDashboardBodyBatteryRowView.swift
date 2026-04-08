@@ -85,9 +85,9 @@ private struct SQRecoveryScoreBadge: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            accentColor.color.opacity(SQColor.isDarkMode ? 0.08 : 0.04),
-                            accentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.10),
-                            SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.98)
+                            accentColor.color.opacity(SQColor.isDarkMode ? 0.05 : 0.04),
+                            accentColor.color.opacity(SQColor.isDarkMode ? 0.10 : 0.10),
+                            SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.98 : 0.98)
                         ],
                         center: .center,
                         startRadius: 6,
@@ -96,13 +96,13 @@ private struct SQRecoveryScoreBadge: View {
                 )
                 .overlay {
                     Circle()
-                        .stroke(accentColor.color.opacity(SQColor.isDarkMode ? 0.38 : 0.24), lineWidth: 1.5)
+                        .stroke(accentColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.24), lineWidth: 1.5)
                 }
                 .shadow(
-                    color: accentColor.color.opacity(SQColor.isDarkMode ? 0.18 : 0.08),
-                    radius: 14,
+                    color: accentColor.color.opacity(SQColor.isDarkMode ? 0.10 : 0.08),
+                    radius: 10,
                     x: 0,
-                    y: 8
+                    y: 6
                 )
 
             VStack(spacing: 2) {

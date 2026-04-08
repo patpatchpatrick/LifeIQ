@@ -32,7 +32,7 @@ enum SQGlassLevel {
     fileprivate var topHighlightOpacity: Double {
         switch self {
         case .card:
-            return SQColor.isDarkMode ? 0.18 : 0.34
+            return SQColor.isDarkMode ? 0.12 : 0.34
         case .floating:
             return SQColor.isDarkMode ? 0.24 : 0.40
         }
@@ -41,7 +41,7 @@ enum SQGlassLevel {
     fileprivate var shadowOpacity: Double {
         switch self {
         case .card:
-            return SQColor.isDarkMode ? 0.10 : 0.06
+            return SQColor.isDarkMode ? 0.07 : 0.06
         case .floating:
             return SQColor.isDarkMode ? 0.26 : 0.14
         }
@@ -142,7 +142,7 @@ struct SQDashboardBackground: View {
 
             RadialGradient(
                 colors: [
-                    SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.18 : 0.30),
+                    SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.12 : 0.30),
                     .clear
                 ],
                 center: .topLeading,
@@ -153,7 +153,7 @@ struct SQDashboardBackground: View {
 
             RadialGradient(
                 colors: [
-                    SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.12 : 0.18),
+                    SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.08 : 0.18),
                     .clear
                 ],
                 center: .bottomTrailing,
