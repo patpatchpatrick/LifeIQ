@@ -665,6 +665,15 @@ final class SQDashboardController: SQDashboardInterface {
         workouts: [SQWorkoutSessionable],
         context: ModelContext
     ) {
+        guard userState.isLoggedIn, let user = userState.loggedInUser else {
+            SQLogger.shared.log(
+                "Skipping new workout review modal in guest mode",
+                .debug,
+                context: .dashboard
+            )
+            return
+        }
+
         guard let installDate = SQUserDefaults.shared.appInstallDate else {
             SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
             return
@@ -679,6 +688,20 @@ final class SQDashboardController: SQDashboardInterface {
             return startDate >= fourteenDaysAgo
                 && startDate >= installDate
                 && !processedIds.contains(sourceId)
+        }
+
+        if !SQUserDefaults.shared.hasWorkoutReviewBaseline(for: user.id) {
+            if !reviewableWorkouts.isEmpty {
+                workoutManager.markWorkoutsAsProcessed(reviewableWorkouts, context: context)
+                SQLogger.shared.log(
+                    "Established workout review baseline for user \(user.id) with \(reviewableWorkouts.count) workout(s)",
+                    .info,
+                    context: .dashboard
+                )
+            }
+
+            SQUserDefaults.shared.markWorkoutReviewBaselineEstablished(for: user.id)
+            return
         }
 
         guard !reviewableWorkouts.isEmpty else {

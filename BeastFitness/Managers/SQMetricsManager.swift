@@ -48,6 +48,7 @@ protocol SQMetricsManaging: AnyObject {
     // Sync
     /// Syncs both the metric catalog and the user's logged metric entry data from Firestore.
     func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult
+    func reset()
 }
 
 // MARK: - Concrete Manager
@@ -302,6 +303,11 @@ final class SQMetricsManager: SQMetricsManaging {
         SQLogger.shared.log("Metric definitions: cache fresh", .debug, context: .metricsManager)
         SyncResult.noSyncNeeded.logSync(service: "metric definitions", context: .metricsManager)
         return .noSyncNeeded
+    }
+
+    func reset() {
+        metrics = []
+        hasLoaded = false
     }
 
     /// One-time push of all local metrics for schema/bootstrap migrations.

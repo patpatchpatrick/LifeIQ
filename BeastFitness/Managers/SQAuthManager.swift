@@ -11,12 +11,30 @@ import FirebaseCore
 import GoogleSignIn
 import UIKit
 
+enum SQAuthProvider: String, CaseIterable, Hashable {
+    case password = "password"
+    case google = "google.com"
+
+    init?(providerId: String) {
+        self.init(rawValue: providerId)
+    }
+}
+
+enum SQAccountDeletionReauthenticationMethod {
+    case password(String)
+    case google
+}
+
 @MainActor
 protocol SQAuthManaging: AnyObject {
     func signIn(email: String, password: String) async throws -> AuthDataResult
     func createUser(email: String, password: String) async throws -> AuthDataResult
     func signInWithGoogle(presentingViewController: UIViewController) async throws -> AuthDataResult
     func handleGoogleSignIn(url: URL) -> Bool
+    func currentAuthProviders() -> Set<SQAuthProvider>
+    func reauthenticateForAccountDeletion(using method: SQAccountDeletionReauthenticationMethod) async throws
+    func revokeGoogleAccessIfNeeded() async throws
+    func deleteCurrentUser() async throws
     func signOut() throws
 }
 
@@ -87,9 +105,94 @@ final class SQAuthManager: SQAuthManaging {
         GIDSignIn.sharedInstance.handle(url)
     }
 
+    func currentAuthProviders() -> Set<SQAuthProvider> {
+        let providerIds = Auth.auth().currentUser?.providerData.map(\.providerID) ?? []
+        return Set(providerIds.compactMap(SQAuthProvider.init(providerId:)))
+    }
+
+    func reauthenticateForAccountDeletion(using method: SQAccountDeletionReauthenticationMethod) async throws {
+        guard let currentUser = Auth.auth().currentUser else {
+            throw SQAuthError(description: "You need to be signed in to delete your account.")
+        }
+
+        switch method {
+        case .password(let password):
+            guard let email = currentUser.email?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty else {
+                throw SQAuthError(description: "This account does not have an email address available for password confirmation.")
+            }
+
+            let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+            try await currentUser.reauthenticate(with: credential)
+
+        case .google:
+            guard let clientID = FirebaseApp.app()?.options.clientID else {
+                throw SQAuthError(description: "Google Sign-In is not configured for this app.")
+            }
+
+            let presentingViewController = try currentPresentingViewController()
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+
+            let signInResult: GIDSignInResult
+            do {
+                signInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController)
+            } catch {
+                throw SQAuthError.fromGoogle(error)
+            }
+
+            guard let idToken = signInResult.user.idToken?.tokenString else {
+                throw SQAuthError(description: "Google Sign-In did not return an ID token.")
+            }
+
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: signInResult.user.accessToken.tokenString
+            )
+
+            try await currentUser.reauthenticate(with: credential)
+        }
+    }
+
+    func revokeGoogleAccessIfNeeded() async throws {
+        guard currentAuthProviders().contains(.google) else { return }
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            GIDSignIn.sharedInstance.disconnect { error in
+                if let error {
+                    continuation.resume(throwing: SQAuthError.fromGoogle(error))
+                } else {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+
+    func deleteCurrentUser() async throws {
+        guard let currentUser = Auth.auth().currentUser else {
+            throw SQAuthError(description: "You need to be signed in to delete your account.")
+        }
+
+        try await currentUser.delete()
+    }
+
     func signOut() throws {
         GIDSignIn.sharedInstance.signOut()
         try Auth.auth().signOut()
+    }
+
+    private func currentPresentingViewController() throws -> UIViewController {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+              let rootViewController = scene.windows.first(where: \.isKeyWindow)?.rootViewController else {
+            throw SQAuthError(description: "Could not start Google Sign-In because no active view was available.")
+        }
+
+        var presentingViewController = rootViewController
+        while let presentedViewController = presentingViewController.presentedViewController {
+            presentingViewController = presentedViewController
+        }
+
+        return presentingViewController
     }
 }
 
@@ -123,6 +226,8 @@ struct SQAuthError: SQUserFacingError {
             return .init(description: "Please check your connection and try again.")
         case .tooManyRequests:
             return .init(description: "Too many attempts. Please try again later.")
+        case .requiresRecentLogin:
+            return .init(description: "For security, log in again and retry.")
         default:
             return .init(description: "Something went wrong. Please try again.")
         }

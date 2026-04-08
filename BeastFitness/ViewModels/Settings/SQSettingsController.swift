@@ -56,6 +56,18 @@ final class SQSettingsController: SQSettingsInterface {
                     self.state.hub.domainEvents.send(.pushDashboardRoute(.onboarding(controller: controller)))
                 }
             )
+
+            builtRows.append(
+                .init(
+                    title: "Delete account",
+                    subtitle: "Permanently delete your LifeIQ account and app-managed data.",
+                    showsChevron: true
+                ) { [weak self] in
+                    guard let self else { return }
+                    let controller = SQDeleteAccountController()
+                    self.state.hub.domainEvents.send(.pushDashboardRoute(.deleteAccount(controller: controller)))
+                }
+            )
         }
 
         builtRows.append(contentsOf: [
@@ -92,15 +104,6 @@ final class SQSettingsController: SQSettingsInterface {
                 showsChevron: false
             ) { [weak self] in
                 self?.confirmClearHiddenWorkouts()
-            },
-
-            // Example nested item for later:
-            .init(
-                title: "Advanced",
-                subtitle: nil,
-                showsChevron: true
-            ) { [weak self] in
-                self?.navigationPath.append(SQNavRoute.Settings.nested)
             }
         ])
 

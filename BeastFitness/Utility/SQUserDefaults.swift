@@ -31,6 +31,9 @@ final class SQUserDefaults {
     /// Local fallback for the user's preferred unit system, used in guest mode and before a profile loads.
     private static let keyPreferredUnitSystem = "settings.preferred-unit-system"
 
+    /// Users whose existing recent workouts have already been baselined for the review sheet.
+    private static let keyWorkoutReviewBaselineUserIds = "workouts.review-baseline.user-ids"
+
 
     // MARK: - Private helpers (Workouts)
 
@@ -76,6 +79,11 @@ final class SQUserDefaults {
         set {
             UserDefaults.standard.set(newValue?.rawValue, forKey: Self.keyPreferredUnitSystem)
         }
+    }
+
+    private var workoutReviewBaselineUserIdsValue: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: Self.keyWorkoutReviewBaselineUserIds) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: Self.keyWorkoutReviewBaselineUserIds) }
     }
 
     // MARK: - Public API (Workouts)
@@ -175,6 +183,31 @@ final class SQUserDefaults {
         var ids = pendingOnboardingUserIdsValue
         ids.remove(userId)
         pendingOnboardingUserIdsValue = ids
+    }
+
+    func clearAccountScopedData(for userId: String) {
+        clearHiddenWorkouts()
+        clearRecentExercises()
+        clearDashboardLayoutPreferences()
+        clearPendingOnboarding(for: userId)
+        clearWorkoutReviewBaseline(for: userId)
+        setPreferredUnitSystem(nil)
+    }
+
+    func hasWorkoutReviewBaseline(for userId: String) -> Bool {
+        workoutReviewBaselineUserIdsValue.contains(userId)
+    }
+
+    func markWorkoutReviewBaselineEstablished(for userId: String) {
+        var ids = workoutReviewBaselineUserIdsValue
+        ids.insert(userId)
+        workoutReviewBaselineUserIdsValue = ids
+    }
+
+    func clearWorkoutReviewBaseline(for userId: String) {
+        var ids = workoutReviewBaselineUserIdsValue
+        ids.remove(userId)
+        workoutReviewBaselineUserIdsValue = ids
     }
 
     var preferredUnitSystem: SQUnitSystem? {
