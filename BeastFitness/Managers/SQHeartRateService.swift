@@ -6,6 +6,7 @@
 import Foundation
 import HealthKit
 import BeastFitnessCore
+import CoolCharts
 
 enum SQHeartRateZone: Int, CaseIterable, Identifiable, Sendable {
     case zone1
@@ -136,8 +137,9 @@ final class SQHeartRateService: SQHeartRateServicing {
         let averageResting = restingSummaries.compactMap(\.average).average
         let lowestHeartRate = heartSummaries.compactMap(\.minimum).min()
         let peakHeartRate = heartSummaries.compactMap(\.maximum).max()
+        let restingTrendChart = makeRestingTrendChart(from: restingSummaries, timeRange: timeRange)
 
-        guard averageResting != nil || lowestHeartRate != nil || peakHeartRate != nil else {
+        guard averageResting != nil || lowestHeartRate != nil || peakHeartRate != nil || restingTrendChart != nil else {
             return nil
         }
 
@@ -164,7 +166,8 @@ final class SQHeartRateService: SQHeartRateServicing {
                     unit: "bpm",
                     detail: detailText(for: timeRange, defaultText: "Peak recorded")
                 )
-            ]
+            ],
+            trendChart: restingTrendChart
         )
     }
 
@@ -273,6 +276,135 @@ final class SQHeartRateService: SQHeartRateServicing {
             return "\(defaultText) in prior 30 days"
         case .yearBeforeLast:
             return "\(defaultText) in prior year"
+        }
+    }
+
+    private func makeRestingTrendChart(
+        from summaries: [SQHeartRateDailySummary],
+        timeRange: SQTimeRange
+    ) -> SQDashboardHeartSummaryRowViewModel.TrendChart? {
+        let aggregated = aggregateRestingSummaries(summaries, for: timeRange)
+        let points = aggregated.compactMap { summary -> LineChartIdentifiablePoint? in
+            guard let value = summary.average else { return nil }
+            return .init(
+                id: summary.date.timeIntervalSince1970.description,
+                point: CGPoint(x: summary.date.timeIntervalSince1970, y: value)
+            )
+        }
+
+        guard points.count >= 2 else {
+            return nil
+        }
+
+        return .init(
+            title: "Resting HR Trend",
+            subtitle: restingTrendSubtitle(for: timeRange),
+            points: points,
+            trendPoints: buildTrendInputPoints(from: points),
+            rangeLabelSuffix: "bpm",
+            averageValue: points.map { Double($0.point.y) }.average ?? 0,
+            averageLabel: "AVG \(Int((points.map { Double($0.point.y) }.average ?? 0).rounded()))"
+        )
+    }
+
+    private func aggregateRestingSummaries(
+        _ summaries: [SQHeartRateDailySummary],
+        for timeRange: SQTimeRange
+    ) -> [SQHeartRateDailySummary] {
+        switch timeRange {
+        case .pastYear, .yearBeforeLast:
+            return aggregate(summaries, by: .weekOfYear)
+        case .allTime:
+            return aggregate(summaries, by: .month)
+        default:
+            return summaries.sorted { $0.date < $1.date }
+        }
+    }
+
+    private func aggregate(
+        _ summaries: [SQHeartRateDailySummary],
+        by component: Calendar.Component
+    ) -> [SQHeartRateDailySummary] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: summaries) { summary -> Date in
+            switch component {
+            case .weekOfYear:
+                return calendar.dateInterval(of: .weekOfYear, for: summary.date)?.start
+                ?? calendar.startOfDay(for: summary.date)
+            case .month:
+                return calendar.date(from: calendar.dateComponents([.year, .month], from: summary.date))
+                ?? calendar.startOfDay(for: summary.date)
+            default:
+                return calendar.startOfDay(for: summary.date)
+            }
+        }
+
+        return grouped.compactMap { date, groupedSummaries in
+            let averages = groupedSummaries.compactMap(\.average)
+            guard !averages.isEmpty else {
+                return nil
+            }
+
+            return SQHeartRateDailySummary(
+                date: date,
+                average: averages.average,
+                minimum: nil,
+                maximum: nil
+            )
+        }
+        .sorted { $0.date < $1.date }
+    }
+
+    private func restingTrendSubtitle(for timeRange: SQTimeRange) -> String {
+        switch timeRange {
+        case .pastYear, .yearBeforeLast:
+            return "Weekly average resting heart rate"
+        case .allTime:
+            return "Monthly average resting heart rate"
+        default:
+            return "Daily average resting heart rate"
+        }
+    }
+
+    private func buildTrendInputPoints(
+        from inputPoints: [LineChartIdentifiablePoint]
+    ) -> [LineChartIdentifiablePoint]? {
+        guard inputPoints.count >= 4 else { return nil }
+
+        let alpha: CGFloat = inputPoints.count > 12 ? 0.20 : 0.26
+        var smoothedY = inputPoints[0].point.y
+
+        let smoothedPoints = inputPoints.enumerated().map { index, point in
+            if index == 0 {
+                return point
+            }
+
+            smoothedY = (alpha * point.point.y) + ((1 - alpha) * smoothedY)
+            return LineChartIdentifiablePoint(
+                id: point.id,
+                point: CGPoint(x: point.point.x, y: smoothedY)
+            )
+        }
+
+        let anchorCount = inputPoints.count >= 9 ? 4 : 3
+        let anchorIndices = buildTrendAnchorIndices(totalCount: smoothedPoints.count, anchorCount: anchorCount)
+        return anchorIndices.map { smoothedPoints[$0] }
+    }
+
+    private func buildTrendAnchorIndices(totalCount: Int, anchorCount: Int) -> [Int] {
+        guard totalCount > 0 else { return [] }
+        guard anchorCount > 1 else { return [0] }
+
+        let lastIndex = totalCount - 1
+        let denominator = max(1, anchorCount - 1)
+        let indices = (0..<anchorCount).map { anchorIndex in
+            Int(round((Double(anchorIndex) / Double(denominator)) * Double(lastIndex)))
+        }
+
+        return indices.reduce(into: [Int]()) { result, index in
+            if result.last != index {
+                result.append(index)
+            }
         }
     }
 

@@ -61,17 +61,9 @@ struct SQDashboardBodyBatteryRowView: View {
             }
 
             VStack(alignment: .leading, spacing: .SQSpace.s) {
-                HStack(spacing: .SQSpace.xs) {
-                    Text("Factors")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-
-                    Spacer()
-
-                    Text("Tap for detail")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textDisabled)
-                }
+                Text("Factors")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
 
                 LazyVGrid(columns: driverColumns, alignment: .leading, spacing: .SQSpace.s) {
                     ForEach(viewModel.drivers) { driver in
@@ -79,10 +71,6 @@ struct SQDashboardBodyBatteryRowView: View {
                     }
                 }
             }
-
-            Text(viewModel.footer)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textDisabled)
         }
     }
 }

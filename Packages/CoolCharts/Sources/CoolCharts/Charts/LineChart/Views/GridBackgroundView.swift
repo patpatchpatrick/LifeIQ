@@ -9,6 +9,31 @@ import SwiftUI
 import Foundation
 
 public struct GridConfig {
+    public struct ReferenceLine: Sendable {
+        public let value: CGFloat
+        public let label: String?
+        public let lineColor: Color
+        public let labelColor: Color?
+        public let lineWidth: CGFloat
+        public let dash: [CGFloat]
+
+        public init(
+            value: CGFloat,
+            label: String? = nil,
+            lineColor: Color = .gray,
+            labelColor: Color? = nil,
+            lineWidth: CGFloat = 1,
+            dash: [CGFloat] = [4, 4]
+        ) {
+            self.value = value
+            self.label = label
+            self.lineColor = lineColor
+            self.labelColor = labelColor
+            self.lineWidth = lineWidth
+            self.dash = dash
+        }
+    }
+
     let numberOfHorizontalLines: Int
     let numberOfVerticalLines: Int
     let lineColor: Color
@@ -16,6 +41,7 @@ public struct GridConfig {
     let yLabelBuilder: ((CGFloat) -> String)?
     let showRangeLabels: Bool
     let rangeLabelBuilder: ((CGFloat) -> String)?
+    let referenceLines: [ReferenceLine]
     
     public init(
         numberOfHorizontalLines: Int = 3,
@@ -24,7 +50,8 @@ public struct GridConfig {
         xLabelBuilder: ((CGFloat) -> String)? = nil,
         yLabelBuilder:  ((CGFloat) -> String)? = nil,
         showRangeLabels: Bool = true,
-        rangeLabelBuilder: ((CGFloat) -> String)? = nil
+        rangeLabelBuilder: ((CGFloat) -> String)? = nil,
+        referenceLines: [ReferenceLine] = []
     ) {
         self.numberOfHorizontalLines = numberOfHorizontalLines
         self.numberOfVerticalLines = numberOfVerticalLines
@@ -33,6 +60,7 @@ public struct GridConfig {
         self.yLabelBuilder = yLabelBuilder
         self.showRangeLabels = showRangeLabels
         self.rangeLabelBuilder = rangeLabelBuilder
+        self.referenceLines = referenceLines
     }
 }
 
@@ -73,6 +101,25 @@ struct GridBackgroundView: View {
                     path.move(to: CGPoint(x: x, y: startingYCoordinate))
                     path.addLine(to: CGPoint(x: x, y: endingYCoordinate))
                     context.stroke(path, with: .color(lineColor), lineWidth: 1)
+                }
+
+                let yMin = lineChartModel.originalCoordinatesMinY
+                let yMax = lineChartModel.originalCoordinatesMaxY
+
+                for referenceLine in gridConfig.referenceLines {
+                    guard yMax > yMin else { continue }
+                    let normalized = (referenceLine.value - yMin) / (yMax - yMin)
+                    let clamped = min(max(normalized, 0), 1)
+                    let y = endingYCoordinate - clamped * (endingYCoordinate - startingYCoordinate)
+
+                    var path = Path()
+                    path.move(to: CGPoint(x: startingXCoordinate, y: y))
+                    path.addLine(to: CGPoint(x: endingXCoordinate, y: y))
+                    context.stroke(
+                        path,
+                        with: .color(referenceLine.lineColor),
+                        style: StrokeStyle(lineWidth: referenceLine.lineWidth, dash: referenceLine.dash)
+                    )
                 }
             }
 
@@ -137,6 +184,26 @@ struct GridBackgroundView: View {
                     .padding(.top, 2)
                     .padding(.bottom, 8)
                     .allowsHitTesting(false)
+                }
+
+                ForEach(Array(gridConfig.referenceLines.enumerated()), id: \.offset) { _, referenceLine in
+                    if let label = referenceLine.label, yMax > yMin {
+                        let normalized = (referenceLine.value - yMin) / (yMax - yMin)
+                        let clamped = min(max(normalized, 0), 1)
+                        let yPos = lineChartModel.coordinatesMaxY - clamped * (lineChartModel.coordinatesMaxY - lineChartModel.coordinatesMinY)
+
+                        Text(label)
+                            .font(lineChartModel.uiConfig.fontConfig.font)
+                            .foregroundColor((referenceLine.labelColor ?? referenceLine.lineColor).opacity(0.88))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(lineChartModel.uiConfig.colorConfig.backgroundPrimary.opacity(0.24))
+                            )
+                            .position(x: 28, y: min(max(yPos, lineChartModel.coordinatesMinY + 10), lineChartModel.coordinatesMaxY - 10))
+                            .allowsHitTesting(false)
+                    }
                 }
 
                 // X-axis labels (bottom)

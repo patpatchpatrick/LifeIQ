@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import CoolCharts
 
 @MainActor
 extension SQDashboardSectionGroupViewModel {
@@ -241,7 +242,24 @@ extension SQDashboardSectionGroupViewModel {
                 .init(id: "resting", title: "Resting Avg", value: "58", unit: "bpm", detail: "Average resting in 7 days"),
                 .init(id: "low", title: "Lowest", value: "46", unit: "bpm", detail: "Lowest recorded in 7 days"),
                 .init(id: "high", title: "Highest", value: "171", unit: "bpm", detail: "Peak recorded in 7 days")
-            ]
+            ],
+            trendChart: .init(
+                title: "Resting HR Trend",
+                subtitle: "Daily average resting heart rate",
+                points: [
+                    .init(id: "heart-0", point: CGPoint(x: 1, y: 60)),
+                    .init(id: "heart-1", point: CGPoint(x: 2, y: 59)),
+                    .init(id: "heart-2", point: CGPoint(x: 3, y: 58)),
+                    .init(id: "heart-3", point: CGPoint(x: 4, y: 57)),
+                    .init(id: "heart-4", point: CGPoint(x: 5, y: 58)),
+                    .init(id: "heart-5", point: CGPoint(x: 6, y: 56)),
+                    .init(id: "heart-6", point: CGPoint(x: 7, y: 57))
+                ],
+                trendPoints: nil,
+                rangeLabelSuffix: "bpm",
+                averageValue: 57.9,
+                averageLabel: "AVG 58"
+            )
         )
 
         let section = SQDashboardSubsectionViewModel(
