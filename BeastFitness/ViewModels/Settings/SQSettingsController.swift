@@ -166,6 +166,7 @@ final class SQSettingsController: SQSettingsInterface {
         if let user = userState.loggedInUser {
             let updatedUser = SQUser(
                 id: user.id,
+                createdAt: user.createdAt,
                 name: user.name,
                 email: user.email,
                 firstName: user.firstName,

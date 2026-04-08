@@ -275,6 +275,7 @@ import BeastFitnessCore
 
         let updatedUser = SQUser(
             id: existingUser.id,
+            createdAt: existingUser.createdAt,
             name: fullName,
             email: existingUser.email,
             firstName: trimmedFirstName,

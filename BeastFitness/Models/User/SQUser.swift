@@ -64,6 +64,7 @@ enum SQSubscriptionLevel: String, Codable {
 
 struct SQUser: Codable, Equatable {
     let id: String
+    let createdAt: Date?
     let name: String
     let email: String
     let firstName: String?
@@ -121,6 +122,7 @@ struct SQUser: Codable, Equatable {
 extension SQUser {
     static let mock = SQUser(
         id: "mock",
+        createdAt: .now,
         name: "Patrick Doyle",
         email: "patrick@example.com",
         firstName: "Patrick",

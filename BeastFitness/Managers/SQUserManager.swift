@@ -46,6 +46,7 @@ final class SQUserManager: SQUserManaging {
         } catch {
             let fallbackUser = SQUser(
                 id: firebaseUser.uid,
+                createdAt: firebaseUser.metadata.creationDate,
                 name: firebaseUser.displayName ?? "",
                 email: firebaseUser.email ?? "",
                 firstName: nil,

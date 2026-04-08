@@ -674,19 +674,15 @@ final class SQDashboardController: SQDashboardInterface {
             return
         }
 
-        guard let installDate = SQUserDefaults.shared.appInstallDate else {
-            SQLogger.shared.log("appInstallDate missing — skipping workout review processing", .error, context: .dashboard)
-            return
-        }
-
         let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
         let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
+        let reviewStartDate = user.createdAt ?? SQUserDefaults.shared.appInstallDate ?? .distantPast
 
         let reviewableWorkouts = workouts.filter { workout in
             guard let startDate = workout.startDate else { return false }
             let sourceId = workout.workoutSource.sourcableData.sourceId
             return startDate >= fourteenDaysAgo
-                && startDate >= installDate
+                && startDate >= reviewStartDate
                 && !processedIds.contains(sourceId)
         }
 

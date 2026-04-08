@@ -12,6 +12,7 @@ final class SQUserService: SQNetworkService {
     static func createUser(uid: String, email: String) async throws -> SQUser {
         let user = SQUser(
             id: uid,
+            createdAt: .now,
             name: "",
             email: email,
             firstName: nil,
