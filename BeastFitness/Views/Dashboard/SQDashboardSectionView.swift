@@ -109,6 +109,11 @@ struct SQDashboardSectionView: View {
                                         SQDashboardSleepScoreRowView(viewModel: vm)
                                     }
 
+                                case .sleepDuration:
+                                    if let vm = row as? SQDashboardSleepDurationRowViewModel {
+                                        SQDashboardSleepDurationRowView(viewModel: vm)
+                                    }
+
                                 case .sleepPhaseTimeline:
                                     if let vm = row as? SQDashboardSleepPhaseTimelineRowViewModel {
                                         SQDashboardSleepPhaseTimelineRowView(viewModel: vm)

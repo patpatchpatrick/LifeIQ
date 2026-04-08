@@ -201,7 +201,16 @@ struct GridBackgroundView: View {
                                 Capsule(style: .continuous)
                                     .fill(lineChartModel.uiConfig.colorConfig.backgroundPrimary.opacity(0.24))
                             )
-                            .position(x: 28, y: min(max(yPos, lineChartModel.coordinatesMinY + 10), lineChartModel.coordinatesMaxY - 10))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .position(
+                                x: lineChartModel.coordinatesMinX + 46,
+                                y: referenceLabelYPosition(
+                                    for: yPos,
+                                    minY: lineChartModel.coordinatesMinY,
+                                    maxY: lineChartModel.coordinatesMaxY
+                                )
+                            )
                             .allowsHitTesting(false)
                     }
                 }
@@ -236,5 +245,13 @@ struct GridBackgroundView: View {
         formatter.minimumFractionDigits = 0
 
         return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+    }
+
+    private func referenceLabelYPosition(for y: CGFloat, minY: CGFloat, maxY: CGFloat) -> CGFloat {
+        let preferredAbove = y - 14
+        if preferredAbove >= minY + 10 {
+            return preferredAbove
+        }
+        return min(maxY - 10, y + 14)
     }
 }

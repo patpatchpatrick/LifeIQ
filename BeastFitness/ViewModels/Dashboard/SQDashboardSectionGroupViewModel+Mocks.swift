@@ -176,11 +176,35 @@ extension SQDashboardSectionGroupViewModel {
             rowsByFilter: ["All": [summaryRow]]
         )
 
+        let durationRow = SQDashboardSleepDurationRowViewModel(
+            bars: [
+                .init(id: "sleep-dur-0", label: "M", focusTitle: "Monday, Jan 6, 2026", valueHours: 7.1, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-1", label: "T", focusTitle: "Tuesday, Jan 7, 2026", valueHours: 7.8, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-2", label: "W", focusTitle: "Wednesday, Jan 8, 2026", valueHours: 6.9, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-3", label: "T", focusTitle: "Thursday, Jan 9, 2026", valueHours: 8.0, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-4", label: "F", focusTitle: "Friday, Jan 10, 2026", valueHours: 7.4, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-5", label: "S", focusTitle: "Saturday, Jan 11, 2026", valueHours: 7.6, color: SQColor.dashboardGlowBlue.color.opacity(0.58)),
+                .init(id: "sleep-dur-6", label: "S", focusTitle: "Sunday, Jan 12, 2026", valueHours: 8.2, color: SQColor.dashboardGlowBlue.color)
+            ],
+            averageDurationHours: 7.57,
+            averageLabel: "AVG 7h 34m",
+            barSpacing: 8,
+            minimumBarWidth: 8,
+            maximumBarWidth: 18
+        )
+
+        let durationSection = SQDashboardSubsectionViewModel(
+            id: "sleep-duration",
+            title: "Sleep Duration",
+            defaultPriority: 30,
+            rowsByFilter: ["All": [durationRow]]
+        )
+
         return SQDashboardSectionGroupViewModel(
             id: "sleep",
             title: "Sleep",
             defaultPriority: 30,
-            sections: [scoreSection, summarySection, phasesSection]
+            sections: [scoreSection, summarySection, durationSection, phasesSection]
         )
     }
 

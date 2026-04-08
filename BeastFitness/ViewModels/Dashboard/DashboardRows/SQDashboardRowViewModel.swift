@@ -16,6 +16,7 @@ enum SQDashboardRowType {
     case workoutTotals
     case activityList
     case sleepScore
+    case sleepDuration
     case sleepPhaseTimeline
     case sleepSummary
 }
@@ -29,6 +30,7 @@ enum SQDashboardRowIdentifier {
     case workoutTotals
     case activityList
     case sleepScore
+    case sleepDuration
     case sleepPhaseTimeline
     case sleepSummary
 }

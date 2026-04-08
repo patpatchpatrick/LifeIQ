@@ -1162,6 +1162,10 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSections.append(summarySection)
         }
 
+        if let durationSection = buildSleepDurationSubsection(with: data) {
+            sleepSections.append(durationSection)
+        }
+
         if let timelineSection = buildSleepTimelineSubsection(with: data) {
             sleepSections.append(timelineSection)
         }
@@ -1321,6 +1325,20 @@ final class SQDashboardController: SQDashboardInterface {
         )
     }
 
+    private func buildSleepDurationSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
+        guard let row = buildSleepDurationRow(with: data, timeRange: state.selectedTimeRange) else {
+            return nil
+        }
+
+        return SQDashboardSubsectionViewModel(
+            id: "sleep-duration",
+            title: "Sleep Duration",
+            defaultPriority: 30,
+            rowsByFilter: ["All": [row]],
+            dropDownViewModel: nil
+        )
+    }
+
     private func buildSleepTimelineSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {
         guard state.selectedTimeRange == .today,
               let timelineRow = buildSleepPhaseTimelineRow(with: data) else { return nil }
@@ -1362,6 +1380,162 @@ final class SQDashboardController: SQDashboardInterface {
             startDate: latestNight.sleepStartDate,
             endDate: latestNight.wakeDate
         )
+    }
+
+    private func buildSleepDurationRow(
+        with data: SQSleepDashboardData,
+        timeRange: AppTimeRange
+    ) -> SQDashboardSleepDurationRowViewModel? {
+        let buckets = makeSleepDurationBuckets(with: data, timeRange: timeRange)
+        guard !buckets.isEmpty else { return nil }
+
+        let averageSourceBuckets = buckets.filter { $0.durationHours > 0 }
+        let averageDurationHours = averageSourceBuckets.map(\.durationHours).average ?? 0
+        let latestBucketId = buckets.last?.id
+        let defaultColor = SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.58 : 0.70)
+        let highlightColor = SQColor.dashboardGlowBlue.color
+
+        return SQDashboardSleepDurationRowViewModel(
+            bars: buckets.map { bucket in
+                .init(
+                    id: bucket.id,
+                    label: bucket.label,
+                    focusTitle: bucket.focusTitle,
+                    valueHours: bucket.durationHours,
+                    color: bucket.id == latestBucketId ? highlightColor : defaultColor
+                )
+            },
+            averageDurationHours: averageDurationHours,
+            averageLabel: "AVG \(formattedDuration(averageDurationHours * 3600))",
+            barSpacing: timeRange == .past30Days ? 4 : 8,
+            minimumBarWidth: timeRange == .past30Days ? 3 : 8,
+            maximumBarWidth: timeRange == .past30Days ? 8 : 18
+        )
+    }
+
+    private struct SleepDurationBucket {
+        let id: String
+        let label: String
+        let focusTitle: String
+        let durationHours: Double
+        let sortDate: Date
+    }
+
+    private func makeSleepDurationBuckets(
+        with data: SQSleepDashboardData,
+        timeRange: AppTimeRange
+    ) -> [SleepDurationBucket] {
+        let calendar = Calendar.current
+        let nights: [SQSleepNight]
+        switch timeRange {
+        case .today:
+            nights = Array((data.priorNights + data.currentNights).sorted { $0.wakeDay < $1.wakeDay }.suffix(7))
+        default:
+            nights = data.currentNights.sorted { $0.wakeDay < $1.wakeDay }
+        }
+
+        switch timeRange {
+        case .pastYear:
+            let grouped = Dictionary(grouping: nights) { night in
+                calendar.date(from: calendar.dateComponents([.year, .month], from: night.wakeDay))
+                ?? calendar.startOfDay(for: night.wakeDay)
+            }
+
+            let latestMonth = nights.last.flatMap {
+                calendar.date(from: calendar.dateComponents([.year, .month], from: $0.wakeDay))
+            } ?? calendar.date(from: calendar.dateComponents([.year, .month], from: .now)) ?? .now
+
+            let monthStarts = (0..<12).compactMap { offset in
+                calendar.date(byAdding: .month, value: -(11 - offset), to: latestMonth)
+            }
+
+            return monthStarts.map { monthStart in
+                let averageHours = grouped[monthStart]?.map { $0.totalSleepDuration / 3600 }.average ?? 0
+                return SleepDurationBucket(
+                    id: monthStart.firebaseDailyDateKey,
+                    label: monthLabel(for: monthStart),
+                    focusTitle: fullMonthLabel(for: monthStart),
+                    durationHours: averageHours,
+                    sortDate: monthStart
+                )
+            }
+
+        case .allTime:
+            let grouped = Dictionary(grouping: nights) { night in
+                let year = calendar.component(.year, from: night.wakeDay)
+                return calendar.date(from: DateComponents(year: year, month: 1, day: 1))
+                ?? calendar.startOfDay(for: night.wakeDay)
+            }
+
+            return grouped.compactMap { yearStart, bucketNights -> SleepDurationBucket? in
+                let averageHours = bucketNights.map { $0.totalSleepDuration / 3600 }.average
+                guard let averageHours else { return nil }
+                return SleepDurationBucket(
+                    id: yearStart.firebaseDailyDateKey,
+                    label: yearLabel(for: yearStart),
+                    focusTitle: yearLabel(for: yearStart),
+                    durationHours: averageHours,
+                    sortDate: yearStart
+                )
+            }
+            .sorted { $0.sortDate < $1.sortDate }
+
+        case .past30Days:
+            return nights.map { night in
+                SleepDurationBucket(
+                    id: night.id,
+                    label: "",
+                    focusTitle: night.wakeDay.formattedString(with: .medium),
+                    durationHours: night.totalSleepDuration / 3600,
+                    sortDate: night.wakeDay
+                )
+            }
+
+        case .today, .pastSevenDays:
+            return nights.map { night in
+                SleepDurationBucket(
+                    id: night.id,
+                    label: weekdayLabel(for: night.wakeDay),
+                    focusTitle: sleepFocusTitle(for: night.wakeDay),
+                    durationHours: night.totalSleepDuration / 3600,
+                    sortDate: night.wakeDay
+                )
+            }
+        }
+    }
+
+    private func weekdayLabel(for date: Date) -> String {
+        let weekday = Calendar.current.component(.weekday, from: date) - 1
+        let symbols = ["S", "M", "T", "W", "T", "F", "S"]
+        guard symbols.indices.contains(weekday) else { return "" }
+        return symbols[weekday]
+    }
+
+    private func monthLabel(for date: Date) -> String {
+        let month = Calendar.current.component(.month, from: date) - 1
+        let symbols = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+        guard symbols.indices.contains(month) else { return "" }
+        return symbols[month]
+    }
+
+    private func fullMonthLabel(for date: Date) -> String {
+        let month = Calendar.current.component(.month, from: date) - 1
+        let symbols = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+        guard symbols.indices.contains(month) else { return date.formattedString(with: .medium) }
+        return symbols[month]
+    }
+
+    private func yearLabel(for date: Date) -> String {
+        String(Calendar.current.component(.year, from: date))
+    }
+
+    private func sleepFocusTitle(for date: Date) -> String {
+        let weekday = date.weekdayName(from: date)
+        let mediumDate = date.formattedString(with: .medium)
+        return "\(weekday), \(mediumDate)"
     }
 
     private func formattedDuration(_ duration: TimeInterval) -> String {
