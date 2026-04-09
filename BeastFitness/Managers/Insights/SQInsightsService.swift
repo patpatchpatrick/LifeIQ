@@ -84,7 +84,15 @@ final class SQInsightsService: SQInsightsServicing {
 
         for insight in generatedInsights.sorted(by: { sortInsightsForDisplay($0, $1) }) {
             SQLogger.shared.log(
-                "Generated insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
+                "Generated candidate insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
+                .debug,
+                context: .dashboard
+            )
+        }
+
+        for insight in insights {
+            SQLogger.shared.log(
+                "Surfaced insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
                 .debug,
                 context: .dashboard
             )
