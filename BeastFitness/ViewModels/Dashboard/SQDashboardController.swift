@@ -1998,7 +1998,7 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         if isPremiumUnlocked {
-            for insight in result.insights.dropFirst().prefix(2) {
+            for insight in result.insights.dropFirst() {
                 rows.append(SQDashboardInsightRowViewModel(
                     model: insight,
                     onInfoTap: { [weak state] in
@@ -2010,13 +2010,24 @@ final class SQDashboardController: SQDashboardInterface {
             rows.append(SQDashboardInsightRowViewModel(model: lockedPreview, isLocked: true))
         }
 
+        let visibleInsightTitles = rows.compactMap { row -> String? in
+            guard let insightRow = row as? SQDashboardInsightRowViewModel else { return nil }
+            return insightRow.model.title
+        }
+
+        SQLogger.shared.log(
+            "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
+            .debug,
+            context: .dashboard
+        )
+
         return SQDashboardSubsectionViewModel(
             id: "insights",
             title: "Insights",
             defaultPriority: 15,
             rowsByFilter: ["All": rows],
             rowSpacing: .SQSpace.m,
-            maxVisibleRows: isPremiumUnlocked ? 2 : nil,
+            maxVisibleRows: nil,
             emptyState: emptyState
         )
     }

@@ -22,6 +22,8 @@ struct SQInsightReadinessItem: Identifiable, Hashable {
 
 struct SQInsight: Identifiable, Hashable {
     let id: String
+    let familyKey: String
+    let variantPriority: Int
     let title: String
     let summary: String
     let evidenceText: String
@@ -34,6 +36,40 @@ struct SQInsight: Identifiable, Hashable {
     let effect: SQInsightEffect
     let sampleCount: Int
     let rankingScore: Double
+
+    init(
+        id: String,
+        familyKey: String? = nil,
+        variantPriority: Int = 0,
+        title: String,
+        summary: String,
+        evidenceText: String,
+        actionText: String,
+        driverText: String,
+        outcomeText: String,
+        deltaText: String,
+        category: SQInsightCategory,
+        confidence: SQInsightConfidence,
+        effect: SQInsightEffect,
+        sampleCount: Int,
+        rankingScore: Double
+    ) {
+        self.id = id
+        self.familyKey = familyKey ?? id
+        self.variantPriority = variantPriority
+        self.title = title
+        self.summary = summary
+        self.evidenceText = evidenceText
+        self.actionText = actionText
+        self.driverText = driverText
+        self.outcomeText = outcomeText
+        self.deltaText = deltaText
+        self.category = category
+        self.confidence = confidence
+        self.effect = effect
+        self.sampleCount = sampleCount
+        self.rankingScore = rankingScore
+    }
 }
 
 struct SQInsightsResult {

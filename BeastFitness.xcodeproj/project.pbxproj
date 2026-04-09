@@ -227,6 +227,7 @@
 		F7E400182FFE200100AA4001 /* SQInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */; };
 		F7E4001A2FFE200100AA4001 /* SQInsightsAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */; };
 		F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */; };
+		F7E4002E2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */; };
 		F7E4001E2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001D2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift */; };
 		F7E400202FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001F2FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift */; };
 		F7E400222FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400212FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift */; };
@@ -562,6 +563,7 @@
 		F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightEvaluator.swift; sourceTree = "<group>"; };
 		F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightsAggregator.swift; sourceTree = "<group>"; };
 		F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightsService.swift; sourceTree = "<group>"; };
+		F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricComparisonInsightEvaluator.swift; sourceTree = "<group>"; };
 		F7E4001D2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlcoholSleepInsightEvaluator.swift; sourceTree = "<group>"; };
 		F7E4001F2FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlcoholEnergyInsightEvaluator.swift; sourceTree = "<group>"; };
 		F7E400212FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCaffeineSleepInsightEvaluator.swift; sourceTree = "<group>"; };
@@ -1520,6 +1522,7 @@
 				F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */,
 				F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */,
 				F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */,
+				F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */,
 			);
 			path = Insights;
 			sourceTree = "<group>";
@@ -2218,6 +2221,7 @@
 				F7E400182FFE200100AA4001 /* SQInsightEvaluator.swift in Sources */,
 				F7E4001A2FFE200100AA4001 /* SQInsightsAggregator.swift in Sources */,
 				F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */,
+				F7E4002E2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift in Sources */,
 				F7E4001E2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift in Sources */,
 				F7E400202FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift in Sources */,
 				F7E400222FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift in Sources */,

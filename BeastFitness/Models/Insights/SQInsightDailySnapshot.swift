@@ -7,6 +7,11 @@
 
 import Foundation
 
+enum SQInsightAnalysisMetricId {
+    static let workoutPerformance = "insight.workoutPerformance"
+    static let workoutDifficulty = "insight.workoutDifficulty"
+}
+
 struct SQInsightDailySnapshot: Identifiable {
     let date: Date
     let anchorDayKey: String
@@ -23,10 +28,28 @@ struct SQInsightDailySnapshot: Identifiable {
     }
 
     func rawMetricValue(for metricId: String) -> Double? {
-        rawMetricValues[metricId]
+        switch metricId {
+        case SQInsightAnalysisMetricId.workoutPerformance:
+            return averageWorkoutPerformance
+        case SQInsightAnalysisMetricId.workoutDifficulty:
+            return averageWorkoutDifficulty
+        default:
+            break
+        }
+
+        return rawMetricValues[metricId]
     }
 
     func normalizedMetricValue(for metricId: String) -> Double? {
-        normalizedMetricValues[metricId]
+        switch metricId {
+        case SQInsightAnalysisMetricId.workoutPerformance:
+            return averageWorkoutPerformance
+        case SQInsightAnalysisMetricId.workoutDifficulty:
+            return averageWorkoutDifficulty
+        default:
+            break
+        }
+
+        return normalizedMetricValues[metricId]
     }
 }
