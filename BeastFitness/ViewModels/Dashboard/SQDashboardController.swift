@@ -1986,29 +1986,58 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
-        var rows = [SQDashboardRowViewModel]()
+        func buildRows(for insights: [SQInsight]) -> [SQDashboardRowViewModel] {
+            var rows = [SQDashboardRowViewModel]()
 
-        if let firstInsight = result.insights.first {
-            rows.append(SQDashboardInsightRowViewModel(
-                model: firstInsight,
-                onInfoTap: { [weak state] in
-                    state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: firstInsight)))
-                }
-            ))
-        }
-
-        if isPremiumUnlocked {
-            for insight in result.insights.dropFirst() {
+            if let firstInsight = insights.first {
                 rows.append(SQDashboardInsightRowViewModel(
-                    model: insight,
+                    model: firstInsight,
                     onInfoTap: { [weak state] in
-                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: insight)))
+                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: firstInsight)))
                     }
                 ))
             }
-        } else if let lockedPreview = result.insights.dropFirst().first {
-            rows.append(SQDashboardInsightRowViewModel(model: lockedPreview, isLocked: true))
+
+            if isPremiumUnlocked {
+                for insight in insights.dropFirst() {
+                    rows.append(SQDashboardInsightRowViewModel(
+                        model: insight,
+                        onInfoTap: { [weak state] in
+                            state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: insight)))
+                        }
+                    ))
+                }
+            } else if let lockedPreview = insights.dropFirst().first {
+                rows.append(SQDashboardInsightRowViewModel(model: lockedPreview, isLocked: true))
+            }
+
+            return rows
         }
+
+        let rows = buildRows(for: result.insights)
+
+        let categoryOrder: [SQInsightCategory] = [.recovery, .sleep, .training, .habits]
+        let presentCategories = categoryOrder.filter { category in
+            result.insights.contains(where: { $0.category == category })
+        }
+
+        var rowsByFilter: [String: [SQDashboardRowViewModel]] = ["All": rows]
+        for category in presentCategories {
+            rowsByFilter[category.badgeTitle] = buildRows(
+                for: result.insights.filter { $0.category == category }
+            )
+        }
+
+        let filterItems = [SQDropDownMenuViewModel.Item(title: "All")] + presentCategories.map {
+            SQDropDownMenuViewModel.Item(title: $0.badgeTitle)
+        }
+        let dropDownViewModel: SQDropDownMenuViewModel? = filterItems.count > 1
+            ? SQDropDownMenuViewModel(
+                defaultItem: .init(title: "All"),
+                items: filterItems,
+                itemSelectionHandler: { _ in }
+            )
+            : nil
 
         let visibleInsightTitles = rows.compactMap { row -> String? in
             guard let insightRow = row as? SQDashboardInsightRowViewModel else { return nil }
@@ -2021,15 +2050,22 @@ final class SQDashboardController: SQDashboardInterface {
             context: .dashboard
         )
 
-        return SQDashboardSubsectionViewModel(
+        let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "insights",
             title: "Insights",
             defaultPriority: 15,
-            rowsByFilter: ["All": rows],
+            rowsByFilter: rowsByFilter,
+            dropDownViewModel: dropDownViewModel,
             rowSpacing: .SQSpace.m,
             maxVisibleRows: nil,
             emptyState: emptyState
         )
+
+        dropDownViewModel?.itemSelectionHandler = { selectedFilter in
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        return sectionViewModel
     }
 
     private func insightReadinessSummary(from items: [SQInsightReadinessItem]) -> String? {
