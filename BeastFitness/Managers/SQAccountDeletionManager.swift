@@ -156,7 +156,6 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
     }
 
     private func clearLocalData(for user: SQUser, modelContext: ModelContext) async {
-        deleteAll(SQDailyCheckInEntity.self, from: modelContext)
         deleteAll(SQDailyCheckInSessionEntity.self, from: modelContext)
         deleteAll(SQWorkoutSessionEntity.self, from: modelContext)
         deleteAll(SQMetricDefinitionEntity.self, from: modelContext)

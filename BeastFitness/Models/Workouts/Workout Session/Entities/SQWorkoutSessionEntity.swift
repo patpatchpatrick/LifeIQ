@@ -11,8 +11,9 @@ import HealthKit
 import SwiftUI
 import BeastFitnessCore
 
-@Model
-final class SQWorkoutSessionEntity {
+extension SQLocalPersistenceSchemaV1 {
+    @Model
+    final class SQWorkoutSessionEntity {
     #Index<SQWorkoutSessionEntity>([\.hkWorkoutId])
     
     @Attribute(.unique) var workoutId: String     // UUID string
@@ -306,7 +307,10 @@ final class SQWorkoutSessionEntity {
             deletedAt: deletedAt
         )
     }
+    }
 }
+
+typealias SQWorkoutSessionEntity = SQCurrentLocalSchema.SQWorkoutSessionEntity
 
 extension SQWorkoutSessionEntity {
     

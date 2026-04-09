@@ -8,36 +8,40 @@ import SwiftData
 
 /// SwiftData entity for persisting a single metric entry locally.
 /// Mirrors `SQMetricEntry` — one row per metric value logged during a check-in.
-@Model
-final class SQMetricEntryEntity {
+extension SQLocalPersistenceSchemaV1 {
+    @Model
+    final class SQMetricEntryEntity {
 
-    @Attribute(.unique) var id: String
-    /// References `SQMetricDefinition.id` — identifies which metric this value belongs to.
-    var metricId: String
-    /// UTC timestamp of when the user submitted this entry.
-    var recordedAt: Date
-    /// "YYYY-MM-DD" in the user's local timezone — groups entries into days.
-    var anchorDayKey: String
-    /// IANA timezone identifier at time of entry (e.g. "America/New_York").
-    var timeZoneIdentifier: String
-    /// Raw string for `SQMetricPeriod` — stored as String for SwiftData compatibility.
-    var periodRaw: String
-    /// The value as entered by the user in their configured scale.
-    var rawValue: Float
-    /// `rawValue` normalized to 0–10 for the insight engine.
-    var normalizedScore: Float
+        @Attribute(.unique) var id: String
+        /// References `SQMetricDefinition.id` — identifies which metric this value belongs to.
+        var metricId: String
+        /// UTC timestamp of when the user submitted this entry.
+        var recordedAt: Date
+        /// "YYYY-MM-DD" in the user's local timezone — groups entries into days.
+        var anchorDayKey: String
+        /// IANA timezone identifier at time of entry (e.g. "America/New_York").
+        var timeZoneIdentifier: String
+        /// Raw string for `SQMetricPeriod` — stored as String for SwiftData compatibility.
+        var periodRaw: String
+        /// The value as entered by the user in their configured scale.
+        var rawValue: Float
+        /// `rawValue` normalized to 0–10 for the insight engine.
+        var normalizedScore: Float
 
-    init(entry: SQMetricEntry) {
-        self.id = entry.id
-        self.metricId = entry.metricId
-        self.recordedAt = entry.recordedAt
-        self.anchorDayKey = entry.anchorDayKey
-        self.timeZoneIdentifier = entry.timeZoneIdentifier
-        self.periodRaw = entry.period.rawValue
-        self.rawValue = entry.rawValue
-        self.normalizedScore = entry.normalizedScore
+        init(entry: SQMetricEntry) {
+            self.id = entry.id
+            self.metricId = entry.metricId
+            self.recordedAt = entry.recordedAt
+            self.anchorDayKey = entry.anchorDayKey
+            self.timeZoneIdentifier = entry.timeZoneIdentifier
+            self.periodRaw = entry.period.rawValue
+            self.rawValue = entry.rawValue
+            self.normalizedScore = entry.normalizedScore
+        }
     }
 }
+
+typealias SQMetricEntryEntity = SQCurrentLocalSchema.SQMetricEntryEntity
 
 // MARK: - Conversion
 

@@ -11,6 +11,15 @@ import SwiftData
 @main
 struct BeastFitnessApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private let modelContainer: ModelContainer
+
+    init() {
+        do {
+            self.modelContainer = try SQPersistenceController.makeModelContainer()
+        } catch {
+            fatalError("Failed to initialize SwiftData container: \(error)")
+        }
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -27,15 +36,6 @@ struct BeastFitnessApp: App {
                     )
                }
         }
-        .modelContainer(for: [
-            SQDailyCheckInEntity.self,
-            SQDailyCheckInSessionEntity.self,
-            SQWorkoutSessionEntity.self,
-            SQMetricDefinitionEntity.self,
-            SQSyncMetadataEntity.self,
-            SQWorkoutProcessedEntity.self,
-            SQMetricEntryEntity.self,
-            SQDailyNoteEntity.self
-        ])
+        .modelContainer(modelContainer)
     }
 }

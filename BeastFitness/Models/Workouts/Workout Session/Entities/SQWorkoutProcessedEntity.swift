@@ -8,16 +8,20 @@ import Foundation
 
 /// Records that a workout has been reviewed by the user in the "New Workout" modal.
 /// Keyed by `sourceId` (the stable HealthKit UUID for HK workouts, or workoutId for manual workouts).
-@Model
-final class SQWorkoutProcessedEntity {
-    @Attribute(.unique) var sourceId: String
-    var processedAt: Date
+extension SQLocalPersistenceSchemaV1 {
+    @Model
+    final class SQWorkoutProcessedEntity {
+        @Attribute(.unique) var sourceId: String
+        var processedAt: Date
 
-    init(sourceId: String, processedAt: Date = .now) {
-        self.sourceId = sourceId
-        self.processedAt = processedAt
+        init(sourceId: String, processedAt: Date = .now) {
+            self.sourceId = sourceId
+            self.processedAt = processedAt
+        }
     }
 }
+
+typealias SQWorkoutProcessedEntity = SQCurrentLocalSchema.SQWorkoutProcessedEntity
 
 extension SQWorkoutProcessedEntity {
 

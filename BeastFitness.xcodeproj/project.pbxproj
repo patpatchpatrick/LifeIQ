@@ -67,7 +67,6 @@
 		F7D1A1012FD1200100AA1001 /* SQAccountDeletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */; };
 		F7D1A1032FD1200100AA1001 /* SQDeleteAccountController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1022FD1200100AA1001 /* SQDeleteAccountController.swift */; };
 		F7D1A1052FD1200100AA1001 /* SQDeleteAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1042FD1200100AA1001 /* SQDeleteAccountView.swift */; };
-		F7D1A1112FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */; };
 		F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B162F6F3BAA00087C0F /* SQUserRoute.swift */; };
 		F6268B192F6F3BB700087C0F /* SQUserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268B182F6F3BB700087C0F /* SQUserService.swift */; };
 		F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */; };
@@ -221,6 +220,7 @@
 		F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */; };
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
 		F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */; };
+		F7E300022FFE100100AA3001 /* SQPersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E300012FFE100100AA3001 /* SQPersistenceController.swift */; };
 		F6C5FCED2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */; };
 		F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD762F3113D900BF1022 /* SQModalState.swift */; };
 		F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD792F31155400BF1022 /* SQModalHost.swift */; };
@@ -392,7 +392,6 @@
 		F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAccountDeletionManager.swift; sourceTree = "<group>"; };
 		F7D1A1022FD1200100AA1001 /* SQDeleteAccountController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeleteAccountController.swift; sourceTree = "<group>"; };
 		F7D1A1042FD1200100AA1001 /* SQDeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDeleteAccountView.swift; sourceTree = "<group>"; };
-		F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInLegacyEntity.swift; sourceTree = "<group>"; };
 		F629CE692EE3B8740002330C /* SQWorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionView.swift; sourceTree = "<group>"; };
 		F629CE6C2EE3B8B40002330C /* SQWorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionController.swift; sourceTree = "<group>"; };
 		F629CE6E2EE497910002330C /* SQWorkoutSessionExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSessionExerciseView.swift; sourceTree = "<group>"; };
@@ -542,6 +541,7 @@
 		F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailView.swift; sourceTree = "<group>"; };
 		F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserState.swift; sourceTree = "<group>"; };
 		F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSyncMetadataEntity.swift; sourceTree = "<group>"; };
+		F7E300012FFE100100AA3001 /* SQPersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPersistenceController.swift; sourceTree = "<group>"; };
 		F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFirestoreMetricsManager.swift; sourceTree = "<group>"; };
 		F6C5FD762F3113D900BF1022 /* SQModalState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQModalState.swift; sourceTree = "<group>"; };
 		F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDatePickerModal.swift; sourceTree = "<group>"; };
@@ -1436,7 +1436,6 @@
 			children = (
 				F67F09F52F08566B00D7BB90 /* SQMetricDefinitionEntity.swift */,
 				F67F09F32F08565800D7BB90 /* SQMetric.swift */,
-				F7D1A1102FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift */,
 				F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */,
 				F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */,
 				F6E1799E2F6357450099CAF2 /* SQDailyNote.swift */,
@@ -1466,6 +1465,7 @@
 		F6C5FCEA2F2C3F2A00BF1022 /* Sync */ = {
 			isa = PBXGroup;
 			children = (
+				F7E300012FFE100100AA3001 /* SQPersistenceController.swift */,
 				F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */,
 			);
 			path = Sync;
@@ -1941,7 +1941,6 @@
 				F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */,
 				F615922F2EF35E2800223A63 /* SQUserDefaults.swift in Sources */,
 				F67F09F42F08565A00D7BB90 /* SQMetric.swift in Sources */,
-				F7D1A1112FD1300100AA1001 /* SQDailyCheckInLegacyEntity.swift in Sources */,
 				F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */,
 				F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */,
 				F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */,
@@ -2129,6 +2128,7 @@
 				F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */,
 				F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */,
 				F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */,
+				F7E300022FFE100100AA3001 /* SQPersistenceController.swift in Sources */,
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,

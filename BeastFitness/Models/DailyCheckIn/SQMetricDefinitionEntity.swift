@@ -8,89 +8,93 @@
 import Foundation
 import SwiftData
 
-@Model
-final class SQMetricDefinitionEntity {
-    @Attribute(.unique) var id: String
+extension SQLocalPersistenceSchemaV1 {
+    @Model
+    final class SQMetricDefinitionEntity {
+        @Attribute(.unique) var id: String
 
-    var title: String
-    var kindRaw: String
-    var unitRaw: String
-    var groupRaw: String
+        var title: String
+        var kindRaw: String
+        var unitRaw: String
+        var groupRaw: String
 
-    var minValue: Float?
-    var maxValue: Float?
-    var stepValue: Float?
+        var minValue: Float?
+        var maxValue: Float?
+        var stepValue: Float?
 
-    var isPreset: Bool
-    var isEnabled: Bool
-    var sortOrder: Int
-    var isArchived: Bool
-    var emoji: String?
-    /// Comma-separated SQMetricPeriod raw values (e.g. "morning", "evening", "morning,evening").
-    /// Default "morning" allows lightweight migration of pre-existing rows.
-    var periodRaw: String = "morning"
-    var isDefault: Bool = false           // True if this metric is enabled by default for new users on first launch
-    /// When true, one entry per calendar day shared across all check-in sessions (e.g. sleep, weight).
-    /// Default false allows lightweight migration of pre-existing rows.
-    var isSingleDailyValue: Bool = false
-    /// Stored as raw value for forward-compatible enum decoding.
-    var goalStyleRaw: String = SQMetricGoalStyle.justTrack.rawValue
-    var targetValue: Float?
-    var targetRangeMinValue: Float?
-    var targetRangeMaxValue: Float?
-    /// Stored as raw value for forward-compatible enum decoding.
-    var bodyBatteryEffectRaw: String = SQMetricBodyBatteryEffect.none.rawValue
+        var isPreset: Bool
+        var isEnabled: Bool
+        var sortOrder: Int
+        var isArchived: Bool
+        var emoji: String?
+        /// Comma-separated SQMetricPeriod raw values (e.g. "morning", "evening", "morning,evening").
+        /// Default "morning" allows lightweight migration of pre-existing rows.
+        var periodRaw: String = "morning"
+        var isDefault: Bool = false           // True if this metric is enabled by default for new users on first launch
+        /// When true, one entry per calendar day shared across all check-in sessions (e.g. sleep, weight).
+        /// Default false allows lightweight migration of pre-existing rows.
+        var isSingleDailyValue: Bool = false
+        /// Stored as raw value for forward-compatible enum decoding.
+        var goalStyleRaw: String = SQMetricGoalStyle.justTrack.rawValue
+        var targetValue: Float?
+        var targetRangeMinValue: Float?
+        var targetRangeMaxValue: Float?
+        /// Stored as raw value for forward-compatible enum decoding.
+        var bodyBatteryEffectRaw: String = SQMetricBodyBatteryEffect.none.rawValue
 
-    // Optional: for Firestore sync later
-    var updatedAt: Date
+        // Optional: for Firestore sync later
+        var updatedAt: Date
 
-    init(
-        id: String,
-        title: String,
-        kind: SQMetricKind,
-        unit: SQMetricUnit,
-        group: String,
-        min: Float? = nil,
-        max: Float? = nil,
-        step: Float? = nil,
-        isPreset: Bool,
-        isEnabled: Bool,
-        sortOrder: Int,
-        isArchived: Bool,
-        emoji: String? = nil,
-        periods: Set<SQMetricPeriod> = [.morning],
-        isSingleDailyValue: Bool = false,
-        goalStyle: SQMetricGoalStyle = .justTrack,
-        targetValue: Float? = nil,
-        targetRangeMin: Float? = nil,
-        targetRangeMax: Float? = nil,
-        bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
-        isDefault: Bool = false
-    ) {
-        self.id = id
-        self.title = title
-        self.kindRaw = kind.rawValue
-        self.unitRaw = unit.rawValue
-        self.groupRaw = group
-        self.minValue = min
-        self.maxValue = max
-        self.stepValue = step
-        self.isPreset = isPreset
-        self.isEnabled = isEnabled
-        self.sortOrder = sortOrder
-        self.isArchived = isArchived
-        self.emoji = emoji
-        self.periodRaw = Self.serialize(periods)
-        self.isSingleDailyValue = isSingleDailyValue
-        self.goalStyleRaw = goalStyle.rawValue
-        self.targetValue = targetValue
-        self.targetRangeMinValue = targetRangeMin
-        self.targetRangeMaxValue = targetRangeMax
-        self.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
-        self.isDefault = isDefault
-        self.updatedAt = .now
+        init(
+            id: String,
+            title: String,
+            kind: SQMetricKind,
+            unit: SQMetricUnit,
+            group: String,
+            min: Float? = nil,
+            max: Float? = nil,
+            step: Float? = nil,
+            isPreset: Bool,
+            isEnabled: Bool,
+            sortOrder: Int,
+            isArchived: Bool,
+            emoji: String? = nil,
+            periods: Set<SQMetricPeriod> = [.morning],
+            isSingleDailyValue: Bool = false,
+            goalStyle: SQMetricGoalStyle = .justTrack,
+            targetValue: Float? = nil,
+            targetRangeMin: Float? = nil,
+            targetRangeMax: Float? = nil,
+            bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
+            isDefault: Bool = false
+        ) {
+            self.id = id
+            self.title = title
+            self.kindRaw = kind.rawValue
+            self.unitRaw = unit.rawValue
+            self.groupRaw = group
+            self.minValue = min
+            self.maxValue = max
+            self.stepValue = step
+            self.isPreset = isPreset
+            self.isEnabled = isEnabled
+            self.sortOrder = sortOrder
+            self.isArchived = isArchived
+            self.emoji = emoji
+            self.periodRaw = Self.serialize(periods)
+            self.isSingleDailyValue = isSingleDailyValue
+            self.goalStyleRaw = goalStyle.rawValue
+            self.targetValue = targetValue
+            self.targetRangeMinValue = targetRangeMin
+            self.targetRangeMaxValue = targetRangeMax
+            self.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
+            self.isDefault = isDefault
+            self.updatedAt = .now
+        }
     }
 }
+
+typealias SQMetricDefinitionEntity = SQCurrentLocalSchema.SQMetricDefinitionEntity
 
 extension SQMetricDefinitionEntity {
     var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }

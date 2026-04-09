@@ -8,22 +8,26 @@ import SwiftData
 
 /// SwiftData entity for persisting a user's daily note locally.
 /// One note per calendar day, keyed by `anchorDayKey`.
-@Model
-final class SQDailyNoteEntity {
+extension SQLocalPersistenceSchemaV1 {
+    @Model
+    final class SQDailyNoteEntity {
 
-    /// "YYYY-MM-DD" in the user's local timezone — unique per day; also used as Firestore document ID.
-    @Attribute(.unique) var anchorDayKey: String
-    /// The user's free-form note text.
-    var content: String
-    /// UTC timestamp of last edit — used for incremental Firestore sync.
-    var updatedAt: Date
+        /// "YYYY-MM-DD" in the user's local timezone — unique per day; also used as Firestore document ID.
+        @Attribute(.unique) var anchorDayKey: String
+        /// The user's free-form note text.
+        var content: String
+        /// UTC timestamp of last edit — used for incremental Firestore sync.
+        var updatedAt: Date
 
-    init(note: SQDailyNote) {
-        self.anchorDayKey = note.anchorDayKey
-        self.content = note.content
-        self.updatedAt = note.updatedAt
+        init(note: SQDailyNote) {
+            self.anchorDayKey = note.anchorDayKey
+            self.content = note.content
+            self.updatedAt = note.updatedAt
+        }
     }
 }
+
+typealias SQDailyNoteEntity = SQCurrentLocalSchema.SQDailyNoteEntity
 
 // MARK: - Conversion
 
