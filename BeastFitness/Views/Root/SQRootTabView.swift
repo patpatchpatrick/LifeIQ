@@ -24,6 +24,8 @@ struct SQRootTabView: View {
             SQWorkoutSummaryView(controller: controller)
         case .workoutInsightDetail(let controller):
             SQWorkoutInsightDetailView(controller: controller)
+        case .insightDetail(model: let model):
+            SQInsightInfoSheetView(model: model)
         case .lifeScoreDetail(let controller):
             SQLifeScoreDetailView(controller: controller)
         case .editWorkout(workout: let workout):
@@ -54,13 +56,28 @@ struct SQRootTabView: View {
     var dashboardViewWithNavSheet: some View {
         SQDashboardView(controller: viewModel.dashboardController)
             .sheet(item: $viewModel.navigationState.dashboardRootSheetView) { route in
-                NavigationStack(path: $viewModel.navigationState.dashboardNavPath) { view(for: route)
+                dashboardSheetView(for: route)
+            }
+    }
+
+    @ViewBuilder
+    private func dashboardSheetView(for route: SQNavRoute.DashboardRoute) -> some View {
+        let content = NavigationStack(path: $viewModel.navigationState.dashboardNavPath) { view(for: route)
                         .navigationDestination(for: SQNavRoute.DashboardRoute.self) { route in
                                 view(for: route)
                             }
                 }
-                .background(SQColor.backgroundSheet.color)
-            }
+                .background {
+                    SQSheetBackground()
+                }
+
+        if let detents = route.sheetDetents {
+            content
+                .presentationDetents(detents)
+                .presentationDragIndicator(route.sheetDragIndicatorVisibility)
+        } else {
+            content
+        }
     }
     
     var body: some View {

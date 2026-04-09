@@ -130,6 +130,7 @@ enum SQImageSymbol: String {
     
     /// Other
     case arrowDown           = "arrow.down"
+    case arrowRight          = "arrow.right"
     case arrowUp             = "arrow.up"
     case calendar            = "calendar"
     case checkmark           = "checkmark"

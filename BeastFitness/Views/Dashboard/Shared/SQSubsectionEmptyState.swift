@@ -50,6 +50,14 @@ struct SQSubsectionEmptyState: View {
                 .sqFont(.body)
                 .sqForegroundColor(.textSecondary)
                 .multilineTextAlignment(.center)
+
+            if let subtitle {
+                Text(subtitle)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity)

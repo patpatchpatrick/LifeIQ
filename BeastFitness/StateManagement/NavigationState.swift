@@ -94,6 +94,7 @@ struct SQNavRoute {
         case workoutsList(workouts: [SQWorkoutSessionable])
         case workoutSummary(controller: SQWorkoutSummaryController)
         case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
+        case insightDetail(model: SQInsight)
         case lifeScoreDetail(controller: SQLifeScoreDetailController)
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
@@ -119,6 +120,8 @@ struct SQNavRoute {
                 return "workoutSummary-\(controller.id)"
             case .workoutInsightDetail(let controller):
                 return "workoutInsightDetail-\(controller.id)"
+            case .insightDetail(let model):
+                return "insightDetail-\(model.id)"
             case .lifeScoreDetail(let controller):
                 return "lifeScoreDetail-\(controller.id)"
             case .editWorkout(let workout):
@@ -150,6 +153,19 @@ struct SQNavRoute {
         
         static func == (lhs: DashboardRoute, rhs: DashboardRoute) -> Bool {
             lhs.id == rhs.id
+        }
+
+        var sheetDetents: Set<PresentationDetent>? {
+            switch self {
+            case .insightDetail:
+                return [.medium, .large]
+            default:
+                return nil
+            }
+        }
+
+        var sheetDragIndicatorVisibility: Visibility {
+            sheetDetents == nil ? .automatic : .visible
         }
     }
     

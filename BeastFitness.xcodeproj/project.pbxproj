@@ -221,6 +221,20 @@
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
 		F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */; };
 		F7E300022FFE100100AA3001 /* SQPersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E300012FFE100100AA3001 /* SQPersistenceController.swift */; };
+		F7E400122FFE200100AA4001 /* SQInsightEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400112FFE200100AA4001 /* SQInsightEnums.swift */; };
+		F7E400142FFE200100AA4001 /* SQInsight.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400132FFE200100AA4001 /* SQInsight.swift */; };
+		F7E400162FFE200100AA4001 /* SQInsightDailySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400152FFE200100AA4001 /* SQInsightDailySnapshot.swift */; };
+		F7E400182FFE200100AA4001 /* SQInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */; };
+		F7E4001A2FFE200100AA4001 /* SQInsightsAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */; };
+		F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */; };
+		F7E4001E2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001D2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift */; };
+		F7E400202FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4001F2FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift */; };
+		F7E400222FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400212FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift */; };
+		F7E400242FFE200100AA4001 /* SQSleepWorkoutPerformanceInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400232FFE200100AA4001 /* SQSleepWorkoutPerformanceInsightEvaluator.swift */; };
+		F7E4002A2FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400292FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift */; };
+		F7E400262FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */; };
+		F7E400282FFE200100AA4001 /* SQDashboardInsightRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */; };
+		F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */; };
 		F6C5FCED2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */; };
 		F6C5FD772F3113D900BF1022 /* SQModalState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD762F3113D900BF1022 /* SQModalState.swift */; };
 		F6C5FD7B2F31155400BF1022 /* SQModalHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FD792F31155400BF1022 /* SQModalHost.swift */; };
@@ -542,6 +556,20 @@
 		F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserState.swift; sourceTree = "<group>"; };
 		F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSyncMetadataEntity.swift; sourceTree = "<group>"; };
 		F7E300012FFE100100AA3001 /* SQPersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPersistenceController.swift; sourceTree = "<group>"; };
+		F7E400112FFE200100AA4001 /* SQInsightEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightEnums.swift; sourceTree = "<group>"; };
+		F7E400132FFE200100AA4001 /* SQInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsight.swift; sourceTree = "<group>"; };
+		F7E400152FFE200100AA4001 /* SQInsightDailySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightDailySnapshot.swift; sourceTree = "<group>"; };
+		F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightsAggregator.swift; sourceTree = "<group>"; };
+		F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightsService.swift; sourceTree = "<group>"; };
+		F7E4001D2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlcoholSleepInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E4001F2FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlcoholEnergyInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E400212FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQCaffeineSleepInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E400232FFE200100AA4001 /* SQSleepWorkoutPerformanceInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepWorkoutPerformanceInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E400292FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepHoursWorkoutPerformanceInsightEvaluator.swift; sourceTree = "<group>"; };
+		F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightRowViewModel.swift; sourceTree = "<group>"; };
+		F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightRowView.swift; sourceTree = "<group>"; };
+		F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightInfoSheetView.swift; sourceTree = "<group>"; };
 		F6C5FCEC2F2C5EA900BF1022 /* SQFirestoreMetricsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFirestoreMetricsManager.swift; sourceTree = "<group>"; };
 		F6C5FD762F3113D900BF1022 /* SQModalState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQModalState.swift; sourceTree = "<group>"; };
 		F6C5FD782F31155400BF1022 /* SQDatePickerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDatePickerModal.swift; sourceTree = "<group>"; };
@@ -683,6 +711,7 @@
 			children = (
 				F6940F2E2F37B1480008A2A0 /* SQDashboardWorkoutSummaryRowConfig.swift */,
 				F6940F2C2F37B12D0008A2A0 /* SQDashboardWorkoutGroupViewModel.swift */,
+				F7E400052FFE200100AA4001 /* Insights */,
 				F67F0A0E2F087C0900D7BB90 /* MetricsList */,
 				F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */,
 				F602DA3B2EC4E9F400404878 /* DashboardRows */,
@@ -708,6 +737,7 @@
 		F602DA382EC4118200404878 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				F7E400062FFE200100AA4001 /* Insights */,
 				F6E90B4A2ED55193003441B5 /* DailyCheckIn */,
 				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */,
@@ -1292,6 +1322,7 @@
 				F639F1332F4547BF004AC701 /* TimeRange */,
 				F6E058952F04981C006C1CE0 /* WatchInterface */,
 				F61592082EEE18D800223A63 /* Firestore */,
+				F7E400002FFE200100AA4001 /* Insights */,
 				F679BDD12EE7C0B200A2F249 /* Shared */,
 				F6ABC3F52EDFBED000D3E679 /* DailyCheckIn */,
 				F6ABC3602EDE654200D3E679 /* User */,
@@ -1335,6 +1366,7 @@
 		F6A848A72CB619E900B09AD5 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				F7E400032FFE200100AA4001 /* Insights */,
 				F67F0A072F08773D00D7BB90 /* SQMetricDefinitionManager.swift */,
 				F7D1A1002FD1200100AA1001 /* SQAccountDeletionManager.swift */,
 				F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */,
@@ -1469,6 +1501,56 @@
 				F6C5FCE92F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift */,
 			);
 			path = Sync;
+			sourceTree = "<group>";
+		};
+		F7E400002FFE200100AA4001 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				F7E400112FFE200100AA4001 /* SQInsightEnums.swift */,
+				F7E400132FFE200100AA4001 /* SQInsight.swift */,
+				F7E400152FFE200100AA4001 /* SQInsightDailySnapshot.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		F7E400032FFE200100AA4001 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				F7E400042FFE200100AA4001 /* Evaluators */,
+				F7E400172FFE200100AA4001 /* SQInsightEvaluator.swift */,
+				F7E400192FFE200100AA4001 /* SQInsightsAggregator.swift */,
+				F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		F7E400042FFE200100AA4001 /* Evaluators */ = {
+			isa = PBXGroup;
+			children = (
+				F7E4001D2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift */,
+				F7E4001F2FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift */,
+				F7E400212FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift */,
+				F7E400232FFE200100AA4001 /* SQSleepWorkoutPerformanceInsightEvaluator.swift */,
+				F7E400292FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift */,
+			);
+			path = Evaluators;
+			sourceTree = "<group>";
+		};
+		F7E400052FFE200100AA4001 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		F7E400062FFE200100AA4001 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */,
+				F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */,
+			);
+			path = Insights;
 			sourceTree = "<group>";
 		};
 		F6C5FD7A2F31155400BF1022 /* Modals */ = {
@@ -2121,6 +2203,7 @@
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,
 				F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */,
 				F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */,
+				F7E400282FFE200100AA4001 /* SQDashboardInsightRowView.swift in Sources */,
 				F7D1000C2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift in Sources */,
 				F7D100052F94000100AA1001 /* SQDashboardLayoutView.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,
@@ -2129,6 +2212,19 @@
 				F6C5FD7C2F31155400BF1022 /* SQDatePickerModal.swift in Sources */,
 				F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */,
 				F7E300022FFE100100AA3001 /* SQPersistenceController.swift in Sources */,
+				F7E400122FFE200100AA4001 /* SQInsightEnums.swift in Sources */,
+				F7E400142FFE200100AA4001 /* SQInsight.swift in Sources */,
+				F7E400162FFE200100AA4001 /* SQInsightDailySnapshot.swift in Sources */,
+				F7E400182FFE200100AA4001 /* SQInsightEvaluator.swift in Sources */,
+				F7E4001A2FFE200100AA4001 /* SQInsightsAggregator.swift in Sources */,
+				F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */,
+				F7E4001E2FFE200100AA4001 /* SQAlcoholSleepInsightEvaluator.swift in Sources */,
+				F7E400202FFE200100AA4001 /* SQAlcoholEnergyInsightEvaluator.swift in Sources */,
+				F7E400222FFE200100AA4001 /* SQCaffeineSleepInsightEvaluator.swift in Sources */,
+				F7E400242FFE200100AA4001 /* SQSleepWorkoutPerformanceInsightEvaluator.swift in Sources */,
+				F7E4002A2FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift in Sources */,
+				F7E400262FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift in Sources */,
+				F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */,
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,

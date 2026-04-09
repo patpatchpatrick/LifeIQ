@@ -34,6 +34,7 @@ final class SQDashboardController: SQDashboardInterface {
     let bodyBatteryService: SQBodyBatteryServicing
     let heartRateService: SQHeartRateServicing
     let workoutScoreService: SQWorkoutScoreServicing
+    let insightsService: SQInsightsServicing
     let dashboardLayoutService: SQDashboardLayoutServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
@@ -67,6 +68,7 @@ final class SQDashboardController: SQDashboardInterface {
         bodyBatteryService: SQBodyBatteryServicing? = nil,
         heartRateService: SQHeartRateServicing? = nil,
         workoutScoreService: SQWorkoutScoreServicing? = nil,
+        insightsService: SQInsightsServicing? = nil,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil
     ) {
         let resolvedHeartRateService = heartRateService ?? SQHeartRateService(
@@ -92,6 +94,7 @@ final class SQDashboardController: SQDashboardInterface {
         self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService(
             heartRateService: resolvedHeartRateService
         )
+        self.insightsService = insightsService ?? SQInsightsService()
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         
         let items = AppTimeRange.allCases
@@ -454,12 +457,14 @@ final class SQDashboardController: SQDashboardInterface {
             let sectionGroups = try await buildSectionGroups(
                 checkIns: currentCheckIns,
                 priorCheckIns: priorCheckIns,
+                insightCheckIns: past30DaysCheckIns,
                 vo2MaxSamples: currentVO2MaxSamples,
                 vo2MaxAllTime: vo2MaxAllTime,
                 todaysWorkouts: todaysWorkouts,
                 yesterdaysWorkouts: yesterdaysWorkouts,
                 workouts: currentWorkouts,
                 priorWorkouts: priorWorkouts,
+                insightWorkouts: past30DaysWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
                 sleepData: sleepDashboardData,
                 sleepAccessStatus: sleepAccessStatus,
@@ -1743,12 +1748,14 @@ final class SQDashboardController: SQDashboardInterface {
     private func buildSectionGroups(
         checkIns: [SQDailyCheckInStats],
         priorCheckIns: [SQDailyCheckInStats],
+        insightCheckIns: [SQDailyCheckInStats],
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable],
+        insightWorkouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
         sleepAccessStatus: SQHealthKitDashboardAccessStatus,
@@ -1781,6 +1788,12 @@ final class SQDashboardController: SQDashboardInterface {
             context: context
         )
         dailyStatsSections.append(metricsSection)
+
+        let insightsSection = buildInsightsSubsection(
+            checkIns: insightCheckIns,
+            workouts: insightWorkouts
+        )
+        dailyStatsSections.append(insightsSection)
 
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
@@ -1925,6 +1938,113 @@ final class SQDashboardController: SQDashboardInterface {
         sectionGroups.append(workoutsGroup)
 
         return sectionGroups
+    }
+
+    private func buildInsightsSubsection(
+        checkIns: [SQDailyCheckInStats],
+        workouts: [SQWorkoutSessionable]
+    ) -> SQDashboardSubsectionViewModel {
+        let result = insightsService.dashboardInsights(
+            checkIns: checkIns,
+            workouts: workouts,
+            metricDefinitions: metricsManager.allMetrics(includeArchived: true)
+        )
+
+        let emptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel?
+        switch result.state {
+        case .ready:
+            emptyState = nil
+        case .notEnoughData:
+            let remainingDays = max(0, result.requiredMinimumDayCount - result.analyzedDayCount)
+            let readinessSummary = insightReadinessSummary(from: result.readinessItems)
+            emptyState = .init(
+                title: "Insights are calibrating",
+                subtitle: [
+                    remainingDays > 0
+                    ? "Log about \(remainingDays) more days of sleep, habits, and workout ratings so LifeIQ can start finding patterns."
+                    : "Log a bit more sleep, habit, and workout data so LifeIQ can start finding patterns you can trust.",
+                    readinessSummary
+                ]
+                .compactMap { $0 }
+                .joined(separator: "\n\n"),
+                icon: .chartBar,
+                onTap: nil
+            )
+        case .noPatterns:
+            let readinessSummary = insightReadinessSummary(from: result.readinessItems)
+            emptyState = .init(
+                title: "No strong patterns yet",
+                subtitle: [
+                    "You have enough data to start analyzing, but nothing has crossed the confidence bar yet. Keep logging consistently.",
+                    readinessSummary
+                ]
+                .compactMap { $0 }
+                .joined(separator: "\n\n"),
+                icon: .chartBar,
+                onTap: nil
+            )
+        }
+
+        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
+        var rows = [SQDashboardRowViewModel]()
+
+        if let firstInsight = result.insights.first {
+            rows.append(SQDashboardInsightRowViewModel(
+                model: firstInsight,
+                onInfoTap: { [weak state] in
+                    state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: firstInsight)))
+                }
+            ))
+        }
+
+        if isPremiumUnlocked {
+            for insight in result.insights.dropFirst().prefix(2) {
+                rows.append(SQDashboardInsightRowViewModel(
+                    model: insight,
+                    onInfoTap: { [weak state] in
+                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: insight)))
+                    }
+                ))
+            }
+        } else if let lockedPreview = result.insights.dropFirst().first {
+            rows.append(SQDashboardInsightRowViewModel(model: lockedPreview, isLocked: true))
+        }
+
+        return SQDashboardSubsectionViewModel(
+            id: "insights",
+            title: "Insights",
+            defaultPriority: 15,
+            rowsByFilter: ["All": rows],
+            rowSpacing: .SQSpace.m,
+            maxVisibleRows: isPremiumUnlocked ? 2 : nil,
+            emptyState: emptyState
+        )
+    }
+
+    private func insightReadinessSummary(from items: [SQInsightReadinessItem]) -> String? {
+        guard !items.isEmpty else { return nil }
+
+        let prioritized = items.sorted { lhs, rhs in
+            readinessPriority(lhs.status) < readinessPriority(rhs.status)
+        }
+
+        let lines = prioritized.map { item in
+            "- \(item.title): \(item.summary)"
+        }
+
+        guard !lines.isEmpty else { return nil }
+        return "What each insight still needs:\n" + lines.joined(separator: "\n")
+    }
+
+    private func readinessPriority(_ status: SQInsightReadinessStatus) -> Int {
+        switch status {
+        case .needsMoreData:
+            return 0
+        case .weakSignal:
+            return 1
+        case .ready:
+            return 2
+        }
     }
 
     private func buildHealthAccessWarningSectionGroup(
