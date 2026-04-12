@@ -309,6 +309,15 @@ Implementation guidance:
 - Prefer adding Remote Config checks in shared layers rather than scattering one-off checks across feature screens.
 - If a feature should surface maintenance/read-only state to users, wire it into existing runtime-control patterns instead of inventing a separate flag system.
 
+### Guest-mode write behavior
+
+- Any Firestore-backed write flow must explicitly account for guest mode.
+- Do not let guest users silently create local data that can later be ambiguously associated with a signed-in account.
+- Guest-mode handling should be reflected in both places:
+  - the shared save/write path should reject guest writes defensively
+  - the UI should hide, disable, or replace write/edit affordances with a login-required message/CTA when appropriate
+- When implementing a new write flow, treat guest-mode UX and write enforcement as part of the feature, not a later cleanup task.
+
 - **Service classes** (e.g., `SQDailyCheckInService`) — Domain-specific services that inherit from `SQNetworkService`
   - Define high-level operations (e.g., `saveDailyCheckInStats`, `fetchAllDailyCheckIns`)
   - Call `performRequest()` with the appropriate route

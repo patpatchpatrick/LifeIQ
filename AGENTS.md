@@ -121,6 +121,18 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - dashboard/root surfaces for user-facing status messaging
 - If a new feature has a meaningful degraded/read-only/maintenance mode, account for Remote Config during implementation rather than treating it as a later patch.
 
+### Guest-mode write behavior
+
+- Any user-facing flow that writes Firestore-backed data must explicitly account for guest mode.
+- Do not allow guest users to silently save local data that can later be ambiguously attached to an account.
+- For guest users, update the UI accordingly:
+  - hide or disable write/edit controls when appropriate
+  - or replace them with a login-required CTA/message
+- Shared save/write entry points should still defensively reject guest writes even if the UI is already gated.
+- When adding a new write flow, review both:
+  - the backend/write path guard
+  - the guest/read-only UI state for that surface
+
 ### Firestore metrics tracking (required)
 
 - Track all reads/writes using `SQFirestoreMetricsManager` for cost visibility.
