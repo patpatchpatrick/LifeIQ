@@ -38,6 +38,9 @@ struct SQRemoteConfigSnapshot: Equatable {
 protocol SQRemoteConfigManaging: AnyObject {
     var snapshot: SQRemoteConfigSnapshot { get }
     func configure()
+    func addSnapshotObserver(_ observer: @escaping (SQRemoteConfigSnapshot) -> Void) -> UUID
+    func removeSnapshotObserver(_ id: UUID)
+    func refreshForCriticalStateCheck()
 }
 
 @MainActor
@@ -55,6 +58,15 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
         static let productionMinimumFetchInterval: TimeInterval = 12 * 60 * 60
     }
 
+#if DEBUG
+    private enum DebugLaunchArgument {
+        // Xcode: Product > Scheme > Edit Scheme... > Run > Arguments.
+        // Add one of these under "Arguments Passed On Launch" to force the blocker UI locally.
+        static let appDisabled = "-sq_app_disabled"
+        static let forceUpdate = "-sq_force_update"
+    }
+#endif
+
     private enum Key: String, CaseIterable {
         case appDisabled = "app_disabled"
         case appDisabledMessage = "app_disabled_message"
@@ -71,6 +83,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
     private let remoteConfig = RemoteConfig.remoteConfig()
     private var hasConfigured = false
     private var realtimeUpdateRegistration: ConfigUpdateListenerRegistration?
+    private var snapshotObservers: [UUID: (SQRemoteConfigSnapshot) -> Void] = [:]
     private(set) var snapshot = SQRemoteConfigSnapshot.default
 
     private init() {}
@@ -97,6 +110,58 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
             .info,
             context: .general
         )
+    }
+
+    func addSnapshotObserver(_ observer: @escaping (SQRemoteConfigSnapshot) -> Void) -> UUID {
+        let observerId = UUID()
+        snapshotObservers[observerId] = observer
+        return observerId
+    }
+
+    func removeSnapshotObserver(_ id: UUID) {
+        snapshotObservers.removeValue(forKey: id)
+    }
+
+    func refreshForCriticalStateCheck() {
+        guard hasConfigured else { return }
+
+        remoteConfig.fetch(withExpirationDuration: 0) { [weak self] status, error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+
+                if let error {
+                    SQLogger.shared.log(
+                        "Remote Config critical refresh failed: \(error.localizedDescription)",
+                        .warning,
+                        context: .general
+                    )
+                    return
+                }
+
+                SQLogger.shared.log(
+                    "Remote Config critical refresh completed with status: \(status.rawValue)",
+                    .debug,
+                    context: .general
+                )
+
+                self.remoteConfig.activate { [weak self] _, error in
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+
+                        if let error {
+                            SQLogger.shared.log(
+                                "Remote Config activate failed after critical refresh: \(error.localizedDescription)",
+                                .warning,
+                                context: .general
+                            )
+                            return
+                        }
+
+                        self.refreshSnapshot(source: "critical_refresh")
+                    }
+                }
+            }
+        }
     }
 
     private func fetchAndActivate() {
@@ -172,7 +237,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
     }
 
     private func refreshSnapshot(source: String) {
-        let updatedSnapshot = SQRemoteConfigSnapshot(
+        let remoteSnapshot = SQRemoteConfigSnapshot(
             appDisabled: boolValue(for: .appDisabled),
             appDisabledMessage: fallbackMessage(
                 for: .appDisabledMessage,
@@ -196,8 +261,11 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
             requiresForceUpdate: requiresForceUpdate()
         )
 
+        let updatedSnapshot = applyDebugOverrides(to: remoteSnapshot)
+
         guard updatedSnapshot != snapshot else { return }
         snapshot = updatedSnapshot
+        snapshotObservers.values.forEach { $0(updatedSnapshot) }
 
         SQLogger.shared.log(
             """
@@ -215,6 +283,42 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
             .debug,
             context: .general
         )
+    }
+
+    private func applyDebugOverrides(to snapshot: SQRemoteConfigSnapshot) -> SQRemoteConfigSnapshot {
+#if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+
+        if arguments.contains(DebugLaunchArgument.forceUpdate) {
+            return .init(
+                appDisabled: false,
+                appDisabledMessage: snapshot.appDisabledMessage,
+                writesDisabled: snapshot.writesDisabled,
+                writesDisabledMessage: snapshot.writesDisabledMessage,
+                signupDisabled: snapshot.signupDisabled,
+                signupDisabledMessage: snapshot.signupDisabledMessage,
+                minSupportedBuild: snapshot.minSupportedBuild,
+                forceUpdateMessage: "[Debug] A newer version of LifeIQ is required to continue.",
+                requiresForceUpdate: true
+            )
+        }
+
+        if arguments.contains(DebugLaunchArgument.appDisabled) {
+            return .init(
+                appDisabled: true,
+                appDisabledMessage: "[Debug] LifeIQ is temporarily unavailable while this screen is being tested.",
+                writesDisabled: snapshot.writesDisabled,
+                writesDisabledMessage: snapshot.writesDisabledMessage,
+                signupDisabled: snapshot.signupDisabled,
+                signupDisabledMessage: snapshot.signupDisabledMessage,
+                minSupportedBuild: snapshot.minSupportedBuild,
+                forceUpdateMessage: snapshot.forceUpdateMessage,
+                requiresForceUpdate: false
+            )
+        }
+#endif
+
+        return snapshot
     }
 
     private func boolValue(for key: Key) -> Bool {
@@ -237,6 +341,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
 
     private func requiresForceUpdate() -> Bool {
         guard let minSupportedBuild = minSupportedBuildValue() else { return false }
+        // Force-update compares against CFBundleVersion (build number), not CFBundleShortVersionString.
         guard let currentBuildRaw = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String else {
             return false
         }

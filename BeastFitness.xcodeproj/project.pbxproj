@@ -52,6 +52,8 @@
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
 		F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C42EF37A8900223A63 /* SQToastState.swift */; };
 		F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */; };
+		F6B710012FA1100100A1B710 /* SQAppBlockerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */; };
+		F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */; };
 		F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */; };
 		F6268AE02F6B823000087C0F /* SQProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268ADE2F6B823000087C0F /* SQProfileController.swift */; };
@@ -516,6 +518,8 @@
 		F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailView.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAnalyticsManager.swift; sourceTree = "<group>"; };
+		F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerState.swift; sourceTree = "<group>"; };
+		F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerHost.swift; sourceTree = "<group>"; };
 		F6B700022FA0000100A1B700 /* remote_config_defaults.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = remote_config_defaults.plist; sourceTree = "<group>"; };
 		F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRemoteConfigManager.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
@@ -928,6 +932,7 @@
 		F61593C62EF4B81400223A63 /* OverlayWindow */ = {
 			isa = PBXGroup;
 			children = (
+				F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */,
 				F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */,
 			);
 			path = OverlayWindow;
@@ -1386,6 +1391,7 @@
 				F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */,
 				F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */,
 				F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */,
+				F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */,
 				F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
@@ -2249,6 +2255,8 @@
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
 				F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */,
 				F6AEB6112F880089008D747B /* SQAnalyticsManager.swift in Sources */,
+				F6B710012FA1100100A1B710 /* SQAppBlockerState.swift in Sources */,
+				F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */,
 				F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */,
 				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
 				F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */,

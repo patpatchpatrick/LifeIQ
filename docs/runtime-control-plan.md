@@ -80,6 +80,7 @@ Use Remote Config for app behavior, UX, and messaging:
 - `app_disabled`
 - `app_disabled_message`
 - `min_supported_build`
+  Uses `CFBundleVersion` (build number), not `CFBundleShortVersionString` / marketing version.
 - `force_update_message`
 - `writes_disabled_message`
 - `signups_disabled_message`

@@ -9,6 +9,7 @@ import SwiftUI
 
 /// This is the overlay view for the window that displays at the top level to manage both alerts and toasts
 struct SQOverlayRootView: View {
+    @Bindable var appBlocker: SQAppBlockerState
     @Bindable var alerts: SQAlertState
     @Bindable var toasts: SQToastState
     @Bindable var modals: SQModalState
@@ -31,6 +32,10 @@ struct SQOverlayRootView: View {
             // Dropdown menu layer (above everything — anchored to button position)
             SQDropDownMenuHost(menuState: dropdownMenu)
                 .zIndex(4)
+
+            // App blocker layer (full-screen topmost)
+            SQAppBlockerHost(blockerState: appBlocker)
+                .zIndex(5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)

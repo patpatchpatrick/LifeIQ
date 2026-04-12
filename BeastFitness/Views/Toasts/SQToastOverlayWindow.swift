@@ -17,7 +17,7 @@ final class SQOverlayWindow {
 
     private init() {}
 
-    func attachIfNeeded(alerts: SQAlertState, toasts: SQToastState, modals: SQModalState, dropdownMenu: SQDropDownMenuState) {
+    func attachIfNeeded(appBlocker: SQAppBlockerState, alerts: SQAlertState, toasts: SQToastState, modals: SQModalState, dropdownMenu: SQDropDownMenuState) {
         guard window == nil else { return }
 
         guard let scene = UIApplication.shared.connectedScenes
@@ -27,7 +27,13 @@ final class SQOverlayWindow {
             return
         }
 
-        let rootView = SQOverlayRootView(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+        let rootView = SQOverlayRootView(
+            appBlocker: appBlocker,
+            alerts: alerts,
+            toasts: toasts,
+            modals: modals,
+            dropdownMenu: dropdownMenu
+        )
         let hc = UIHostingController(rootView: rootView)
         hc.view.backgroundColor = .clear
 
@@ -46,26 +52,66 @@ final class SQOverlayWindow {
         // - If only a toast is visible and you want the dismiss button tappable,
         //   passthrough should also be OFF (otherwise taps fall through).
         // - If nothing visible, passthrough ON.
-        updatePassthrough(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+        updatePassthrough(
+            appBlocker: appBlocker,
+            alerts: alerts,
+            toasts: toasts,
+            modals: modals,
+            dropdownMenu: dropdownMenu
+        )
 
         // React to changes (simple callbacks).
         // If your managers don't have callbacks, you can add them (like we did earlier),
         // or just call updatePassthrough() when you present/dismiss.
+        appBlocker.onVisibilityChanged = { [weak self] _ in
+            guard let self else { return }
+            self.updatePassthrough(
+                appBlocker: appBlocker,
+                alerts: alerts,
+                toasts: toasts,
+                modals: modals,
+                dropdownMenu: dropdownMenu
+            )
+        }
         alerts.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+            self.updatePassthrough(
+                appBlocker: appBlocker,
+                alerts: alerts,
+                toasts: toasts,
+                modals: modals,
+                dropdownMenu: dropdownMenu
+            )
         }
         toasts.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+            self.updatePassthrough(
+                appBlocker: appBlocker,
+                alerts: alerts,
+                toasts: toasts,
+                modals: modals,
+                dropdownMenu: dropdownMenu
+            )
         }
         modals.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+            self.updatePassthrough(
+                appBlocker: appBlocker,
+                alerts: alerts,
+                toasts: toasts,
+                modals: modals,
+                dropdownMenu: dropdownMenu
+            )
         }
         dropdownMenu.onVisibilityChanged = { [weak self] _ in
             guard let self else { return }
-            self.updatePassthrough(alerts: alerts, toasts: toasts, modals: modals, dropdownMenu: dropdownMenu)
+            self.updatePassthrough(
+                appBlocker: appBlocker,
+                alerts: alerts,
+                toasts: toasts,
+                modals: modals,
+                dropdownMenu: dropdownMenu
+            )
         }
     }
 
@@ -75,9 +121,15 @@ final class SQOverlayWindow {
         hostingController = nil
     }
 
-    private func updatePassthrough(alerts: SQAlertState, toasts: SQToastState, modals: SQModalState, dropdownMenu: SQDropDownMenuState) {
+    private func updatePassthrough(
+        appBlocker: SQAppBlockerState,
+        alerts: SQAlertState,
+        toasts: SQToastState,
+        modals: SQModalState,
+        dropdownMenu: SQDropDownMenuState
+    ) {
         // Passthrough ONLY when nothing is showing
-        window?.isPassthroughEnabled = !(alerts.isPresented || toasts.isPresented || modals.isPresented || dropdownMenu.isPresented)
+        window?.isPassthroughEnabled = !(appBlocker.isPresented || alerts.isPresented || toasts.isPresented || modals.isPresented || dropdownMenu.isPresented)
     }
 }
 

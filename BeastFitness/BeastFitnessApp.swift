@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct BeastFitnessApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     private let modelContainer: ModelContainer
 
     init() {
@@ -29,6 +30,7 @@ struct BeastFitnessApp: App {
                     SQLaunchManager.shared.performLaunchTasks()
                     
                     SQOverlayWindow.shared.attachIfNeeded(
+                        appBlocker: SQAppState.shared.appBlockerState,
                         alerts: SQAppState.shared.alertState,
                         toasts: SQAppState.shared.toastState,
                         modals: SQAppState.shared.modalState,
@@ -37,5 +39,11 @@ struct BeastFitnessApp: App {
                }
         }
         .modelContainer(modelContainer)
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            guard SQAppState.shared.appBlockerState.isPresented else { return }
+
+            SQRemoteConfigManager.shared.refreshForCriticalStateCheck()
+        }
     }
 }
