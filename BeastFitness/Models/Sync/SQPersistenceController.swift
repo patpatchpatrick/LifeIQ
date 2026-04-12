@@ -47,3 +47,7 @@ enum SQPersistenceController {
         )
     }
 }
+
+enum SQLocalPersistenceScope {
+    static let guestUserId = "guest"
+}

@@ -16,7 +16,9 @@ extension SQLocalPersistenceSchemaV1 {
     final class SQWorkoutSessionEntity {
     #Index<SQWorkoutSessionEntity>([\.hkWorkoutId])
     
-    @Attribute(.unique) var workoutId: String     // UUID string
+    @Attribute(.unique) var storageId: String
+    var userId: String
+    var workoutId: String     // UUID string
     var hkWorkoutId: String?
     var sourceRaw: String?
 
@@ -52,7 +54,9 @@ extension SQLocalPersistenceSchemaV1 {
     var ratingDifficulty: Float?
     var temperatureCelsius: Double?
 
-    init(from session: SQWorkoutSessionable) {
+    init(from session: SQWorkoutSessionable, userId: String) {
+        self.storageId = Self.makeStorageId(userId: userId, workoutId: session.id)
+        self.userId = userId
         self.workoutId = session.id
         self.title = session.title
         self.hkWorkoutId = session.hkWorkoutId
@@ -81,7 +85,9 @@ extension SQLocalPersistenceSchemaV1 {
         self.temperatureCelsius = session.temperatureCelsius
     }
 
-    init(from document: SQWorkoutSyncDocument) {
+    init(from document: SQWorkoutSyncDocument, userId: String) {
+        self.storageId = Self.makeStorageId(userId: userId, workoutId: document.workoutId)
+        self.userId = userId
         self.workoutId = document.workoutId
         self.hkWorkoutId = document.hkWorkoutId
         self.sourceRaw = document.sourceRaw
@@ -313,6 +319,9 @@ extension SQLocalPersistenceSchemaV1 {
 typealias SQWorkoutSessionEntity = SQCurrentLocalSchema.SQWorkoutSessionEntity
 
 extension SQWorkoutSessionEntity {
+    static func makeStorageId(userId: String, workoutId: String) -> String {
+        "\(userId)/\(workoutId)"
+    }
     
     private static func encodeDetails(_ details: SQWorkoutActivityDetails?) -> Data? {
         guard let details else { return nil }
@@ -330,10 +339,10 @@ extension SQWorkoutSessionEntity {
 
 extension SQWorkoutSessionEntity {
     
-    static func get(id: String, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
+    static func get(id: String, userId: String, context: ModelContext, workoutSource: SQWorkoutSource) throws -> SQWorkoutSessionable? {
         let key = id
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == key && $0.deletedAt == nil }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == key && $0.deletedAt == nil }
         )
         
         let firstItem = try context.fetch(descriptor).first
@@ -347,11 +356,14 @@ extension SQWorkoutSessionEntity {
     static func getFromHkWorkout(
         source: SQWorkoutSource,
         hkWorkoutId: String?,
+        userId: String,
         context: ModelContext
     ) throws -> SQWorkoutSessionable? {
         
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
                 predicate: #Predicate<SQWorkoutSessionEntity> {
+                    $0.userId == userId
+                    &&
                     $0.hkWorkoutId == hkWorkoutId
                     && $0.deletedAt == nil
                 }
@@ -364,27 +376,27 @@ extension SQWorkoutSessionEntity {
         return workoutSession
     }
     
-    static func upsert(session: SQWorkoutSessionable, in context: ModelContext) throws {
+    static func upsert(session: SQWorkoutSessionable, userId: String, in context: ModelContext) throws {
         let key = session.id
         
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == key }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == key }
         )
         
         if let existing = try context.fetch(descriptor).first {
             SQLogger.shared.log("Updating Existing Workout with session: \(session.prettyDescription)", .debug, context: .workoutSession)
             existing.update(from: session)
         } else {
-            context.insert(SQWorkoutSessionEntity(from: session))
+            context.insert(SQWorkoutSessionEntity(from: session, userId: userId))
         }
         
         try context.save()
     }
 
-    static func upsert(remoteDocument: SQWorkoutSyncDocument, in context: ModelContext) throws {
+    static func upsert(remoteDocument: SQWorkoutSyncDocument, userId: String, in context: ModelContext) throws {
         let key = remoteDocument.workoutId
         let workoutIdDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == key }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == key }
         )
         let existingByWorkoutId = try context.fetch(workoutIdDescriptor).first
 
@@ -393,7 +405,7 @@ extension SQWorkoutSessionEntity {
             existing = existingByWorkoutId
         } else if let hkWorkoutId = remoteDocument.hkWorkoutId {
             let hkDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-                predicate: #Predicate { $0.hkWorkoutId == hkWorkoutId }
+                predicate: #Predicate { $0.userId == userId && $0.hkWorkoutId == hkWorkoutId }
             )
             existing = try context.fetch(hkDescriptor).first
         } else {
@@ -406,28 +418,30 @@ extension SQWorkoutSessionEntity {
             }
             if existing.workoutId != remoteDocument.workoutId {
                 existing.workoutId = remoteDocument.workoutId
+                existing.storageId = makeStorageId(userId: userId, workoutId: remoteDocument.workoutId)
             }
             existing.update(from: remoteDocument)
         } else {
-            context.insert(SQWorkoutSessionEntity(from: remoteDocument))
+            context.insert(SQWorkoutSessionEntity(from: remoteDocument, userId: userId))
         }
 
         try context.save()
     }
 
-    static func getEntity(workoutId: String, context: ModelContext) throws -> SQWorkoutSessionEntity? {
+    static func getEntity(workoutId: String, userId: String, context: ModelContext) throws -> SQWorkoutSessionEntity? {
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == workoutId }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == workoutId }
         )
         return try context.fetch(descriptor).first
     }
 
-    static func getPendingSyncEntities(context: ModelContext) throws -> [SQWorkoutSessionEntity] {
+    static func getPendingSyncEntities(userId: String, context: ModelContext) throws -> [SQWorkoutSessionEntity] {
         let pendingUpload = SQSyncStatus.pendingUpload.rawValue
         let pendingDelete = SQSyncStatus.pendingDelete.rawValue
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
             predicate: #Predicate {
-                $0.syncStatusRaw == pendingUpload || $0.syncStatusRaw == pendingDelete
+                $0.userId == userId &&
+                ($0.syncStatusRaw == pendingUpload || $0.syncStatusRaw == pendingDelete)
             },
             sortBy: [SortDescriptor(\.updatedAt, order: .forward)]
         )
@@ -436,11 +450,13 @@ extension SQWorkoutSessionEntity {
 
     static func getManualWorkouts(
         for timeRange: SQTimeRange,
+        userId: String,
         context: ModelContext
     ) throws -> [SQWorkoutSessionEntity] {
         let manual = SQWorkoutSourceRaw.manual.rawValue
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
             predicate: #Predicate {
+                $0.userId == userId &&
                 $0.deletedAt == nil
                     && $0.sourceRaw == manual
             },
@@ -467,20 +483,22 @@ extension SQWorkoutSessionEntity {
     /// Deletes (soft or hard) by domain model.
     static func delete(
         workoutSession: SQWorkoutSessionable,
+        userId: String,
         in context: ModelContext,
         mode: DeleteMode = .soft
     ) throws {
-        try delete(workoutId: workoutSession.id, in: context, mode: mode)
+        try delete(workoutId: workoutSession.id, userId: userId, in: context, mode: mode)
     }
 
     /// Deletes (soft or hard) by workoutId.
     static func delete(
         workoutId: String,
+        userId: String,
         in context: ModelContext,
         mode: DeleteMode = .soft
     ) throws {
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == workoutId }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == workoutId }
         )
 
         guard let existing = try context.fetch(descriptor).first else {
@@ -507,11 +525,12 @@ extension SQWorkoutSessionEntity {
     /// Convenience: delete by hkWorkoutId (useful when you delete from HealthKit first)
     static func deleteFromHkWorkoutId(
         _ hkWorkoutId: String,
+        userId: String,
         in context: ModelContext,
         mode: DeleteMode = .soft
     ) throws {
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate<SQWorkoutSessionEntity> { $0.hkWorkoutId == hkWorkoutId }
+            predicate: #Predicate<SQWorkoutSessionEntity> { $0.userId == userId && $0.hkWorkoutId == hkWorkoutId }
         )
 
         guard let existing = try context.fetch(descriptor).first else {

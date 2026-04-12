@@ -12,7 +12,9 @@ extension SQLocalPersistenceSchemaV1 {
     @Model
     final class SQMetricEntryEntity {
 
-        @Attribute(.unique) var id: String
+        @Attribute(.unique) var storageId: String
+        var userId: String
+        var id: String
         /// References `SQMetricDefinition.id` — identifies which metric this value belongs to.
         var metricId: String
         /// UTC timestamp of when the user submitted this entry.
@@ -28,7 +30,9 @@ extension SQLocalPersistenceSchemaV1 {
         /// `rawValue` normalized to 0–10 for the insight engine.
         var normalizedScore: Float
 
-        init(entry: SQMetricEntry) {
+        init(entry: SQMetricEntry, userId: String) {
+            self.storageId = Self.makeStorageId(userId: userId, entryId: entry.id)
+            self.userId = userId
             self.id = entry.id
             self.metricId = entry.metricId
             self.recordedAt = entry.recordedAt
@@ -46,6 +50,9 @@ typealias SQMetricEntryEntity = SQCurrentLocalSchema.SQMetricEntryEntity
 // MARK: - Conversion
 
 extension SQMetricEntryEntity {
+    static func makeStorageId(userId: String, entryId: String) -> String {
+        "\(userId)/\(entryId)"
+    }
 
     var period: SQMetricPeriod { SQMetricPeriod(unfrozenRawValue: periodRaw) }
 
@@ -66,11 +73,11 @@ extension SQMetricEntryEntity {
     /// Uses a stable deterministic ID (anchorDayKey/metricId/period) as the primary key.
     /// Also deletes any stale rows for the same (metricId, anchorDayKey, period) that have a
     /// different ID — handles cleanup of pre-stable-ID entries so buckets never contain duplicates.
-    static func upsert(_ entries: [SQMetricEntry], in context: ModelContext) throws {
+    static func upsert(_ entries: [SQMetricEntry], userId: String, in context: ModelContext) throws {
         for entry in entries {
             let id = entry.id
             let descriptor = FetchDescriptor<SQMetricEntryEntity>(
-                predicate: #Predicate { $0.id == id }
+                predicate: #Predicate { $0.userId == userId && $0.id == id }
             )
             if let existing = try context.fetch(descriptor).first {
                 existing.rawValue = entry.rawValue
@@ -78,7 +85,7 @@ extension SQMetricEntryEntity {
                 existing.periodRaw = entry.period.rawValue
                 existing.recordedAt = entry.recordedAt
             } else {
-                context.insert(SQMetricEntryEntity(entry: entry))
+                context.insert(SQMetricEntryEntity(entry: entry, userId: userId))
             }
 
             // Delete any stale rows for the same slot (different ID = pre-stable-ID data)
@@ -87,6 +94,7 @@ extension SQMetricEntryEntity {
             let periodRaw = entry.period.rawValue
             let staleDescriptor = FetchDescriptor<SQMetricEntryEntity>(
                 predicate: #Predicate {
+                    $0.userId == userId &&
                     $0.metricId == metricId &&
                     $0.anchorDayKey == anchorDayKey &&
                     $0.periodRaw == periodRaw &&
@@ -102,11 +110,12 @@ extension SQMetricEntryEntity {
     /// Returns all entries for a given `anchorDayKey`, optionally filtered by period.
     static func getAll(
         for anchorDayKey: String,
+        userId: String,
         period: SQMetricPeriod? = nil,
         context: ModelContext
     ) throws -> [SQMetricEntry] {
         let descriptor = FetchDescriptor<SQMetricEntryEntity>(
-            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == anchorDayKey }
         )
         let entities = try context.fetch(descriptor)
         let filtered = period.map { p in entities.filter { $0.period == p } } ?? entities
@@ -114,19 +123,20 @@ extension SQMetricEntryEntity {
     }
 
     /// Returns all entries with `recordedAt` after a given date (for incremental sync).
-    static func getAll(after date: Date, context: ModelContext) throws -> [SQMetricEntry] {
+    static func getAll(after date: Date, userId: String, context: ModelContext) throws -> [SQMetricEntry] {
         let descriptor = FetchDescriptor<SQMetricEntryEntity>(
-            predicate: #Predicate { $0.recordedAt > date },
+            predicate: #Predicate { $0.userId == userId && $0.recordedAt > date },
             sortBy: [SortDescriptor(\.recordedAt)]
         )
         return try context.fetch(descriptor).map { $0.toEntry() }
     }
 
-    static func getAll(from startDate: Date, to endDate: Date, context: ModelContext) throws -> [SQMetricEntry] {
+    static func getAll(from startDate: Date, to endDate: Date, userId: String, context: ModelContext) throws -> [SQMetricEntry] {
         let startKey = startDate.anchorDayKey()
         let endKey = endDate.anchorDayKey()
         let descriptor = FetchDescriptor<SQMetricEntryEntity>(
             predicate: #Predicate {
+                $0.userId == userId &&
                 $0.anchorDayKey >= startKey && $0.anchorDayKey <= endKey
             },
             sortBy: [SortDescriptor(\.recordedAt, order: .forward)]
@@ -136,6 +146,7 @@ extension SQMetricEntryEntity {
 
     static func delete(
         for anchorDayKey: String,
+        userId: String,
         metricIds: Set<String>,
         period: SQMetricPeriod,
         singleDailyMetricIds: Set<String>,
@@ -145,7 +156,7 @@ extension SQMetricEntryEntity {
         guard !metricIds.isEmpty else { return }
 
         let descriptor = FetchDescriptor<SQMetricEntryEntity>(
-            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == anchorDayKey }
         )
         let entities = try context.fetch(descriptor)
 

@@ -12,14 +12,18 @@ extension SQLocalPersistenceSchemaV1 {
     @Model
     final class SQDailyNoteEntity {
 
+        @Attribute(.unique) var storageId: String
+        var userId: String
         /// "YYYY-MM-DD" in the user's local timezone — unique per day; also used as Firestore document ID.
-        @Attribute(.unique) var anchorDayKey: String
+        var anchorDayKey: String
         /// The user's free-form note text.
         var content: String
         /// UTC timestamp of last edit — used for incremental Firestore sync.
         var updatedAt: Date
 
-        init(note: SQDailyNote) {
+        init(note: SQDailyNote, userId: String) {
+            self.storageId = Self.makeStorageId(userId: userId, anchorDayKey: note.anchorDayKey)
+            self.userId = userId
             self.anchorDayKey = note.anchorDayKey
             self.content = note.content
             self.updatedAt = note.updatedAt
@@ -32,56 +36,60 @@ typealias SQDailyNoteEntity = SQCurrentLocalSchema.SQDailyNoteEntity
 // MARK: - Conversion
 
 extension SQDailyNoteEntity {
+    static func makeStorageId(userId: String, anchorDayKey: String) -> String {
+        "\(userId)/\(anchorDayKey)"
+    }
 
     func toNote() -> SQDailyNote {
         SQDailyNote(anchorDayKey: anchorDayKey, content: content, updatedAt: updatedAt)
     }
 
     /// Upserts a note for the given day. Creates if absent, updates content if present.
-    static func upsert(_ note: SQDailyNote, in context: ModelContext) throws {
+    static func upsert(_ note: SQDailyNote, userId: String, in context: ModelContext) throws {
         let key = note.anchorDayKey
         let descriptor = FetchDescriptor<SQDailyNoteEntity>(
-            predicate: #Predicate { $0.anchorDayKey == key }
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == key }
         )
         if let existing = try context.fetch(descriptor).first {
             existing.content = note.content
             existing.updatedAt = note.updatedAt
         } else {
-            context.insert(SQDailyNoteEntity(note: note))
+            context.insert(SQDailyNoteEntity(note: note, userId: userId))
         }
         try context.save()
     }
 
     /// Returns the note for a given `anchorDayKey`, or nil if none exists.
-    static func get(for anchorDayKey: String, context: ModelContext) throws -> SQDailyNote? {
+    static func get(for anchorDayKey: String, userId: String, context: ModelContext) throws -> SQDailyNote? {
         let descriptor = FetchDescriptor<SQDailyNoteEntity>(
-            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == anchorDayKey }
         )
         return try context.fetch(descriptor).first?.toNote()
     }
 
     /// Returns all notes updated after a given date (for incremental sync).
-    static func getAll(after date: Date, context: ModelContext) throws -> [SQDailyNote] {
+    static func getAll(after date: Date, userId: String, context: ModelContext) throws -> [SQDailyNote] {
         let descriptor = FetchDescriptor<SQDailyNoteEntity>(
-            predicate: #Predicate { $0.updatedAt > date }
+            predicate: #Predicate { $0.userId == userId && $0.updatedAt > date }
         )
         return try context.fetch(descriptor).map { $0.toNote() }
     }
 
-    static func getAll(from startDate: Date, to endDate: Date, context: ModelContext) throws -> [SQDailyNote] {
+    static func getAll(from startDate: Date, to endDate: Date, userId: String, context: ModelContext) throws -> [SQDailyNote] {
         let startKey = startDate.anchorDayKey()
         let endKey = endDate.anchorDayKey()
         let descriptor = FetchDescriptor<SQDailyNoteEntity>(
             predicate: #Predicate {
+                $0.userId == userId &&
                 $0.anchorDayKey >= startKey && $0.anchorDayKey <= endKey
             }
         )
         return try context.fetch(descriptor).map { $0.toNote() }
     }
 
-    static func delete(for anchorDayKey: String, in context: ModelContext) throws {
+    static func delete(for anchorDayKey: String, userId: String, in context: ModelContext) throws {
         let descriptor = FetchDescriptor<SQDailyNoteEntity>(
-            predicate: #Predicate { $0.anchorDayKey == anchorDayKey }
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == anchorDayKey }
         )
 
         for entity in try context.fetch(descriptor) {

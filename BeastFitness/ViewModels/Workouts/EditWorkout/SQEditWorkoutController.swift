@@ -138,10 +138,11 @@ final class SQEditWorkoutController: Identifiable {
     }
 
     private func freshEntityFromStore() -> SQWorkoutSessionEntity? {
-        guard let modelContext = SQAppState.shared.modelContext else { return nil }
+        guard let modelContext = SQAppState.shared.modelContext,
+              let userId = userState.loggedInUser?.id else { return nil }
         let workoutId = workout.id
         let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
-            predicate: #Predicate { $0.workoutId == workoutId && $0.deletedAt == nil }
+            predicate: #Predicate { $0.userId == userId && $0.workoutId == workoutId && $0.deletedAt == nil }
         )
         return try? modelContext.fetch(descriptor).first
     }

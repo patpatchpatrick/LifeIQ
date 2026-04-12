@@ -18,17 +18,19 @@ enum SyncResult {
 
 extension SyncResult {
     func logSync(documentCount: Int = 0, service: String, context: SQiOSLogContext) {
+        let prefix = "[Sync - \(service)]"
+
         switch self {
         case .fullSyncCompleted:
             SQLogger.shared.log(
-                "Full sync: \(documentCount) documents for \(service)",
+                "\(prefix) Full sync completed: \(documentCount) documents",
                 .info,
                 context: context,
                 isPriority: true
             )
         case .refreshCompleted, .incrementalSyncCompleted:
             SQLogger.shared.log(
-                "Incremental sync: \(documentCount) documents for \(service)",
+                "\(prefix) Incremental sync completed: \(documentCount) documents",
                 .info,
                 context: context,
                 isPriority: true
@@ -37,7 +39,7 @@ extension SyncResult {
             break
         }
 
-        SQLogger.shared.log("Sync result: \(self)", .debug, context: context)
+        SQLogger.shared.log("\(prefix) Result: \(self)", .debug, context: context)
     }
 }
 

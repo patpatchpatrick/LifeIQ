@@ -11,7 +11,9 @@ import SwiftData
 extension SQLocalPersistenceSchemaV1 {
     @Model
     final class SQMetricDefinitionEntity {
-        @Attribute(.unique) var id: String
+        @Attribute(.unique) var storageId: String
+        var userId: String
+        var id: String
 
         var title: String
         var kindRaw: String
@@ -46,6 +48,7 @@ extension SQLocalPersistenceSchemaV1 {
         var updatedAt: Date
 
         init(
+            userId: String,
             id: String,
             title: String,
             kind: SQMetricKind,
@@ -68,6 +71,8 @@ extension SQLocalPersistenceSchemaV1 {
             bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
             isDefault: Bool = false
         ) {
+            self.storageId = Self.makeStorageId(userId: userId, metricId: id)
+            self.userId = userId
             self.id = id
             self.title = title
             self.kindRaw = kind.rawValue
@@ -97,6 +102,10 @@ extension SQLocalPersistenceSchemaV1 {
 typealias SQMetricDefinitionEntity = SQCurrentLocalSchema.SQMetricDefinitionEntity
 
 extension SQMetricDefinitionEntity {
+    static func makeStorageId(userId: String, metricId: String) -> String {
+        "\(userId)/\(metricId)"
+    }
+
     var kind: SQMetricKind { SQMetricKind(unfrozenRawValue: kindRaw) }
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }

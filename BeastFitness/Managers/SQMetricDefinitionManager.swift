@@ -62,16 +62,18 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
     private(set) var metrics: [SQMetricDefinition] = []
     private var hasLoaded = false
+    private var loadedScopeUserId: String?
 
     private init() {}
 
     // MARK: - Load / Seed
 
     func loadIfNeeded(using context: ModelContext) throws {
-        guard !hasLoaded else { return }
+        let currentUserId = currentLocalUserId()
+        guard !hasLoaded || loadedScopeUserId != currentUserId else { return }
 
         let descriptor = FetchDescriptor<SQMetricDefinitionEntity>(
-            predicate: #Predicate { $0.isArchived == false },
+            predicate: #Predicate { $0.userId == currentUserId && $0.isArchived == false },
             sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
         )
 
@@ -83,6 +85,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             for def in presets {
                 context.insert(
                     SQMetricDefinitionEntity(
+                        userId: currentUserId,
                         id: def.id,
                         title: def.title,
                         kind: def.kind,
@@ -122,6 +125,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         }
 
         hasLoaded = true
+        loadedScopeUserId = currentUserId
     }
 
     // MARK: - Public Accessors
@@ -213,11 +217,13 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws {
         try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
+        let userId = currentLocalUserId()
 
         let maxOrder = dailyCheckInMetrics().map(\.sortOrder).max() ?? 0
 
         context.insert(
             SQMetricDefinitionEntity(
+                userId: userId,
                 id: definition.id,
                 title: definition.title,
                 kind: definition.kind,
@@ -285,10 +291,14 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     // MARK: - Reload (protocol requires public)
 
     func reload(using context: ModelContext) throws {
+        let userId = currentLocalUserId()
         let descriptor = FetchDescriptor<SQMetricDefinitionEntity>(
+            predicate: #Predicate { $0.userId == userId },
             sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
         )
         metrics = try context.fetch(descriptor).map { $0.toDefinition() }
+        loadedScopeUserId = userId
+        hasLoaded = true
     }
 
     // MARK: - Sync
@@ -297,7 +307,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try loadIfNeeded(using: context)
 
         guard SQAppState.shared.userState.loggedInUser != nil else {
-            SQLogger.shared.log("Metric definitions: skipping cloud sync while logged out", .debug, context: .metricsManager)
+            SQLogger.shared.log("[Sync - Metric Definition] Skipping cloud sync while logged out", .debug, context: .metricsManager)
             return .noSyncNeeded
         }
 
@@ -312,28 +322,29 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         await bootstrapPushIfNeeded(context: context)
 
         guard let lastSync = getMetricSyncDate(context: context) else {
-            SQLogger.shared.log("Metric definitions: never synced — full sync", .info, context: .metricsManager)
+            SQLogger.shared.log("[Sync - Metric Definition] Never synced, running full sync", .info, context: .metricsManager)
             let count = try await performFullMetricSync(context: context)
-            SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "metric definitions", context: .metricsManager)
+            SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
             return .fullSyncCompleted
         }
 
         let hoursSinceSync = Date().timeIntervalSince(lastSync) / 3600
         if hoursSinceSync > 6 {
-            SQLogger.shared.log("Metric definitions: stale (\(String(format: "%.1f", hoursSinceSync))h) — incremental sync", .info, context: .metricsManager)
+            SQLogger.shared.log("[Sync - Metric Definition] Stale cache (\(String(format: "%.1f", hoursSinceSync))h), running incremental sync", .info, context: .metricsManager)
             let count = try await performIncrementalMetricSync(lastSync: lastSync, context: context)
-            SyncResult.refreshCompleted.logSync(documentCount: count, service: "metric definitions", context: .metricsManager)
+            SyncResult.refreshCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
             return .refreshCompleted
         }
 
-        SQLogger.shared.log("Metric definitions: cache fresh", .debug, context: .metricsManager)
-        SyncResult.noSyncNeeded.logSync(service: "metric definitions", context: .metricsManager)
+        SQLogger.shared.log("[Sync - Metric Definition] Cache fresh", .debug, context: .metricsManager)
+        SyncResult.noSyncNeeded.logSync(service: "Metric Definition", context: .metricsManager)
         return .noSyncNeeded
     }
 
     func reset() {
         metrics = []
         hasLoaded = false
+        loadedScopeUserId = nil
     }
 
     /// One-time push of all local metrics for schema/bootstrap migrations.
@@ -344,18 +355,21 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             return
         }
 
-        let key = "metric-definitions-bootstrap-v4-body-battery-presets"
+        let userId = currentLocalUserId()
+        let key = "metric-definitions-bootstrap-v4-body-battery-presets-\(userId)"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
         )
 
         guard (try? context.fetch(descriptor))?.first == nil else { return }
 
-        let allEntities = (try? context.fetch(FetchDescriptor<SQMetricDefinitionEntity>())) ?? []
+        let allEntities = (try? context.fetch(FetchDescriptor<SQMetricDefinitionEntity>(
+            predicate: #Predicate { $0.userId == userId }
+        ))) ?? []
         let allDefinitions = allEntities.map { $0.toDefinition() }
 
         SQLogger.shared.log(
-            "Metric definitions: bootstrapping \(allDefinitions.count) metrics to Firestore",
+            "[Sync - Metric Definition] Bootstrapping \(allDefinitions.count) metrics to Firestore",
             .info,
             context: .metricsManager,
             isPriority: true
@@ -366,7 +380,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 try await metricService.saveMetricDefinition(definition)
             } catch {
                 SQLogger.shared.log(
-                    "Bootstrap push failed for \(definition.id): \(error)",
+                    "[Sync - Metric Definition] Bootstrap push failed for \(definition.id): \(error)",
                     .error,
                     context: .metricsManager
                 )
@@ -379,7 +393,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try? context.save()
 
         SQLogger.shared.log(
-            "Metric definitions: bootstrap push complete (\(allDefinitions.count) metrics)",
+            "[Sync - Metric Definition] Bootstrap push complete (\(allDefinitions.count) metrics)",
             .info,
             context: .metricsManager,
             isPriority: true
@@ -414,6 +428,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 }
             } else {
                 let entity = SQMetricDefinitionEntity(
+                    userId: currentLocalUserId(),
                     id: def.id,
                     title: def.title,
                     kind: def.kind,
@@ -457,26 +472,28 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     // MARK: - Sync Metadata
 
     private func getMetricSyncDate(context: ModelContext) -> Date? {
+        let id = metricSyncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
-            predicate: #Predicate { $0.id == "metric-definitions-sync" }
+            predicate: #Predicate { $0.id == id }
         )
         return (try? context.fetch(descriptor))?.first?.lastSyncDate
     }
 
     private func updateMetricSyncDate(to date: Date, context: ModelContext) {
+        let id = metricSyncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
-            predicate: #Predicate { $0.id == "metric-definitions-sync" }
+            predicate: #Predicate { $0.id == id }
         )
         do {
             if let existing = try context.fetch(descriptor).first {
                 existing.lastSyncDate = date
             } else {
-                let metadata = SQSyncMetadataEntity(id: "metric-definitions-sync")
+                let metadata = SQSyncMetadataEntity(id: id)
                 metadata.lastSyncDate = date
                 context.insert(metadata)
             }
         } catch {
-            SQLogger.shared.log("Failed to update metric sync metadata: \(error)", .error, context: .metricsManager)
+            SQLogger.shared.log("[Sync - Metric Definition] Failed to update sync metadata: \(error)", .error, context: .metricsManager)
         }
     }
 
@@ -493,15 +510,16 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     }
 
     private func assertServerWritesEnabledIfNeeded() throws {
-        guard SQAppState.shared.userState.isLoggedIn else { return }
+        guard SQAppState.shared.userState.isLoggedIn else { throw SQError.notLoggedIn }
         try SQRemoteConfigManager.shared.assertServerWritesEnabled()
     }
 
     // MARK: - Helpers
 
     private func fetchEntity(id: String, using context: ModelContext) throws -> SQMetricDefinitionEntity? {
+        let userId = currentLocalUserId()
         let descriptor = FetchDescriptor<SQMetricDefinitionEntity>(
-            predicate: #Predicate { $0.id == id }
+            predicate: #Predicate { $0.userId == userId && $0.id == id }
         )
         return try context.fetch(descriptor).first
     }
@@ -523,6 +541,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 // New preset — insert with all fields
                 context.insert(
                     SQMetricDefinitionEntity(
+                        userId: currentLocalUserId(),
                         id: preset.id,
                         title: preset.title,
                         kind: preset.kind,
@@ -620,6 +639,14 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 .info, context: .metricsManager, isPriority: true
             )
         }
+    }
+
+    private func currentLocalUserId() -> String {
+        SQAppState.shared.userState.loggedInUser?.id ?? SQLocalPersistenceScope.guestUserId
+    }
+
+    private func metricSyncMetadataId() -> String {
+        "metric-definitions-sync-\(currentLocalUserId())"
     }
 
     // MARK: - Presets

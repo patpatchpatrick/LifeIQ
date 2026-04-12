@@ -48,6 +48,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         let healthKitWorkouts = try await healthKitManager.fetchWorkouts(timeRange)
         var allWorkouts = [SQWorkoutSessionable]()
         var seenWorkoutIds = Set<String>()
+        let userId = userState.loggedInUser?.id
 
         for hkWorkout in healthKitWorkouts {
             do {
@@ -82,20 +83,22 @@ final class SQWorkoutManager: SQWorkoutManaging {
             }
         }
 
-        do {
-            let manualEntities = try SQWorkoutSessionEntity.getManualWorkouts(for: timeRange, context: modelContext)
-            for entity in manualEntities {
-                let manualWorkout = try entity.toSession(workoutSource: nil)
-                if seenWorkoutIds.insert(manualWorkout.id).inserted {
-                    allWorkouts.appendIfNotNil(safeguardedWorkout(workout: manualWorkout))
+        if let userId {
+            do {
+                let manualEntities = try SQWorkoutSessionEntity.getManualWorkouts(for: timeRange, userId: userId, context: modelContext)
+                for entity in manualEntities {
+                    let manualWorkout = try entity.toSession(workoutSource: nil)
+                    if seenWorkoutIds.insert(manualWorkout.id).inserted {
+                        allWorkouts.appendIfNotNil(safeguardedWorkout(workout: manualWorkout))
+                    }
                 }
+            } catch {
+                SQLogger.shared.log(
+                    "Failed to load local manual workouts: \(error)",
+                    .error,
+                    context: .workoutManager
+                )
             }
-        } catch {
-            SQLogger.shared.log(
-                "Failed to load local manual workouts: \(error)",
-                .error,
-                context: .workoutManager
-            )
         }
         
         return allWorkouts.sorted {
@@ -115,6 +118,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         guard userState.isLoggedIn else {
             throw SQError.standard(withDescription: "Please log in to save workouts and workout reviews.")
         }
+        guard let userId = userState.loggedInUser?.id else { throw SQError.notLoggedIn }
 
         if workout.hkWorkoutId == nil {
             do {
@@ -129,8 +133,8 @@ final class SQWorkoutManager: SQWorkoutManaging {
         }
 
         do {
-            try SQWorkoutSessionEntity.upsert(session: workout, in: modelContext)
-            try markWorkoutPendingUpload(workoutId: workout.id, context: modelContext)
+            try SQWorkoutSessionEntity.upsert(session: workout, userId: userId, in: modelContext)
+            try markWorkoutPendingUpload(workoutId: workout.id, userId: userId, context: modelContext)
             SQLogger.shared.log("Successfully saved workout: \(workout.prettyDescription)", .debug, context: .workoutManager)
         } catch {
             SQLogger.shared.log(
@@ -185,6 +189,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func deleteWorkout(workout: any SQWorkoutSessionable, from modelContext: ModelContext) async throws {
+        guard let userId = userState.loggedInUser?.id else { throw SQError.notLoggedIn }
         
         let deletionType = deletionTypeForWorkout(workout)
         
@@ -202,7 +207,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         
         do {
             let deleteMode: SQWorkoutSessionEntity.DeleteMode = deletionType == .standard ? .soft : .hard
-            try SQWorkoutSessionEntity.delete(workoutSession: workout, in: modelContext, mode: deleteMode)
+            try SQWorkoutSessionEntity.delete(workoutSession: workout, userId: userId, in: modelContext, mode: deleteMode)
             SQLogger.shared.log("Successfully deleted workout from SwiftData: \(workout.id)-\(workout.visibleTitle)", .info, context: .workoutManager)
         } catch {
             SQLogger.shared.log("Could not delete workout from SwiftData: \(error)", .error, context: .workoutManager)
@@ -216,9 +221,11 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
+        guard let userId = userState.loggedInUser?.id else { return nil }
         if let workout = try SQWorkoutSessionEntity.getFromHkWorkout(
             source: workoutSource,
             hkWorkoutId: hkWorkoutId,
+            userId: userId,
             context: modelContext
         ) {
             return workout
@@ -226,15 +233,17 @@ final class SQWorkoutManager: SQWorkoutManaging {
 
         return try SQWorkoutSessionEntity.get(
             id: workoutSource.sourcableData.sourceId,
+            userId: userId,
             context: modelContext,
             workoutSource: workoutSource
         )
     }
 
     func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext) {
+        guard let userId = userState.loggedInUser?.id else { return }
         for workout in workouts {
             let sourceId = workout.workoutSource.sourcableData.sourceId
-            SQWorkoutProcessedEntity.markAsProcessed(sourceId: sourceId, context: context)
+            SQWorkoutProcessedEntity.markAsProcessed(sourceId: sourceId, userId: userId, context: context)
         }
         SQLogger.shared.log(
             "Marked \(workouts.count) workout(s) as processed",
@@ -244,7 +253,8 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
 
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String> {
-        SQWorkoutProcessedEntity.fetchProcessedSourceIds(context: context)
+        guard let userId = userState.loggedInUser?.id else { return [] }
+        return SQWorkoutProcessedEntity.fetchProcessedSourceIds(userId: userId, context: context)
     }
 
     func syncWorkoutsIfNeeded(context: ModelContext, force: Bool = false) async {
@@ -277,14 +287,14 @@ final class SQWorkoutManager: SQWorkoutManaging {
                         afterDate: shouldForceCurrentRun ? nil : lastSync
                     )
                     for document in documents {
-                        try SQWorkoutSessionEntity.upsert(remoteDocument: document, in: context)
+                        try SQWorkoutSessionEntity.upsert(remoteDocument: document, userId: user.id, in: context)
                     }
                     updateLastSyncDate(to: .now, context: context)
                     let result: SyncResult = lastSync == nil || shouldForceCurrentRun ? .fullSyncCompleted : .refreshCompleted
-                    result.logSync(documentCount: documents.count, service: "Workouts", context: .workoutManager)
+                    result.logSync(documentCount: documents.count, service: "Workout", context: .workoutManager)
                 } catch {
                     SQLogger.shared.log(
-                        "Workout metadata sync failed: \(error)",
+                        "[Sync - Workout] Metadata sync failed: \(error)",
                         .error,
                         context: .workoutManager
                     )
@@ -302,13 +312,13 @@ final class SQWorkoutManager: SQWorkoutManaging {
         guard let user = SQAppState.shared.userState.loggedInUser else { return }
 
         do {
-            let pendingEntities = try SQWorkoutSessionEntity.getPendingSyncEntities(context: context)
+            let pendingEntities = try SQWorkoutSessionEntity.getPendingSyncEntities(userId: user.id, context: context)
             guard !pendingEntities.isEmpty else { return }
 
             for entity in pendingEntities {
                 guard let document = entity.toSyncDocument() else {
                     SQLogger.shared.log(
-                        "Skipping workout sync for \(entity.workoutId) due to missing metadata timestamps",
+                        "[Sync - Workout] Skipping upload for \(entity.workoutId) due to missing metadata timestamps",
                         .warning,
                         context: .workoutManager
                     )
@@ -329,15 +339,15 @@ final class SQWorkoutManager: SQWorkoutManaging {
             }
         } catch {
             SQLogger.shared.log(
-                "Failed to fetch pending workout sync entities: \(error)",
+                "[Sync - Workout] Failed to fetch pending sync entities: \(error)",
                 .error,
                 context: .workoutManager
             )
         }
     }
 
-    private func markWorkoutPendingUpload(workoutId: String, context: ModelContext) throws {
-        guard let entity = try SQWorkoutSessionEntity.getEntity(workoutId: workoutId, context: context) else {
+    private func markWorkoutPendingUpload(workoutId: String, userId: String, context: ModelContext) throws {
+        guard let entity = try SQWorkoutSessionEntity.getEntity(workoutId: workoutId, userId: userId, context: context) else {
             return
         }
         entity.markPendingUpload()
@@ -381,7 +391,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
             try context.save()
         } catch {
             SQLogger.shared.log(
-                "Failed to update workout sync metadata: \(error)",
+                "[Sync - Workout] Failed to update sync metadata: \(error)",
                 .error,
                 context: .workoutManager
             )

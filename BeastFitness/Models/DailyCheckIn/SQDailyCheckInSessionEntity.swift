@@ -18,15 +18,17 @@ extension SQLocalPersistenceSchemaV1 {
         /// The dashboard CTA and date picker use this to determine whether a user
         /// explicitly completed the morning or evening session.
         @Attribute(.unique) var id: String
+        var userId: String
         var anchorDayKey: String
         var date: Date
         var periodRaw: String
         var completedAt: Date
 
-        init(date: Date, period: SQMetricPeriod, completedAt: Date = .now) {
+        init(userId: String, date: Date, period: SQMetricPeriod, completedAt: Date = .now) {
             let normalized = Calendar.current.startOfDay(for: date)
             let anchorDayKey = normalized.anchorDayKey()
-            self.id = Self.sessionId(anchorDayKey: anchorDayKey, period: period)
+            self.id = Self.storageId(userId: userId, anchorDayKey: anchorDayKey, period: period)
+            self.userId = userId
             self.anchorDayKey = anchorDayKey
             self.date = normalized
             self.periodRaw = period.rawValue
@@ -46,7 +48,12 @@ extension SQDailyCheckInSessionEntity {
         "\(anchorDayKey)/\(period.rawValue)"
     }
 
+    static func storageId(userId: String, anchorDayKey: String, period: SQMetricPeriod) -> String {
+        "\(userId)/\(sessionId(anchorDayKey: anchorDayKey, period: period))"
+    }
+
     static func upsert(
+        userId: String,
         date: Date,
         period: SQMetricPeriod,
         completedAt: Date = .now,
@@ -54,7 +61,7 @@ extension SQDailyCheckInSessionEntity {
     ) throws {
         let normalized = Calendar.current.startOfDay(for: date)
         let anchorDayKey = normalized.anchorDayKey()
-        let id = sessionId(anchorDayKey: anchorDayKey, period: period)
+        let id = storageId(userId: userId, anchorDayKey: anchorDayKey, period: period)
 
         let descriptor = FetchDescriptor<SQDailyCheckInSessionEntity>(
             predicate: #Predicate { $0.id == id }
@@ -66,22 +73,59 @@ extension SQDailyCheckInSessionEntity {
             existing.anchorDayKey = anchorDayKey
             existing.periodRaw = period.rawValue
         } else {
-            context.insert(SQDailyCheckInSessionEntity(date: normalized, period: period, completedAt: completedAt))
+            context.insert(SQDailyCheckInSessionEntity(userId: userId, date: normalized, period: period, completedAt: completedAt))
         }
 
         try context.save()
     }
 
     static func exists(
+        userId: String,
         for date: Date,
         period: SQMetricPeriod,
         context: ModelContext
     ) throws -> Bool {
         let normalized = Calendar.current.startOfDay(for: date)
-        let id = sessionId(anchorDayKey: normalized.anchorDayKey(), period: period)
+        let id = storageId(userId: userId, anchorDayKey: normalized.anchorDayKey(), period: period)
         let descriptor = FetchDescriptor<SQDailyCheckInSessionEntity>(
             predicate: #Predicate { $0.id == id }
         )
         return try context.fetch(descriptor).first != nil
+    }
+
+    static func replaceCompletedPeriods(
+        userId: String,
+        anchorDayKey: String,
+        date: Date,
+        periods: Set<SQMetricPeriod>,
+        context: ModelContext
+    ) throws {
+        try deleteAll(for: anchorDayKey, userId: userId, context: context)
+
+        for period in periods where period != .unknown {
+            context.insert(SQDailyCheckInSessionEntity(userId: userId, date: date, period: period))
+        }
+
+        try context.save()
+    }
+
+    static func deleteAll(for anchorDayKey: String, userId: String, context: ModelContext) throws {
+        let descriptor = FetchDescriptor<SQDailyCheckInSessionEntity>(
+            predicate: #Predicate { $0.userId == userId && $0.anchorDayKey == anchorDayKey }
+        )
+        for entity in try context.fetch(descriptor) {
+            context.delete(entity)
+        }
+        try context.save()
+    }
+
+    static func deleteAll(for userId: String, context: ModelContext) throws {
+        let descriptor = FetchDescriptor<SQDailyCheckInSessionEntity>(
+            predicate: #Predicate { $0.userId == userId }
+        )
+        for entity in try context.fetch(descriptor) {
+            context.delete(entity)
+        }
+        try context.save()
     }
 }
