@@ -173,6 +173,9 @@
 		F6A3120E2EF60E4500A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120D2EF60E4500A2E5F7 /* BeastFitnessCore */; };
 		F6A312102EF60F2D00A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120F2EF60F2D00A2E5F7 /* BeastFitnessCore */; };
 		F6AEB6112F880089008D747B /* SQAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */; };
+		F6B700012FA0000100A1B700 /* remote_config_defaults.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6B700022FA0000100A1B700 /* remote_config_defaults.plist */; };
+		F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */; };
+		F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */; };
 		F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A401112EF5B920002BC997 /* SQLaunchManager.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
@@ -513,6 +516,8 @@
 		F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailView.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAnalyticsManager.swift; sourceTree = "<group>"; };
+		F6B700022FA0000100A1B700 /* remote_config_defaults.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = remote_config_defaults.plist; sourceTree = "<group>"; };
+		F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRemoteConfigManager.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
@@ -669,6 +674,7 @@
 				F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */,
 				F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */,
 				F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */,
+				F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */,
 				F6AEB6052F880088008D747B /* AmplitudeUnified in Frameworks */,
 				F694AAE32F78862A00453F0A /* GoogleSignInSwift in Frameworks */,
 				F6A3120E2EF60E4500A2E5F7 /* BeastFitnessCore in Frameworks */,
@@ -1182,6 +1188,7 @@
 				F694AE922F7D8EC400453F0A /* GooglePList */,
 				F694AD842F7CCCE100453F0A /* Fonts */,
 				F679BC582EE7BDF800A2F249 /* exercises_all.json */,
+				F6B700022FA0000100A1B700 /* remote_config_defaults.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1379,6 +1386,7 @@
 				F7D100022F94000100AA1001 /* SQDashboardLayoutService.swift */,
 				F6B2B0082F92440100A1B001 /* SQHeartRateService.swift */,
 				F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */,
+				F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
 				F61593C32EF37A8600223A63 /* Toast */,
@@ -1981,6 +1989,7 @@
 				F694AD952F7CCCFB00453F0A /* Sora-SemiBold.ttf in Resources */,
 				F657E2AD2CA50D7E00E72926 /* Assets.xcassets in Resources */,
 				F6ABC25E2EDE4EF100D3E679 /* GoogleService-Info-Staging.plist in Resources */,
+				F6B700012FA0000100A1B700 /* remote_config_defaults.plist in Resources */,
 				F679BC592EE7BDF800A2F249 /* exercises_all.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2240,6 +2249,7 @@
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,
 				F6268B172F6F3BAA00087C0F /* SQUserRoute.swift in Sources */,
 				F6AEB6112F880089008D747B /* SQAnalyticsManager.swift in Sources */,
+				F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */,
 				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
 				F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */,
 				F7D1A1032FD1200100AA1001 /* SQDeleteAccountController.swift in Sources */,
@@ -3715,6 +3725,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
 		};
 		F6AEB6042F880088008D747B /* AmplitudeUnified */ = {
 			isa = XCSwiftPackageProductDependency;

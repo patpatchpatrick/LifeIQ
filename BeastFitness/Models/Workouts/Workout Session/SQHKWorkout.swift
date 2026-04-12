@@ -313,7 +313,7 @@ struct SQHKWorkout: SQWorkoutSourcable {
         return .init(name: device.friendlyDescription)
     }
 
-    // TODO: - Pass workout details for existing HK workouts if they exist
+    // TODO: - Deprecated Pass workout details for existing HK workouts if they exist
     var details: SQWorkoutActivityDetails? {
         nil
     }

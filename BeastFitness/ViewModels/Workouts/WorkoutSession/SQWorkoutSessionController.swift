@@ -175,7 +175,7 @@ final class SQWorkoutSessionController: Identifiable {
         let baseWorkout = state.baseWorkout
         let title = state.titleTextField?.text.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // TODO: - PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
+        // TODO: - Deprecated PTD Finish building out manual workout source here with full data (elapsed time, heart rate, etc...)
         let workoutId = baseWorkout?.id ?? UUID().uuidString
         
         /// ✅ Snapshot time once so all fields are consistent

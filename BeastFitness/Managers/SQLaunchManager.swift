@@ -16,6 +16,7 @@ final class SQLaunchManager {
         hasPerformedLaunchTasks = true
 
         SQUserDefaults.shared.recordInstallDateIfNeeded()
+        SQRemoteConfigManager.shared.configure()
         SQAnalyticsManager.shared.configure(
             hub: SQAppState.shared.hub,
             userState: SQAppState.shared.userState

@@ -23,7 +23,7 @@ struct SQManualWorkout: SQWorkoutSourcable {
     // MARK: - SQWorkoutSourcable
     
     func sumOutputFor(_ quantityTypeIdentifier: SQQuantityType) -> Double? {
-        // TODO: - Implement this for all Quantity Types that are supported with manual workouts
+        // TODO: - Deprecated Implement this for all Quantity Types that are supported with manual workouts
         switch quantityTypeIdentifier {
         case .distanceWalkingRunning, .distanceCycling, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed, .heartRate:
             return nil

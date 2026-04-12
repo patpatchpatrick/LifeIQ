@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>app_disabled</key>
+	<string>false</string>
+	<key>app_disabled_message</key>
+	<string></string>
+	<key>force_update_message</key>
+	<string></string>
+	<key>min_supported_build</key>
+	<string>0</string>
+	<key>signup_disabled</key>
+	<string>false</string>
+	<key>signup_disabled_message</key>
+	<string></string>
+	<key>writes_disabled</key>
+	<string>false</string>
+	<key>writes_disabled_message</key>
+	<string></string>
+</dict>
+</plist>

@@ -61,7 +61,7 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
         case .distanceCycling, .distanceWalkingRunning, .activeKilocaloriesBurned, .distanceSwimming, .distanceRowing, .distanceDownhillSnowSports, .distanceCrossCountrySkiing, .flightsClimbed:
             return nil
         case .sqPaceRunning, .sqFastestPace, .sqTotalVolumeLifted, .unknown:
-            // TODO: - support strava running pace
+            // TODO: - Deprecated support strava running pace
             return nil
         }
     }
@@ -91,11 +91,11 @@ struct SQStravaWorkout: Codable, SQWorkoutSourcable {
     }
     
     var device: SQWorkoutDevice? {
-        // TODO: - Can we pull in device from strava workouts?
+        // TODO: - Deprecated Can we pull in device from strava workouts?
         nil
     }
     
-    // TODO: - Pass details from existing strava workouts if they exist
+    // TODO: - Deprecated Pass details from existing strava workouts if they exist
     var details: SQWorkoutActivityDetails? {
         return nil
     }

@@ -212,7 +212,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         
         try await requestAppAuthorization()
 
-        // TODO: - Finish configuration, add calories, heartRate, locationType, etc..
+        // TODO: - Deprecated Finish configuration, add calories, heartRate, locationType, etc..
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = workout.activityType
 
@@ -232,7 +232,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
             end: endDate,
             metadata: nil))
         
-        // TODO: - Hack to add inactive time for now, update later to properly use workout events
+        // TODO: - Deprecated Hack to add inactive time for now, update later to properly use workout events
         if
             let startDate = workout.startDate,
             let endDate = workout.endDate,

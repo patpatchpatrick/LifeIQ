@@ -36,7 +36,7 @@ final class SWWatchConnectivityManager: NSObject, ObservableObject, SWWatchConne
                 SWAppState.shared.rootState.updateActiveWorkoutDescription(to: payload.visibleDescription)
             }
         } catch {
-            // TODO: - PTD surface error to user when we can't decode the payload from iOS?
+            // TODO: - PTD Deprecated surface error to user when we can't decode the payload from iOS?
             SQLogger.shared.logW("Failed to decode workout payload: \(error.localizedDescription)", .error, context: .watchInterface)
         }
     }
@@ -52,7 +52,7 @@ extension SWWatchConnectivityManager: WCSessionDelegate {
           error: Error?
       ) {
           if let error {
-              // TODO: - PTD surface error to user when we can't activate session
+              // TODO: - PTD Deprecated surface error to user when we can't activate session
               SQLogger.shared.logW("Failed to activate watch session: \(error.localizedDescription)", .error, context: .watchInterface)
           }
       }

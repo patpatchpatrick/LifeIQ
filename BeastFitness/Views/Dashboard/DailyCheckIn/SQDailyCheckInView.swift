@@ -128,7 +128,6 @@ struct SQDailyCheckInView: View {
     var body: some View {
         navStack
             .task {
-                /// TODO: - Don't refresh for every appear, only the first time the view appears
                 await viewModel.refresh(for: viewModel.targetDate, modelContext: modelContext)
             }
     }

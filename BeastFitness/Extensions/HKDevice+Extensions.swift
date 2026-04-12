@@ -31,7 +31,7 @@ extension HKDevice {
 
 
     /// Mapping of Apple model identifiers -> marketing names
-    // TODO: - Update this list of marketing names to be accurate
+    // TODO: - (Deprecated) Update this list of marketing names to be accurate
     private static let marketingNames: [String: String] = [
 
         // --- APPLE WATCH (1ST GENERATION) ---
