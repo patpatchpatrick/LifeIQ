@@ -71,7 +71,8 @@ final class SQAuthManager: SQAuthManaging {
     }
 
     func createUser(email: String, password: String) async throws -> AuthDataResult {
-        try await Auth.auth().createUser(withEmail: email, password: password)
+        try SQRemoteConfigManager.shared.assertSignupEnabled()
+        return try await Auth.auth().createUser(withEmail: email, password: password)
     }
 
     func signInWithGoogle(presentingViewController: UIViewController) async throws -> AuthDataResult {

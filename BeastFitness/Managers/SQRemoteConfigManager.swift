@@ -41,6 +41,8 @@ protocol SQRemoteConfigManaging: AnyObject {
     func addSnapshotObserver(_ observer: @escaping (SQRemoteConfigSnapshot) -> Void) -> UUID
     func removeSnapshotObserver(_ id: UUID)
     func refreshForCriticalStateCheck()
+    func assertServerWritesEnabled() throws
+    func assertSignupEnabled() throws
 }
 
 @MainActor
@@ -48,8 +50,8 @@ protocol SQRemoteConfigManaging: AnyObject {
 final class SQRemoteConfigManager: SQRemoteConfigManaging {
     enum FallbackMessages {
         static let appDisabled = "LifeIQ is temporarily unavailable. Please try again in a little while."
-        static let writesDisabled = "LifeIQ is temporarily in read-only mode while we make a quick fix."
-        static let signupDisabled = "Signups are temporarily unavailable. Please try again later."
+        static let writesDisabled = "Saving changes is temporarily unavailable while we fix a technical issue. You can still browse your data, but new check-ins and edits won't be saved right now."
+        static let signupDisabled = "New account creation is temporarily unavailable. Existing LifeIQ accounts can still log in."
         static let forceUpdate = "A newer version of LifeIQ is required to continue."
     }
 
@@ -64,6 +66,8 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
         // Add one of these under "Arguments Passed On Launch" to force the blocker UI locally.
         static let appDisabled = "-sq_app_disabled"
         static let forceUpdate = "-sq_force_update"
+        static let writesDisabled = "-sq_writes_disabled"
+        static let signupDisabled = "-sq_signup_disabled"
     }
 #endif
 
@@ -161,6 +165,24 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
                     }
                 }
             }
+        }
+    }
+
+    func assertServerWritesEnabled() throws {
+        guard !snapshot.writesDisabled else {
+            throw SQError(
+                title: "Saving Temporarily Unavailable",
+                description: snapshot.writesDisabledMessage
+            )
+        }
+    }
+
+    func assertSignupEnabled() throws {
+        guard !snapshot.signupDisabled else {
+            throw SQError(
+                title: "Signups Unavailable",
+                description: snapshot.signupDisabledMessage
+            )
         }
     }
 
@@ -293,9 +315,9 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
             return .init(
                 appDisabled: false,
                 appDisabledMessage: snapshot.appDisabledMessage,
-                writesDisabled: snapshot.writesDisabled,
+                writesDisabled: false,
                 writesDisabledMessage: snapshot.writesDisabledMessage,
-                signupDisabled: snapshot.signupDisabled,
+                signupDisabled: false,
                 signupDisabledMessage: snapshot.signupDisabledMessage,
                 minSupportedBuild: snapshot.minSupportedBuild,
                 forceUpdateMessage: "[Debug] A newer version of LifeIQ is required to continue.",
@@ -307,10 +329,38 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
             return .init(
                 appDisabled: true,
                 appDisabledMessage: "[Debug] LifeIQ is temporarily unavailable while this screen is being tested.",
-                writesDisabled: snapshot.writesDisabled,
+                writesDisabled: false,
                 writesDisabledMessage: snapshot.writesDisabledMessage,
-                signupDisabled: snapshot.signupDisabled,
+                signupDisabled: false,
                 signupDisabledMessage: snapshot.signupDisabledMessage,
+                minSupportedBuild: snapshot.minSupportedBuild,
+                forceUpdateMessage: snapshot.forceUpdateMessage,
+                requiresForceUpdate: false
+            )
+        }
+
+        if arguments.contains(DebugLaunchArgument.writesDisabled) {
+            return .init(
+                appDisabled: false,
+                appDisabledMessage: snapshot.appDisabledMessage,
+                writesDisabled: true,
+                writesDisabledMessage: "[Debug] Saving changes is temporarily unavailable while this screen is being tested.",
+                signupDisabled: false,
+                signupDisabledMessage: snapshot.signupDisabledMessage,
+                minSupportedBuild: snapshot.minSupportedBuild,
+                forceUpdateMessage: snapshot.forceUpdateMessage,
+                requiresForceUpdate: false
+            )
+        }
+
+        if arguments.contains(DebugLaunchArgument.signupDisabled) {
+            return .init(
+                appDisabled: false,
+                appDisabledMessage: snapshot.appDisabledMessage,
+                writesDisabled: false,
+                writesDisabledMessage: snapshot.writesDisabledMessage,
+                signupDisabled: true,
+                signupDisabledMessage: "[Debug] New account creation is temporarily unavailable while this screen is being tested.",
                 minSupportedBuild: snapshot.minSupportedBuild,
                 forceUpdateMessage: snapshot.forceUpdateMessage,
                 requiresForceUpdate: false

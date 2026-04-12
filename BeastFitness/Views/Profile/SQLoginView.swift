@@ -30,6 +30,24 @@ struct SQLoginView: View {
     }
 
     @ViewBuilder
+    private var signupDisabledNoticeCard: some View {
+        if let signupDisabledMessage = controller.signupDisabledMessage {
+            SQCallToAction(
+                viewModel: .init(
+                    icon: .init(symbol: .exclamationmarkTriangleFill),
+                    priority: .high,
+                    badgeTitle: "Signups Unavailable",
+                    title: "New account creation is temporarily unavailable",
+                    subtitle: signupDisabledMessage,
+                    actionText: nil,
+                    onTap: nil,
+                    showsChevron: false
+                )
+            )
+        }
+    }
+
+    @ViewBuilder
     private var heroCard: some View {
         VStack(spacing: .SQSpace.m) {
             ZStack {
@@ -116,20 +134,22 @@ struct SQLoginView: View {
 
     @ViewBuilder
     private var alternateModeRow: some View {
-        HStack(spacing: .SQSpace.xs) {
-            Text(alternatePrompt)
-                .sqFont(.bodySmall)
-                .sqForegroundColor(.textSecondary)
+        if !controller.isSignupDisabled {
+            HStack(spacing: .SQSpace.xs) {
+                Text(alternatePrompt)
+                    .sqFont(.bodySmall)
+                    .sqForegroundColor(.textSecondary)
 
-            Button(action: controller.toggleMode) {
-                Text(controller.mode.toggleTitle)
-                    .sqFont(.bodySmallSemiBold)
-                    .sqForegroundColor(.textPrimary)
+                Button(action: controller.toggleMode) {
+                    Text(controller.mode.toggleTitle)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, .SQSpace.xs)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.top, .SQSpace.xs)
     }
 
     @ViewBuilder
@@ -154,6 +174,7 @@ struct SQLoginView: View {
         ScrollView {
             VStack(spacing: .SQSpace.l) {
                 heroCard
+                signupDisabledNoticeCard
                 formCard
                 socialAuthCard
             }

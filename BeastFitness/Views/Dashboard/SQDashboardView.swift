@@ -97,6 +97,12 @@ struct SQDashboardView: View {
                     .padding(.bottom, 8)
                 }
 
+                if let runtimeControlCtaViewModel = controller.runtimeControlCtaViewModel {
+                    SQCallToAction(viewModel: runtimeControlCtaViewModel)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                }
+
                 if !controller.state.isLoading,
                    let healthKitAccessCtaViewModel = controller.healthKitAccessCtaViewModel {
                     SQCallToAction(viewModel: healthKitAccessCtaViewModel)

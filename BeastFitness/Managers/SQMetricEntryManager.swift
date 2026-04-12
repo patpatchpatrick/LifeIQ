@@ -54,6 +54,10 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     // MARK: - Save
 
     func save(entries: [SQMetricEntry], note: SQDailyNote?, to context: ModelContext) async throws {
+        if SQAppState.shared.userState.isLoggedIn {
+            try SQRemoteConfigManager.shared.assertServerWritesEnabled()
+        }
+
         // Save entries locally
         do {
             try SQMetricEntryEntity.upsert(entries, in: context)
@@ -94,6 +98,10 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to context: ModelContext) async throws {
+        if SQAppState.shared.userState.isLoggedIn {
+            try SQRemoteConfigManager.shared.assertServerWritesEnabled()
+        }
+
         try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
 
         let allMetrics = SQMetricDefinitionManager.shared.allMetrics(includeArchived: true)

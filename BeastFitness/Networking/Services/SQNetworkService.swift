@@ -34,6 +34,8 @@ extension SQNetworkService {
                return try decodeDocuments(snaps.documents, as: T.self)
 
            case .documentWrite(let ref):
+               try await SQRemoteConfigManager.shared.assertServerWritesEnabled()
+
                guard let body = route.writeBody else {
                    throw SQNetworkError.invalidResponseType(
                        expected: "body data",
@@ -48,7 +50,7 @@ extension SQNetworkService {
                    )
                }
 
-               try ref.setData(from: body)
+               try await writeDocument(body, to: ref)
 
                guard let result = SQVoidWrite() as? T else {
                    throw SQNetworkError.invalidResponseType(
@@ -195,5 +197,21 @@ extension SQNetworkService {
             expected: "a supported array type",
             got: String(describing: type)
         )
+    }
+
+    private static func writeDocument(_ body: any Encodable, to reference: DocumentReference) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            do {
+                try reference.setData(from: body) { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: ())
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 }

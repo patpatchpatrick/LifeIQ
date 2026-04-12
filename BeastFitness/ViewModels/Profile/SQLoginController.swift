@@ -44,17 +44,26 @@ protocol SQLoginInterface: AnyObject {
 @Observable final class SQLoginController: SQLoginInterface, Identifiable {
     let id = UUID().uuidString
     let hub: EventHub
+    private let remoteConfigManager: SQRemoteConfigManaging
 
     var mode: SQLoginMode
     var isLoading: Bool = false
+    private(set) var signupDisabledMessage: String?
+    var isSignupDisabled: Bool { signupDisabledMessage != nil }
 
     let emailViewModel: SQUITextFieldViewModel
     let passwordViewModel: SQUITextFieldViewModel
 
     var title: String { mode.rawValue }
 
-    init(mode: SQLoginMode = .login, hub: EventHub = SQAppState.shared.hub) {
-        self.mode = mode
+    init(
+        mode: SQLoginMode = .login,
+        hub: EventHub = SQAppState.shared.hub,
+        remoteConfigManager: SQRemoteConfigManaging = SQRemoteConfigManager.shared
+    ) {
+        self.remoteConfigManager = remoteConfigManager
+        let initialSnapshot = remoteConfigManager.snapshot
+        self.mode = initialSnapshot.signupDisabled && mode == .signup ? .login : mode
         self.hub = hub
         self.emailViewModel = SQUITextFieldViewModel(
             placeholder: "Email",
@@ -84,10 +93,25 @@ protocol SQLoginInterface: AnyObject {
                 Self.passwordErrorMessage(for: text)
             }
         )
+        refreshSignupAvailability(with: initialSnapshot)
+        _ = remoteConfigManager.addSnapshotObserver { [weak self] snapshot in
+            self?.refreshSignupAvailability(with: snapshot)
+        }
     }
 
     func toggleMode() {
-        mode = mode.toggled()
+        let toggledMode = mode.toggled()
+
+        if toggledMode == .signup {
+            do {
+                try remoteConfigManager.assertSignupEnabled()
+            } catch {
+                presentAuthError(error)
+                return
+            }
+        }
+
+        mode = toggledMode
     }
 
     func loginOrSignUpButtonTapped() {
@@ -136,6 +160,17 @@ protocol SQLoginInterface: AnyObject {
         do {
             let presentingViewController = try currentPresentingViewController()
             let result = try await SQAuthManager.shared.signInWithGoogle(presentingViewController: presentingViewController)
+
+            if result.additionalUserInfo?.isNewUser == true {
+                do {
+                    try remoteConfigManager.assertSignupEnabled()
+                } catch {
+                    try? await SQAuthManager.shared.deleteCurrentUser()
+                    try? SQAuthManager.shared.signOut()
+                    throw error
+                }
+            }
+
             try await completeAuthentication(
                 result: result,
                 fallbackEmail: result.user.email,
@@ -169,11 +204,20 @@ protocol SQLoginInterface: AnyObject {
     }
 
     private func signUp() async throws -> AuthDataResult {
+        try remoteConfigManager.assertSignupEnabled()
         let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
             return try await SQAuthManager.shared.createUser(email: email, password: passwordViewModel.text)
         } catch {
             throw SQAuthError.from(error)
+        }
+    }
+
+    private func refreshSignupAvailability(with snapshot: SQRemoteConfigSnapshot) {
+        signupDisabledMessage = snapshot.signupDisabled ? snapshot.signupDisabledMessage : nil
+
+        if snapshot.signupDisabled, mode == .signup {
+            mode = .login
         }
     }
 

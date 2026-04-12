@@ -100,6 +100,27 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Domain services (example: `SQDailyCheckInService`)
 - Use incremental sync with `afterDate` where applicable.
 
+### Remote Config runtime controls
+
+- `SQRemoteConfigManager` is the client control plane for runtime app behavior.
+- Current critical keys include:
+  - `app_disabled`
+  - `app_disabled_message`
+  - `min_supported_build`
+  - `force_update_message`
+  - `writes_disabled`
+  - `writes_disabled_message`
+  - `signup_disabled`
+  - `signup_disabled_message`
+- `min_supported_build` compares against `CFBundleVersion` (build number), not `CFBundleShortVersionString`.
+- Use Remote Config for client messaging and gating UX. Do not use it as the backend enforcement layer for Firestore security.
+- When changing any write flow, signup flow, or app-wide access behavior, review whether these runtime controls should affect the new code path.
+- Prefer shared gating points for Remote Config-sensitive behavior:
+  - shared Firestore write layer for server-write shutdowns
+  - auth entry points for signup shutdowns
+  - dashboard/root surfaces for user-facing status messaging
+- If a new feature has a meaningful degraded/read-only/maintenance mode, account for Remote Config during implementation rather than treating it as a later patch.
+
 ### Firestore metrics tracking (required)
 
 - Track all reads/writes using `SQFirestoreMetricsManager` for cost visibility.

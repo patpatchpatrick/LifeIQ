@@ -167,6 +167,16 @@ final class SQSettingsController: SQSettingsInterface {
 
     private func saveUnitSystem(_ unitSystem: SQUnitSystem) async {
         let previousUnitSystem = currentUnitSystem
+
+        if userState.isLoggedIn {
+            do {
+                try SQRemoteConfigManager.shared.assertServerWritesEnabled()
+            } catch {
+                state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
+                return
+            }
+        }
+
         SQUserDefaults.shared.setPreferredUnitSystem(unitSystem)
 
         if let user = userState.loggedInUser {

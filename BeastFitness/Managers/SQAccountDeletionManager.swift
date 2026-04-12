@@ -113,6 +113,8 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
     }
 
     private func deleteRemoteData(for user: SQUser) async throws {
+        try SQRemoteConfigManager.shared.assertServerWritesEnabled()
+
         let userRef = firestore.collection("users").document(user.id)
 
         for subcollection in subcollections {

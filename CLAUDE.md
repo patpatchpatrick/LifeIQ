@@ -285,6 +285,30 @@ We use **Firestore** as our backend with a custom networking layer built around 
   - Automatically handles read/write operations based on the route's reference type
   - Write operations use `SQVoidWrite` as the return type
 
+### Remote Config runtime controls
+
+We also use **SQRemoteConfigManager** for runtime app controls and client-facing operational messaging.
+
+Current important Remote Config keys:
+- `app_disabled`
+- `app_disabled_message`
+- `min_supported_build`
+- `force_update_message`
+- `writes_disabled`
+- `writes_disabled_message`
+- `signup_disabled`
+- `signup_disabled_message`
+
+Important behavior:
+- `min_supported_build` is compared against `CFBundleVersion` (the build number), not `CFBundleShortVersionString`.
+- Remote Config is the client control plane for blockers, force-update UI, read-only messaging, and signup gating.
+- Remote Config is **not** the security boundary for Firestore writes. Backend enforcement should still live in Firestore rules / Auth / server-side controls as needed.
+
+Implementation guidance:
+- When touching signup flows, server-write flows, or app-wide availability behavior, explicitly check whether Remote Config should gate the new path.
+- Prefer adding Remote Config checks in shared layers rather than scattering one-off checks across feature screens.
+- If a feature should surface maintenance/read-only state to users, wire it into existing runtime-control patterns instead of inventing a separate flag system.
+
 - **Service classes** (e.g., `SQDailyCheckInService`) — Domain-specific services that inherit from `SQNetworkService`
   - Define high-level operations (e.g., `saveDailyCheckInStats`, `fetchAllDailyCheckIns`)
   - Call `performRequest()` with the appropriate route

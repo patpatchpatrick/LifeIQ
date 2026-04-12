@@ -48,7 +48,9 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
+    private let remoteConfigManager: SQRemoteConfigManaging
     var healthKitAccessCtaViewModel: SQCallToActionViewModel?
+    var runtimeControlCtaViewModel: SQCallToActionViewModel?
     var lifeScoreViewModel: SQLifeScoreViewModel?
     
     
@@ -69,7 +71,8 @@ final class SQDashboardController: SQDashboardInterface {
         heartRateService: SQHeartRateServicing? = nil,
         workoutScoreService: SQWorkoutScoreServicing? = nil,
         insightsService: SQInsightsServicing? = nil,
-        dashboardLayoutService: SQDashboardLayoutServicing? = nil
+        dashboardLayoutService: SQDashboardLayoutServicing? = nil,
+        remoteConfigManager: SQRemoteConfigManaging = SQRemoteConfigManager.shared
     ) {
         let resolvedHeartRateService = heartRateService ?? SQHeartRateService(
             healthKitManager: healthKitManager,
@@ -96,6 +99,7 @@ final class SQDashboardController: SQDashboardInterface {
         )
         self.insightsService = insightsService ?? SQInsightsService()
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
+        self.remoteConfigManager = remoteConfigManager
         
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -119,6 +123,11 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGroups))
             state.setLoading(true)
+        }
+
+        refreshRuntimeControlCtaViewModel()
+        _ = remoteConfigManager.addSnapshotObserver { [weak self] _ in
+            self?.refreshRuntimeControlCtaViewModel()
         }
         
         self.handleEventSubscriptions(hub: state.hub)
@@ -159,6 +168,7 @@ final class SQDashboardController: SQDashboardInterface {
             guard let self else { return }
             switch event {
             case .loginStateChanged, .profileUpdated:
+                self.refreshRuntimeControlCtaViewModel()
                 if self.hasLoadedUI {
                     self.refreshFromGlobalContext()
                 } else if let modelContext = SQAppState.shared.modelContext {
@@ -185,12 +195,32 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func refreshFromGlobalContext() {
+        refreshRuntimeControlCtaViewModel()
         guard let modelContext = SQAppState.shared.modelContext else { return }
         Task { await self.refreshUI(for: modelContext) }
     }
 
     private func applyLayoutCustomizationToCurrentState() {
         state.updateSectionGroups(to: dashboardLayoutService.apply(to: state.uncustomizedSectionGroups))
+    }
+
+    private func refreshRuntimeControlCtaViewModel() {
+        let snapshot = remoteConfigManager.snapshot
+        guard userState.isLoggedIn, snapshot.writesDisabled else {
+            runtimeControlCtaViewModel = nil
+            return
+        }
+
+        runtimeControlCtaViewModel = .init(
+            icon: .init(symbol: .exclamationmarkTriangleFill),
+            priority: .high,
+            badgeTitle: "Read-Only Mode",
+            title: "Saving is temporarily unavailable",
+            subtitle: snapshot.writesDisabledMessage,
+            actionText: nil,
+            onTap: nil,
+            showsChevron: false
+        )
     }
     
     func loadUI(

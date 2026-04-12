@@ -76,6 +76,14 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
+            argument = "-sq_writes_disabled"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-sq_signup_disabled"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-sq_force_update"
             isEnabled = "NO">
          </CommandLineArgument>

@@ -20,6 +20,7 @@ protocol SQProfileInterface: AnyObject {
     let hub: EventHub
     let userState: SQUserStating
     let authManager: SQAuthManaging
+    private let remoteConfigManager: SQRemoteConfigManaging
 
     var title: String { "Profile" }
     var subtitle: String {
@@ -51,12 +52,21 @@ protocol SQProfileInterface: AnyObject {
 
     private var cancellables = Set<AnyCancellable>()
 
-    init(hub: EventHub = SQAppState.shared.hub, userState: SQUserStating = SQAppState.shared.userState, authManager: SQAuthManaging = SQAuthManager.shared) {
+    init(
+        hub: EventHub = SQAppState.shared.hub,
+        userState: SQUserStating = SQAppState.shared.userState,
+        authManager: SQAuthManaging = SQAuthManager.shared,
+        remoteConfigManager: SQRemoteConfigManaging = SQRemoteConfigManager.shared
+    ) {
         self.hub = hub
         self.userState = userState
         self.authManager = authManager
+        self.remoteConfigManager = remoteConfigManager
         refreshUI()
         subscribeToUserEvents()
+        _ = remoteConfigManager.addSnapshotObserver { [weak self] _ in
+            self?.refreshUI()
+        }
     }
 
     // MARK: - Private
@@ -86,7 +96,7 @@ protocol SQProfileInterface: AnyObject {
             loginButtonViewModel = SQButtonViewModel(title: "Log in") { [weak self] in
                 self?.showLogin(mode: .login)
             }
-            signUpButtonViewModel = SQButtonViewModel(title: "Sign up") { [weak self] in
+            signUpButtonViewModel = remoteConfigManager.snapshot.signupDisabled ? nil : SQButtonViewModel(title: "Sign up") { [weak self] in
                 self?.showLogin(mode: .signup)
             }
             logOutButtonViewModel = nil

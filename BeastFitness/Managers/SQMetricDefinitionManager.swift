@@ -155,6 +155,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     // MARK: - Mutations (persisted)
 
     func enableMetric(id: String, using context: ModelContext) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
@@ -170,6 +171,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     }
 
     func disableMetric(id: String, using context: ModelContext) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
@@ -183,6 +185,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     }
 
     func archiveMetric(id: String, using context: ModelContext) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
@@ -197,6 +200,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     }
 
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
@@ -207,6 +211,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     }
 
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         let maxOrder = dailyCheckInMetrics().map(\.sortOrder).max() ?? 0
@@ -257,6 +262,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         bodyBatteryEffect: SQMetricBodyBatteryEffect,
         using context: ModelContext
     ) throws {
+        try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
@@ -329,6 +335,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     /// Bumping the key forces a single backfill for existing users when new fields
     /// need to be written to Firestore.
     private func bootstrapPushIfNeeded(context: ModelContext) async {
+        guard !SQAppState.shared.userState.isLoggedIn || !SQRemoteConfigManager.shared.snapshot.writesDisabled else {
+            return
+        }
+
         let key = "metric-definitions-bootstrap-v4-body-battery-presets"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
@@ -475,6 +485,11 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try context.save()
         try reload(using: context)
         hub.metricEvents.send(.metricsUpdated)
+    }
+
+    private func assertServerWritesEnabledIfNeeded() throws {
+        guard SQAppState.shared.userState.isLoggedIn else { return }
+        try SQRemoteConfigManager.shared.assertServerWritesEnabled()
     }
 
     // MARK: - Helpers

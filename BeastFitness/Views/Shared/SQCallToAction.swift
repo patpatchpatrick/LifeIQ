@@ -26,9 +26,9 @@ struct SQCallToAction: View {
             : (SQColor.isDarkMode ? 0.18 : 0.14)
     }
 
-    var body: some View {
-        Button(action: { viewModel.onTap?() }) {
-            HStack(spacing: .SQSpace.m) {
+    @ViewBuilder
+    private var cardContent: some View {
+        HStack(spacing: .SQSpace.m) {
                 if let icon = viewModel.icon {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
                         .fill(accentColor.color.opacity(iconFillOpacity))
@@ -78,18 +78,20 @@ struct SQCallToAction: View {
 
                 Spacer(minLength: .SQSpace.m)
 
-                Circle()
-                    .fill(accentColor.color.opacity(viewModel.priority == .high ? (SQColor.isDarkMode ? 0.22 : 0.18) : (SQColor.isDarkMode ? 0.16 : 0.12)))
-                    .frame(width: 30, height: 30)
-                    .overlay {
-                        Circle()
-                            .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
-                    }
-                    .overlay {
-                            SQImageView(image: .init(symbol: .chevronRight, symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)))
-                                .sqTintColor(accentColor)
-                                .frame(width: 10, height: 10)
-                    }
+                if viewModel.showsChevron {
+                    Circle()
+                        .fill(accentColor.color.opacity(viewModel.priority == .high ? (SQColor.isDarkMode ? 0.22 : 0.18) : (SQColor.isDarkMode ? 0.16 : 0.12)))
+                        .frame(width: 30, height: 30)
+                        .overlay {
+                            Circle()
+                                .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                        }
+                        .overlay {
+                                SQImageView(image: .init(symbol: .chevronRight, symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)))
+                                    .sqTintColor(accentColor)
+                                    .frame(width: 10, height: 10)
+                        }
+                }
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.vertical, .SQSpace.m)
@@ -126,7 +128,18 @@ struct SQCallToAction: View {
                 y: 12
             )
         }
-        .buttonStyle(.plain)
+
+    var body: some View {
+        Group {
+            if let onTap = viewModel.onTap {
+                Button(action: onTap) {
+                    cardContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                cardContent
+            }
+        }
     }
 }
 
@@ -143,6 +156,7 @@ struct SQCallToActionViewModel {
     let subtitle: String?
     let actionText: String?
     let onTap: (() -> Void)?
+    let showsChevron: Bool
 
     init(
         icon: SQImage? = nil,
@@ -151,7 +165,8 @@ struct SQCallToActionViewModel {
         title: String,
         subtitle: String? = nil,
         actionText: String? = "Tap to log now",
-        onTap: (() -> Void)?
+        onTap: (() -> Void)?,
+        showsChevron: Bool = true
     ) {
         self.icon = icon
         self.priority = priority
@@ -160,6 +175,7 @@ struct SQCallToActionViewModel {
         self.subtitle = subtitle
         self.actionText = actionText
         self.onTap = onTap
+        self.showsChevron = showsChevron
     }
 }
 
