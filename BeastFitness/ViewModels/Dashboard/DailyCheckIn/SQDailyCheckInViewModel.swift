@@ -176,7 +176,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             var displayTitle = metric.title
 
             // Add unit suffix if present (e.g., "Weight (lbs)")
-            if metric.unit != .none {
+            if metric.unit != .none, !titleAlreadyIncludesUnit(metric.title, unit: metric.unit) {
                 displayTitle = "\(displayTitle) (\(metric.unit.rawValue))"
             }
 
@@ -200,7 +200,11 @@ final class SQDailyCheckInViewModel: Identifiable {
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
                     field: field,
                     title: displayTitle,
-                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
+                    subtitle: subtitle(
+                        for: metric,
+                        targetDate: targetDate,
+                        sleepPrefillMetricIds: sleepPrefillMetricIds
+                    ),
                     segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -216,7 +220,11 @@ final class SQDailyCheckInViewModel: Identifiable {
                 let row = SQDailyCheckInRowSegmentedControlViewModel(
                     field: field,
                     title: displayTitle,
-                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
+                    subtitle: subtitle(
+                        for: metric,
+                        targetDate: targetDate,
+                        sleepPrefillMetricIds: sleepPrefillMetricIds
+                    ),
                     segments: segments,
                     initialSelection: initial,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -229,7 +237,11 @@ final class SQDailyCheckInViewModel: Identifiable {
                 let row = SQDailyCheckInTextEntryViewModel(
                     field: field,
                     title: displayTitle,
-                    subtitle: subtitle(for: metric, sleepPrefillMetricIds: sleepPrefillMetricIds),
+                    subtitle: subtitle(
+                        for: metric,
+                        targetDate: targetDate,
+                        sleepPrefillMetricIds: sleepPrefillMetricIds
+                    ),
                     textFieldViewModel: tf,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )
@@ -252,10 +264,28 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     private func subtitle(
         for metric: SQMetricDefinition,
+        targetDate: Date,
         sleepPrefillMetricIds: Set<String>
     ) -> String? {
-        guard sleepPrefillMetricIds.contains(metric.id) else { return nil }
-        return "Prefilled from the previous night's sleep. You can override it."
+        guard isPreviousNightSleepMetric(metric.id) else { return nil }
+
+        let referencedNightDate = Calendar.current
+            .date(byAdding: .day, value: -1, to: targetDate)?
+            .formattedString(with: .medium) ?? "the previous night"
+
+        if sleepPrefillMetricIds.contains(metric.id) {
+            return "Previous night's sleep (\(referencedNightDate)). Prefilled from HealthKit; you can override it."
+        }
+
+        return "Previous night's sleep (\(referencedNightDate))."
+    }
+
+    private func isPreviousNightSleepMetric(_ metricId: String) -> Bool {
+        metricId == SQMetricId.sleepHours || metricId == SQMetricId.sleepQuality
+    }
+
+    private func titleAlreadyIncludesUnit(_ title: String, unit: SQMetricUnit) -> Bool {
+        title.localizedCaseInsensitiveContains(unit.rawValue)
     }
 
     // MARK: - Scale Helpers

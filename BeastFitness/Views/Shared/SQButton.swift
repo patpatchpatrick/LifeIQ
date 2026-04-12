@@ -95,11 +95,11 @@ struct SQButton: View {
 
     @ViewBuilder
     private var backgroundView: some View {
-        let backgroundColor = (isDisabled || isLoading)
-            ? style.disabledBackgroundColor.color
-            : style.backgroundColor.color
+        let backgroundColor = style.backgroundFillColor(
+            isDisabled: isDisabled || isLoading
+        )
 
-        if style == .glassPrimary {
+        if style.usesGlassTreatment {
             RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
                 .fill(backgroundColor)
         } else {
@@ -110,12 +110,12 @@ struct SQButton: View {
 
     @ViewBuilder
     private var overlayView: some View {
-        if style == .glassPrimary {
+        if style.usesGlassTreatment {
             RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(SQColor.isDarkMode ? 0.18 : 0.28),
+                            Color.white.opacity(style.glassHighlightOpacity),
                             Color.white.opacity(0.03)
                         ],
                         startPoint: .topLeading,
@@ -127,7 +127,7 @@ struct SQButton: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
-                        .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                        .stroke(style.strokeColor, lineWidth: 1)
                 )
         }
     }
@@ -146,14 +146,23 @@ struct SQButton: View {
         case secondary
         case glassPrimary
         
-        var backgroundColor: SQColor {
+        func backgroundFillColor(isDisabled: Bool) -> Color {
+            if isDisabled {
+                switch self {
+                case .secondary, .glassPrimary:
+                    return SQColor.glassCardTint.color
+                case .primary, .primarySmall:
+                    return SQColor.textDisabled.color
+                }
+            }
+
             switch self {
             case .primary, .primarySmall:
-                .accent(1)
+                return SQColor.accent(1).color
             case .secondary:
-                .backgroundSecondary
+                return SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96)
             case .glassPrimary:
-                .dashboardGlowBlue
+                return SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.80 : 0.62)
             }
         }
 
@@ -165,16 +174,7 @@ struct SQButton: View {
                 .textPrimary
             }
         }
-        
-        var disabledBackgroundColor: SQColor {
-            switch self {
-            case .glassPrimary:
-                .glassCardTint
-            default:
-                .textDisabled
-            }
-        }
-        
+
         var innerPadding: CGFloat {
             switch self {
             case .primary, .secondary, .glassPrimary:
@@ -186,10 +186,41 @@ struct SQButton: View {
 
         var cornerRadius: CGFloat {
             switch self {
-            case .glassPrimary:
+            case .secondary, .glassPrimary:
                 .SQCornerRadius.xl
-            default:
+            case .primary, .primarySmall:
                 8
+            }
+        }
+
+        var usesGlassTreatment: Bool {
+            switch self {
+            case .secondary, .glassPrimary:
+                true
+            case .primary, .primarySmall:
+                false
+            }
+        }
+
+        var strokeColor: Color {
+            switch self {
+            case .glassPrimary:
+                return SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.46 : 0.34)
+            case .secondary:
+                return SQColor.glassStroke.color
+            case .primary, .primarySmall:
+                return SQColor.border().color
+            }
+        }
+
+        var glassHighlightOpacity: Double {
+            switch self {
+            case .glassPrimary:
+                return SQColor.isDarkMode ? 0.14 : 0.22
+            case .secondary:
+                return SQColor.isDarkMode ? 0.10 : 0.18
+            case .primary, .primarySmall:
+                return 0
             }
         }
     }
