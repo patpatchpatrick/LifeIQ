@@ -70,6 +70,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
 
     private let remoteConfig = RemoteConfig.remoteConfig()
     private var hasConfigured = false
+    private var realtimeUpdateRegistration: ConfigUpdateListenerRegistration?
     private(set) var snapshot = SQRemoteConfigSnapshot.default
 
     private init() {}
@@ -123,7 +124,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
     }
 
     private func startRealtimeUpdates() {
-        remoteConfig.addOnConfigUpdateListener { [weak self] configUpdate, error in
+        realtimeUpdateRegistration = remoteConfig.addOnConfigUpdateListener { [weak self] configUpdate, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
 
@@ -139,7 +140,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
                 guard let configUpdate else { return }
 
                 SQLogger.shared.log(
-                    "Remote Config updated keys: \(Array(configUpdate.updatedKeys).sorted().joined(separator: \", \"))",
+                    "Remote Config updated keys: \(Array(configUpdate.updatedKeys).sorted().joined(separator: ", "))",
                     .debug,
                     context: .general
                 )
@@ -162,6 +163,12 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
                 }
             }
         }
+
+        SQLogger.shared.log(
+            "Remote Config realtime listener started",
+            .debug,
+            context: .general
+        )
     }
 
     private func refreshSnapshot(source: String) {
@@ -193,7 +200,18 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
         snapshot = updatedSnapshot
 
         SQLogger.shared.log(
-            "Remote Config snapshot refreshed from \(source)",
+            """
+            Remote Config snapshot refreshed from \(source)
+            app_disabled=\(updatedSnapshot.appDisabled)
+            app_disabled_message=\(updatedSnapshot.appDisabledMessage)
+            writes_disabled=\(updatedSnapshot.writesDisabled)
+            writes_disabled_message=\(updatedSnapshot.writesDisabledMessage)
+            signup_disabled=\(updatedSnapshot.signupDisabled)
+            signup_disabled_message=\(updatedSnapshot.signupDisabledMessage)
+            min_supported_build=\(updatedSnapshot.minSupportedBuild.map(String.init) ?? "nil")
+            force_update_message=\(updatedSnapshot.forceUpdateMessage)
+            requires_force_update=\(updatedSnapshot.requiresForceUpdate)
+            """,
             .debug,
             context: .general
         )
@@ -204,7 +222,7 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
     }
 
     private func stringValue(for key: Key) -> String? {
-        remoteConfig.configValue(forKey: key.rawValue).stringValue?.sqNonEmptyTrimmed
+        remoteConfig.configValue(forKey: key.rawValue).stringValue.sqNonEmptyTrimmed
     }
 
     private func fallbackMessage(for key: Key, fallback: String) -> String {
@@ -224,12 +242,5 @@ final class SQRemoteConfigManager: SQRemoteConfigManaging {
         }
         guard let currentBuild = Int(currentBuildRaw) else { return false }
         return currentBuild < minSupportedBuild
-    }
-}
-
-private extension String {
-    var sqNonEmptyTrimmed: String? {
-        let trimmedValue = trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedValue.isEmpty ? nil : trimmedValue
     }
 }
