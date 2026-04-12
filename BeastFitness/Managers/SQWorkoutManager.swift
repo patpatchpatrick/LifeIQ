@@ -27,14 +27,19 @@ final class SQWorkoutManager: SQWorkoutManaging {
 
     private let workoutService: SQWorkoutServicing.Type
     private let healthKitManager: SQHealthKitManaging
-    private let syncMetadataId = "workouts-sync"
+    private let userState: SQUserStating
     private var isSyncInProgress = false
     private var needsSyncAfterCurrentRun = false
     private var needsForcedSyncAfterCurrentRun = false
 
-    init(workoutService: SQWorkoutServicing.Type = SQWorkoutService.self, healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared) {
+    init(
+        workoutService: SQWorkoutServicing.Type = SQWorkoutService.self,
+        healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
+        userState: SQUserStating = SQAppState.shared.userState
+    ) {
         self.workoutService = workoutService
         self.healthKitManager = healthKitManager
+        self.userState = userState
     }
     
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
@@ -107,6 +112,9 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func saveWorkout(workout: SQWorkoutSessionable, to modelContext: ModelContext, saveToCloud: Bool = true) async throws {
+        guard userState.isLoggedIn else {
+            throw SQError.standard(withDescription: "Please log in to save workouts and workout reviews.")
+        }
 
         if workout.hkWorkoutId == nil {
             do {
@@ -341,8 +349,15 @@ final class SQWorkoutManager: SQWorkoutManaging {
         return Date().timeIntervalSince(lastSync) / 3600 > 6
     }
 
+    private func syncMetadataId() -> String {
+        if let userId = SQAppState.shared.userState.loggedInUser?.id {
+            return "workouts-sync-\(userId)"
+        }
+        return "workouts-sync-guest"
+    }
+
     private func getLastSyncDate(context: ModelContext) -> Date? {
-        let id = syncMetadataId
+        let id = syncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == id }
         )
@@ -350,7 +365,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
 
     private func updateLastSyncDate(to date: Date, context: ModelContext) {
-        let id = syncMetadataId
+        let id = syncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == id }
         )

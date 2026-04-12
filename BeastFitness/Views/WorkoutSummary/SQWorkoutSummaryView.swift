@@ -119,8 +119,30 @@ struct SQWorkoutSummaryView: View {
                 reviewHighlightsSection
             }
 
-            reviewQuestionsSection
+            if controller.canEditWorkoutMetadata {
+                reviewQuestionsSection
+            } else {
+                workoutEditingLockedCard(
+                    title: "Log in to save workout feedback",
+                    subtitle: "Sign in to save workout notes, weather, performance, and effort details."
+                )
+            }
         }
+    }
+
+    @ViewBuilder
+    private func workoutEditingLockedCard(title: String, subtitle: String) -> some View {
+        SQCallToAction(viewModel: .init(
+            icon: .init(symbol: .personCircle),
+            priority: .standard,
+            badgeTitle: "Login Required",
+            title: title,
+            subtitle: subtitle,
+            actionText: "Tap to log in",
+            onTap: {
+                controller.presentWorkoutEditingLoginFlow()
+            }
+        ))
     }
 
     @ViewBuilder

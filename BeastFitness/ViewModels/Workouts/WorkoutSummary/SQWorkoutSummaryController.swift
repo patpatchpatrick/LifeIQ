@@ -129,6 +129,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         }
     }
     let showNavEditWorkoutButton: Bool
+    var canEditWorkoutMetadata: Bool { userState.isLoggedIn }
 
     init(
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
@@ -283,6 +284,11 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     }
 
     func pushEditWorkoutView() {
+        guard canEditWorkoutMetadata else {
+            presentWorkoutEditingLoginFlow()
+            return
+        }
+
         guard let baseWorkout = state.currentWorkout else {
             SQLogger.shared.log("Workout missing. Can't push edit workout screen.", .error, context: .workoutSummary)
             return
@@ -356,6 +362,10 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
 // MARK: - Review Persistence
 
 extension SQWorkoutSummaryController {
+    func presentWorkoutEditingLoginFlow() {
+        let controller = SQProfileController(userState: userState)
+        state.hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
+    }
 
     private func setupEventSubscriptions() {
         // WorkoutSummaryState has its own workoutEvents subscription that calls
@@ -394,6 +404,7 @@ extension SQWorkoutSummaryController {
     private func persistReviewDataIfNeeded() {
         guard isWorkoutLoaded,
               mode == .review,
+              canEditWorkoutMetadata,
               let workout = state.currentWorkout,
               let modelContext = SQAppState.shared.modelContext else { return }
 

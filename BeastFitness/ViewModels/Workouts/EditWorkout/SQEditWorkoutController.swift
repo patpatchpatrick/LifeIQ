@@ -63,6 +63,7 @@ final class SQEditWorkoutController: Identifiable {
     private let userState: SQUserStating
     private var cancellables = Set<AnyCancellable>()
     private var isLoaded = false
+    var canEditWorkoutMetadata: Bool { userState.isLoggedIn }
 
     // MARK: - Init
 
@@ -149,6 +150,11 @@ final class SQEditWorkoutController: Identifiable {
         SQAppState.shared.hub.domainEvents.send(.popDashboardRoute)
     }
 
+    func presentWorkoutEditingLoginFlow() {
+        let controller = SQProfileController(userState: userState)
+        SQAppState.shared.hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
+    }
+
     // MARK: - Save Subscriptions
 
     private func setupSaveSubscriptions() {
@@ -178,6 +184,7 @@ final class SQEditWorkoutController: Identifiable {
 
     private func persistIfNeeded() {
         guard isLoaded,
+              canEditWorkoutMetadata,
               let modelContext = SQAppState.shared.modelContext else { return }
 
         let titleText = titleViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)

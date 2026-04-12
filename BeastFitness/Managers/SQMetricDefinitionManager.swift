@@ -296,6 +296,11 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     func syncMetricsIfNeeded(using context: ModelContext) async throws -> SyncResult {
         try loadIfNeeded(using: context)
 
+        guard SQAppState.shared.userState.loggedInUser != nil else {
+            SQLogger.shared.log("Metric definitions: skipping cloud sync while logged out", .debug, context: .metricsManager)
+            return .noSyncNeeded
+        }
+
         // Keep metric entry values/notes and metric definitions in sync from one entrypoint.
         _ = try await SQAppState.shared.metricEntryManager.syncIfNeeded(
             for: .allTime,
@@ -335,7 +340,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     /// Bumping the key forces a single backfill for existing users when new fields
     /// need to be written to Firestore.
     private func bootstrapPushIfNeeded(context: ModelContext) async {
-        guard !SQAppState.shared.userState.isLoggedIn || !SQRemoteConfigManager.shared.snapshot.writesDisabled else {
+        guard SQAppState.shared.userState.isLoggedIn, !SQRemoteConfigManager.shared.snapshot.writesDisabled else {
             return
         }
 

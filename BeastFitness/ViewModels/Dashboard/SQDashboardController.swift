@@ -558,6 +558,11 @@ final class SQDashboardController: SQDashboardInterface {
     }
     
     func displayDailyCheckInSheet(for context: ModelContext, date: Date? = nil) async {
+        guard userState.isLoggedIn else {
+            handleAuthButtonTap()
+            return
+        }
+
         let sleepSchedule = userState.loggedInUser?.sleepSchedule
         let referenceDate = date ?? .now
         let targetDate = date ?? DashboardState.currentCheckInDate(

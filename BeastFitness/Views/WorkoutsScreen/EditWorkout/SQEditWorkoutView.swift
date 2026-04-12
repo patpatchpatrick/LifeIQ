@@ -117,53 +117,79 @@ struct SQEditWorkoutView: View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             heroCard
 
-            formSection(title: "Details", subtitle: "Name, notes, and weather context.") {
-                SQUITextField(viewModel: controller.titleViewModel)
-                SQTextField(viewModel: controller.notesViewModel)
+            if controller.canEditWorkoutMetadata {
+                formSection(title: "Details", subtitle: "Name, notes, and weather context.") {
+                    SQUITextField(viewModel: controller.titleViewModel)
+                    SQTextField(viewModel: controller.notesViewModel)
 
-                VStack(alignment: .leading, spacing: .SQSpace.s) {
-                    questionTitle(title: "Temperature")
+                    VStack(alignment: .leading, spacing: .SQSpace.s) {
+                        questionTitle(title: "Temperature")
 
-                    HStack(spacing: .SQSpace.s) {
-                    SQUITextField(viewModel: controller.temperatureViewModel, width: 96)
+                        HStack(spacing: .SQSpace.s) {
+                            SQUITextField(viewModel: controller.temperatureViewModel, width: 96)
 
-                    Text(controller.temperatureUnit.unitString ?? "°")
-                        .sqFont(.bodySmall)
-                        .sqForegroundColor(.textSecondary)
+                            Text(controller.temperatureUnit.unitString ?? "°")
+                                .sqFont(.bodySmall)
+                                .sqForegroundColor(.textSecondary)
 
-                        Spacer()
+                            Spacer()
+                        }
                     }
                 }
-            }
 
-            formSection(title: "Ratings", subtitle: "Capture performance and effort for future insights.") {
-                ratingRow(
-                    title: "How did you perform?",
-                    segments: SQEditWorkoutController.performanceSegments,
-                    selection: bindable.selectedPerformance,
-                    scaleMin: "Very low",
-                    scaleMax: "Very high"
-                )
+                formSection(title: "Ratings", subtitle: "Capture performance and effort for future insights.") {
+                    ratingRow(
+                        title: "How did you perform?",
+                        segments: SQEditWorkoutController.performanceSegments,
+                        selection: bindable.selectedPerformance,
+                        scaleMin: "Very low",
+                        scaleMax: "Very high"
+                    )
 
-                ratingRow(
-                    title: "How hard was it?",
-                    segments: SQEditWorkoutController.difficultySegments,
-                    selection: bindable.selectedDifficulty,
-                    scaleMin: "Easy",
-                    scaleMax: "Max effort"
-                )
+                    ratingRow(
+                        title: "How hard was it?",
+                        segments: SQEditWorkoutController.difficultySegments,
+                        selection: bindable.selectedDifficulty,
+                        scaleMin: "Easy",
+                        scaleMax: "Max effort"
+                    )
+                }
+            } else {
+                SQCallToAction(viewModel: .init(
+                    icon: .init(symbol: .personCircle),
+                    priority: .standard,
+                    badgeTitle: "Login Required",
+                    title: "Log in to edit workout details",
+                    subtitle: "Sign in to save workout titles, notes, weather, and effort ratings.",
+                    actionText: "Tap to log in",
+                    onTap: {
+                        controller.presentWorkoutEditingLoginFlow()
+                    }
+                ))
             }
         }
     }
 
     @ViewBuilder
     private var bottomAction: some View {
-        SQButton(
-            style: .glassPrimary,
-            shouldHugContent: false,
-            title: "Done"
-        ) {
-            controller.dismiss()
+        Group {
+            if controller.canEditWorkoutMetadata {
+                SQButton(
+                    style: .glassPrimary,
+                    shouldHugContent: false,
+                    title: "Done"
+                ) {
+                    controller.dismiss()
+                }
+            } else {
+                SQButton(
+                    style: .glassPrimary,
+                    shouldHugContent: false,
+                    title: "Log In"
+                ) {
+                    controller.presentWorkoutEditingLoginFlow()
+                }
+            }
         }
         .padding(.horizontal, .SQSpace.xl)
         .padding(.top, .SQSpace.m)
@@ -195,7 +221,11 @@ struct SQEditWorkoutView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    controller.dismiss()
+                    if controller.canEditWorkoutMetadata {
+                        controller.dismiss()
+                    } else {
+                        controller.presentWorkoutEditingLoginFlow()
+                    }
                 } label: {
                     SQImageView(
                         image: .init(

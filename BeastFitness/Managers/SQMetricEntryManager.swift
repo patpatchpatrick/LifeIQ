@@ -279,6 +279,11 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     // MARK: - Sync
 
     func syncIfNeeded(for timeRange: SQTimeRange, context: ModelContext) async throws -> SyncResult {
+        guard SQAppState.shared.userState.loggedInUser != nil else {
+            SyncResult.noSyncNeeded.logSync(service: "MetricEntries", context: .dailyCheckIn)
+            return .noSyncNeeded
+        }
+
         SQLogger.shared.log("Checking entry sync for \(timeRange)", .debug, context: .dailyCheckIn)
 
         let localEntries = try SQMetricEntryEntity.getAll(after: timeRange.startDate, context: context)
@@ -361,10 +366,15 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     // MARK: - Sync Metadata
 
-    private let syncMetadataId = "metric-entries-sync"
+    private func syncMetadataId() -> String {
+        if let userId = SQAppState.shared.userState.loggedInUser?.id {
+            return "metric-entries-sync-\(userId)"
+        }
+        return "metric-entries-sync-guest"
+    }
 
     private func getLastSyncDate(context: ModelContext) -> Date? {
-        let id = syncMetadataId
+        let id = syncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == id }
         )
@@ -372,7 +382,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     private func updateLastSyncDate(to date: Date, context: ModelContext) {
-        let id = syncMetadataId
+        let id = syncMetadataId()
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == id }
         )
