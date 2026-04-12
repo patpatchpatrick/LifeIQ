@@ -15,17 +15,8 @@ final class SQDashboardActivityRowViewModel: SQDashboardRowViewModel {
     
     init(workoutGroupViewModels: [SQDashboardWorkoutGroupViewModel]) {
         self.workoutGroupViewModels = workoutGroupViewModels
-        
-        if workoutGroupViewModels.isEmpty {
-            ctaViewModel = .init(
-                title: "Start workout",
-                onTap: {
-                    SQAppState.shared.hub.domainEvents.send(.changeTab(.workouts))
-            })
-        } else {
-            ctaViewModel = nil
-        }
-        
+        ctaViewModel = nil
+
         super.init(rowId: .activityList, rowType: .activityList)
     }
     

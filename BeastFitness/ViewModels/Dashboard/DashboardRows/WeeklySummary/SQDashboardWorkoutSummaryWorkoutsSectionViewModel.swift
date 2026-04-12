@@ -27,16 +27,7 @@ final class SQDashboardWorkoutSummaryWorkoutsSectionViewModel {
             workoutGroupViewModels.append(.init(activityType: activityType, workouts: .init(workouts: workouts)))
         }
         self.workoutGroupViewModels = workoutGroupViewModels
-        
-        if workoutGroupViewModels.isEmpty {
-            ctaViewModel = .init(
-                title: "Start workout",
-                onTap: {
-                    SQAppState.shared.hub.domainEvents.send(.changeTab(.workouts))
-            })
-        } else {
-            ctaViewModel = nil
-        }
+        ctaViewModel = nil
     }
 }
 

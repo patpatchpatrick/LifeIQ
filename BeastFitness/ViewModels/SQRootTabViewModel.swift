@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 @Observable
 @MainActor
@@ -15,9 +14,7 @@ final class SQRootTabViewModel {
     
     private(set) var dashboardController: SQDashboardController
     let deepLinkManager = SQDeepLinkManager()
-    
-    var workoutsNavigationPath = NavigationPath()
-    
+
     // MARK: - Init
     
     init(appState: SQAppState) {

@@ -13,6 +13,7 @@ import os
 #if os(iOS)
 public enum SQiOSLogContext: Sendable {
     case general
+    case analytics
     case dailyCheckIn
     case loginSignup
     case metricsManager
@@ -133,6 +134,7 @@ fileprivate extension Logger {
     static func logger(for context: SQiOSLogContext) -> Logger {
         switch context {
         case .general:         return .general
+        case .analytics:       return .analytics
         case .dailyCheckIn:    return .dailyCheckIn
         case .deepLink:        return .deepLink
         case .dataProcessing:  return .dataProcessing
@@ -152,6 +154,7 @@ fileprivate extension Logger {
     static let subsystem = "io.github.patpatchpatrick.BeastFitness"
 
     static let general        = Logger(subsystem: subsystem, category: "General")
+    static let analytics      = Logger(subsystem: subsystem, category: "Analytics")
     static let dailyCheckIn   = Logger(subsystem: subsystem, category: "DailyCheckIn")
     static let deepLink       = Logger(subsystem: subsystem, category: "DeepLink")
     static let dataProcessing = Logger(subsystem: subsystem, category: "DataProcessing")

@@ -35,7 +35,6 @@ protocol NavigationStating: AnyObject {
     
     enum Tab: Hashable {
         case home
-        case workouts
     }
     
     @ObservationIgnored private let selectedTabSubject = PassthroughSubject<Tab, Never>()

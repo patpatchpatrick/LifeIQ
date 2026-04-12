@@ -8,12 +8,18 @@
 @MainActor
 final class SQLaunchManager {
     static let shared = SQLaunchManager()
-    
+
     private var hasPerformedLaunchTasks = false
+
     func performLaunchTasks() {
         guard !hasPerformedLaunchTasks else { return }
         hasPerformedLaunchTasks = true
+
         SQUserDefaults.shared.recordInstallDateIfNeeded()
+        SQAnalyticsManager.shared.configure(
+            hub: SQAppState.shared.hub,
+            userState: SQAppState.shared.userState
+        )
         SQWatchInterface.shared.configureMirroringHandler(onStart: { _ in })
         SQAuthManager.shared.startListening(userState: SQAppState.shared.userState)
     }
