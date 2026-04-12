@@ -105,7 +105,9 @@ final class SQDashboardController: SQDashboardInterface {
             items: items
         ) { [weak state] selectedTitle in
             guard let state else { return }
-            if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }) {
+            if let selectedRange = AppTimeRange.allCases.first(where: { $0.rawValue == selectedTitle }),
+               selectedRange != state.selectedTimeRange {
+                SQAnalyticsManager.shared.track(.dashboardTimeRangeChanged(timeRange: selectedRange))
                 state.selectedTimeRange = selectedRange
             }
         }
@@ -1137,6 +1139,12 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func displayWorkoutInsightDetail(_ model: SQWorkoutPremiumInsightDetailModel) {
+        SQAnalyticsManager.shared.track(.insightOpened(
+            insightId: nil,
+            insightType: model.title.analyticsKey,
+            sourceScreen: "dashboard",
+            insightCategory: "workout_score"
+        ))
         let controller = SQWorkoutInsightDetailController(model: model)
         state.hub.domainEvents.send(.pushDashboardRoute(.workoutInsightDetail(controller: controller)))
     }
@@ -1993,6 +2001,12 @@ final class SQDashboardController: SQDashboardInterface {
                 rows.append(SQDashboardInsightRowViewModel(
                     model: firstInsight,
                     onInfoTap: { [weak state] in
+                        SQAnalyticsManager.shared.track(.insightOpened(
+                            insightId: firstInsight.id,
+                            insightType: firstInsight.familyKey.analyticsKey,
+                            sourceScreen: "dashboard",
+                            insightCategory: firstInsight.category.rawValue.analyticsKey
+                        ))
                         state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: firstInsight)))
                     }
                 ))
@@ -2003,6 +2017,12 @@ final class SQDashboardController: SQDashboardInterface {
                     rows.append(SQDashboardInsightRowViewModel(
                         model: insight,
                         onInfoTap: { [weak state] in
+                            SQAnalyticsManager.shared.track(.insightOpened(
+                                insightId: insight.id,
+                                insightType: insight.familyKey.analyticsKey,
+                                sourceScreen: "dashboard",
+                                insightCategory: insight.category.rawValue.analyticsKey
+                            ))
                             state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: insight)))
                         }
                     ))
@@ -2057,7 +2077,7 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             rowSpacing: .SQSpace.m,
-            maxVisibleRows: nil,
+            maxVisibleRows: 4,
             emptyState: emptyState
         )
 

@@ -428,6 +428,18 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         do {
             try await metricEntryManager.saveDailyCheckInStats(stats: stats, to: modelContext)
+            let submittedMetricIds = Array(formPayload.values.keys)
+            let customMetricCount = metricsManager.metrics.filter {
+                submittedMetricIds.contains($0.id) && !$0.isPreset
+            }.count
+
+            SQAnalyticsManager.shared.track(.dailyCheckInSubmitted(
+                period: period,
+                metricIds: submittedMetricIds,
+                customMetricCount: customMetricCount,
+                hasNotes: formPayload.notes != nil,
+                isPastDateEntry: isEditingPastDate
+            ))
             await dashboardInterface.refreshUI(for: modelContext)
             onDismiss()
         } catch {

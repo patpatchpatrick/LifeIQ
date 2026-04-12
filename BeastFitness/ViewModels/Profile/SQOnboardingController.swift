@@ -301,9 +301,14 @@ import BeastFitnessCore
 
             switch mode {
             case .setup:
+                SQAnalyticsManager.shared.track(.onboardingCompleted(
+                    unitSystem: selectedUnitSystem,
+                    includesDateOfBirth: includesDateOfBirth
+                ))
                 hub.domainEvents.send(.dismissDashboardNavStack)
                 hub.toastEvents.send(.present(.init(title: "Setup complete", style: .success)))
             case .editProfile:
+                SQAnalyticsManager.shared.track(.profileUpdated(source: "onboarding_edit_profile"))
                 hub.domainEvents.send(.popDashboardRoute)
                 hub.toastEvents.send(.present(.init(title: "Profile updated", style: .success)))
             }

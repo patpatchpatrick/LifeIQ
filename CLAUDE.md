@@ -259,6 +259,13 @@ SQLogger.shared.log(
    )
    ```
 
+## Analytics Conventions
+
+- Treat **Amplitude** review as part of normal implementation for relevant user-facing changes and flow updates.
+- If you modify an existing tracked flow, check whether the corresponding Amplitude events or properties should also be updated.
+- If you add a new feature or interaction that seems worth tracking in Amplitude, **confirm with Patrick first before adding new analytics events**.
+- Do not silently omit analytics consideration on meaningful product work; make an explicit decision whether analytics should change or remain unchanged.
+
 3. **Use appropriate contexts** - helps filter logs in Console.app
 4. **Mark important events as priority** - easier to spot in logs
 

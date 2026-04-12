@@ -85,6 +85,13 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Use appropriate contexts (e.g. `.dashboard`, `.dailyCheckIn`, `.workoutSession`, `.healthKit`).
 - Use `isPriority: true` for important milestones.
 
+## Analytics
+
+- Treat Amplitude instrumentation as part of implementation review for any relevant product or flow change.
+- When modifying an existing tracked flow, update the related Amplitude events/properties if the behavior or semantics changed.
+- When adding a new feature or surface that seems worth tracking in Amplitude, confirm with Patrick before adding new analytics events.
+- Do not silently skip analytics review on user-facing feature work; make an explicit call whether existing tracking should change, stay as-is, or a new event is worth proposing.
+
 ## Networking and Firestore
 
 - Use route/service architecture:
@@ -194,7 +201,9 @@ When implementing changes, default to this checklist:
 4. Use `SQTimeRange` and `SQDateFormatters` for date handling.
 5. Route Firestore operations through existing route/service layer and track metrics.
 6. Use `SQLogger` with proper context and priority where useful.
-7. Keep shared logic in `BeastFitnessCore` and charts in `CoolCharts`.
+7. Review whether relevant Amplitude events need to be added or updated.
+8. If the change introduces a new feature that seems worth tracking, ask Patrick before adding new Amplitude events.
+9. Keep shared logic in `BeastFitnessCore` and charts in `CoolCharts`.
 
 ## Source of truth
 

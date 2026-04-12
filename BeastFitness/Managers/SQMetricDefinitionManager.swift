@@ -163,7 +163,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
         entity.updatedAt = .now
         try saveContextAndNotify(context)
-        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
+        if let updated = metrics.first(where: { $0.id == id }) {
+            SQAnalyticsManager.shared.track(.metricTrackingChanged(isEnabled: true, definition: updated))
+            pushMetricToFirestore(updated)
+        }
     }
 
     func disableMetric(id: String, using context: ModelContext) throws {
@@ -173,7 +176,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         entity.isEnabled = false
         entity.updatedAt = .now
         try saveContextAndNotify(context)
-        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
+        if let updated = metrics.first(where: { $0.id == id }) {
+            SQAnalyticsManager.shared.track(.metricTrackingChanged(isEnabled: false, definition: updated))
+            pushMetricToFirestore(updated)
+        }
     }
 
     func archiveMetric(id: String, using context: ModelContext) throws {
@@ -184,7 +190,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         entity.isEnabled = false
         entity.updatedAt = .now
         try saveContextAndNotify(context)
-        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
+        if let updated = metrics.first(where: { $0.id == id }) {
+            SQAnalyticsManager.shared.track(.metricArchived(definition: updated))
+            pushMetricToFirestore(updated)
+        }
     }
 
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws {
@@ -229,7 +238,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         )
 
         try saveContextAndNotify(context)
-        if let created = metrics.first(where: { $0.id == definition.id }) { pushMetricToFirestore(created) }
+        if let created = metrics.first(where: { $0.id == definition.id }) {
+            SQAnalyticsManager.shared.track(.metricSaved(action: .create, definition: created))
+            pushMetricToFirestore(created)
+        }
         SQLogger.shared.log("Created custom metric: \(definition.id)", .debug, context: .metricsManager)
     }
 
@@ -258,7 +270,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         entity.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
         entity.updatedAt = .now
         try saveContextAndNotify(context)
-        if let updated = metrics.first(where: { $0.id == id }) { pushMetricToFirestore(updated) }
+        if let updated = metrics.first(where: { $0.id == id }) {
+            SQAnalyticsManager.shared.track(.metricSaved(action: .edit, definition: updated))
+            pushMetricToFirestore(updated)
+        }
     }
 
     // MARK: - Reload (protocol requires public)

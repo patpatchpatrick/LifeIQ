@@ -109,6 +109,7 @@ protocol SQProfileInterface: AnyObject {
         isLoggingOut = true
         do {
             try authManager.signOut()
+            SQAnalyticsManager.shared.track(.logout)
             hub.toastEvents.send(.present(.init(title: "Logout successful", style: .success)))
             hub.domainEvents.send(.dismissDashboardNavStack)
         } catch {

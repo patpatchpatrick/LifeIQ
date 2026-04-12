@@ -52,6 +52,7 @@ final class SQSettingsController: SQSettingsInterface {
                     showsChevron: true
                 ) { [weak self] in
                     guard let self else { return }
+                    SQAnalyticsManager.shared.track(.settingsActionTaken(action: "edit_profile_stats"))
                     let controller = SQOnboardingController(mode: .editProfile)
                     self.state.hub.domainEvents.send(.pushDashboardRoute(.onboarding(controller: controller)))
                 }
@@ -64,6 +65,7 @@ final class SQSettingsController: SQSettingsInterface {
                     showsChevron: true
                 ) { [weak self] in
                     guard let self else { return }
+                    SQAnalyticsManager.shared.track(.settingsActionTaken(action: "delete_account"))
                     let controller = SQDeleteAccountController()
                     self.state.hub.domainEvents.send(.pushDashboardRoute(.deleteAccount(controller: controller)))
                 }
@@ -76,6 +78,7 @@ final class SQSettingsController: SQSettingsInterface {
                 subtitle: "Currently \(currentUnitSystem.title).",
                 showsChevron: true
             ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "units"))
                 self?.presentUnitSystemPicker()
             },
 
@@ -85,6 +88,7 @@ final class SQSettingsController: SQSettingsInterface {
                 showsChevron: true
             ) { [weak self] in
                 guard let self else { return }
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "customize_dashboard"))
                 let controller = SQDashboardLayoutController(
                     availableGroups: self.dashboardState.availableLayoutGroups,
                     layoutService: self.dashboardLayoutService
@@ -103,6 +107,7 @@ final class SQSettingsController: SQSettingsInterface {
                 subtitle: "Restore workouts you previously hid so they appear in the app again.",
                 showsChevron: false
             ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "clear_hidden_workouts"))
                 self?.confirmClearHiddenWorkouts()
             }
         ])
@@ -161,6 +166,7 @@ final class SQSettingsController: SQSettingsInterface {
     }
 
     private func saveUnitSystem(_ unitSystem: SQUnitSystem) async {
+        let previousUnitSystem = currentUnitSystem
         SQUserDefaults.shared.setPreferredUnitSystem(unitSystem)
 
         if let user = userState.loggedInUser {
@@ -192,6 +198,9 @@ final class SQSettingsController: SQSettingsInterface {
         }
 
         buildRows()
+        if unitSystem != previousUnitSystem {
+            SQAnalyticsManager.shared.track(.unitsChanged(unitSystem: unitSystem))
+        }
         state.hub.toastEvents.send(.present(.init(title: "Units updated", style: .success)))
     }
 

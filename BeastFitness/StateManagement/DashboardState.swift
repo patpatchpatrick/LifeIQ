@@ -256,6 +256,14 @@ protocol DashboardStating: AnyObject {
             return selectedTimeRange
         }()
 
+        SQAnalyticsManager.shared.track(.dashboardItemOpened(
+            itemType: "leaderboard",
+            itemId: mode.analyticsIdentifier,
+            sourceGroup: "dashboard",
+            score: nil
+        ))
+        SQAnalyticsManager.shared.track(.leaderboardOpened(mode: mode, sourceScreen: "dashboard"))
+
         let leaderboardController = SQLeaderboardController(
             hub: hub,
             mode: mode,
@@ -266,6 +274,20 @@ protocol DashboardStating: AnyObject {
     }
 
     func displayMetricDetail(metricId: String) {
+        let metricDefinition = SQMetricDefinitionManager.shared.metrics.first(where: { $0.id == metricId })
+
+        SQAnalyticsManager.shared.track(.dashboardItemOpened(
+            itemType: "metric_detail",
+            itemId: metricId,
+            sourceGroup: "metrics",
+            score: nil
+        ))
+        SQAnalyticsManager.shared.track(.metricDetailViewed(
+            metricId: metricId,
+            definition: metricDefinition,
+            sourceScreen: "dashboard"
+        ))
+
         let metricDetailController = SQMetricDetailController(
             hub: hub,
             metricId: metricId,

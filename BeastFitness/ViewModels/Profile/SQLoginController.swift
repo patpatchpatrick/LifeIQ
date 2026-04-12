@@ -109,10 +109,18 @@ protocol SQLoginInterface: AnyObject {
             switch mode {
             case .login:
                 let result = try await login()
-                try await completeAuthentication(result: result, fallbackEmail: emailViewModel.text)
+                try await completeAuthentication(
+                    result: result,
+                    fallbackEmail: emailViewModel.text,
+                    method: .email
+                )
             case .signup:
                 let result = try await signUp()
-                try await completeAuthentication(result: result, fallbackEmail: emailViewModel.text)
+                try await completeAuthentication(
+                    result: result,
+                    fallbackEmail: emailViewModel.text,
+                    method: .email
+                )
             }
         } catch {
             presentAuthError(error)
@@ -128,7 +136,11 @@ protocol SQLoginInterface: AnyObject {
         do {
             let presentingViewController = try currentPresentingViewController()
             let result = try await SQAuthManager.shared.signInWithGoogle(presentingViewController: presentingViewController)
-            try await completeAuthentication(result: result, fallbackEmail: result.user.email)
+            try await completeAuthentication(
+                result: result,
+                fallbackEmail: result.user.email,
+                method: .google
+            )
         } catch {
             presentAuthError(error)
         }
@@ -165,7 +177,11 @@ protocol SQLoginInterface: AnyObject {
         }
     }
 
-    private func completeAuthentication(result: AuthDataResult, fallbackEmail: String?) async throws {
+    private func completeAuthentication(
+        result: AuthDataResult,
+        fallbackEmail: String?,
+        method: SQAnalyticsAuthMethod
+    ) async throws {
         let trimmedFallbackEmail = fallbackEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedEmail = result.user.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? trimmedFallbackEmail
         let isNewUser = result.additionalUserInfo?.isNewUser == true
@@ -180,6 +196,7 @@ protocol SQLoginInterface: AnyObject {
             SQAppState.shared.userState.updateLoggedInUser(user, hasLoadedProfile: true)
 
             SQLogger.shared.log("User signed up successfully", .info, context: .loginSignup)
+            SQAnalyticsManager.shared.track(.signupSucceeded(method: method))
             hub.toastEvents.send(.present(.init(title: "Signup successful!", style: .success)))
         } else {
             if let existingUser = try? await SQUserManager.shared.fetchUser(uid: result.user.uid) {
@@ -187,6 +204,7 @@ protocol SQLoginInterface: AnyObject {
             }
 
             SQLogger.shared.log("User logged in successfully", .info, context: .loginSignup)
+            SQAnalyticsManager.shared.track(.loginSucceeded(method: method))
             hub.toastEvents.send(.present(.init(title: "Login successful!", style: .success)))
         }
 

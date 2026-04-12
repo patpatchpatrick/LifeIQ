@@ -94,6 +94,8 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     let navigationTitle: String
     private var cancellables = Set<AnyCancellable>()
     private var isWorkoutLoaded = false
+    private var hasTrackedSummaryView = false
+    private var hasTrackedReviewSubmission = false
 
     static let performanceSegments: [SQSegmentedControlSegment] = [
         .init(id: "perf-1", title: "😞", ratingValue: 2),
@@ -236,6 +238,13 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             )
         }
         isWorkoutLoaded = true
+        if !hasTrackedSummaryView {
+            hasTrackedSummaryView = true
+            SQAnalyticsManager.shared.track(.workoutSummaryViewed(
+                workout: workout,
+                entryMode: mode == .review ? "review" : "standard"
+            ))
+        }
         if mode == .review {
             setupReviewSaveSubscriptions()
         }
@@ -259,6 +268,8 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             context: .workoutSummary
         )
 
+        SQAnalyticsManager.shared.track(.leaderboardOpened(mode: mode, sourceScreen: "workout_summary"))
+
         let leaderboardController = SQLeaderboardController(
             hub: state.hub,
             mode: mode,
@@ -277,10 +288,20 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             return
         }
 
+        SQAnalyticsManager.shared.track(.workoutEditTapped(
+            workout: baseWorkout,
+            sourceScreen: "workout_summary"
+        ))
         state.hub.domainEvents.send(.pushDashboardRoute(.editWorkout(workout: baseWorkout)))
     }
 
     func displayPremiumInsightDetail(for score: SQWorkoutPremiumInsightScore) {
+        SQAnalyticsManager.shared.track(.insightOpened(
+            insightId: score.id,
+            insightType: score.kind.rawValue.analyticsKey,
+            sourceScreen: "workout_summary",
+            insightCategory: "workout_score"
+        ))
         let controller = SQWorkoutInsightDetailController(model: score.detailModel)
         state.hub.domainEvents.send(.pushDashboardRoute(.workoutInsightDetail(controller: controller)))
     }
@@ -304,6 +325,11 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
             subtitle = "This workout will be deleted from both HealthKit and this app."
         }
 
+        SQAnalyticsManager.shared.track(.workoutDeleteTapped(
+            workout: baseWorkout,
+            sourceScreen: "workout_summary"
+        ))
+
         state.hub.alertEvents.send(.present(.init(
             title: title,
             subtitle: subtitle,
@@ -311,11 +337,15 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
                 Task { [weak self] in
                     guard let self else { return }
                     do {
-                        try await workoutManager.deleteWorkout(workout: baseWorkout, from: modelContext)
-                        state.notifyAppOfWorkoutDeletion(workout: baseWorkout)
-                        state.hub.domainEvents.send(.popDashboardRoute)
+                        try await self.workoutManager.deleteWorkout(workout: baseWorkout, from: modelContext)
+                        SQAnalyticsManager.shared.track(.workoutDeleted(
+                            workout: baseWorkout,
+                            sourceScreen: "workout_summary"
+                        ))
+                        self.state.notifyAppOfWorkoutDeletion(workout: baseWorkout)
+                        self.state.hub.domainEvents.send(.popDashboardRoute)
                     } catch {
-                        state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
+                        self.state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))
                     }
                 }
             }),
@@ -381,10 +411,27 @@ extension SQWorkoutSummaryController {
             session.title = titleText.isEmpty ? nil : titleText
         }
 
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
-                state.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
+                try await self.workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
+                if !self.hasTrackedReviewSubmission {
+                    let hasWeather = temperatureCelsius != nil
+                    let hasPerformanceScore = self.selectedPerformance?.ratingValue != nil
+                    let hasDifficultyScore = self.selectedDifficulty?.ratingValue != nil
+                    let hasNotes = !(self.notesViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    if hasWeather || hasPerformanceScore || hasDifficultyScore || hasNotes {
+                        self.hasTrackedReviewSubmission = true
+                        SQAnalyticsManager.shared.track(.workoutReviewSubmitted(
+                            workout: workout,
+                            hasWeather: hasWeather,
+                            hasPerformanceScore: hasPerformanceScore,
+                            hasDifficultyScore: hasDifficultyScore,
+                            hasNotes: hasNotes
+                        ))
+                    }
+                }
+                self.state.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {
                 SQLogger.shared.log(
                     "Failed to save review data: \(error.localizedDescription)",

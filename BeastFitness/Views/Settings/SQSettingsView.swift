@@ -133,6 +133,8 @@ private struct SQSettingsRowView: View {
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.vertical, .SQSpace.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
             .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
         }
         .buttonStyle(.plain)
