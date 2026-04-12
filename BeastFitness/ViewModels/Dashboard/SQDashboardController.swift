@@ -1999,30 +1999,18 @@ final class SQDashboardController: SQDashboardInterface {
             emptyState = nil
         case .notEnoughData:
             let remainingDays = max(0, result.requiredMinimumDayCount - result.analyzedDayCount)
-            let readinessSummary = insightReadinessSummary(from: result.readinessItems)
             emptyState = .init(
                 title: "Insights are calibrating",
-                subtitle: [
-                    remainingDays > 0
-                    ? "Log about \(remainingDays) more days of sleep, habits, and workout ratings so LifeIQ can start finding patterns."
-                    : "Log a bit more sleep, habit, and workout data so LifeIQ can start finding patterns you can trust.",
-                    readinessSummary
-                ]
-                .compactMap { $0 }
-                .joined(separator: "\n\n"),
+                subtitle: remainingDays > 0
+                    ? "Log about \(remainingDays) more days of sleep, habits, and workout feedback so LifeIQ can start finding patterns."
+                    : "Log a bit more sleep, habit, and workout feedback so LifeIQ can start finding patterns.",
                 icon: .chartBar,
                 onTap: nil
             )
         case .noPatterns:
-            let readinessSummary = insightReadinessSummary(from: result.readinessItems)
             emptyState = .init(
                 title: "No strong patterns yet",
-                subtitle: [
-                    "You have enough data to start analyzing, but nothing has crossed the confidence bar yet. Keep logging consistently.",
-                    readinessSummary
-                ]
-                .compactMap { $0 }
-                .joined(separator: "\n\n"),
+                subtitle: "Keep logging sleep, habits, check-ins, and workout feedback so LifeIQ can spot stronger patterns over time.",
                 icon: .chartBar,
                 onTap: nil
             )
@@ -2122,33 +2110,6 @@ final class SQDashboardController: SQDashboardInterface {
 
         return sectionViewModel
     }
-
-    private func insightReadinessSummary(from items: [SQInsightReadinessItem]) -> String? {
-        guard !items.isEmpty else { return nil }
-
-        let prioritized = items.sorted { lhs, rhs in
-            readinessPriority(lhs.status) < readinessPriority(rhs.status)
-        }
-
-        let lines = prioritized.map { item in
-            "- \(item.title): \(item.summary)"
-        }
-
-        guard !lines.isEmpty else { return nil }
-        return "What each insight still needs:\n" + lines.joined(separator: "\n")
-    }
-
-    private func readinessPriority(_ status: SQInsightReadinessStatus) -> Int {
-        switch status {
-        case .needsMoreData:
-            return 0
-        case .weakSignal:
-            return 1
-        case .ready:
-            return 2
-        }
-    }
-
     private func buildHealthAccessWarningSectionGroup(
         id: String,
         title: String,
