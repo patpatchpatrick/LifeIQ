@@ -78,6 +78,8 @@
 		F639F0CB2F3ECD14004AC701 /* SQLeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */; };
 		F639F0CD2F3ED11F004AC701 /* SQLeaderboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0CC2F3ED11F004AC701 /* SQLeaderboardRowView.swift */; };
 		F639F0CF2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0CE2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift */; };
+		F7E500022FFE300100AA5001 /* SQSleepPhaseTrendsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E500012FFE300100AA5001 /* SQSleepPhaseTrendsController.swift */; };
+		F7E500042FFE300100AA5001 /* SQSleepPhaseTrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E500032FFE300100AA5001 /* SQSleepPhaseTrendsView.swift */; };
 		F639F0FB2F4272AA004AC701 /* SQPerformanceRowData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FA2F4272AA004AC701 /* SQPerformanceRowData.swift */; };
 		F639F0FD2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */; };
 		F639F0FF2F4275BE004AC701 /* SQPercentileCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */; };
@@ -405,6 +407,8 @@
 		F639F0C92F3ECD14004AC701 /* SQLeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardView.swift; sourceTree = "<group>"; };
 		F639F0CC2F3ED11F004AC701 /* SQLeaderboardRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardRowView.swift; sourceTree = "<group>"; };
 		F639F0CE2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLeaderboardRowViewModel.swift; sourceTree = "<group>"; };
+		F7E500012FFE300100AA5001 /* SQSleepPhaseTrendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepPhaseTrendsController.swift; sourceTree = "<group>"; };
+		F7E500032FFE300100AA5001 /* SQSleepPhaseTrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepPhaseTrendsView.swift; sourceTree = "<group>"; };
 		F639F0FA2F4272AA004AC701 /* SQPerformanceRowData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPerformanceRowData.swift; sourceTree = "<group>"; };
 		F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardMetricPerformanceRowViewModel.swift; sourceTree = "<group>"; };
 		F639F0FE2F4275BE004AC701 /* SQPercentileCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPercentileCalculator.swift; sourceTree = "<group>"; };
@@ -710,6 +714,7 @@
 				F7E400052FFE200100AA4001 /* Insights */,
 				F67F0A0E2F087C0900D7BB90 /* MetricsList */,
 				F6F4D4112ED60E4C00ECE0BC /* DailyCheckIn */,
+				F7E500052FFE300100AA5001 /* SleepPhaseTrends */,
 				F602DA3B2EC4E9F400404878 /* DashboardRows */,
 				F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */,
 				F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */,
@@ -735,6 +740,7 @@
 			children = (
 				F7E400062FFE200100AA4001 /* Insights */,
 				F6E90B4A2ED55193003441B5 /* DailyCheckIn */,
+				F7E500062FFE300100AA5001 /* SleepPhaseTrends */,
 				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */,
 				F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */,
@@ -744,6 +750,22 @@
 				F6940F1A2F36AC390008A2A0 /* SQDashboardSectionView.swift */,
 			);
 			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		F7E500052FFE300100AA5001 /* SleepPhaseTrends */ = {
+			isa = PBXGroup;
+			children = (
+				F7E500012FFE300100AA5001 /* SQSleepPhaseTrendsController.swift */,
+			);
+			path = SleepPhaseTrends;
+			sourceTree = "<group>";
+		};
+		F7E500062FFE300100AA5001 /* SleepPhaseTrends */ = {
+			isa = PBXGroup;
+			children = (
+				F7E500032FFE300100AA5001 /* SQSleepPhaseTrendsView.swift */,
+			);
+			path = SleepPhaseTrends;
 			sourceTree = "<group>";
 		};
 		F602DA3B2EC4E9F400404878 /* DashboardRows */ = {
@@ -2048,6 +2070,8 @@
 				F6A848962CB4ABE300B09AD5 /* SQWorkoutSession.swift in Sources */,
 				F61593BD2EF376A700223A63 /* SQToastView.swift in Sources */,
 				F639F1662F49649B004AC701 /* SQLeaderboardMode.swift in Sources */,
+				F7E500022FFE300100AA5001 /* SQSleepPhaseTrendsController.swift in Sources */,
+				F7E500042FFE300100AA5001 /* SQSleepPhaseTrendsView.swift in Sources */,
 				F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */,
 				F679BC542EE7321A00A2F249 /* SQUserIcon.swift in Sources */,
 				F639F1682F4BC668004AC701 /* SQWorkoutProcessedEntity.swift in Sources */,

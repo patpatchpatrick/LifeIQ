@@ -34,6 +34,8 @@ struct SQRootTabView: View {
             SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
         case .leaderboard(controller: let controller):
             SQLeaderboardView(controller: controller)
+        case .sleepPhaseTrends(controller: let controller):
+            SQSleepPhaseTrendsView(controller: controller)
         case .metricDetail(controller: let controller):
             SQMetricDetailView(controller: controller)
         case .profile(controller: let controller):

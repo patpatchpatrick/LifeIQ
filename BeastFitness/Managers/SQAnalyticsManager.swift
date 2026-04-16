@@ -471,6 +471,8 @@ private extension SQNavRoute.DashboardRoute {
             return "edit_workout"
         case .leaderboard:
             return "leaderboard"
+        case .sleepPhaseTrends:
+            return "sleep_phase_trends"
         case .metricDetail:
             return "metric_detail"
         case .profile:

@@ -177,6 +177,11 @@ struct SQDashboardSectionView: View {
 
     private func handleMetricRowTap(_ viewModel: SQDashboardRowViewModel) {
         if let statsViewModel = viewModel as? SQDashboardMetricStatsRowViewModel {
+            if let onTap = statsViewModel.onTap {
+                onTap()
+                return
+            }
+
             if let qt = statsViewModel.quantityType, let at = statsViewModel.activityType {
                 SQLogger.shared.log(
                     "Displaying leaderboard for '\(statsViewModel.title)'",

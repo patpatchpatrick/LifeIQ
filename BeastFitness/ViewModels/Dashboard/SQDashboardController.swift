@@ -1387,7 +1387,10 @@ final class SQDashboardController: SQDashboardInterface {
                 avgValue: formattedDuration(aggregate.averageDuration),
                 unit: "",
                 sparklineData: aggregate.sparklineDataHours,
-                changePercent: aggregate.changePercent
+                changePercent: aggregate.changePercent,
+                onTap: { [weak self] in
+                    self?.displaySleepPhaseTrends(focusedPhase: phase)
+                }
             )
             rows.append(row)
         }
@@ -1402,6 +1405,19 @@ final class SQDashboardController: SQDashboardInterface {
             dropDownViewModel: nil,
             columnHeaders: ["Phase", "Avg Duration", state.selectedTimeRange.dashboardChangePctHeader]
         )
+    }
+
+    private func displaySleepPhaseTrends(focusedPhase: SQSleepPhase) {
+        SQLogger.shared.log(
+            "Displaying sleep phase trends for '\(focusedPhase.title)'",
+            .debug,
+            context: .dashboard
+        )
+        let controller = SQSleepPhaseTrendsController(
+            initialTimeRange: state.selectedTimeRange,
+            focusedPhase: focusedPhase
+        )
+        state.hub.domainEvents.send(.pushDashboardRoute(.sleepPhaseTrends(controller: controller)))
     }
 
     private func buildSleepDurationSubsection(with data: SQSleepDashboardData) -> SQDashboardSubsectionViewModel? {

@@ -98,6 +98,7 @@ struct SQNavRoute {
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
+        case sleepPhaseTrends(controller: SQSleepPhaseTrendsController)
         case metricDetail(controller: SQMetricDetailController)
         case profile(controller: SQProfileController)
         case login(controller: SQLoginController)
@@ -127,6 +128,8 @@ struct SQNavRoute {
                 return "editWorkout-\(workout.id)"
             case .leaderboard(controller: let controller):
                 return "leaderboard-\(controller.id)"
+            case .sleepPhaseTrends(controller: let controller):
+                return "sleepPhaseTrends-\(controller.id)"
             case .metricDetail(controller: let controller):
                 return "metricDetail-\(controller.id)"
             case .profile(let controller):

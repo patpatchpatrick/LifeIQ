@@ -37,6 +37,8 @@ final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
     /// Optional activity type for performance metrics (used for leaderboard)
     let activityType: HKWorkoutActivityType?
 
+    /// Optional override for rows that open a custom dashboard route instead of metric detail.
+    let onTap: (() -> Void)?
 
     init(
         metricId: String,
@@ -47,7 +49,8 @@ final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
         sparklineData: [Double],
         changePercent: Double?,
         quantityType: SQQuantityType? = nil,
-        activityType: HKWorkoutActivityType? = nil
+        activityType: HKWorkoutActivityType? = nil,
+        onTap: (() -> Void)? = nil
     ) {
         self.metricId = metricId
         self.icon = icon
@@ -58,6 +61,7 @@ final class SQDashboardMetricStatsRowViewModel: SQDashboardRowViewModel {
         self.changePercent = changePercent
         self.quantityType = quantityType
         self.activityType = activityType
+        self.onTap = onTap
 
         super.init(rowId: .metricStats, rowType: .metricStats)
     }
