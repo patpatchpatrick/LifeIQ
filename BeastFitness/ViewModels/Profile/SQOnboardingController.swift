@@ -62,6 +62,7 @@ import BeastFitnessCore
             keyboardType: .default,
             autocapitalizationType: .words,
             autocorrectionType: .no,
+            returnKeyType: .next,
             selectAllOnFocus: true,
             textChangeFormatter: .maxLength(40),
             validationRule: nil,
@@ -73,6 +74,7 @@ import BeastFitnessCore
             keyboardType: .default,
             autocapitalizationType: .words,
             autocorrectionType: .no,
+            returnKeyType: .next,
             selectAllOnFocus: true,
             textChangeFormatter: .maxLength(40),
             validationRule: nil,
@@ -84,6 +86,7 @@ import BeastFitnessCore
             keyboardType: .numberPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
+            returnKeyType: .next,
             selectAllOnFocus: true,
             textChangeFormatter: .integer,
             validationRule: nil,
@@ -95,6 +98,7 @@ import BeastFitnessCore
             keyboardType: .numberPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
+            returnKeyType: .next,
             selectAllOnFocus: true,
             textChangeFormatter: .integer,
             validationRule: nil,
@@ -106,6 +110,7 @@ import BeastFitnessCore
             keyboardType: .decimalPad,
             autocapitalizationType: .none,
             autocorrectionType: .no,
+            returnKeyType: .done,
             selectAllOnFocus: true,
             textChangeFormatter: .decimal(maxDecimalPlaces: 1),
             validationRule: nil,
@@ -119,6 +124,7 @@ import BeastFitnessCore
             heightCentimeters: existingUser?.heightCentimeters,
             weightKilograms: existingUser?.weightKilograms
         )
+        configureKeyboardReturnChain()
     }
 
     var title: String {
@@ -333,6 +339,31 @@ import BeastFitnessCore
             weightKilograms: currentCanonicalWeight
         )
         SQUserDefaults.shared.setPreferredUnitSystem(newValue)
+    }
+
+    private func configureKeyboardReturnChain() {
+        firstNameField.onReturn = { [weak lastNameField] in
+            lastNameField?.focus()
+        }
+        lastNameField.onReturn = { [weak heightFeetField] in
+            heightFeetField?.focus()
+        }
+        heightFeetField.onReturn = { [weak self] in
+            guard let self else { return }
+            if self.showsHeightSecondaryField {
+                self.heightInchesField.focus()
+            } else {
+                self.weightField.focus()
+            }
+        }
+        heightInchesField.onReturn = { [weak weightField] in
+            weightField?.focus()
+        }
+        weightField.onReturn = { [weak self] in
+            Task { @MainActor in
+                await self?.completeTapped()
+            }
+        }
     }
 
     private func applyMeasurementFieldPlaceholders() {
