@@ -203,6 +203,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     subtitle: subtitle(
                         for: metric,
                         targetDate: targetDate,
+                        period: period,
                         sleepPrefillMetricIds: sleepPrefillMetricIds
                     ),
                     segments: segments,
@@ -223,6 +224,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     subtitle: subtitle(
                         for: metric,
                         targetDate: targetDate,
+                        period: period,
                         sleepPrefillMetricIds: sleepPrefillMetricIds
                     ),
                     segments: segments,
@@ -240,6 +242,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     subtitle: subtitle(
                         for: metric,
                         targetDate: targetDate,
+                        period: period,
                         sleepPrefillMetricIds: sleepPrefillMetricIds
                     ),
                     textFieldViewModel: tf,
@@ -282,6 +285,48 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     private func isPreviousNightSleepMetric(_ metricId: String) -> Bool {
         metricId == SQMetricId.sleepHours || metricId == SQMetricId.sleepQuality
+    }
+
+    private func subtitle(
+        for metric: SQMetricDefinition,
+        targetDate: Date,
+        period: SQMetricPeriod,
+        sleepPrefillMetricIds: Set<String>
+    ) -> String? {
+        if let sleepSubtitle = subtitle(
+            for: metric,
+            targetDate: targetDate,
+            sleepPrefillMetricIds: sleepPrefillMetricIds
+        ) {
+            return sleepSubtitle
+        }
+
+        guard !metric.isSingleDailyValue else { return nil }
+        return periodWindowSubtitle(for: period, targetDate: targetDate)
+    }
+
+    private func periodWindowSubtitle(for period: SQMetricPeriod, targetDate: Date) -> String? {
+        let schedule = userState.loggedInUser?.sleepSchedule ?? .onboardingDefault
+        let calendar = Calendar.current
+        let startOfTargetDay = calendar.startOfDay(for: targetDate)
+
+        switch period {
+        case .evening:
+            let eveningStart = schedule.wakeTime.date(on: startOfTargetDay, calendar: calendar)
+            let nextWakeDate = schedule.wakeTime.date(
+                on: calendar.date(byAdding: .day, value: 1, to: startOfTargetDay) ?? startOfTargetDay,
+                calendar: calendar
+            )
+            return "Applies to the period between \(eveningStart.formattedString(with: .timeOnly)) and \(nextWakeDate.formattedString(with: .timeOnly))."
+
+        case .morning:
+            let wakeDate = schedule.wakeTime.date(on: startOfTargetDay, calendar: calendar)
+            let eveningStart = schedule.sleepTime.date(on: startOfTargetDay, calendar: calendar)
+            return "Applies to the period between \(wakeDate.formattedString(with: .timeOnly)) and \(eveningStart.formattedString(with: .timeOnly))."
+
+        case .unknown:
+            return nil
+        }
     }
 
     private func titleAlreadyIncludesUnit(_ title: String, unit: SQMetricUnit) -> Bool {

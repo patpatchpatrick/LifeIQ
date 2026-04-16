@@ -13,6 +13,18 @@ struct SQDropDownMenu: View {
 
     @State private var buttonFrame: CGRect = .zero
 
+    private func updateButtonFrame(_ newFrame: CGRect) {
+        // Snap to pixel boundaries and defer the state write to avoid
+        // geometry-driven feedback loops while scroll views are actively laying out.
+        let snappedFrame = newFrame.integral
+        guard buttonFrame != snappedFrame else { return }
+
+        DispatchQueue.main.async {
+            guard self.buttonFrame != snappedFrame else { return }
+            self.buttonFrame = snappedFrame
+        }
+    }
+
     var body: some View {
         SQDropDownButton(viewModel: menuViewModel.mainButton, showBackground: showBackground)
             .disabled(isDisabled)
@@ -21,10 +33,10 @@ struct SQDropDownMenu: View {
                 GeometryReader { geo in
                     Color.clear
                         .onAppear {
-                            buttonFrame = geo.frame(in: .global)
+                            updateButtonFrame(geo.frame(in: .global))
                         }
                         .onChange(of: geo.frame(in: .global)) { _, newFrame in
-                            buttonFrame = newFrame
+                            updateButtonFrame(newFrame)
                         }
                 }
             )

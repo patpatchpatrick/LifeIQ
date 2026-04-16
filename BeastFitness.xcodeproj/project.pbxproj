@@ -44,6 +44,7 @@
 		F61592372EF3637000223A63 /* SQAlertHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592362EF3636C00223A63 /* SQAlertHost.swift */; };
 		F61592392EF3637E00223A63 /* SQAlertCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592382EF3637C00223A63 /* SQAlertCard.swift */; };
 		F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B22EF3726E00223A63 /* SQSettingsView.swift */; };
+		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 		F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B52EF3728300223A63 /* SQSettingsController.swift */; };
 		F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */; };
 		F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B92EF3741800223A63 /* SettingsState.swift */; };
@@ -389,6 +390,7 @@
 		F61592362EF3636C00223A63 /* SQAlertHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertHost.swift; sourceTree = "<group>"; };
 		F61592382EF3637C00223A63 /* SQAlertCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertCard.swift; sourceTree = "<group>"; };
 		F61593B22EF3726E00223A63 /* SQSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsView.swift; sourceTree = "<group>"; };
+		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 		F61593B52EF3728300223A63 /* SQSettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsController.swift; sourceTree = "<group>"; };
 		F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsRowViewModel.swift; sourceTree = "<group>"; };
 		F61593B92EF3741800223A63 /* SettingsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsState.swift; sourceTree = "<group>"; };
@@ -936,6 +938,14 @@
 				F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */,
 			);
 			path = OverlayWindow;
+			sourceTree = "<group>";
+		};
+		F81A10032FFF100100AA1001 /* Launch */ = {
+			isa = PBXGroup;
+			children = (
+				F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */,
+			);
+			path = Launch;
 			sourceTree = "<group>";
 		};
 		F61593F92EF4BEB800223A63 /* WatchInterface */ = {
@@ -1656,6 +1666,7 @@
 		F6F94E002CAB9A7B00C2B90B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F81A10032FFF100100AA1001 /* Launch */,
 				F67F0A092F087A0500D7BB90 /* MetricsList */,
 				F61593C62EF4B81400223A63 /* OverlayWindow */,
 				F61593BB2EF3769F00223A63 /* Toasts */,
@@ -2147,6 +2158,7 @@
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */,
+				F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */,
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */,
 				F639F0CF2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift in Sources */,
