@@ -33,6 +33,12 @@ extension SQDashboardSectionGroupViewModel {
                 .init(title: "Strain", valueText: "-11", detailText: "11 pts from 2 today, 1 yesterday", attributedDetailText: buildBodyBatteryMockDetail([.highlight("11 pts"), .plain(" from "), .highlight("2"), .plain(" today, "), .highlight("1"), .plain(" yesterday")]), tone: .negative, symbol: .arrowDown, alert: nil),
                 .init(title: "Check-ins", valueText: "+4", detailText: "+4 from today's signals", attributedDetailText: buildBodyBatteryMockDetail([.highlight("+4"), .plain(" from today's signals")]), tone: .positive, symbol: .arrowUp, alert: nil)
             ],
+            formulaAlert: .init(
+                title: "How Recovery Score Is Calculated",
+                subtitle: "Recovery Score starts from a neutral baseline and then adjusts based on the signals available today. Missing signals are omitted.",
+                primary: .ok,
+                canDismiss: true
+            ),
             footer: "Estimated from last night’s sleep, current workout strain, and today’s recovery signals."
         )
 

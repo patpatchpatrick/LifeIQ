@@ -18,21 +18,25 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
         let alert: SQAlertViewModel?
     }
 
-    let score: Int
+    let score: Int?
     let statusTitle: String
     let statusTone: SQDashboardTrendTone
     let headline: String
     let summary: String
     let drivers: [Driver]
+    let formulaAlert: SQAlertViewModel
+    let dataQualityWarning: String?
     let footer: String
 
     init(
-        score: Int,
+        score: Int?,
         statusTitle: String,
         statusTone: SQDashboardTrendTone,
         headline: String,
         summary: String,
         drivers: [Driver],
+        formulaAlert: SQAlertViewModel,
+        dataQualityWarning: String? = nil,
         footer: String
     ) {
         self.score = score
@@ -41,6 +45,8 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
         self.headline = headline
         self.summary = summary
         self.drivers = drivers
+        self.formulaAlert = formulaAlert
+        self.dataQualityWarning = dataQualityWarning
         self.footer = footer
 
         super.init(rowId: .bodyBattery, rowType: .bodyBattery)

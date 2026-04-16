@@ -48,28 +48,56 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             to: SQTimeRange.today.endDate,
             context: context
         )
+        async let yesterdaysCheckInsTask = metricEntryManager.getDailyCheckInStats(
+            from: SQTimeRange.yesterday.startDate,
+            to: SQTimeRange.yesterday.endDate,
+            context: context
+        )
         async let todaysRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.today)
         async let recentRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastWeek)
+        async let todaysHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.today)
+        async let recentHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.pastWeek)
 
         let todaysCheckIns = try await todaysCheckInsTask
+        let yesterdaysCheckIns = try await yesterdaysCheckInsTask
         let todaysRestingSummaries = (try? await todaysRestingTask) ?? []
         let recentRestingSummaries = (try? await recentRestingTask) ?? []
+        let todaysHeartRateSummaries = (try? await todaysHeartRateTask) ?? []
+        let recentHeartRateSummaries = (try? await recentHeartRateTask) ?? []
 
         let heartRecovery = heartRecoverySignal(
             todaysRestingSummaries: todaysRestingSummaries,
-            recentRestingSummaries: recentRestingSummaries
+            recentRestingSummaries: recentRestingSummaries,
+            todaysHeartRateSummaries: todaysHeartRateSummaries,
+            recentHeartRateSummaries: recentHeartRateSummaries
         )
 
-        guard sleepData?.latestNight != nil || !todaysWorkouts.isEmpty || !yesterdaysWorkouts.isEmpty || !todaysCheckIns.isEmpty || heartRecovery.hasSignal else {
+        guard sleepData?.latestNight != nil || !todaysWorkouts.isEmpty || !yesterdaysWorkouts.isEmpty || !todaysCheckIns.isEmpty || !yesterdaysCheckIns.isEmpty || heartRecovery.hasSignal else {
             return nil
         }
 
-        let latestSleepScore = sleepData?.latestNight.map { sleepAggregationService.score(for: $0).totalScore }
-        let sleepRecharge = clamp(
-            (latestSleepScore ?? 52) * 0.52,
-            min: 14,
-            max: 55
+        let todaysCheckInValues = todaysCheckIns.last?.values ?? [:]
+        let yesterdaysCheckInValues = yesterdaysCheckIns.last?.values ?? [:]
+        let latestHealthSleepScore = sleepData?.latestNight.map { sleepAggregationService.score(for: $0).totalScore }
+        let previousHealthSleepScore = previousHealthSleepScore(from: sleepData)
+        let latestSleepSignal = sleepScoreSignal(
+            from: todaysCheckInValues,
+            healthSleepScore: latestHealthSleepScore,
+            nightLabel: "last night"
         )
+        let previousSleepSignal = sleepScoreSignal(
+            from: yesterdaysCheckInValues,
+            healthSleepScore: previousHealthSleepScore,
+            nightLabel: "the prior night"
+        )
+        let sleepScoreSignal = combinedSleepScoreSignal(
+            latest: latestSleepSignal,
+            previous: previousSleepSignal
+        )
+        let neutralSleepRecharge = neutralSleepRecharge()
+        let sleepAdjustment = sleepScoreSignal.map {
+            clamp($0.score * 0.52, min: 14, max: 55) - neutralSleepRecharge
+        }
 
         let todaysStrain = clamp(
             todaysWorkouts.reduce(0.0) { $0 + workoutStrainPenalty(for: $1) },
@@ -83,38 +111,49 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         )
         let totalStrain = todaysStrain + carryoverStrain
 
-        let todaysCheckInValues = todaysCheckIns.last?.values ?? [:]
         let checkInAdjustment = bodyBatteryCheckInAdjustment(
             from: todaysCheckInValues,
             metrics: metricsManager.allMetrics(includeArchived: false)
         )
-        let rawScore = 28 + sleepRecharge + checkInAdjustment.totalAdjustment + heartRecovery.adjustment - totalStrain
-        let score = Int(clamp(rawScore.rounded(), min: 5, max: 100))
+        let hasSleepSignal = sleepAdjustment != nil
+        let hasStrainSignal = !todaysWorkouts.isEmpty || !yesterdaysWorkouts.isEmpty
+        let hasHeartScoreSignal = heartRecovery.hasTodayData && heartRecovery.baselineAverage != nil
+        let hasScoreableSignals = hasSleepSignal || hasStrainSignal || hasHeartScoreSignal || checkInAdjustment.hasScoringSignals
+        let rawScore = hasScoreableSignals
+            ? 55 + (sleepAdjustment ?? 0) + checkInAdjustment.totalAdjustment + (hasHeartScoreSignal ? heartRecovery.adjustment : 0) - (hasStrainSignal ? totalStrain : 0)
+            : nil
+        let score = rawScore.map { Int(clamp($0.rounded(), min: 5, max: 100)) }
 
         let statusTone: SQDashboardTrendTone
         let statusTitle: String
         let headline: String
-        switch score {
-        case 80...100:
-            statusTone = .positive
-            statusTitle = "High"
-            headline = "Well charged for the day"
-        case 60..<80:
-            statusTone = .positive
-            statusTitle = "Solid"
-            headline = "Recovery is carrying you"
-        case 40..<60:
+        if let score {
+            switch score {
+            case 80...100:
+                statusTone = .positive
+                statusTitle = "High"
+                headline = "Well charged for the day"
+            case 60..<80:
+                statusTone = .positive
+                statusTitle = "Solid"
+                headline = "Recovery is carrying you"
+            case 40..<60:
+                statusTone = .neutral
+                statusTitle = "Moderate"
+                headline = "Energy reserves are mixed"
+            case 20..<40:
+                statusTone = .negative
+                statusTitle = "Low"
+                headline = "Recovery is fading"
+            default:
+                statusTone = .negative
+                statusTitle = "Drained"
+                headline = "Recovery is under pressure"
+            }
+        } else {
             statusTone = .neutral
-            statusTitle = "Moderate"
-            headline = "Energy reserves are mixed"
-        case 20..<40:
-            statusTone = .negative
-            statusTitle = "Low"
-            headline = "Recovery is fading"
-        default:
-            statusTone = .negative
-            statusTitle = "Drained"
-            headline = "Recovery is under pressure"
+            statusTitle = "Needs Data"
+            headline = "Recovery score is not ready"
         }
 
         return SQDashboardBodyBatteryRowViewModel(
@@ -122,24 +161,29 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             statusTitle: statusTitle,
             statusTone: statusTone,
             headline: headline,
-            summary: bodyBatterySummary(
-                sleepRecharge: sleepRecharge,
-                totalStrain: totalStrain,
-                habitAdjustment: checkInAdjustment.totalAdjustment,
-                heartAdjustment: heartRecovery.adjustment
-            ),
+            summary: score == nil
+                ? "Track recovery check-ins or Health sleep, workout, and resting heart data to calculate this."
+                : bodyBatterySummary(
+                    sleepAdjustment: sleepAdjustment ?? 0,
+                    totalStrain: totalStrain,
+                    habitAdjustment: checkInAdjustment.totalAdjustment,
+                    heartAdjustment: hasHeartScoreSignal ? heartRecovery.adjustment : 0
+                ),
             drivers: [
                 .init(
                     title: "Sleep",
-                    valueText: "+\(Int(sleepRecharge.rounded()))",
-                    detailText: latestSleepScore == nil ? "Awaiting sleep data" : "Recharge from last night",
+                    valueText: sleepAdjustment.map { signedValueText(for: $0) } ?? "--",
+                    detailText: sleepScoreSignal?.detailText ?? "Not included, no sleep data",
                     attributedDetailText: sleepDriverDetailText(
-                        latestSleepScore: latestSleepScore,
-                        sleepRecharge: sleepRecharge
+                        sleepScoreSignal: sleepScoreSignal,
+                        sleepAdjustment: sleepAdjustment
                     ),
-                    tone: .positive,
-                    symbol: .arrowUp,
-                    alert: sleepAlert(latestSleepScore: latestSleepScore, sleepRecharge: sleepRecharge)
+                    tone: sleepAdjustment.map { tone(for: $0) } ?? .neutral,
+                    symbol: sleepAdjustment.flatMap { symbol(for: $0) },
+                    alert: sleepAlert(
+                        sleepScoreSignal: sleepScoreSignal,
+                        sleepAdjustment: sleepAdjustment
+                    )
                 ),
                 .init(
                     title: "Strain",
@@ -160,7 +204,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 ),
                 .init(
                     title: "Check-ins",
-                    valueText: signedValueText(for: checkInAdjustment.totalAdjustment),
+                    valueText: checkInAdjustment.hasScoringSignals ? signedValueText(for: checkInAdjustment.totalAdjustment) : "--",
                     detailText: checkInsDriverDetailLabel(checkInAdjustment: checkInAdjustment),
                     attributedDetailText: checkInsDriverDetailText(checkInAdjustment: checkInAdjustment),
                     tone: tone(for: checkInAdjustment.totalAdjustment),
@@ -169,14 +213,30 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 ),
                 .init(
                     title: "Heart",
-                    valueText: heartRecovery.valueText,
-                    detailText: heartRecovery.detailText,
-                    attributedDetailText: heartDriverDetailText(heartRecovery: heartRecovery),
-                    tone: heartRecovery.tone,
-                    symbol: heartRecovery.symbol,
+                    valueText: hasHeartScoreSignal ? heartRecovery.valueText : "--",
+                    detailText: hasHeartScoreSignal
+                        ? heartRecovery.detailText
+                        : (heartRecovery.hasTodayData ? "Building resting HR baseline" : "Not included, no resting HR"),
+                    attributedDetailText: hasHeartScoreSignal ? heartDriverDetailText(heartRecovery: heartRecovery) : nil,
+                    tone: hasHeartScoreSignal ? heartRecovery.tone : .neutral,
+                    symbol: hasHeartScoreSignal ? heartRecovery.symbol : nil,
                     alert: heartAlert(heartRecovery: heartRecovery)
                 )
             ],
+            formulaAlert: formulaAlert(
+                score: score,
+                rawScore: rawScore,
+                sleepAdjustment: sleepAdjustment,
+                sleepScoreSignal: sleepScoreSignal,
+                checkInAdjustment: checkInAdjustment,
+                heartAdjustment: hasHeartScoreSignal ? heartRecovery.adjustment : nil,
+                totalStrain: hasStrainSignal ? totalStrain : nil
+            ),
+            dataQualityWarning: dataQualityWarning(
+                score: score,
+                hasSleepSignal: hasSleepSignal,
+                hasHeartScoreSignal: hasHeartScoreSignal
+            ),
             footer: "Estimated from sleep, resting heart rate, workout strain, and today’s recovery signals."
         )
     }
@@ -196,14 +256,162 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
     }
 
     private struct CheckInAdjustment {
+        let hasPresetSignals: Bool
+        let hasCustomScoringSignals: Bool
         let presetAdjustment: Double
         let customAdjustment: Double
         let customMetricTitles: [String]
         let totalAdjustment: Double
 
+        var hasScoringSignals: Bool {
+            hasPresetSignals || hasCustomScoringSignals
+        }
+
         var hasCustomSignals: Bool {
             !customMetricTitles.isEmpty
         }
+    }
+
+    private struct SleepScoreSignal {
+        let score: Double
+        let detailText: String
+        let formulaSourceText: String
+        let alertDescription: String
+    }
+
+    private enum HeartRecoverySource {
+        case restingHeartRate
+        case rawHeartRateFallback
+
+        var metricName: String {
+            switch self {
+            case .restingHeartRate:
+                return "resting HR"
+            case .rawHeartRateFallback:
+                return "low heart-rate fallback"
+            }
+        }
+
+        var alertDescription: String {
+            switch self {
+            case .restingHeartRate:
+                return "Resting Heart Rate"
+            case .rawHeartRateFallback:
+                return "recent Heart Rate samples"
+            }
+        }
+    }
+
+    private struct HeartRecoverySignal {
+        let adjustment: Double
+        let valueText: String
+        let detailText: String
+        let tone: SQDashboardTrendTone
+        let symbol: SQImageSymbol?
+        let hasSignal: Bool
+        let hasTodayData: Bool
+        let baselineAverage: Double?
+        let todaysAverage: Double?
+        let source: HeartRecoverySource?
+        let baselineSource: HeartRecoverySource?
+    }
+
+    private func sleepScoreSignal(
+        from values: [String: Float],
+        healthSleepScore: Double?,
+        nightLabel: String
+    ) -> SleepScoreSignal? {
+        let sleepQuality = values[SQMetricId.sleepQuality].map { clamp(Double($0), min: 0, max: 10) }
+        let sleepHours = values[SQMetricId.sleepHours].map { clamp(Double($0), min: 0, max: 24) }
+
+        if let sleepQuality {
+            let qualityScore = sleepQuality * 10
+
+            if let sleepHours {
+                let durationScore = sleepDurationScore(hours: sleepHours)
+                let score = (qualityScore * 0.75) + (durationScore * 0.25)
+                return .init(
+                    score: score,
+                    detailText: "Check-in quality + hours",
+                    formulaSourceText: "Daily Check-In sleep quality and hours",
+                    alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 and Sleep Hours \(formatSleepValue(sleepHours))h were used. Sleep Quality carries most of the score because it is user-reported."
+                )
+            }
+
+            return .init(
+                score: qualityScore,
+                detailText: "Check-in sleep quality",
+                formulaSourceText: "Daily Check-In sleep quality",
+                alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 was used as the sleep source."
+            )
+        }
+
+        if let healthSleepScore {
+            return .init(
+                score: healthSleepScore,
+                detailText: "Health sleep score",
+                formulaSourceText: "Health sleep score",
+                alertDescription: "For \(nightLabel), Health sleep data was used because Daily Check-In Sleep Quality was not logged."
+            )
+        }
+
+        if let sleepHours {
+            let score = sleepDurationScore(hours: sleepHours)
+            return .init(
+                score: score,
+                detailText: "Check-in sleep hours",
+                formulaSourceText: "Daily Check-In sleep hours",
+                alertDescription: "For \(nightLabel), Daily Check-In Sleep Hours \(formatSleepValue(sleepHours))h was used because Sleep Quality and Health sleep data were not available."
+            )
+        }
+
+        return nil
+    }
+
+    private func combinedSleepScoreSignal(
+        latest: SleepScoreSignal?,
+        previous: SleepScoreSignal?
+    ) -> SleepScoreSignal? {
+        guard let latest else { return previous }
+        guard let previous else { return latest }
+
+        let score = (latest.score * 0.70) + (previous.score * 0.30)
+
+        return .init(
+            score: score,
+            detailText: "Last 2 nights",
+            formulaSourceText: "70% last night, 30% prior night",
+            alertDescription: "\(latest.alertDescription) \(previous.alertDescription) Recovery Score weights sleep as 70% last night and 30% the prior night so consecutive good or bad nights can stack."
+        )
+    }
+
+    private func previousHealthSleepScore(from sleepData: SQSleepDashboardData?) -> Double? {
+        let nights = ((sleepData?.currentNights ?? []) + (sleepData?.priorNights ?? []))
+            .sorted { $0.wakeDay > $1.wakeDay }
+
+        guard nights.count > 1 else { return nil }
+        return sleepAggregationService.score(for: nights[1]).totalScore
+    }
+
+    private func sleepDurationScore(hours: Double) -> Double {
+        if hours >= 7, hours <= 9 {
+            return 100
+        }
+
+        if hours < 7 {
+            return clamp(100 - ((7 - hours) * 18), min: 0, max: 100)
+        }
+
+        return clamp(100 - ((hours - 9) * 12), min: 0, max: 100)
+    }
+
+    private func formatSleepValue(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        if rounded == rounded.rounded() {
+            return "\(Int(rounded))"
+        }
+
+        return String(format: "%.1f", rounded)
     }
 
     private func bodyBatteryPresetAdjustment(from values: [String: Float]) -> Double {
@@ -224,7 +432,20 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         from values: [String: Float],
         metrics: [SQMetricDefinition]
     ) -> CheckInAdjustment {
+        let presetSignalIds = [
+            SQMetricId.energy,
+            SQMetricId.soreness,
+            SQMetricId.nutrition,
+            SQMetricId.alcohol,
+            SQMetricId.caffeine
+        ]
+        let hasPresetSignals = presetSignalIds.contains { values[$0] != nil }
         let presetAdjustment = bodyBatteryPresetAdjustment(from: values)
+        let hasCustomScoringSignals = metrics.contains { metric in
+            guard !metric.isPreset else { return false }
+            guard metric.bodyBatteryEffect != .none, metric.bodyBatteryEffect != .unknown else { return false }
+            return values[metric.id] != nil
+        }
 
         let customSignals = metrics.compactMap { metric -> (title: String, adjustment: Double)? in
             guard !metric.isPreset else { return nil }
@@ -239,6 +460,8 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let customAdjustment = clamp(rawCustomAdjustment, min: -6, max: 6)
 
         return .init(
+            hasPresetSignals: hasPresetSignals,
+            hasCustomScoringSignals: hasCustomScoringSignals,
             presetAdjustment: presetAdjustment,
             customAdjustment: customAdjustment,
             customMetricTitles: customSignals.map(\.title),
@@ -269,12 +492,12 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
     }
 
     private func bodyBatterySummary(
-        sleepRecharge: Double,
+        sleepAdjustment: Double,
         totalStrain: Double,
         habitAdjustment: Double,
         heartAdjustment: Double
     ) -> String {
-        if sleepRecharge >= 38 && totalStrain <= 8 && habitAdjustment >= 0 {
+        if sleepAdjustment >= 10 && totalStrain <= 8 && habitAdjustment >= 0 {
             return "Strong overnight recovery is keeping your energy reserves high right now."
         }
 
@@ -291,7 +514,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         if habitAdjustment <= -6 {
-            return "Today’s recovery signals are dragging the battery down despite your baseline recharge."
+            return "Today’s recovery signals are dragging the score down from its neutral baseline."
         }
 
         if habitAdjustment >= 6 {
@@ -303,35 +526,60 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
 
     private func heartRecoverySignal(
         todaysRestingSummaries: [SQHeartRateDailySummary],
-        recentRestingSummaries: [SQHeartRateDailySummary]
-    ) -> (adjustment: Double, valueText: String, detailText: String, tone: SQDashboardTrendTone, symbol: SQImageSymbol?, hasSignal: Bool, hasTodayData: Bool, baselineAverage: Double?, todaysAverage: Double?) {
+        recentRestingSummaries: [SQHeartRateDailySummary],
+        todaysHeartRateSummaries: [SQHeartRateDailySummary],
+        recentHeartRateSummaries: [SQHeartRateDailySummary]
+    ) -> HeartRecoverySignal {
         let calendar = Calendar.current
         let todayStart = calendar.startOfDay(for: .now)
 
-        let todaysAverage = todaysRestingSummaries
+        let todaysOfficialAverage = todaysRestingSummaries
             .last(where: { calendar.isDate($0.date, inSameDayAs: todayStart) })?
             .average
-        let baselineValues = recentRestingSummaries
+        let todaysFallbackAverage = todaysHeartRateSummaries
+            .last(where: { calendar.isDate($0.date, inSameDayAs: todayStart) })
+            .flatMap(heartRateFallbackValue)
+
+        let todaysAverage = todaysOfficialAverage ?? todaysFallbackAverage
+        let todaysSource: HeartRecoverySource? = todaysOfficialAverage != nil
+            ? .restingHeartRate
+            : (todaysFallbackAverage != nil ? .rawHeartRateFallback : nil)
+
+        let officialBaselineValues = recentRestingSummaries
             .filter { !calendar.isDate($0.date, inSameDayAs: todayStart) }
             .compactMap(\.average)
+        let fallbackBaselineValues = recentHeartRateSummaries
+            .filter { !calendar.isDate($0.date, inSameDayAs: todayStart) }
+            .compactMap(heartRateFallbackValue)
+        let baselineValues = todaysSource == .rawHeartRateFallback
+            ? (!fallbackBaselineValues.isEmpty ? fallbackBaselineValues : officialBaselineValues)
+            : (!officialBaselineValues.isEmpty ? officialBaselineValues : fallbackBaselineValues)
         let baselineAverage = baselineValues.average
+        let baselineSource: HeartRecoverySource?
+        if todaysSource == .rawHeartRateFallback {
+            baselineSource = !fallbackBaselineValues.isEmpty ? .rawHeartRateFallback : (!officialBaselineValues.isEmpty ? .restingHeartRate : nil)
+        } else {
+            baselineSource = !officialBaselineValues.isEmpty ? .restingHeartRate : (!fallbackBaselineValues.isEmpty ? .rawHeartRateFallback : nil)
+        }
 
         guard let todaysAverage else {
             if let baselineAverage {
-                return (
+                return HeartRecoverySignal(
                     adjustment: 0,
                     valueText: "--",
-                    detailText: "Waiting for today’s resting HR. 7d baseline \(Int(baselineAverage.rounded())) bpm",
+                    detailText: "Waiting for today’s heart data. 7d baseline \(Int(baselineAverage.rounded())) bpm",
                     tone: .neutral,
                     symbol: nil,
                     hasSignal: true,
                     hasTodayData: false,
                     baselineAverage: baselineAverage,
-                    todaysAverage: nil
+                    todaysAverage: nil,
+                    source: nil,
+                    baselineSource: baselineSource
                 )
             }
 
-            return (
+            return HeartRecoverySignal(
                 adjustment: 0,
                 valueText: "--",
                 detailText: "Awaiting resting heart data",
@@ -340,21 +588,25 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 hasSignal: false,
                 hasTodayData: false,
                 baselineAverage: nil,
-                todaysAverage: nil
+                todaysAverage: nil,
+                source: nil,
+                baselineSource: nil
             )
         }
 
         guard let baselineAverage else {
-            return (
+            return HeartRecoverySignal(
                 adjustment: 0,
                 valueText: "\(Int(todaysAverage.rounded())) bpm",
-                detailText: "Resting HR today",
+                detailText: "\(todaysSource?.metricName.capitalized ?? "Heart rate") today",
                 tone: .neutral,
                 symbol: nil,
                 hasSignal: true,
                 hasTodayData: true,
                 baselineAverage: nil,
-                todaysAverage: todaysAverage
+                todaysAverage: todaysAverage,
+                source: todaysSource,
+                baselineSource: nil
             )
         }
 
@@ -362,54 +614,241 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let adjustment = clamp(delta * 1.4, min: -10, max: 8)
         let roundedDelta = Int(abs(delta).rounded())
         let detailDirection = delta >= 0 ? "below" : "above"
+        let sourceText = todaysSource?.metricName ?? "heart rate"
 
-        return (
+        return HeartRecoverySignal(
             adjustment: adjustment,
             valueText: signedValueText(for: adjustment),
-            detailText: "\(Int(todaysAverage.rounded())) bpm today, \(roundedDelta) \(detailDirection) 7d baseline",
+            detailText: "\(Int(todaysAverage.rounded())) bpm \(sourceText), \(roundedDelta) \(detailDirection) baseline",
             tone: tone(for: adjustment),
             symbol: symbol(for: adjustment),
             hasSignal: true,
             hasTodayData: true,
             baselineAverage: baselineAverage,
-            todaysAverage: todaysAverage
+            todaysAverage: todaysAverage,
+            source: todaysSource,
+            baselineSource: baselineSource
         )
     }
 
-    private func sleepAlert(latestSleepScore: Double?, sleepRecharge: Double) -> SQAlertViewModel {
+    private func heartRateFallbackValue(from summary: SQHeartRateDailySummary) -> Double? {
+        if let minimum = summary.minimum, (35...120).contains(minimum) {
+            return minimum
+        }
+
+        if let average = summary.average, (35...120).contains(average) {
+            return average
+        }
+
+        return nil
+    }
+
+    private func sleepAlert(sleepScoreSignal: SleepScoreSignal?, sleepAdjustment: Double?) -> SQAlertViewModel {
         let subtitle: String
         let attributedSubtitle: AttributedString
-        if let latestSleepScore {
-            subtitle = "Sleep recharge is based on your latest Sleep Score. A score of \(Int(latestSleepScore.rounded())) contributed about \(Int(sleepRecharge.rounded())) points to Recovery Score."
+        if let sleepScoreSignal, let sleepAdjustment {
+            subtitle = "\(sleepScoreSignal.alertDescription) This produced a sleep score of \(Int(sleepScoreSignal.score.rounded())) and changed Recovery Score by \(signedValueText(for: sleepAdjustment)) point(s) versus the neutral baseline."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Sleep recharge is based on your latest Sleep Score. A score of "),
-                .highlight("\(Int(latestSleepScore.rounded()))"),
-                .plain(" contributed about "),
-                .highlight("\(Int(sleepRecharge.rounded()))"),
-                .plain(" points to Recovery Score.")
+                .plain(sleepScoreSignal.alertDescription),
+                .plain(" This produced a sleep score of "),
+                .highlight("\(Int(sleepScoreSignal.score.rounded()))"),
+                .plain(" and changed Recovery Score by "),
+                .highlight(signedValueText(for: sleepAdjustment)),
+                .plain(" point(s) versus the neutral baseline.")
             ])
         } else {
-            subtitle = "Sleep recharge uses your latest completed night. When sleep data is available, stronger duration, efficiency, fragmentation, and architecture scores raise Recovery Score."
+            subtitle = "No Daily Check-In or Health sleep data is available yet, so sleep is omitted from the Recovery Score calculation instead of being treated as good or bad."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Sleep recharge uses your latest completed night. When sleep data is available, stronger "),
-                .highlight("duration"),
-                .plain(", "),
-                .highlight("efficiency"),
-                .plain(", "),
-                .highlight("fragmentation"),
-                .plain(", and "),
-                .highlight("architecture"),
-                .plain(" scores raise Recovery Score.")
+                .plain("No Daily Check-In or Health sleep data is available yet, so sleep is "),
+                .highlight("omitted"),
+                .plain(" from the Recovery Score calculation instead of being treated as good or bad.")
             ])
         }
 
         return .init(
-            title: "Sleep Recharge",
+            title: "Sleep",
             subtitle: subtitle,
             attributedSubtitle: attributedSubtitle,
             primary: .ok,
             canDismiss: true
         )
+    }
+
+    private func formulaAlert(
+        score: Int?,
+        rawScore: Double?,
+        sleepAdjustment: Double?,
+        sleepScoreSignal: SleepScoreSignal?,
+        checkInAdjustment: CheckInAdjustment,
+        heartAdjustment: Double?,
+        totalStrain: Double?
+    ) -> SQAlertViewModel {
+        guard let score, let rawScore else {
+            let subtitle = "Recovery Score needs at least one scoreable signal before it can calculate. Log Sleep Quality, Sleep Hours, Energy, or Recovery in Daily Check-In, add a custom metric marked for Recovery Score, or record Health sleep, workout, and resting heart data."
+            let attributedSubtitle = buildBodyBatteryText([
+                .plain("Recovery Score needs at least "),
+                .highlight("one scoreable signal"),
+                .plain(" before it can calculate. Log "),
+                .highlight("Sleep Quality"),
+                .plain(", "),
+                .highlight("Sleep Hours"),
+                .plain(", "),
+                .highlight("Energy"),
+                .plain(", or "),
+                .highlight("Recovery"),
+                .plain(" in Daily Check-In, add a custom metric marked for Recovery Score, or record Health "),
+                .highlight("sleep"),
+                .plain(", "),
+                .highlight("workout"),
+                .plain(", and "),
+                .highlight("resting heart"),
+                .plain(" data.")
+            ])
+
+            return .init(
+                title: "How Recovery Score Is Calculated",
+                subtitle: subtitle,
+                attributedSubtitle: attributedSubtitle,
+                primary: .ok,
+                canDismiss: true
+            )
+        }
+
+        let roundedRawScore = Int(rawScore.rounded())
+        let activeTerms = activeFormulaTerms(
+            sleepAdjustment: sleepAdjustment,
+            checkInAdjustment: checkInAdjustment,
+            heartAdjustment: heartAdjustment,
+            totalStrain: totalStrain
+        )
+        let omittedSignals = omittedFormulaSignals(
+            sleepAdjustment: sleepAdjustment,
+            checkInAdjustment: checkInAdjustment,
+            heartAdjustment: heartAdjustment,
+            totalStrain: totalStrain
+        )
+        let calculationText = "55 baseline \(activeTerms.map(\.formulaText).joined(separator: " "))"
+        let sleepSourceText = sleepScoreSignal.map { "Sleep source: \($0.formulaSourceText)." } ?? ""
+        let omittedText = omittedSignals.isEmpty
+            ? "No signals were omitted."
+            : "Omitted due to missing data: \(omittedSignals.joined(separator: ", "))."
+        let subtitle = """
+        Recovery Score starts from a neutral baseline and then adjusts based on the signals available today. Current calculation: \(calculationText) = \(roundedRawScore). Your current score is \(score). \(sleepSourceText) \(omittedText) Check-ins use Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics marked for Recovery Score.
+        """
+        let attributedSubtitle = buildBodyBatteryText([
+            .highlight("Recovery Score"),
+            .plain(" starts from a "),
+            .highlight("55 neutral baseline"),
+            .plain(" and then adjusts based on the signals available today. Current calculation: "),
+            .highlight(calculationText),
+            .plain(" = "),
+            .highlight("\(roundedRawScore)"),
+            .plain(". Your current score is "),
+            .highlight("\(score)"),
+            .plain(". "),
+            .highlight(sleepSourceText),
+            .plain(" "),
+            .highlight(omittedText),
+            .plain(" Check-ins use "),
+            .highlight("Energy"),
+            .plain(", "),
+            .highlight("Recovery"),
+            .plain(", "),
+            .highlight("Nutrition"),
+            .plain(", "),
+            .highlight("Alcohol"),
+            .plain(", "),
+            .highlight("Caffeine"),
+            .plain(", and custom metrics marked for Recovery Score.")
+        ])
+
+        return .init(
+            title: "How Recovery Score Is Calculated",
+            subtitle: subtitle,
+            attributedSubtitle: attributedSubtitle,
+            primary: .ok,
+            canDismiss: true
+        )
+    }
+
+    private func activeFormulaTerms(
+        sleepAdjustment: Double?,
+        checkInAdjustment: CheckInAdjustment,
+        heartAdjustment: Double?,
+        totalStrain: Double?
+    ) -> [(label: String, formulaText: String)] {
+        var terms: [(label: String, formulaText: String)] = []
+
+        if let sleepAdjustment {
+            terms.append(("sleep", labeledFormulaAdjustmentText(for: sleepAdjustment, label: "sleep")))
+        }
+
+        if checkInAdjustment.hasScoringSignals {
+            terms.append(("check-ins", labeledFormulaAdjustmentText(for: checkInAdjustment.totalAdjustment, label: "check-ins")))
+        }
+
+        if let heartAdjustment {
+            terms.append(("heart", labeledFormulaAdjustmentText(for: heartAdjustment, label: "heart")))
+        }
+
+        if let totalStrain {
+            terms.append(("strain", "- \(Int(totalStrain.rounded())) strain"))
+        }
+
+        return terms
+    }
+
+    private func omittedFormulaSignals(
+        sleepAdjustment: Double?,
+        checkInAdjustment: CheckInAdjustment,
+        heartAdjustment: Double?,
+        totalStrain: Double?
+    ) -> [String] {
+        var signals: [String] = []
+
+        if sleepAdjustment == nil {
+            signals.append("sleep")
+        }
+
+        if !checkInAdjustment.hasScoringSignals {
+            signals.append("check-ins")
+        }
+
+        if heartAdjustment == nil {
+            signals.append("heart")
+        }
+
+        if totalStrain == nil {
+            signals.append("strain")
+        }
+
+        return signals
+    }
+
+    private func dataQualityWarning(
+        score: Int?,
+        hasSleepSignal: Bool,
+        hasHeartScoreSignal: Bool
+    ) -> String? {
+        guard score != nil else {
+            return "Not enough recovery data yet. Log Sleep Quality, Sleep Hours, Energy, or Recovery in Daily Check-In, or record Health sleep and resting heart data."
+        }
+
+        guard !hasSleepSignal || !hasHeartScoreSignal else { return nil }
+
+        if !hasSleepSignal && !hasHeartScoreSignal {
+            return "Limited accuracy: sleep and resting heart data are missing, so this score is based only on the signals available today."
+        }
+
+        if !hasSleepSignal {
+            return "Limited accuracy: Health sleep data is missing, so sleep is omitted from this score."
+        }
+
+        return nil
+    }
+
+    private func neutralSleepRecharge() -> Double {
+        clamp(52 * 0.52, min: 14, max: 55)
     }
 
     private func strainAlert(
@@ -442,7 +881,24 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let subtitle: String
         let attributedSubtitle: AttributedString
 
-        if let customSummary {
+        if !checkInAdjustment.hasScoringSignals {
+            subtitle = "Check-ins are omitted from Recovery Score until you log at least one recovery-related metric. Built-in signals include Energy, Recovery, Nutrition, Alcohol, and Caffeine. Custom metrics count when they are marked for Recovery Score."
+            attributedSubtitle = buildBodyBatteryText([
+                .plain("Check-ins are "),
+                .highlight("omitted"),
+                .plain(" from Recovery Score until you log at least one recovery-related metric. Built-in signals include "),
+                .highlight("Energy"),
+                .plain(", "),
+                .highlight("Recovery"),
+                .plain(", "),
+                .highlight("Nutrition"),
+                .plain(", "),
+                .highlight("Alcohol"),
+                .plain(", and "),
+                .highlight("Caffeine"),
+                .plain(". Custom metrics count when they are marked for Recovery Score.")
+            ])
+        } else if let customSummary {
             subtitle = "Check-ins adjust Recovery Score using Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s). Custom metric impact is capped so those signals stay supportive instead of dominating the score."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Check-ins adjust Recovery Score using "),
@@ -491,52 +947,66 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         )
     }
 
-    private func heartAlert(
-        heartRecovery: (adjustment: Double, valueText: String, detailText: String, tone: SQDashboardTrendTone, symbol: SQImageSymbol?, hasSignal: Bool, hasTodayData: Bool, baselineAverage: Double?, todaysAverage: Double?)
-    ) -> SQAlertViewModel {
+    private func heartAlert(heartRecovery: HeartRecoverySignal) -> SQAlertViewModel {
         let subtitle: String
         let attributedSubtitle: AttributedString
 
         if !heartRecovery.hasSignal {
-            subtitle = "Recovery Score can use resting heart rate when Health access is allowed and Health has collected enough background heart data. Make sure Heart Rate and Resting Heart Rate permissions are enabled and that a compatible device is recording heart data regularly."
+            subtitle = "Recovery Score can use Resting Heart Rate when Health has it. When it is missing, LifeIQ can fall back to low raw Heart Rate readings from Health to estimate a resting-ish recovery signal."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Recovery Score can use "),
-                .highlight("resting heart rate"),
-                .plain(" when Health access is allowed and Health has collected enough background heart data. Make sure "),
-                .highlight("Heart Rate"),
-                .plain(" and "),
                 .highlight("Resting Heart Rate"),
-                .plain(" permissions are enabled and that a compatible device is recording heart data regularly.")
+                .plain(" when Health has it. When it is missing, LifeIQ can fall back to low raw "),
+                .highlight("Heart Rate"),
+                .plain(" readings from Health to estimate a resting-ish recovery signal.")
             ])
         } else if !heartRecovery.hasTodayData {
             let baselineText = heartRecovery.baselineAverage.map { "\(Int($0.rounded())) bpm" } ?? "your recent baseline"
-            subtitle = "We have a recent resting-heart-rate baseline of \(baselineText), but not a resting HR for today yet. Resting heart rate is recorded automatically in the background when supported Health sources provide it; apps can read that data, but cannot force a new resting-heart-rate sample on demand."
+            let baselineSourceText = heartRecovery.baselineSource?.alertDescription ?? "heart data"
+            subtitle = "We have a recent baseline of \(baselineText) from \(baselineSourceText), but not enough heart data for today yet. Apple Watch may record Heart Rate before it produces an official Resting Heart Rate value."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("We have a recent resting-heart-rate baseline of "),
+                .plain("We have a recent baseline of "),
                 .highlight(baselineText),
-                .plain(", but not a resting HR for today yet. Resting heart rate is recorded automatically in the background when supported Health sources provide it; apps can read that data, but cannot force a new resting-heart-rate sample on demand.")
+                .plain(" from "),
+                .highlight(baselineSourceText),
+                .plain(", but not enough heart data for today yet. Apple Watch may record "),
+                .highlight("Heart Rate"),
+                .plain(" before it produces an official "),
+                .highlight("Resting Heart Rate"),
+                .plain(" value.")
             ])
         } else if let todaysAverage = heartRecovery.todaysAverage, let baselineAverage = heartRecovery.baselineAverage {
-            subtitle = "Heart recovery compares today’s resting HR (\(Int(todaysAverage.rounded())) bpm) to your recent 7-day baseline (\(Int(baselineAverage.rounded())) bpm). Lower-than-baseline resting HR boosts Recovery Score, while higher-than-baseline resting HR adds a recovery penalty."
+            let sourceText = heartRecovery.source?.alertDescription ?? "heart data"
+            let baselineSourceText = heartRecovery.baselineSource?.alertDescription ?? "recent heart data"
+            subtitle = "Heart recovery uses \(sourceText). Today is \(Int(todaysAverage.rounded())) bpm versus a recent baseline of \(Int(baselineAverage.rounded())) bpm. Lower-than-baseline values boost Recovery Score, while higher values lower it."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Heart recovery compares today’s resting HR ("),
+                .plain("Heart recovery uses "),
+                .highlight(sourceText),
+                .plain(". Today is "),
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
-                .plain(") to your recent 7-day baseline ("),
+                .plain(" versus a recent baseline of "),
                 .highlight("\(Int(baselineAverage.rounded())) bpm"),
-                .plain("). Lower-than-baseline resting HR boosts Recovery Score, while higher-than-baseline resting HR adds a recovery penalty.")
+                .plain(". Lower-than-baseline values boost Recovery Score, while higher values lower it.")
             ])
         } else if let todaysAverage = heartRecovery.todaysAverage {
-            subtitle = "Today’s resting HR is \(Int(todaysAverage.rounded())) bpm. Once more history is available, Recovery Score will compare that value against your recent baseline to estimate recovery."
+            let sourceText = heartRecovery.source?.alertDescription ?? "heart data"
+            subtitle = "Today’s heart value is \(Int(todaysAverage.rounded())) bpm from \(sourceText). Once more history is available, Recovery Score will compare that value against your recent baseline."
             attributedSubtitle = buildBodyBatteryText([
-                .plain("Today’s resting HR is "),
+                .plain("Today’s heart value is "),
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
-                .plain(". Once more history is available, Recovery Score will compare that value against your recent baseline to estimate recovery.")
+                .plain(" from "),
+                .highlight(sourceText),
+                .plain(". Once more history is available, Recovery Score will compare that value against your recent baseline.")
             ])
         } else {
-            subtitle = "Resting heart rate is used as a recovery signal inside Recovery Score when enough heart data is available."
+            subtitle = "Heart data is used as a recovery signal inside Recovery Score when enough Resting Heart Rate or low raw Heart Rate data is available."
             attributedSubtitle = buildBodyBatteryText([
-                .highlight("Resting heart rate"),
-                .plain(" is used as a recovery signal inside Recovery Score when enough heart data is available.")
+                .highlight("Heart data"),
+                .plain(" is used as a recovery signal inside Recovery Score when enough "),
+                .highlight("Resting Heart Rate"),
+                .plain(" or low raw "),
+                .highlight("Heart Rate"),
+                .plain(" data is available.")
             ])
         }
 
@@ -549,15 +1019,19 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         )
     }
 
-    private func sleepDriverDetailText(latestSleepScore: Double?, sleepRecharge: Double) -> AttributedString? {
-        guard let latestSleepScore else { return nil }
+    private func sleepDriverDetailText(
+        sleepScoreSignal: SleepScoreSignal?,
+        sleepAdjustment: Double?
+    ) -> AttributedString? {
+        guard let sleepScoreSignal, let sleepAdjustment else { return nil }
 
         return buildBodyBatteryText([
             .plain("Sleep Score "),
-            .highlight("\(Int(latestSleepScore.rounded()))"),
-            .plain(" added "),
-            .highlight("+\(Int(sleepRecharge.rounded()))"),
-            .plain(" points")
+            .highlight("\(Int(sleepScoreSignal.score.rounded()))"),
+            .plain(" from "),
+            .highlight(sleepScoreSignal.formulaSourceText),
+            .plain(" changed score by "),
+            .highlight(signedValueText(for: sleepAdjustment))
         ])
     }
 
@@ -579,6 +1053,10 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
     }
 
     private func checkInsDriverDetailLabel(checkInAdjustment: CheckInAdjustment) -> String {
+        guard checkInAdjustment.hasScoringSignals else {
+            return "No recovery metrics logged"
+        }
+
         if checkInAdjustment.hasCustomSignals {
             return "Recovery + \(checkInAdjustment.customMetricTitles.count) custom"
         }
@@ -622,16 +1100,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         return "\(visibleTitles.joined(separator: ", ")), and \(remainingCount) more"
     }
 
-    private func heartDriverDetailText(
-        heartRecovery: (adjustment: Double, valueText: String, detailText: String, tone: SQDashboardTrendTone, symbol: SQImageSymbol?, hasSignal: Bool, hasTodayData: Bool, baselineAverage: Double?, todaysAverage: Double?)
-    ) -> AttributedString? {
+    private func heartDriverDetailText(heartRecovery: HeartRecoverySignal) -> AttributedString? {
         if let todaysAverage = heartRecovery.todaysAverage, let baselineAverage = heartRecovery.baselineAverage {
             let delta = Int(abs(todaysAverage - baselineAverage).rounded())
             let direction = todaysAverage <= baselineAverage ? "below" : "above"
+            let sourceText = heartRecovery.source?.metricName ?? "heart"
 
             return buildBodyBatteryText([
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
-                .plain(" today, "),
+                .plain(" \(sourceText), "),
                 .highlight("\(delta)"),
                 .plain(" \(direction) baseline")
             ])
@@ -645,9 +1122,10 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         if let todaysAverage = heartRecovery.todaysAverage {
+            let sourceText = heartRecovery.source?.metricName ?? "heart"
             return buildBodyBatteryText([
                 .highlight("\(Int(todaysAverage.rounded())) bpm"),
-                .plain(" resting HR today")
+                .plain(" \(sourceText) today")
             ])
         }
 
@@ -676,6 +1154,19 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             return "+\(rounded)"
         }
         return "\(rounded)"
+    }
+
+    private func formulaAdjustmentText(for value: Double) -> String {
+        let rounded = Int(value.rounded())
+        if rounded < 0 {
+            return "- \(abs(rounded))"
+        }
+
+        return "+ \(rounded)"
+    }
+
+    private func labeledFormulaAdjustmentText(for value: Double, label: String) -> String {
+        "\(formulaAdjustmentText(for: value)) \(label)"
     }
 
     private func tone(for value: Double) -> SQDashboardTrendTone {

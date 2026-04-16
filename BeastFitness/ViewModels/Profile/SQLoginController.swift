@@ -93,6 +93,12 @@ protocol SQLoginInterface: AnyObject {
                 Self.passwordErrorMessage(for: text)
             }
         )
+        self.emailViewModel.onReturn = { [weak passwordViewModel] in
+            passwordViewModel?.focus()
+        }
+        self.passwordViewModel.onReturn = { [weak self] in
+            self?.loginOrSignUpButtonTapped()
+        }
         refreshSignupAvailability(with: initialSnapshot)
         _ = remoteConfigManager.addSnapshotObserver { [weak self] snapshot in
             self?.refreshSignupAvailability(with: snapshot)

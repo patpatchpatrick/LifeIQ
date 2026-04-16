@@ -41,6 +41,7 @@ final class SQUITextFieldViewModel: ObservableObject {
     let validationRule: SQTextValidationRule?
 
     weak var delegate: SQUITextFieldViewModelDelegate?
+    var onReturn: (() -> Void)?
 
     // MARK: - State
 
@@ -135,6 +136,14 @@ final class SQUITextFieldViewModel: ObservableObject {
 
     func blur() {
         boundTextField?.resignFirstResponder()
+    }
+
+    func handleReturn() {
+        if let onReturn {
+            onReturn()
+        } else {
+            blur()
+        }
     }
 
     func toggleSecureTextVisibility() {

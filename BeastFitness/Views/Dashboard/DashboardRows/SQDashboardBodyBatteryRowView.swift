@@ -60,6 +60,34 @@ struct SQDashboardBodyBatteryRowView: View {
                 SQRecoveryScoreBadge(score: viewModel.score, accentColor: accentColor)
             }
 
+            if let warning = viewModel.dataQualityWarning {
+                HStack(alignment: .top, spacing: .SQSpace.s) {
+                    SQImageView(
+                        image: .init(
+                            symbol: .infoCircle,
+                            symbolStyle: .colorWithFont(.dashboardTrendWarm, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 14, height: 14)
+                    .padding(.top, 1)
+
+                    Text(warning)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.SQSpace.m)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.dashboardTrendWarm.color.opacity(SQColor.isDarkMode ? 0.10 : 0.08))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(SQColor.dashboardTrendWarm.color.opacity(SQColor.isDarkMode ? 0.22 : 0.16), lineWidth: 1)
+                        }
+                }
+            }
+
             VStack(alignment: .leading, spacing: .SQSpace.s) {
                 Text("Factors")
                     .sqFont(.bodyExtraSmall)
@@ -71,12 +99,51 @@ struct SQDashboardBodyBatteryRowView: View {
                     }
                 }
             }
+
+            Button {
+                SQAppState.shared.hub.alertEvents.send(.present(viewModel.formulaAlert))
+            } label: {
+                HStack(spacing: .SQSpace.s) {
+                    SQImageView(
+                        image: .init(
+                            symbol: .infoCircle,
+                            symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 14, height: 14)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("How this score is calculated")
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textPrimary)
+
+                        Text(viewModel.footer)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.SQSpace.m)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.46 : 0.72))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        }
+                }
+            }
+            .buttonStyle(.plain)
         }
     }
 }
 
 private struct SQRecoveryScoreBadge: View {
-    let score: Int
+    let score: Int?
     let accentColor: SQColor
 
     var body: some View {
@@ -106,7 +173,7 @@ private struct SQRecoveryScoreBadge: View {
                 )
 
             VStack(spacing: 2) {
-                Text("\(score)")
+                Text(score.map { "\($0)" } ?? "N/A")
                     .sqFont(.title2)
                     .sqForegroundColor(.textPrimary)
 

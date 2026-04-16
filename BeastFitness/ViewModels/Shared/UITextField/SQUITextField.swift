@@ -203,7 +203,7 @@ private struct SQUITextFieldRepresentable: UIViewRepresentable {
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
             pendingSelectAll?.cancel()
             pendingSelectAll = nil
-            textField.resignFirstResponder()
+            viewModel.handleReturn()
             return true
         }
     }
