@@ -294,13 +294,10 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             let count = try await performFullSync(context: context)
             SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "Metric Entry", context: .dailyCheckIn)
             return .fullSyncCompleted
-        } else if shouldRefresh(lastSync: lastSync) {
+        } else {
             let count = try await performIncrementalSync(lastSync: lastSync, context: context)
             SyncResult.refreshCompleted.logSync(documentCount: count, service: "Metric Entry", context: .dailyCheckIn)
             return .refreshCompleted
-        } else {
-            SyncResult.noSyncNeeded.logSync(service: "Metric Entry", context: .dailyCheckIn)
-            return .noSyncNeeded
         }
     }
 
@@ -386,11 +383,6 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                 context: context
             )
         }
-    }
-
-    private func shouldRefresh(lastSync: Date?) -> Bool {
-        guard let lastSync else { return true }
-        return Date().timeIntervalSince(lastSync) / 3600 > 6
     }
 
     // MARK: - Sync Metadata

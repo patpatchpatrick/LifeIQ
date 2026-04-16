@@ -328,17 +328,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             return .fullSyncCompleted
         }
 
-        let hoursSinceSync = Date().timeIntervalSince(lastSync) / 3600
-        if hoursSinceSync > 6 {
-            SQLogger.shared.log("[Sync - Metric Definition] Stale cache (\(String(format: "%.1f", hoursSinceSync))h), running incremental sync", .info, context: .metricsManager)
-            let count = try await performIncrementalMetricSync(lastSync: lastSync, context: context)
-            SyncResult.refreshCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
-            return .refreshCompleted
-        }
-
-        SQLogger.shared.log("[Sync - Metric Definition] Cache fresh", .debug, context: .metricsManager)
-        SyncResult.noSyncNeeded.logSync(service: "Metric Definition", context: .metricsManager)
-        return .noSyncNeeded
+        let count = try await performIncrementalMetricSync(lastSync: lastSync, context: context)
+        SyncResult.refreshCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
+        return .refreshCompleted
     }
 
     func reset() {
