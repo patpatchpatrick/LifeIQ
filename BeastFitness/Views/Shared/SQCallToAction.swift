@@ -122,10 +122,10 @@ struct SQCallToAction: View {
             }
             .sqGlassSurface(level: .floating, cornerRadius: .SQCornerRadius.l)
             .shadow(
-                color: accentColor.color.opacity(viewModel.priority == .high ? (SQColor.isDarkMode ? 0.34 : 0.22) : (SQColor.isDarkMode ? 0.24 : 0.16)),
-                radius: viewModel.priority == .high ? 30 : 24,
+                color: accentColor.color.opacity(viewModel.priority == .high ? (SQColor.isDarkMode ? 0.24 : 0.16) : (SQColor.isDarkMode ? 0.16 : 0.10)),
+                radius: viewModel.priority == .high ? 18 : 14,
                 x: 0,
-                y: 12
+                y: 7
             )
         }
 

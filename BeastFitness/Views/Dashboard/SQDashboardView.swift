@@ -252,12 +252,12 @@ private struct SQLifeScoreOrbView: View {
                     )
                 )
                 .frame(width: auraSize, height: auraSize)
-                .blur(radius: isAnimating ? size * 0.10 : size * 0.07)
+                .blur(radius: size * 0.08)
                 .scaleEffect(isAnimating ? 1.06 : 0.99)
                 .opacity(isAnimating ? 0.96 : 0.78)
                 .shadow(
                     color: viewModel.state.primaryColor.color.opacity(SQColor.isDarkMode ? 0.45 : 0.24),
-                    radius: isAnimating ? size * 0.22 : size * 0.14,
+                    radius: size * 0.16,
                     x: 0,
                     y: 0
                 )

@@ -41,27 +41,27 @@ enum SQGlassLevel {
     fileprivate var shadowOpacity: Double {
         switch self {
         case .card:
-            return SQColor.isDarkMode ? 0.07 : 0.06
+            return SQColor.isDarkMode ? 0.05 : 0.045
         case .floating:
-            return SQColor.isDarkMode ? 0.26 : 0.14
+            return SQColor.isDarkMode ? 0.20 : 0.10
         }
     }
 
     fileprivate var shadowRadius: CGFloat {
         switch self {
         case .card:
-            return 10
+            return 7
         case .floating:
-            return 24
+            return 18
         }
     }
 
     fileprivate var shadowYOffset: CGFloat {
         switch self {
         case .card:
-            return 4
+            return 3
         case .floating:
-            return 12
+            return 9
         }
     }
 }
@@ -98,9 +98,6 @@ private struct SQGlassSurfaceModifier: ViewModifier {
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
-                    )
-                    .mask(
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     )
                     .allowsHitTesting(false)
             }
