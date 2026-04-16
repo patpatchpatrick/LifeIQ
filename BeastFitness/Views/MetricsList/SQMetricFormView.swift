@@ -98,8 +98,10 @@ struct SQMetricFormView: View {
             title: "Delete Metric?",
             subtitle: "This will remove the metric from your daily check-in. Past check-in data is preserved.",
             primary: .init(title: "Delete", role: .destructive) { _ in
-                viewModel.deleteTapped(using: modelContext)
-                dismiss()
+                let didDelete = viewModel.deleteTapped(using: modelContext)
+                if didDelete {
+                    dismiss()
+                }
             },
             secondary: .init(title: "Cancel", role: .cancel),
             canDismiss: true
@@ -328,8 +330,8 @@ struct SQMetricFormView: View {
                 isLoading: viewModel.isLoading,
                 action: {
                     Task {
-                        await viewModel.saveTapped(using: modelContext)
-                        if !viewModel.isLoading {
+                        let didSave = await viewModel.saveTapped(using: modelContext)
+                        if didSave {
                             dismiss()
                         }
                     }

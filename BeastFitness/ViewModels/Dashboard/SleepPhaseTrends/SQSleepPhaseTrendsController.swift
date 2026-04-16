@@ -44,6 +44,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
     private let healthKitManager: SQHealthKitManaging
     private let sleepAggregationService: SQSleepAggregationService
     private let userState: SQUserStating
+    private let hub: EventHub
     private var chartSeries: [MultiLineChartSeries] = []
     private var focusPointIDByPhase: [SQSleepPhase: String] = [:]
 
@@ -64,7 +65,8 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
         focusedPhase: SQSleepPhase? = nil,
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         sleepAggregationService: SQSleepAggregationService = SQSleepAggregationService(),
-        userState: SQUserStating = SQAppState.shared.userState
+        userState: SQUserStating = SQAppState.shared.userState,
+        hub: EventHub = SQAppState.shared.hub
     ) {
         let resolvedInitialRange = initialTimeRange == .today ? AppTimeRange.pastSevenDays : initialTimeRange
         self.selectedTimeRange = resolvedInitialRange
@@ -73,6 +75,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
         self.healthKitManager = healthKitManager
         self.sleepAggregationService = sleepAggregationService
         self.userState = userState
+        self.hub = hub
 
         let items = AppTimeRange.allCases
             .filter { $0 != .today }
@@ -147,6 +150,9 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
             trendRows = []
             chartModel = nil
             emptyMessage = "Sleep phase trends are unavailable right now."
+            hub.alertEvents.send(
+                .present(.init(SQError.standard(withDescription: "Error loading sleep phase trends: \(error.localizedDescription)")))
+            )
         }
 
         isLoading = false

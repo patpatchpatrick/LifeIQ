@@ -63,6 +63,7 @@ final class SQEditWorkoutController: Identifiable {
     private let userState: SQUserStating
     private var cancellables = Set<AnyCancellable>()
     private var isLoaded = false
+    private var hasPresentedAutoSaveError = false
     var canEditWorkoutMetadata: Bool { userState.isLoggedIn }
 
     // MARK: - Init
@@ -206,6 +207,7 @@ final class SQEditWorkoutController: Identifiable {
         Task {
             do {
                 try await workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
+                hasPresentedAutoSaveError = false
                 SQLogger.shared.log("Auto-saved edit workout data", .debug, context: .workoutSession)
                 SQAppState.shared.hub.workoutEvents.send(.workoutsUpdated([workout.id: workout]))
             } catch {
@@ -214,6 +216,12 @@ final class SQEditWorkoutController: Identifiable {
                     .error,
                     context: .workoutSession
                 )
+                if !hasPresentedAutoSaveError {
+                    hasPresentedAutoSaveError = true
+                    SQAppState.shared.hub.alertEvents.send(
+                        .present(.init(SQError.standard(withDescription: "Error saving workout edits: \(error.localizedDescription)")))
+                    )
+                }
             }
         }
     }

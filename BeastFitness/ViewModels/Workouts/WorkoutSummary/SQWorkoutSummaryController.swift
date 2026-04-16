@@ -96,6 +96,7 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private var isWorkoutLoaded = false
     private var hasTrackedSummaryView = false
     private var hasTrackedReviewSubmission = false
+    private var hasPresentedReviewSaveError = false
 
     static let performanceSegments: [SQSegmentedControlSegment] = [
         .init(id: "perf-1", title: "😞", ratingValue: 2),
@@ -426,6 +427,7 @@ extension SQWorkoutSummaryController {
             guard let self else { return }
             do {
                 try await self.workoutManager.saveWorkout(workout: workout, to: modelContext, saveToCloud: true)
+                self.hasPresentedReviewSaveError = false
                 if !self.hasTrackedReviewSubmission {
                     let hasWeather = temperatureCelsius != nil
                     let hasPerformanceScore = self.selectedPerformance?.ratingValue != nil
@@ -449,6 +451,12 @@ extension SQWorkoutSummaryController {
                     .error,
                     context: .workoutSummary
                 )
+                if !self.hasPresentedReviewSaveError {
+                    self.hasPresentedReviewSaveError = true
+                    self.state.hub.alertEvents.send(
+                        .present(.init(SQError.standard(withDescription: "Error saving workout review: \(error.localizedDescription)")))
+                    )
+                }
             }
         }
     }

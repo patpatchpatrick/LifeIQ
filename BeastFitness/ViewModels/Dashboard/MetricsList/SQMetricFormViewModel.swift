@@ -6,6 +6,7 @@
 import Foundation
 import UIKit
 import SwiftData
+import BeastFitnessCore
 
 // MARK: - Navigation Target
 
@@ -529,7 +530,8 @@ final class SQMetricFormViewModel {
 
     // MARK: - Actions
 
-    func saveTapped(using context: ModelContext) async {
+    @discardableResult
+    func saveTapped(using context: ModelContext) async -> Bool {
         isLoading = true
         defer { isLoading = false }
 
@@ -554,8 +556,16 @@ final class SQMetricFormViewModel {
                     using: context
                 )
             }
+
+            return true
         } catch {
-            // Error handling — caller can observe isLoading reset
+            SQLogger.shared.log(
+                "Failed to save metric: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            presentError("Error saving metric: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -566,14 +576,30 @@ final class SQMetricFormViewModel {
         return false
     }
 
-    func deleteTapped(using context: ModelContext) {
-        guard case .edit(let existing) = mode else { return }
+    @discardableResult
+    func deleteTapped(using context: ModelContext) -> Bool {
+        guard case .edit(let existing) = mode else { return false }
         do {
             try metricsManager.archiveMetric(id: existing.id, using: context)
-        } catch {}
+            return true
+        } catch {
+            SQLogger.shared.log(
+                "Failed to delete metric: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            presentError("Error deleting metric: \(error.localizedDescription)")
+            return false
+        }
     }
 
     // MARK: - Private
+
+    private func presentError(_ message: String) {
+        SQAppState.shared.hub.alertEvents.send(
+            .present(.init(SQError.standard(withDescription: message)))
+        )
+    }
 
     private func setupRowViewModels() {
         let titleRow = RowViewModel(

@@ -607,11 +607,26 @@ final class SQDashboardController: SQDashboardInterface {
                 sleepSchedule: sleepSchedule
             )
         }()
-        let dailyCheckInStats = try? await metricEntryManager.getDailyCheckInStats(
-            for: targetDate,
-            period: checkInPeriod,
-            context: context
-        )
+
+        let dailyCheckInStats: SQDailyCheckInStats?
+        do {
+            dailyCheckInStats = try await metricEntryManager.getDailyCheckInStats(
+                for: targetDate,
+                period: checkInPeriod,
+                context: context
+            )
+        } catch {
+            SQLogger.shared.log(
+                "Failed to load daily check-in data: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            state.hub.alertEvents.send(
+                .present(.init(SQError.standard(withDescription: "Error loading check-in data: \(error.localizedDescription)")))
+            )
+            return
+        }
+
         state.displayDailyCheckInSheet(
             with: dailyCheckInStats,
             for: targetDate,

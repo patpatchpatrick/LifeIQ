@@ -76,8 +76,12 @@ final class SQMetricsListController {
             hasLoadedUI = true
             subscribeToMetricEvents()
         } catch {
-            // If you have eventHub alerts on this screen, emit one here
-            // For now, fail silently
+            SQLogger.shared.log(
+                "Failed to load metrics list: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            presentError("Error loading metrics: \(error.localizedDescription)")
         }
     }
 
@@ -118,7 +122,12 @@ final class SQMetricsListController {
             self.trackedCount = built.filter(\.isTracked).count
             searchTextUpdated(searchText)
         } catch {
-            // swallow for now, or emit alert
+            SQLogger.shared.log(
+                "Failed to refresh metrics list: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            presentError("Error refreshing metrics: \(error.localizedDescription)")
         }
     }
 
@@ -191,7 +200,12 @@ final class SQMetricsListController {
 
             reloadRows(using: context)
         } catch {
-            // emit alert if desired
+            SQLogger.shared.log(
+                "Failed to update metric tracking: \(error.localizedDescription)",
+                .error,
+                context: .dailyCheckIn
+            )
+            presentError("Error updating metric tracking: \(error.localizedDescription)")
         }
     }
 
@@ -209,6 +223,12 @@ final class SQMetricsListController {
         } else {
             collapsedSectionIds.insert(sectionId)
         }
+    }
+
+    private func presentError(_ message: String) {
+        hub.alertEvents.send(
+            .present(.init(SQError.standard(withDescription: message)))
+        )
     }
 
     private func buildSections(from rows: [SQMetricsListItemViewModel]) -> [SQMetricsListSectionViewModel] {

@@ -32,9 +32,15 @@ struct SQError: SQUserFacingError {
     }
 }
 
-protocol SQUserFacingError: Error {
+protocol SQUserFacingError: LocalizedError {
     var userFacingTitle: String { get }
     var userFacingDescription: String { get }
+}
+
+extension SQUserFacingError {
+    var errorDescription: String? {
+        userFacingDescription
+    }
 }
 
 enum SQNetworkError: SQUserFacingError {
