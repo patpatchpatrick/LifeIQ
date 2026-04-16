@@ -44,7 +44,6 @@
 		F61592372EF3637000223A63 /* SQAlertHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592362EF3636C00223A63 /* SQAlertHost.swift */; };
 		F61592392EF3637E00223A63 /* SQAlertCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61592382EF3637C00223A63 /* SQAlertCard.swift */; };
 		F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B22EF3726E00223A63 /* SQSettingsView.swift */; };
-		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 		F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B52EF3728300223A63 /* SQSettingsController.swift */; };
 		F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */; };
 		F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B92EF3741800223A63 /* SettingsState.swift */; };
@@ -53,9 +52,6 @@
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
 		F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C42EF37A8900223A63 /* SQToastState.swift */; };
 		F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */; };
-		F6B710012FA1100100A1B710 /* SQAppBlockerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */; };
-		F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */; };
-		F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F61593CD2EF4BD8200223A63 /* Beast Fitness Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F61593FB2EF4BEC100223A63 /* SQWatchInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593FA2EF4BEBE00223A63 /* SQWatchInterface.swift */; };
 		F6268AE02F6B823000087C0F /* SQProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268ADE2F6B823000087C0F /* SQProfileController.swift */; };
 		F6268AE32F6B824700087C0F /* SQProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6268AE12F6B824700087C0F /* SQProfileView.swift */; };
@@ -175,10 +171,6 @@
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
 		F6A3120E2EF60E4500A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120D2EF60E4500A2E5F7 /* BeastFitnessCore */; };
 		F6A312102EF60F2D00A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A3120F2EF60F2D00A2E5F7 /* BeastFitnessCore */; };
-		F6AEB6112F880089008D747B /* SQAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */; };
-		F6B700012FA0000100A1B700 /* remote_config_defaults.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6B700022FA0000100A1B700 /* remote_config_defaults.plist */; };
-		F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */; };
-		F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */; };
 		F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A401112EF5B920002BC997 /* SQLaunchManager.swift */; };
 		F6A8488A2CB3241900B09AD5 /* SQFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848892CB3241900B09AD5 /* SQFont.swift */; };
 		F6A8488C2CB3246900B09AD5 /* Font+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */; };
@@ -212,6 +204,7 @@
 		F6ABC3F92EDFBEF700D3E679 /* SQDailyCheckInSessionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */; };
 		F6ABC4EA2EDFCE5500D3E679 /* Int+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */; };
 		F6AEB6052F880088008D747B /* AmplitudeUnified in Frameworks */ = {isa = PBXBuildFile; productRef = F6AEB6042F880088008D747B /* AmplitudeUnified */; };
+		F6AEB6112F880089008D747B /* SQAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */; };
 		F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */; };
 		F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */; };
 		F6B2B0052F92430100A1B001 /* SQBodyBatteryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */; };
@@ -219,6 +212,11 @@
 		F6B2B0092F92440100A1B001 /* SQHealthKitManager+HeartRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */; };
 		F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */; };
 		F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */; };
+		F6B700012FA0000100A1B700 /* remote_config_defaults.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6B700022FA0000100A1B700 /* remote_config_defaults.plist */; };
+		F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */; };
+		F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */; };
+		F6B710012FA1100100A1B710 /* SQAppBlockerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */; };
+		F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */; };
 		F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */; };
 		F6C2E03B2F74580C00A44D72 /* SQMetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */; };
 		F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */; };
@@ -298,6 +296,7 @@
 		F7E4002A2FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400292FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift */; };
 		F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */; };
 		F7E4002E2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */; };
+		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -309,13 +308,6 @@
 			remoteInfo = "Beast Fitness Watch Watch App";
 		};
 		F61593E42EF4BD8400223A63 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F61593CC2EF4BD8200223A63;
-			remoteInfo = "Beast Fitness Watch Watch App";
-		};
-		F61593EB2EF4BD8400223A63 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F657E29D2CA50D7C00E72926 /* Project object */;
 			proxyType = 1;
@@ -337,20 +329,6 @@
 			remoteInfo = BeastFitness;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		F61593F12EF4BD8400223A63 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				F61593ED2EF4BD8400223A63 /* Beast Fitness Watch Watch App.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F60196492F4D412C0029A5B9 /* SQDashboardSectionGroupViewModel+Mocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardSectionGroupViewModel+Mocks.swift"; sourceTree = "<group>"; };
@@ -390,7 +368,6 @@
 		F61592362EF3636C00223A63 /* SQAlertHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertHost.swift; sourceTree = "<group>"; };
 		F61592382EF3637C00223A63 /* SQAlertCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertCard.swift; sourceTree = "<group>"; };
 		F61593B22EF3726E00223A63 /* SQSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsView.swift; sourceTree = "<group>"; };
-		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 		F61593B52EF3728300223A63 /* SQSettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsController.swift; sourceTree = "<group>"; };
 		F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsRowViewModel.swift; sourceTree = "<group>"; };
 		F61593B92EF3741800223A63 /* SettingsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsState.swift; sourceTree = "<group>"; };
@@ -519,11 +496,6 @@
 		F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailController.swift; sourceTree = "<group>"; };
 		F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailView.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
-		F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAnalyticsManager.swift; sourceTree = "<group>"; };
-		F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerState.swift; sourceTree = "<group>"; };
-		F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerHost.swift; sourceTree = "<group>"; };
-		F6B700022FA0000100A1B700 /* remote_config_defaults.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = remote_config_defaults.plist; sourceTree = "<group>"; };
-		F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRemoteConfigManager.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
 		F6A8488B2CB3246900B09AD5 /* Font+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Extensions.swift"; sourceTree = "<group>"; };
@@ -554,6 +526,7 @@
 		F6ABC3F62EDFBED500D3E679 /* SQDailyCheckInStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInStats.swift; sourceTree = "<group>"; };
 		F6ABC3F82EDFBEF200D3E679 /* SQDailyCheckInSessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDailyCheckInSessionEntity.swift; sourceTree = "<group>"; };
 		F6ABC4E92EDFCE5200D3E679 /* Int+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Extensions.swift"; sourceTree = "<group>"; };
+		F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAnalyticsManager.swift; sourceTree = "<group>"; };
 		F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardBodyBatteryRowView.swift; sourceTree = "<group>"; };
 		F6B2B0062F92430100A1B001 /* SQBodyBatteryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQBodyBatteryService.swift; sourceTree = "<group>"; };
@@ -561,6 +534,10 @@
 		F6B2B00A2F92440100A1B001 /* SQHealthKitManager+HeartRate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQHealthKitManager+HeartRate.swift"; sourceTree = "<group>"; };
 		F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowViewModel.swift; sourceTree = "<group>"; };
 		F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowView.swift; sourceTree = "<group>"; };
+		F6B700022FA0000100A1B700 /* remote_config_defaults.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = remote_config_defaults.plist; sourceTree = "<group>"; };
+		F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRemoteConfigManager.swift; sourceTree = "<group>"; };
+		F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerState.swift; sourceTree = "<group>"; };
+		F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerHost.swift; sourceTree = "<group>"; };
 		F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailController.swift; sourceTree = "<group>"; };
 		F6C2E0392F74580C00A44D72 /* SQMetricDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailView.swift; sourceTree = "<group>"; };
 		F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQUserState.swift; sourceTree = "<group>"; };
@@ -640,6 +617,7 @@
 		F7E400292FFE200100AA4001 /* SQSleepHoursWorkoutPerformanceInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepHoursWorkoutPerformanceInsightEvaluator.swift; sourceTree = "<group>"; };
 		F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightInfoSheetView.swift; sourceTree = "<group>"; };
 		F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricComparisonInsightEvaluator.swift; sourceTree = "<group>"; };
+		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -938,14 +916,6 @@
 				F61593C72EF4B81A00223A63 /* SQOverlayRootView.swift */,
 			);
 			path = OverlayWindow;
-			sourceTree = "<group>";
-		};
-		F81A10032FFF100100AA1001 /* Launch */ = {
-			isa = PBXGroup;
-			children = (
-				F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */,
-			);
-			path = Launch;
 			sourceTree = "<group>";
 		};
 		F61593F92EF4BEB800223A63 /* WatchInterface */ = {
@@ -1773,6 +1743,14 @@
 			path = Insights;
 			sourceTree = "<group>";
 		};
+		F81A10032FFF100100AA1001 /* Launch */ = {
+			isa = PBXGroup;
+			children = (
+				F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */,
+			);
+			path = Launch;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1853,12 +1831,10 @@
 				F657E2A12CA50D7C00E72926 /* Sources */,
 				F657E2A22CA50D7C00E72926 /* Frameworks */,
 				F657E2A32CA50D7C00E72926 /* Resources */,
-				F61593F12EF4BD8400223A63 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				F61593EC2EF4BD8400223A63 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F61592082EEE18D800223A63 /* Firestore */,
@@ -2348,11 +2324,6 @@
 			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
 			targetProxy = F61593E42EF4BD8400223A63 /* PBXContainerItemProxy */;
 		};
-		F61593EC2EF4BD8400223A63 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F61593CC2EF4BD8200223A63 /* Beast Fitness Watch Watch App */;
-			targetProxy = F61593EB2EF4BD8400223A63 /* PBXContainerItemProxy */;
-		};
 		F657E2B72CA50D7E00E72926 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F657E2A42CA50D7C00E72926 /* BeastFitness */;
@@ -2668,7 +2639,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2708,7 +2679,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3223,7 +3194,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3264,7 +3235,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3305,7 +3276,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3346,7 +3317,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3746,15 +3717,15 @@
 			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
 		};
-		F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseRemoteConfig;
-		};
 		F6AEB6042F880088008D747B /* AmplitudeUnified */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F6AEB6032F880088008D747B /* XCRemoteSwiftPackageReference "AmplitudeUnified-Swift" */;
 			productName = AmplitudeUnified;
+		};
+		F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -306,24 +306,17 @@ final class SQDailyCheckInViewModel: Identifiable {
     }
 
     private func periodWindowSubtitle(for period: SQMetricPeriod, targetDate: Date) -> String? {
-        let schedule = userState.loggedInUser?.sleepSchedule ?? .onboardingDefault
-        let calendar = Calendar.current
-        let startOfTargetDay = calendar.startOfDay(for: targetDate)
-
         switch period {
         case .evening:
-            let eveningStart = schedule.wakeTime.date(on: startOfTargetDay, calendar: calendar)
-            let nextWakeDate = schedule.wakeTime.date(
-                on: calendar.date(byAdding: .day, value: 1, to: startOfTargetDay) ?? startOfTargetDay,
-                calendar: calendar
-            )
-            return "Applies to the period between \(eveningStart.formattedString(with: .timeOnly)) and \(nextWakeDate.formattedString(with: .timeOnly))."
-
+            if Calendar.current.isDateInToday(targetDate) {
+                return "Applies to this evening's check-in."
+            }
+            return "Applies to the evening check-in for \(targetDate.formattedString(with: .medium))."
         case .morning:
-            let wakeDate = schedule.wakeTime.date(on: startOfTargetDay, calendar: calendar)
-            let eveningStart = schedule.sleepTime.date(on: startOfTargetDay, calendar: calendar)
-            return "Applies to the period between \(wakeDate.formattedString(with: .timeOnly)) and \(eveningStart.formattedString(with: .timeOnly))."
-
+            if Calendar.current.isDateInToday(targetDate) {
+                return "Applies to this morning's check-in."
+            }
+            return "Applies to the morning check-in for \(targetDate.formattedString(with: .medium))."
         case .unknown:
             return nil
         }
