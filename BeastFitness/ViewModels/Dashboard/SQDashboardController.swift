@@ -167,12 +167,36 @@ final class SQDashboardController: SQDashboardInterface {
         hub.userEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .loginStateChanged, .profileUpdated:
+            case .loginStateChanged:
                 self.refreshRuntimeControlCtaViewModel()
-                if self.hasLoadedUI {
-                    self.refreshFromGlobalContext()
-                } else if let modelContext = SQAppState.shared.modelContext {
-                    Task { await self.loadUI(for: modelContext) }
+                if let modelContext = SQAppState.shared.modelContext {
+                    Task {
+                        await self.loadUI(
+                            for: modelContext,
+                            shouldForceRefresh: true,
+                            showLoadingState: true
+                        )
+                    }
+                }
+            case .profileUpdated:
+                self.refreshRuntimeControlCtaViewModel()
+                guard !self.isLoadUIInProgress else {
+                    SQLogger.shared.log(
+                        "Profile update received during dashboard load. Skipping duplicate dashboard refresh.",
+                        .debug,
+                        context: .dashboard
+                    )
+                    return
+                }
+
+                if let modelContext = SQAppState.shared.modelContext {
+                    Task {
+                        await self.loadUI(
+                            for: modelContext,
+                            shouldForceRefresh: true,
+                            showLoadingState: true
+                        )
+                    }
                 }
             }
         }.store(in: &cancellables)

@@ -312,12 +312,6 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         try rebuildSessions(from: buckets, userId: user.id, resetExisting: true, in: context)
 
         updateLastSyncDate(to: .now, context: context)
-        Task { @MainActor in
-            SQFirestoreMetricsManager.shared.recordReads(
-                buckets.count,
-                operation: "Full sync metric buckets"
-            )
-        }
         return buckets.count
     }
 
@@ -331,12 +325,6 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         try rebuildSessions(from: buckets, userId: user.id, resetExisting: false, in: context)
 
         updateLastSyncDate(to: .now, context: context)
-        Task { @MainActor in
-            SQFirestoreMetricsManager.shared.recordReads(
-                buckets.count,
-                operation: "Incremental sync metric buckets"
-            )
-        }
         return buckets.count
     }
 
