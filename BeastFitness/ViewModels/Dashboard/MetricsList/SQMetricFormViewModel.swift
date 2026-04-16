@@ -98,7 +98,7 @@ final class SQMetricFormViewModel {
         }
     }
     /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
-    var selectedPeriods: Set<SQMetricPeriod> = [.morning]
+    var selectedPeriods: Set<SQMetricPeriod> = [.morning, .evening]
     /// When both periods are selected, whether this is a single shared daily value or independent per-session.
     var isSingleDailyValue: Bool = false {
         didSet {
@@ -151,7 +151,7 @@ final class SQMetricFormViewModel {
         var initialSelectedGroup: String = SQDefaultGroup.general.rawValue
         var initialSelectedGoalStyle: SQMetricGoalStyle = .justTrack
         var initialSelectedBodyBatteryEffect: SQMetricBodyBatteryEffect = .none
-        var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning]
+        var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning, .evening]
         var initialIsSingleDailyValue: Bool = false
 
         // Title field

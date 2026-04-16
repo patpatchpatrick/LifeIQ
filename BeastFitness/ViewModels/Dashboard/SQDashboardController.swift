@@ -1873,7 +1873,9 @@ final class SQDashboardController: SQDashboardInterface {
             sectionGroups.append(dailyStatsGroup)
         }
 
-        if sleepAccessStatus == .unavailable {
+        if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
+            sectionGroups.append(sleepGroup)
+        } else if sleepAccessStatus == .unavailable {
             sectionGroups.append(
                 buildHealthAccessWarningSectionGroup(
                     id: "sleep",
@@ -1882,13 +1884,11 @@ final class SQDashboardController: SQDashboardInterface {
                     subsectionTitle: "Sleep Access Required",
                     icon: .bedDoubleFill,
                     message: "Sleep data is currently unavailable",
-                    detail: "Open the Health app > Profile > Apps > LifeIQ, enable Sleep, then come back here and tap to retry.",
+                    detail: "Sleep may not be tracked yet, or Health access may not be enabled. If you use sleep data in LifeIQ, check Health app > Profile > Apps > LifeIQ, enable Sleep, then come back here and tap to retry.",
                     context: context,
                     defaultPriority: 30
                 )
             )
-        } else if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
-            sectionGroups.append(sleepGroup)
         } else {
             sectionGroups.append(
                 buildHealthAccessWarningSectionGroup(
@@ -1905,7 +1905,10 @@ final class SQDashboardController: SQDashboardInterface {
             )
         }
 
-        if heartAccessStatus == .unavailable {
+        let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange)
+        if let heartGroup {
+            sectionGroups.append(heartGroup)
+        } else if heartAccessStatus == .unavailable {
             sectionGroups.append(
                 buildHealthAccessWarningSectionGroup(
                     id: "heart",
@@ -1914,13 +1917,11 @@ final class SQDashboardController: SQDashboardInterface {
                     subsectionTitle: "Heart Access Required",
                     icon: .heart,
                     message: "Heart data is currently unavailable",
-                    detail: "Open the Health app > Profile > Apps > LifeIQ, enable Heart Rate, then come back here and tap to retry.",
+                    detail: "Heart data may not be tracked yet, or Health access may not be enabled. If you use heart data in LifeIQ, check Health app > Profile > Apps > LifeIQ, enable Heart Rate and Resting Heart Rate, then come back here and tap to retry.",
                     context: context,
                     defaultPriority: 40
                 )
             )
-        } else if let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange) {
-            sectionGroups.append(heartGroup)
         } else {
             sectionGroups.append(
                 buildHealthAccessWarningSectionGroup(
