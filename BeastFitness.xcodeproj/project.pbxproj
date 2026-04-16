@@ -198,6 +198,7 @@
 		F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2602EDE54C900D3E679 /* FirebaseAnalytics */; };
 		F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2622EDE54C900D3E679 /* FirebaseAuth */; };
 		F6ABC2652EDE54C900D3E679 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F6ABC2642EDE54C900D3E679 /* FirebaseFirestore */; };
+		F7C100022FA2100100C10002 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = F7C100032FA2100100C10003 /* FirebaseCrashlytics */; };
 		F6ABC3572EDE58B900D3E679 /* SQRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3562EDE58B800D3E679 /* SQRouter.swift */; };
 		F6ABC35D2EDE594C00D3E679 /* SQNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC35C2EDE594900D3E679 /* SQNetworkService.swift */; };
 		F6ABC3622EDE654600D3E679 /* SQUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6ABC3612EDE654500D3E679 /* SQUser.swift */; };
@@ -662,6 +663,7 @@
 				F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */,
 				F6ABC2612EDE54C900D3E679 /* FirebaseAnalytics in Frameworks */,
 				F6ABC2632EDE54C900D3E679 /* FirebaseAuth in Frameworks */,
+				F7C100022FA2100100C10002 /* FirebaseCrashlytics in Frameworks */,
 				F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */,
 				F6AEB6052F880088008D747B /* AmplitudeUnified in Frameworks */,
 				F694AAE32F78862A00453F0A /* GoogleSignInSwift in Frameworks */,
@@ -1853,6 +1855,7 @@
 				F657E2A12CA50D7C00E72926 /* Sources */,
 				F657E2A22CA50D7C00E72926 /* Frameworks */,
 				F657E2A32CA50D7C00E72926 /* Resources */,
+				F7C100012FA2100100C10001 /* Upload dSYMs to Crashlytics */,
 			);
 			buildRules = (
 			);
@@ -1862,6 +1865,9 @@
 				F61592082EEE18D800223A63 /* Firestore */,
 			);
 			name = BeastFitness;
+			packageProductDependencies = (
+				F7C100032FA2100100C10003 /* FirebaseCrashlytics */,
+			);
 			productName = BeastFitness;
 			productReference = F657E2A52CA50D7C00E72926 /* BeastFitness.app */;
 			productType = "com.apple.product-type.application";
@@ -2024,6 +2030,35 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F7C100012FA2100100C10001 /* Upload dSYMs to Crashlytics */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(SRCROOT)/BeastFitness/Resources/GooglePList/GoogleService-Info-Prod.plist",
+				"$(SRCROOT)/BeastFitness/Resources/GooglePList/GoogleService-Info-Staging.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			name = "Upload dSYMs to Crashlytics";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "case \"${LIFEIQ_FIREBASE_ENVIRONMENT}\" in\n  staging)\n    GOOGLE_SERVICE_PLIST=\"${SRCROOT}/BeastFitness/Resources/GooglePList/GoogleService-Info-Staging.plist\"\n    ;;\n  prod)\n    GOOGLE_SERVICE_PLIST=\"${SRCROOT}/BeastFitness/Resources/GooglePList/GoogleService-Info-Prod.plist\"\n    ;;\n  *)\n    echo \"error: Unknown LIFEIQ_FIREBASE_ENVIRONMENT '${LIFEIQ_FIREBASE_ENVIRONMENT}' for Crashlytics dSYM upload.\"\n    exit 1\n    ;;\nesac\n\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\" -gsp \"${GOOGLE_SERVICE_PLIST}\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F61593C92EF4BD8200223A63 /* Sources */ = {
@@ -2647,6 +2682,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -2687,6 +2723,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -3201,6 +3238,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -3242,6 +3280,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -3283,6 +3322,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -3324,6 +3364,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = 5FXSK8WB9T;
 				ENABLE_PREVIEWS = YES;
@@ -3740,6 +3781,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		F7C100032FA2100100C10003 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6ABC25F2EDE54C900D3E679 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		F6AEB6042F880088008D747B /* AmplitudeUnified */ = {
 			isa = XCSwiftPackageProductDependency;

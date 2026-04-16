@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import FirebaseCore
+import FirebaseCrashlytics
 import GoogleSignIn
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -51,6 +52,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
 
         FirebaseApp.configure(options: options)
+        Crashlytics.crashlytics().log("Firebase configured for \(environment.rawValue)")
     }
 
     private func configuredFirebaseEnvironment() -> FirebaseEnvironment {

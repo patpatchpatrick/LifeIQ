@@ -1432,6 +1432,7 @@ final class SQDashboardController: SQDashboardInterface {
             initialTimeRange: state.selectedTimeRange,
             focusedPhase: focusedPhase
         )
+        
         state.hub.domainEvents.send(.pushDashboardRoute(.sleepPhaseTrends(controller: controller)))
     }
 
