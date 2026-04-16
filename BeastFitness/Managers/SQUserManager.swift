@@ -65,7 +65,7 @@ final class SQUserManager: SQUserManaging {
         }
 
         if let modelContext = SQAppState.shared.modelContext {
-            await SQWorkoutManager.shared.syncWorkoutsIfNeeded(context: modelContext, force: true)
+            await SQWorkoutManager.shared.syncWorkoutsIfNeeded(context: modelContext)
         }
     }
 

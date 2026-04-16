@@ -638,9 +638,9 @@ final class SQDashboardController: SQDashboardInterface {
             icon: .init(symbol: .heart),
             priority: .high,
             badgeTitle: "Health Access",
-            title: "Enable Health access for full dashboard insights",
-            subtitle: "Open the Health app > Profile > Apps > LifeIQ and enable the data types you want to use. Then come back here and retry.",
-            actionText: "Tap to retry",
+            title: "Connect Health data for full dashboard insights",
+            subtitle: "LifeIQ couldn't find Health data yet. Check Health app > Profile > Apps > LifeIQ to confirm access, or make sure your device or apps are recording workouts, sleep, heart, or VO2 max data.",
+            actionText: "Retry",
             onTap: { [weak self] in
                 guard let self else { return }
                 Task { @MainActor in

@@ -93,6 +93,8 @@ extension SQNetworkService {
     /// Attempts to decode documents as various known array types
     /// Uses compactMap to gracefully skip documents that don't conform to the current model
     private static func decodeTypedArray<T>(_ documents: [QueryDocumentSnapshot], inferredFrom type: T.Type) throws -> Any {
+        let billedReadCount = max(documents.count, 1)
+
         // Try to decode as array of SQDailyCheckInStats (most common case)
         if type is [SQDailyCheckInStats].Type {
             let decoded = documents.compactMap { document -> SQDailyCheckInStats? in
@@ -112,7 +114,7 @@ extension SQNetworkService {
             // Track Firestore reads
             Task { @MainActor in
                 SQFirestoreMetricsManager.shared.recordReads(
-                    documents.count,
+                    billedReadCount,
                     operation: "Fetch daily check-ins"
                 )
             }
@@ -137,7 +139,7 @@ extension SQNetworkService {
             // Track Firestore reads
             Task { @MainActor in
                 SQFirestoreMetricsManager.shared.recordReads(
-                    documents.count,
+                    billedReadCount,
                     operation: "Fetch metric definitions"
                 )
             }
@@ -161,7 +163,7 @@ extension SQNetworkService {
 
             Task { @MainActor in
                 SQFirestoreMetricsManager.shared.recordReads(
-                    documents.count,
+                    billedReadCount,
                     operation: "Fetch metric entry buckets"
                 )
             }
@@ -185,7 +187,7 @@ extension SQNetworkService {
 
             Task { @MainActor in
                 SQFirestoreMetricsManager.shared.recordReads(
-                    documents.count,
+                    billedReadCount,
                     operation: "Fetch workout metadata"
                 )
             }
