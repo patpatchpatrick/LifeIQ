@@ -69,9 +69,8 @@ struct SQDashboardView: View {
                     }
 
                     Text("LifeIQ")
-                        .font(SQFont.brandFont(.wordmark))
+                        .sqFont(.title2)
                         .sqForegroundColor(.textPrimary)
-                        .tracking(1.2)
                         .opacity(SQColor.isDarkMode ? 0.24 : 0.18)
                 }
                 .padding(.horizontal, 16)

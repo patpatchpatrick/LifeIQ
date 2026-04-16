@@ -11,24 +11,6 @@ import SwiftUI
 struct SQFont {
     let type: FontType
 
-    enum BrandFontType {
-        case wordmark
-
-        fileprivate var pointSize: CGFloat {
-            switch self {
-            case .wordmark:
-                return 18
-            }
-        }
-
-        fileprivate var postScriptName: String {
-            switch self {
-            case .wordmark:
-                return "Sora-SemiBold"
-            }
-        }
-    }
-
     var uiFont: UIFont {
         switch type {
         case .titleNav, .title1, .title2, .title3, .title4,
@@ -41,15 +23,6 @@ struct SQFont {
     }
 
     var font: Font { Font(uiFont) }
-
-    static func brandUIFont(_ type: BrandFontType) -> UIFont {
-        UIFont(name: type.postScriptName, size: type.pointSize)
-        ?? .systemFont(ofSize: type.pointSize, weight: .semibold)
-    }
-
-    static func brandFont(_ type: BrandFontType) -> Font {
-        .init(brandUIFont(type))
-    }
 
     enum FontType: CaseIterable {
         case titleNav
