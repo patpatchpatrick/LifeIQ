@@ -24,16 +24,19 @@ enum SQHealthKitDashboardDomain {
 actor SQHealthKitAuthorizationCoordinator {
     private var inFlightAuthorizationTask: Task<Void, Error>?
 
-    func authorize(healthStore: HKHealthStore, sampleTypes: Set<HKSampleType>) async throws {
+    func authorize(
+        healthStore: HKHealthStore,
+        shareTypes: Set<HKSampleType>,
+        readTypes: Set<HKObjectType>
+    ) async throws {
         if let inFlightAuthorizationTask {
             try await inFlightAuthorizationTask.value
             return
         }
 
         let task = Task { @MainActor in
-            let readTypes = Set(sampleTypes.map { $0 as HKObjectType })
             try await healthStore.requestAuthorization(
-                toShare: sampleTypes,
+                toShare: shareTypes,
                 read: readTypes
             )
         }
@@ -116,8 +119,9 @@ final class SQHealthKitManager: SQHealthKitManaging {
     static let shared = SQHealthKitManager()
     static let healthStore: HKHealthStore = HKHealthStore()
     private static let authorizationCoordinator = SQHealthKitAuthorizationCoordinator()
-    
-    let allTypesToReadWrite: Set<HKSampleType> = [
+
+    /// Keep this list aligned with the HealthKit privacy strings in the project settings.
+    private let allTypesToRead: Set<HKObjectType> = [
         HKObjectType.workoutType(),
         HKSeriesType.workoutRoute(),
 
@@ -130,6 +134,10 @@ final class SQHealthKitManager: SQHealthKitManaging {
         HKQuantityType(.vo2Max),
 
         HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+    ]
+
+    private let allTypesToWrite: Set<HKSampleType> = [
+        HKObjectType.workoutType()
     ]
 
     
@@ -165,10 +173,6 @@ final class SQHealthKitManager: SQHealthKitManaging {
         ]
     }
 
-    private var dashboardAuthorizationSampleTypes: Set<HKSampleType> {
-        Set(dashboardAuthorizationTypes.compactMap { $0 as? HKSampleType })
-    }
-
     private func authorizationTypes(for domain: SQHealthKitDashboardDomain) -> Set<HKObjectType> {
         switch domain {
         case .workouts:
@@ -187,14 +191,11 @@ final class SQHealthKitManager: SQHealthKitManaging {
         }
     }
 
-    private func authorizationSampleTypes(for domain: SQHealthKitDashboardDomain) -> Set<HKSampleType> {
-        Set(authorizationTypes(for: domain).compactMap { $0 as? HKSampleType })
-    }
-
     func requestAppAuthorization() async throws {
         try await Self.authorizationCoordinator.authorize(
             healthStore: Self.healthStore,
-            sampleTypes: allTypesToReadWrite
+            shareTypes: allTypesToWrite,
+            readTypes: allTypesToRead
         )
     }
 
@@ -378,7 +379,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
         do {
             let requestStatus = try await Self.healthStore.statusForAuthorizationRequest(
-                toShare: dashboardAuthorizationSampleTypes,
+                toShare: [],
                 read: dashboardAuthorizationTypes
             )
 
@@ -415,7 +416,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
         do {
             let requestStatus = try await Self.healthStore.statusForAuthorizationRequest(
-                toShare: authorizationSampleTypes(for: domain),
+                toShare: [],
                 read: domainTypes
             )
 
