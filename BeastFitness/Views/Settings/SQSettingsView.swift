@@ -15,14 +15,9 @@ struct SQSettingsView: View {
             VStack(alignment: .leading, spacing: .SQSpace.l) {
                 heroCard
 
-                VStack(alignment: .leading, spacing: .SQSpace.s) {
-                    Text("Preferences")
-                        .sqFont(.headerSmall)
-                        .sqForegroundColor(.textSecondary)
-                        .padding(.horizontal, .SQSpace.xs)
-
-                    ForEach(controller.rows, id: \.id) { row in
-                        SQSettingsRowView(row: row)
+                VStack(alignment: .leading, spacing: .SQSpace.xl) {
+                    ForEach(controller.sections, id: \.id) { section in
+                        SQSettingsSectionView(section: section)
                     }
                 }
             }
@@ -58,7 +53,7 @@ struct SQSettingsView: View {
                     .sqFont(.title3)
                     .sqForegroundColor(.textPrimary)
 
-                Text("Manage preferences, hidden workouts, and advanced options.")
+                Text("Manage your account, app preferences, and support options.")
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .multilineTextAlignment(.center)
@@ -84,6 +79,23 @@ struct SQSettingsView: View {
     }
 }
 
+private struct SQSettingsSectionView: View {
+    let section: SQSettingsSectionViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            Text(section.title)
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+                .padding(.horizontal, .SQSpace.xs)
+
+            ForEach(section.rows, id: \.id) { row in
+                SQSettingsRowView(row: row)
+            }
+        }
+    }
+}
+
 private struct SQSettingsRowView: View {
     let row: SQSettingsRowViewModel
 
@@ -100,7 +112,7 @@ private struct SQSettingsRowView: View {
                     .overlay(
                         SQImageView(
                             image: .init(
-                                symbol: row.showsChevron ? .gear : .checkmarkCircle,
+                                symbol: row.icon,
                                 symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
                             )
                         )

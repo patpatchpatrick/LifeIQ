@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import Observation
 
 @MainActor
@@ -21,7 +22,7 @@ final class SQSettingsController: SQSettingsInterface {
     private let dashboardLayoutService: SQDashboardLayoutServicing
     private let userManager: SQUserManaging
     var navigationPath = NavigationPath()
-    private(set) var rows: [SQSettingsRowViewModel] = []
+    private(set) var sections: [SQSettingsSectionViewModel] = []
 
     @MainActor
     static let `default` = SQSettingsController(state: SQAppState.shared.settingsState)
@@ -38,17 +39,19 @@ final class SQSettingsController: SQSettingsInterface {
         self.userState = userState
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         self.userManager = userManager
-        buildRows()
+        buildSections()
     }
 
-    private func buildRows() {
-        var builtRows: [SQSettingsRowViewModel] = []
+    private func buildSections() {
+        var builtSections: [SQSettingsSectionViewModel] = []
+        var accountRows: [SQSettingsRowViewModel] = []
 
         if userState.isLoggedIn {
-            builtRows.append(
+            accountRows.append(
                 .init(
                     title: "Edit profile stats",
                     subtitle: "Update your name, height, weight, birth date, and sleep schedule.",
+                    icon: .personCircle,
                     showsChevron: true
                 ) { [weak self] in
                     guard let self else { return }
@@ -58,10 +61,11 @@ final class SQSettingsController: SQSettingsInterface {
                 }
             )
 
-            builtRows.append(
+            accountRows.append(
                 .init(
                     title: "Delete account",
                     subtitle: "Permanently delete your LifeIQ account and app-managed data.",
+                    icon: .trash,
                     showsChevron: true
                 ) { [weak self] in
                     guard let self else { return }
@@ -72,10 +76,15 @@ final class SQSettingsController: SQSettingsInterface {
             )
         }
 
-        builtRows.append(contentsOf: [
+        if !accountRows.isEmpty {
+            builtSections.append(.init(title: "Account", rows: accountRows))
+        }
+
+        let preferenceRows: [SQSettingsRowViewModel] = [
             .init(
                 title: "Units",
                 subtitle: "Currently \(currentUnitSystem.title).",
+                icon: .sliderHorizontal3,
                 showsChevron: true
             ) { [weak self] in
                 SQAnalyticsManager.shared.track(.settingsActionTaken(action: "units"))
@@ -85,6 +94,7 @@ final class SQSettingsController: SQSettingsInterface {
             .init(
                 title: "Customize dashboard",
                 subtitle: "Reorder, hide, and restore dashboard sections and subsections.",
+                icon: .circleGrid2x2,
                 showsChevron: true
             ) { [weak self] in
                 guard let self else { return }
@@ -105,14 +115,41 @@ final class SQSettingsController: SQSettingsInterface {
             .init(
                 title: "Clear hidden workouts",
                 subtitle: "Restore workouts you previously hid so they appear in the app again.",
+                icon: .eye,
                 showsChevron: false
             ) { [weak self] in
                 SQAnalyticsManager.shared.track(.settingsActionTaken(action: "clear_hidden_workouts"))
                 self?.confirmClearHiddenWorkouts()
             }
-        ])
+        ]
 
-        rows = builtRows
+        builtSections.append(.init(title: "App Preferences", rows: preferenceRows))
+
+        let supportRows: [SQSettingsRowViewModel] = [
+            .init(
+                title: "Help & Support",
+                subtitle: "Email support@lifeiq.app if you need help or want to report a bug.",
+                icon: .questionmarkCircle,
+                showsChevron: true
+            ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "help_support"))
+                self?.openSupportEmail()
+            },
+
+            .init(
+                title: "Send Feedback",
+                subtitle: "We'd love to hear what's working, what's not, and what you'd like to see next.",
+                icon: .faceSmiling,
+                showsChevron: true
+            ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "send_feedback"))
+                self?.openFeedbackEmail()
+            }
+        ]
+
+        builtSections.append(.init(title: "Support", rows: supportRows))
+
+        sections = builtSections
     }
 
     private var currentUnitSystem: SQUnitSystem {
@@ -207,11 +244,76 @@ final class SQSettingsController: SQSettingsInterface {
             }
         }
 
-        buildRows()
+        buildSections()
         if unitSystem != previousUnitSystem {
             SQAnalyticsManager.shared.track(.unitsChanged(unitSystem: unitSystem))
         }
         state.hub.toastEvents.send(.present(.init(title: "Units updated", style: .success)))
+    }
+
+    private func openSupportEmail() {
+        openEmail(
+            subject: "LifeIQ Support",
+            fallbackTitle: "Contact Support",
+            fallbackSubtitle: "Email \(SQError.supportEmail) and we’ll get back to you as soon as we can.",
+            copiedToastTitle: "Support email copied"
+        )
+    }
+
+    private func openFeedbackEmail() {
+        openEmail(
+            subject: "LifeIQ Feedback",
+            fallbackTitle: "Send Feedback",
+            fallbackSubtitle: "Email \(SQError.supportEmail) to share feedback, report friction, or request a feature.",
+            copiedToastTitle: "Feedback email copied"
+        )
+    }
+
+    private func openEmail(
+        subject: String,
+        fallbackTitle: String,
+        fallbackSubtitle: String,
+        copiedToastTitle: String
+    ) {
+        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        guard let url = URL(string: "mailto:\(SQError.supportEmail)?subject=\(encodedSubject)") else {
+            presentEmailFallback(
+                title: fallbackTitle,
+                subtitle: fallbackSubtitle,
+                copiedToastTitle: copiedToastTitle
+            )
+            return
+        }
+
+        guard UIApplication.shared.canOpenURL(url) else {
+            presentEmailFallback(
+                title: fallbackTitle,
+                subtitle: fallbackSubtitle,
+                copiedToastTitle: copiedToastTitle
+            )
+            return
+        }
+
+        UIApplication.shared.open(url)
+    }
+
+    private func presentEmailFallback(
+        title: String,
+        subtitle: String,
+        copiedToastTitle: String
+    ) {
+        let alert = SQAlertViewModel(
+            title: title,
+            subtitle: subtitle,
+            primary: .init(title: "Copy Email") { [weak self] _ in
+                UIPasteboard.general.string = SQError.supportEmail
+                self?.state.hub.toastEvents.send(.present(.init(title: copiedToastTitle, style: .success)))
+            },
+            secondary: .init(title: "Close", role: .cancel),
+            canDismiss: true
+        )
+
+        state.hub.alertEvents.send(.present(alert))
     }
 
     func popView() {
