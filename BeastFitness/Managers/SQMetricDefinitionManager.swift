@@ -296,18 +296,21 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             context: context
         )
 
-        // Metric definitions are synced separately from metric entries because they live in a
-        // different Firestore collection and have their own incremental sync timestamps.
-        await bootstrapPushIfNeeded(context: context)
-
         guard let lastSync = getMetricSyncDate(context: context) else {
             SQLogger.shared.log("[Sync - Metric Definition] Never synced, running full sync", .info, context: .metricsManager)
             let count = try await performFullMetricSync(context: context)
+            // Important: reconcile from Firestore before any bootstrap push so a freshly
+            // seeded local catalog on a new install cannot overwrite the user's cloud-tracked
+            // metric order / enabled state.
+            await bootstrapPushIfNeeded(context: context)
             SyncResult.fullSyncCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
             return .fullSyncCompleted
         }
 
         let count = try await performIncrementalMetricSync(lastSync: lastSync, context: context)
+        // After an incremental pull the local catalog reflects the latest remote state, so any
+        // one-time bootstrap push is safe to run without clobbering cloud-tracked settings.
+        await bootstrapPushIfNeeded(context: context)
         SyncResult.refreshCompleted.logSync(documentCount: count, service: "Metric Definition", context: .metricsManager)
         return .refreshCompleted
     }
