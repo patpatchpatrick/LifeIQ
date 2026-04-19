@@ -21,6 +21,7 @@ protocol SQDashboardInterface {
 
 @Observable @MainActor
 final class SQDashboardController: SQDashboardInterface {
+    private static let automaticForegroundRefreshMinimumInterval: TimeInterval = 180
     private var cancellables = Set<AnyCancellable>()
     var state: DashboardStating
     let navState: NavigationStating
@@ -40,6 +41,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var isLoadUIInProgress = false
     private var pendingForcedRefresh = false
     private var pendingRefreshShowsLoadingState = false
+    private var lastSuccessfulLoadAt: Date?
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
     private var lastLoadedSectionGroups: [SQDashboardSectionGroupViewModel] = []
@@ -222,6 +224,26 @@ final class SQDashboardController: SQDashboardInterface {
         refreshRuntimeControlCtaViewModel()
         guard let modelContext = SQAppState.shared.modelContext else { return }
         Task { await self.refreshUI(for: modelContext) }
+    }
+
+    var shouldAutoRefreshOnForeground: Bool {
+        guard hasLoadedUI else { return true }
+        guard !isLoadUIInProgress else { return false }
+        guard let lastSuccessfulLoadAt else { return true }
+        return Date().timeIntervalSince(lastSuccessfulLoadAt) >= Self.automaticForegroundRefreshMinimumInterval
+    }
+
+    func refreshUIIfNeededOnForeground(for context: ModelContext) async {
+        guard shouldAutoRefreshOnForeground else {
+            SQLogger.shared.log(
+                "Skipping automatic foreground dashboard refresh because the last successful load is still fresh.",
+                .debug,
+                context: .dashboard
+            )
+            return
+        }
+
+        await refreshUI(for: context)
     }
 
     private func applyLayoutCustomizationToCurrentState() {
@@ -543,6 +565,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
             lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
+            lastSuccessfulLoadAt = .now
 
             if showLoadingState {
                 state.setLoading(false)

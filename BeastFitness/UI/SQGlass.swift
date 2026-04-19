@@ -69,6 +69,7 @@ enum SQGlassLevel {
 private struct SQGlassSurfaceModifier: ViewModifier {
     let level: SQGlassLevel
     let cornerRadius: CGFloat
+    let showsShadow: Bool
 
     func body(content: Content) -> some View {
         content
@@ -107,10 +108,10 @@ private struct SQGlassSurfaceModifier: ViewModifier {
                     .allowsHitTesting(false)
             }
             .shadow(
-                color: Color.black.opacity(level.shadowOpacity),
-                radius: level.shadowRadius,
+                color: Color.black.opacity(showsShadow ? level.shadowOpacity : 0),
+                radius: showsShadow ? level.shadowRadius : 0,
                 x: 0,
-                y: level.shadowYOffset
+                y: showsShadow ? level.shadowYOffset : 0
             )
     }
 }
@@ -118,9 +119,10 @@ private struct SQGlassSurfaceModifier: ViewModifier {
 extension View {
     func sqGlassSurface(
         level: SQGlassLevel,
-        cornerRadius: CGFloat = .SQCornerRadius.xl
+        cornerRadius: CGFloat = .SQCornerRadius.xl,
+        showsShadow: Bool = true
     ) -> some View {
-        modifier(SQGlassSurfaceModifier(level: level, cornerRadius: cornerRadius))
+        modifier(SQGlassSurfaceModifier(level: level, cornerRadius: cornerRadius, showsShadow: showsShadow))
     }
 }
 

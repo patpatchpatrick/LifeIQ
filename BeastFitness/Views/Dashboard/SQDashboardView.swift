@@ -162,7 +162,7 @@ struct SQDashboardView: View {
                     guard shouldRefreshOnNextActive, controller.hasLoadedUI else { return }
                     shouldRefreshOnNextActive = false
                     Task {
-                        await controller.refreshUI(for: modelContext)
+                        await controller.refreshUIIfNeededOnForeground(for: modelContext)
                     }
                 case .inactive:
                     break

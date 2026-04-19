@@ -105,7 +105,7 @@ struct SQDashboardSubsection<Content: View>: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
     }
 }
 

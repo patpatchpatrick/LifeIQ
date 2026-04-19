@@ -103,7 +103,7 @@ struct SQDailyCheckInRow: View {
     var borderedContainer: some View {
         vertStack
             .padding(.SQSpace.l)
-            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
     }
     
     var body: some View {
