@@ -153,6 +153,25 @@ struct SQLoginView: View {
     }
 
     @ViewBuilder
+    private var privacyPolicyFooter: some View {
+        VStack(spacing: .SQSpace.xs) {
+            Text("Review how LifeIQ handles your data before continuing.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+
+            Button(action: controller.openPrivacyPolicy) {
+                Text("Privacy Policy")
+                    .underline()
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textPrimary)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
     private var bottomAction: some View {
         VStack(spacing: .SQSpace.s) {
             SQButton(
@@ -166,8 +185,10 @@ struct SQLoginView: View {
             .padding(.horizontal, .SQSpace.xl)
 
             alternateModeRow
-                .padding(.bottom, .SQSpace.l)
+
+            privacyPolicyFooter
         }
+        .padding(.bottom, .SQSpace.l)
     }
 
     var body: some View {

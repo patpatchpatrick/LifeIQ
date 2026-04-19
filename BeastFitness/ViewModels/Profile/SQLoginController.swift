@@ -128,6 +128,14 @@ protocol SQLoginInterface: AnyObject {
         Task { await loginOrSignUpWithGoogle() }
     }
 
+    func openPrivacyPolicy() {
+        hub.domainEvents.send(
+            .pushDashboardRoute(
+                .webContent(title: "Privacy Policy", urlString: SQAppLinks.privacyPolicyURLString)
+            )
+        )
+    }
+
     private func loginOrSignUp() async {
         guard !isLoading else { return }
         guard inputsAreValid() else { return }

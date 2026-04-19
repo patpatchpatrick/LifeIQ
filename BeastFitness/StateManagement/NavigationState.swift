@@ -94,6 +94,7 @@ struct SQNavRoute {
         case workoutSummary(controller: SQWorkoutSummaryController)
         case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
         case insightDetail(model: SQInsight)
+        case webContent(title: String, urlString: String)
         case lifeScoreDetail(controller: SQLifeScoreDetailController)
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
@@ -122,6 +123,8 @@ struct SQNavRoute {
                 return "workoutInsightDetail-\(controller.id)"
             case .insightDetail(let model):
                 return "insightDetail-\(model.id)"
+            case .webContent(let title, let urlString):
+                return "webContent-\(title)-\(urlString)"
             case .lifeScoreDetail(let controller):
                 return "lifeScoreDetail-\(controller.id)"
             case .editWorkout(let workout):
@@ -161,6 +164,8 @@ struct SQNavRoute {
             switch self {
             case .insightDetail:
                 return [.medium, .large]
+            case .webContent:
+                return [.large]
             default:
                 return nil
             }

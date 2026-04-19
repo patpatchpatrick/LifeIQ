@@ -26,6 +26,8 @@ struct SQRootTabView: View {
             SQWorkoutInsightDetailView(controller: controller)
         case .insightDetail(model: let model):
             SQInsightInfoSheetView(model: model)
+        case .webContent(title: let title, urlString: let urlString):
+            SQWebContentView(title: title, urlString: urlString)
         case .lifeScoreDetail(let controller):
             SQLifeScoreDetailView(controller: controller)
         case .editWorkout(workout: let workout):

@@ -137,6 +137,20 @@ final class SQSettingsController: SQSettingsInterface {
             },
 
             .init(
+                title: "Privacy Policy",
+                subtitle: "Review how LifeIQ collects, uses, shares, and deletes your data.",
+                icon: .infoCircle,
+                showsChevron: true
+            ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "privacy_policy"))
+                self?.state.hub.domainEvents.send(
+                    .pushDashboardRoute(
+                        .webContent(title: "Privacy Policy", urlString: SQAppLinks.privacyPolicyURLString)
+                    )
+                )
+            },
+
+            .init(
                 title: "Send Feedback",
                 subtitle: "We'd love to hear what's working, what's not, and what you'd like to see next.",
                 icon: .faceSmiling,
@@ -315,7 +329,6 @@ final class SQSettingsController: SQSettingsInterface {
 
         state.hub.alertEvents.send(.present(alert))
     }
-
     func popView() {
         if !navigationPath.isEmpty {
             navigationPath.removeLast()
