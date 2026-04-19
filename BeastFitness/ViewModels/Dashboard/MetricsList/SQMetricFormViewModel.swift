@@ -609,6 +609,8 @@ final class SQMetricFormViewModel {
 
     var healthKitHelperText: String {
         switch currentHealthKitType {
+        case .bodyMass:
+            return "Reads daily weight samples from Apple Health when LifeIQ does not have a value. If write is on, LifeIQ also syncs your saved weight back to Apple Health."
         case .dietaryWater:
             return "Reads daily water totals from Apple Health when you have not logged Hydration in LifeIQ. If write is on, LifeIQ also keeps its daily total in sync."
         case .dietaryCaffeine:
@@ -1632,6 +1634,7 @@ final class SQMetricFormViewModel {
     private static var healthKitDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
             .init(title: displayName(for: SQMetricHealthKitType.none)),
+            .init(title: displayName(for: SQMetricHealthKitType.bodyMass)),
             .init(title: displayName(for: SQMetricHealthKitType.dietaryWater)),
             .init(title: displayName(for: SQMetricHealthKitType.dietaryCaffeine)),
             .init(title: displayName(for: SQMetricHealthKitType.numberOfAlcoholicBeverages)),
@@ -1733,6 +1736,7 @@ final class SQMetricFormViewModel {
     private static func healthKitType(fromDisplayName title: String) -> SQMetricHealthKitType {
         [
             SQMetricHealthKitType.none,
+            .bodyMass,
             .dietaryWater,
             .dietaryCaffeine,
             .numberOfAlcoholicBeverages,

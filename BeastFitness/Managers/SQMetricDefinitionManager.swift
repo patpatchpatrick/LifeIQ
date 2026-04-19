@@ -697,7 +697,8 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds,
                   group: SQDefaultGroup.stats.rawValue, min: 0, max: 1000, step: 0.1,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
-                  emoji: "⚖️", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
+                  emoji: "⚖️", periods: both, isSingleDailyValue: true, goalStyle: .justTrack,
+                  healthKitType: .bodyMass, healthKitReadEnabled: true, healthKitWriteEnabled: true),
 
             // MARK: Mind & Body — independent morning + evening values
             .init(id: SQMetricId.mood, title: "Mood", kind: .scale, unit: .none,

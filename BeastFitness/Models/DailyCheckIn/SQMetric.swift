@@ -40,6 +40,7 @@ enum SQMetricValueMode: String, Codable, CaseIterable, UnfrozenEnum {
 
 enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
     case none
+    case bodyMass
     case dietaryWater
     case dietaryCaffeine
     case numberOfAlcoholicBeverages
@@ -49,6 +50,8 @@ enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
         switch self {
         case .none:
             return "None"
+        case .bodyMass:
+            return "Weight"
         case .dietaryWater:
             return "Water"
         case .dietaryCaffeine:
@@ -62,6 +65,8 @@ enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
 
     var recommendedUnit: SQMetricUnit {
         switch self {
+        case .bodyMass:
+            return .pounds
         case .dietaryWater:
             return .milliliters
         case .dietaryCaffeine:
@@ -75,7 +80,7 @@ enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
 
     var supportsWrite: Bool {
         switch self {
-        case .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
+        case .bodyMass, .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
             return true
         case .none, .unknown:
             return false
@@ -84,12 +89,28 @@ enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
 
     var requiresSingleDailyValue: Bool {
         switch self {
-        case .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
+        case .bodyMass, .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
             return true
         case .none, .unknown:
             return false
         }
     }
+
+    var aggregationStyle: SQMetricHealthKitAggregationStyle {
+        switch self {
+        case .bodyMass:
+            return .latestSamplePerDay
+        case .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
+            return .cumulativeDailyTotal
+        case .none, .unknown:
+            return .cumulativeDailyTotal
+        }
+    }
+}
+
+enum SQMetricHealthKitAggregationStyle {
+    case cumulativeDailyTotal
+    case latestSamplePerDay
 }
 
 struct SQMetricScaleQuantityMapping: Codable, Hashable {

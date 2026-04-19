@@ -154,6 +154,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
         HKQuantityType(.heartRate),
         HKQuantityType(.restingHeartRate),
         HKQuantityType(.vo2Max),
+        HKQuantityType(.bodyMass),
         HKQuantityType(.dietaryCaffeine),
         HKQuantityType(.dietaryWater),
         HKQuantityType(.numberOfAlcoholicBeverages),
@@ -163,6 +164,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
     private let allTypesToWrite: Set<HKSampleType> = [
         HKObjectType.workoutType(),
+        HKQuantityType(.bodyMass),
         HKQuantityType(.dietaryCaffeine),
         HKQuantityType(.dietaryWater),
         HKQuantityType(.numberOfAlcoholicBeverages)
@@ -670,14 +672,25 @@ extension SQHealthKitManager {
                 continue
             }
 
-            let dayTotals = try await fetchDailyCumulativeTotals(
-                quantityType: quantityType,
-                unit: unit,
-                from: startDate,
-                to: endDate
-            )
+            let dayValues: [String: Double]
+            switch healthKitType.aggregationStyle {
+            case .cumulativeDailyTotal:
+                dayValues = try await fetchDailyCumulativeTotals(
+                    quantityType: quantityType,
+                    unit: unit,
+                    from: startDate,
+                    to: endDate
+                )
+            case .latestSamplePerDay:
+                dayValues = try await fetchDailyLatestValues(
+                    quantityType: quantityType,
+                    unit: unit,
+                    from: startDate,
+                    to: endDate
+                )
+            }
 
-            for (anchorDayKey, totalValue) in dayTotals where totalValue > 0 {
+            for (anchorDayKey, totalValue) in dayValues where totalValue > 0 {
                 for definition in linkedDefinitions {
                     guard let loggedValue = healthKitLoggedValue(for: definition, quantityValue: Float(totalValue)) else {
                         continue
@@ -702,37 +715,43 @@ extension SQHealthKitManager {
         guard
             let quantityType = quantityType(for: definition.healthKitType),
             let unit = canonicalHKUnit(for: definition.healthKitType),
-            let desiredQuantityValue = canonicalQuantityValue(for: definition, loggedValue: loggedValue)
+            let desiredQuantityValue = healthKitQuantityValue(for: definition, loggedValue: loggedValue)
         else {
             return
         }
 
         try await requestAppAuthorization()
 
-        let syncIdentifier = metricSyncIdentifier(metricId: metricId, date: date)
-        let existingAuthoredTotal = try await authoredMetricTotal(
-            quantityType: quantityType,
-            unit: unit,
-            syncIdentifier: syncIdentifier
-        )
-        let allDayTotal = try await totalQuantityValue(
-            quantityType: quantityType,
-            unit: unit,
-            date: date
-        )
-        let externalTotal = max(0, allDayTotal - existingAuthoredTotal)
-        let desiredAuthoredTotal = max(0, Double(desiredQuantityValue) - externalTotal)
-
         try await deleteMetricSample(for: definition, metricId: metricId, date: date)
 
-        guard desiredAuthoredTotal > 0 else { return }
+        let syncIdentifier = metricSyncIdentifier(metricId: metricId, date: date)
+        let quantityToSave: Double
+        switch definition.healthKitType.aggregationStyle {
+        case .cumulativeDailyTotal:
+            let existingAuthoredTotal = try await authoredMetricTotal(
+                quantityType: quantityType,
+                unit: unit,
+                syncIdentifier: syncIdentifier
+            )
+            let allDayTotal = try await totalQuantityValue(
+                quantityType: quantityType,
+                unit: unit,
+                date: date
+            )
+            let externalTotal = max(0, allDayTotal - existingAuthoredTotal)
+            quantityToSave = max(0, Double(desiredQuantityValue) - externalTotal)
+        case .latestSamplePerDay:
+            quantityToSave = Double(desiredQuantityValue)
+        }
+
+        guard quantityToSave > 0 else { return }
 
         let sampleDate = canonicalMetricSampleDate(for: date)
         let metadata: [String: Any] = [
             HKMetadataKeySyncIdentifier: syncIdentifier,
             HKMetadataKeySyncVersion: 1
         ]
-        let quantity = HKQuantity(unit: unit, doubleValue: desiredAuthoredTotal)
+        let quantity = HKQuantity(unit: unit, doubleValue: quantityToSave)
         let sample = HKQuantitySample(
             type: quantityType,
             quantity: quantity,
@@ -770,30 +789,37 @@ extension SQHealthKitManager {
         for definition: SQMetricDefinition,
         quantityValue: Float
     ) -> SQMetricLoggedValue? {
+        guard let metricQuantityValue = metricQuantityValue(
+            fromHealthKitQuantityValue: quantityValue,
+            for: definition
+        ) else {
+            return nil
+        }
+
         switch definition.defaultEntryMode {
         case .scale:
-            guard let scaleValue = definition.scaleValue(forQuantityValue: quantityValue) else {
+            guard let scaleValue = definition.scaleValue(forQuantityValue: metricQuantityValue) else {
                 return nil
             }
             return .init(
                 enteredMode: .scale,
                 rawValue: scaleValue,
                 scaleValue: scaleValue,
-                quantityValue: quantityValue
+                quantityValue: metricQuantityValue
             )
         case .quantity:
             return .init(
                 enteredMode: .quantity,
-                rawValue: quantityValue,
-                scaleValue: definition.scaleValue(forQuantityValue: quantityValue),
-                quantityValue: quantityValue
+                rawValue: metricQuantityValue,
+                scaleValue: definition.scaleValue(forQuantityValue: metricQuantityValue),
+                quantityValue: metricQuantityValue
             )
         case .unknown:
             return .init(
                 enteredMode: .quantity,
-                rawValue: quantityValue,
-                scaleValue: definition.scaleValue(forQuantityValue: quantityValue),
-                quantityValue: quantityValue
+                rawValue: metricQuantityValue,
+                scaleValue: definition.scaleValue(forQuantityValue: metricQuantityValue),
+                quantityValue: metricQuantityValue
             )
         }
     }
@@ -814,6 +840,32 @@ extension SQHealthKitManager {
         }
     }
 
+    private func healthKitQuantityValue(
+        for definition: SQMetricDefinition,
+        loggedValue: SQMetricLoggedValue
+    ) -> Float? {
+        guard let metricQuantityValue = canonicalQuantityValue(for: definition, loggedValue: loggedValue) else {
+            return nil
+        }
+
+        guard let healthKitMetricUnit = canonicalHealthKitMetricUnit(for: definition.healthKitType) else {
+            return metricQuantityValue
+        }
+
+        return definition.quantityUnit.convert(metricQuantityValue, to: healthKitMetricUnit) ?? metricQuantityValue
+    }
+
+    private func metricQuantityValue(
+        fromHealthKitQuantityValue value: Float,
+        for definition: SQMetricDefinition
+    ) -> Float? {
+        guard let healthKitMetricUnit = canonicalHealthKitMetricUnit(for: definition.healthKitType) else {
+            return value
+        }
+
+        return healthKitMetricUnit.convert(value, to: definition.quantityUnit) ?? value
+    }
+
     private func quantityType(for type: SQMetricHealthKitType) -> HKQuantityType? {
         guard let identifier = quantityTypeIdentifier(for: type) else { return nil }
         return HKObjectType.quantityType(forIdentifier: identifier)
@@ -821,6 +873,8 @@ extension SQHealthKitManager {
 
     private func quantityTypeIdentifier(for type: SQMetricHealthKitType) -> HKQuantityTypeIdentifier? {
         switch type {
+        case .bodyMass:
+            return .bodyMass
         case .dietaryWater:
             return .dietaryWater
         case .dietaryCaffeine:
@@ -834,12 +888,29 @@ extension SQHealthKitManager {
 
     private func canonicalHKUnit(for type: SQMetricHealthKitType) -> HKUnit? {
         switch type {
+        case .bodyMass:
+            return SQUnit.kilogram.hkUnit
         case .dietaryWater:
             return SQUnit.milliliter.hkUnit
         case .dietaryCaffeine:
             return SQUnit.milligram.hkUnit
         case .numberOfAlcoholicBeverages:
             return SQUnit.count.hkUnit
+        case .none, .unknown:
+            return nil
+        }
+    }
+
+    private func canonicalHealthKitMetricUnit(for type: SQMetricHealthKitType) -> SQMetricUnit? {
+        switch type {
+        case .bodyMass:
+            return .kilograms
+        case .dietaryWater:
+            return .milliliters
+        case .dietaryCaffeine:
+            return .milligrams
+        case .numberOfAlcoholicBeverages:
+            return .count
         case .none, .unknown:
             return nil
         }
@@ -901,6 +972,44 @@ extension SQHealthKitManager {
         }
     }
 
+    private func fetchDailyLatestValues(
+        quantityType: HKQuantityType,
+        unit: HKUnit,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [String: Double] {
+        let calendar = Calendar.current
+        let queryStart = calendar.startOfDay(for: startDate)
+        guard let queryEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) else {
+            return [:]
+        }
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: queryStart,
+            end: queryEnd,
+            options: [.strictStartDate]
+        )
+
+        let sortDescriptors = [
+            NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        ]
+
+        let samples = try await quantitySamples(
+            quantityType: quantityType,
+            predicate: predicate,
+            sortDescriptors: sortDescriptors
+        )
+
+        var latestValues = [String: Double]()
+        for sample in samples {
+            let dayKey = sample.endDate.anchorDayKey()
+            guard latestValues[dayKey] == nil else { continue }
+            latestValues[dayKey] = sample.quantity.doubleValue(for: unit)
+        }
+
+        return latestValues
+    }
+
     private func totalQuantityValue(
         quantityType: HKQuantityType,
         unit: HKUnit,
@@ -958,14 +1067,15 @@ extension SQHealthKitManager {
 
     private func quantitySamples(
         quantityType: HKQuantityType,
-        predicate: NSPredicate?
+        predicate: NSPredicate?,
+        sortDescriptors: [NSSortDescriptor]? = nil
     ) async throws -> [HKQuantitySample] {
         try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: quantityType,
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
-                sortDescriptors: nil
+                sortDescriptors: sortDescriptors
             ) { _, samples, error in
                 if let error {
                     continuation.resume(throwing: error)
