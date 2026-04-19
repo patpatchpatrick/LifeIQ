@@ -43,6 +43,9 @@ extension SQLocalPersistenceSchemaV1 {
         var targetRangeMaxValue: Float?
         /// Stored as raw value for forward-compatible enum decoding.
         var bodyBatteryEffectRaw: String = SQMetricBodyBatteryEffect.none.rawValue
+        var scaleQuantityUnitRaw: String?
+        var scaleQuantityMaxValue: Float?
+        var scaleQuantityLabelOverride: String?
 
         // Optional: for Firestore sync later
         var updatedAt: Date
@@ -69,6 +72,7 @@ extension SQLocalPersistenceSchemaV1 {
             targetRangeMin: Float? = nil,
             targetRangeMax: Float? = nil,
             bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
+            scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
             isDefault: Bool = false
         ) {
             self.storageId = Self.makeStorageId(userId: userId, metricId: id)
@@ -93,6 +97,9 @@ extension SQLocalPersistenceSchemaV1 {
             self.targetRangeMinValue = targetRangeMin
             self.targetRangeMaxValue = targetRangeMax
             self.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
+            self.scaleQuantityUnitRaw = scaleQuantityMapping?.quantityUnit.rawValue
+            self.scaleQuantityMaxValue = scaleQuantityMapping?.maxQuantityValue
+            self.scaleQuantityLabelOverride = scaleQuantityMapping?.quantityLabelOverride
             self.isDefault = isDefault
             self.updatedAt = .now
         }
@@ -110,6 +117,22 @@ extension SQMetricDefinitionEntity {
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }
     var bodyBatteryEffect: SQMetricBodyBatteryEffect { SQMetricBodyBatteryEffect(unfrozenRawValue: bodyBatteryEffectRaw) }
+    var scaleQuantityMapping: SQMetricScaleQuantityMapping? {
+        guard
+            let unitRaw = scaleQuantityUnitRaw,
+            let maxValue = scaleQuantityMaxValue
+        else {
+            return nil
+        }
+
+        let unit = SQMetricUnit(unfrozenRawValue: unitRaw)
+        guard unit != .unknown, unit != .none, maxValue > 0 else { return nil }
+        return .init(
+            quantityUnit: unit,
+            maxQuantityValue: maxValue,
+            quantityLabelOverride: scaleQuantityLabelOverride
+        )
+    }
 
     /// Parses `periodRaw` (comma-separated) into a set of periods.
     /// Handles legacy single-value strings ("morning", "evening") and new multi-value strings.
@@ -159,6 +182,7 @@ extension SQMetricDefinitionEntity {
             targetRangeMin: targetRangeMinValue,
             targetRangeMax: targetRangeMaxValue,
             bodyBatteryEffect: bodyBatteryEffect,
+            scaleQuantityMapping: scaleQuantityMapping,
             updatedAt: updatedAt
         )
     }
@@ -185,6 +209,9 @@ extension SQMetricDefinitionEntity {
         targetRangeMinValue = def.targetRangeMin
         targetRangeMaxValue = def.targetRangeMax
         bodyBatteryEffectRaw = def.bodyBatteryEffect.rawValue
+        scaleQuantityUnitRaw = def.scaleQuantityMapping?.quantityUnit.rawValue
+        scaleQuantityMaxValue = def.scaleQuantityMapping?.maxQuantityValue
+        scaleQuantityLabelOverride = def.scaleQuantityMapping?.quantityLabelOverride
         updatedAt = def.updatedAt
     }
 

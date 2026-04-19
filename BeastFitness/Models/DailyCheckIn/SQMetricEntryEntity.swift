@@ -25,8 +25,12 @@ extension SQLocalPersistenceSchemaV1 {
         var timeZoneIdentifier: String
         /// Raw string for `SQMetricPeriod` — stored as String for SwiftData compatibility.
         var periodRaw: String
+        /// Raw string for `SQMetricValueMode` — stored as String for SwiftData compatibility.
+        var enteredModeRaw: String
         /// The value as entered by the user in their configured scale.
         var rawValue: Float
+        var scaleValue: Float?
+        var quantityValue: Float?
         /// `rawValue` normalized to 0–10 for the insight engine.
         var normalizedScore: Float
 
@@ -39,7 +43,10 @@ extension SQLocalPersistenceSchemaV1 {
             self.anchorDayKey = entry.anchorDayKey
             self.timeZoneIdentifier = entry.timeZoneIdentifier
             self.periodRaw = entry.period.rawValue
+            self.enteredModeRaw = entry.enteredMode.rawValue
             self.rawValue = entry.rawValue
+            self.scaleValue = entry.scaleValue
+            self.quantityValue = entry.quantityValue
             self.normalizedScore = entry.normalizedScore
         }
     }
@@ -55,6 +62,7 @@ extension SQMetricEntryEntity {
     }
 
     var period: SQMetricPeriod { SQMetricPeriod(unfrozenRawValue: periodRaw) }
+    var enteredMode: SQMetricValueMode { SQMetricValueMode(unfrozenRawValue: enteredModeRaw) }
 
     func toEntry() -> SQMetricEntry {
         SQMetricEntry(
@@ -64,7 +72,10 @@ extension SQMetricEntryEntity {
             anchorDayKey: anchorDayKey,
             timeZoneIdentifier: timeZoneIdentifier,
             period: period,
+            enteredMode: enteredMode,
             rawValue: rawValue,
+            scaleValue: scaleValue,
+            quantityValue: quantityValue,
             normalizedScore: normalizedScore
         )
     }
@@ -80,7 +91,10 @@ extension SQMetricEntryEntity {
                 predicate: #Predicate { $0.userId == userId && $0.id == id }
             )
             if let existing = try context.fetch(descriptor).first {
+                existing.enteredModeRaw = entry.enteredMode.rawValue
                 existing.rawValue = entry.rawValue
+                existing.scaleValue = entry.scaleValue
+                existing.quantityValue = entry.quantityValue
                 existing.normalizedScore = entry.normalizedScore
                 existing.periodRaw = entry.period.rawValue
                 existing.recordedAt = entry.recordedAt

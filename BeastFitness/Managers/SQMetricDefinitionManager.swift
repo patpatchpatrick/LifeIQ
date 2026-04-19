@@ -32,18 +32,7 @@ protocol SQMetricDefinitionManaging: AnyObject {
     func archiveMetric(id: String, using context: ModelContext) throws
     func setSortOrder(_ sortOrder: Int, for id: String, using context: ModelContext) throws
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws
-    func updateMetric(
-        id: String,
-        title: String,
-        emoji: String?,
-        group: String,
-        goalStyle: SQMetricGoalStyle,
-        targetValue: Float?,
-        targetRangeMin: Float?,
-        targetRangeMax: Float?,
-        bodyBatteryEffect: SQMetricBodyBatteryEffect,
-        using context: ModelContext
-    ) throws
+    func updateMetric(definition: SQMetricDefinition, using context: ModelContext) throws
 
     // Sync
     /// Syncs both the metric catalog and the user's logged metric entry data from Firestore.
@@ -106,6 +95,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMin: def.targetRangeMin,
                         targetRangeMax: def.targetRangeMax,
                         bodyBatteryEffect: def.bodyBatteryEffect,
+                        scaleQuantityMapping: def.scaleQuantityMapping,
                         isDefault: def.isDefault
                     )
                 )
@@ -244,6 +234,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 targetRangeMin: definition.targetRangeMin,
                 targetRangeMax: definition.targetRangeMax,
                 bodyBatteryEffect: definition.bodyBatteryEffect,
+                scaleQuantityMapping: definition.scaleQuantityMapping,
                 isDefault: false
             )
         )
@@ -256,33 +247,15 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         SQLogger.shared.log("Created custom metric: \(definition.id)", .debug, context: .metricsManager)
     }
 
-    func updateMetric(
-        id: String,
-        title: String,
-        emoji: String?,
-        group: String,
-        goalStyle: SQMetricGoalStyle,
-        targetValue: Float?,
-        targetRangeMin: Float?,
-        targetRangeMax: Float?,
-        bodyBatteryEffect: SQMetricBodyBatteryEffect,
-        using context: ModelContext
-    ) throws {
+    func updateMetric(definition: SQMetricDefinition, using context: ModelContext) throws {
         try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
 
-        guard let entity = try fetchEntity(id: id, using: context) else { return }
-        entity.title = title
-        entity.emoji = emoji
-        entity.groupRaw = group
-        entity.goalStyleRaw = goalStyle.rawValue
-        entity.targetValue = targetValue
-        entity.targetRangeMinValue = targetRangeMin
-        entity.targetRangeMaxValue = targetRangeMax
-        entity.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
+        guard let entity = try fetchEntity(id: definition.id, using: context) else { return }
+        entity.apply(definition)
         entity.updatedAt = .now
         try saveContextAndNotify(context)
-        if let updated = metrics.first(where: { $0.id == id }) {
+        if let updated = metrics.first(where: { $0.id == definition.id }) {
             SQAnalyticsManager.shared.track(.metricSaved(action: .edit, definition: updated))
             pushMetricToFirestore(updated)
         }
@@ -554,6 +527,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMin: preset.targetRangeMin,
                         targetRangeMax: preset.targetRangeMax,
                         bodyBatteryEffect: preset.bodyBatteryEffect,
+                        scaleQuantityMapping: preset.scaleQuantityMapping,
                         isDefault: preset.isDefault
                     )
                 )
@@ -575,6 +549,26 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     entity.isDefault = preset.isDefault
                     didChange = true
                 }
+                if entity.kindRaw != preset.kind.rawValue {
+                    entity.kindRaw = preset.kind.rawValue
+                    didChange = true
+                }
+                if entity.unitRaw != preset.unit.rawValue {
+                    entity.unitRaw = preset.unit.rawValue
+                    didChange = true
+                }
+                if entity.minValue != preset.min {
+                    entity.minValue = preset.min
+                    didChange = true
+                }
+                if entity.maxValue != preset.max {
+                    entity.maxValue = preset.max
+                    didChange = true
+                }
+                if entity.stepValue != preset.step {
+                    entity.stepValue = preset.step
+                    didChange = true
+                }
                 if entity.goalStyleRaw != preset.goalStyle.rawValue {
                     entity.goalStyleRaw = preset.goalStyle.rawValue
                     didChange = true
@@ -593,6 +587,18 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 }
                 if entity.bodyBatteryEffectRaw != preset.bodyBatteryEffect.rawValue {
                     entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
+                    didChange = true
+                }
+                if entity.scaleQuantityUnitRaw != preset.scaleQuantityMapping?.quantityUnit.rawValue {
+                    entity.scaleQuantityUnitRaw = preset.scaleQuantityMapping?.quantityUnit.rawValue
+                    didChange = true
+                }
+                if entity.scaleQuantityMaxValue != preset.scaleQuantityMapping?.maxQuantityValue {
+                    entity.scaleQuantityMaxValue = preset.scaleQuantityMapping?.maxQuantityValue
+                    didChange = true
+                }
+                if entity.scaleQuantityLabelOverride != preset.scaleQuantityMapping?.quantityLabelOverride {
+                    entity.scaleQuantityLabelOverride = preset.scaleQuantityMapping?.quantityLabelOverride
                     didChange = true
                 }
                 // Upgrade legacy binary metrics to scale 0–10
@@ -717,7 +723,8 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             .init(id: SQMetricId.hydration, title: "Hydration", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "💧", periods: both, goalStyle: .buildUp, targetValue: 7),
+                  emoji: "💧", periods: both, goalStyle: .buildUp, targetValue: 7,
+                  scaleQuantityMapping: .init(quantityUnit: .milliliters, maxQuantityValue: 3000)),
 
             .init(id: SQMetricId.digestion, title: "Digestion", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
@@ -730,15 +737,17 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   emoji: "🧘", periods: both, goalStyle: .buildUp, targetValue: 1),
 
             // MARK: Vices — independent morning + evening tracking
-            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .scale, unit: .none,
+            .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .number, unit: .count,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🍺", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh),
+                  emoji: "🍺", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
+                  scaleQuantityMapping: .init(quantityUnit: .count, maxQuantityValue: 10, quantityLabelOverride: "drink count")),
 
-            .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .scale, unit: .none,
-                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+            .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .number, unit: .milligrams,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 1000, step: 10,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "☕", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh),
+                  emoji: "☕", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
+                  scaleQuantityMapping: .init(quantityUnit: .milligrams, maxQuantityValue: 200)),
 
             .init(id: SQMetricId.weed, title: "Weed", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
@@ -753,7 +762,8 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             .init(id: SQMetricId.nicotine, title: "Nicotine", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "🚬", periods: both, goalStyle: .avoidIt),
+                  emoji: "🚬", periods: both, goalStyle: .avoidIt,
+                  scaleQuantityMapping: .init(quantityUnit: .count, maxQuantityValue: 10, quantityLabelOverride: "count")),
         ]
     }
 }

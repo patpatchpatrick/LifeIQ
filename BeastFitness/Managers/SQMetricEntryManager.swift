@@ -108,7 +108,21 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         let submissionPeriod = stats.period ?? .morning
         let recordedAt = Date.now
 
-        let entries: [SQMetricEntry] = stats.values.compactMap { metricId, rawValue in
+        let sourceMetricValues: [String: SQMetricLoggedValue]
+        if stats.metricValues.isEmpty {
+            sourceMetricValues = stats.values.mapValues {
+                SQMetricLoggedValue(
+                    enteredMode: .unknown,
+                    rawValue: $0,
+                    scaleValue: nil,
+                    quantityValue: nil
+                )
+            }
+        } else {
+            sourceMetricValues = stats.metricValues
+        }
+
+        let entries: [SQMetricEntry] = sourceMetricValues.compactMap { metricId, loggedValue in
             guard let definition = metricById[metricId] else { return nil }
 
             return SQMetricEntry(
@@ -123,8 +137,16 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                 anchorDayKey: anchorDayKey,
                 timeZoneIdentifier: timeZone.identifier,
                 period: submissionPeriod,
-                rawValue: rawValue,
-                normalizedScore: SQMetricEntry.normalizedScore(for: rawValue, definition: definition)
+                enteredMode: loggedValue.enteredMode == .unknown ? definition.defaultEntryMode : loggedValue.enteredMode,
+                rawValue: loggedValue.rawValue,
+                scaleValue: loggedValue.scaleValue,
+                quantityValue: loggedValue.quantityValue,
+                normalizedScore: SQMetricEntry.normalizedScore(
+                    scaleValue: loggedValue.scaleValue,
+                    quantityValue: loggedValue.quantityValue,
+                    rawValue: loggedValue.rawValue,
+                    definition: definition
+                )
             )
         }
 
@@ -142,7 +164,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             metricIds: formMetricIds,
             period: submissionPeriod,
             singleDailyMetricIds: singleDailyMetricIds,
-            keepMetricIds: Set(stats.values.keys),
+            keepMetricIds: Set(sourceMetricValues.keys),
             in: context
         )
 
@@ -212,10 +234,19 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         )
 
         var values: [String: Float] = [:]
+        var metricValues: [String: SQMetricLoggedValue] = [:]
         for entry in entries {
             let isSingleDaily = metricById[entry.metricId]?.isSingleDailyValue ?? false
             if isSingleDaily || period == nil || entry.period == period {
-                values[entry.metricId] = entry.rawValue
+                let loggedValue = SQMetricLoggedValue(
+                    enteredMode: entry.enteredMode,
+                    rawValue: entry.rawValue,
+                    scaleValue: entry.scaleValue,
+                    quantityValue: entry.quantityValue
+                )
+                let definition = metricById[entry.metricId]
+                values[entry.metricId] = definition.map { loggedValue.value(for: $0) } ?? loggedValue.displayValue
+                metricValues[entry.metricId] = loggedValue
             }
         }
 
@@ -224,6 +255,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                 date: date,
                 period: period,
                 values: values,
+                metricValues: metricValues,
                 notes: note?.content
             )
         )
@@ -241,9 +273,13 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats] {
+        try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
         let userId = localUserId()
         let entries = try SQMetricEntryEntity.getAll(from: startDate, to: endDate, userId: userId, context: context)
         let notes = try SQDailyNoteEntity.getAll(from: startDate, to: endDate, userId: userId, context: context)
+        let metricById = Dictionary(
+            uniqueKeysWithValues: SQMetricDefinitionManager.shared.allMetrics(includeArchived: true).map { ($0.id, $0) }
+        )
 
         var valuesByDay = [String: [String: SQMetricEntry]]()
         for entry in entries {
@@ -265,13 +301,27 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             let dayDate = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey)
             guard let dayDate else { return nil }
 
-            let values = valuesByDay[dayKey, default: [:]].mapValues(\.rawValue)
+            let metricValues = valuesByDay[dayKey, default: [:]].mapValues {
+                SQMetricLoggedValue(
+                    enteredMode: $0.enteredMode,
+                    rawValue: $0.rawValue,
+                    scaleValue: $0.scaleValue,
+                    quantityValue: $0.quantityValue
+                )
+            }
+            let values = metricValues.mapValues { metricId, loggedValue in
+                guard let definition = metricById[metricId] else {
+                    return loggedValue.displayValue
+                }
+                return loggedValue.value(for: definition)
+            }
             guard !values.isEmpty || notesByDay[dayKey] != nil else { return nil }
 
             return SQDailyCheckInStats(
                 date: dayDate,
                 period: nil,
                 values: values,
+                metricValues: metricValues,
                 notes: notesByDay[dayKey]
             )
         }

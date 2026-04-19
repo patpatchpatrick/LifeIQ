@@ -193,7 +193,7 @@ struct SQMetricFormView: View {
                     SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
                 }
             } else {
-                staticRow(label: "Unit", value: viewModel.currentUnit == .none ? "None" : viewModel.currentUnit.rawValue.capitalized)
+                staticRow(label: "Unit", value: viewModel.currentUnit.displayName)
             }
         }
     }
@@ -225,6 +225,46 @@ struct SQMetricFormView: View {
                 staticRow(label: "Min", value: viewModel.currentMin)
                 staticRow(label: "Max", value: viewModel.currentMax)
                 staticRow(label: "Step", value: viewModel.currentStep)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var alternateInputRows: some View {
+        if viewModel.showsScaleQuantityMappingSection {
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                Toggle(isOn: $viewModel.isScaleQuantityMappingEnabled) {
+                    Text(viewModel.scaleQuantitySectionTitle)
+                        .sqFont(.body)
+                        .sqForegroundColor(.textPrimary)
+                }
+                .tint(SQColor.dashboardGlowBlue.color)
+
+                Text(viewModel.scaleQuantityHelperText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+
+            if viewModel.isScaleQuantityMappingEnabled {
+                if viewModel.selectedKind == .scale {
+                    labeledRow(label: "Quantity Unit") {
+                        SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
+                    }
+                }
+
+                labeledRow(label: "Scale Max Quantity") {
+                    SQUITextField(viewModel: viewModel.scaleQuantityMaxField)
+                }
+
+                labeledRow(label: "Visual Label") {
+                    VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                        SQUITextField(viewModel: viewModel.quantityLabelOverrideField)
+
+                        Text("Optional. Example: use canonical unit Count but show “drink count” in the UI.")
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                }
             }
         }
     }
@@ -362,6 +402,7 @@ struct SQMetricFormView: View {
                     kindRow
                     unitRow
                     numericRows
+                    alternateInputRows
                 }
 
                 if viewModel.showsBodyBatteryControls {

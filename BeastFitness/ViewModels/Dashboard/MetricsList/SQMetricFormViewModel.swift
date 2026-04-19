@@ -113,9 +113,17 @@ final class SQMetricFormViewModel {
     let minField: SQUITextFieldViewModel
     let maxField: SQUITextFieldViewModel
     let stepField: SQUITextFieldViewModel
+    let scaleQuantityMaxField: SQUITextFieldViewModel
+    let quantityLabelOverrideField: SQUITextFieldViewModel
     let goalTargetField: SQUITextFieldViewModel
     let goalRangeMinField: SQUITextFieldViewModel
     let goalRangeMaxField: SQUITextFieldViewModel
+
+    var isScaleQuantityMappingEnabled: Bool = false {
+        didSet {
+            calculateValidity()
+        }
+    }
 
     var groupMenuViewModel: SQDropDownMenuViewModel
     var unitMenuViewModel: SQDropDownMenuViewModel
@@ -154,6 +162,7 @@ final class SQMetricFormViewModel {
         var initialSelectedBodyBatteryEffect: SQMetricBodyBatteryEffect = .none
         var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning, .evening]
         var initialIsSingleDailyValue: Bool = false
+        var initialScaleQuantityMapping: SQMetricScaleQuantityMapping? = nil
 
         // Title field
         self.titleField = SQUITextFieldViewModel(
@@ -232,6 +241,30 @@ final class SQMetricFormViewModel {
             errorHandler: { _ in nil }
         )
 
+        self.scaleQuantityMaxField = SQUITextFieldViewModel(
+            placeholder: "200",
+            font: SQFont(type: .body).uiFont,
+            keyboardType: .decimalPad,
+            autocapitalizationType: .none,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .decimal(maxDecimalPlaces: 1),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
+        self.quantityLabelOverrideField = SQUITextFieldViewModel(
+            placeholder: "Optional visual label",
+            font: SQFont(type: .body).uiFont,
+            keyboardType: .default,
+            autocapitalizationType: .sentences,
+            autocorrectionType: .no,
+            selectAllOnFocus: true,
+            textChangeFormatter: .maxLength(24),
+            validationRule: nil,
+            errorHandler: { _ in nil }
+        )
+
         self.goalRangeMinField = SQUITextFieldViewModel(
             placeholder: "Min",
             font: SQFont(type: .body).uiFont,
@@ -274,15 +307,18 @@ final class SQMetricFormViewModel {
             titleField.setText(existing.title)
             emojiField.setText(existing.emoji ?? "")
             initialSelectedKind = existing.kind
-            initialSelectedUnit = existing.unit
+            initialSelectedUnit = existing.scaleQuantityMapping?.quantityUnit ?? existing.unit
             initialSelectedGroup = existing.group
             initialSelectedGoalStyle = existing.goalStyle
             initialSelectedBodyBatteryEffect = existing.bodyBatteryEffect
             initialSelectedPeriods = existing.periods
             initialIsSingleDailyValue = existing.isSingleDailyValue
+            initialScaleQuantityMapping = existing.scaleQuantityMapping
             minField.setText(existing.min.map { Self.formatFloat($0) } ?? "")
             maxField.setText(existing.max.map { Self.formatFloat($0) } ?? "")
             stepField.setText(existing.step.map { Self.formatFloat($0) } ?? "")
+            scaleQuantityMaxField.setText(existing.scaleQuantityMapping.map { Self.formatFloat($0.maxQuantityValue) } ?? "")
+            quantityLabelOverrideField.setText(existing.scaleQuantityMapping?.quantityLabelOverride ?? "")
             goalTargetField.setText(existing.targetValue.map { Self.formatFloat($0) } ?? "")
             goalRangeMinField.setText(existing.targetRangeMin.map { Self.formatFloat($0) } ?? "")
             goalRangeMaxField.setText(existing.targetRangeMax.map { Self.formatFloat($0) } ?? "")
@@ -300,6 +336,7 @@ final class SQMetricFormViewModel {
         selectedBodyBatteryEffect = initialSelectedBodyBatteryEffect
         selectedPeriods = initialSelectedPeriods
         isSingleDailyValue = initialIsSingleDailyValue
+        isScaleQuantityMappingEnabled = initialScaleQuantityMapping != nil
 
         let initialGroupItems = Self.computeAvailableGroups(metricsManager: metricsManager, selectedGroup: initialSelectedGroup)
             .map { SQDropDownMenuViewModel.Item(title: $0) }
@@ -350,8 +387,12 @@ final class SQMetricFormViewModel {
     // MARK: - Computed
 
     var isStructurallyEditable: Bool {
-        if case .create = mode { return true }
-        return false
+        switch mode {
+        case .create:
+            return true
+        case .edit(let existing):
+            return !existing.isPreset
+        }
     }
 
     var navigationTitle: String {
@@ -367,6 +408,30 @@ final class SQMetricFormViewModel {
     /// Whether unit picker should be visible
     var showUnit: Bool {
         selectedKind == .number
+    }
+
+    var showsScaleQuantityMappingSection: Bool {
+        isStructurallyEditable && (selectedKind == .scale || selectedKind == .number)
+    }
+
+    var scaleQuantitySectionTitle: String {
+        switch selectedKind {
+        case .number:
+            return "Allow Scale Input"
+        case .scale:
+            return "Allow Numeric Input"
+        default:
+            return "Alternate Input"
+        }
+    }
+
+    var scaleQuantityHelperText: String {
+        if !isScaleQuantityMappingEnabled {
+            return "Optional. Add a max quantity if this metric should support both a scale and a real-number entry."
+        }
+
+        let unitName = selectedUnit.displayName.lowercased()
+        return "The top of the scale will map to the max \(unitName) value below. Old entries keep the mode they were originally logged in."
     }
 
     var showGoalTargetField: Bool {
@@ -504,12 +569,18 @@ final class SQMetricFormViewModel {
     }
 
     var currentKind: SQMetricKind {
+        if isStructurallyEditable {
+            return selectedKind
+        }
         if case .edit(let def) = mode { return def.kind }
         return selectedKind
     }
 
     var currentUnit: SQMetricUnit {
-        if case .edit(let def) = mode { return def.unit }
+        if isStructurallyEditable {
+            return selectedUnit
+        }
+        if case .edit(let def) = mode { return def.scaleQuantityMapping?.quantityUnit ?? def.unit }
         return selectedUnit
     }
 
@@ -542,19 +613,8 @@ final class SQMetricFormViewModel {
                 try metricsManager.createMetric(definition: definition, using: context)
 
             case .edit(let existing):
-                let emoji = emojiField.text.isEmpty ? nil : emojiField.text
-                try metricsManager.updateMetric(
-                    id: existing.id,
-                    title: titleField.text,
-                    emoji: emoji,
-                    group: selectedGroup,
-                    goalStyle: selectedGoalStyle,
-                    targetValue: resolvedGoalTargetValue,
-                    targetRangeMin: resolvedGoalRangeMin,
-                    targetRangeMax: resolvedGoalRangeMax,
-                    bodyBatteryEffect: selectedBodyBatteryEffect,
-                    using: context
-                )
+                let definition = buildDefinition(existingId: existing.id, isPreset: existing.isPreset, isEnabled: existing.isEnabled, sortOrder: existing.sortOrder, isArchived: existing.isArchived)
+                try metricsManager.updateMetric(definition: definition, using: context)
             }
 
             return true
@@ -672,13 +732,13 @@ final class SQMetricFormViewModel {
 
         var firstError: String? = activeRows.first(where: { !$0.isValid })?.errorMessage()
 
-        if firstError == nil, case .create = mode {
+        if firstError == nil, isStructurallyEditable {
             if selectedPeriods.isEmpty {
                 firstError = "Select at least one check-in period."
             }
         }
 
-        if firstError == nil, case .create = mode {
+        if firstError == nil, isStructurallyEditable {
             switch selectedKind {
             case .scale:
                 let result = validateScaleFieldsDetailed()
@@ -689,6 +749,11 @@ final class SQMetricFormViewModel {
             default:
                 firstError = "Metric type is invalid."
             }
+        }
+
+        if firstError == nil {
+            let result = validateScaleQuantityMappingDetailed()
+            if !result.isValid { firstError = result.message }
         }
 
         if firstError == nil {
@@ -714,6 +779,8 @@ final class SQMetricFormViewModel {
         goalTargetField.delegate = self
         goalRangeMinField.delegate = self
         goalRangeMaxField.delegate = self
+        scaleQuantityMaxField.delegate = self
+        quantityLabelOverrideField.delegate = self
         newGroupField.delegate = self
 
         groupMenuViewModel = SQDropDownMenuViewModel(
@@ -845,13 +912,20 @@ final class SQMetricFormViewModel {
         }
     }
 
-    private func buildDefinition() -> SQMetricDefinition {
+    private func buildDefinition(
+        existingId: String? = nil,
+        isPreset: Bool = false,
+        isEnabled: Bool = true,
+        sortOrder: Int = 0,
+        isArchived: Bool = false
+    ) -> SQMetricDefinition {
         let emoji = emojiField.text.isEmpty ? nil : emojiField.text
+        let mapping = resolvedScaleQuantityMapping
 
         switch selectedKind {
         case .scale:
             return .init(
-                id: SQMetricId.custom(),
+                id: existingId ?? SQMetricId.custom(),
                 title: titleField.text,
                 kind: .scale,
                 unit: .none,
@@ -859,10 +933,10 @@ final class SQMetricFormViewModel {
                 min: Float(minField.text),
                 max: Float(maxField.text),
                 step: Float(stepField.text),
-                isPreset: false,
-                isEnabled: true,
-                sortOrder: 0,
-                isArchived: false,
+                isPreset: isPreset,
+                isEnabled: isEnabled,
+                sortOrder: sortOrder,
+                isArchived: isArchived,
                 emoji: emoji,
                 periods: selectedPeriods,
                 isSingleDailyValue: isSingleDailyValue,
@@ -870,12 +944,13 @@ final class SQMetricFormViewModel {
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
-                bodyBatteryEffect: selectedBodyBatteryEffect
+                bodyBatteryEffect: selectedBodyBatteryEffect,
+                scaleQuantityMapping: mapping
             )
 
         case .number:
             return .init(
-                id: SQMetricId.custom(),
+                id: existingId ?? SQMetricId.custom(),
                 title: titleField.text,
                 kind: .number,
                 unit: selectedUnit,
@@ -883,10 +958,10 @@ final class SQMetricFormViewModel {
                 min: minField.text.isEmpty ? nil : Float(minField.text),
                 max: maxField.text.isEmpty ? nil : Float(maxField.text),
                 step: stepField.text.isEmpty ? nil : Float(stepField.text),
-                isPreset: false,
-                isEnabled: true,
-                sortOrder: 0,
-                isArchived: false,
+                isPreset: isPreset,
+                isEnabled: isEnabled,
+                sortOrder: sortOrder,
+                isArchived: isArchived,
                 emoji: emoji,
                 periods: selectedPeriods,
                 isSingleDailyValue: isSingleDailyValue,
@@ -894,22 +969,23 @@ final class SQMetricFormViewModel {
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
-                bodyBatteryEffect: selectedBodyBatteryEffect
+                bodyBatteryEffect: selectedBodyBatteryEffect,
+                scaleQuantityMapping: mapping
             )
 
         default:
             // .binary and .unknown should never be user-created; fall back to scale
             return .init(
-                id: SQMetricId.custom(),
+                id: existingId ?? SQMetricId.custom(),
                 title: titleField.text,
                 kind: .scale,
                 unit: .none,
                 group: selectedGroup,
                 min: 0, max: 10, step: 1,
-                isPreset: false,
-                isEnabled: true,
-                sortOrder: 0,
-                isArchived: false,
+                isPreset: isPreset,
+                isEnabled: isEnabled,
+                sortOrder: sortOrder,
+                isArchived: isArchived,
                 emoji: emoji,
                 periods: selectedPeriods,
                 isSingleDailyValue: isSingleDailyValue,
@@ -917,7 +993,8 @@ final class SQMetricFormViewModel {
                 targetValue: resolvedGoalTargetValue,
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
-                bodyBatteryEffect: selectedBodyBatteryEffect
+                bodyBatteryEffect: selectedBodyBatteryEffect,
+                scaleQuantityMapping: mapping
             )
         }
     }
@@ -984,6 +1061,32 @@ final class SQMetricFormViewModel {
         case .unknown:
             return (false, "Select a valid goal.")
         }
+    }
+
+    private func validateScaleQuantityMappingDetailed() -> (isValid: Bool, message: String?) {
+        guard showsScaleQuantityMappingSection else { return (true, nil) }
+
+        if case .edit(let existing) = mode,
+           selectedKind != existing.kind,
+           !isScaleQuantityMappingEnabled {
+            return (false, "Switching between scale and number requires a mapping so historical entries keep their original mode.")
+        }
+
+        guard isScaleQuantityMappingEnabled else { return (true, nil) }
+
+        guard selectedUnit != .none && selectedUnit != .unknown else {
+            return (false, "Choose a quantity unit for the alternate input mode.")
+        }
+
+        guard let maxQuantityValue = resolvedScaleQuantityMaxValue else {
+            return (false, "Enter the max quantity that should map to the top of the scale.")
+        }
+
+        guard maxQuantityValue > 0 else {
+            return (false, "Max quantity must be greater than 0.")
+        }
+
+        return (true, nil)
     }
 
     private func validateGoalValueWithinBounds(_ value: Float, label: String) -> (isValid: Bool, message: String?) {
@@ -1102,10 +1205,16 @@ final class SQMetricFormViewModel {
             minField.setText("0")
             maxField.setText("10")
             stepField.setText("1")
+            if !isScaleQuantityMappingEnabled {
+                selectedUnit = .count
+            }
         case .number:
             minField.setText("")
             maxField.setText("")
             stepField.setText("")
+            if selectedUnit == .none || selectedUnit == .unknown {
+                selectedUnit = .count
+            }
         default:
             break
         }
@@ -1113,17 +1222,40 @@ final class SQMetricFormViewModel {
     }
 
     private var metricLowerBound: Float? {
+        if isStructurallyEditable {
+            return Float(minField.text)
+        }
         if case .edit(let def) = mode { return def.min }
         return Float(minField.text)
     }
 
     private var metricUpperBound: Float? {
+        if isStructurallyEditable {
+            return Float(maxField.text)
+        }
         if case .edit(let def) = mode { return def.max }
         return Float(maxField.text)
     }
 
     private var parsedGoalTargetValue: Float? {
         goalTargetField.text.isEmpty ? nil : Float(goalTargetField.text)
+    }
+
+    private var resolvedScaleQuantityMaxValue: Float? {
+        scaleQuantityMaxField.text.isEmpty ? nil : Float(scaleQuantityMaxField.text)
+    }
+
+    private var resolvedScaleQuantityMapping: SQMetricScaleQuantityMapping? {
+        guard isScaleQuantityMappingEnabled, let maxValue = resolvedScaleQuantityMaxValue else { return nil }
+
+        let trimmedLabelOverride = quantityLabelOverrideField.text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return .init(
+            quantityUnit: selectedUnit,
+            maxQuantityValue: maxValue,
+            quantityLabelOverride: trimmedLabelOverride.isEmpty ? nil : trimmedLabelOverride
+        )
     }
 
     private var parsedGoalRangeMin: Float? {
@@ -1204,14 +1336,7 @@ final class SQMetricFormViewModel {
     }
 
     private static func displayName(for unit: SQMetricUnit) -> String {
-        switch unit {
-        case .none:
-            return "None"
-        case .unknown:
-            return "Unknown"
-        default:
-            return unit.rawValue.capitalized
-        }
+        unit.displayName
     }
 
     private static func displayName(for kind: SQMetricKind) -> String {

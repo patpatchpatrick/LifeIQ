@@ -18,12 +18,42 @@ enum SQMetricKind: String, Codable, CaseIterable, UnfrozenEnum {
 
 enum SQMetricUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case none
+    case minutes
     case hours
     case count
+    case milligrams
+    case grams
+    case milliliters
+    case liters
+    case fluidOunces
     case pounds
     case kilograms
     case percent
     case unknown     // Fallback for unrecognized values from Firestore
+}
+
+enum SQMetricValueMode: String, Codable, CaseIterable, UnfrozenEnum {
+    case scale
+    case quantity
+    case unknown
+}
+
+struct SQMetricScaleQuantityMapping: Codable, Hashable {
+    var quantityUnit: SQMetricUnit
+    var maxQuantityValue: Float
+    /// Optional UI-only label when the visual wording should differ from the canonical unit.
+    /// Example: canonical unit `count`, label override "drink count".
+    var quantityLabelOverride: String?
+
+    init(
+        quantityUnit: SQMetricUnit,
+        maxQuantityValue: Float,
+        quantityLabelOverride: String? = nil
+    ) {
+        self.quantityUnit = quantityUnit
+        self.maxQuantityValue = maxQuantityValue
+        self.quantityLabelOverride = quantityLabelOverride
+    }
 }
 
 // MARK: - SQMetricGoalStyle
@@ -109,6 +139,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     /// Optional custom contribution to Body Battery. This is aggressively capped
     /// inside the scoring service so many custom metrics cannot overwhelm the score.
     var bodyBatteryEffect: SQMetricBodyBatteryEffect
+    /// Optional linear mapping between the metric's scale range and a real quantity.
+    /// This allows a metric to be entered as either a scale or a number while preserving
+    /// canonical quantity units for import/export and downstream analysis.
+    var scaleQuantityMapping: SQMetricScaleQuantityMapping?
     var updatedAt: Date                 // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
@@ -134,6 +168,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMin: Float? = nil,
         targetRangeMax: Float? = nil,
         bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
+        scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -157,6 +192,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.targetRangeMin = targetRangeMin
         self.targetRangeMax = targetRangeMax
         self.bodyBatteryEffect = bodyBatteryEffect
+        self.scaleQuantityMapping = scaleQuantityMapping
         self.updatedAt = updatedAt
     }
 
@@ -183,6 +219,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMin    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMin)
         targetRangeMax    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMax)
         bodyBatteryEffect = (try c.decodeIfPresent(SQMetricBodyBatteryEffect.self, forKey: .bodyBatteryEffect)) ?? .none
+        scaleQuantityMapping = try c.decodeIfPresent(SQMetricScaleQuantityMapping.self, forKey: .scaleQuantityMapping)
         updatedAt         = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
 
         // Decode periods: try new array format first, then fall back to legacy single-period field
@@ -219,6 +256,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         try c.encodeIfPresent(targetRangeMin, forKey: .targetRangeMin)
         try c.encodeIfPresent(targetRangeMax, forKey: .targetRangeMax)
         try c.encode(bodyBatteryEffect, forKey: .bodyBatteryEffect)
+        try c.encodeIfPresent(scaleQuantityMapping, forKey: .scaleQuantityMapping)
         try c.encode(updatedAt,         forKey: .updatedAt)
         // Encode periods as a sorted array for deterministic output
         try c.encode(periods.filter { $0 != .unknown }.map(\.rawValue).sorted(), forKey: .periods)
@@ -231,8 +269,239 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         case isSingleDailyValue
         case goalStyle, targetValue, targetRangeMin, targetRangeMax
         case bodyBatteryEffect
+        case scaleQuantityMapping
         case periods   // new format: array (encode + decode)
         case period    // legacy format: single string (decode only)
+    }
+}
+
+extension SQMetricDefinition {
+    var defaultEntryMode: SQMetricValueMode {
+        switch kind {
+        case .scale, .binary:
+            return .scale
+        case .number:
+            return .quantity
+        case .unknown:
+            return .unknown
+        }
+    }
+
+    var supportsScaleEntry: Bool {
+        switch kind {
+        case .scale, .binary:
+            return true
+        case .number:
+            return scaleQuantityMapping != nil
+        case .unknown:
+            return false
+        }
+    }
+
+    var supportsQuantityEntry: Bool {
+        switch kind {
+        case .number:
+            return true
+        case .scale, .binary:
+            return scaleQuantityMapping != nil
+        case .unknown:
+            return false
+        }
+    }
+
+    var allowsAlternateEntryMode: Bool {
+        supportsScaleEntry && supportsQuantityEntry
+    }
+
+    var quantityUnit: SQMetricUnit {
+        scaleQuantityMapping?.quantityUnit ?? unit
+    }
+
+    var quantityLabel: String {
+        scaleQuantityMapping?.quantityLabelOverride ?? quantityUnit.shortDisplayName
+    }
+
+    var scaleMinValue: Float {
+        switch kind {
+        case .binary:
+            return 0
+        case .number:
+            return scaleQuantityMapping == nil ? (min ?? 0) : 0
+        case .scale:
+            return min ?? 0
+        case .unknown:
+            return min ?? 0
+        }
+    }
+
+    var scaleMaxValue: Float {
+        switch kind {
+        case .binary:
+            return 1
+        case .number:
+            return scaleQuantityMapping == nil ? (max ?? 10) : 10
+        case .scale:
+            return max ?? 10
+        case .unknown:
+            return max ?? 10
+        }
+    }
+
+    var scaleStepValue: Float {
+        switch kind {
+        case .binary:
+            return 1
+        case .number:
+            return scaleQuantityMapping == nil ? (step ?? 1) : 1
+        case .scale:
+            return step ?? 1
+        case .unknown:
+            return step ?? 1
+        }
+    }
+
+    func quantityValue(forScaleValue scaleValue: Float) -> Float? {
+        guard let mapping = scaleQuantityMapping else { return nil }
+        let minScale = scaleMinValue
+        let maxScale = scaleMaxValue
+        guard maxScale > minScale, mapping.maxQuantityValue > 0 else { return nil }
+        let normalized = (scaleValue - minScale) / (maxScale - minScale)
+        return Swift.max(Float(0), normalized) * mapping.maxQuantityValue
+    }
+
+    func scaleValue(forQuantityValue quantityValue: Float) -> Float? {
+        guard let mapping = scaleQuantityMapping else { return nil }
+        let minScale = scaleMinValue
+        let maxScale = scaleMaxValue
+        guard maxScale > minScale, mapping.maxQuantityValue > 0 else { return nil }
+        let normalized = quantityValue / mapping.maxQuantityValue
+        let clamped = Swift.min(Float(1), Swift.max(Float(0), normalized))
+        return minScale + ((maxScale - minScale) * clamped)
+    }
+
+    func displayUnit(for unitSystem: SQUnitSystem) -> SQMetricUnit {
+        quantityUnit.displayUnit(for: unitSystem)
+    }
+
+    func displayQuantityValue(_ quantityValue: Float, for unitSystem: SQUnitSystem) -> Float {
+        quantityUnit.convert(quantityValue, to: displayUnit(for: unitSystem)) ?? quantityValue
+    }
+
+    func canonicalQuantityValue(fromDisplayValue value: Float, unitSystem: SQUnitSystem) -> Float {
+        displayUnit(for: unitSystem).convert(value, to: quantityUnit) ?? value
+    }
+}
+
+extension SQMetricUnit {
+    var sqUnit: SQUnit? {
+        switch self {
+        case .minutes:
+            return .minute
+        case .hours:
+            return .hour
+        case .count:
+            return .count
+        case .milligrams:
+            return .milligram
+        case .grams:
+            return .gram
+        case .milliliters:
+            return .milliliter
+        case .liters:
+            return .liter
+        case .fluidOunces:
+            return .fluidOunce
+        case .pounds:
+            return .pound
+        case .kilograms:
+            return .kilogram
+        case .percent:
+            return .percent
+        case .none, .unknown:
+            return nil
+        }
+    }
+
+    func convert(_ value: Float, to unit: SQMetricUnit) -> Float? {
+        guard let fromUnit = sqUnit, let toUnit = unit.sqUnit else {
+            return self == unit ? value : nil
+        }
+
+        guard let converted = fromUnit.convert(Double(value), to: toUnit) else { return nil }
+        return Float(converted)
+    }
+
+    func displayUnit(for unitSystem: SQUnitSystem) -> SQMetricUnit {
+        switch self {
+        case .kilograms, .pounds:
+            return unitSystem == .metric ? .kilograms : .pounds
+        case .milliliters, .liters, .fluidOunces:
+            return unitSystem == .metric ? .milliliters : .fluidOunces
+        default:
+            return self
+        }
+    }
+
+    var shortDisplayName: String {
+        switch self {
+        case .none:
+            return ""
+        case .minutes:
+            return "min"
+        case .hours:
+            return "hrs"
+        case .count:
+            return "count"
+        case .milligrams:
+            return "mg"
+        case .grams:
+            return "g"
+        case .milliliters:
+            return "mL"
+        case .liters:
+            return "L"
+        case .fluidOunces:
+            return "fl oz"
+        case .pounds:
+            return "lbs"
+        case .kilograms:
+            return "kg"
+        case .percent:
+            return "%"
+        case .unknown:
+            return ""
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .none:
+            return "None"
+        case .minutes:
+            return "Minutes"
+        case .hours:
+            return "Hours"
+        case .count:
+            return "Count"
+        case .milligrams:
+            return "Milligrams (mg)"
+        case .grams:
+            return "Grams (g)"
+        case .milliliters:
+            return "Milliliters (mL)"
+        case .liters:
+            return "Liters (L)"
+        case .fluidOunces:
+            return "Fluid Ounces (fl oz)"
+        case .pounds:
+            return "Pounds (lbs)"
+        case .kilograms:
+            return "Kilograms (kg)"
+        case .percent:
+            return "Percent (%)"
+        case .unknown:
+            return "Unknown"
+        }
     }
 }
 

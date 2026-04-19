@@ -41,9 +41,10 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
         }
 
         let kindLabel = metric.kind == .number ? "Number" : "Scale 0–\(Int(metric.max ?? 10))"
+        let unit = metric.quantityUnit
 
-        if metric.unit != .none {
-            return "\(periodLabel) • \(kindLabel) • \(metric.unit.rawValue.capitalized)"
+        if unit != .none {
+            return "\(periodLabel) • \(kindLabel) • \(unit.displayName)"
         } else {
             return "\(periodLabel) • \(kindLabel)"
         }

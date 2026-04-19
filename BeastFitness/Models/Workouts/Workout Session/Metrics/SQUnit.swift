@@ -13,14 +13,22 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case mile
     case kilometer
     case meter
+    case minute
+    case hour
     case count
     case countPerMinute
     case secondsPerMile
     case secondsPerKilometer
+    case milligram
+    case gram
     case pound
     case kilogram
+    case milliliter
+    case liter
+    case fluidOunce
     case inch
     case centimeter
+    case percent
     case degreesCelsius
     case degreesFahrenheit
     case unknown
@@ -35,6 +43,20 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
         switch fromUnit {
         case .kilocalorie:
             return value
+        case .minute:
+            switch toUnit {
+            case .hour:
+                return value / 60.0
+            default:
+                return value
+            }
+        case .hour:
+            switch toUnit {
+            case .minute:
+                return value * 60.0
+            default:
+                return value
+            }
         case .mile:
             switch toUnit {
             case .meter:
@@ -62,7 +84,7 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             default:
                 return value
             }
-        case .countPerMinute, .count:
+        case .countPerMinute, .count, .percent:
             return value
         case .secondsPerMile:
             switch toUnit {
@@ -78,10 +100,32 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             default:
                 return value
             }
+        case .milligram:
+            switch toUnit {
+            case .gram:
+                return value / 1000.0
+            case .kilogram:
+                return value / 1_000_000.0
+            default:
+                return value
+            }
+        case .gram:
+            switch toUnit {
+            case .milligram:
+                return value * 1000.0
+            case .kilogram:
+                return value / 1000.0
+            default:
+                return value
+            }
         case .pound:
             switch toUnit {
             case .kilogram:
                 return value * 0.45359237
+            case .gram:
+                return value * 453.59237
+            case .milligram:
+                return value * 453_592.37
             default:
                 return value
             }
@@ -89,6 +133,37 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
             switch toUnit {
             case .pound:
                 return value / 0.45359237
+            case .gram:
+                return value * 1000.0
+            case .milligram:
+                return value * 1_000_000.0
+            default:
+                return value
+            }
+        case .milliliter:
+            switch toUnit {
+            case .liter:
+                return value / 1000.0
+            case .fluidOunce:
+                return value / 29.5735295625
+            default:
+                return value
+            }
+        case .liter:
+            switch toUnit {
+            case .milliliter:
+                return value * 1000.0
+            case .fluidOunce:
+                return value * 33.8140227018
+            default:
+                return value
+            }
+        case .fluidOunce:
+            switch toUnit {
+            case .milliliter:
+                return value * 29.5735295625
+            case .liter:
+                return value / 33.8140227018
             default:
                 return value
             }
@@ -133,16 +208,20 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
         switch self {
         case .kilocalorie:
             return .energy
+        case .minute, .hour:
+            return .time
         case .mile, .kilometer, .meter, .inch, .centimeter:
             return .distance
         case .countPerMinute:
             return .countPerTime
-        case .count:
+        case .count, .percent:
             return .total
         case .secondsPerMile, .secondsPerKilometer:
             return .timePerDistance
-        case .pound, .kilogram:
+        case .milligram, .gram, .pound, .kilogram:
             return .weight
+        case .milliliter, .liter, .fluidOunce:
+            return .volume
         case .degreesCelsius, .degreesFahrenheit:
             return .temperature
         case .unknown:
@@ -154,6 +233,10 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
         switch self {
         case .kilocalorie:
                 .kilocalorie()
+        case .minute:
+                .minute()
+        case .hour:
+                .hour()
         case .mile:
                 .mile()
         case .kilometer:
@@ -168,14 +251,26 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
                 .second().unitDivided(by: .mile())
         case .secondsPerKilometer:
                 .second().unitDivided(by: .meterUnit(with: .kilo))
+        case .milligram:
+                .gramUnit(with: .milli)
+        case .gram:
+                .gram()
         case .pound:
                 .pound()
         case .kilogram:
                 .gramUnit(with: .kilo)
+        case .milliliter:
+                .literUnit(with: .milli)
+        case .liter:
+                .liter()
+        case .fluidOunce:
+                .fluidOunceUS()
         case .inch:
                 .inch()
         case .centimeter:
                 .meterUnit(with: .centi)
+        case .percent:
+                .percent()
         case .degreesCelsius:
                 .degreeCelsius()
         case .degreesFahrenheit:
@@ -187,7 +282,7 @@ enum SQUnit: String, Codable, CaseIterable, UnfrozenEnum {
     
     var unitString: String? {
         switch self {
-        case .kilocalorie, .mile, .kilometer, .meter, .count, .pound, .kilogram, .inch, .centimeter:
+        case .kilocalorie, .minute, .hour, .mile, .kilometer, .meter, .count, .milligram, .gram, .pound, .kilogram, .milliliter, .liter, .fluidOunce, .inch, .centimeter, .percent:
             return hkUnit?.unitString
         case .countPerMinute:
             return "bpm"
@@ -213,6 +308,7 @@ enum SQUnitType: String, Codable, UnfrozenEnum {
     case timePerDistance
     case total
     case weight
+    case volume
     case temperature
     case unknown
 }

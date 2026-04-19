@@ -419,7 +419,10 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let recoveryBoost = values[SQMetricId.soreness].map { clamp((Double($0) - 5.0) * 1.2, min: -6, max: 6) } ?? 0
         let nutritionBoost = values[SQMetricId.nutrition].map { clamp((Double($0) - 5.0) * 0.7, min: 0, max: 4) } ?? 0
         let alcoholPenalty = values[SQMetricId.alcohol].map { clamp(Double($0) * 1.5, min: 0, max: 12) } ?? 0
-        let caffeinePenalty = values[SQMetricId.caffeine].map { clamp((Double($0) - 6.0) * 0.8, min: 0, max: 4) } ?? 0
+        let caffeinePenalty = values[SQMetricId.caffeine].map {
+            // Caffeine is now stored as mg for default metrics. Keep the penalty mild until later-day timing is modeled.
+            clamp((Double($0) - 120.0) / 45.0, min: 0, max: 6)
+        } ?? 0
 
         return clamp(
             energyBoost + recoveryBoost + nutritionBoost - alcoholPenalty - caffeinePenalty,

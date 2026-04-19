@@ -49,6 +49,15 @@ enum SQUnitSystem: String, Codable, CaseIterable {
         }
     }
 
+    var volumeUnit: SQUnit {
+        switch self {
+        case .imperial:
+            return .fluidOunce
+        case .metric:
+            return .milliliter
+        }
+    }
+
     func displayWeight(fromKilograms kilograms: Double?) -> Double? {
         SQUnit.kilogram.convert(kilograms, to: weightUnit)
     }
@@ -63,6 +72,14 @@ enum SQUnitSystem: String, Codable, CaseIterable {
 
     func canonicalTemperature(fromDisplayTemperature temperature: Double?) -> Double? {
         temperatureUnit.convert(temperature, to: .degreesCelsius)
+    }
+
+    func displayVolume(fromMilliliters milliliters: Double?) -> Double? {
+        SQUnit.milliliter.convert(milliliters, to: volumeUnit)
+    }
+
+    func canonicalVolume(fromDisplayVolume value: Double?) -> Double? {
+        volumeUnit.convert(value, to: .milliliter)
     }
 
     func displayHeightPrimary(fromCentimeters centimeters: Double?) -> String {

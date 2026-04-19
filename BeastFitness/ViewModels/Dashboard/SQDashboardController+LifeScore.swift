@@ -364,21 +364,21 @@ extension SQDashboardController {
     private func formattedMetricValue(_ value: Double, definition: SQMetricDefinition) -> String {
         let raw = value == value.rounded() ? "\(Int(value))" : String(format: "%.1f", value)
 
-        switch definition.unit {
-        case .hours:
-            return "\(raw) hrs"
-        case .pounds:
-            return "\(raw) lbs"
-        case .kilograms:
-            return "\(raw) kg"
-        case .percent:
-            return "\(raw)%"
-        case .none, .count, .unknown:
-            if definition.kind == .scale, let max = definition.max {
+        let unit = definition.quantityUnit
+        let unitSuffix = unit.shortDisplayName
+        if unit == .none || unit == .count || unit == .unknown {
+            if definition.kind == .scale || definition.kind == .binary {
+                let max = definition.scaleMaxValue
                 return "\(raw)/\(Int(max))"
             }
             return raw
         }
+
+        if unit == .percent {
+            return "\(raw)%"
+        }
+
+        return "\(raw) \(unitSuffix)"
     }
 
     private func habitScoreSummary(for value: Double, score: Double, definition: SQMetricDefinition) -> String {

@@ -25,11 +25,23 @@ final class SQInsightsAggregator {
             var rawMap = rawValuesByDay[dayKey, default: [:]]
             var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
 
-            for (metricId, rawValue) in checkIn.values {
+            for metricId in Set(checkIn.values.keys).union(checkIn.metricValues.keys) {
                 guard let definition = definitionsById[metricId] else { continue }
-                rawMap[metricId] = Double(rawValue)
+
+                let loggedValue = checkIn.metricValues[metricId]
+                let analysisRawValue = loggedValue?.quantityValue ?? loggedValue?.displayValue ?? checkIn.values[metricId]
+                let scaleValue = loggedValue?.scaleValue
+
+                guard let analysisRawValue else { continue }
+
+                rawMap[metricId] = Double(analysisRawValue)
                 normalizedMap[metricId] = Double(
-                    SQMetricEntry.normalizedScore(for: rawValue, definition: definition)
+                    SQMetricEntry.normalizedScore(
+                        scaleValue: scaleValue,
+                        quantityValue: loggedValue?.quantityValue,
+                        rawValue: analysisRawValue,
+                        definition: definition
+                    )
                 )
             }
 

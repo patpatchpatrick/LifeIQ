@@ -2288,7 +2288,7 @@ final class SQDashboardController: SQDashboardInterface {
         if definition.kind == .binary {
             // For binary metrics, show count
             avgValueString = String(format: "%.1f", average)
-        } else if definition.unit == .hours {
+        } else if definition.quantityUnit == .hours {
             avgValueString = String(format: "%.1f", average)
         } else {
             avgValueString = String(format: "%.1f", average)
@@ -2340,14 +2340,18 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func metricUnitString(for definition: SQMetricDefinition) -> String {
-        switch definition.unit {
-        case .none:    return definition.max != nil ? "/\(Int(definition.max ?? 10))" : ""
-        case .hours:   return "hrs"
-        case .count:   return ""
-        case .pounds:  return "lbs"
-        case .kilograms: return "kg"
-        case .percent: return "%"
-        case .unknown: return ""
+        let unit = definition.quantityUnit
+        switch unit {
+        case .none:
+            return (definition.kind == .scale || definition.kind == .binary) ? "/\(Int(definition.scaleMaxValue))" : ""
+        case .count:
+            return ""
+        case .percent:
+            return "%"
+        case .unknown:
+            return ""
+        default:
+            return unit.shortDisplayName
         }
     }
 }

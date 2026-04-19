@@ -13,7 +13,43 @@ struct SQDailyCheckInStats: Codable {
     /// Nil when stats are fetched across all periods (e.g. for completion checks).
     var period: SQMetricPeriod?
     var values: [String: Float]
+    var metricValues: [String: SQMetricLoggedValue]
     var notes: String?
+
+    init(
+        date: Date,
+        period: SQMetricPeriod?,
+        values: [String: Float],
+        metricValues: [String: SQMetricLoggedValue] = [:],
+        notes: String?
+    ) {
+        self.date = date
+        self.period = period
+        self.metricValues = metricValues
+
+        if !values.isEmpty {
+            self.values = values
+        } else {
+            self.values = metricValues.mapValues(\.displayValue)
+        }
+
+        if self.metricValues.isEmpty, !values.isEmpty {
+            self.metricValues = values.mapValues {
+                SQMetricLoggedValue(
+                    enteredMode: .unknown,
+                    rawValue: $0,
+                    scaleValue: nil,
+                    quantityValue: nil
+                )
+            }
+        }
+
+        self.notes = notes
+    }
+
+    func metricValue(for metricId: String) -> SQMetricLoggedValue? {
+        metricValues[metricId]
+    }
 
     var uniqueDateKey: String { date.firebaseDailyDateKey }
     static func getUniqueDateKey(for date: Date) -> String {

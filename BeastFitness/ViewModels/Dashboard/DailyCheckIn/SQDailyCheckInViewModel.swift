@@ -171,13 +171,15 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         for metric in metrics {
             let field: SQDailyCheckInField = .metric(id: metric.id)
+            let entryMode = resolvedEntryMode(for: metric, stats: stats)
 
             // Build display title with emoji and unit
             var displayTitle = metric.title
 
-            // Add unit suffix if present (e.g., "Weight (lbs)")
-            if metric.unit != .none, !titleAlreadyIncludesUnit(metric.title, unit: metric.unit) {
-                displayTitle = "\(displayTitle) (\(metric.unit.rawValue))"
+            let titleUnit = entryMode == .quantity ? metric.quantityUnit : .none
+            if titleUnit != .none, !titleAlreadyIncludesUnit(metric.title, unit: titleUnit) {
+                let titleUnitText = metric.quantityLabel.isEmpty ? titleUnit.shortDisplayName : metric.quantityLabel
+                displayTitle = "\(displayTitle) (\(titleUnitText))"
             }
 
             // Prepend emoji if present
@@ -185,32 +187,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 displayTitle = "\(emoji) \(displayTitle)"
             }
 
-            switch metric.kind {
-
-            case .binary:
-                // Legacy: treat as a 0–1 scale for display purposes
-                let legacyDef = SQMetricDefinition(
-                    id: metric.id, title: metric.title, kind: .scale, unit: metric.unit,
-                    group: metric.group, min: 0, max: 1, step: 1,
-                    isPreset: metric.isPreset, sortOrder: metric.sortOrder
-                )
-                let segments = Self.scaleSegments(for: legacyDef)
-                guard !segments.isEmpty else { continue }
-                let initial = Self.scaleInitialSelection(metricId: metric.id, stats: stats, segments: segments)
-                let row = SQDailyCheckInRowSegmentedControlViewModel(
-                    field: field,
-                    title: displayTitle,
-                    subtitle: subtitle(
-                        for: metric,
-                        targetDate: targetDate,
-                        period: period,
-                        sleepPrefillMetricIds: sleepPrefillMetricIds
-                    ),
-                    segments: segments,
-                    initialSelection: initial,
-                    onFocused: { [weak self] in self?.handleRowFocused($0) }
-                )
-                built.append(row)
+            switch entryMode {
 
             case .scale:
                 let segments = Self.scaleSegments(for: metric)
@@ -233,7 +210,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 )
                 built.append(row)
 
-            case .number:
+            case .quantity:
                 let tf = Self.numericTextField(metric: metric)
 
                 let row = SQDailyCheckInTextEntryViewModel(
@@ -249,7 +226,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
                 )
 
-                if let existing = stats?.values[metric.id] {
+                if let existing = stats?.metricValue(for: metric.id)?.displayValue ?? stats?.values[metric.id] {
                     row.initialize(with: Self.formatNumber(existing, metric: metric))
                 }
 
@@ -323,15 +300,22 @@ final class SQDailyCheckInViewModel: Identifiable {
     }
 
     private func titleAlreadyIncludesUnit(_ title: String, unit: SQMetricUnit) -> Bool {
-        title.localizedCaseInsensitiveContains(unit.rawValue)
+        title.localizedCaseInsensitiveContains(unit.shortDisplayName)
+    }
+
+    private func resolvedEntryMode(for metric: SQMetricDefinition, stats: SQDailyCheckInStats?) -> SQMetricValueMode {
+        if let storedMode = stats?.metricValue(for: metric.id)?.enteredMode, storedMode != .unknown {
+            return storedMode
+        }
+        return metric.defaultEntryMode
     }
 
     // MARK: - Scale Helpers
 
     private static func scaleSegments(for metric: SQMetricDefinition) -> [SQScaleSegment] {
-        let minV = metric.min ?? 0
-        let maxV = metric.max ?? 10
-        let stepV = metric.step ?? 1
+        let minV = metric.scaleMinValue
+        let maxV = metric.scaleMaxValue
+        let stepV = metric.scaleStepValue
 
         guard stepV > 0, maxV >= minV else { return [] }
 
@@ -354,7 +338,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         stats: SQDailyCheckInStats?,
         segments: [SQScaleSegment]
     ) -> SQScaleSegment? {
-        guard let stored = stats?.values[metricId] else { return nil }
+        guard let stored = stats?.metricValue(for: metricId)?.scaleValue ?? stats?.values[metricId] else { return nil }
         return segments.min(by: { abs($0.value - stored) < abs($1.value - stored) })
     }
 
@@ -368,7 +352,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         return SQTextFieldViewModel(
             lineLimit: 1,
-            placeholder: metric.unit == .hours ? "8" : "0",
+            placeholder: metric.quantityUnit == .hours ? "8" : "0",
             keyboardType: .decimalPad,
             textChangeFormatter: .decimal(maxDecimalPlaces: maxDecimalPlaces),
             validationRule: .decimal(maxDecimalPlaces: maxDecimalPlaces, range: Double(min)...Double(max)),
@@ -452,17 +436,20 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     var canSubmit: Bool {
         let formPayload = currentFormPayload()
-        if !formPayload.values.isEmpty || formPayload.notes != nil {
+        if !formPayload.metricValues.isEmpty || formPayload.notes != nil {
             return true
         }
 
         let savedNotes = stats?.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         let savedPayload = (
             values: stats?.values ?? [:],
+            metricValues: stats?.metricValues ?? [:],
             notes: savedNotes?.isEmpty == false ? savedNotes : nil
         )
 
-        return formPayload.values != savedPayload.values || formPayload.notes != savedPayload.notes
+        return formPayload.values != savedPayload.values
+            || formPayload.metricValues != savedPayload.metricValues
+            || formPayload.notes != savedPayload.notes
     }
 
     func submitTapped(modelContext: ModelContext) async {
@@ -489,6 +476,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             date: targetDate,
             period: period,
             values: formPayload.values,
+            metricValues: formPayload.metricValues,
             notes: formPayload.notes
         )
 
@@ -496,7 +484,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         do {
             try await metricEntryManager.saveDailyCheckInStats(stats: stats, to: modelContext)
-            let submittedMetricIds = Array(formPayload.values.keys)
+            let submittedMetricIds = Array(formPayload.metricValues.keys)
             let customMetricCount = metricsManager.metrics.filter {
                 submittedMetricIds.contains($0.id) && !$0.isPreset
             }.count
@@ -537,19 +525,29 @@ final class SQDailyCheckInViewModel: Identifiable {
         }
     }
 
-    private func currentFormPayload() -> (values: [String: Float], notes: String?) {
+    private func currentFormPayload() -> (values: [String: Float], metricValues: [String: SQMetricLoggedValue], notes: String?) {
         var values: [String: Float] = [:]
+        var metricValues: [String: SQMetricLoggedValue] = [:]
         var notes: String?
+        let metricsById = Dictionary(uniqueKeysWithValues: metricsManager.dailyCheckInMetrics(for: period).map { ($0.id, $0) })
 
         for row in rows {
             switch row.field {
             case .metric(let metricId):
+                guard let metric = metricsById[metricId] else { continue }
+
                 if
                     let segmented = row as? SQDailyCheckInRowSegmentedControlViewModel,
                     let selectedSegment = segmented.selectedSegment,
                     let value = Float(selectedSegment.id)
                 {
-                    values[metricId] = value
+                    let loggedValue = SQMetricEntry.loggedValue(
+                        rawValue: value,
+                        enteredMode: .scale,
+                        definition: metric
+                    )
+                    values[metricId] = loggedValue.displayValue
+                    metricValues[metricId] = loggedValue
                     continue
                 }
 
@@ -557,7 +555,13 @@ final class SQDailyCheckInViewModel: Identifiable {
                     let trimmed = textRow.textFieldViewModel.text
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     if let value = Float(trimmed) {
-                        values[metricId] = value
+                        let loggedValue = SQMetricEntry.loggedValue(
+                            rawValue: value,
+                            enteredMode: .quantity,
+                            definition: metric
+                        )
+                        values[metricId] = loggedValue.displayValue
+                        metricValues[metricId] = loggedValue
                     }
                 }
 
@@ -570,7 +574,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             }
         }
 
-        return (values: values, notes: notes)
+        return (values: values, metricValues: metricValues, notes: notes)
     }
 
     func addMetricTapped() {
@@ -656,8 +660,15 @@ final class SQDailyCheckInViewModel: Identifiable {
         guard !sleepPrefill.values.isEmpty else { return savedStats }
 
         var mergedValues = savedStats?.values ?? [:]
+        var mergedMetricValues = savedStats?.metricValues ?? [:]
         for (metricId, value) in sleepPrefill.values where mergedValues[metricId] == nil {
             mergedValues[metricId] = value
+            mergedMetricValues[metricId] = .init(
+                enteredMode: .unknown,
+                rawValue: value,
+                scaleValue: value,
+                quantityValue: nil
+            )
         }
 
         guard !mergedValues.isEmpty || savedStats?.notes != nil else {
@@ -668,6 +679,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             date: savedStats?.date ?? targetDate,
             period: savedStats?.period ?? period,
             values: mergedValues,
+            metricValues: mergedMetricValues,
             notes: savedStats?.notes
         )
     }

@@ -33,11 +33,16 @@ struct SQMetricEntry: Identifiable, Codable, Hashable {
 
     // MARK: - Value
 
-    /// The value as entered by the user, in their configured scale (e.g. 0–5 if they set a 5-point scale).
+    /// The UI mode the user used when logging this value.
+    var enteredMode: SQMetricValueMode
+    /// The value as entered by the user in `enteredMode`.
     var rawValue: Float
+    /// When available, the entry converted onto the metric's scale range.
+    var scaleValue: Float?
+    /// When available, the entry converted into the metric's canonical quantity unit.
+    var quantityValue: Float?
     /// `rawValue` converted to a 0–10 score for the insight engine.
-    /// Allows comparing all metrics regardless of their individual scales.
-    /// Formula: `(rawValue - min) / (max - min) * 10` for scale metrics; `rawValue` for number metrics.
+    /// Allows comparing mapped-scale metrics regardless of the UI mode the user entered.
     var normalizedScore: Float
 
     // MARK: - Init
@@ -49,7 +54,10 @@ struct SQMetricEntry: Identifiable, Codable, Hashable {
         anchorDayKey: String,
         timeZoneIdentifier: String,
         period: SQMetricPeriod,
+        enteredMode: SQMetricValueMode,
         rawValue: Float,
+        scaleValue: Float?,
+        quantityValue: Float?,
         normalizedScore: Float
     ) {
         self.id = id
@@ -58,14 +66,53 @@ struct SQMetricEntry: Identifiable, Codable, Hashable {
         self.anchorDayKey = anchorDayKey
         self.timeZoneIdentifier = timeZoneIdentifier
         self.period = period
+        self.enteredMode = enteredMode
         self.rawValue = rawValue
+        self.scaleValue = scaleValue
+        self.quantityValue = quantityValue
         self.normalizedScore = normalizedScore
+    }
+}
+
+struct SQMetricLoggedValue: Codable, Hashable {
+    var enteredMode: SQMetricValueMode
+    var rawValue: Float
+    var scaleValue: Float?
+    var quantityValue: Float?
+
+    var displayValue: Float {
+        switch enteredMode {
+        case .scale:
+            return scaleValue ?? rawValue
+        case .quantity:
+            return quantityValue ?? rawValue
+        case .unknown:
+            return rawValue
+        }
+    }
+
+    func value(for definition: SQMetricDefinition) -> Float {
+        switch definition.defaultEntryMode {
+        case .scale:
+            return scaleValue ?? displayValue
+        case .quantity:
+            return quantityValue ?? displayValue
+        case .unknown:
+            return displayValue
+        }
     }
 }
 
 // MARK: - Normalization Helper
 
 extension SQMetricEntry {
+    static func normalizedScaleScore(for scaleValue: Float, definition: SQMetricDefinition) -> Float {
+        let min = definition.scaleMinValue
+        let max = definition.scaleMaxValue
+        guard max > min else { return scaleValue }
+        let normalized = (scaleValue - min) / (max - min) * 10
+        return Swift.min(Float(10), Swift.max(Float(0), normalized))
+    }
 
     /// Computes `normalizedScore` from a raw value and metric definition bounds.
     /// - Scale metrics: `(rawValue - min) / (max - min) * 10`, clamped to 0–10.
@@ -73,13 +120,61 @@ extension SQMetricEntry {
     static func normalizedScore(for rawValue: Float, definition: SQMetricDefinition) -> Float {
         switch definition.kind {
         case .scale, .binary:
-            let min = definition.min ?? 0
-            let max = definition.max ?? 10
-            guard max > min else { return rawValue }
-            let normalized = (rawValue - min) / (max - min) * 10
-            return Swift.min(10, Swift.max(0, normalized))
+            return normalizedScaleScore(for: rawValue, definition: definition)
         case .number, .unknown:
             return rawValue
+        }
+    }
+
+    static func normalizedScore(
+        scaleValue: Float?,
+        quantityValue: Float?,
+        rawValue: Float,
+        definition: SQMetricDefinition
+    ) -> Float {
+        if let scaleValue {
+            return normalizedScaleScore(for: scaleValue, definition: definition)
+        }
+
+        if let quantityValue {
+            return normalizedScore(for: quantityValue, definition: definition)
+        }
+
+        return normalizedScore(for: rawValue, definition: definition)
+    }
+
+    static func loggedValue(
+        rawValue: Float,
+        enteredMode: SQMetricValueMode,
+        definition: SQMetricDefinition
+    ) -> SQMetricLoggedValue {
+        switch enteredMode {
+        case .scale:
+            return .init(
+                enteredMode: .scale,
+                rawValue: rawValue,
+                scaleValue: rawValue,
+                quantityValue: definition.quantityValue(forScaleValue: rawValue)
+            )
+        case .quantity:
+            let unitSystem = SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale
+            let canonicalQuantity = definition.canonicalQuantityValue(
+                fromDisplayValue: rawValue,
+                unitSystem: unitSystem
+            )
+            return .init(
+                enteredMode: .quantity,
+                rawValue: rawValue,
+                scaleValue: definition.scaleValue(forQuantityValue: canonicalQuantity),
+                quantityValue: canonicalQuantity
+            )
+        case .unknown:
+            return .init(
+                enteredMode: definition.defaultEntryMode,
+                rawValue: rawValue,
+                scaleValue: definition.defaultEntryMode == .scale ? rawValue : nil,
+                quantityValue: definition.defaultEntryMode == .quantity ? rawValue : nil
+            )
         }
     }
 
@@ -90,6 +185,7 @@ extension SQMetricEntry {
     static func make(
         metricId: String,
         rawValue: Float,
+        enteredMode: SQMetricValueMode,
         definition: SQMetricDefinition,
         recordedAt: Date = .now
     ) -> SQMetricEntry {
@@ -103,6 +199,7 @@ extension SQMetricEntry {
             period: submissionPeriod,
             isSingleDailyValue: definition.isSingleDailyValue
         )
+        let loggedValue = loggedValue(rawValue: rawValue, enteredMode: enteredMode, definition: definition)
         return SQMetricEntry(
             id: stableId,
             metricId: metricId,
@@ -110,8 +207,16 @@ extension SQMetricEntry {
             anchorDayKey: anchorDayKey,
             timeZoneIdentifier: tz.identifier,
             period: submissionPeriod,
+            enteredMode: loggedValue.enteredMode,
             rawValue: rawValue,
-            normalizedScore: normalizedScore(for: rawValue, definition: definition)
+            scaleValue: loggedValue.scaleValue,
+            quantityValue: loggedValue.quantityValue,
+            normalizedScore: normalizedScore(
+                scaleValue: loggedValue.scaleValue,
+                quantityValue: loggedValue.quantityValue,
+                rawValue: rawValue,
+                definition: definition
+            )
         )
     }
 
