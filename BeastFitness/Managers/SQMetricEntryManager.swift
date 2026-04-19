@@ -297,7 +297,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         let notesByDay = Dictionary(uniqueKeysWithValues: notes.map { ($0.anchorDayKey, $0.content) })
         let dayKeys = Set(valuesByDay.keys).union(notesByDay.keys).sorted()
 
-        return dayKeys.compactMap { dayKey in
+        return dayKeys.compactMap { dayKey -> SQDailyCheckInStats? in
             let dayDate = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey)
             guard let dayDate else { return nil }
 
@@ -309,12 +309,15 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                     quantityValue: $0.quantityValue
                 )
             }
-            let values = metricValues.mapValues { metricId, loggedValue in
-                guard let definition = metricById[metricId] else {
-                    return loggedValue.displayValue
+            let values = Dictionary(uniqueKeysWithValues: metricValues.map { metricId, loggedValue in
+                let value: Float
+                if let definition = metricById[metricId] {
+                    value = loggedValue.value(for: definition)
+                } else {
+                    value = loggedValue.displayValue
                 }
-                return loggedValue.value(for: definition)
-            }
+                return (metricId, value)
+            })
             guard !values.isEmpty || notesByDay[dayKey] != nil else { return nil }
 
             return SQDailyCheckInStats(
