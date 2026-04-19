@@ -206,7 +206,17 @@ final class SQDailyCheckInViewModel: Identifiable {
                     ),
                     segments: segments,
                     initialSelection: initial,
+                    accentSubtitleProvider: { [weak self] segment in
+                        guard let self else { return nil }
+                        return self.approximateQuantitySubtitle(for: metric, selectedSegment: segment)
+                    },
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
+                )
+                row.attributedSubtitle = attributedSubtitle(
+                    for: metric,
+                    targetDate: targetDate,
+                    period: period,
+                    sleepPrefillMetricIds: sleepPrefillMetricIds
                 )
                 built.append(row)
 
@@ -229,6 +239,13 @@ final class SQDailyCheckInViewModel: Identifiable {
                 if let existing = stats?.metricValue(for: metric.id)?.displayValue ?? stats?.values[metric.id] {
                     row.initialize(with: Self.formatNumber(existing, metric: metric))
                 }
+
+                row.attributedSubtitle = attributedSubtitle(
+                    for: metric,
+                    targetDate: targetDate,
+                    period: period,
+                    sleepPrefillMetricIds: sleepPrefillMetricIds
+                )
 
                 built.append(row)
             case .unknown:
@@ -258,6 +275,33 @@ final class SQDailyCheckInViewModel: Identifiable {
         }
 
         return "Previous night's sleep (\(referencedNightDate))."
+    }
+
+    private func attributedSubtitle(
+        for metric: SQMetricDefinition,
+        targetDate: Date,
+        period: SQMetricPeriod,
+        sleepPrefillMetricIds: Set<String>
+    ) -> AttributedString? {
+        guard isPreviousNightSleepMetric(metric.id) else { return nil }
+
+        let referencedNightDate = Calendar.current
+            .date(byAdding: .day, value: -1, to: targetDate)?
+            .formattedString(with: .medium) ?? "the previous night"
+
+        let baseFont = SQFont(type: .bodyExtraSmall).font
+        let secondaryColor = SQColor.textSecondary.color
+        let highlightColor = SQColor.dashboardGlowBlue.color
+
+        var result = AttributedString.build(with: "Previous night's sleep (", font: baseFont, color: secondaryColor)
+        result += AttributedString.build(with: referencedNightDate, font: baseFont, color: highlightColor)
+        result += AttributedString.build(with: ").", font: baseFont, color: secondaryColor)
+
+        if sleepPrefillMetricIds.contains(metric.id) {
+            result += AttributedString.build(with: " Prefilled from HealthKit; you can override it.", font: baseFont, color: secondaryColor)
+        }
+
+        return result
     }
 
     private func isPreviousNightSleepMetric(_ metricId: String) -> Bool {
@@ -301,6 +345,42 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     private func titleAlreadyIncludesUnit(_ title: String, unit: SQMetricUnit) -> Bool {
         title.localizedCaseInsensitiveContains(unit.shortDisplayName)
+    }
+
+    private func approximateQuantitySubtitle(
+        for metric: SQMetricDefinition,
+        selectedSegment: SQSegmentedControlSegment?
+    ) -> String? {
+        guard
+            let selectedSegment,
+            let scaleValue = Float(selectedSegment.id),
+            let quantityValue = metric.quantityValue(forScaleValue: scaleValue)
+        else {
+            return nil
+        }
+
+        let unitSystem = SQUnitSystemResolver.resolve(for: userState.loggedInUser)
+        let displayValue = metric.displayQuantityValue(quantityValue, for: unitSystem)
+        let label = displayQuantityLabel(for: metric, displayValue: displayValue, unitSystem: unitSystem)
+        return "Approx. \(Self.formatDisplayQuantity(displayValue)) \(label)"
+    }
+
+    private func displayQuantityLabel(
+        for metric: SQMetricDefinition,
+        displayValue: Float,
+        unitSystem: SQUnitSystem
+    ) -> String {
+        if let override = metric.scaleQuantityMapping?.quantityLabelOverride?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !override.isEmpty {
+            if override.caseInsensitiveCompare("drink count") == .orderedSame {
+                return abs(displayValue - 1) < 0.001 ? "drink" : "drinks"
+            }
+
+            return override
+        }
+
+        return metric.displayUnit(for: unitSystem).shortDisplayName
     }
 
     private func resolvedEntryMode(for metric: SQMetricDefinition, stats: SQDailyCheckInStats?) -> SQMetricValueMode {
@@ -350,9 +430,19 @@ final class SQDailyCheckInViewModel: Identifiable {
         let min: Float = metric.min ?? -Float.greatestFiniteMagnitude
         let max: Float = metric.max ?? Float.greatestFiniteMagnitude
 
+        let placeholder: String
+        switch metric.id {
+        case SQMetricId.weight:
+            placeholder = "150"
+        case SQMetricId.sleepHours:
+            placeholder = "8"
+        default:
+            placeholder = "0"
+        }
+
         return SQTextFieldViewModel(
             lineLimit: 1,
-            placeholder: metric.quantityUnit == .hours ? "8" : "0",
+            placeholder: placeholder,
             keyboardType: .decimalPad,
             textChangeFormatter: .decimal(maxDecimalPlaces: maxDecimalPlaces),
             validationRule: .decimal(maxDecimalPlaces: maxDecimalPlaces, range: Double(min)...Double(max)),
@@ -371,6 +461,14 @@ final class SQDailyCheckInViewModel: Identifiable {
     private static func formatNumber(_ v: Float, metric: SQMetricDefinition) -> String {
         let places = maxDecimalPlaces(fromStep: metric.step) ?? 0
         return String(format: "%.\(places)f", v)
+    }
+
+    private static func formatDisplayQuantity(_ value: Float) -> String {
+        if value.rounded() == value {
+            return "\(Int(value))"
+        }
+
+        return String(format: "%.1f", Double(value))
     }
 
     private static func maxDecimalPlaces(fromStep step: Float?) -> Int? {

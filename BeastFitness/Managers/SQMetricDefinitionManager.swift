@@ -414,6 +414,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     targetRangeMin: def.targetRangeMin,
                     targetRangeMax: def.targetRangeMax,
                     bodyBatteryEffect: def.bodyBatteryEffect,
+                    scaleQuantityMapping: def.scaleQuantityMapping,
                     isDefault: def.isDefault
                 )
                 entity.updatedAt = def.updatedAt
@@ -500,6 +501,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
         var added = 0
         var updated = 0
+        var changedPresetIds: [String] = []
 
         for preset in allPresets {
             if !existingIds.contains(preset.id) {
@@ -536,6 +538,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 // Existing preset — apply period, isDefault, and binary→scale upgrade
                 var didChange = false
 
+                if entity.title != preset.title {
+                    entity.title = preset.title
+                    didChange = true
+                }
                 let serializedPeriods = SQMetricDefinitionEntity.serialize(preset.periods)
                 if entity.periodRaw != serializedPeriods {
                     entity.periodRaw = serializedPeriods
@@ -589,15 +595,18 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
                     didChange = true
                 }
-                if entity.scaleQuantityUnitRaw != preset.scaleQuantityMapping?.quantityUnit.rawValue {
+                if entity.scaleQuantityUnitRaw == nil,
+                   entity.scaleQuantityUnitRaw != preset.scaleQuantityMapping?.quantityUnit.rawValue {
                     entity.scaleQuantityUnitRaw = preset.scaleQuantityMapping?.quantityUnit.rawValue
                     didChange = true
                 }
-                if entity.scaleQuantityMaxValue != preset.scaleQuantityMapping?.maxQuantityValue {
+                if entity.scaleQuantityMaxValue == nil,
+                   entity.scaleQuantityMaxValue != preset.scaleQuantityMapping?.maxQuantityValue {
                     entity.scaleQuantityMaxValue = preset.scaleQuantityMapping?.maxQuantityValue
                     didChange = true
                 }
-                if entity.scaleQuantityLabelOverride != preset.scaleQuantityMapping?.quantityLabelOverride {
+                if entity.scaleQuantityLabelOverride == nil,
+                   entity.scaleQuantityLabelOverride != preset.scaleQuantityMapping?.quantityLabelOverride {
                     entity.scaleQuantityLabelOverride = preset.scaleQuantityMapping?.quantityLabelOverride
                     didChange = true
                 }
@@ -626,12 +635,15 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 if didChange {
                     entity.updatedAt = .now
                     updated += 1
+                    changedPresetIds.append(preset.id)
                 }
             }
         }
 
         if added > 0 || updated > 0 {
             try saveContextAndNotify(context)
+            let changedDefinitions = metrics.filter { changedPresetIds.contains($0.id) }
+            changedDefinitions.forEach { pushMetricToFirestore($0) }
             SQLogger.shared.log(
                 "Migration: Added \(added) new preset(s), updated \(updated) existing preset(s)",
                 .info, context: .metricsManager, isPriority: true
@@ -709,7 +721,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
                   emoji: "😴", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
-            .init(id: SQMetricId.sleepHours, title: "Sleep Hours", kind: .number, unit: .hours,
+            .init(id: SQMetricId.sleepHours, title: "Sleep Duration", kind: .number, unit: .hours,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.5,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
                   emoji: "🌙", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),

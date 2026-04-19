@@ -13,6 +13,8 @@ class SQDailyCheckInRowViewModel: Identifiable {
     let field: SQDailyCheckInField
     let title: String
     let subtitle: String?
+    var attributedSubtitle: AttributedString?
+    var accentSubtitle: String?
     var number: String = ""
     var isCompleted = false
     var isDisabled: Bool = false
@@ -27,6 +29,8 @@ class SQDailyCheckInRowViewModel: Identifiable {
         self.field = field
         self.title = title
         self.subtitle = subtitle
+        self.attributedSubtitle = nil
+        self.accentSubtitle = nil
         self.onFocused = onFocused
     }
 }

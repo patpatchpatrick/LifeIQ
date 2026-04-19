@@ -8,8 +8,39 @@ import SwiftUI
 struct SQDropDownMenuOverlayCard: View {
     let menu: SQDropDownMenuState.MenuPresentation
     let menuState: SQDropDownMenuState
+    private let scrollThreshold = 6
 
-    var body: some View {
+    @ViewBuilder
+    private var scrollHint: some View {
+        HStack(spacing: .SQSpace.xs) {
+            Text("Scroll")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.dashboardGlowBlue)
+
+            SQImageView(
+                image: .init(
+                    symbol: .chevronDown,
+                    symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
+                )
+            )
+            .frame(width: 10, height: 10)
+        }
+        .padding(.horizontal, .SQSpace.s)
+        .padding(.vertical, 6)
+        .background(
+            Capsule(style: .continuous)
+                .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.88 : 0.94))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(SQColor.dashboardGlowBlue.color.opacity(0.4), lineWidth: 1)
+        )
+        .shadow(color: SQColor.dashboardGlowBlue.color.opacity(0.14), radius: 10, x: 0, y: 4)
+        .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private var menuItemsContent: some View {
         VStack(spacing: 0) {
             ForEach(Array(menu.items.enumerated()), id: \.offset) { index, item in
                 Button {
@@ -46,6 +77,23 @@ struct SQDropDownMenuOverlayCard: View {
                     Divider()
                         .padding(.leading, 16)
                 }
+            }
+        }
+    }
+
+    var body: some View {
+        Group {
+            if menu.items.count > scrollThreshold {
+                ScrollView {
+                    menuItemsContent
+                }
+                .frame(maxHeight: 320)
+                .overlay(alignment: .bottom) {
+                    scrollHint
+                        .padding(.bottom, .SQSpace.s)
+                }
+            } else {
+                menuItemsContent
             }
         }
         .frame(minWidth: 160)

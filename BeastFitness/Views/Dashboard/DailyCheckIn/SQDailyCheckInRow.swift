@@ -39,10 +39,20 @@ struct SQDailyCheckInRow: View {
                     .sqForegroundColor(.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let subtitle = viewModel.subtitle, !subtitle.isEmpty {
+                if let attributedSubtitle = viewModel.attributedSubtitle {
+                    Text(attributedSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let subtitle = viewModel.subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let accentSubtitle = viewModel.accentSubtitle, !accentSubtitle.isEmpty {
+                    Text(accentSubtitle)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

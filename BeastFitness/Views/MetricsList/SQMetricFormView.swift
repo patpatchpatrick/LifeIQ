@@ -25,8 +25,8 @@ struct SQMetricFormView: View {
                     )
                     .frame(width: 86, height: 86)
 
-                if !viewModel.emojiField.text.isEmpty {
-                    Text(viewModel.emojiField.text)
+                if !viewModel.emojiPreviewText.isEmpty {
+                    Text(viewModel.emojiPreviewText)
                         .font(.system(size: 32))
                 } else {
                     SQImageView(
@@ -131,11 +131,11 @@ struct SQMetricFormView: View {
                 HStack(spacing: .SQSpace.s) {
                     SQUITextField(viewModel: viewModel.newGroupField)
 
-                    iconActionButton(symbol: .checkmarkCircleFill, foregroundColor: .dashboardGlowBlueForeground) {
+                    iconActionButton(symbol: .checkmark, foregroundColor: .dashboardGlowBlueForeground) {
                         viewModel.confirmNewGroup()
                     }
 
-                    iconActionButton(symbol: .xmarkCircleFill, foregroundColor: .textSecondary) {
+                    iconActionButton(symbol: .xMark, foregroundColor: .textSecondary) {
                         viewModel.cancelNewGroup()
                     }
                 }
@@ -233,36 +233,61 @@ struct SQMetricFormView: View {
     private var alternateInputRows: some View {
         if viewModel.showsScaleQuantityMappingSection {
             VStack(alignment: .leading, spacing: .SQSpace.s) {
-                Toggle(isOn: $viewModel.isScaleQuantityMappingEnabled) {
+                if viewModel.showsScaleQuantityToggle {
+                    Toggle(isOn: $viewModel.isScaleQuantityMappingEnabled) {
+                        Text(viewModel.scaleQuantitySectionTitle)
+                            .sqFont(.body)
+                            .sqForegroundColor(.textPrimary)
+                    }
+                    .tint(SQColor.dashboardGlowBlue.color)
+                } else {
                     Text(viewModel.scaleQuantitySectionTitle)
                         .sqFont(.body)
                         .sqForegroundColor(.textPrimary)
                 }
-                .tint(SQColor.dashboardGlowBlue.color)
 
-                Text(viewModel.scaleQuantityHelperText)
+                Text(viewModel.scaleQuantityHelperTextDisplay)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
 
-            if viewModel.isScaleQuantityMappingEnabled {
-                if viewModel.selectedKind == .scale {
-                    labeledRow(label: "Quantity Unit") {
-                        SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
+            if viewModel.showsScaleQuantityFields {
+                if viewModel.selectedKind == .scale || viewModel.selectedKind == .number {
+                    labeledRow(label: viewModel.selectedKind == .scale ? "Mapped Unit" : "Conversion Unit") {
+                        if viewModel.canEditScaleQuantityUnit {
+                            SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
+                        } else {
+                            Text(viewModel.currentUnit.displayName)
+                                .sqFont(.body)
+                                .sqForegroundColor(.textPrimary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, .SQSpace.m)
+                                .padding(.vertical, .SQSpace.m)
+                                .background(
+                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.76 : 0.96))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                                )
+                        }
                     }
                 }
 
-                labeledRow(label: "Scale Max Quantity") {
+                labeledRow(label: "Top Scale Value") {
                     SQUITextField(viewModel: viewModel.scaleQuantityMaxField)
                 }
 
-                labeledRow(label: "Visual Label") {
-                    VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                        SQUITextField(viewModel: viewModel.quantityLabelOverrideField)
+                if viewModel.canEditScaleQuantityLabelOverride {
+                    labeledRow(label: "Visual Label") {
+                        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                            SQUITextField(viewModel: viewModel.quantityLabelOverrideField)
 
-                        Text("Optional. Example: use canonical unit Count but show “drink count” in the UI.")
-                            .sqFont(.bodyExtraSmall)
-                            .sqForegroundColor(.textSecondary)
+                            Text("Optional. Example: use canonical unit Count but show “drink count” in the UI.")
+                                .sqFont(.bodyExtraSmall)
+                                .sqForegroundColor(.textSecondary)
+                        }
                     }
                 }
             }
@@ -421,6 +446,7 @@ struct SQMetricFormView: View {
         .background {
             SQSheetBackground()
         }
+        .dismissKeyboardOnBackgroundTap()
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 0) {
                 Divider()

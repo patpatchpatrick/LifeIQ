@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 
 struct SQDropDownMenu: View {
@@ -43,6 +44,12 @@ struct SQDropDownMenu: View {
             .simultaneousGesture(
                 TapGesture().onEnded {
                     guard !isDisabled else { return }
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil,
+                        from: nil,
+                        for: nil
+                    )
                     let presentation = SQDropDownMenuState.MenuPresentation(
                         anchorFrame: buttonFrame,
                         items: menuViewModel.dropDownButtons,

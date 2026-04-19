@@ -11,6 +11,7 @@ import SwiftUI
 final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewModel {
     // Segments for the control
     let segments: [SQSegmentedControlSegment]
+    private let accentSubtitleProvider: ((SQSegmentedControlSegment?) -> String?)?
 
     // Backing storage so we can detect changes
     private var _selectedSegment: SQSegmentedControlSegment? = nil
@@ -22,6 +23,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
 
             // Only react when it actually changes
             if old?.id != newValue?.id {
+                accentSubtitle = accentSubtitleProvider?(newValue)
                 self.onFocused?(self)
                 self.isCompleted = newValue != nil
             }
@@ -43,13 +45,16 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [SQSegmentedControlSegment],
         initialSelection: SQSegmentedControlSegment? = nil,
+        accentSubtitleProvider: ((SQSegmentedControlSegment?) -> String?)? = nil,
         onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         precondition(!segments.isEmpty, "segments must not be empty")
         self.segments = segments
         self._selectedSegment = initialSelection
         self.scaleConfig = scaleConfig
+        self.accentSubtitleProvider = accentSubtitleProvider
         super.init(field: field, title: title, subtitle: subtitle, onFocused: onFocused)
+        self.accentSubtitle = accentSubtitleProvider?(initialSelection)
         self.isCompleted = initialSelection != nil
     }
 
@@ -61,6 +66,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
         scaleConfig: ScaleConfig? = .init(minText: "Very low", maxText: "Very high"),
         segments: [Segment],
         initialSelection: Segment? = nil,
+        accentSubtitleProvider: ((SQSegmentedControlSegment?) -> String?)? = nil,
         onFocused: ((SQDailyCheckInRowViewModel) -> Void)? = nil
     ) {
         let mappedSegments: [SQSegmentedControlSegment] = segments.map { segment in
@@ -85,6 +91,7 @@ final class SQDailyCheckInRowSegmentedControlViewModel: SQDailyCheckInRowViewMod
             scaleConfig: scaleConfig,
             segments: mappedSegments,
             initialSelection: initialMappedSelection,
+            accentSubtitleProvider: accentSubtitleProvider,
             onFocused: onFocused
         )
     }

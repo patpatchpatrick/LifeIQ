@@ -10,6 +10,7 @@ struct SQDropDownMenuHost: View {
 
     private let horizontalInset: CGFloat = .SQSpace.xl
     private let idealMenuWidth: CGFloat = 220
+    private let maximumMenuHeight: CGFloat = 320
 
     private func menuWidth(for availableWidth: CGFloat) -> CGFloat {
         min(idealMenuWidth, max(availableWidth - (horizontalInset * 2), 160))
@@ -23,6 +24,12 @@ struct SQDropDownMenuHost: View {
             : menu.anchorFrame.minX
         let maxX = max(horizontalInset, availableWidth - width - horizontalInset)
         return min(max(preferredX, horizontalInset), maxX)
+    }
+
+    private func menuOriginY(for menu: SQDropDownMenuState.MenuPresentation, in availableHeight: CGFloat) -> CGFloat {
+        let preferredY = menu.anchorFrame.maxY + 4
+        let maxY = max(horizontalInset, availableHeight - maximumMenuHeight - horizontalInset)
+        return min(preferredY, maxY)
     }
 
     var body: some View {
@@ -44,7 +51,7 @@ struct SQDropDownMenuHost: View {
                         .frame(width: menuWidth(for: proxy.size.width), alignment: .leading)
                         .offset(
                             x: menuOriginX(for: menu, in: proxy.size.width),
-                            y: menu.anchorFrame.maxY + 4
+                            y: menuOriginY(for: menu, in: proxy.size.height)
                         )
                         .transition(
                             .opacity.combined(with: .scale(

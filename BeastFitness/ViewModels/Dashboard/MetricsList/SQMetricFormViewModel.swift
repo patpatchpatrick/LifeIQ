@@ -67,11 +67,12 @@ final class SQMetricFormViewModel {
 
     let titleField: SQUITextFieldViewModel
     let emojiField: SQUITextFieldViewModel
+    var emojiPreviewText: String = ""
 
     var selectedKind: SQMetricKind = .scale {
         didSet {
             updateKindMenuSelection()
-            kindChanged()
+            kindChanged(from: oldValue)
         }
     }
     var selectedUnit: SQMetricUnit = .none {
@@ -144,6 +145,7 @@ final class SQMetricFormViewModel {
     var isLoading = false
     private(set) var isFormValid = false
     private(set) var saveDisabledMessage: String? = nil
+    private(set) var scaleQuantityHelperTextDisplay: String = ""
 
     // MARK: - Dependencies
 
@@ -306,6 +308,7 @@ final class SQMetricFormViewModel {
         if case .edit(let existing) = mode {
             titleField.setText(existing.title)
             emojiField.setText(existing.emoji ?? "")
+            emojiPreviewText = existing.emoji ?? ""
             initialSelectedKind = existing.kind
             initialSelectedUnit = existing.scaleQuantityMapping?.quantityUnit ?? existing.unit
             initialSelectedGroup = existing.group
@@ -327,6 +330,7 @@ final class SQMetricFormViewModel {
             minField.setText("0")
             maxField.setText("10")
             stepField.setText("1")
+            initialSelectedUnit = .count
         }
 
         selectedKind = initialSelectedKind
@@ -336,7 +340,12 @@ final class SQMetricFormViewModel {
         selectedBodyBatteryEffect = initialSelectedBodyBatteryEffect
         selectedPeriods = initialSelectedPeriods
         isSingleDailyValue = initialIsSingleDailyValue
-        isScaleQuantityMappingEnabled = initialScaleQuantityMapping != nil
+        switch mode {
+        case .create:
+            isScaleQuantityMappingEnabled = initialSelectedKind == .scale
+        case .edit:
+            isScaleQuantityMappingEnabled = initialScaleQuantityMapping != nil
+        }
 
         let initialGroupItems = Self.computeAvailableGroups(metricsManager: metricsManager, selectedGroup: initialSelectedGroup)
             .map { SQDropDownMenuViewModel.Item(title: $0) }
@@ -395,6 +404,15 @@ final class SQMetricFormViewModel {
         }
     }
 
+    var canCustomizeScaleQuantityMapping: Bool {
+        switch mode {
+        case .create:
+            return true
+        case .edit(let existing):
+            return existing.scaleQuantityMapping != nil
+        }
+    }
+
     var navigationTitle: String {
         if case .create = mode { return "New Metric" }
         return "Edit Metric"
@@ -411,27 +429,70 @@ final class SQMetricFormViewModel {
     }
 
     var showsScaleQuantityMappingSection: Bool {
-        isStructurallyEditable && (selectedKind == .scale || selectedKind == .number)
+        canCustomizeScaleQuantityMapping && (selectedKind == .scale || selectedKind == .number)
+    }
+
+    var showsScaleQuantityToggle: Bool {
+        selectedKind == .scale && isStructurallyEditable && showsScaleQuantityMappingSection
+    }
+
+    var showsRequiredScaleConversionSection: Bool {
+        guard showsScaleQuantityMappingSection, selectedKind == .number else { return false }
+        guard case .edit(let existing) = mode else { return false }
+        return existing.kind != .number || existing.scaleQuantityMapping != nil
+    }
+
+    var showsScaleQuantityFields: Bool {
+        if selectedKind == .scale {
+            return showsScaleQuantityMappingSection && isScaleQuantityMappingEnabled
+        }
+
+        return showsRequiredScaleConversionSection
+    }
+
+    var canEditScaleQuantityUnit: Bool {
+        isStructurallyEditable
+    }
+
+    var canEditScaleQuantityLabelOverride: Bool {
+        isStructurallyEditable
     }
 
     var scaleQuantitySectionTitle: String {
         switch selectedKind {
         case .number:
-            return "Allow Scale Input"
+            return "Scale Conversion"
         case .scale:
-            return "Allow Numeric Input"
+            return "Map Scale to Unit"
         default:
             return "Alternate Input"
         }
     }
 
-    var scaleQuantityHelperText: String {
-        if !isScaleQuantityMappingEnabled {
-            return "Optional. Add a max quantity if this metric should support both a scale and a real-number entry."
-        }
+    private func buildScaleQuantityHelperText() -> String {
+        switch selectedKind {
+        case .scale:
+            if !isScaleQuantityMappingEnabled {
+                return "Add a numeric value that maps to the scale so entries like 10 can also mean a real amount."
+            }
 
-        let unitName = selectedUnit.displayName.lowercased()
-        return "The top of the scale will map to the max \(unitName) value below. Old entries keep the mode they were originally logged in."
+            if let topScaleValue = resolvedScaleUpperBound,
+               let maxQuantityValue = resolvedScaleQuantityMaxValue,
+               selectedUnit != .none,
+               selectedUnit != .unknown {
+                let midpointScaleValue = topScaleValue / 2
+                let midpointQuantityValue = maxQuantityValue / 2
+                return "Add a numeric value that maps to the top scale value. For example, if \(Self.formatFloat(topScaleValue)) = \(Self.formatFloat(maxQuantityValue)) \(selectedUnit.shortDisplayName), then \(Self.formatFloat(midpointScaleValue)) = \(Self.formatFloat(midpointQuantityValue)) \(selectedUnit.shortDisplayName)."
+            }
+
+            return "Add a numeric value that maps to the top scale value so the app can translate scale entries into a real amount."
+
+        case .number:
+            return "Define how this number maps onto a scale so older scale entries and scale-based views stay aligned."
+
+        default:
+            return "Optional alternate input configuration."
+        }
     }
 
     var showGoalTargetField: Bool {
@@ -632,7 +693,9 @@ final class SQMetricFormViewModel {
     // MARK: - Delete
 
     var canDelete: Bool {
-        if case .edit = mode { return true }
+        if case .edit(let existing) = mode {
+            return !existing.isPreset
+        }
         return false
     }
 
@@ -727,6 +790,8 @@ final class SQMetricFormViewModel {
     }
 
     private func calculateValidity() {
+        scaleQuantityHelperTextDisplay = buildScaleQuantityHelperText()
+
         let activeRows = rowViewModels.filter { $0.isActive() }
         activeRows.forEach { $0.setValidity($0.validator(), notify: false) }
 
@@ -773,6 +838,7 @@ final class SQMetricFormViewModel {
     private func configureAfterInit() {
         // Wire delegates for validation updates
         titleField.delegate = self
+        emojiField.delegate = self
         minField.delegate = self
         maxField.delegate = self
         stepField.delegate = self
@@ -1072,14 +1138,18 @@ final class SQMetricFormViewModel {
             return (false, "Switching between scale and number requires a mapping so historical entries keep their original mode.")
         }
 
-        guard isScaleQuantityMappingEnabled else { return (true, nil) }
+        let requiresMappingFields = selectedKind == .number
+            ? showsRequiredScaleConversionSection
+            : isScaleQuantityMappingEnabled
+
+        guard requiresMappingFields else { return (true, nil) }
 
         guard selectedUnit != .none && selectedUnit != .unknown else {
-            return (false, "Choose a quantity unit for the alternate input mode.")
+            return (false, "Choose a unit for the scale conversion.")
         }
 
         guard let maxQuantityValue = resolvedScaleQuantityMaxValue else {
-            return (false, "Enter the max quantity that should map to the top of the scale.")
+            return (false, "Enter the numeric value that should map to the top of the scale.")
         }
 
         guard maxQuantityValue > 0 else {
@@ -1198,15 +1268,18 @@ final class SQMetricFormViewModel {
     }
 
     /// Reset numeric defaults when kind changes in create mode
-    private func kindChanged() {
+    private func kindChanged(from previousKind: SQMetricKind) {
         guard isStructurallyEditable else { return }
         switch selectedKind {
         case .scale:
             minField.setText("0")
             maxField.setText("10")
             stepField.setText("1")
-            if !isScaleQuantityMappingEnabled {
+            if selectedUnit == .none || selectedUnit == .unknown {
                 selectedUnit = .count
+            }
+            if previousKind != .scale {
+                isScaleQuantityMappingEnabled = true
             }
         case .number:
             minField.setText("")
@@ -1214,6 +1287,9 @@ final class SQMetricFormViewModel {
             stepField.setText("")
             if selectedUnit == .none || selectedUnit == .unknown {
                 selectedUnit = .count
+            }
+            if case .edit(let existing) = mode, existing.kind != .number {
+                isScaleQuantityMappingEnabled = true
             }
         default:
             break
@@ -1245,8 +1321,23 @@ final class SQMetricFormViewModel {
         scaleQuantityMaxField.text.isEmpty ? nil : Float(scaleQuantityMaxField.text)
     }
 
+    private var resolvedScaleUpperBound: Float? {
+        Float(maxField.text)
+    }
+
+    private var shouldPersistScaleQuantityMapping: Bool {
+        switch selectedKind {
+        case .scale:
+            return isScaleQuantityMappingEnabled
+        case .number:
+            return showsRequiredScaleConversionSection
+        default:
+            return false
+        }
+    }
+
     private var resolvedScaleQuantityMapping: SQMetricScaleQuantityMapping? {
-        guard isScaleQuantityMappingEnabled, let maxValue = resolvedScaleQuantityMaxValue else { return nil }
+        guard shouldPersistScaleQuantityMapping, let maxValue = resolvedScaleQuantityMaxValue else { return nil }
 
         let trimmedLabelOverride = quantityLabelOverrideField.text
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1428,6 +1519,8 @@ extension SQMetricFormViewModel: SQUITextFieldViewModelDelegate {
     private func handleFieldChanged(_ viewModel: SQUITextFieldViewModel) {
         if viewModel === titleField {
             titleRowViewModel?.updateValidity()
+        } else if viewModel === emojiField {
+            emojiPreviewText = emojiField.text
         } else if viewModel === minField {
             minRowViewModel?.updateValidity()
         } else if viewModel === maxField {
