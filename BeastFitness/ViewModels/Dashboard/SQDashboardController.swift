@@ -297,6 +297,12 @@ final class SQDashboardController: SQDashboardInterface {
             )
             return
         }
+
+        if shouldPresentLaunchTutorial {
+            presentLaunchTutorialIfNeeded(context: context)
+            return
+        }
+
         guard !hasLoadedUI || shouldForceRefresh else { return }
         guard !isLoadUIInProgress else {
             if shouldForceRefresh {
@@ -356,19 +362,22 @@ final class SQDashboardController: SQDashboardInterface {
                 _ = try await SQMetricDefinitionManager.shared.syncMetricsIfNeeded(using: context)
             }
 
-            // Fetch VO2 Max samples for different time ranges
-            let vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(
-                .pastWeek
-            )
-            let vo2MaxPast30Days = try await healthKitManager.fetchVO2MaxSamples(
-                .past30Days
-            )
-            let vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(
-                .pastYear
-            )
-            let vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(
-                .allTime
-            )
+            async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
+            async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
+            async let workoutsAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .workouts)
+            let sleepAccessStatus = await sleepAccessStatusTask
+            let heartAccessStatus = await heartAccessStatusTask
+            let workoutsAccessStatus = await workoutsAccessStatusTask
+
+            let vo2MaxPast7Days: [SQVO2MaxSample]
+            let vo2MaxPast30Days: [SQVO2MaxSample]
+            let vo2MaxPastYear: [SQVO2MaxSample]
+            let vo2MaxAllTime: [SQVO2MaxSample]
+
+            vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(.pastWeek)
+            vo2MaxPast30Days = try await healthKitManager.fetchVO2MaxSamples(.past30Days)
+            vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(.pastYear)
+            vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(.allTime)
 
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
             
@@ -464,11 +473,23 @@ final class SQDashboardController: SQDashboardInterface {
                 !hasCompletedCurrentCheckIn,
                 userState.isLoggedIn
             {
-                state.updateDailyCheckInCtaViewModel(.init(
-                    icon: .init(symbol: .checkmark),
-                    title: "Complete your \(title(for: currentCheckInPromptPeriod)) check-in",
+                state.updateDailyCheckInCtaViewModel(.dailyCheckInPrompt(
+                    periodTitle: title(for: currentCheckInPromptPeriod),
                     onTap: {
                         Task { await self.displayDailyCheckInSheet(for: context) }
+                    }
+                ))
+            } else if !userState.isLoggedIn {
+                let preferredMode: SQLoginMode = remoteConfigManager.snapshot.signupDisabled ? .login : .signup
+                state.updateDailyCheckInCtaViewModel(.guestDailyCheckInPrompt(
+                    signupEnabled: !remoteConfigManager.snapshot.signupDisabled,
+                    onTap: {
+                        let controller = SQLoginController(
+                            mode: preferredMode,
+                            hub: self.state.hub,
+                            remoteConfigManager: self.remoteConfigManager
+                        )
+                        self.state.hub.domainEvents.send(.pushDashboardRoute(.login(controller: controller)))
                     }
                 ))
             } else {
@@ -521,15 +542,7 @@ final class SQDashboardController: SQDashboardInterface {
                 currentVO2MaxSamples = vo2MaxAllTime
             }
 
-            let sleepDashboardData = try await buildSleepDashboardData(
-                for: state.selectedTimeRange
-            )
-            async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
-            async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
-            async let workoutsAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .workouts)
-            let sleepAccessStatus = await sleepAccessStatusTask
-            let heartAccessStatus = await heartAccessStatusTask
-            let workoutsAccessStatus = await workoutsAccessStatusTask
+            let sleepDashboardData = try await buildSleepDashboardData(for: state.selectedTimeRange)
 
             healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
                 for: context,
@@ -563,6 +576,7 @@ final class SQDashboardController: SQDashboardInterface {
                 sleepAccessStatus: sleepAccessStatus,
                 heartAccessStatus: heartAccessStatus,
                 workoutsAccessStatus: workoutsAccessStatus,
+                includeHeartRateData: true,
                 timeRange: state.selectedTimeRange.sqTimeRange,
                 priorTimeRange: priorTimeRange,
                 context: context
@@ -743,11 +757,32 @@ final class SQDashboardController: SQDashboardInterface {
         state.hub.alertEvents.send(.present(alert))
     }
 
+    private func presentLaunchTutorialIfNeeded(context: ModelContext) {
+        guard navState.dashboardRootSheetView == nil else { return }
+        guard shouldPresentLaunchTutorial else { return }
+
+        let controller = SQLaunchTutorialController { [weak self] _ in
+            guard let self else { return }
+
+            await self.loadUI(
+                for: context,
+                shouldForceRefresh: true,
+                showLoadingState: true
+            )
+        }
+        state.hub.domainEvents.send(.pushDashboardRoute(.launchTutorial(controller: controller)))
+    }
+
     private func presentHighestPriorityDashboardRouteIfNeeded(
         workouts: [SQWorkoutSessionable],
         context: ModelContext
     ) {
         guard navState.dashboardRootSheetView == nil else { return }
+
+        if shouldPresentLaunchTutorial {
+            presentLaunchTutorialIfNeeded(context: context)
+            return
+        }
 
         if shouldPresentOnboarding {
             let controller = SQOnboardingController()
@@ -756,6 +791,11 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         processNewWorkoutReviews(workouts: workouts, context: context)
+    }
+
+    private var shouldPresentLaunchTutorial: Bool {
+        !userState.isLoggedIn &&
+        !SQUserDefaults.shared.hasCompletedLaunchTutorial(version: SQLaunchTutorialController.currentVersion)
     }
 
     private var shouldPresentOnboarding: Bool {
@@ -1896,6 +1936,7 @@ final class SQDashboardController: SQDashboardInterface {
         sleepAccessStatus: SQHealthKitDashboardAccessStatus,
         heartAccessStatus: SQHealthKitDashboardAccessStatus,
         workoutsAccessStatus: SQHealthKitDashboardAccessStatus,
+        includeHeartRateData: Bool,
         timeRange: SQTimeRange,
         priorTimeRange: SQTimeRange,
         context: ModelContext
@@ -1907,6 +1948,7 @@ final class SQDashboardController: SQDashboardInterface {
                 todaysWorkouts: todaysWorkouts,
                 yesterdaysWorkouts: yesterdaysWorkouts,
                 sleepData: sleepData,
+                includeHeartRateData: includeHeartRateData,
                 context: context
            ) {
             sectionGroups.append(recoveryGroup)
@@ -1973,7 +2015,10 @@ final class SQDashboardController: SQDashboardInterface {
             )
         }
 
-        let heartGroup = try await buildHeartSectionGroup(timeRange: timeRange)
+        let heartGroup = try await buildHeartSectionGroup(
+            timeRange: timeRange,
+            includeHeartRateData: includeHeartRateData
+        )
         if let heartGroup {
             sectionGroups.append(heartGroup)
         } else if heartAccessStatus == .unavailable {
@@ -2038,7 +2083,7 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         let workoutsGroup: SQDashboardSectionGroupViewModel
-        if workoutsAccessStatus == .unavailable {
+        if workoutsAccessStatus == .unavailable && allTimeWorkouts.isEmpty {
             workoutsGroup = buildHealthAccessWarningSectionGroup(
                 id: "workouts",
                 title: "Workouts",
@@ -2248,12 +2293,14 @@ final class SQDashboardController: SQDashboardInterface {
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
+        includeHeartRateData: Bool,
         context: ModelContext
     ) async throws -> SQDashboardSectionGroupViewModel? {
         guard let row = try await bodyBatteryService.buildDashboardRowViewModel(
             todaysWorkouts: todaysWorkouts,
             yesterdaysWorkouts: yesterdaysWorkouts,
             sleepData: sleepData,
+            includeHeartRateData: includeHeartRateData,
             context: context
         ) else {
             return nil
@@ -2279,8 +2326,14 @@ final class SQDashboardController: SQDashboardInterface {
         )
     }
 
-    private func buildHeartSectionGroup(timeRange: SQTimeRange) async throws -> SQDashboardSectionGroupViewModel? {
-        guard let row = try await heartRateService.buildDashboardRowViewModel(for: timeRange) else {
+    private func buildHeartSectionGroup(
+        timeRange: SQTimeRange,
+        includeHeartRateData: Bool
+    ) async throws -> SQDashboardSectionGroupViewModel? {
+        guard let row = try await heartRateService.buildDashboardRowViewModel(
+            for: timeRange,
+            includeHealthKitData: includeHeartRateData
+        ) else {
             return nil
         }
 

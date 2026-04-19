@@ -179,6 +179,34 @@ struct SQCallToActionViewModel {
     }
 }
 
+extension SQCallToActionViewModel {
+    static func dailyCheckInPrompt(
+        periodTitle: String,
+        onTap: (() -> Void)? = nil
+    ) -> Self {
+        .init(
+            icon: .init(symbol: .checkmark),
+            title: "Complete your \(periodTitle) check-in",
+            onTap: onTap
+        )
+    }
+
+    static func guestDailyCheckInPrompt(
+        signupEnabled: Bool,
+        onTap: (() -> Void)? = nil
+    ) -> Self {
+        .init(
+            icon: .init(symbol: .checkmark),
+            title: "Complete your check-in",
+            subtitle: signupEnabled
+                ? "Create your account to start tracking daily check-ins."
+                : "Log in to start tracking daily check-ins.",
+            actionText: signupEnabled ? "Tap to continue" : "Tap to log in",
+            onTap: onTap
+        )
+    }
+}
+
 #Preview {
     VStack(spacing: .SQSpace.l) {
         // With icon

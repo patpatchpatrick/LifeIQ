@@ -100,6 +100,7 @@ struct SQNavRoute {
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
         case sleepPhaseTrends(controller: SQSleepPhaseTrendsController)
+        case launchTutorial(controller: SQLaunchTutorialController)
         case metricDetail(controller: SQMetricDetailController)
         case profile(controller: SQProfileController)
         case login(controller: SQLoginController)
@@ -133,6 +134,8 @@ struct SQNavRoute {
                 return "leaderboard-\(controller.id)"
             case .sleepPhaseTrends(controller: let controller):
                 return "sleepPhaseTrends-\(controller.id)"
+            case .launchTutorial(controller: let controller):
+                return "launchTutorial-\(controller.id)"
             case .metricDetail(controller: let controller):
                 return "metricDetail-\(controller.id)"
             case .profile(let controller):
@@ -162,6 +165,8 @@ struct SQNavRoute {
 
         var sheetDetents: Set<PresentationDetent>? {
             switch self {
+            case .launchTutorial:
+                return [.large]
             case .insightDetail:
                 return [.medium, .large]
             case .webContent:

@@ -19,6 +19,7 @@ enum SQHealthKitDashboardDomain {
     case workouts
     case sleep
     case heart
+    case vo2Max
 }
 
 actor SQHealthKitAuthorizationCoordinator {
@@ -218,6 +219,10 @@ final class SQHealthKitManager: SQHealthKitManaging {
                 HKQuantityType(.heartRate),
                 HKQuantityType(.restingHeartRate)
             ]
+        case .vo2Max:
+            return [
+                HKQuantityType(.vo2Max)
+            ]
         }
     }
 
@@ -415,9 +420,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
             switch requestStatus {
             case .unnecessary:
-                return authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized })
-                    ? .available
-                    : .unavailable
+                return .available
             case .shouldRequest, .unknown:
                 return .unavailable
             @unknown default:
@@ -452,9 +455,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
             switch requestStatus {
             case .unnecessary:
-                return authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized })
-                    ? .available
-                    : .unavailable
+                return .available
             case .shouldRequest, .unknown:
                 return .unavailable
             @unknown default:

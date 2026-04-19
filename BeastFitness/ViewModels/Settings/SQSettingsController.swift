@@ -236,6 +236,7 @@ final class SQSettingsController: SQSettingsInterface {
                 createdAt: user.createdAt,
                 name: user.name,
                 email: user.email,
+                emailVerificationBypass: user.emailVerificationBypass,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 dateOfBirth: user.dateOfBirth,

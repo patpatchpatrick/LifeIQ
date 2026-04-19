@@ -22,6 +22,9 @@ final class SQUserDefaults {
     /// Date the app was first installed on this device
     private static let keyAppInstallDate = "app.install-date"
 
+    /// Version of the first-launch tutorial that has been completed on this device.
+    private static let keyCompletedLaunchTutorialVersion = "launch.tutorial.completed-version"
+
     /// Persisted dashboard layout preferences
     private static let keyDashboardLayoutPreferences = "dashboard.layout.preferences"
 
@@ -159,6 +162,26 @@ final class SQUserDefaults {
     func recordInstallDateIfNeeded() {
         guard UserDefaults.standard.object(forKey: Self.keyAppInstallDate) == nil else { return }
         UserDefaults.standard.set(Date(), forKey: Self.keyAppInstallDate)
+    }
+
+    // MARK: - Public API (Launch Tutorial)
+
+    var completedLaunchTutorialVersion: Int? {
+        let storedValue = UserDefaults.standard.integer(forKey: Self.keyCompletedLaunchTutorialVersion)
+        return storedValue > 0 ? storedValue : nil
+    }
+
+    func hasCompletedLaunchTutorial(version: Int) -> Bool {
+        guard let completedLaunchTutorialVersion else { return false }
+        return completedLaunchTutorialVersion >= version
+    }
+
+    func markLaunchTutorialCompleted(version: Int) {
+        UserDefaults.standard.set(version, forKey: Self.keyCompletedLaunchTutorialVersion)
+    }
+
+    func clearCompletedLaunchTutorialVersion() {
+        UserDefaults.standard.removeObject(forKey: Self.keyCompletedLaunchTutorialVersion)
     }
 
     // MARK: - Public API (Dashboard Layout)

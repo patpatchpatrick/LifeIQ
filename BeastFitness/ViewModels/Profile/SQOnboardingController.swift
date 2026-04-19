@@ -299,6 +299,7 @@ import BeastFitnessCore
             createdAt: existingUser.createdAt,
             name: fullName,
             email: existingUser.email,
+            emailVerificationBypass: existingUser.emailVerificationBypass,
             firstName: trimmedFirstName,
             lastName: trimmedLastName.isEmpty ? nil : trimmedLastName,
             dateOfBirth: includesDateOfBirth ? selectedDateOfBirth : nil,

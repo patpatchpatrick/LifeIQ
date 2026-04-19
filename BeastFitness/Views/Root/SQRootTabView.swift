@@ -38,6 +38,8 @@ struct SQRootTabView: View {
             SQLeaderboardView(controller: controller)
         case .sleepPhaseTrends(controller: let controller):
             SQSleepPhaseTrendsView(controller: controller)
+        case .launchTutorial(controller: let controller):
+            SQLaunchTutorialView(controller: controller)
         case .metricDetail(controller: let controller):
             SQMetricDetailView(controller: controller)
         case .profile(controller: let controller):

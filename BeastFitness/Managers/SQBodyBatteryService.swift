@@ -14,6 +14,7 @@ protocol SQBodyBatteryServicing {
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
+        includeHeartRateData: Bool,
         context: ModelContext
     ) async throws -> SQDashboardBodyBatteryRowViewModel?
 }
@@ -41,6 +42,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
+        includeHeartRateData: Bool,
         context: ModelContext
     ) async throws -> SQDashboardBodyBatteryRowViewModel? {
         async let todaysCheckInsTask = metricEntryManager.getDailyCheckInStats(
@@ -53,17 +55,30 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             to: SQTimeRange.yesterday.endDate,
             context: context
         )
-        async let todaysRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.today)
-        async let recentRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastWeek)
-        async let todaysHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.today)
-        async let recentHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.pastWeek)
 
         let todaysCheckIns = try await todaysCheckInsTask
         let yesterdaysCheckIns = try await yesterdaysCheckInsTask
-        let todaysRestingSummaries = (try? await todaysRestingTask) ?? []
-        let recentRestingSummaries = (try? await recentRestingTask) ?? []
-        let todaysHeartRateSummaries = (try? await todaysHeartRateTask) ?? []
-        let recentHeartRateSummaries = (try? await recentHeartRateTask) ?? []
+        let todaysRestingSummaries: [SQHeartRateDailySummary]
+        let recentRestingSummaries: [SQHeartRateDailySummary]
+        let todaysHeartRateSummaries: [SQHeartRateDailySummary]
+        let recentHeartRateSummaries: [SQHeartRateDailySummary]
+
+        if includeHeartRateData {
+            async let todaysRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.today)
+            async let recentRestingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastWeek)
+            async let todaysHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.today)
+            async let recentHeartRateTask = healthKitManager.fetchDailyHeartRateSummaries(.pastWeek)
+
+            todaysRestingSummaries = (try? await todaysRestingTask) ?? []
+            recentRestingSummaries = (try? await recentRestingTask) ?? []
+            todaysHeartRateSummaries = (try? await todaysHeartRateTask) ?? []
+            recentHeartRateSummaries = (try? await recentHeartRateTask) ?? []
+        } else {
+            todaysRestingSummaries = []
+            recentRestingSummaries = []
+            todaysHeartRateSummaries = []
+            recentHeartRateSummaries = []
+        }
 
         let heartRecovery = heartRecoverySignal(
             todaysRestingSummaries: todaysRestingSummaries,

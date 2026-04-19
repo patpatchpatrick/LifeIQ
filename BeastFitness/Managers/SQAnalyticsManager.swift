@@ -478,6 +478,8 @@ private extension SQNavRoute.DashboardRoute {
             return "leaderboard"
         case .sleepPhaseTrends:
             return "sleep_phase_trends"
+        case .launchTutorial:
+            return "launch_tutorial"
         case .metricDetail:
             return "metric_detail"
         case .profile:

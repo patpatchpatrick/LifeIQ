@@ -15,6 +15,7 @@ final class SQUserService: SQNetworkService {
             createdAt: .now,
             name: "",
             email: email,
+            emailVerificationBypass: nil,
             firstName: nil,
             lastName: nil,
             dateOfBirth: nil,

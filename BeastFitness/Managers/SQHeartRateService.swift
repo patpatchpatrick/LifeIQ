@@ -110,7 +110,10 @@ struct SQHeartRateWorkoutZoneSummary: Sendable {
 
 @MainActor
 protocol SQHeartRateServicing {
-    func buildDashboardRowViewModel(for timeRange: SQTimeRange) async throws -> SQDashboardHeartSummaryRowViewModel?
+    func buildDashboardRowViewModel(
+        for timeRange: SQTimeRange,
+        includeHealthKitData: Bool
+    ) async throws -> SQDashboardHeartSummaryRowViewModel?
     func buildWorkoutZoneSummary(for workout: SQWorkoutSessionable) async -> SQHeartRateWorkoutZoneSummary?
 }
 
@@ -127,7 +130,14 @@ final class SQHeartRateService: SQHeartRateServicing {
         self.userState = userState
     }
 
-    func buildDashboardRowViewModel(for timeRange: SQTimeRange) async throws -> SQDashboardHeartSummaryRowViewModel? {
+    func buildDashboardRowViewModel(
+        for timeRange: SQTimeRange,
+        includeHealthKitData: Bool
+    ) async throws -> SQDashboardHeartSummaryRowViewModel? {
+        guard includeHealthKitData else {
+            return nil
+        }
+
         async let heartTask = healthKitManager.fetchDailyHeartRateSummaries(timeRange)
         async let restingTask = healthKitManager.fetchDailyRestingHeartRateSummaries(timeRange)
 

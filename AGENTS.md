@@ -182,6 +182,12 @@ Sleep-specific range semantics:
 Charts convention:
 - Reusable timeline/interval charts should live in `CoolCharts` as generic components (for example `TimelineChartView`) so they can be reused by Sleep and future Heart Rate surfaces.
 
+Tutorial/example sync convention:
+- Tutorial/example surfaces should reuse the real app components where possible so they do not drift visually or behaviorally.
+- Current launch tutorial examples are expected to stay aligned with the actual Daily Check-In rows, insight card, and dashboard check-in CTA.
+- If you modify any real app surface that is mirrored in the tutorial, update the tutorial preview or shared helper in the same change.
+- When you make one of those changes, explicitly tell Patrick that the launch tutorial should be re-tested for sync/regression as part of your user-facing update/final response.
+
 ## Workout source architecture
 
 - Supported sources are unified by `SQWorkoutSourceable`:

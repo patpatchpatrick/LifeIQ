@@ -67,6 +67,7 @@ struct SQUser: Codable, Equatable {
     let createdAt: Date?
     let name: String
     let email: String
+    let emailVerificationBypass: Bool?
     let firstName: String?
     let lastName: String?
     let dateOfBirth: Date?
@@ -125,6 +126,7 @@ extension SQUser {
         createdAt: .now,
         name: "Patrick Doyle",
         email: "patrick@example.com",
+        emailVerificationBypass: nil,
         firstName: "Patrick",
         lastName: "Doyle",
         dateOfBirth: nil,

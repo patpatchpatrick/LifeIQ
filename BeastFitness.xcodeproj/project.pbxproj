@@ -306,6 +306,8 @@
 		F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */; };
 		F7E4002E2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */; };
 		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
+		F81A10052FFF200100AA1001 /* SQLaunchTutorialController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */; };
+		F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -635,6 +637,8 @@
 		F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightInfoSheetView.swift; sourceTree = "<group>"; };
 		F7E4002D2FFE200100AA4001 /* SQMetricComparisonInsightEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricComparisonInsightEvaluator.swift; sourceTree = "<group>"; };
 		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
+		F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialController.swift; sourceTree = "<group>"; };
+		F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1660,6 +1664,7 @@
 		F6F94DFD2CAB9A5500C2B90B /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				F81A10082FFF200100AA1001 /* Launch */,
 				F60C50A22F4FCBD600CB9510 /* WorkoutReview */,
 				F61593C02EF37A6D00223A63 /* Toast */,
 				F61593B42EF3727F00223A63 /* Settings */,
@@ -1789,6 +1794,15 @@
 			isa = PBXGroup;
 			children = (
 				F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */,
+				F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */,
+			);
+			path = Launch;
+			sourceTree = "<group>";
+		};
+		F81A10082FFF200100AA1001 /* Launch */ = {
+			isa = PBXGroup;
+			children = (
+				F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */,
 			);
 			path = Launch;
 			sourceTree = "<group>";
@@ -2215,6 +2229,7 @@
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */,
 				F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */,
+				F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */,
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */,
 				F639F0CF2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift in Sources */,
@@ -2327,6 +2342,7 @@
 				F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */,
 				F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */,
 				F6A401122EF5B926002BC997 /* SQLaunchManager.swift in Sources */,
+				F81A10052FFF200100AA1001 /* SQLaunchTutorialController.swift in Sources */,
 				F6268AE72F6B83EE00087C0F /* SQLoginController.swift in Sources */,
 				F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */,
 				F7D1A1032FD1200100AA1001 /* SQDeleteAccountController.swift in Sources */,

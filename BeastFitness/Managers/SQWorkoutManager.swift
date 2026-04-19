@@ -16,9 +16,24 @@ protocol SQWorkoutManaging {
     func deleteWorkout(workout: SQWorkoutSessionable, from modelContext: ModelContext) async throws
     func deletionTypeForWorkout(_ workout: any SQWorkoutSessionable) -> SQWorkoutManager.WorkoutDeletionType
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> SQWorkoutSessionable?
+    func getWorkouts(
+        for timeRange: SQTimeRange,
+        modelContext: ModelContext,
+        includeHealthKitWorkouts: Bool
+    ) async throws -> [SQWorkoutSessionable]
     func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable]
     func markWorkoutsAsProcessed(_ workouts: [SQWorkoutSessionable], context: ModelContext)
     func fetchProcessedSourceIds(context: ModelContext) -> Set<String>
+}
+
+extension SQWorkoutManaging {
+    func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [SQWorkoutSessionable] {
+        try await getWorkouts(
+            for: timeRange,
+            modelContext: modelContext,
+            includeHealthKitWorkouts: true
+        )
+    }
 }
 
 @MainActor
@@ -42,43 +57,50 @@ final class SQWorkoutManager: SQWorkoutManaging {
         self.userState = userState
     }
     
-    func getWorkouts(for timeRange: SQTimeRange, modelContext: ModelContext) async throws -> [any SQWorkoutSessionable] {
+    func getWorkouts(
+        for timeRange: SQTimeRange,
+        modelContext: ModelContext,
+        includeHealthKitWorkouts: Bool
+    ) async throws -> [any SQWorkoutSessionable] {
         await syncWorkoutsIfNeeded(context: modelContext)
 
-        let healthKitWorkouts = try await healthKitManager.fetchWorkouts(timeRange)
         var allWorkouts = [SQWorkoutSessionable]()
         var seenWorkoutIds = Set<String>()
         let userId = userState.loggedInUser?.id
 
-        for hkWorkout in healthKitWorkouts {
-            do {
-                let source = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
-                let savedWorkout = try getWorkout(
-                    withHkWorkoutId: hkWorkout.uuid.uuidString,
-                    workoutSource: source,
-                    modelContext: modelContext
-                )
-                
-                if let savedWorkout {
-                    if seenWorkoutIds.insert(savedWorkout.id).inserted {
-                        allWorkouts.appendIfNotNil(safeguardedWorkout(workout: savedWorkout))
-                    }
-                } else {
-                    let sqHkWorkout = SQWorkoutSession(
+        if includeHealthKitWorkouts {
+            let healthKitWorkouts = try await healthKitManager.fetchWorkouts(timeRange)
+
+            for hkWorkout in healthKitWorkouts {
+                do {
+                    let source = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
+                    let savedWorkout = try getWorkout(
+                        withHkWorkoutId: hkWorkout.uuid.uuidString,
                         workoutSource: source,
-                        overrideData: nil,
-                        hkWorkoutId: nil
+                        modelContext: modelContext
                     )
+
+                    if let savedWorkout {
+                        if seenWorkoutIds.insert(savedWorkout.id).inserted {
+                            allWorkouts.appendIfNotNil(safeguardedWorkout(workout: savedWorkout))
+                        }
+                    } else {
+                        let sqHkWorkout = SQWorkoutSession(
+                            workoutSource: source,
+                            overrideData: nil,
+                            hkWorkoutId: nil
+                        )
+                        if seenWorkoutIds.insert(sqHkWorkout.id).inserted {
+                            allWorkouts.appendIfNotNil(safeguardedWorkout(workout: sqHkWorkout))
+                        }
+                    }
+
+                } catch {
+                    let workoutSource = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
+                    let sqHkWorkout = SQWorkoutSession(workoutSource: workoutSource, overrideData: nil, hkWorkoutId: nil)
                     if seenWorkoutIds.insert(sqHkWorkout.id).inserted {
                         allWorkouts.appendIfNotNil(safeguardedWorkout(workout: sqHkWorkout))
                     }
-                }
-                
-            } catch {
-                let workoutSource = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
-                let sqHkWorkout = SQWorkoutSession(workoutSource: workoutSource, overrideData: nil, hkWorkoutId: nil)
-                if seenWorkoutIds.insert(sqHkWorkout.id).inserted {
-                    allWorkouts.appendIfNotNil(safeguardedWorkout(workout: sqHkWorkout))
                 }
             }
         }
