@@ -121,7 +121,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         // Refresh rows with new stats
         do {
             try metricsManager.loadIfNeeded(using: modelContext)
-            self.rows = buildRows(for: effectiveStats, sleepPrefillMetricIds: sleepPrefill.metricIds)
+            self.rows = buildRows(for: effectiveStats, healthKitPrefillMetricIds: effectiveStats?.healthKitMetricIds ?? [])
         } catch {
             eventHub.alertEvents.send(.present(.init(
                 SQError.standard(withDescription: "Error loading metrics: \(error.localizedDescription)")
@@ -135,7 +135,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.modelContext = modelContext
         do {
             try metricsManager.loadIfNeeded(using: modelContext)
-            self.rows = buildRows(for: stats, sleepPrefillMetricIds: [])
+            self.rows = buildRows(for: stats, healthKitPrefillMetricIds: stats?.healthKitMetricIds ?? [])
         } catch {
             eventHub.alertEvents.send(.present(.init(
                 SQError.standard(withDescription: "Error loading metrics: \(error.localizedDescription)")
@@ -163,7 +163,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     func buildRows(
         for stats: SQDailyCheckInStats?,
-        sleepPrefillMetricIds: Set<String>
+        healthKitPrefillMetricIds: Set<String>
     ) -> [SQDailyCheckInRowViewModel] {
         var built: [SQDailyCheckInRowViewModel] = []
 
@@ -202,7 +202,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                         for: metric,
                         targetDate: targetDate,
                         period: period,
-                        sleepPrefillMetricIds: sleepPrefillMetricIds
+                        healthKitPrefillMetricIds: healthKitPrefillMetricIds
                     ),
                     segments: segments,
                     initialSelection: initial,
@@ -216,7 +216,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     for: metric,
                     targetDate: targetDate,
                     period: period,
-                    sleepPrefillMetricIds: sleepPrefillMetricIds
+                    healthKitPrefillMetricIds: healthKitPrefillMetricIds
                 )
                 built.append(row)
 
@@ -230,7 +230,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                         for: metric,
                         targetDate: targetDate,
                         period: period,
-                        sleepPrefillMetricIds: sleepPrefillMetricIds
+                        healthKitPrefillMetricIds: healthKitPrefillMetricIds
                     ),
                     textFieldViewModel: tf,
                     onFocused: { [weak self] in self?.handleRowFocused($0) }
@@ -244,7 +244,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                     for: metric,
                     targetDate: targetDate,
                     period: period,
-                    sleepPrefillMetricIds: sleepPrefillMetricIds
+                    healthKitPrefillMetricIds: healthKitPrefillMetricIds
                 )
 
                 built.append(row)
@@ -262,7 +262,7 @@ final class SQDailyCheckInViewModel: Identifiable {
     private func subtitle(
         for metric: SQMetricDefinition,
         targetDate: Date,
-        sleepPrefillMetricIds: Set<String>
+        healthKitPrefillMetricIds: Set<String>
     ) -> String? {
         guard isPreviousNightSleepMetric(metric.id) else { return nil }
 
@@ -270,7 +270,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             .date(byAdding: .day, value: -1, to: targetDate)?
             .formattedString(with: .medium) ?? "the previous night"
 
-        if sleepPrefillMetricIds.contains(metric.id) {
+        if healthKitPrefillMetricIds.contains(metric.id) {
             return "Previous night's sleep (\(referencedNightDate)). Prefilled from HealthKit; you can override it."
         }
 
@@ -281,7 +281,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         for metric: SQMetricDefinition,
         targetDate: Date,
         period: SQMetricPeriod,
-        sleepPrefillMetricIds: Set<String>
+        healthKitPrefillMetricIds: Set<String>
     ) -> AttributedString? {
         guard isPreviousNightSleepMetric(metric.id) else { return nil }
 
@@ -297,7 +297,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         result += AttributedString.build(with: referencedNightDate, font: baseFont, color: highlightColor)
         result += AttributedString.build(with: ").", font: baseFont, color: secondaryColor)
 
-        if sleepPrefillMetricIds.contains(metric.id) {
+        if healthKitPrefillMetricIds.contains(metric.id) {
             result += AttributedString.build(with: " Prefilled from HealthKit; you can override it.", font: baseFont, color: secondaryColor)
         }
 
@@ -312,18 +312,26 @@ final class SQDailyCheckInViewModel: Identifiable {
         for metric: SQMetricDefinition,
         targetDate: Date,
         period: SQMetricPeriod,
-        sleepPrefillMetricIds: Set<String>
+        healthKitPrefillMetricIds: Set<String>
     ) -> String? {
         if let sleepSubtitle = subtitle(
             for: metric,
             targetDate: targetDate,
-            sleepPrefillMetricIds: sleepPrefillMetricIds
+            healthKitPrefillMetricIds: healthKitPrefillMetricIds
         ) {
             return sleepSubtitle
         }
 
-        guard !metric.isSingleDailyValue else { return nil }
-        return periodWindowSubtitle(for: period, targetDate: targetDate)
+        let periodSubtitle = metric.isSingleDailyValue ? nil : periodWindowSubtitle(for: period, targetDate: targetDate)
+        guard healthKitPrefillMetricIds.contains(metric.id) else {
+            return periodSubtitle
+        }
+
+        if let periodSubtitle {
+            return "\(periodSubtitle) Prefilled from HealthKit; you can override it."
+        }
+
+        return "Prefilled from HealthKit; you can override it."
     }
 
     private func periodWindowSubtitle(for period: SQMetricPeriod, targetDate: Date) -> String? {
@@ -759,6 +767,7 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         var mergedValues = savedStats?.values ?? [:]
         var mergedMetricValues = savedStats?.metricValues ?? [:]
+        var mergedHealthKitMetricIds = savedStats?.healthKitMetricIds ?? []
         for (metricId, value) in sleepPrefill.values where mergedValues[metricId] == nil {
             mergedValues[metricId] = value
             mergedMetricValues[metricId] = .init(
@@ -767,6 +776,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 scaleValue: value,
                 quantityValue: nil
             )
+            mergedHealthKitMetricIds.insert(metricId)
         }
 
         guard !mergedValues.isEmpty || savedStats?.notes != nil else {
@@ -778,7 +788,8 @@ final class SQDailyCheckInViewModel: Identifiable {
             period: savedStats?.period ?? period,
             values: mergedValues,
             metricValues: mergedMetricValues,
-            notes: savedStats?.notes
+            notes: savedStats?.notes,
+            healthKitMetricIds: mergedHealthKitMetricIds
         )
     }
 

@@ -42,13 +42,16 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
 
     let hub: EventHub
     private let entryService: SQMetricEntryServicing.Type
+    private let healthKitManager: SQHealthKitManaging
 
     init(
         hub: EventHub,
-        entryService: SQMetricEntryServicing.Type = SQMetricEntryService.self
+        entryService: SQMetricEntryServicing.Type = SQMetricEntryService.self,
+        healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared
     ) {
         self.hub = hub
         self.entryService = entryService
+        self.healthKitManager = healthKitManager
     }
 
     // MARK: - Save
@@ -202,6 +205,48 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         )
         try await entryService.saveEntryBucket(bucket, for: user)
 
+        let removedMetricIds = formMetricIds.subtracting(sourceMetricValues.keys)
+        for (metricId, loggedValue) in sourceMetricValues {
+            guard let definition = metricById[metricId], definition.isHealthKitWriteEnabledEffective else {
+                continue
+            }
+
+            do {
+                try await healthKitManager.upsertMetricSample(
+                    for: definition,
+                    metricId: metricId,
+                    loggedValue: loggedValue,
+                    date: stats.date
+                )
+            } catch {
+                SQLogger.shared.log(
+                    "Failed to sync metric \(metricId) to HealthKit: \(error.localizedDescription)",
+                    .error,
+                    context: .healthKit
+                )
+            }
+        }
+
+        for metricId in removedMetricIds {
+            guard let definition = metricById[metricId], definition.isHealthKitWriteEnabledEffective else {
+                continue
+            }
+
+            do {
+                try await healthKitManager.deleteMetricSample(
+                    for: definition,
+                    metricId: metricId,
+                    date: stats.date
+                )
+            } catch {
+                SQLogger.shared.log(
+                    "Failed to delete metric \(metricId) from HealthKit: \(error.localizedDescription)",
+                    .error,
+                    context: .healthKit
+                )
+            }
+        }
+
         SQLogger.shared.log(
             "Saved daily check-in for \(anchorDayKey) (\(submissionPeriod.rawValue)) with \(entries.count) entries",
             .info,
@@ -220,6 +265,19 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     func getDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) async throws -> SQDailyCheckInStats? {
+        let localStats = try localDailyCheckInStats(for: date, period: period, context: context)
+        let mergedStats = try await mergeHealthKitFallback(
+            into: localStats.map { [$0] } ?? [],
+            from: date,
+            to: date,
+            period: period,
+            context: context
+        )
+
+        return mergedStats.first ?? localStats
+    }
+
+    private func localDailyCheckInStats(for date: Date, period: SQMetricPeriod?, context: ModelContext) throws -> SQDailyCheckInStats? {
         try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
 
         let anchorDayKey = date.anchorDayKey()
@@ -256,7 +314,8 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                 period: period,
                 values: values,
                 metricValues: metricValues,
-                notes: note?.content
+                notes: note?.content,
+                healthKitMetricIds: []
             )
         )
     }
@@ -273,6 +332,17 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
     }
 
     func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats] {
+        let localStats = try localDailyCheckInStats(from: startDate, to: endDate, context: context)
+        return try await mergeHealthKitFallback(
+            into: localStats,
+            from: startDate,
+            to: endDate,
+            period: nil,
+            context: context
+        )
+    }
+
+    private func localDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) throws -> [SQDailyCheckInStats] {
         try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
         let userId = localUserId()
         let entries = try SQMetricEntryEntity.getAll(from: startDate, to: endDate, userId: userId, context: context)
@@ -325,7 +395,8 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
                 period: nil,
                 values: values,
                 metricValues: metricValues,
-                notes: notesByDay[dayKey]
+                notes: notesByDay[dayKey],
+                healthKitMetricIds: []
             )
         }
     }
@@ -476,8 +547,72 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             date: stats.date,
             period: stats.period,
             values: stats.values,
-            notes: normalizedNotes?.isEmpty == false ? normalizedNotes : nil
+            metricValues: stats.metricValues,
+            notes: normalizedNotes?.isEmpty == false ? normalizedNotes : nil,
+            healthKitMetricIds: stats.healthKitMetricIds
         )
+    }
+
+    private func mergeHealthKitFallback(
+        into stats: [SQDailyCheckInStats],
+        from startDate: Date,
+        to endDate: Date,
+        period: SQMetricPeriod?,
+        context: ModelContext
+    ) async throws -> [SQDailyCheckInStats] {
+        try SQMetricDefinitionManager.shared.loadIfNeeded(using: context)
+
+        let allDefinitions = SQMetricDefinitionManager.shared.allMetrics(includeArchived: true)
+        let linkedDefinitions = allDefinitions.filter { $0.isHealthKitReadEnabledEffective }
+        guard !linkedDefinitions.isEmpty else { return stats }
+
+        let metricById = Dictionary(uniqueKeysWithValues: allDefinitions.map { ($0.id, $0) })
+        let fallbackValues = try await healthKitManager.fetchMetricFallbackValues(
+            for: linkedDefinitions,
+            from: startDate,
+            to: endDate
+        )
+
+        guard !fallbackValues.isEmpty else { return stats }
+
+        var statsByDay = Dictionary(uniqueKeysWithValues: stats.map { ($0.uniqueDateKey, $0) })
+
+        for (dayKey, fallbackMetricValues) in fallbackValues {
+            let dayDate = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey)
+            guard let dayDate else { continue }
+
+            var mergedStats = statsByDay[dayKey] ?? SQDailyCheckInStats(
+                date: dayDate,
+                period: period,
+                values: [:],
+                metricValues: [:],
+                notes: nil,
+                healthKitMetricIds: []
+            )
+
+            for (metricId, loggedValue) in fallbackMetricValues {
+                guard mergedStats.metricValues[metricId] == nil && mergedStats.values[metricId] == nil else {
+                    continue
+                }
+
+                let displayValue: Float
+                if let definition = metricById[metricId] {
+                    displayValue = loggedValue.value(for: definition)
+                } else {
+                    displayValue = loggedValue.displayValue
+                }
+
+                mergedStats.metricValues[metricId] = loggedValue
+                mergedStats.values[metricId] = displayValue
+                mergedStats.healthKitMetricIds.insert(metricId)
+            }
+
+            if !mergedStats.values.isEmpty || mergedStats.notes != nil {
+                statsByDay[dayKey] = mergedStats
+            }
+        }
+
+        return statsByDay.values.sorted { $0.date < $1.date }
     }
 
     private func localUserId() -> String {

@@ -110,6 +110,28 @@ protocol SQHealthKitManaging {
     /// Same, but you pass your saved HealthKit UUID string.
     func fetchWorkoutHeartRateSummaries(for healthKitId: String) async throws -> [SQHeartRateIntervalSummary]
 
+    /// Returns HealthKit-backed metric values keyed by `anchorDayKey` and metric id.
+    func fetchMetricFallbackValues(
+        for definitions: [SQMetricDefinition],
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [String: [String: SQMetricLoggedValue]]
+
+    /// Upserts a LifeIQ-authored HealthKit sample for a metric on the provided day.
+    func upsertMetricSample(
+        for definition: SQMetricDefinition,
+        metricId: String,
+        loggedValue: SQMetricLoggedValue,
+        date: Date
+    ) async throws
+
+    /// Deletes the LifeIQ-authored HealthKit sample for a metric on the provided day.
+    func deleteMetricSample(
+        for definition: SQMetricDefinition,
+        metricId: String,
+        date: Date
+    ) async throws
+
     func dashboardAccessStatus() async -> SQHealthKitDashboardAccessStatus
     func dashboardAccessStatus(for domain: SQHealthKitDashboardDomain) async -> SQHealthKitDashboardAccessStatus
 }
@@ -132,12 +154,18 @@ final class SQHealthKitManager: SQHealthKitManaging {
         HKQuantityType(.heartRate),
         HKQuantityType(.restingHeartRate),
         HKQuantityType(.vo2Max),
+        HKQuantityType(.dietaryCaffeine),
+        HKQuantityType(.dietaryWater),
+        HKQuantityType(.numberOfAlcoholicBeverages),
 
         HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
     ]
 
     private let allTypesToWrite: Set<HKSampleType> = [
-        HKObjectType.workoutType()
+        HKObjectType.workoutType(),
+        HKQuantityType(.dietaryCaffeine),
+        HKQuantityType(.dietaryWater),
+        HKQuantityType(.numberOfAlcoholicBeverages)
     ]
 
     
@@ -616,6 +644,377 @@ extension SQHealthKitManager {
         }
         
         return quantity.doubleValue(for: .degreeCelsius())
+    }
+}
+
+extension SQHealthKitManager {
+    func fetchMetricFallbackValues(
+        for definitions: [SQMetricDefinition],
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [String: [String: SQMetricLoggedValue]] {
+        let supportedDefinitions = definitions.filter { $0.isHealthKitReadEnabledEffective }
+        guard !supportedDefinitions.isEmpty else { return [:] }
+        guard HKHealthStore.isHealthDataAvailable() else { return [:] }
+
+        try await requestAppAuthorization()
+
+        let groupedDefinitions = Dictionary(grouping: supportedDefinitions, by: \.healthKitType)
+        var fallbackValues = [String: [String: SQMetricLoggedValue]]()
+
+        for (healthKitType, linkedDefinitions) in groupedDefinitions {
+            guard
+                let quantityType = quantityType(for: healthKitType),
+                let unit = canonicalHKUnit(for: healthKitType)
+            else {
+                continue
+            }
+
+            let dayTotals = try await fetchDailyCumulativeTotals(
+                quantityType: quantityType,
+                unit: unit,
+                from: startDate,
+                to: endDate
+            )
+
+            for (anchorDayKey, totalValue) in dayTotals where totalValue > 0 {
+                for definition in linkedDefinitions {
+                    guard let loggedValue = healthKitLoggedValue(for: definition, quantityValue: Float(totalValue)) else {
+                        continue
+                    }
+                    fallbackValues[anchorDayKey, default: [:]][definition.id] = loggedValue
+                }
+            }
+        }
+
+        return fallbackValues
+    }
+
+    func upsertMetricSample(
+        for definition: SQMetricDefinition,
+        metricId: String,
+        loggedValue: SQMetricLoggedValue,
+        date: Date
+    ) async throws {
+        guard definition.isHealthKitWriteEnabledEffective else { return }
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard definition.isSingleDailyValue else { return }
+        guard
+            let quantityType = quantityType(for: definition.healthKitType),
+            let unit = canonicalHKUnit(for: definition.healthKitType),
+            let desiredQuantityValue = canonicalQuantityValue(for: definition, loggedValue: loggedValue)
+        else {
+            return
+        }
+
+        try await requestAppAuthorization()
+
+        let syncIdentifier = metricSyncIdentifier(metricId: metricId, date: date)
+        let existingAuthoredTotal = try await authoredMetricTotal(
+            quantityType: quantityType,
+            unit: unit,
+            syncIdentifier: syncIdentifier
+        )
+        let allDayTotal = try await totalQuantityValue(
+            quantityType: quantityType,
+            unit: unit,
+            date: date
+        )
+        let externalTotal = max(0, allDayTotal - existingAuthoredTotal)
+        let desiredAuthoredTotal = max(0, Double(desiredQuantityValue) - externalTotal)
+
+        try await deleteMetricSample(for: definition, metricId: metricId, date: date)
+
+        guard desiredAuthoredTotal > 0 else { return }
+
+        let sampleDate = canonicalMetricSampleDate(for: date)
+        let metadata: [String: Any] = [
+            HKMetadataKeySyncIdentifier: syncIdentifier,
+            HKMetadataKeySyncVersion: 1
+        ]
+        let quantity = HKQuantity(unit: unit, doubleValue: desiredAuthoredTotal)
+        let sample = HKQuantitySample(
+            type: quantityType,
+            quantity: quantity,
+            start: sampleDate,
+            end: sampleDate,
+            metadata: metadata
+        )
+
+        try await save(sample)
+    }
+
+    func deleteMetricSample(
+        for definition: SQMetricDefinition,
+        metricId: String,
+        date: Date
+    ) async throws {
+        guard definition.hasHealthKitLink else { return }
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard let quantityType = quantityType(for: definition.healthKitType) else { return }
+
+        try await requestAppAuthorization()
+
+        let syncIdentifier = metricSyncIdentifier(metricId: metricId, date: date)
+        let samples = try await authoredMetricSamples(
+            quantityType: quantityType,
+            syncIdentifier: syncIdentifier
+        )
+
+        for sample in samples {
+            try await delete(sample)
+        }
+    }
+
+    private func healthKitLoggedValue(
+        for definition: SQMetricDefinition,
+        quantityValue: Float
+    ) -> SQMetricLoggedValue? {
+        switch definition.defaultEntryMode {
+        case .scale:
+            guard let scaleValue = definition.scaleValue(forQuantityValue: quantityValue) else {
+                return nil
+            }
+            return .init(
+                enteredMode: .scale,
+                rawValue: scaleValue,
+                scaleValue: scaleValue,
+                quantityValue: quantityValue
+            )
+        case .quantity:
+            return .init(
+                enteredMode: .quantity,
+                rawValue: quantityValue,
+                scaleValue: definition.scaleValue(forQuantityValue: quantityValue),
+                quantityValue: quantityValue
+            )
+        case .unknown:
+            return .init(
+                enteredMode: .quantity,
+                rawValue: quantityValue,
+                scaleValue: definition.scaleValue(forQuantityValue: quantityValue),
+                quantityValue: quantityValue
+            )
+        }
+    }
+
+    private func canonicalQuantityValue(
+        for definition: SQMetricDefinition,
+        loggedValue: SQMetricLoggedValue
+    ) -> Float? {
+        if let quantityValue = loggedValue.quantityValue {
+            return quantityValue
+        }
+
+        switch loggedValue.enteredMode {
+        case .scale:
+            return definition.quantityValue(forScaleValue: loggedValue.rawValue)
+        case .quantity, .unknown:
+            return loggedValue.rawValue
+        }
+    }
+
+    private func quantityType(for type: SQMetricHealthKitType) -> HKQuantityType? {
+        guard let identifier = quantityTypeIdentifier(for: type) else { return nil }
+        return HKObjectType.quantityType(forIdentifier: identifier)
+    }
+
+    private func quantityTypeIdentifier(for type: SQMetricHealthKitType) -> HKQuantityTypeIdentifier? {
+        switch type {
+        case .dietaryWater:
+            return .dietaryWater
+        case .dietaryCaffeine:
+            return .dietaryCaffeine
+        case .numberOfAlcoholicBeverages:
+            return .numberOfAlcoholicBeverages
+        case .none, .unknown:
+            return nil
+        }
+    }
+
+    private func canonicalHKUnit(for type: SQMetricHealthKitType) -> HKUnit? {
+        switch type {
+        case .dietaryWater:
+            return SQUnit.milliliter.hkUnit
+        case .dietaryCaffeine:
+            return SQUnit.milligram.hkUnit
+        case .numberOfAlcoholicBeverages:
+            return SQUnit.count.hkUnit
+        case .none, .unknown:
+            return nil
+        }
+    }
+
+    private func fetchDailyCumulativeTotals(
+        quantityType: HKQuantityType,
+        unit: HKUnit,
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [String: Double] {
+        let calendar = Calendar.current
+        let queryStart = calendar.startOfDay(for: startDate)
+        guard let queryEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) else {
+            return [:]
+        }
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: queryStart,
+            end: queryEnd,
+            options: [.strictStartDate]
+        )
+        let interval = DateComponents(day: 1)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: quantityType,
+                quantitySamplePredicate: predicate,
+                options: [.cumulativeSum],
+                anchorDate: queryStart,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let results else {
+                    continuation.resume(returning: [:])
+                    return
+                }
+
+                var totals = [String: Double]()
+                results.enumerateStatistics(from: queryStart, to: queryEnd) { stats, _ in
+                    guard let sum = stats.sumQuantity()?.doubleValue(for: unit), sum > 0 else {
+                        return
+                    }
+
+                    let dayKey = stats.startDate.anchorDayKey()
+                    totals[dayKey] = sum
+                }
+
+                continuation.resume(returning: totals)
+            }
+
+            Self.healthStore.execute(query)
+        }
+    }
+
+    private func totalQuantityValue(
+        quantityType: HKQuantityType,
+        unit: HKUnit,
+        date: Date
+    ) async throws -> Double {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return 0
+        }
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startOfDay,
+            end: endOfDay,
+            options: [.strictStartDate]
+        )
+
+        let samples = try await quantitySamples(
+            quantityType: quantityType,
+            predicate: predicate
+        )
+
+        return samples.reduce(0) { partialResult, sample in
+            partialResult + sample.quantity.doubleValue(for: unit)
+        }
+    }
+
+    private func authoredMetricTotal(
+        quantityType: HKQuantityType,
+        unit: HKUnit,
+        syncIdentifier: String
+    ) async throws -> Double {
+        let samples = try await authoredMetricSamples(
+            quantityType: quantityType,
+            syncIdentifier: syncIdentifier
+        )
+
+        return samples.reduce(0) { partialResult, sample in
+            partialResult + sample.quantity.doubleValue(for: unit)
+        }
+    }
+
+    private func authoredMetricSamples(
+        quantityType: HKQuantityType,
+        syncIdentifier: String
+    ) async throws -> [HKQuantitySample] {
+        let predicate = HKQuery.predicateForObjects(
+            withMetadataKey: HKMetadataKeySyncIdentifier,
+            operatorType: .equalTo,
+            value: syncIdentifier
+        )
+
+        return try await quantitySamples(quantityType: quantityType, predicate: predicate)
+    }
+
+    private func quantitySamples(
+        quantityType: HKQuantityType,
+        predicate: NSPredicate?
+    ) async throws -> [HKQuantitySample] {
+        try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: quantityType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                continuation.resume(returning: samples as? [HKQuantitySample] ?? [])
+            }
+
+            Self.healthStore.execute(query)
+        }
+    }
+
+    private func save(_ sample: HKQuantitySample) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            Self.healthStore.save(sample) { success, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(throwing: SQError.standard)
+                }
+            }
+        }
+    }
+
+    private func delete(_ object: HKObject) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            Self.healthStore.delete(object) { success, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(throwing: SQError.standard)
+                }
+            }
+        }
+    }
+
+    private func metricSyncIdentifier(metricId: String, date: Date) -> String {
+        "lifeiq.metric.\(metricId).\(date.anchorDayKey())"
+    }
+
+    private func canonicalMetricSampleDate(for date: Date) -> Date {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        return calendar.date(byAdding: .hour, value: 12, to: startOfDay) ?? startOfDay
     }
 }
 

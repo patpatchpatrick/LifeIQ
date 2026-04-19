@@ -46,6 +46,9 @@ extension SQLocalPersistenceSchemaV1 {
         var scaleQuantityUnitRaw: String?
         var scaleQuantityMaxValue: Float?
         var scaleQuantityLabelOverride: String?
+        var healthKitTypeRaw: String = SQMetricHealthKitType.none.rawValue
+        var healthKitReadEnabled: Bool = false
+        var healthKitWriteEnabled: Bool = false
 
         // Optional: for Firestore sync later
         var updatedAt: Date
@@ -73,6 +76,9 @@ extension SQLocalPersistenceSchemaV1 {
             targetRangeMax: Float? = nil,
             bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
             scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
+            healthKitType: SQMetricHealthKitType = .none,
+            healthKitReadEnabled: Bool = false,
+            healthKitWriteEnabled: Bool = false,
             isDefault: Bool = false
         ) {
             self.storageId = Self.makeStorageId(userId: userId, metricId: id)
@@ -100,6 +106,9 @@ extension SQLocalPersistenceSchemaV1 {
             self.scaleQuantityUnitRaw = scaleQuantityMapping?.quantityUnit.rawValue
             self.scaleQuantityMaxValue = scaleQuantityMapping?.maxQuantityValue
             self.scaleQuantityLabelOverride = scaleQuantityMapping?.quantityLabelOverride
+            self.healthKitTypeRaw = healthKitType.rawValue
+            self.healthKitReadEnabled = healthKitReadEnabled
+            self.healthKitWriteEnabled = healthKitWriteEnabled
             self.isDefault = isDefault
             self.updatedAt = .now
         }
@@ -117,6 +126,7 @@ extension SQMetricDefinitionEntity {
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }
     var bodyBatteryEffect: SQMetricBodyBatteryEffect { SQMetricBodyBatteryEffect(unfrozenRawValue: bodyBatteryEffectRaw) }
+    var healthKitType: SQMetricHealthKitType { SQMetricHealthKitType(unfrozenRawValue: healthKitTypeRaw) }
     var scaleQuantityMapping: SQMetricScaleQuantityMapping? {
         guard
             let unitRaw = scaleQuantityUnitRaw,
@@ -183,6 +193,9 @@ extension SQMetricDefinitionEntity {
             targetRangeMax: targetRangeMaxValue,
             bodyBatteryEffect: bodyBatteryEffect,
             scaleQuantityMapping: scaleQuantityMapping,
+            healthKitType: healthKitType,
+            healthKitReadEnabled: healthKitReadEnabled,
+            healthKitWriteEnabled: healthKitWriteEnabled,
             updatedAt: updatedAt
         )
     }
@@ -212,6 +225,9 @@ extension SQMetricDefinitionEntity {
         scaleQuantityUnitRaw = def.scaleQuantityMapping?.quantityUnit.rawValue
         scaleQuantityMaxValue = def.scaleQuantityMapping?.maxQuantityValue
         scaleQuantityLabelOverride = def.scaleQuantityMapping?.quantityLabelOverride
+        healthKitTypeRaw = def.healthKitType.rawValue
+        healthKitReadEnabled = def.healthKitReadEnabled
+        healthKitWriteEnabled = def.healthKitWriteEnabled
         updatedAt = def.updatedAt
     }
 

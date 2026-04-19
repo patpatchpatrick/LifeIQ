@@ -110,6 +110,17 @@ struct SQMetricFormView: View {
         SQAppState.shared.hub.alertEvents.send(.present(alert))
     }
 
+    private func presentRecoveryScoreInfoAlert() {
+        let alert = SQAlertViewModel(
+            title: "Recovery Score Range",
+            subtitle: "Typical low and typical high values help LifeIQ understand what a lower day or higher day means for this metric. They are especially important when this metric is allowed to influence Recovery Score.",
+            primary: .init(title: "Got It"),
+            canDismiss: true
+        )
+
+        SQAppState.shared.hub.alertEvents.send(.present(alert))
+    }
+
     @ViewBuilder
     private var emojiInputRow: some View {
         labeledRow(label: "Icon") {
@@ -200,7 +211,7 @@ struct SQMetricFormView: View {
 
     @ViewBuilder
     private var numericRows: some View {
-        if viewModel.showNumericRange {
+        if viewModel.showsScaleRangeFields {
             if viewModel.isStructurallyEditable {
                 labeledRow(label: "Min") {
                     SQUITextField(viewModel: viewModel.minField)
@@ -211,15 +222,7 @@ struct SQMetricFormView: View {
                 }
 
                 labeledRow(label: "Step") {
-                    VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                        SQUITextField(viewModel: viewModel.stepField)
-
-                        if viewModel.selectedKind == .number {
-                            Text("Used as decimal precision.")
-                                .sqFont(.bodyExtraSmall)
-                                .sqForegroundColor(.textSecondary)
-                        }
-                    }
+                    SQUITextField(viewModel: viewModel.stepField)
                 }
             } else {
                 staticRow(label: "Min", value: viewModel.currentMin)
@@ -275,7 +278,7 @@ struct SQMetricFormView: View {
                     }
                 }
 
-                labeledRow(label: "Top Scale Value") {
+                labeledRow(label: viewModel.scaleQuantityMaxFieldLabel) {
                     SQUITextField(viewModel: viewModel.scaleQuantityMaxField)
                 }
 
@@ -345,6 +348,66 @@ struct SQMetricFormView: View {
                 .sqForegroundColor(.dashboardGlowBlue)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, .SQSpace.xs)
+        }
+
+        if viewModel.showsRecoveryScoreRangeFields {
+            Button(action: presentRecoveryScoreInfoAlert) {
+                HStack(spacing: .SQSpace.xs) {
+                    SQImageView(
+                        image: .init(
+                            symbol: .infoCircle,
+                            symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 14, height: 14)
+
+                    Text("Why typical low and high matter")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
+                }
+            }
+            .buttonStyle(.plain)
+
+            labeledRow(label: "Typical Low") {
+                SQUITextField(viewModel: viewModel.minField)
+            }
+
+            labeledRow(label: "Typical High") {
+                SQUITextField(viewModel: viewModel.maxField)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var healthKitRows: some View {
+        if viewModel.canEditHealthKitType {
+            labeledRow(label: "Linked Type") {
+                SQDropDownMenu(menuViewModel: viewModel.healthKitMenuViewModel, isDisabled: false)
+            }
+        } else {
+            staticRow(label: "Linked Type", value: viewModel.currentHealthKitType.displayName)
+        }
+
+        Text(viewModel.healthKitHelperText)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textSecondary)
+
+        if viewModel.showsHealthKitReadToggle {
+            Toggle(isOn: $viewModel.isHealthKitReadEnabled) {
+                Text("Read From Apple Health")
+                    .sqFont(.body)
+                    .sqForegroundColor(.textPrimary)
+            }
+            .tint(SQColor.dashboardGlowBlue.color)
+        }
+
+        if viewModel.showsHealthKitWriteToggle {
+            Toggle(isOn: $viewModel.isHealthKitWriteEnabled) {
+                Text("Write To Apple Health")
+                    .sqFont(.body)
+                    .sqForegroundColor(.textPrimary)
+            }
+            .tint(SQColor.dashboardGlowBlue.color)
         }
     }
 
@@ -423,11 +486,17 @@ struct SQMetricFormView: View {
                     goalRows
                 }
 
-                formSection(title: "Format", subtitle: "Value type, units, and range.") {
+                formSection(title: "Format", subtitle: "Value type, units, and scale setup.") {
                     kindRow
                     unitRow
                     numericRows
                     alternateInputRows
+                }
+
+                if viewModel.showsHealthKitSection {
+                    formSection(title: "Health App", subtitle: "Optional Apple Health fallback and sync.") {
+                        healthKitRows
+                    }
                 }
 
                 if viewModel.showsBodyBatteryControls {

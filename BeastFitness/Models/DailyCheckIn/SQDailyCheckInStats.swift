@@ -15,17 +15,20 @@ struct SQDailyCheckInStats: Codable {
     var values: [String: Float]
     var metricValues: [String: SQMetricLoggedValue]
     var notes: String?
+    var healthKitMetricIds: Set<String>
 
     init(
         date: Date,
         period: SQMetricPeriod?,
         values: [String: Float],
         metricValues: [String: SQMetricLoggedValue] = [:],
-        notes: String?
+        notes: String?,
+        healthKitMetricIds: Set<String> = []
     ) {
         self.date = date
         self.period = period
         self.metricValues = metricValues
+        self.healthKitMetricIds = healthKitMetricIds
 
         if !values.isEmpty {
             self.values = values
@@ -45,6 +48,46 @@ struct SQDailyCheckInStats: Codable {
         }
 
         self.notes = notes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case date
+        case period
+        case values
+        case metricValues
+        case notes
+        case healthKitMetricIds
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let date = try container.decode(Date.self, forKey: .date)
+        let period = try container.decodeIfPresent(SQMetricPeriod.self, forKey: .period)
+        let values = try container.decodeIfPresent([String: Float].self, forKey: .values) ?? [:]
+        let metricValues = try container.decodeIfPresent([String: SQMetricLoggedValue].self, forKey: .metricValues) ?? [:]
+        let notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        let healthKitMetricIds = try container.decodeIfPresent(Set<String>.self, forKey: .healthKitMetricIds) ?? []
+
+        self.init(
+            date: date,
+            period: period,
+            values: values,
+            metricValues: metricValues,
+            notes: notes,
+            healthKitMetricIds: healthKitMetricIds
+        )
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(date, forKey: .date)
+        try container.encodeIfPresent(period, forKey: .period)
+        try container.encode(values, forKey: .values)
+        try container.encode(metricValues, forKey: .metricValues)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        if !healthKitMetricIds.isEmpty {
+            try container.encode(healthKitMetricIds, forKey: .healthKitMetricIds)
+        }
     }
 
     func metricValue(for metricId: String) -> SQMetricLoggedValue? {

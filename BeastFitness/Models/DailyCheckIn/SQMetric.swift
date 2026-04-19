@@ -38,6 +38,60 @@ enum SQMetricValueMode: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
+enum SQMetricHealthKitType: String, Codable, CaseIterable, UnfrozenEnum {
+    case none
+    case dietaryWater
+    case dietaryCaffeine
+    case numberOfAlcoholicBeverages
+    case unknown
+
+    var displayName: String {
+        switch self {
+        case .none:
+            return "None"
+        case .dietaryWater:
+            return "Water"
+        case .dietaryCaffeine:
+            return "Caffeine"
+        case .numberOfAlcoholicBeverages:
+            return "Alcoholic Beverages"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
+    var recommendedUnit: SQMetricUnit {
+        switch self {
+        case .dietaryWater:
+            return .milliliters
+        case .dietaryCaffeine:
+            return .milligrams
+        case .numberOfAlcoholicBeverages:
+            return .count
+        case .none, .unknown:
+            return .none
+        }
+    }
+
+    var supportsWrite: Bool {
+        switch self {
+        case .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
+            return true
+        case .none, .unknown:
+            return false
+        }
+    }
+
+    var requiresSingleDailyValue: Bool {
+        switch self {
+        case .dietaryWater, .dietaryCaffeine, .numberOfAlcoholicBeverages:
+            return true
+        case .none, .unknown:
+            return false
+        }
+    }
+}
+
 struct SQMetricScaleQuantityMapping: Codable, Hashable {
     var quantityUnit: SQMetricUnit
     var maxQuantityValue: Float
@@ -143,6 +197,12 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     /// This allows a metric to be entered as either a scale or a number while preserving
     /// canonical quantity units for import/export and downstream analysis.
     var scaleQuantityMapping: SQMetricScaleQuantityMapping?
+    /// Optional HealthKit quantity type to use as a fallback data source and sync target.
+    var healthKitType: SQMetricHealthKitType
+    /// When true, HealthKit values can fill this metric when the user has not logged it in LifeIQ.
+    var healthKitReadEnabled: Bool
+    /// When true, LifeIQ writes this metric back to HealthKit when the user logs a value.
+    var healthKitWriteEnabled: Bool
     var updatedAt: Date                 // UTC timestamp of last modification; used for incremental Firestore sync
 
     // MARK: - Manual Init (non-decoder)
@@ -169,6 +229,9 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMax: Float? = nil,
         bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
         scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
+        healthKitType: SQMetricHealthKitType = .none,
+        healthKitReadEnabled: Bool = false,
+        healthKitWriteEnabled: Bool = false,
         updatedAt: Date = .now
     ) {
         self.id = id
@@ -193,6 +256,9 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.targetRangeMax = targetRangeMax
         self.bodyBatteryEffect = bodyBatteryEffect
         self.scaleQuantityMapping = scaleQuantityMapping
+        self.healthKitType = healthKitType
+        self.healthKitReadEnabled = healthKitReadEnabled
+        self.healthKitWriteEnabled = healthKitWriteEnabled
         self.updatedAt = updatedAt
     }
 
@@ -220,6 +286,9 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMax    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMax)
         bodyBatteryEffect = (try c.decodeIfPresent(SQMetricBodyBatteryEffect.self, forKey: .bodyBatteryEffect)) ?? .none
         scaleQuantityMapping = try c.decodeIfPresent(SQMetricScaleQuantityMapping.self, forKey: .scaleQuantityMapping)
+        healthKitType = (try c.decodeIfPresent(SQMetricHealthKitType.self, forKey: .healthKitType)) ?? .none
+        healthKitReadEnabled = (try c.decodeIfPresent(Bool.self, forKey: .healthKitReadEnabled)) ?? false
+        healthKitWriteEnabled = (try c.decodeIfPresent(Bool.self, forKey: .healthKitWriteEnabled)) ?? false
         updatedAt         = (try c.decodeIfPresent(Date.self,      forKey: .updatedAt)) ?? .now
 
         // Decode periods: try new array format first, then fall back to legacy single-period field
@@ -257,6 +326,9 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         try c.encodeIfPresent(targetRangeMax, forKey: .targetRangeMax)
         try c.encode(bodyBatteryEffect, forKey: .bodyBatteryEffect)
         try c.encodeIfPresent(scaleQuantityMapping, forKey: .scaleQuantityMapping)
+        try c.encode(healthKitType, forKey: .healthKitType)
+        try c.encode(healthKitReadEnabled, forKey: .healthKitReadEnabled)
+        try c.encode(healthKitWriteEnabled, forKey: .healthKitWriteEnabled)
         try c.encode(updatedAt,         forKey: .updatedAt)
         // Encode periods as a sorted array for deterministic output
         try c.encode(periods.filter { $0 != .unknown }.map(\.rawValue).sorted(), forKey: .periods)
@@ -270,6 +342,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         case goalStyle, targetValue, targetRangeMin, targetRangeMax
         case bodyBatteryEffect
         case scaleQuantityMapping
+        case healthKitType, healthKitReadEnabled, healthKitWriteEnabled
         case periods   // new format: array (encode + decode)
         case period    // legacy format: single string (decode only)
     }
@@ -311,6 +384,18 @@ extension SQMetricDefinition {
 
     var allowsAlternateEntryMode: Bool {
         supportsScaleEntry && supportsQuantityEntry
+    }
+
+    var hasHealthKitLink: Bool {
+        healthKitType != .none && healthKitType != .unknown
+    }
+
+    var isHealthKitReadEnabledEffective: Bool {
+        hasHealthKitLink && healthKitReadEnabled
+    }
+
+    var isHealthKitWriteEnabledEffective: Bool {
+        hasHealthKitLink && healthKitWriteEnabled && healthKitType.supportsWrite
     }
 
     var quantityUnit: SQMetricUnit {

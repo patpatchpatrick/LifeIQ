@@ -10,7 +10,7 @@ import Foundation
 struct SQCaffeineSleepInsightEvaluator: SQInsightEvaluating {
     let id = "insight.caffeine.sleep"
     let title = "Caffeine -> Sleep"
-    private let lowCaffeineUpperBound = 3.0
+    private let lowCaffeineUpperBound = 120.0
     private let minimumEffectMagnitude = 0.15
 
     func evaluate(snapshots: [SQInsightDailySnapshot]) -> SQInsightEvaluationResult {
@@ -45,7 +45,7 @@ struct SQCaffeineSleepInsightEvaluator: SQInsightEvaluating {
             let neededLowerCaffeine = max(0, 2 - sleepAfterLowerCaffeine.count)
             let neededHigherCaffeine = max(0, 2 - sleepAfterHigherCaffeine.count)
             return needsMoreData(
-                summary: "Need \(neededLowerCaffeine) more lower-caffeine evening(s) (0-3) and \(neededHigherCaffeine) more higher-caffeine evening(s) (4+) with next-day sleep logged."
+                summary: "Need \(neededLowerCaffeine) more lower-caffeine evening(s) (0-120 mg) and \(neededHigherCaffeine) more higher-caffeine evening(s) (121+ mg) with next-day sleep logged."
             )
         }
 
@@ -70,7 +70,7 @@ struct SQCaffeineSleepInsightEvaluator: SQInsightEvaluating {
             id: id,
             title: isSubtle ? "Higher caffeine may be slightly lowering sleep" : "Higher caffeine is showing up in your sleep quality",
             summary: "Higher-caffeine evenings are associated with \(format(effectMagnitude)) points lower next-day sleep quality.",
-            evidenceText: "Next-day sleep quality averaged \(format(higherCaffeineAverage)) after higher-caffeine evenings (4+) vs \(format(lowerCaffeineAverage)) after lower-caffeine evenings (0-3) across \(sampleCount) matched days.",
+            evidenceText: "Next-day sleep quality averaged \(format(higherCaffeineAverage)) after higher-caffeine evenings (121+ mg) vs \(format(lowerCaffeineAverage)) after lower-caffeine evenings (0-120 mg) across \(sampleCount) matched days.",
             actionText: isSubtle ? "Even a small sleep hit can accumulate. Try lowering caffeine on nights when recovery matters." : "Try pulling caffeine earlier or lowering it on nights when sleep quality matters most.",
             driverText: "Higher caffeine",
             outcomeText: "Lower sleep",

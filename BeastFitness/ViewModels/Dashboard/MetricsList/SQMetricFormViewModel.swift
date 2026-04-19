@@ -99,6 +99,23 @@ final class SQMetricFormViewModel {
             calculateValidity()
         }
     }
+    var selectedHealthKitType: SQMetricHealthKitType = .none {
+        didSet {
+            updateHealthKitMenuSelection()
+            applyHealthKitTypeDefaultsIfNeeded(from: oldValue)
+            calculateValidity()
+        }
+    }
+    var isHealthKitReadEnabled: Bool = false {
+        didSet {
+            calculateValidity()
+        }
+    }
+    var isHealthKitWriteEnabled: Bool = false {
+        didSet {
+            calculateValidity()
+        }
+    }
     /// Which check-in screen(s) this metric appears on. Only configurable in create mode.
     var selectedPeriods: Set<SQMetricPeriod> = [.morning, .evening]
     /// When both periods are selected, whether this is a single shared daily value or independent per-session.
@@ -131,6 +148,7 @@ final class SQMetricFormViewModel {
     var kindMenuViewModel: SQDropDownMenuViewModel
     var goalMenuViewModel: SQDropDownMenuViewModel
     var bodyBatteryMenuViewModel: SQDropDownMenuViewModel
+    var healthKitMenuViewModel: SQDropDownMenuViewModel
     var trackingMenuViewModel: SQDropDownMenuViewModel
     let periodMultiSelectViewModel: SQMultiSelectViewModel
 
@@ -146,6 +164,7 @@ final class SQMetricFormViewModel {
     private(set) var isFormValid = false
     private(set) var saveDisabledMessage: String? = nil
     private(set) var scaleQuantityHelperTextDisplay: String = ""
+    private(set) var formContentRevision: Int = 0
 
     // MARK: - Dependencies
 
@@ -162,6 +181,9 @@ final class SQMetricFormViewModel {
         var initialSelectedGroup: String = SQDefaultGroup.general.rawValue
         var initialSelectedGoalStyle: SQMetricGoalStyle = .justTrack
         var initialSelectedBodyBatteryEffect: SQMetricBodyBatteryEffect = .none
+        var initialSelectedHealthKitType: SQMetricHealthKitType = .none
+        var initialHealthKitReadEnabled = false
+        var initialHealthKitWriteEnabled = false
         var initialSelectedPeriods: Set<SQMetricPeriod> = [.morning, .evening]
         var initialIsSingleDailyValue: Bool = false
         var initialScaleQuantityMapping: SQMetricScaleQuantityMapping? = nil
@@ -314,6 +336,9 @@ final class SQMetricFormViewModel {
             initialSelectedGroup = existing.group
             initialSelectedGoalStyle = existing.goalStyle
             initialSelectedBodyBatteryEffect = existing.bodyBatteryEffect
+            initialSelectedHealthKitType = existing.healthKitType
+            initialHealthKitReadEnabled = existing.healthKitReadEnabled
+            initialHealthKitWriteEnabled = existing.healthKitWriteEnabled
             initialSelectedPeriods = existing.periods
             initialIsSingleDailyValue = existing.isSingleDailyValue
             initialScaleQuantityMapping = existing.scaleQuantityMapping
@@ -338,6 +363,9 @@ final class SQMetricFormViewModel {
         selectedGroup = initialSelectedGroup
         selectedGoalStyle = initialSelectedGoalStyle
         selectedBodyBatteryEffect = initialSelectedBodyBatteryEffect
+        selectedHealthKitType = initialSelectedHealthKitType
+        isHealthKitReadEnabled = initialHealthKitReadEnabled
+        isHealthKitWriteEnabled = initialHealthKitWriteEnabled
         selectedPeriods = initialSelectedPeriods
         isSingleDailyValue = initialIsSingleDailyValue
         switch mode {
@@ -378,6 +406,11 @@ final class SQMetricFormViewModel {
             items: bodyBatteryItems
         ) { _ in }
 
+        self.healthKitMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: initialSelectedHealthKitType)),
+            items: Self.healthKitDisplayItems
+        ) { _ in }
+
         self.trackingMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(forTrackingShared: initialIsSingleDailyValue)),
             items: Self.trackingDisplayItems
@@ -409,7 +442,7 @@ final class SQMetricFormViewModel {
         case .create:
             return true
         case .edit(let existing):
-            return existing.scaleQuantityMapping != nil
+            return !existing.isPreset || existing.scaleQuantityMapping != nil
         }
     }
 
@@ -418,9 +451,12 @@ final class SQMetricFormViewModel {
         return "Edit Metric"
     }
 
-    /// Whether min/max/step fields should be visible based on current kind
-    var showNumericRange: Bool {
-        selectedKind == .scale || selectedKind == .number
+    var showsScaleRangeFields: Bool {
+        selectedKind == .scale
+    }
+
+    var showsRecoveryScoreRangeFields: Bool {
+        selectedKind == .number && selectedBodyBatteryEffect != .none
     }
 
     /// Whether unit picker should be visible
@@ -428,18 +464,29 @@ final class SQMetricFormViewModel {
         selectedKind == .number
     }
 
-    var showsScaleQuantityMappingSection: Bool {
+    private var supportsScaleQuantitySection: Bool {
         canCustomizeScaleQuantityMapping && (selectedKind == .scale || selectedKind == .number)
+    }
+
+    var showsRequiredScaleConversionSection: Bool {
+        guard supportsScaleQuantitySection, selectedKind == .number else { return false }
+        guard case .edit(let existing) = mode else { return false }
+        return existing.kind == .scale
+    }
+
+    var showsScaleQuantityMappingSection: Bool {
+        switch selectedKind {
+        case .scale:
+            return supportsScaleQuantitySection
+        case .number:
+            return showsRequiredScaleConversionSection
+        default:
+            return false
+        }
     }
 
     var showsScaleQuantityToggle: Bool {
         selectedKind == .scale && isStructurallyEditable && showsScaleQuantityMappingSection
-    }
-
-    var showsRequiredScaleConversionSection: Bool {
-        guard showsScaleQuantityMappingSection, selectedKind == .number else { return false }
-        guard case .edit(let existing) = mode else { return false }
-        return existing.kind != .number || existing.scaleQuantityMapping != nil
     }
 
     var showsScaleQuantityFields: Bool {
@@ -469,11 +516,18 @@ final class SQMetricFormViewModel {
         }
     }
 
+    var scaleQuantityMaxFieldLabel: String {
+        if selectedKind == .number, let topScaleValue = resolvedScaleConversionUpperBound {
+            return "Value at \(Self.formatFloat(topScaleValue)) on Scale"
+        }
+        return "Top Scale Value"
+    }
+
     private func buildScaleQuantityHelperText() -> String {
         switch selectedKind {
         case .scale:
             if !isScaleQuantityMappingEnabled {
-                return "Add a numeric value that maps to the scale so entries like 10 can also mean a real amount."
+                return "Maps the scale value to a numeric value for more accurate data."
             }
 
             if let topScaleValue = resolvedScaleUpperBound,
@@ -485,10 +539,23 @@ final class SQMetricFormViewModel {
                 return "Add a numeric value that maps to the top scale value. For example, if \(Self.formatFloat(topScaleValue)) = \(Self.formatFloat(maxQuantityValue)) \(selectedUnit.shortDisplayName), then \(Self.formatFloat(midpointScaleValue)) = \(Self.formatFloat(midpointQuantityValue)) \(selectedUnit.shortDisplayName)."
             }
 
-            return "Add a numeric value that maps to the top scale value so the app can translate scale entries into a real amount."
+            return "Maps the scale value to a numeric value for more accurate data."
 
         case .number:
-            return "Define how this number maps onto a scale so older scale entries and scale-based views stay aligned."
+            if let topScaleValue = resolvedScaleConversionUpperBound,
+               let maxQuantityValue = resolvedScaleQuantityMaxValue,
+               selectedUnit != .none,
+               selectedUnit != .unknown {
+                let midpointScaleValue = topScaleValue / 2
+                let midpointQuantityValue = maxQuantityValue / 2
+                return "Enter the real amount that should match the top of the old scale. For example, if \(Self.formatFloat(topScaleValue)) = \(Self.formatFloat(maxQuantityValue)) \(selectedUnit.shortDisplayName), then \(Self.formatFloat(midpointScaleValue)) = \(Self.formatFloat(midpointQuantityValue)) \(selectedUnit.shortDisplayName)."
+            }
+
+            if let topScaleValue = resolvedScaleConversionUpperBound {
+                return "Enter the real amount that should match the top of the old \(Self.formatFloat(topScaleValue))-point scale so older scale entries stay aligned."
+            }
+
+            return "Enter the real amount that should match the top of the old scale so older scale entries stay aligned."
 
         default:
             return "Optional alternate input configuration."
@@ -509,6 +576,49 @@ final class SQMetricFormViewModel {
             return true
         case .edit(let def):
             return !def.isPreset
+        }
+    }
+
+    var currentHealthKitType: SQMetricHealthKitType {
+        if case .edit(let def) = mode {
+            return def.healthKitType
+        }
+        return selectedHealthKitType
+    }
+
+    var canEditHealthKitType: Bool {
+        false
+    }
+
+    private var supportsHealthKitSection: Bool {
+        guard case .edit(let existing) = mode else { return false }
+        return existing.isPreset && existing.hasHealthKitLink
+    }
+
+    var showsHealthKitSection: Bool {
+        supportsHealthKitSection
+    }
+
+    var showsHealthKitReadToggle: Bool {
+        currentHealthKitType != .none && currentHealthKitType != .unknown
+    }
+
+    var showsHealthKitWriteToggle: Bool {
+        currentHealthKitType.supportsWrite
+    }
+
+    var healthKitHelperText: String {
+        switch currentHealthKitType {
+        case .dietaryWater:
+            return "Reads daily water totals from Apple Health when you have not logged Hydration in LifeIQ. If write is on, LifeIQ also keeps its daily total in sync."
+        case .dietaryCaffeine:
+            return "Reads daily caffeine totals from Apple Health when LifeIQ does not have a value. If write is on, LifeIQ updates its Apple Health sample for that day."
+        case .numberOfAlcoholicBeverages:
+            return "Uses Apple Health standard drink totals as a fallback when LifeIQ is missing a value. Write keeps the LifeIQ total mirrored back to Apple Health."
+        case .none:
+            return "Optional. Link a supported Apple Health metric so missing LifeIQ days can fall back to Health data."
+        case .unknown:
+            return ""
         }
     }
 
@@ -545,15 +655,23 @@ final class SQMetricFormViewModel {
         case .none:
             return "Optional. Leave this off unless the metric should meaningfully nudge daily energy or recovery."
         case .boostsWhenHigh:
-            return "Higher values will lift Recovery Score. The impact is normalized to this metric’s range and aggressively capped."
+            if selectedKind == .number {
+                return "Higher values will lift Recovery Score. Add a typical low and high daily value below so LifeIQ can interpret the number correctly."
+            }
+            return "Higher values will lift Recovery Score. Scale values already provide the range LifeIQ needs."
         case .drainsWhenHigh:
-            return "Higher values will lower Recovery Score. The impact is normalized to this metric’s range and aggressively capped."
+            if selectedKind == .number {
+                return "Higher values will lower Recovery Score. Add a typical low and high daily value below so LifeIQ can interpret the number correctly."
+            }
+            return "Higher values will lower Recovery Score. Scale values already provide the range LifeIQ needs."
         case .unknown:
             return ""
         }
     }
 
     var bodyBatterySummary: String? {
+        _ = formContentRevision
+
         let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "This metric"
             : titleField.text
@@ -571,6 +689,8 @@ final class SQMetricFormViewModel {
     }
 
     var goalSuccessSummary: String? {
+        _ = formContentRevision
+
         let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "this metric"
             : titleField.text
@@ -737,7 +857,7 @@ final class SQMetricFormViewModel {
         let minRow = RowViewModel(
             isActive: { [weak self] in
                 guard let self else { return false }
-                return self.isStructurallyEditable && self.showNumericRange
+                return self.isStructurallyEditable && (self.showsScaleRangeFields || self.showsRecoveryScoreRangeFields)
             },
             validator: { [weak self] in
                 guard let self else { return false }
@@ -751,7 +871,7 @@ final class SQMetricFormViewModel {
         let maxRow = RowViewModel(
             isActive: { [weak self] in
                 guard let self else { return false }
-                return self.isStructurallyEditable && self.showNumericRange
+                return self.isStructurallyEditable && (self.showsScaleRangeFields || self.showsRecoveryScoreRangeFields)
             },
             validator: { [weak self] in
                 guard let self else { return false }
@@ -765,7 +885,7 @@ final class SQMetricFormViewModel {
         let stepRow = RowViewModel(
             isActive: { [weak self] in
                 guard let self else { return false }
-                return self.isStructurallyEditable && self.showNumericRange
+                return self.isStructurallyEditable && self.showsScaleRangeFields
             },
             validator: { [weak self] in
                 guard let self else { return false }
@@ -818,6 +938,11 @@ final class SQMetricFormViewModel {
 
         if firstError == nil {
             let result = validateScaleQuantityMappingDetailed()
+            if !result.isValid { firstError = result.message }
+        }
+
+        if firstError == nil {
+            let result = validateHealthKitFieldsDetailed()
             if !result.isValid { firstError = result.message }
         }
 
@@ -884,6 +1009,13 @@ final class SQMetricFormViewModel {
             self?.selectedBodyBatteryEffect = Self.bodyBatteryEffect(fromDisplayName: title)
         }
 
+        healthKitMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: Self.displayName(for: selectedHealthKitType)),
+            items: Self.healthKitDisplayItems
+        ) { [weak self] title in
+            self?.selectedHealthKitType = Self.healthKitType(fromDisplayName: title)
+        }
+
         trackingMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(forTrackingShared: isSingleDailyValue)),
             items: Self.trackingDisplayItems
@@ -897,6 +1029,9 @@ final class SQMetricFormViewModel {
             self.selectedPeriods = periods
             if self.selectedPeriods.count < 2 {
                 self.isSingleDailyValue = false
+                self.updateTrackingMenuSelection()
+            } else if self.selectedHealthKitType.requiresSingleDailyValue {
+                self.isSingleDailyValue = true
                 self.updateTrackingMenuSelection()
             }
             self.calculateValidity()
@@ -971,6 +1106,13 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private func updateHealthKitMenuSelection() {
+        let title = Self.displayName(for: selectedHealthKitType)
+        if healthKitMenuViewModel.mainButton.title != title {
+            healthKitMenuViewModel.defaultItem = .init(title: title)
+        }
+    }
+
     private func updateTrackingMenuSelection() {
         let title = Self.displayName(forTrackingShared: isSingleDailyValue)
         if trackingMenuViewModel.mainButton.title != title {
@@ -987,6 +1129,9 @@ final class SQMetricFormViewModel {
     ) -> SQMetricDefinition {
         let emoji = emojiField.text.isEmpty ? nil : emojiField.text
         let mapping = resolvedScaleQuantityMapping
+        let healthKitType = currentHealthKitType
+        let healthKitReadEnabled = healthKitType == .none ? false : isHealthKitReadEnabled
+        let healthKitWriteEnabled = healthKitType.supportsWrite ? isHealthKitWriteEnabled : false
 
         switch selectedKind {
         case .scale:
@@ -1011,7 +1156,10 @@ final class SQMetricFormViewModel {
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
                 bodyBatteryEffect: selectedBodyBatteryEffect,
-                scaleQuantityMapping: mapping
+                scaleQuantityMapping: mapping,
+                healthKitType: healthKitType,
+                healthKitReadEnabled: healthKitReadEnabled,
+                healthKitWriteEnabled: healthKitWriteEnabled
             )
 
         case .number:
@@ -1023,7 +1171,7 @@ final class SQMetricFormViewModel {
                 group: selectedGroup,
                 min: minField.text.isEmpty ? nil : Float(minField.text),
                 max: maxField.text.isEmpty ? nil : Float(maxField.text),
-                step: stepField.text.isEmpty ? nil : Float(stepField.text),
+                step: resolvedNumberStepValue,
                 isPreset: isPreset,
                 isEnabled: isEnabled,
                 sortOrder: sortOrder,
@@ -1036,7 +1184,10 @@ final class SQMetricFormViewModel {
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
                 bodyBatteryEffect: selectedBodyBatteryEffect,
-                scaleQuantityMapping: mapping
+                scaleQuantityMapping: mapping,
+                healthKitType: healthKitType,
+                healthKitReadEnabled: healthKitReadEnabled,
+                healthKitWriteEnabled: healthKitWriteEnabled
             )
 
         default:
@@ -1060,7 +1211,10 @@ final class SQMetricFormViewModel {
                 targetRangeMin: resolvedGoalRangeMin,
                 targetRangeMax: resolvedGoalRangeMax,
                 bodyBatteryEffect: selectedBodyBatteryEffect,
-                scaleQuantityMapping: mapping
+                scaleQuantityMapping: mapping,
+                healthKitType: healthKitType,
+                healthKitReadEnabled: healthKitReadEnabled,
+                healthKitWriteEnabled: healthKitWriteEnabled
             )
         }
     }
@@ -1082,20 +1236,16 @@ final class SQMetricFormViewModel {
     }
 
     private func validateNumberFieldsDetailed() -> (isValid: Bool, message: String?) {
+        guard showsRecoveryScoreRangeFields else { return (true, nil) }
+
         if !minField.text.isEmpty, Float(minField.text) == nil {
-            return (false, "Min must be a number.")
+            return (false, "Typical low must be a number.")
         }
         if !maxField.text.isEmpty, Float(maxField.text) == nil {
-            return (false, "Max must be a number.")
-        }
-        if !stepField.text.isEmpty, Float(stepField.text) == nil {
-            return (false, "Step must be a number.")
+            return (false, "Typical high must be a number.")
         }
         if let min = Float(minField.text), let max = Float(maxField.text) {
-            guard max > min else { return (false, "Max must be greater than Min.") }
-        }
-        if let step = Float(stepField.text) {
-            guard step > 0 else { return (false, "Step must be greater than 0.") }
+            guard max > min else { return (false, "Typical high must be greater than typical low.") }
         }
         return (true, nil)
     }
@@ -1159,6 +1309,27 @@ final class SQMetricFormViewModel {
         return (true, nil)
     }
 
+    private func validateHealthKitFieldsDetailed() -> (isValid: Bool, message: String?) {
+        guard currentHealthKitType != .none && currentHealthKitType != .unknown else {
+            return (true, nil)
+        }
+
+        if currentHealthKitType.requiresSingleDailyValue, selectedPeriods.count > 1, !isSingleDailyValue {
+            return (false, "HealthKit-linked daily totals must use Shared tracking.")
+        }
+
+        let recommendedUnit = currentHealthKitType.recommendedUnit
+        if recommendedUnit != .none, selectedUnit != recommendedUnit {
+            return (false, "\(currentHealthKitType.displayName) uses \(recommendedUnit.displayName).")
+        }
+
+        if selectedKind == .scale && resolvedScaleQuantityMapping == nil {
+            return (false, "HealthKit-linked scale metrics need a scale-to-unit mapping.")
+        }
+
+        return (true, nil)
+    }
+
     private func validateGoalValueWithinBounds(_ value: Float, label: String) -> (isValid: Bool, message: String?) {
         if let min = metricLowerBound, value < min {
             return (false, "\(label) must be at least \(Self.formatFloat(min)).")
@@ -1173,12 +1344,14 @@ final class SQMetricFormViewModel {
         guard showsBodyBatteryControls else { return (true, nil) }
         guard selectedBodyBatteryEffect != .none else { return (true, nil) }
 
+        guard selectedKind == .number else { return (true, nil) }
+
         guard let min = metricLowerBound, let max = metricUpperBound else {
-            return (false, "Recovery Score metrics need both Min and Max values so their impact can be normalized.")
+            return (false, "Recovery Score needs both a typical low and typical high value for number metrics.")
         }
 
         guard max > min else {
-            return (false, "Recovery Score metrics need Max to be greater than Min.")
+            return (false, "Typical high must be greater than typical low.")
         }
 
         return (true, nil)
@@ -1189,7 +1362,8 @@ final class SQMetricFormViewModel {
         case .scale:
             return !minField.text.isEmpty && Float(minField.text) != nil
         case .number:
-            return minField.text.isEmpty || Float(minField.text) != nil
+            guard showsRecoveryScoreRangeFields else { return true }
+            return !minField.text.isEmpty && Float(minField.text) != nil
         default:
             return true
         }
@@ -1200,7 +1374,9 @@ final class SQMetricFormViewModel {
         case .scale:
             return "Min is required for scale."
         case .number:
-            return "Min must be a number."
+            return showsRecoveryScoreRangeFields
+                ? "Enter a typical low value for Recovery Score."
+                : nil
         default:
             return nil
         }
@@ -1211,7 +1387,8 @@ final class SQMetricFormViewModel {
         case .scale:
             return !maxField.text.isEmpty && Float(maxField.text) != nil
         case .number:
-            return maxField.text.isEmpty || Float(maxField.text) != nil
+            guard showsRecoveryScoreRangeFields else { return true }
+            return !maxField.text.isEmpty && Float(maxField.text) != nil
         default:
             return true
         }
@@ -1222,7 +1399,9 @@ final class SQMetricFormViewModel {
         case .scale:
             return "Max is required for scale."
         case .number:
-            return "Max must be a number."
+            return showsRecoveryScoreRangeFields
+                ? "Enter a typical high value for Recovery Score."
+                : nil
         default:
             return nil
         }
@@ -1232,8 +1411,6 @@ final class SQMetricFormViewModel {
         switch selectedKind {
         case .scale:
             return !stepField.text.isEmpty && Float(stepField.text) != nil
-        case .number:
-            return stepField.text.isEmpty || Float(stepField.text) != nil
         default:
             return true
         }
@@ -1243,8 +1420,6 @@ final class SQMetricFormViewModel {
         switch selectedKind {
         case .scale:
             return "Step is required for scale."
-        case .number:
-            return "Step must be a number."
         default:
             return nil
         }
@@ -1294,7 +1469,40 @@ final class SQMetricFormViewModel {
         default:
             break
         }
+        applyHealthKitTypeDefaultsIfNeeded(from: selectedHealthKitType)
         calculateValidity()
+    }
+
+    private func applyHealthKitTypeDefaultsIfNeeded(from previousType: SQMetricHealthKitType) {
+        guard selectedHealthKitType != .unknown else { return }
+
+        if selectedHealthKitType == .none {
+            isHealthKitReadEnabled = false
+            isHealthKitWriteEnabled = false
+            return
+        }
+
+        if previousType == .none || previousType == .unknown {
+            isHealthKitReadEnabled = true
+            isHealthKitWriteEnabled = selectedHealthKitType.supportsWrite
+        }
+
+        let recommendedUnit = selectedHealthKitType.recommendedUnit
+        if recommendedUnit != .none {
+            selectedUnit = recommendedUnit
+        }
+
+        if selectedHealthKitType.requiresSingleDailyValue {
+            isSingleDailyValue = true
+        }
+
+        if selectedKind == .scale {
+            isScaleQuantityMappingEnabled = true
+        }
+
+        if !selectedHealthKitType.supportsWrite {
+            isHealthKitWriteEnabled = false
+        }
     }
 
     private var metricLowerBound: Float? {
@@ -1313,6 +1521,10 @@ final class SQMetricFormViewModel {
         return Float(maxField.text)
     }
 
+    private var resolvedNumberStepValue: Float? {
+        0.1
+    }
+
     private var parsedGoalTargetValue: Float? {
         goalTargetField.text.isEmpty ? nil : Float(goalTargetField.text)
     }
@@ -1323,6 +1535,15 @@ final class SQMetricFormViewModel {
 
     private var resolvedScaleUpperBound: Float? {
         Float(maxField.text)
+    }
+
+    private var resolvedScaleConversionUpperBound: Float? {
+        if selectedKind == .number,
+           case .edit(let existing) = mode,
+           existing.kind == .scale {
+            return existing.max
+        }
+        return resolvedScaleUpperBound
     }
 
     private var shouldPersistScaleQuantityMapping: Bool {
@@ -1408,6 +1629,15 @@ final class SQMetricFormViewModel {
         ]
     }
 
+    private static var healthKitDisplayItems: [SQDropDownMenuViewModel.Item] {
+        [
+            .init(title: displayName(for: SQMetricHealthKitType.none)),
+            .init(title: displayName(for: SQMetricHealthKitType.dietaryWater)),
+            .init(title: displayName(for: SQMetricHealthKitType.dietaryCaffeine)),
+            .init(title: displayName(for: SQMetricHealthKitType.numberOfAlcoholicBeverages)),
+        ]
+    }
+
     private static var trackingDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
             .init(title: "Independent"),
@@ -1464,6 +1694,10 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private static func displayName(for healthKitType: SQMetricHealthKitType) -> String {
+        healthKitType.displayName
+    }
+
     private static func displayName(forTrackingShared isShared: Bool) -> String {
         isShared ? "Shared" : "Independent"
     }
@@ -1496,6 +1730,15 @@ final class SQMetricFormViewModel {
         ].first(where: { displayName(for: $0) == title }) ?? .none
     }
 
+    private static func healthKitType(fromDisplayName title: String) -> SQMetricHealthKitType {
+        [
+            SQMetricHealthKitType.none,
+            .dietaryWater,
+            .dietaryCaffeine,
+            .numberOfAlcoholicBeverages,
+        ].first(where: { displayName(for: $0) == title }) ?? .none
+    }
+
     private static func isTrackingShared(fromDisplayName title: String) -> Bool {
         title == "Shared"
     }
@@ -1517,6 +1760,8 @@ extension SQMetricFormViewModel: SQUITextFieldViewModelDelegate {
     }
 
     private func handleFieldChanged(_ viewModel: SQUITextFieldViewModel) {
+        formContentRevision += 1
+
         if viewModel === titleField {
             titleRowViewModel?.updateValidity()
         } else if viewModel === emojiField {

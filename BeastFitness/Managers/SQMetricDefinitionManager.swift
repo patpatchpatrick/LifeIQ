@@ -96,6 +96,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMax: def.targetRangeMax,
                         bodyBatteryEffect: def.bodyBatteryEffect,
                         scaleQuantityMapping: def.scaleQuantityMapping,
+                        healthKitType: def.healthKitType,
+                        healthKitReadEnabled: def.healthKitReadEnabled,
+                        healthKitWriteEnabled: def.healthKitWriteEnabled,
                         isDefault: def.isDefault
                     )
                 )
@@ -235,6 +238,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 targetRangeMax: definition.targetRangeMax,
                 bodyBatteryEffect: definition.bodyBatteryEffect,
                 scaleQuantityMapping: definition.scaleQuantityMapping,
+                healthKitType: definition.healthKitType,
+                healthKitReadEnabled: definition.healthKitReadEnabled,
+                healthKitWriteEnabled: definition.healthKitWriteEnabled,
                 isDefault: false
             )
         )
@@ -321,7 +327,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         }
 
         let userId = currentLocalUserId()
-        let key = "metric-definitions-bootstrap-v4-body-battery-presets-\(userId)"
+        let key = "metric-definitions-bootstrap-v5-healthkit-metrics-\(userId)"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
         )
@@ -415,6 +421,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     targetRangeMax: def.targetRangeMax,
                     bodyBatteryEffect: def.bodyBatteryEffect,
                     scaleQuantityMapping: def.scaleQuantityMapping,
+                    healthKitType: def.healthKitType,
+                    healthKitReadEnabled: def.healthKitReadEnabled,
+                    healthKitWriteEnabled: def.healthKitWriteEnabled,
                     isDefault: def.isDefault
                 )
                 entity.updatedAt = def.updatedAt
@@ -530,6 +539,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMax: preset.targetRangeMax,
                         bodyBatteryEffect: preset.bodyBatteryEffect,
                         scaleQuantityMapping: preset.scaleQuantityMapping,
+                        healthKitType: preset.healthKitType,
+                        healthKitReadEnabled: preset.healthKitReadEnabled,
+                        healthKitWriteEnabled: preset.healthKitWriteEnabled,
                         isDefault: preset.isDefault
                     )
                 )
@@ -608,6 +620,19 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 if entity.scaleQuantityLabelOverride == nil,
                    entity.scaleQuantityLabelOverride != preset.scaleQuantityMapping?.quantityLabelOverride {
                     entity.scaleQuantityLabelOverride = preset.scaleQuantityMapping?.quantityLabelOverride
+                    didChange = true
+                }
+                if entity.healthKitTypeRaw == SQMetricHealthKitType.none.rawValue,
+                   entity.healthKitTypeRaw != preset.healthKitType.rawValue {
+                    entity.healthKitTypeRaw = preset.healthKitType.rawValue
+                    didChange = true
+                }
+                if entity.healthKitReadEnabled != preset.healthKitReadEnabled {
+                    entity.healthKitReadEnabled = preset.healthKitReadEnabled
+                    didChange = true
+                }
+                if entity.healthKitWriteEnabled != preset.healthKitWriteEnabled {
+                    entity.healthKitWriteEnabled = preset.healthKitWriteEnabled
                     didChange = true
                 }
                 // Upgrade legacy binary metrics to scale 0–10
@@ -722,7 +747,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   emoji: "😴", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             .init(id: SQMetricId.sleepHours, title: "Sleep Duration", kind: .number, unit: .hours,
-                  group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.5,
+                  group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.1,
                   isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
                   emoji: "🌙", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
@@ -735,8 +760,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             .init(id: SQMetricId.hydration, title: "Hydration", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
-                  emoji: "💧", periods: both, goalStyle: .buildUp, targetValue: 7,
-                  scaleQuantityMapping: .init(quantityUnit: .milliliters, maxQuantityValue: 3000)),
+                  emoji: "💧", periods: both, isSingleDailyValue: true, goalStyle: .buildUp, targetValue: 7,
+                  scaleQuantityMapping: .init(quantityUnit: .milliliters, maxQuantityValue: 3000),
+                  healthKitType: .dietaryWater, healthKitReadEnabled: true, healthKitWriteEnabled: true),
 
             .init(id: SQMetricId.digestion, title: "Digestion", kind: .scale, unit: .none,
                   group: SQDefaultGroup.positiveHabits.rawValue, min: 0, max: 10, step: 1,
@@ -750,16 +776,18 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
             // MARK: Vices — independent morning + evening tracking
             .init(id: SQMetricId.alcohol, title: "Alcohol", kind: .number, unit: .count,
-                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 0.1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "🍺", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
-                  scaleQuantityMapping: .init(quantityUnit: .count, maxQuantityValue: 10, quantityLabelOverride: "drink count")),
+                  emoji: "🍺", periods: both, isSingleDailyValue: true, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
+                  scaleQuantityMapping: .init(quantityUnit: .count, maxQuantityValue: 10, quantityLabelOverride: "drink count"),
+                  healthKitType: .numberOfAlcoholicBeverages, healthKitReadEnabled: true, healthKitWriteEnabled: true),
 
             .init(id: SQMetricId.caffeine, title: "Caffeine", kind: .number, unit: .milligrams,
-                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 1000, step: 10,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 1000, step: 0.1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "☕", periods: both, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
-                  scaleQuantityMapping: .init(quantityUnit: .milligrams, maxQuantityValue: 200)),
+                  emoji: "☕", periods: both, isSingleDailyValue: true, goalStyle: .avoidIt, bodyBatteryEffect: .drainsWhenHigh,
+                  scaleQuantityMapping: .init(quantityUnit: .milligrams, maxQuantityValue: 200),
+                  healthKitType: .dietaryCaffeine, healthKitReadEnabled: true, healthKitWriteEnabled: true),
 
             .init(id: SQMetricId.weed, title: "Weed", kind: .scale, unit: .none,
                   group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
