@@ -178,6 +178,8 @@ protocol SQLoginInterface: AnyObject {
             if result.additionalUserInfo?.isNewUser == true {
                 do {
                     try remoteConfigManager.assertSignupEnabled()
+                    let resolvedEmail = result.user.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    try SQAuthManager.assertEmailAllowedForPublicSignup(resolvedEmail)
                 } catch {
                     try? await SQAuthManager.shared.deleteCurrentUser()
                     try? SQAuthManager.shared.signOut()
@@ -202,6 +204,16 @@ protocol SQLoginInterface: AnyObject {
         guard emailValid && passwordValid else {
             hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "Enter a valid email and password."))))
             return false
+        }
+
+        if mode == .signup {
+            let email = emailViewModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            do {
+                try SQAuthManager.assertEmailAllowedForPublicSignup(email)
+            } catch {
+                presentAuthError(error)
+                return false
+            }
         }
 
         return true
@@ -243,6 +255,9 @@ protocol SQLoginInterface: AnyObject {
         let trimmedFallbackEmail = fallbackEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedEmail = result.user.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? trimmedFallbackEmail
         let isNewUser = result.additionalUserInfo?.isNewUser == true
+        let emailVerificationRequirement = SQAuthManager.emailVerificationRequirement(for: result.user)
+        var verificationEmailWasSent = false
+        var verificationEmailSendErrorDescription: String?
 
         if isNewUser {
             guard let resolvedEmail, !resolvedEmail.isEmpty else {
@@ -251,19 +266,67 @@ protocol SQLoginInterface: AnyObject {
 
             let user = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: resolvedEmail)
             SQUserDefaults.shared.markPendingOnboarding(for: result.user.uid)
-            SQAppState.shared.userState.updateLoggedInUser(user, hasLoadedProfile: true)
+            SQAppState.shared.userState.updateLoggedInUser(
+                user,
+                hasLoadedProfile: true,
+                emailVerificationRequirement: emailVerificationRequirement
+            )
+
+            if method == .email, emailVerificationRequirement != nil {
+                do {
+                    try await SQAuthManager.shared.sendEmailVerification(to: result.user)
+                    verificationEmailWasSent = true
+                    SQLogger.shared.log(
+                        "Email Verification: initial verification email sent for signup user \(result.user.uid) (\(resolvedEmail))",
+                        .info,
+                        context: .loginSignup,
+                        isPriority: true
+                    )
+                } catch {
+                    verificationEmailSendErrorDescription = (error as? SQUserFacingError)?.userFacingDescription ?? error.localizedDescription
+                    SQLogger.shared.log(
+                        "Email Verification: failed to send initial verification email for signup user \(result.user.uid) (\(resolvedEmail)): \(error.localizedDescription)",
+                        .warning,
+                        context: .loginSignup,
+                        isPriority: true
+                    )
+                }
+            }
 
             SQLogger.shared.log("User signed up successfully", .info, context: .loginSignup)
             SQAnalyticsManager.shared.track(.signupSucceeded(method: method))
-            hub.toastEvents.send(.present(.init(title: "Signup successful!", style: .success)))
         } else {
             if let existingUser = try? await SQUserManager.shared.fetchUser(uid: result.user.uid) {
-                SQAppState.shared.userState.updateLoggedInUser(existingUser, hasLoadedProfile: true)
+                SQAppState.shared.userState.updateLoggedInUser(
+                    existingUser,
+                    hasLoadedProfile: true,
+                    emailVerificationRequirement: emailVerificationRequirement
+                )
             }
 
             SQLogger.shared.log("User logged in successfully", .info, context: .loginSignup)
             SQAnalyticsManager.shared.track(.loginSucceeded(method: method))
-            hub.toastEvents.send(.present(.init(title: "Login successful!", style: .success)))
+        }
+
+        if emailVerificationRequirement != nil {
+            if verificationEmailWasSent {
+                hub.toastEvents.send(.present(.init(
+                    title: "Verification email sent",
+                    subtitle: "If you don't see it, check spam or promotions.",
+                    style: .success,
+                    duration: 4.0
+                )))
+            } else {
+                hub.toastEvents.send(.present(.init(
+                    title: "Verification email couldn't be sent",
+                    subtitle: verificationEmailSendErrorDescription ?? "Use Resend Verification Email to try again.",
+                    style: .warning,
+                    duration: 4.0
+                )))
+            }
+        } else {
+            let title = isNewUser ? "Signup successful!" : "Login successful!"
+            hub.toastEvents.send(.present(.init(title: title, style: .success)))
         }
 
         hub.domainEvents.send(.dismissDashboardNavStack)

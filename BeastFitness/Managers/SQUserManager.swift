@@ -35,13 +35,19 @@ final class SQUserManager: SQUserManaging {
             return
         }
 
+        let emailVerificationRequirement = SQAuthManager.emailVerificationRequirement(for: firebaseUser)
+
         do {
             let user = try await SQUserService.fetchUser(uid: firebaseUser.uid)
             SQUserDefaults.shared.setPreferredUnitSystem(user.unitSystem)
             if user.onboardingStatus == .completed {
                 SQUserDefaults.shared.clearPendingOnboarding(for: user.id)
             }
-            userState.setLoggedIn(user, hasLoadedProfile: true)
+            userState.setLoggedIn(
+                user,
+                hasLoadedProfile: true,
+                emailVerificationRequirement: emailVerificationRequirement
+            )
             SQLogger.shared.log("✅ Auth state: user logged in with remote profile (\(firebaseUser.uid))", .info, context: .network, isPriority: true)
         } catch {
             let fallbackUser = SQUser(
@@ -60,7 +66,11 @@ final class SQUserManager: SQUserManaging {
                 onboardingCompletedAt: nil,
                 onboardingStatus: nil
             )
-            userState.setLoggedIn(fallbackUser, hasLoadedProfile: false)
+            userState.setLoggedIn(
+                fallbackUser,
+                hasLoadedProfile: false,
+                emailVerificationRequirement: emailVerificationRequirement
+            )
             SQLogger.shared.log("Auth state: using fallback user profile for \(firebaseUser.uid): \(error)", .warning, context: .network)
         }
 

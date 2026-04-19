@@ -8,7 +8,7 @@ import SwiftUI
 import BeastFitnessCore
 
 @MainActor
-@Observable final class SQOnboardingController: Identifiable {
+@Observable final class SQOnboardingController: Identifiable, SQUITextFieldViewModelDelegate {
     enum Mode {
         case setup
         case editProfile
@@ -33,6 +33,7 @@ import BeastFitnessCore
     let weightField: SQUITextFieldViewModel
 
     private let userManager: SQUserManaging
+    private var validationRevision: Int = 0
 
     init(
         mode: Mode = .setup,
@@ -124,6 +125,7 @@ import BeastFitnessCore
             heightCentimeters: existingUser?.heightCentimeters,
             weightKilograms: existingUser?.weightKilograms
         )
+        configureFieldDelegates()
         configureKeyboardReturnChain()
     }
 
@@ -203,43 +205,58 @@ import BeastFitnessCore
     }
 
     private var canonicalHeightCentimeters: Double? {
-        selectedUnitSystem.canonicalHeight(
+        let trimmedPrimary = heightFeetField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedSecondary = heightInchesField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPrimary.isEmpty || !trimmedSecondary.isEmpty else { return nil }
+        return selectedUnitSystem.canonicalHeight(
             primaryText: heightFeetField.text,
             secondaryText: heightInchesField.text
         )
     }
 
     private var canonicalWeightKilograms: Double? {
-        guard let weight = Double(weightField.text), weight > 0 else { return nil }
+        let trimmedWeight = weightField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedWeight.isEmpty else { return nil }
+        guard let weight = Double(trimmedWeight), weight > 0 else { return nil }
         return selectedUnitSystem.canonicalWeight(fromDisplayWeight: weight)
     }
 
     var canSave: Bool {
+        let _ = validationRevision
         guard !firstNameField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        guard canonicalHeightCentimeters != nil else { return false }
-        guard canonicalWeightKilograms != nil else { return false }
         guard sleepTimeOfDay != wakeTimeOfDay else { return false }
+        let trimmedHeightPrimary = heightFeetField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedHeightSecondary = heightInchesField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if (!trimmedHeightPrimary.isEmpty || !trimmedHeightSecondary.isEmpty), canonicalHeightCentimeters == nil {
+            return false
+        }
         return true
     }
 
     var saveDisabledMessage: String? {
+        let _ = validationRevision
         if firstNameField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "First name is required."
         }
-        if selectedUnitSystem == .imperial {
+        let trimmedHeightPrimary = heightFeetField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedHeightSecondary = heightInchesField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasHeightInput = !trimmedHeightPrimary.isEmpty || !trimmedHeightSecondary.isEmpty
+
+        if hasHeightInput, selectedUnitSystem == .imperial {
             if Int(heightFeetField.text) == nil || (Int(heightFeetField.text) ?? 0) <= 0 {
                 return "Enter a valid height in feet."
             }
             if !((0...11).contains(Int(heightInchesField.text) ?? 0)) {
                 return "Inches must be between 0 and 11."
             }
-        } else if Double(heightFeetField.text) == nil || (Double(heightFeetField.text) ?? 0) <= 0 {
+        } else if hasHeightInput, Double(heightFeetField.text) == nil || (Double(heightFeetField.text) ?? 0) <= 0 {
             return "Enter a valid height in centimeters."
         }
-        if canonicalHeightCentimeters == nil {
+        if hasHeightInput, canonicalHeightCentimeters == nil {
             return "Enter a valid height."
         }
-        if canonicalWeightKilograms == nil {
+        let trimmedWeight = weightField.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedWeight.isEmpty, canonicalWeightKilograms == nil {
             return selectedUnitSystem == .imperial
                 ? "Enter a valid weight in pounds."
                 : "Enter a valid weight in kilograms."
@@ -268,8 +285,6 @@ import BeastFitnessCore
             hub.alertEvents.send(.present(.init(SQError.standard(withDescription: "You need to be logged in to finish setup."))))
             return
         }
-        guard let heightCentimeters = canonicalHeightCentimeters, let weightKilograms = canonicalWeightKilograms else { return }
-
         isLoading = true
         defer { isLoading = false }
 
@@ -287,8 +302,8 @@ import BeastFitnessCore
             firstName: trimmedFirstName,
             lastName: trimmedLastName.isEmpty ? nil : trimmedLastName,
             dateOfBirth: includesDateOfBirth ? selectedDateOfBirth : nil,
-            heightCentimeters: heightCentimeters,
-            weightKilograms: weightKilograms,
+            heightCentimeters: canonicalHeightCentimeters,
+            weightKilograms: canonicalWeightKilograms,
             unitSystem: selectedUnitSystem,
             sleepSchedule: .init(
                 sleepTime: sleepTimeOfDay,
@@ -303,7 +318,11 @@ import BeastFitnessCore
             let savedUser = try await userManager.saveUser(updatedUser)
             SQUserDefaults.shared.setPreferredUnitSystem(savedUser.unitSystem)
             SQUserDefaults.shared.clearPendingOnboarding(for: savedUser.id)
-            userState.updateLoggedInUser(savedUser, hasLoadedProfile: true)
+            userState.updateLoggedInUser(
+                savedUser,
+                hasLoadedProfile: true,
+                emailVerificationRequirement: userState.emailVerificationRequirement
+            )
 
             switch mode {
             case .setup:
@@ -366,14 +385,24 @@ import BeastFitnessCore
         }
     }
 
+    private func configureFieldDelegates() {
+        [
+            firstNameField,
+            lastNameField,
+            heightFeetField,
+            heightInchesField,
+            weightField
+        ].forEach { $0.delegate = self }
+    }
+
     private func applyMeasurementFieldPlaceholders() {
         switch selectedUnitSystem {
         case .imperial:
-            heightFeetField.setPlaceholder("Ft")
-            heightInchesField.setPlaceholder("In")
+            heightFeetField.setPlaceholder("5")
+            heightInchesField.setPlaceholder("0")
             weightField.setPlaceholder("Weight in pounds")
         case .metric:
-            heightFeetField.setPlaceholder("Cm")
+            heightFeetField.setPlaceholder("175")
             heightInchesField.setPlaceholder("")
             weightField.setPlaceholder("Weight in kilograms")
         }
@@ -397,5 +426,15 @@ import BeastFitnessCore
             return "\(Int(value))"
         }
         return String(format: "%.1f", value)
+    }
+
+    func squiTextFieldFocused(_ viewModel: SQUITextFieldViewModel) {}
+
+    func squiTextFieldTextChanged(_ viewModel: SQUITextFieldViewModel, text: String) {
+        validationRevision += 1
+    }
+
+    func squiTextFieldStateChanged(_ viewModel: SQUITextFieldViewModel, state: SQUITextFieldViewModel.TextFieldState) {
+        validationRevision += 1
     }
 }

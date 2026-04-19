@@ -147,10 +147,15 @@ struct SQDashboardView: View {
             SQDashboardBackground()
 
             mainScroll
+                .disabled(controller.state.isLoading || controller.emailVerificationRequirement != nil)
+
+            if controller.emailVerificationRequirement != nil {
+                SQEmailVerificationGateView(controller: controller.emailVerificationController)
+                    .zIndex(2)
+            }
         }
             .navigationBarTitleDisplayMode(.inline)
             .redacted(controller.state.isLoading, reason: .placeholder)
-            .disabled(controller.state.isLoading)
             .task {
                 await controller.loadUI(for: modelContext)
             }

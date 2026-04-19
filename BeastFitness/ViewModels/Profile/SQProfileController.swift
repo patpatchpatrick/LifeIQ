@@ -78,6 +78,8 @@ protocol SQProfileInterface: AnyObject {
                 switch event {
                 case .loginStateChanged:
                     self?.refreshUI()
+                case .emailVerificationStateChanged:
+                    self?.refreshUI()
                 case .profileUpdated:
                     self?.refreshUI()
                 }

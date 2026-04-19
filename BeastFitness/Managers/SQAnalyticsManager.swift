@@ -351,6 +351,9 @@ final class SQAnalyticsManager: SQAnalyticsTracking {
                 setUser(nil)
             }
 
+        case .emailVerificationStateChanged:
+            setUser(userState?.loggedInUser)
+
         case .profileUpdated:
             setUser(userState?.loggedInUser)
         }

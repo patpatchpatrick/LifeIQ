@@ -250,7 +250,11 @@ final class SQSettingsController: SQSettingsInterface {
 
             do {
                 let savedUser = try await userManager.saveUser(updatedUser)
-                userState.updateLoggedInUser(savedUser, hasLoadedProfile: true)
+                userState.updateLoggedInUser(
+                    savedUser,
+                    hasLoadedProfile: true,
+                    emailVerificationRequirement: userState.emailVerificationRequirement
+                )
                 state.hub.userEvents.send(.profileUpdated)
             } catch {
                 state.hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))

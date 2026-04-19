@@ -39,6 +39,7 @@ enum ToastEvent {
 
 enum UserEvent {
     case loginStateChanged(isLoggedIn: Bool)
+    case emailVerificationStateChanged(isRequired: Bool)
     case profileUpdated
 }
 

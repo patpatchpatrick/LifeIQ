@@ -30,6 +30,9 @@ protocol SQAuthManaging: AnyObject {
     func signIn(email: String, password: String) async throws -> AuthDataResult
     func createUser(email: String, password: String) async throws -> AuthDataResult
     func signInWithGoogle(presentingViewController: UIViewController) async throws -> AuthDataResult
+    func sendEmailVerification() async throws
+    func sendEmailVerification(to user: FirebaseAuth.User) async throws
+    func reloadCurrentUser() async throws -> FirebaseAuth.User
     func handleGoogleSignIn(url: URL) -> Bool
     func currentAuthProviders() -> Set<SQAuthProvider>
     func reauthenticateForAccountDeletion(using method: SQAccountDeletionReauthenticationMethod) async throws
@@ -41,6 +44,7 @@ protocol SQAuthManaging: AnyObject {
 @MainActor
 final class SQAuthManager: SQAuthManaging {
     static let shared = SQAuthManager()
+    static let reservedSignupEmailDomains: Set<String> = ["lifeiq.app"]
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?
 
@@ -72,6 +76,7 @@ final class SQAuthManager: SQAuthManaging {
 
     func createUser(email: String, password: String) async throws -> AuthDataResult {
         try SQRemoteConfigManager.shared.assertSignupEnabled()
+        try Self.assertEmailAllowedForPublicSignup(email)
         return try await Auth.auth().createUser(withEmail: email, password: password)
     }
 
@@ -100,6 +105,32 @@ final class SQAuthManager: SQAuthManaging {
         )
 
         return try await Auth.auth().signIn(with: credential)
+    }
+
+    func sendEmailVerification() async throws {
+        guard let currentUser = Auth.auth().currentUser else {
+            throw SQAuthError(description: "You need to be signed in to verify your email.")
+        }
+
+        try await sendEmailVerification(to: currentUser)
+    }
+
+    func sendEmailVerification(to user: FirebaseAuth.User) async throws {
+        try await user.sendEmailVerification()
+    }
+
+    func reloadCurrentUser() async throws -> FirebaseAuth.User {
+        guard let currentUser = Auth.auth().currentUser else {
+            throw SQAuthError(description: "You need to be signed in to refresh your email verification status.")
+        }
+
+        try await currentUser.reload()
+
+        guard let reloadedUser = Auth.auth().currentUser else {
+            throw SQAuthError(description: "Your session expired. Please log in again.")
+        }
+
+        return reloadedUser
     }
 
     func handleGoogleSignIn(url: URL) -> Bool {
@@ -194,6 +225,44 @@ final class SQAuthManager: SQAuthManaging {
         }
 
         return presentingViewController
+    }
+
+    static func isReservedPublicSignupEmail(_ email: String) -> Bool {
+        let normalizedEmail = email
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        guard let domain = normalizedEmail.split(separator: "@").last.map(String.init) else {
+            return false
+        }
+
+        return reservedSignupEmailDomains.contains(domain)
+    }
+
+    static func assertEmailAllowedForPublicSignup(_ email: String) throws {
+        guard !isReservedPublicSignupEmail(email) else {
+            throw SQAuthError(
+                description: "Emails ending in @lifeiq.app are reserved and cannot be used to create an account."
+            )
+        }
+    }
+
+    static func emailVerificationRequirement(for firebaseUser: FirebaseAuth.User) -> SQEmailVerificationRequirement? {
+        guard SQBuildOverrides.enforceEmailVerificationForEmailPasswordAccounts else {
+            return nil
+        }
+
+        let providerIds = Set(firebaseUser.providerData.map(\.providerID))
+        guard providerIds.contains(SQAuthProvider.password.rawValue) else {
+            return nil
+        }
+
+        let email = firebaseUser.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !email.isEmpty, !firebaseUser.isEmailVerified else {
+            return nil
+        }
+
+        return .init(email: email)
     }
 }
 

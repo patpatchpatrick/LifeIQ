@@ -54,6 +54,8 @@ final class SQDashboardController: SQDashboardInterface {
     var healthKitAccessCtaViewModel: SQCallToActionViewModel?
     var runtimeControlCtaViewModel: SQCallToActionViewModel?
     var lifeScoreViewModel: SQLifeScoreViewModel?
+    let emailVerificationController: SQEmailVerificationController
+    private(set) var emailVerificationRequirement: SQEmailVerificationRequirement?
     
     
     @MainActor
@@ -102,6 +104,11 @@ final class SQDashboardController: SQDashboardInterface {
         self.insightsService = insightsService ?? SQInsightsService()
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         self.remoteConfigManager = remoteConfigManager
+        self.emailVerificationController = .init(
+            hub: state.hub,
+            userState: userState
+        )
+        self.emailVerificationRequirement = userState.emailVerificationRequirement
         
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -168,6 +175,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         hub.userEvents.sink { [weak self] event in
             guard let self else { return }
+            self.refreshEmailVerificationRequirement()
             switch event {
             case .loginStateChanged:
                 self.refreshRuntimeControlCtaViewModel()
@@ -180,6 +188,8 @@ final class SQDashboardController: SQDashboardInterface {
                         )
                     }
                 }
+            case .emailVerificationStateChanged:
+                break
             case .profileUpdated:
                 self.refreshRuntimeControlCtaViewModel()
                 guard !self.isLoadUIInProgress else {
@@ -221,9 +231,14 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func refreshFromGlobalContext() {
+        refreshEmailVerificationRequirement()
         refreshRuntimeControlCtaViewModel()
         guard let modelContext = SQAppState.shared.modelContext else { return }
         Task { await self.refreshUI(for: modelContext) }
+    }
+
+    private func refreshEmailVerificationRequirement() {
+        emailVerificationRequirement = userState.emailVerificationRequirement
     }
 
     var shouldAutoRefreshOnForeground: Bool {

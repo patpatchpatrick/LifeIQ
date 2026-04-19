@@ -96,7 +96,7 @@ protocol WorkoutSummaryStating: AnyObject {
         hub.userEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .loginStateChanged, .profileUpdated:
+            case .loginStateChanged, .emailVerificationStateChanged, .profileUpdated:
                 updateUserContext()
             }
         }.store(in: &cancellables)
