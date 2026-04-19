@@ -34,6 +34,9 @@ final class SQUserDefaults {
     /// Users whose existing recent workouts have already been baselined for the review sheet.
     private static let keyWorkoutReviewBaselineUserIds = "workouts.review-baseline.user-ids"
 
+    /// Map: userId -> resend-attempt epoch seconds for email verification resends.
+    private static let keyEmailVerificationResendHistory = "auth.email-verification.resend-history"
+
 
     // MARK: - Private helpers (Workouts)
 
@@ -84,6 +87,15 @@ final class SQUserDefaults {
     private var workoutReviewBaselineUserIdsValue: Set<String> {
         get { Set(UserDefaults.standard.stringArray(forKey: Self.keyWorkoutReviewBaselineUserIds) ?? []) }
         set { UserDefaults.standard.set(Array(newValue), forKey: Self.keyWorkoutReviewBaselineUserIds) }
+    }
+
+    private var emailVerificationResendHistoryValue: [String: [Double]] {
+        get {
+            (UserDefaults.standard.dictionary(forKey: Self.keyEmailVerificationResendHistory) as? [String: [Double]]) ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.keyEmailVerificationResendHistory)
+        }
     }
 
     // MARK: - Public API (Workouts)
@@ -191,6 +203,7 @@ final class SQUserDefaults {
         clearDashboardLayoutPreferences()
         clearPendingOnboarding(for: userId)
         clearWorkoutReviewBaseline(for: userId)
+        clearEmailVerificationResendHistory(for: userId)
         setPreferredUnitSystem(nil)
     }
 
@@ -216,5 +229,32 @@ final class SQUserDefaults {
 
     func setPreferredUnitSystem(_ unitSystem: SQUnitSystem?) {
         preferredUnitSystemValue = unitSystem
+    }
+
+    // MARK: - Public API (Email Verification Resend Throttle)
+
+    func emailVerificationResendAttemptDates(for userId: String) -> [Date] {
+        let timestamps = emailVerificationResendHistoryValue[userId] ?? []
+        return timestamps.map { Date(timeIntervalSince1970: $0) }.sorted()
+    }
+
+    func setEmailVerificationResendAttemptDates(_ dates: [Date], for userId: String) {
+        var history = emailVerificationResendHistoryValue
+        if dates.isEmpty {
+            history.removeValue(forKey: userId)
+        } else {
+            history[userId] = dates.sorted().map(\.timeIntervalSince1970)
+        }
+        emailVerificationResendHistoryValue = history
+    }
+
+    func appendEmailVerificationResendAttempt(for userId: String, at date: Date = .now) {
+        var dates = emailVerificationResendAttemptDates(for: userId)
+        dates.append(date)
+        setEmailVerificationResendAttemptDates(dates, for: userId)
+    }
+
+    func clearEmailVerificationResendHistory(for userId: String) {
+        setEmailVerificationResendAttemptDates([], for: userId)
     }
 }

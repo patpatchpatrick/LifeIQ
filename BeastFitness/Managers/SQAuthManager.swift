@@ -280,6 +280,15 @@ struct SQAuthError: SQUserFacingError {
     }
 
     static func from(_ error: Error) -> SQAuthError {
+        let nsError = error as NSError
+        let localizedDescription = nsError.localizedDescription.lowercased()
+
+        if localizedDescription.contains("blocked all requests from this device due to unusual activity") {
+            return .init(
+                description: "Email verification is temporarily blocked on this device because too many requests were sent. Please try again later or email \(SQError.supportEmail) if you need help."
+            )
+        }
+
         let code = AuthErrorCode(_bridgedNSError: error as NSError)
         switch code?.code {
         case .emailAlreadyInUse:
@@ -295,7 +304,7 @@ struct SQAuthError: SQUserFacingError {
         case .networkError:
             return .init(description: "Please check your connection and try again.")
         case .tooManyRequests:
-            return .init(description: "Too many attempts. Please try again later.")
+            return .init(description: "Too many attempts. Please try again later or email \(SQError.supportEmail) if the issue continues.")
         case .requiresRecentLogin:
             return .init(description: "For security, log in again and retry.")
         default:

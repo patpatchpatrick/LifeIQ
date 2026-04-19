@@ -57,10 +57,18 @@ struct SQEmailVerificationGateView: View {
                     SQButton(
                         style: .secondary,
                         shouldHugContent: false,
-                        title: "Resend Verification Email",
+                        title: controller.resendButtonTitle,
+                        isDisabled: controller.isResendDisabled,
                         isLoading: controller.isResendingEmail
                     ) {
                         controller.resendEmailTapped()
+                    }
+
+                    if let resendHelperText = controller.resendHelperText {
+                        Text(resendHelperText)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                            .multilineTextAlignment(.center)
                     }
 
                     Button(action: controller.logOutTapped) {
