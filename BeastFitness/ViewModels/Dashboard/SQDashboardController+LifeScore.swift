@@ -95,11 +95,116 @@ extension SQDashboardController {
             subtitle: subtitle,
             components: components.sorted { $0.weight > $1.weight },
             primaryInsight: primaryInsight,
-            drivers: Array(insightDrivers.prefix(3)),
+            drivers: alignedHeroDrivers(
+                primaryInsight: primaryInsight,
+                drivers: insightDrivers
+            ),
             changes: Array(insightChanges.prefix(2)),
             actions: Array(insightActions.prefix(1)),
             availableWeight: totalWeight
         )
+    }
+
+    private func alignedHeroDrivers(
+        primaryInsight: SQInsight?,
+        drivers: [SQInsightDriver]
+    ) -> [SQInsightDriver] {
+        guard let primaryInsight else { return Array(drivers.prefix(3)) }
+
+        let normalizedInsightText = normalizedHeroMatchText(
+            [
+                primaryInsight.title,
+                primaryInsight.summary,
+                primaryInsight.driverText,
+                primaryInsight.outcomeText
+            ]
+            .joined(separator: " ")
+        )
+
+        let exactMatches = drivers.filter { driver in
+            let driverTitle = normalizedHeroMatchText(driver.title)
+            return normalizedInsightText.contains(driverTitle)
+        }
+
+        let categoryMatches = drivers.filter { driver in
+            driver.category == primaryInsight.category && !exactMatches.contains(driver)
+        }
+
+        let remainingDrivers = drivers.filter { driver in
+            !exactMatches.contains(driver) && !categoryMatches.contains(driver)
+        }
+
+        var alignedDrivers = exactMatches + categoryMatches + remainingDrivers
+
+        if exactMatches.isEmpty,
+           let synthesizedDriver = synthesizedHeroDriver(from: primaryInsight),
+           !alignedDrivers.contains(where: { normalizedHeroMatchText($0.title) == normalizedHeroMatchText(synthesizedDriver.title) }) {
+            alignedDrivers.insert(synthesizedDriver, at: 0)
+        }
+
+        return Array(alignedDrivers.prefix(3))
+    }
+
+    private func synthesizedHeroDriver(from primaryInsight: SQInsight) -> SQInsightDriver? {
+        let normalizedText = normalizedHeroMatchText(
+            [
+                primaryInsight.title,
+                primaryInsight.summary,
+                primaryInsight.driverText,
+                primaryInsight.outcomeText
+            ]
+            .joined(separator: " ")
+        )
+
+        let synthesizedTitle: String
+        let signalId: String
+
+        if normalizedText.contains("sleep") {
+            synthesizedTitle = "Sleep"
+            signalId = SQMetricId.sleepQuality
+        } else if normalizedText.contains("energy") {
+            synthesizedTitle = "Energy"
+            signalId = SQMetricId.energy
+        } else if normalizedText.contains("mood") {
+            synthesizedTitle = "Mood"
+            signalId = SQMetricId.mood
+        } else if normalizedText.contains("recovery") {
+            synthesizedTitle = "Recovery"
+            signalId = "hero.recovery"
+        } else if normalizedText.contains("strain") {
+            synthesizedTitle = "Strain"
+            signalId = "hero.strain"
+        } else if normalizedText.contains("performance") {
+            synthesizedTitle = "Performance"
+            signalId = SQInsightAnalysisMetricId.workoutPerformance
+        } else {
+            return nil
+        }
+
+        return .init(
+            id: "hero-synth-\(signalId)",
+            signalId: signalId,
+            title: synthesizedTitle,
+            summary: primaryInsight.summary,
+            category: primaryInsight.category,
+            direction: primaryInsight.effect == .negative ? .drag : .supportive,
+            recentAverage: 0,
+            baselineAverage: 0,
+            deltaText: primaryInsight.deltaText,
+            effectMagnitude: 0,
+            rankingScore: primaryInsight.rankingScore
+        )
+    }
+
+    private func normalizedHeroMatchText(_ text: String) -> String {
+        text.lowercased()
+            .replacingOccurrences(of: "sleep quality", with: "sleep")
+            .replacingOccurrences(of: "sleep hours", with: "sleep")
+            .replacingOccurrences(of: "running performance", with: "performance")
+            .replacingOccurrences(of: "cycling performance", with: "performance")
+            .replacingOccurrences(of: "walking performance", with: "performance")
+            .replacingOccurrences(of: "pickleball performance", with: "performance")
+            .replacingOccurrences(of: "workout performance", with: "performance")
     }
 
     private func estimatedPreviousDayLifeScore(
