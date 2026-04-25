@@ -199,7 +199,7 @@ private struct SQLifeScoreHeroCard: View {
     let onOpenDetail: (() -> Void)?
 
     private var driverColumns: [GridItem] {
-        [.init(.adaptive(minimum: 88), spacing: .SQSpace.xs, alignment: .center)]
+        [.init(.adaptive(minimum: 84), spacing: 4, alignment: .center)]
     }
 
     private var shouldShowTodayBriefing: Bool {
@@ -236,6 +236,13 @@ private struct SQLifeScoreHeroCard: View {
         return cleaned
     }
 
+    private func humanizedHeroText(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "Sleep Quality", with: "Sleep")
+            .replacingOccurrences(of: "Sleep Hours", with: "Sleep")
+            .replacingOccurrences(of: "Workout Performance", with: "Performance")
+    }
+
     var body: some View {
         VStack(spacing: .SQSpace.m) {
             VStack(spacing: .SQSpace.s) {
@@ -270,8 +277,11 @@ private struct SQLifeScoreHeroCard: View {
                                 .padding(.top, .SQSpace.xs)
                         }
 
-                        heroBriefing(summary: primaryInsight.title, action: compactActionText)
-                            .padding(.top, .SQSpace.s)
+                        heroBriefing(
+                            summary: humanizedHeroText(primaryInsight.title),
+                            action: compactActionText
+                        )
+                        .padding(.top, .SQSpace.m)
                     }
                     .padding(.top, .SQSpace.s)
                 }
@@ -321,7 +331,7 @@ private struct SQLifeScoreRecentChangesCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             HStack(spacing: .SQSpace.s) {
-                Text("Recently (last 2 days)")
+                Text("Recently (2 days)")
                     .sqFont(.headerSmall)
                     .sqForegroundColor(.textSecondary)
 
@@ -349,7 +359,14 @@ private struct SQLifeScoreRecentChangesCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.l)
-        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(SQColor.glassStroke.color.opacity(0.65), lineWidth: 1)
+                }
+        }
     }
 }
 
@@ -368,8 +385,8 @@ private struct HeroDriverChip: View {
         Text("\(symbolText) \(driver.title)")
             .sqFont(.bodyExtraSmall)
             .sqForegroundColor(.textPrimary)
-            .padding(.vertical, 6)
-            .padding(.horizontal, .SQSpace.s)
+            .padding(.vertical, 5)
+            .padding(.horizontal, 6)
             .background {
                 Capsule(style: .continuous)
                     .fill(color.color.opacity(SQColor.isDarkMode ? 0.16 : 0.10))

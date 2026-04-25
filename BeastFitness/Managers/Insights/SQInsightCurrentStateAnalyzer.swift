@@ -218,19 +218,28 @@ struct SQInsightCurrentStateAnalyzer {
         relationship: SQInsightRelationshipDefinition
     ) -> String {
         let usesSecondarySignal = relationship.outputSignalId != relationship.inputSignalId
+        let inputTitle = displayTitle(for: relationship.inputTitle)
+        let outputTitle = displayTitle(for: relationship.outputTitle)
 
         switch relationship.insightClass {
         case .opportunity:
             return usesSecondarySignal
-                ? "\(relationship.inputTitle) and \(relationship.outputTitle) are lining up today"
-                : "\(relationship.inputTitle) is supporting today"
+                ? "\(inputTitle) and \(outputTitle) are lining up today"
+                : "\(inputTitle) is helping today"
         case .risk:
             return usesSecondarySignal
-                ? "\(relationship.inputTitle) and \(relationship.outputTitle) are both under pressure today"
-                : "\(relationship.inputTitle) is putting pressure on today"
+                ? "\(inputTitle) and \(outputTitle) are both under pressure today"
+                : "\(inputTitle) is under pressure today"
         default:
-            return "\(relationship.inputTitle) stands out today"
+            return "\(inputTitle) stands out today"
         }
+    }
+
+    private func displayTitle(for rawTitle: String) -> String {
+        rawTitle
+            .replacingOccurrences(of: "Sleep Quality", with: "Sleep")
+            .replacingOccurrences(of: "Sleep Hours", with: "Sleep")
+            .replacingOccurrences(of: "Workout Performance", with: "Performance")
     }
 
     private func currentStateSummary(
