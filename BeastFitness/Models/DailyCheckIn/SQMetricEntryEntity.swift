@@ -145,6 +145,14 @@ extension SQMetricEntryEntity {
         return try context.fetch(descriptor).map { $0.toEntry() }
     }
 
+    static func getAll(userId: String, context: ModelContext) throws -> [SQMetricEntry] {
+        let descriptor = FetchDescriptor<SQMetricEntryEntity>(
+            predicate: #Predicate { $0.userId == userId },
+            sortBy: [SortDescriptor(\.recordedAt, order: .forward)]
+        )
+        return try context.fetch(descriptor).map { $0.toEntry() }
+    }
+
     static func getAll(from startDate: Date, to endDate: Date, userId: String, context: ModelContext) throws -> [SQMetricEntry] {
         let startKey = startDate.anchorDayKey()
         let endKey = endDate.anchorDayKey()

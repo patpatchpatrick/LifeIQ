@@ -93,6 +93,14 @@ extension SQDailyCheckInSessionEntity {
         return try context.fetch(descriptor).first != nil
     }
 
+    static func getAll(userId: String, context: ModelContext) throws -> [SQDailyCheckInSessionEntity] {
+        let descriptor = FetchDescriptor<SQDailyCheckInSessionEntity>(
+            predicate: #Predicate { $0.userId == userId },
+            sortBy: [SortDescriptor(\.date, order: .forward)]
+        )
+        return try context.fetch(descriptor)
+    }
+
     static func replaceCompletedPeriods(
         userId: String,
         anchorDayKey: String,

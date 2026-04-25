@@ -18,6 +18,7 @@ final class SQModalState {
     enum ModalContent {
         case datePicker(
             dateEntries: [SQDatePickerModal.DateEntry],
+            completionMap: [String: Set<SQMetricPeriod>],
             selectedDate: Date?,
             selectedPeriod: SQMetricPeriod?,
             onDateSelected: (Date, SQMetricPeriod) -> Void
@@ -40,9 +41,10 @@ final class SQModalState {
             guard let self else { return }
 
             switch event {
-            case .presentDatePicker(let dateEntries, let selectedDate, let selectedPeriod, let onDateSelected):
+            case .presentDatePicker(let dateEntries, let completionMap, let selectedDate, let selectedPeriod, let onDateSelected):
                 currentModal = .datePicker(
                     dateEntries: dateEntries,
+                    completionMap: completionMap,
                     selectedDate: selectedDate,
                     selectedPeriod: selectedPeriod,
                     onDateSelected: onDateSelected

@@ -711,11 +711,11 @@ final class SQDailyCheckInViewModel: Identifiable {
 
     func showDatePicker(modelContext: ModelContext) {
         Task {
-            // Load date entries with completion status (one row per day×period combo)
-            let dateEntries = await loadDateEntries(modelContext: modelContext)
+            let (dateEntries, completionMap) = await loadDatePickerData(modelContext: modelContext)
 
             eventHub.modalEvents.send(.presentDatePicker(
                 dateEntries: dateEntries,
+                completionMap: completionMap,
                 selectedDate: self.targetDate,
                 selectedPeriod: self.period,
                 onDateSelected: { [weak self] selectedDate, selectedPeriod in
@@ -729,45 +729,41 @@ final class SQDailyCheckInViewModel: Identifiable {
         }
     }
 
-    private func loadDateEntries(modelContext: ModelContext) async -> [SQDatePickerModal.DateEntry] {
+    private func loadDatePickerData(modelContext: ModelContext) async -> ([SQDatePickerModal.DateEntry], [String: Set<SQMetricPeriod>]) {
         let calendar = Calendar.current
-        var entries: [SQDatePickerModal.DateEntry] = []
+        var recentEntries: [SQDatePickerModal.DateEntry] = []
 
         let today = Date()
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = .current
-        dateFormatter.dateFormat = "EEEE, MMMM d, yyyy"
+        let completionMap = (try? await metricEntryManager.getCompletedCheckInPeriods(context: modelContext)) ?? [:]
 
         // Build entries for today + past 30 days.
         for i in 0...30 {
             guard let dayDate = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
             let normalizedDate = calendar.startOfDay(for: dayDate)
             let isToday = i == 0
-            let dateString = dateFormatter.string(from: normalizedDate)
+            let dateString = normalizedDate.formattedString(with: .long)
+            let completedPeriods = completionMap[normalizedDate.anchorDayKey()] ?? []
 
             for entryPeriod in [SQMetricPeriod.evening, .morning] {
-                let isCompleted = (try? await metricEntryManager.hasCompletedCheckIn(
-                    for: normalizedDate,
-                    period: entryPeriod,
-                    context: modelContext
-                )) ?? false
-                entries.append(SQDatePickerModal.DateEntry(
+                recentEntries.append(SQDatePickerModal.DateEntry(
                     date: normalizedDate,
                     displayText: "\(dateString) — \(entryPeriod.rawValue.capitalized)",
                     period: entryPeriod,
                     isToday: isToday,
-                    isCompleted: isCompleted
+                    isCompleted: completedPeriods.contains(entryPeriod)
                 ))
             }
         }
 
-        return entries.sorted {
+        let sortedEntries = recentEntries.sorted {
             if !Calendar.current.isDate($0.date, inSameDayAs: $1.date) {
                 return $0.date > $1.date
             }
 
             return periodSortOrder($0.period) > periodSortOrder($1.period)
         }
+
+        return (sortedEntries, completionMap)
     }
 
     private func periodSortOrder(_ period: SQMetricPeriod) -> Int {

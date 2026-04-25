@@ -32,6 +32,7 @@ protocol SQMetricEntryManaging: AnyObject {
 
     /// Builds per-day dashboard stats from the canonical metric entry store for a date range.
     func getDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) async throws -> [SQDailyCheckInStats]
+    func getCompletedCheckInPeriods(context: ModelContext) async throws -> [String: Set<SQMetricPeriod>]
 }
 
 // MARK: - Implementation
@@ -340,6 +341,26 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             period: nil,
             context: context
         )
+    }
+
+    func getCompletedCheckInPeriods(context: ModelContext) async throws -> [String: Set<SQMetricPeriod>] {
+        let userId = localUserId()
+        let sessions = try SQDailyCheckInSessionEntity.getAll(userId: userId, context: context)
+        let entries = try SQMetricEntryEntity.getAll(userId: userId, context: context)
+
+        var periodsByDay = [String: Set<SQMetricPeriod>]()
+
+        for session in sessions {
+            guard session.period != .unknown else { continue }
+            periodsByDay[session.anchorDayKey, default: []].insert(session.period)
+        }
+
+        for entry in entries {
+            guard entry.period != .unknown else { continue }
+            periodsByDay[entry.anchorDayKey, default: []].insert(entry.period)
+        }
+
+        return periodsByDay
     }
 
     private func localDailyCheckInStats(from startDate: Date, to endDate: Date, context: ModelContext) throws -> [SQDailyCheckInStats] {

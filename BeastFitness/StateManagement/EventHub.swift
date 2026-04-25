@@ -46,6 +46,7 @@ enum UserEvent {
 enum ModalEvent {
     case presentDatePicker(
         dateEntries: [SQDatePickerModal.DateEntry],
+        completionMap: [String: Set<SQMetricPeriod>],
         selectedDate: Date?,
         selectedPeriod: SQMetricPeriod?,
         onDateSelected: (Date, SQMetricPeriod) -> Void
