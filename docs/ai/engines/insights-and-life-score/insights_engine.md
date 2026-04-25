@@ -47,6 +47,8 @@ Current code entry points:
 - relationship analysis now lives in [SQInsightRelationshipAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipAnalyzer.swift)
 - recent trend analysis now lives in [SQInsightTrendAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightTrendAnalyzer.swift)
 - baseline deviation analysis now lives in [SQInsightBaselineAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightBaselineAnalyzer.swift)
+- follow-up analysis now lives in [SQInsightFollowUpAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightFollowUpAnalyzer.swift)
+- current-state risk/opportunity analysis now lives in [SQInsightCurrentStateAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightCurrentStateAnalyzer.swift)
 - engine orchestration now lives in [SQInsightAnalysisEngine.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightAnalysisEngine.swift)
 - range-aware ranking policy now lives in [SQInsightSurfacingPolicy.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightSurfacingPolicy.swift)
 
@@ -63,6 +65,8 @@ The current runtime system now follows this mapping:
 - `SQInsightRelationshipAnalyzer` -> reusable analyzer for relationship / bucket-comparison insights
 - `SQInsightTrendAnalyzer` -> reusable analyzer for recent trend insights
 - `SQInsightBaselineAnalyzer` -> reusable analyzer for baseline-change insights
+- `SQInsightFollowUpAnalyzer` -> reusable analyzer for recent follow-up / experiment-outcome insights
+- `SQInsightCurrentStateAnalyzer` -> reusable analyzer for `Today` risk/opportunity insights
 - `SQInsightAnalysisEngine` -> candidate generation and result orchestration
 - `SQInsightSurfacingPolicy` -> range-aware surfacing policy
 

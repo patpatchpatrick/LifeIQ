@@ -124,3 +124,5 @@ The runtime now uses that registry for more than one analyzer family:
 - relationship / bucket comparison
 - recent trend
 - baseline deviation
+- follow-up / experiment outcome
+- current-state risk / opportunity

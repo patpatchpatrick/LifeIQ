@@ -24,17 +24,23 @@ struct SQInsightAnalysisEngine: SQInsightAnalyzing {
     private let relationshipAnalyzer: SQInsightRelationshipAnalyzer
     private let trendAnalyzer: SQInsightTrendAnalyzer
     private let baselineAnalyzer: SQInsightBaselineAnalyzer
+    private let followUpAnalyzer: SQInsightFollowUpAnalyzer
+    private let currentStateAnalyzer: SQInsightCurrentStateAnalyzer
     private let surfacingPolicy: SQInsightSurfacingPolicy
 
     init(
         relationshipAnalyzer: SQInsightRelationshipAnalyzer = .init(),
         trendAnalyzer: SQInsightTrendAnalyzer = .init(),
         baselineAnalyzer: SQInsightBaselineAnalyzer = .init(),
+        followUpAnalyzer: SQInsightFollowUpAnalyzer = .init(),
+        currentStateAnalyzer: SQInsightCurrentStateAnalyzer = .init(),
         surfacingPolicy: SQInsightSurfacingPolicy = .init()
     ) {
         self.relationshipAnalyzer = relationshipAnalyzer
         self.trendAnalyzer = trendAnalyzer
         self.baselineAnalyzer = baselineAnalyzer
+        self.followUpAnalyzer = followUpAnalyzer
+        self.currentStateAnalyzer = currentStateAnalyzer
         self.surfacingPolicy = surfacingPolicy
     }
 
@@ -66,6 +72,22 @@ struct SQInsightAnalysisEngine: SQInsightAnalyzing {
                     )
                 case .baselineDeviation:
                     baselineAnalyzer.analyze(
+                        snapshots: snapshots,
+                        relationship: relationship,
+                        variant: variant,
+                        surfaceIntent: surfaceIntent,
+                        surfacingPolicy: surfacingPolicy
+                    )
+                case .followUpOutcome:
+                    followUpAnalyzer.analyze(
+                        snapshots: snapshots,
+                        relationship: relationship,
+                        variant: variant,
+                        surfaceIntent: surfaceIntent,
+                        surfacingPolicy: surfacingPolicy
+                    )
+                case .currentStateAssessment:
+                    currentStateAnalyzer.analyze(
                         snapshots: snapshots,
                         relationship: relationship,
                         variant: variant,

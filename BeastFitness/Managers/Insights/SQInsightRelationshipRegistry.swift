@@ -317,6 +317,108 @@ struct SQInsightRelationshipRegistry {
             expectedEffect: .positive,
             strongActionText: "Mood is below your usual baseline. Keep routines steadier for a few days and watch whether it lifts."
         ),
+        currentStateRelationship(
+            id: "insight.today.sleep-hours.opportunity",
+            inputSignalId: SQMetricId.sleepHours,
+            inputTitle: "Sleep Hours",
+            insightClass: .opportunity,
+            category: .sleep,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Sleep is supporting today",
+            outcomeText: "Recovery Tailwind",
+            strongActionText: "Sleep is lining up well today. Use it, but keep the rest of the day recovery-friendly enough to hold onto the advantage."
+        ),
+        currentStateRelationship(
+            id: "insight.today.sleep-hours.risk",
+            inputSignalId: SQMetricId.sleepHours,
+            inputTitle: "Sleep Hours",
+            insightClass: .risk,
+            category: .sleep,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Sleep is dragging today",
+            outcomeText: "Recovery Drag",
+            strongActionText: "Sleep is below your usual range. Protect recovery today and avoid stacking extra strain if you can."
+        ),
+        currentStateRelationship(
+            id: "insight.today.sleep-quality.opportunity",
+            inputSignalId: SQMetricId.sleepQuality,
+            inputTitle: "Sleep Quality",
+            insightClass: .opportunity,
+            category: .sleep,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Sleep quality is helping today",
+            outcomeText: "Recovery Tailwind",
+            strongActionText: "Sleep quality looks better than usual. This is a good day to take advantage of that recovery if the rest of the signals cooperate."
+        ),
+        currentStateRelationship(
+            id: "insight.today.sleep-quality.risk",
+            inputSignalId: SQMetricId.sleepQuality,
+            inputTitle: "Sleep Quality",
+            insightClass: .risk,
+            category: .sleep,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Sleep quality is hurting today",
+            outcomeText: "Recovery Drag",
+            strongActionText: "Sleep quality is below your usual range. Keep the day steadier and set up tonight to recover better."
+        ),
+        currentStateRelationship(
+            id: "insight.today.energy.opportunity",
+            inputSignalId: SQMetricId.energy,
+            inputTitle: "Energy",
+            insightClass: .opportunity,
+            category: .recovery,
+            recommendationFamily: .moderateStrain,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Energy is available today",
+            outcomeText: "Good Window",
+            strongActionText: "Energy is stronger than usual today. If the rest of your signals line up, this could be a good window to use it well."
+        ),
+        currentStateRelationship(
+            id: "insight.today.energy.risk",
+            inputSignalId: SQMetricId.energy,
+            inputTitle: "Energy",
+            insightClass: .risk,
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 0.75,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .positive,
+            driverText: "Energy is under pressure today",
+            outcomeText: "Low Reserve",
+            strongActionText: "Energy is below your usual range today. Protect the basics and avoid making the day harder than it needs to be."
+        ),
         signalBaselineChange(
             id: "insight.baseline.workout-performance",
             inputSignalId: SQInsightAnalysisMetricId.workoutPerformance,
@@ -331,6 +433,58 @@ struct SQInsightRelationshipRegistry {
             baselineWindowDayCount: 8,
             expectedEffect: .positive,
             strongActionText: "Workout performance is below your usual baseline. Protect recovery and watch whether the next few sessions rebound."
+        ),
+        followUpRelationship(
+            id: "insight.followup.alcohol-energy",
+            inputSignalId: SQMetricId.alcohol,
+            inputTitle: "Alcohol",
+            outputSignalId: SQMetricId.energy,
+            outputTitle: "Energy",
+            category: .recovery,
+            bucketUnitName: "days",
+            expectedEffect: .negative
+        ),
+        followUpRelationship(
+            id: "insight.followup.alcohol-mood",
+            inputSignalId: SQMetricId.alcohol,
+            inputTitle: "Alcohol",
+            outputSignalId: SQMetricId.mood,
+            outputTitle: "Mood",
+            category: .habits,
+            bucketUnitName: "days",
+            expectedEffect: .negative
+        ),
+        followUpRelationship(
+            id: "insight.followup.caffeine-sleep",
+            inputSignalId: SQMetricId.caffeine,
+            inputTitle: "Caffeine",
+            outputSignalId: SQMetricId.sleepQuality,
+            outputTitle: "Sleep Quality",
+            category: .sleep,
+            bucketUnitName: "days",
+            expectedEffect: .negative
+        ),
+        followUpRelationship(
+            id: "insight.followup.sleep-hours-energy",
+            inputSignalId: SQMetricId.sleepHours,
+            inputTitle: "Sleep Hours",
+            outputSignalId: SQMetricId.energy,
+            outputTitle: "Energy",
+            category: .recovery,
+            bucketUnitName: "days",
+            expectedEffect: .positive
+        ),
+        followUpRelationship(
+            id: "insight.followup.sleep-quality-performance",
+            inputSignalId: SQMetricId.sleepQuality,
+            inputTitle: "Sleep Quality",
+            outputSignalId: SQInsightAnalysisMetricId.workoutPerformance,
+            outputTitle: "Workout Performance",
+            category: .training,
+            bucketUnitName: "workout days",
+            minimumBucketSampleCount: 2,
+            minimumEffectMagnitude: 0.4,
+            expectedEffect: .positive
         ),
         workoutPerformanceRelationship(
             id: "insight.sleep-quality.workout-performance",
@@ -595,6 +749,95 @@ struct SQInsightRelationshipRegistry {
             outcomeText: "Baseline Shift",
             strongActionText: strongActionText,
             subtleActionText: "Use this baseline shift as a check-in point and see if it persists."
+        )
+    }
+
+    private static func followUpRelationship(
+        id: String,
+        inputSignalId: String,
+        inputTitle: String,
+        outputSignalId: String,
+        outputTitle: String,
+        category: SQInsightCategory,
+        bucketUnitName: String,
+        minimumBucketSampleCount: Int = 3,
+        minimumEffectMagnitude: Double = 0.75,
+        recentWindowDayCount: Int = 3,
+        comparisonWindowDayCount: Int = 3,
+        expectedEffect: SQInsightEffect
+    ) -> SQInsightRelationshipDefinition {
+        .init(
+            familyKey: "followup.\(inputSignalId)->\(outputSignalId)",
+            inputSignalId: inputSignalId,
+            inputTitle: inputTitle,
+            outputSignalId: outputSignalId,
+            outputTitle: outputTitle,
+            insightClass: .followUp,
+            analyzerFamily: .followUpOutcome,
+            category: category,
+            recommendationFamily: .observeAndCompare,
+            eligibleSurfaceIntents: [.today, .pastWeek],
+            variants: [
+                .init(id: id, priority: 0, timing: .sameDay)
+            ],
+            lowBucketUpperBound: 0,
+            highBucketLowerBound: 0,
+            bucketUnitName: bucketUnitName,
+            minimumBucketSampleCount: minimumBucketSampleCount,
+            minimumEffectMagnitude: minimumEffectMagnitude,
+            recentWindowDayCount: recentWindowDayCount,
+            comparisonWindowDayCount: comparisonWindowDayCount,
+            expectedEffect: expectedEffect,
+            driverText: inputTitle,
+            outcomeText: outputTitle,
+            strongActionText: "The recent shift looks promising. Keep going and compare how the next few \(bucketUnitName) feel.",
+            subtleActionText: "Keep this change steady for a little longer and see whether the result persists."
+        )
+    }
+
+    private static func currentStateRelationship(
+        id: String,
+        inputSignalId: String,
+        inputTitle: String,
+        insightClass: SQInsightClass,
+        category: SQInsightCategory,
+        recommendationFamily: SQInsightRecommendationFamily,
+        bucketUnitName: String,
+        minimumBucketSampleCount: Int = 3,
+        minimumEffectMagnitude: Double = 0.75,
+        recentWindowDayCount: Int = 1,
+        baselineWindowDayCount: Int = 14,
+        expectedEffect: SQInsightEffect,
+        driverText: String,
+        outcomeText: String,
+        strongActionText: String
+    ) -> SQInsightRelationshipDefinition {
+        .init(
+            familyKey: "current.\(inputSignalId).\(insightClass.rawValue)",
+            inputSignalId: inputSignalId,
+            inputTitle: inputTitle,
+            outputSignalId: inputSignalId,
+            outputTitle: inputTitle,
+            insightClass: insightClass,
+            analyzerFamily: .currentStateAssessment,
+            category: category,
+            recommendationFamily: recommendationFamily,
+            eligibleSurfaceIntents: [.today],
+            variants: [
+                .init(id: id, priority: 0, timing: .sameDay)
+            ],
+            lowBucketUpperBound: 0,
+            highBucketLowerBound: 0,
+            bucketUnitName: bucketUnitName,
+            minimumBucketSampleCount: minimumBucketSampleCount,
+            minimumEffectMagnitude: minimumEffectMagnitude,
+            recentWindowDayCount: recentWindowDayCount,
+            baselineWindowDayCount: baselineWindowDayCount,
+            expectedEffect: expectedEffect,
+            driverText: driverText,
+            outcomeText: outcomeText,
+            strongActionText: strongActionText,
+            subtleActionText: "Use this as a current-state signal and see whether the rest of the day confirms it."
         )
     }
 }

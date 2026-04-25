@@ -22,6 +22,8 @@ enum SQInsightAnalyzerFamily: Hashable {
     case metricBucketComparison
     case recentTrend
     case baselineDeviation
+    case followUpOutcome
+    case currentStateAssessment
 }
 
 enum SQInsightRecommendationFamily: Hashable {
