@@ -59,7 +59,7 @@ enum SQSubscriptionLevel: String, Codable {
 
     /// Temporary app-wide default while subscription plans are not wired up yet.
     /// Change this to `.free` to quickly exercise locked premium UI states.
-    static let appDefault: SQSubscriptionLevel = .free
+    static let appDefault: SQSubscriptionLevel = .premium
 }
 
 struct SQUser: Codable, Equatable {

@@ -22,6 +22,7 @@ protocol SQInsightsServicing {
 final class SQInsightsService: SQInsightsServicing {
     private let featureBuilder: SQInsightFeatureBuilding
     private let driverBuilder: SQInsightDriverBuilding
+    private let changeBuilder: SQInsightChangeBuilding
     private let analysisEngine: SQInsightAnalyzing
     private let relationshipRegistry: SQInsightRelationshipRegistry
     private let minimumAnalyzedDayCount = 10
@@ -30,11 +31,13 @@ final class SQInsightsService: SQInsightsServicing {
     init(
         featureBuilder: SQInsightFeatureBuilding = SQInsightFeatureBuilder(),
         driverBuilder: SQInsightDriverBuilding = SQInsightDriverBuilder(),
+        changeBuilder: SQInsightChangeBuilding = SQInsightChangeBuilder(),
         analysisEngine: SQInsightAnalyzing = SQInsightAnalysisEngine(),
         relationshipRegistry: SQInsightRelationshipRegistry = .init()
     ) {
         self.featureBuilder = featureBuilder
         self.driverBuilder = driverBuilder
+        self.changeBuilder = changeBuilder
         self.analysisEngine = analysisEngine
         self.relationshipRegistry = relationshipRegistry
         self.relevantMetricIds = relationshipRegistry.relevantSignalIds
@@ -68,6 +71,13 @@ final class SQInsightsService: SQInsightsServicing {
         )
         let drivers = curatedDrivers(
             from: driverBuilder.buildDrivers(
+                from: snapshots,
+                surfaceIntent: timeRange.insightSurfaceIntent
+            ),
+            surfaceIntent: timeRange.insightSurfaceIntent
+        )
+        let changes = curatedChanges(
+            from: changeBuilder.buildChanges(
                 from: snapshots,
                 surfaceIntent: timeRange.insightSurfaceIntent
             ),
@@ -113,6 +123,14 @@ final class SQInsightsService: SQInsightsServicing {
                     context: .dashboard
                 )
             }
+
+            for change in changes {
+                SQLogger.shared.log(
+                    "Surfaced change [\(change.title)] direction=\(change.direction == .improved ? "improved" : "worsened") delta=\(change.deltaText) rank=\(String(format: "%.1f", change.rankingScore))",
+                    .debug,
+                    context: .dashboard
+                )
+            }
         }
 
         let effectiveAnalyzedDayCount = max(analyzedDayCount, relevantDayCount)
@@ -135,6 +153,7 @@ final class SQInsightsService: SQInsightsServicing {
             state: state,
             insights: insights,
             drivers: drivers,
+            changes: changes,
             readinessItems: readinessItems,
             analyzedDayCount: effectiveAnalyzedDayCount,
             requiredMinimumDayCount: minimumAnalyzedDayCount
@@ -310,6 +329,42 @@ final class SQInsightsService: SQInsightsServicing {
         for driver in drivers where !selected.contains(driver) {
             guard selected.count < maximumCount else { break }
             selected.append(driver)
+        }
+
+        return selected
+    }
+
+    private func curatedChanges(
+        from changes: [SQInsightChange],
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsightChange] {
+        let maximumCount: Int
+        switch surfaceIntent {
+        case .today:
+            maximumCount = 2
+        case .pastWeek:
+            maximumCount = 3
+        case .pastYear:
+            maximumCount = 3
+        }
+
+        var selected = [SQInsightChange]()
+        var usedDirections = Set<SQInsightChangeDirection>()
+
+        for change in changes {
+            if usedDirections.count < 2, !usedDirections.contains(change.direction) {
+                selected.append(change)
+                usedDirections.insert(change.direction)
+            }
+
+            if selected.count >= maximumCount {
+                return selected
+            }
+        }
+
+        for change in changes where !selected.contains(change) {
+            guard selected.count < maximumCount else { break }
+            selected.append(change)
         }
 
         return selected

@@ -43,9 +43,11 @@ Current code entry points:
 - active relationship definitions now live in [SQInsightRelationshipRegistry.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipRegistry.swift)
 - relationship and surface metadata now live in [SQInsightRelationshipDefinition.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightRelationshipDefinition.swift)
 - shared driver models now live in [SQInsightDriver.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightDriver.swift)
+- shared change models now live in [SQInsightChange.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightChange.swift)
 - shared feature snapshots now live in [SQInsightFeatureSnapshot.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightFeatureSnapshot.swift)
 - feature construction now lives in [SQInsightFeatureBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightFeatureBuilder.swift)
 - shared driver construction now lives in [SQInsightDriverBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightDriverBuilder.swift)
+- shared change construction now lives in [SQInsightChangeBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightChangeBuilder.swift)
 - relationship analysis now lives in [SQInsightRelationshipAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipAnalyzer.swift)
 - recent trend analysis now lives in [SQInsightTrendAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightTrendAnalyzer.swift)
 - baseline deviation analysis now lives in [SQInsightBaselineAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightBaselineAnalyzer.swift)
@@ -64,6 +66,7 @@ The current runtime system now follows this mapping:
 - `SQInsightFeatureSnapshot` -> shared day feature layer
 - `SQInsightFeatureBuilder` -> normalized feature construction
 - `SQInsightDriver` / `SQInsightDriverBuilder` -> shared “what is helping / what is dragging” layer for insights + future Life Score alignment
+- `SQInsightChange` / `SQInsightChangeBuilder` -> shared “what changed recently” layer for `Today` and future dashboard storytelling
 - `SQInsightRelationshipRegistry` -> active relationship source of truth
 - `SQInsightRelationshipAnalyzer` -> reusable analyzer for relationship / bucket-comparison insights
 - `SQInsightTrendAnalyzer` -> reusable analyzer for recent trend insights
@@ -83,6 +86,8 @@ The current-state analyzer is allowed to evaluate either:
 - `Past Year` is curated like a longer-term playbook
 
 `SQInsightsResult` also now carries a curated driver list alongside surfaced cards. That driver list is not a UI surface yet, but it is the intended shared bridge into future orb / Life Score explanation.
+
+`SQInsightsResult` also now carries curated `changes`, which are intended to back the lightweight `What Changed` surface in the eventual `Today` dashboard.
 
 That is now the implementation baseline going forward.
 

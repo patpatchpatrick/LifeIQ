@@ -301,6 +301,7 @@
 		F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */; };
 		F7E400302FFE200100AA4001 /* SQInsightRelationshipDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002F2FFE200100AA4001 /* SQInsightRelationshipDefinition.swift */; };
 		F7E400342FFE200100AA4001 /* SQInsightDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400332FFE200100AA4001 /* SQInsightDriver.swift */; };
+		F7E400442FFE200100AA4001 /* SQInsightChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400432FFE200100AA4001 /* SQInsightChange.swift */; };
 		F7E400322FFE200100AA4001 /* SQInsightRelationshipRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400312FFE200100AA4001 /* SQInsightRelationshipRegistry.swift */; };
 		F7E400362FFE200100AA4001 /* SQInsightFeatureSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400352FFE200100AA4001 /* SQInsightFeatureSnapshot.swift */; };
 		F7E400382FFE200100AA4001 /* SQInsightFeatureBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400372FFE200100AA4001 /* SQInsightFeatureBuilder.swift */; };
@@ -313,6 +314,7 @@
 		F8B100053000200300AB2001 /* SQInsightFollowUpAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100043000200300AB2001 /* SQInsightFollowUpAnalyzer.swift */; };
 		F8B100073000200400AB2001 /* SQInsightCurrentStateAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100063000200400AB2001 /* SQInsightCurrentStateAnalyzer.swift */; };
 		F8B100093000200500AB2001 /* SQInsightDriverBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100083000200500AB2001 /* SQInsightDriverBuilder.swift */; };
+		F8B1000B3000200600AB2001 /* SQInsightChangeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B1000A3000200600AB2001 /* SQInsightChangeBuilder.swift */; };
 		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 		F81A10052FFF200100AA1001 /* SQLaunchTutorialController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */; };
 		F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */; };
@@ -640,6 +642,7 @@
 		F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightInfoSheetView.swift; sourceTree = "<group>"; };
 		F7E4002F2FFE200100AA4001 /* SQInsightRelationshipDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightRelationshipDefinition.swift; sourceTree = "<group>"; };
 		F7E400332FFE200100AA4001 /* SQInsightDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightDriver.swift; sourceTree = "<group>"; };
+		F7E400432FFE200100AA4001 /* SQInsightChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightChange.swift; sourceTree = "<group>"; };
 		F7E400312FFE200100AA4001 /* SQInsightRelationshipRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightRelationshipRegistry.swift; sourceTree = "<group>"; };
 		F7E400352FFE200100AA4001 /* SQInsightFeatureSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightFeatureSnapshot.swift; sourceTree = "<group>"; };
 		F7E400372FFE200100AA4001 /* SQInsightFeatureBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightFeatureBuilder.swift; sourceTree = "<group>"; };
@@ -652,6 +655,7 @@
 		F8B100043000200300AB2001 /* SQInsightFollowUpAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightFollowUpAnalyzer.swift; sourceTree = "<group>"; };
 		F8B100063000200400AB2001 /* SQInsightCurrentStateAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightCurrentStateAnalyzer.swift; sourceTree = "<group>"; };
 		F8B100083000200500AB2001 /* SQInsightDriverBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightDriverBuilder.swift; sourceTree = "<group>"; };
+		F8B1000A3000200600AB2001 /* SQInsightChangeBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightChangeBuilder.swift; sourceTree = "<group>"; };
 		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 		F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialController.swift; sourceTree = "<group>"; };
 		F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialView.swift; sourceTree = "<group>"; };
@@ -1765,6 +1769,7 @@
 				F7E400132FFE200100AA4001 /* SQInsight.swift */,
 				F7E4002F2FFE200100AA4001 /* SQInsightRelationshipDefinition.swift */,
 				F7E400332FFE200100AA4001 /* SQInsightDriver.swift */,
+				F7E400432FFE200100AA4001 /* SQInsightChange.swift */,
 				F7E400352FFE200100AA4001 /* SQInsightFeatureSnapshot.swift */,
 			);
 			path = Insights;
@@ -1782,6 +1787,7 @@
 				F8B100043000200300AB2001 /* SQInsightFollowUpAnalyzer.swift */,
 				F8B100063000200400AB2001 /* SQInsightCurrentStateAnalyzer.swift */,
 				F8B100083000200500AB2001 /* SQInsightDriverBuilder.swift */,
+				F8B1000A3000200600AB2001 /* SQInsightChangeBuilder.swift */,
 				F7E4003D2FFE200100AA4001 /* SQInsightAnalysisEngine.swift */,
 				F7E4003F2FFE200100AA4001 /* SQInsightSurfacingPolicy.swift */,
 				F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */,
@@ -2341,6 +2347,7 @@
 				F7E400142FFE200100AA4001 /* SQInsight.swift in Sources */,
 				F7E400302FFE200100AA4001 /* SQInsightRelationshipDefinition.swift in Sources */,
 				F7E400342FFE200100AA4001 /* SQInsightDriver.swift in Sources */,
+				F7E400442FFE200100AA4001 /* SQInsightChange.swift in Sources */,
 				F7E400362FFE200100AA4001 /* SQInsightFeatureSnapshot.swift in Sources */,
 				F7E400382FFE200100AA4001 /* SQInsightFeatureBuilder.swift in Sources */,
 				F7E4003A2FFE200100AA4001 /* SQInsightScoring.swift in Sources */,
@@ -2351,6 +2358,7 @@
 				F8B100053000200300AB2001 /* SQInsightFollowUpAnalyzer.swift in Sources */,
 				F8B100073000200400AB2001 /* SQInsightCurrentStateAnalyzer.swift in Sources */,
 				F8B100093000200500AB2001 /* SQInsightDriverBuilder.swift in Sources */,
+				F8B1000B3000200600AB2001 /* SQInsightChangeBuilder.swift in Sources */,
 				F7E4003E2FFE200100AA4001 /* SQInsightAnalysisEngine.swift in Sources */,
 				F7E400402FFE200100AA4001 /* SQInsightSurfacingPolicy.swift in Sources */,
 				F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */,
