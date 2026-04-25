@@ -369,18 +369,6 @@ final class SQDashboardController: SQDashboardInterface {
             let heartAccessStatus = await heartAccessStatusTask
             let workoutsAccessStatus = await workoutsAccessStatusTask
 
-            SQLogger.shared.log(
-                """
-                [Health Debug] Dashboard access statuses:
-                timeRange=\(state.selectedTimeRange.rawValue)
-                sleep=\(String(describing: sleepAccessStatus))
-                heart=\(String(describing: heartAccessStatus))
-                workouts=\(String(describing: workoutsAccessStatus))
-                """,
-                .debug,
-                context: .dashboard
-            )
-
             let vo2MaxPast7Days: [SQVO2MaxSample]
             let vo2MaxPast30Days: [SQVO2MaxSample]
             let vo2MaxPastYear: [SQVO2MaxSample]
@@ -1320,20 +1308,6 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSchedule: sleepSchedule
         )
 
-        SQLogger.shared.log(
-            """
-            [Health Debug] Sleep dashboard initial window:
-            timeRange=\(timeRange.rawValue)
-            fetchStart=\(initialWindow.fetchStartDate.formattedString(with: .fullWithoutDayName))
-            fetchEnd=\(initialWindow.fetchEndDate.formattedString(with: .fullWithoutDayName))
-            currentWakeDays=\(initialWindow.currentWakeDays.map { $0.formattedString(with: .medium) }.joined(separator: ", "))
-            priorWakeDays=\(initialWindow.priorWakeDays.map { $0.formattedString(with: .medium) }.joined(separator: ", "))
-            sleepSchedule=\(sleepSchedule.map { "sleep=\($0.sleepTime.hour):\(String(format: "%02d", $0.sleepTime.minute)), wake=\($0.wakeTime.hour):\(String(format: "%02d", $0.wakeTime.minute))" } ?? "nil")
-            """,
-            .debug,
-            context: .dashboard
-        )
-
         var sleepSegments = try await healthKitManager.fetchSleepSegments(
             from: initialWindow.fetchStartDate,
             to: initialWindow.fetchEndDate
@@ -1345,35 +1319,8 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSchedule: sleepSchedule
         )
 
-        if resolvedWindow.currentWakeDays != initialWindow.currentWakeDays
-            || resolvedWindow.priorWakeDays != initialWindow.priorWakeDays {
-            SQLogger.shared.log(
-                """
-                [Health Debug] Sleep dashboard resolved window:
-                timeRange=\(timeRange.rawValue)
-                fetchStart=\(resolvedWindow.fetchStartDate.formattedString(with: .fullWithoutDayName))
-                fetchEnd=\(resolvedWindow.fetchEndDate.formattedString(with: .fullWithoutDayName))
-                currentWakeDays=\(resolvedWindow.currentWakeDays.map { $0.formattedString(with: .medium) }.joined(separator: ", "))
-                priorWakeDays=\(resolvedWindow.priorWakeDays.map { $0.formattedString(with: .medium) }.joined(separator: ", "))
-                """,
-                .debug,
-                context: .dashboard
-            )
-        }
-
         if resolvedWindow.fetchStartDate < initialWindow.fetchStartDate
             || resolvedWindow.fetchEndDate > initialWindow.fetchEndDate {
-            SQLogger.shared.log(
-                """
-                [Health Debug] Sleep dashboard refetching for resolved window:
-                timeRange=\(timeRange.rawValue)
-                fetchStart=\(resolvedWindow.fetchStartDate.formattedString(with: .fullWithoutDayName))
-                fetchEnd=\(resolvedWindow.fetchEndDate.formattedString(with: .fullWithoutDayName))
-                """,
-                .debug,
-                context: .dashboard
-            )
-
             sleepSegments = try await healthKitManager.fetchSleepSegments(
                 from: resolvedWindow.fetchStartDate,
                 to: resolvedWindow.fetchEndDate
@@ -1384,21 +1331,6 @@ final class SQDashboardController: SQDashboardInterface {
             segments: sleepSegments,
             window: resolvedWindow,
             sleepSchedule: sleepSchedule
-        )
-
-        SQLogger.shared.log(
-            """
-            [Health Debug] Sleep dashboard aggregation:
-            timeRange=\(timeRange.rawValue)
-            segmentCount=\(sleepSegments.count)
-            currentNightCount=\(dashboardData.currentNights.count)
-            priorNightCount=\(dashboardData.priorNights.count)
-            currentWakeDays=\(resolvedWindow.currentWakeDays.map { $0.formattedString(with: .medium) }.joined(separator: ", "))
-            latestNightStart=\(dashboardData.latestNight?.sleepStartDate.formattedString(with: .fullWithoutDayName) ?? "nil")
-            latestNightEnd=\(dashboardData.latestNight?.wakeDate.formattedString(with: .fullWithoutDayName) ?? "nil")
-            """,
-            .debug,
-            context: .dashboard
         )
 
         return dashboardData.currentNights.isEmpty ? nil : dashboardData
@@ -2417,11 +2349,6 @@ final class SQDashboardController: SQDashboardInterface {
             for: timeRange,
             includeHealthKitData: includeHeartRateData
         ) else {
-            SQLogger.shared.log(
-                "[Health Debug] Heart dashboard row unavailable for timeRange=\(timeRange.rawValue)",
-                .debug,
-                context: .dashboard
-            )
             return nil
         }
 
