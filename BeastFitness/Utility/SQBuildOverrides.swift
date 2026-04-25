@@ -15,13 +15,13 @@ enum SQBuildOverrides {
 
     /// Debug-only toggle for rendering canned health data without requiring
     /// a populated HealthKit store on the current simulator or device.
-    static var useMockDashboardHealthData = true
+    static var useMockDashboardHealthData = false
     static var useMockHealthData: Bool { useMockDashboardHealthData }
     static var verboseLoggingEnabled = false
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
-    static let useMockDashboardHealthData = true
-    static let useMockHealthData = true
+    static let useMockDashboardHealthData = false
+    static let useMockHealthData = false
     static let verboseLoggingEnabled = false
     #endif
 }
