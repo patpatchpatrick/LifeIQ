@@ -136,9 +136,13 @@ extension SQDashboardController {
 
         var alignedDrivers = exactMatches + categoryMatches + remainingDrivers
 
-        if exactMatches.isEmpty,
-           let synthesizedDriver = synthesizedHeroDriver(from: primaryInsight),
-           !alignedDrivers.contains(where: { normalizedHeroMatchText($0.title) == normalizedHeroMatchText(synthesizedDriver.title) }) {
+        if let synthesizedDriver = synthesizedHeroDriver(from: primaryInsight) {
+            let normalizedSynthesizedTitle = normalizedHeroMatchText(synthesizedDriver.title)
+
+            alignedDrivers.removeAll { driver in
+                normalizedHeroMatchText(driver.title) == normalizedSynthesizedTitle
+            }
+
             alignedDrivers.insert(synthesizedDriver, at: 0)
         }
 
