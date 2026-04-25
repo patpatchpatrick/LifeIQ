@@ -194,7 +194,7 @@
 		F6A848B22CBD8CCE00B09AD5 /* SQError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B12CBD8CCE00B09AD5 /* SQError.swift */; };
 		F7A417112FFD110100AA4101 /* SQAppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A417102FFD110100AA4101 /* SQAppLinks.swift */; };
 		F7A417152FFD310100AA4101 /* SQWebViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A417142FFD310100AA4101 /* SQWebViewManager.swift */; };
-		F8E100012FE5000100AB1001 /* SQBuildOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQBuildOverrides.swift */; };
+		F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQAdminConfig.swift */; };
 		F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */; };
 		F8E100052FE5000100AB1001 /* SQEmailVerificationGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */; };
 		F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */; };
@@ -541,7 +541,7 @@
 		F6A848B12CBD8CCE00B09AD5 /* SQError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQError.swift; sourceTree = "<group>"; };
 		F7A417102FFD110100AA4101 /* SQAppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppLinks.swift; sourceTree = "<group>"; };
 		F7A417142FFD310100AA4101 /* SQWebViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWebViewManager.swift; sourceTree = "<group>"; };
-		F8E100002FE5000100AB1001 /* SQBuildOverrides.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQBuildOverrides.swift; sourceTree = "<group>"; };
+		F8E100002FE5000100AB1001 /* SQAdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAdminConfig.swift; sourceTree = "<group>"; };
 		F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationController.swift; sourceTree = "<group>"; };
 		F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationGateView.swift; sourceTree = "<group>"; };
 		F6A848B32CBD8DB000B09AD5 /* Array+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extensions.swift"; sourceTree = "<group>"; };
@@ -1674,7 +1674,7 @@
 			children = (
 				F639F1022F43D35B004AC701 /* Workouts */,
 				F7A417102FFD110100AA4101 /* SQAppLinks.swift */,
-				F8E100002FE5000100AB1001 /* SQBuildOverrides.swift */,
+				F8E100002FE5000100AB1001 /* SQAdminConfig.swift */,
 				F615922E2EF35E2500223A63 /* SQUserDefaults.swift */,
 				F7E200042FA0010000AA2001 /* SQUnitSystemResolver.swift */,
 				F6A848A22CB6033100B09AD5 /* ThirdParty */,
@@ -2144,7 +2144,7 @@
 				F639F1622F493374004AC701 /* SQDropDownMenuOverlayCard.swift in Sources */,
 				F629CE6D2EE3B8B80002330C /* SQWorkoutSessionController.swift in Sources */,
 				F615922F2EF35E2800223A63 /* SQUserDefaults.swift in Sources */,
-				F8E100012FE5000100AB1001 /* SQBuildOverrides.swift in Sources */,
+				F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */,
 				F67F09F42F08565A00D7BB90 /* SQMetric.swift in Sources */,
 				F629CE6A2EE3B8790002330C /* SQWorkoutSessionView.swift in Sources */,
 				F679BA472EE4F36E00A2F249 /* SQWorkoutsListView.swift in Sources */,

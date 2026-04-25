@@ -11,7 +11,7 @@ import CoreLocation
 
 extension SQHealthKitManager {
     var shouldUseMockHealthData: Bool {
-        SQBuildOverrides.useMockHealthData
+        SQAdminConfig.useMockHealthData
     }
 
     var mockHealthData: SQMockHealthData {

@@ -78,6 +78,10 @@ The current app now also consumes that shared driver layer in the Life Score det
 - move explanation onto shared drivers
 - later let the score formula reuse the same driver inputs more directly
 
+The Life Score detail flow now also consumes shared recent `changes`, so the explanation layer can answer both:
+- what is helping / dragging
+- what has shifted recently
+
 ## Dashboard Use
 
 On the dashboard, the orb should eventually support:

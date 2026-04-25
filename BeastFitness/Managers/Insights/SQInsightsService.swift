@@ -91,7 +91,7 @@ final class SQInsightsService: SQInsightsServicing {
         )
         let readinessItems = analysisOutput.readinessItems
 
-        if SQBuildOverrides.verboseLoggingEnabled {
+        if SQAdminConfig.verboseLoggingEnabled {
             for readiness in readinessItems {
                 SQLogger.shared.log(
                     "Insight readiness [\(readiness.title)]: \(readiness.summary)",
@@ -141,7 +141,7 @@ final class SQInsightsService: SQInsightsServicing {
             state = insights.isEmpty ? .noPatterns : .ready
         }
 
-        if SQBuildOverrides.verboseLoggingEnabled {
+        if SQAdminConfig.verboseLoggingEnabled {
             SQLogger.shared.log(
                 "Insights dashboard result: state=\(debugTitle(for: state)), analyzedDays=\(effectiveAnalyzedDayCount), insights=\(insights.count), readiness=\(readinessItems.count)",
                 .debug,

@@ -20,6 +20,9 @@ struct SQLifeScoreDetailView: View {
                 if !controller.viewModel.drivers.isEmpty {
                     driversCard
                 }
+                if !controller.viewModel.changes.isEmpty {
+                    changesCard
+                }
                 breakdownSection
                 formulaCard
             }
@@ -130,6 +133,28 @@ struct SQLifeScoreDetailView: View {
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
+    private var changesCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("What Changed")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("These are the clearest recent shifts the app is seeing versus your prior logged days.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                ForEach(controller.viewModel.changes) { change in
+                    changeRow(change)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
     private func overviewMetric(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.xs) {
             Text(title.uppercased())
@@ -185,6 +210,36 @@ struct SQLifeScoreDetailView: View {
                 }
 
                 Text(driver.summary)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func changeRow(_ change: SQInsightChange) -> some View {
+        let color: SQColor = change.direction == .improved ? .dashboardGlowMint : .colorErrorRed
+
+        return HStack(alignment: .top, spacing: .SQSpace.s) {
+            Circle()
+                .fill(color.color)
+                .frame(width: 8, height: 8)
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                    Text(change.title)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+
+                    Spacer(minLength: 0)
+
+                    Text(change.deltaText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+
+                Text(change.summary)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

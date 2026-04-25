@@ -23,7 +23,7 @@ final class SQUserService: SQNetworkService {
             weightKilograms: nil,
             unitSystem: SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale,
             sleepSchedule: nil,
-            subscriptionLevel: .appDefault,
+            subscriptionLevel: SQAdminConfig.appDefaultSubscriptionLevel,
             onboardingCompletedAt: nil,
             onboardingStatus: .pending
         )

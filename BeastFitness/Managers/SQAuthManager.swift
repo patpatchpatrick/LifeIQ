@@ -248,7 +248,7 @@ final class SQAuthManager: SQAuthManaging {
     }
 
     static func emailVerificationRequirement(for firebaseUser: FirebaseAuth.User) -> SQEmailVerificationRequirement? {
-        guard SQBuildOverrides.enforceEmailVerificationForEmailPasswordAccounts else {
+        guard SQAdminConfig.enforceEmailVerificationForEmailPasswordAccounts else {
             return nil
         }
 

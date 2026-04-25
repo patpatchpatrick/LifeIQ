@@ -113,6 +113,7 @@ struct SQLifeScoreViewModel {
     let subtitle: String
     let components: [SQLifeScoreComponent]
     let drivers: [SQInsightDriver]
+    let changes: [SQInsightChange]
     let availableWeight: Double
 
     static let mock = SQLifeScoreViewModel(
@@ -121,6 +122,7 @@ struct SQLifeScoreViewModel {
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         components: [],
         drivers: [],
+        changes: [],
         availableWeight: 100
     )
 

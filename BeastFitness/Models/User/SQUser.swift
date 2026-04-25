@@ -56,10 +56,6 @@ struct SQSleepSchedule: Codable, Equatable, Hashable {
 enum SQSubscriptionLevel: String, Codable {
     case free
     case premium
-
-    /// Temporary app-wide default while subscription plans are not wired up yet.
-    /// Change this to `.free` to quickly exercise locked premium UI states.
-    static let appDefault: SQSubscriptionLevel = .premium
 }
 
 struct SQUser: Codable, Equatable {
@@ -86,7 +82,7 @@ struct SQUser: Codable, Equatable {
     /// Temporary default while subscription plans are not wired up yet.
     /// Legacy users without a stored value should still be able to access premium insights.
     var effectiveSubscriptionLevel: SQSubscriptionLevel {
-        subscriptionLevel ?? .appDefault
+        subscriptionLevel ?? SQAdminConfig.appDefaultSubscriptionLevel
     }
 
     var hasPremiumAccess: Bool {
@@ -134,7 +130,7 @@ extension SQUser {
         weightKilograms: 83.9,
         unitSystem: .imperial,
         sleepSchedule: .onboardingDefault,
-        subscriptionLevel: .appDefault,
+        subscriptionLevel: SQAdminConfig.appDefaultSubscriptionLevel,
         onboardingCompletedAt: .now,
         onboardingStatus: .completed
     )

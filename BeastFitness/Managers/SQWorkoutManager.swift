@@ -62,7 +62,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
         modelContext: ModelContext,
         includeHealthKitWorkouts: Bool
     ) async throws -> [any SQWorkoutSessionable] {
-        if SQBuildOverrides.useMockHealthData {
+        if SQAdminConfig.useMockHealthData {
             guard includeHealthKitWorkouts else { return [] }
             return SQHealthKitManager.shared.mockHealthData
                 .workoutSessions(for: timeRange)
@@ -250,7 +250,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
     
     func getWorkout(withHkWorkoutId hkWorkoutId: String?, workoutSource: SQWorkoutSource, modelContext: ModelContext) throws -> (any SQWorkoutSessionable)? {
-        if SQBuildOverrides.useMockHealthData {
+        if SQAdminConfig.useMockHealthData {
             return SQHealthKitManager.shared.mockHealthData.workoutSession(withHkWorkoutId: hkWorkoutId)
                 ?? SQHealthKitManager.shared.mockHealthData.workoutSession(sourceId: workoutSource.sourcableData.sourceId)
         }
@@ -292,7 +292,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
     }
 
     func syncWorkoutsIfNeeded(context: ModelContext, force: Bool = false) async {
-        guard !SQBuildOverrides.useMockHealthData else { return }
+        guard !SQAdminConfig.useMockHealthData else { return }
         guard SQAppState.shared.userState.loggedInUser != nil else { return }
 
         if isSyncInProgress {

@@ -563,7 +563,8 @@ final class SQDashboardController: SQDashboardInterface {
                 lastWeekWorkouts: lastWeekWorkouts,
                 sleepData: sleepDashboardData,
                 hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn,
-                insightDrivers: insightsResult.drivers
+                insightDrivers: insightsResult.drivers,
+                insightChanges: insightsResult.changes
             )
 
             let sectionGroups = try await buildSectionGroups(
@@ -898,7 +899,7 @@ final class SQDashboardController: SQDashboardInterface {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
 
-        if SQBuildOverrides.verboseLoggingEnabled {
+        if SQAdminConfig.verboseLoggingEnabled {
             SQLogger.shared.log(
                 "Building Metrics subsection for \(timeRange.rawValue): current check-ins = \(stats.count), prior check-ins = \(priorCheckIns.count), definitions = \(allDefinitions.count)",
                 .debug,
@@ -2256,7 +2257,7 @@ final class SQDashboardController: SQDashboardInterface {
             return insightRow.model.title
         }
 
-        if SQBuildOverrides.verboseLoggingEnabled {
+        if SQAdminConfig.verboseLoggingEnabled {
             SQLogger.shared.log(
                 "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
                 .debug,
@@ -2393,7 +2394,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Skip if no data
         guard !values.isEmpty else {
-            if SQBuildOverrides.verboseLoggingEnabled {
+            if SQAdminConfig.verboseLoggingEnabled {
                 SQLogger.shared.log(
                     "Metric row skipped for '\(definition.title)' (\(definition.id)) - no current values in \(stats.count) check-ins",
                     .debug,
