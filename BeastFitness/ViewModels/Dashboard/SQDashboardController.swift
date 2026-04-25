@@ -161,6 +161,11 @@ final class SQDashboardController: SQDashboardInterface {
 
         state.hub.domainEvents.send(.pushDashboardRoute(.dashboardLayout(controller: controller)))
     }
+
+    func handleSeeMoreInsightsTap() {
+        guard state.selectedTimeRange == .today else { return }
+        timeRangeMenuViewModel.defaultItem = .init(title: AppTimeRange.pastSevenDays.rawValue)
+    }
     
     private func handleEventSubscriptions(hub: EventHub) {
         hub.workoutEvents.sink { [weak self] event in
@@ -2001,15 +2006,17 @@ final class SQDashboardController: SQDashboardInterface {
             sectionGroups.append(dailyStatsGroup)
         }
 
-        let insightsSection = buildInsightsSubsection(result: insightsResult)
+        if state.selectedTimeRange != .today {
+            let insightsSection = buildInsightsSubsection(result: insightsResult)
 
-        let insightsGroup = SQDashboardSectionGroupViewModel(
-            id: "insights",
-            title: "Insights",
-            defaultPriority: 25,
-            sections: [insightsSection]
-        )
-        sectionGroups.append(insightsGroup)
+            let insightsGroup = SQDashboardSectionGroupViewModel(
+                id: "insights",
+                title: "Insights",
+                defaultPriority: 25,
+                sections: [insightsSection]
+            )
+            sectionGroups.append(insightsGroup)
+        }
 
         if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)

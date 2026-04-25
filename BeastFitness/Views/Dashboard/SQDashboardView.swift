@@ -78,25 +78,17 @@ struct SQDashboardView: View {
                 .padding(.bottom, 10)
 
                 if let lifeScoreViewModel = displayedLifeScoreViewModel {
-                    Group {
-                        if controller.lifeScoreViewModel != nil && !controller.state.isLoading {
-                            Button {
-                                controller.handleLifeScoreTap()
-                            } label: {
-                                SQLifeScoreHeroCard(
-                                    viewModel: lifeScoreViewModel,
-                                    timeRange: controller.state.selectedTimeRange
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
-                        } else {
-                            SQLifeScoreHeroCard(
-                                viewModel: lifeScoreViewModel,
-                                timeRange: controller.state.selectedTimeRange
-                            )
-                        }
-                    }
+                    SQLifeScoreHeroCard(
+                        viewModel: lifeScoreViewModel,
+                        timeRange: controller.state.selectedTimeRange,
+                        onOpenDetail: controller.lifeScoreViewModel != nil && !controller.state.isLoading
+                            ? { controller.handleLifeScoreTap() }
+                            : nil,
+                        onSeeMoreInsights: controller.state.selectedTimeRange == .today
+                            ? { controller.handleSeeMoreInsightsTap() }
+                            : nil
+                    )
+                    .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 8)
@@ -194,6 +186,8 @@ struct SQDashboardView: View {
 private struct SQLifeScoreHeroCard: View {
     let viewModel: SQLifeScoreViewModel
     let timeRange: AppTimeRange
+    let onOpenDetail: (() -> Void)?
+    let onSeeMoreInsights: (() -> Void)?
 
     private var driverColumns: [GridItem] {
         [.init(.adaptive(minimum: 88), spacing: .SQSpace.xs, alignment: .center)]
@@ -209,9 +203,9 @@ private struct SQLifeScoreHeroCard: View {
 
     var body: some View {
         VStack(spacing: .SQSpace.m) {
-            SQLifeScoreOrbView(viewModel: viewModel, size: 156, scoreFont: .title1)
-
             VStack(spacing: .SQSpace.s) {
+                SQLifeScoreOrbView(viewModel: viewModel, size: 156, scoreFont: .title1)
+
                 Text(viewModel.state.title)
                     .sqFont(.title3)
                     .sqForegroundColor(.textPrimary)
@@ -237,8 +231,28 @@ private struct SQLifeScoreHeroCard: View {
                                 .frame(maxWidth: 280)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+
+                        if !viewModel.changes.isEmpty {
+                            heroChanges
+                        }
                     }
                 }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onOpenDetail?()
+            }
+
+            if shouldShowTodayBriefing, let onSeeMoreInsights {
+                Button {
+                    onSeeMoreInsights()
+                } label: {
+                    Text("See more insights")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, .SQSpace.xs)
             }
         }
         .frame(maxWidth: .infinity)
@@ -253,6 +267,23 @@ private struct SQLifeScoreHeroCard: View {
             }
         }
         .frame(maxWidth: 300)
+    }
+
+    private var heroChanges: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            Text("Recently")
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(viewModel.changes.prefix(3))) { change in
+                    HeroChangeRow(change: change)
+                }
+            }
+        }
+        .frame(maxWidth: 280, alignment: .leading)
+        .padding(.top, .SQSpace.xs)
     }
 }
 
@@ -281,6 +312,37 @@ private struct HeroDriverChip: View {
                 Capsule(style: .continuous)
                     .stroke(color.color.opacity(SQColor.isDarkMode ? 0.30 : 0.20), lineWidth: 1)
             }
+    }
+}
+
+private struct HeroChangeRow: View {
+    let change: SQInsightChange
+
+    private var color: SQColor {
+        change.direction == .improved ? .dashboardGlowMint : .colorErrorRed
+    }
+
+    private var symbolText: String {
+        change.direction == .improved ? "↑" : "↓"
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+            Text(symbolText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(color)
+
+            Text(change.title)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+
+            Text(change.deltaText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+        }
     }
 }
 
