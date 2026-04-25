@@ -23,6 +23,7 @@ struct SQInsightReadinessItem: Identifiable, Hashable {
 struct SQInsight: Identifiable, Hashable {
     let id: String
     let familyKey: String
+    let insightClass: SQInsightClass
     let variantPriority: Int
     let title: String
     let summary: String
@@ -40,6 +41,7 @@ struct SQInsight: Identifiable, Hashable {
     init(
         id: String,
         familyKey: String? = nil,
+        insightClass: SQInsightClass = .relationship,
         variantPriority: Int = 0,
         title: String,
         summary: String,
@@ -56,6 +58,7 @@ struct SQInsight: Identifiable, Hashable {
     ) {
         self.id = id
         self.familyKey = familyKey ?? id
+        self.insightClass = insightClass
         self.variantPriority = variantPriority
         self.title = title
         self.summary = summary

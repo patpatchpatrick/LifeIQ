@@ -20,6 +20,8 @@ enum SQInsightClass: String, Hashable {
 
 enum SQInsightAnalyzerFamily: Hashable {
     case metricBucketComparison
+    case recentTrend
+    case baselineDeviation
 }
 
 enum SQInsightRecommendationFamily: Hashable {
@@ -33,7 +35,7 @@ enum SQInsightRecommendationFamily: Hashable {
     case observeAndCompare
 }
 
-enum SQInsightSurfaceIntent: Hashable {
+enum SQInsightSurfaceIntent: Hashable, CaseIterable {
     case today
     case pastWeek
     case pastYear
@@ -69,12 +71,16 @@ struct SQInsightRelationshipDefinition: Hashable {
     let analyzerFamily: SQInsightAnalyzerFamily
     let category: SQInsightCategory
     let recommendationFamily: SQInsightRecommendationFamily
+    let eligibleSurfaceIntents: Set<SQInsightSurfaceIntent>
     let variants: [SQInsightRelationshipVariantDefinition]
     let lowBucketUpperBound: Double
     let highBucketLowerBound: Double
     let bucketUnitName: String
     let minimumBucketSampleCount: Int
     let minimumEffectMagnitude: Double
+    let recentWindowDayCount: Int
+    let comparisonWindowDayCount: Int
+    let baselineWindowDayCount: Int
     let expectedEffect: SQInsightEffect
     let driverText: String
     let outcomeText: String
@@ -92,12 +98,16 @@ struct SQInsightRelationshipDefinition: Hashable {
         analyzerFamily: SQInsightAnalyzerFamily = .metricBucketComparison,
         category: SQInsightCategory,
         recommendationFamily: SQInsightRecommendationFamily,
+        eligibleSurfaceIntents: Set<SQInsightSurfaceIntent> = Set(SQInsightSurfaceIntent.allCases),
         variants: [SQInsightRelationshipVariantDefinition],
         lowBucketUpperBound: Double,
         highBucketLowerBound: Double,
         bucketUnitName: String = "days",
         minimumBucketSampleCount: Int = 2,
         minimumEffectMagnitude: Double = 0.15,
+        recentWindowDayCount: Int = 3,
+        comparisonWindowDayCount: Int = 3,
+        baselineWindowDayCount: Int = 21,
         expectedEffect: SQInsightEffect = .negative,
         driverText: String,
         outcomeText: String,
@@ -114,12 +124,16 @@ struct SQInsightRelationshipDefinition: Hashable {
         self.analyzerFamily = analyzerFamily
         self.category = category
         self.recommendationFamily = recommendationFamily
+        self.eligibleSurfaceIntents = eligibleSurfaceIntents
         self.variants = variants
         self.lowBucketUpperBound = lowBucketUpperBound
         self.highBucketLowerBound = highBucketLowerBound
         self.bucketUnitName = bucketUnitName
         self.minimumBucketSampleCount = minimumBucketSampleCount
         self.minimumEffectMagnitude = minimumEffectMagnitude
+        self.recentWindowDayCount = recentWindowDayCount
+        self.comparisonWindowDayCount = comparisonWindowDayCount
+        self.baselineWindowDayCount = baselineWindowDayCount
         self.expectedEffect = expectedEffect
         self.driverText = driverText
         self.outcomeText = outcomeText

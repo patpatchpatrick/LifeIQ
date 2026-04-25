@@ -247,6 +247,91 @@ struct SQInsightRelationshipRegistry {
             outcomeText: "Lower motivation",
             strongActionText: "If motivation matters the next day, keep porn use lower the night before."
         ),
+        signalTrend(
+            id: "insight.trend.alcohol",
+            inputSignalId: SQMetricId.alcohol,
+            inputTitle: "Alcohol",
+            category: .habits,
+            recommendationFamily: .reduce,
+            bucketUnitName: "days",
+            expectedEffect: .negative,
+            strongActionText: "Alcohol has been moving in the wrong direction recently. Try a lighter stretch and see how your next few days feel."
+        ),
+        signalTrend(
+            id: "insight.trend.caffeine",
+            inputSignalId: SQMetricId.caffeine,
+            inputTitle: "Caffeine",
+            category: .habits,
+            recommendationFamily: .shiftEarlier,
+            bucketUnitName: "days",
+            expectedEffect: .negative,
+            strongActionText: "Caffeine is trending up recently. If sleep or steady energy matters, pull it earlier or bring it down slightly."
+        ),
+        signalTrend(
+            id: "insight.trend.weed",
+            inputSignalId: SQMetricId.weed,
+            inputTitle: "Weed",
+            category: .habits,
+            recommendationFamily: .reduce,
+            bucketUnitName: "days",
+            expectedEffect: .negative,
+            strongActionText: "Weed use has been trending up recently. If recovery or sleep matters, try a lighter stretch and compare the next few days."
+        ),
+        signalBaselineChange(
+            id: "insight.baseline.sleep-hours",
+            inputSignalId: SQMetricId.sleepHours,
+            inputTitle: "Sleep Hours",
+            category: .sleep,
+            recommendationFamily: .increase,
+            bucketUnitName: "days",
+            expectedEffect: .positive,
+            strongActionText: "Sleep has slipped below your normal baseline. Protect a few longer nights and watch how recovery responds."
+        ),
+        signalBaselineChange(
+            id: "insight.baseline.sleep-quality",
+            inputSignalId: SQMetricId.sleepQuality,
+            inputTitle: "Sleep Quality",
+            category: .sleep,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            expectedEffect: .positive,
+            strongActionText: "Sleep quality is running below your usual baseline. Keep evenings recovery-friendly for a few days and see if it rebounds."
+        ),
+        signalBaselineChange(
+            id: "insight.baseline.energy",
+            inputSignalId: SQMetricId.energy,
+            inputTitle: "Energy",
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            expectedEffect: .positive,
+            strongActionText: "Energy is below your usual baseline right now. Pull back on drains and protect sleep until it rebounds."
+        ),
+        signalBaselineChange(
+            id: "insight.baseline.mood",
+            inputSignalId: SQMetricId.mood,
+            inputTitle: "Mood",
+            category: .habits,
+            recommendationFamily: .keepConsistent,
+            bucketUnitName: "days",
+            expectedEffect: .positive,
+            strongActionText: "Mood is below your usual baseline. Keep routines steadier for a few days and watch whether it lifts."
+        ),
+        signalBaselineChange(
+            id: "insight.baseline.workout-performance",
+            inputSignalId: SQInsightAnalysisMetricId.workoutPerformance,
+            inputTitle: "Workout Performance",
+            category: .training,
+            recommendationFamily: .protectRecovery,
+            eligibleSurfaceIntents: [.pastWeek, .pastYear],
+            bucketUnitName: "workout days",
+            minimumBucketSampleCount: 2,
+            minimumEffectMagnitude: 0.4,
+            recentWindowDayCount: 2,
+            baselineWindowDayCount: 8,
+            expectedEffect: .positive,
+            strongActionText: "Workout performance is below your usual baseline. Protect recovery and watch whether the next few sessions rebound."
+        ),
         workoutPerformanceRelationship(
             id: "insight.sleep-quality.workout-performance",
             inputSignalId: SQMetricId.sleepQuality,
@@ -422,6 +507,94 @@ struct SQInsightRelationshipRegistry {
             outcomeText: "Better workouts",
             strongActionText: strongActionText,
             subtleActionText: subtleActionText
+        )
+    }
+
+    private static func signalTrend(
+        id: String,
+        inputSignalId: String,
+        inputTitle: String,
+        category: SQInsightCategory,
+        recommendationFamily: SQInsightRecommendationFamily,
+        eligibleSurfaceIntents: Set<SQInsightSurfaceIntent> = [.today, .pastWeek],
+        bucketUnitName: String,
+        minimumBucketSampleCount: Int = 2,
+        minimumEffectMagnitude: Double = 0.75,
+        recentWindowDayCount: Int = 3,
+        comparisonWindowDayCount: Int = 3,
+        expectedEffect: SQInsightEffect,
+        strongActionText: String
+    ) -> SQInsightRelationshipDefinition {
+        .init(
+            familyKey: "trend.\(inputSignalId)",
+            inputSignalId: inputSignalId,
+            inputTitle: inputTitle,
+            outputSignalId: inputSignalId,
+            outputTitle: inputTitle,
+            insightClass: .trend,
+            analyzerFamily: .recentTrend,
+            category: category,
+            recommendationFamily: recommendationFamily,
+            eligibleSurfaceIntents: eligibleSurfaceIntents,
+            variants: [
+                .init(id: id, priority: 0, timing: .sameDay)
+            ],
+            lowBucketUpperBound: 0,
+            highBucketLowerBound: 0,
+            bucketUnitName: bucketUnitName,
+            minimumBucketSampleCount: minimumBucketSampleCount,
+            minimumEffectMagnitude: minimumEffectMagnitude,
+            recentWindowDayCount: recentWindowDayCount,
+            comparisonWindowDayCount: comparisonWindowDayCount,
+            expectedEffect: expectedEffect,
+            driverText: inputTitle,
+            outcomeText: "Recent Trend",
+            strongActionText: strongActionText,
+            subtleActionText: "Keep watching the recent trend and compare how the next few days feel."
+        )
+    }
+
+    private static func signalBaselineChange(
+        id: String,
+        inputSignalId: String,
+        inputTitle: String,
+        category: SQInsightCategory,
+        recommendationFamily: SQInsightRecommendationFamily,
+        eligibleSurfaceIntents: Set<SQInsightSurfaceIntent> = [.today, .pastWeek, .pastYear],
+        bucketUnitName: String,
+        minimumBucketSampleCount: Int = 3,
+        minimumEffectMagnitude: Double = 0.75,
+        recentWindowDayCount: Int = 3,
+        baselineWindowDayCount: Int = 14,
+        expectedEffect: SQInsightEffect,
+        strongActionText: String
+    ) -> SQInsightRelationshipDefinition {
+        .init(
+            familyKey: "baseline.\(inputSignalId)",
+            inputSignalId: inputSignalId,
+            inputTitle: inputTitle,
+            outputSignalId: inputSignalId,
+            outputTitle: inputTitle,
+            insightClass: .baselineChange,
+            analyzerFamily: .baselineDeviation,
+            category: category,
+            recommendationFamily: recommendationFamily,
+            eligibleSurfaceIntents: eligibleSurfaceIntents,
+            variants: [
+                .init(id: id, priority: 0, timing: .sameDay)
+            ],
+            lowBucketUpperBound: 0,
+            highBucketLowerBound: 0,
+            bucketUnitName: bucketUnitName,
+            minimumBucketSampleCount: minimumBucketSampleCount,
+            minimumEffectMagnitude: minimumEffectMagnitude,
+            recentWindowDayCount: recentWindowDayCount,
+            baselineWindowDayCount: baselineWindowDayCount,
+            expectedEffect: expectedEffect,
+            driverText: inputTitle,
+            outcomeText: "Baseline Shift",
+            strongActionText: strongActionText,
+            subtleActionText: "Use this baseline shift as a check-in point and see if it persists."
         )
     }
 }

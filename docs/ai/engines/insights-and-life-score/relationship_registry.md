@@ -33,7 +33,7 @@ And the underlying relationship model now lives in:
 That is now the place to look for:
 - which relationship families are active
 - which variants are active
-- what categories, recommendation families, and timing models are attached
+- what categories, recommendation families, timing models, analyzer families, and eligible dashboard ranges are attached
 
 ## Current Structure
 
@@ -57,6 +57,7 @@ Each relationship should eventually describe:
 - output signal
 - timing model
 - analyzer family
+- eligible surface intents / dashboard ranges
 - insight class
 - category
 - expected direction if known
@@ -118,3 +119,8 @@ The registry is already extracted into dedicated code.
 
 The current code-level source of truth for active relationship definitions is:
 - `SQInsightRelationshipRegistry.activeRelationships`
+
+The runtime now uses that registry for more than one analyzer family:
+- relationship / bucket comparison
+- recent trend
+- baseline deviation

@@ -45,6 +45,8 @@ Current code entry points:
 - shared feature snapshots now live in [SQInsightFeatureSnapshot.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightFeatureSnapshot.swift)
 - feature construction now lives in [SQInsightFeatureBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightFeatureBuilder.swift)
 - relationship analysis now lives in [SQInsightRelationshipAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipAnalyzer.swift)
+- recent trend analysis now lives in [SQInsightTrendAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightTrendAnalyzer.swift)
+- baseline deviation analysis now lives in [SQInsightBaselineAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightBaselineAnalyzer.swift)
 - engine orchestration now lives in [SQInsightAnalysisEngine.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightAnalysisEngine.swift)
 - range-aware ranking policy now lives in [SQInsightSurfacingPolicy.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightSurfacingPolicy.swift)
 
@@ -58,7 +60,9 @@ The current runtime system now follows this mapping:
 - `SQInsightFeatureSnapshot` -> shared day feature layer
 - `SQInsightFeatureBuilder` -> normalized feature construction
 - `SQInsightRelationshipRegistry` -> active relationship source of truth
-- `SQInsightRelationshipAnalyzer` -> reusable analyzer for the current relationship family
+- `SQInsightRelationshipAnalyzer` -> reusable analyzer for relationship / bucket-comparison insights
+- `SQInsightTrendAnalyzer` -> reusable analyzer for recent trend insights
+- `SQInsightBaselineAnalyzer` -> reusable analyzer for baseline-change insights
 - `SQInsightAnalysisEngine` -> candidate generation and result orchestration
 - `SQInsightSurfacingPolicy` -> range-aware surfacing policy
 

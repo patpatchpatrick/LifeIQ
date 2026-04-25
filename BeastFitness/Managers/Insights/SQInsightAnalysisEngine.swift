@@ -22,13 +22,19 @@ protocol SQInsightAnalyzing {
 
 struct SQInsightAnalysisEngine: SQInsightAnalyzing {
     private let relationshipAnalyzer: SQInsightRelationshipAnalyzer
+    private let trendAnalyzer: SQInsightTrendAnalyzer
+    private let baselineAnalyzer: SQInsightBaselineAnalyzer
     private let surfacingPolicy: SQInsightSurfacingPolicy
 
     init(
         relationshipAnalyzer: SQInsightRelationshipAnalyzer = .init(),
+        trendAnalyzer: SQInsightTrendAnalyzer = .init(),
+        baselineAnalyzer: SQInsightBaselineAnalyzer = .init(),
         surfacingPolicy: SQInsightSurfacingPolicy = .init()
     ) {
         self.relationshipAnalyzer = relationshipAnalyzer
+        self.trendAnalyzer = trendAnalyzer
+        self.baselineAnalyzer = baselineAnalyzer
         self.surfacingPolicy = surfacingPolicy
     }
 
@@ -37,15 +43,36 @@ struct SQInsightAnalysisEngine: SQInsightAnalyzing {
         relationships: [SQInsightRelationshipDefinition],
         surfaceIntent: SQInsightSurfaceIntent
     ) -> SQInsightAnalysisEngineOutput {
-        let results = relationships.flatMap { relationship in
+        let results = relationships
+            .filter { $0.eligibleSurfaceIntents.contains(surfaceIntent) }
+            .flatMap { relationship in
             relationship.variants.map { variant in
-                relationshipAnalyzer.analyze(
-                    snapshots: snapshots,
-                    relationship: relationship,
-                    variant: variant,
-                    surfaceIntent: surfaceIntent,
-                    surfacingPolicy: surfacingPolicy
-                )
+                switch relationship.analyzerFamily {
+                case .metricBucketComparison:
+                    relationshipAnalyzer.analyze(
+                        snapshots: snapshots,
+                        relationship: relationship,
+                        variant: variant,
+                        surfaceIntent: surfaceIntent,
+                        surfacingPolicy: surfacingPolicy
+                    )
+                case .recentTrend:
+                    trendAnalyzer.analyze(
+                        snapshots: snapshots,
+                        relationship: relationship,
+                        variant: variant,
+                        surfaceIntent: surfaceIntent,
+                        surfacingPolicy: surfacingPolicy
+                    )
+                case .baselineDeviation:
+                    baselineAnalyzer.analyze(
+                        snapshots: snapshots,
+                        relationship: relationship,
+                        variant: variant,
+                        surfaceIntent: surfaceIntent,
+                        surfacingPolicy: surfacingPolicy
+                    )
+                }
             }
         }
 

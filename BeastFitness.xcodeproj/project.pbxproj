@@ -307,6 +307,8 @@
 		F7E4003C2FFE200100AA4001 /* SQInsightRelationshipAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4003B2FFE200100AA4001 /* SQInsightRelationshipAnalyzer.swift */; };
 		F7E4003E2FFE200100AA4001 /* SQInsightAnalysisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4003D2FFE200100AA4001 /* SQInsightAnalysisEngine.swift */; };
 		F7E400402FFE200100AA4001 /* SQInsightSurfacingPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4003F2FFE200100AA4001 /* SQInsightSurfacingPolicy.swift */; };
+		F8B100013000200100AB2001 /* SQInsightTrendAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100003000200100AB2001 /* SQInsightTrendAnalyzer.swift */; };
+		F8B100033000200200AB2001 /* SQInsightBaselineAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100023000200200AB2001 /* SQInsightBaselineAnalyzer.swift */; };
 		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 		F81A10052FFF200100AA1001 /* SQLaunchTutorialController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */; };
 		F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */; };
@@ -640,6 +642,8 @@
 		F7E4003B2FFE200100AA4001 /* SQInsightRelationshipAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightRelationshipAnalyzer.swift; sourceTree = "<group>"; };
 		F7E4003D2FFE200100AA4001 /* SQInsightAnalysisEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightAnalysisEngine.swift; sourceTree = "<group>"; };
 		F7E4003F2FFE200100AA4001 /* SQInsightSurfacingPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightSurfacingPolicy.swift; sourceTree = "<group>"; };
+		F8B100003000200100AB2001 /* SQInsightTrendAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightTrendAnalyzer.swift; sourceTree = "<group>"; };
+		F8B100023000200200AB2001 /* SQInsightBaselineAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightBaselineAnalyzer.swift; sourceTree = "<group>"; };
 		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 		F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialController.swift; sourceTree = "<group>"; };
 		F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialView.swift; sourceTree = "<group>"; };
@@ -1764,6 +1768,8 @@
 				F7E400392FFE200100AA4001 /* SQInsightScoring.swift */,
 				F7E400312FFE200100AA4001 /* SQInsightRelationshipRegistry.swift */,
 				F7E4003B2FFE200100AA4001 /* SQInsightRelationshipAnalyzer.swift */,
+				F8B100003000200100AB2001 /* SQInsightTrendAnalyzer.swift */,
+				F8B100023000200200AB2001 /* SQInsightBaselineAnalyzer.swift */,
 				F7E4003D2FFE200100AA4001 /* SQInsightAnalysisEngine.swift */,
 				F7E4003F2FFE200100AA4001 /* SQInsightSurfacingPolicy.swift */,
 				F7E4001B2FFE200100AA4001 /* SQInsightsService.swift */,
@@ -2327,6 +2333,8 @@
 				F7E4003A2FFE200100AA4001 /* SQInsightScoring.swift in Sources */,
 				F7E400322FFE200100AA4001 /* SQInsightRelationshipRegistry.swift in Sources */,
 				F7E4003C2FFE200100AA4001 /* SQInsightRelationshipAnalyzer.swift in Sources */,
+				F8B100013000200100AB2001 /* SQInsightTrendAnalyzer.swift in Sources */,
+				F8B100033000200200AB2001 /* SQInsightBaselineAnalyzer.swift in Sources */,
 				F7E4003E2FFE200100AA4001 /* SQInsightAnalysisEngine.swift in Sources */,
 				F7E400402FFE200100AA4001 /* SQInsightSurfacingPolicy.swift in Sources */,
 				F7E4001C2FFE200100AA4001 /* SQInsightsService.swift in Sources */,
