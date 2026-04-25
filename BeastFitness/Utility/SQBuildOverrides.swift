@@ -15,7 +15,7 @@ enum SQBuildOverrides {
 
     /// Debug-only toggle for rendering canned dashboard health data without requiring
     /// a populated HealthKit store on the current simulator or device.
-    static var useMockDashboardHealthData = true
+    static var useMockDashboardHealthData = false
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let useMockDashboardHealthData = false

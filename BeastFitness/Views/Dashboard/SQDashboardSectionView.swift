@@ -46,7 +46,7 @@ struct SQDashboardSectionView: View {
 
                     ZStack(alignment: .center) {
                         VStack(spacing: section.rowSpacing ?? SQDashboardView.uiConfig.sectionRowSpacing) {
-                            ForEach(Array(section.visibleRows.enumerated()), id: \.offset) { offset, row in
+                            ForEach(section.visibleRows) { row in
                                 switch row.rowType {
                                 case .bodyBattery:
                                     if let vm = row as? SQDashboardBodyBatteryRowViewModel {
@@ -145,7 +145,7 @@ struct SQDashboardSectionView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .id(section.activeFilter)
+                    .id("\(section.id)-\(section.activeFilter)")
                     .transition(.opacity)
 
                     if section.canToggleVisibleRows && !section.isLocked {

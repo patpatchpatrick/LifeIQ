@@ -37,7 +37,6 @@ struct SQDashboardSectionGroupView: View {
                 isCollapsed: isCollapsed
             )
         }
-
     }
 
     var body: some View {

@@ -17,7 +17,7 @@ extension SQDashboardSectionGroupViewModel {
             groups.append(mockRecovery)
         }
 
-        groups.append(contentsOf: [mockDailyStats, mockSleep, mockHeart, mockWorkouts])
+        groups.append(contentsOf: [mockDailyStats, mockInsightsGroup, mockSleep, mockHeart, mockWorkouts])
         return groups
     }
 
@@ -111,13 +111,20 @@ extension SQDashboardSectionGroupViewModel {
             columnHeaders: ["Metric", "Avg Score", "vs Prior"]
         )
 
-        let insightsSection = mockInsightsSection
-
         return SQDashboardSectionGroupViewModel(
             id: "daily-stats",
             title: "Daily Stats",
             defaultPriority: 20,
-            sections: [metricsSection, insightsSection]
+            sections: [metricsSection]
+        )
+    }
+
+    private static var mockInsightsGroup: SQDashboardSectionGroupViewModel {
+        SQDashboardSectionGroupViewModel(
+            id: "insights",
+            title: "Insights",
+            defaultPriority: 25,
+            sections: [mockInsightsSection]
         )
     }
 

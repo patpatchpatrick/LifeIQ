@@ -2021,7 +2021,6 @@ final class SQDashboardController: SQDashboardInterface {
             checkIns: insightCheckIns,
             workouts: insightWorkouts
         )
-        dailyStatsSections.append(insightsSection)
 
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
@@ -2033,6 +2032,14 @@ final class SQDashboardController: SQDashboardInterface {
             )
             sectionGroups.append(dailyStatsGroup)
         }
+
+        let insightsGroup = SQDashboardSectionGroupViewModel(
+            id: "insights",
+            title: "Insights",
+            defaultPriority: 25,
+            sections: [insightsSection]
+        )
+        sectionGroups.append(insightsGroup)
 
         if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)
