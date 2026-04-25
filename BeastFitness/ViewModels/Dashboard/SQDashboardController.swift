@@ -355,6 +355,11 @@ final class SQDashboardController: SQDashboardInterface {
             state.setLoading(true)
         }
 
+        if SQBuildOverrides.useMockDashboardHealthData {
+            applyMockDashboardState()
+            return
+        }
+
         do {
             try metricsManager.loadIfNeeded(using: context)
 
@@ -622,6 +627,37 @@ final class SQDashboardController: SQDashboardInterface {
 
             presentDashboardLoadError(error, context: context)
         }
+    }
+
+    private func applyMockDashboardState() {
+        let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+        let appliedSectionGroups = dashboardLayoutService.apply(to: mockGroups)
+        let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
+
+        state.updateDailyCheckInCtaViewModel(nil)
+        state.updateUncustomizedSectionGroups(mockGroups)
+        availableLayoutGroups = updatedAvailableLayoutGroups
+        state.updateAvailableLayoutGroups(updatedAvailableLayoutGroups)
+        state.updateSectionGroups(to: appliedSectionGroups)
+
+        healthKitAccessCtaViewModel = nil
+        lifeScoreViewModel = .mock
+
+        lastLoadedUncustomizedSectionGroups = mockGroups
+        lastLoadedSectionGroups = appliedSectionGroups
+        lastLoadedAvailableLayoutGroups = updatedAvailableLayoutGroups
+        lastLoadedDailyCheckInCtaViewModel = nil
+        lastLoadedHealthKitAccessCtaViewModel = nil
+        lastLoadedLifeScoreViewModel = .mock
+        lastSuccessfulLoadAt = .now
+
+        state.setLoading(false)
+
+        SQLogger.shared.log(
+            "Using mock dashboard health data override.",
+            .debug,
+            context: .dashboard
+        )
     }
     
     func refreshUI(for context: ModelContext) async {

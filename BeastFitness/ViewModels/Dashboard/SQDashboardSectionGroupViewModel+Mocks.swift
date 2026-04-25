@@ -111,12 +111,140 @@ extension SQDashboardSectionGroupViewModel {
             columnHeaders: ["Metric", "Avg Score", "vs Prior"]
         )
 
+        let insightsSection = mockInsightsSection
+
         return SQDashboardSectionGroupViewModel(
             id: "daily-stats",
             title: "Daily Stats",
             defaultPriority: 20,
-            sections: [metricsSection]
+            sections: [metricsSection, insightsSection]
         )
+    }
+
+    private static var mockInsightsSection: SQDashboardSubsectionViewModel {
+        let insights = mockInsights
+        let rows = insights.map { SQDashboardInsightRowViewModel(model: $0) as SQDashboardRowViewModel }
+        let categoryOrder: [SQInsightCategory] = [.recovery, .sleep, .training, .habits]
+        let presentCategories = categoryOrder.filter { category in
+            insights.contains(where: { $0.category == category })
+        }
+
+        var rowsByFilter: [String: [SQDashboardRowViewModel]] = ["All": rows]
+        for category in presentCategories {
+            rowsByFilter[category.badgeTitle] = insights
+                .filter { $0.category == category }
+                .map { SQDashboardInsightRowViewModel(model: $0) as SQDashboardRowViewModel }
+        }
+
+        let filterItems = [SQDropDownMenuViewModel.Item(title: "All")] + presentCategories.map {
+            SQDropDownMenuViewModel.Item(title: $0.badgeTitle)
+        }
+        let dropDownViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: "All"),
+            items: filterItems,
+            itemSelectionHandler: { _ in }
+        )
+
+        let sectionViewModel = SQDashboardSubsectionViewModel(
+            id: "insights",
+            title: "Insights",
+            defaultPriority: 15,
+            rowsByFilter: rowsByFilter,
+            dropDownViewModel: dropDownViewModel,
+            rowSpacing: .SQSpace.m,
+            maxVisibleRows: 4
+        )
+
+        dropDownViewModel.itemSelectionHandler = { selectedFilter in
+            sectionViewModel.updateActiveFilter(selectedFilter)
+        }
+
+        return sectionViewModel
+    }
+
+    private static var mockInsights: [SQInsight] {
+        [
+            .init(
+                id: "mock.insight.sleep-energy",
+                familyKey: "metric.sleepHours->metric.energy",
+                title: "Longer sleep tends to lift energy",
+                summary: "On days after 8+ hours of sleep, your energy check-ins trend about 1.2 points higher.",
+                evidenceText: "Sample dashboard insight for UI testing.",
+                actionText: "Protect sleep duration before harder training days.",
+                driverText: "More Sleep",
+                outcomeText: "Higher Energy",
+                deltaText: "+1.2 pts",
+                category: .recovery,
+                confidence: .medium,
+                effect: .positive,
+                sampleCount: 18,
+                rankingScore: 0.94
+            ),
+            .init(
+                id: "mock.insight.alcohol-sleep",
+                familyKey: "metric.alcohol->metric.sleepQuality",
+                title: "Alcohol is dragging sleep quality",
+                summary: "Even moderate drinking nights are followed by lower sleep-quality check-ins the next morning.",
+                evidenceText: "Sample dashboard insight for UI testing.",
+                actionText: "Try alcohol-free evenings before important recovery days.",
+                driverText: "More Alcohol",
+                outcomeText: "Lower Sleep Quality",
+                deltaText: "-0.9 pts",
+                category: .sleep,
+                confidence: .medium,
+                effect: .negative,
+                sampleCount: 15,
+                rankingScore: 0.89
+            ),
+            .init(
+                id: "mock.insight.caffeine-workout",
+                familyKey: "metric.caffeine->metric.workoutPerformance",
+                title: "Earlier caffeine aligns with better sessions",
+                summary: "Workouts started after an earlier caffeine window tend to score better than late-caffeine days.",
+                evidenceText: "Sample dashboard insight for UI testing.",
+                actionText: "Front-load caffeine before midday when possible.",
+                driverText: "Earlier Caffeine",
+                outcomeText: "Better Training",
+                deltaText: "+6%",
+                category: .training,
+                confidence: .low,
+                effect: .positive,
+                sampleCount: 11,
+                rankingScore: 0.77
+            ),
+            .init(
+                id: "mock.insight.checkin-recovery",
+                familyKey: "metric.mood->metric.recovery",
+                title: "Good check-in days tend to stack together",
+                summary: "Mood, clarity, and recovery ratings often rise together when your routine stays consistent for a few days.",
+                evidenceText: "Sample dashboard insight for UI testing.",
+                actionText: "Use this as a baseline pattern for consistency experiments.",
+                driverText: "Consistency",
+                outcomeText: "Better Recovery",
+                deltaText: "+8%",
+                category: .habits,
+                confidence: .high,
+                effect: .neutral,
+                sampleCount: 22,
+                rankingScore: 0.72
+            ),
+            .init(
+                id: "mock.insight.strain-sleep",
+                familyKey: "metric.trainingLoad->metric.sleepHours",
+                title: "Heavy training nights need more sleep",
+                summary: "Your harder training days look better the next day when sleep also stretches past your usual baseline.",
+                evidenceText: "Sample dashboard insight for UI testing.",
+                actionText: "Pair your highest-strain days with longer recovery sleep windows.",
+                driverText: "Higher Strain",
+                outcomeText: "More Sleep Needed",
+                deltaText: "+42 min",
+                category: .training,
+                confidence: .medium,
+                effect: .neutral,
+                sampleCount: 14,
+                rankingScore: 0.69
+            )
+        ]
     }
 
     // MARK: - Workouts
