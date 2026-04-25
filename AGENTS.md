@@ -162,6 +162,10 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Keep group composition logic centralized in `SQDashboardController.buildSectionGroups(...)`.
 - Prefer extending existing row infrastructure (for example `SQDashboardMetricStatsRowViewModel`) before introducing custom row types.
 - Dashboard layout customization clones section/subsection view models before applying order/visibility. Keep cloning centralized on the view models themselves (`cloned()` / copy API) rather than reconstructing them field-by-field in services, so new properties cannot be silently dropped.
+- Keep dashboard subsections compositionally simple. Avoid letting a single top-level group accumulate multiple heavy/rich subsections if they can be split into separate groups instead.
+- Be especially careful with dashboard subsection complexity on `iPhone SE (2nd generation)`. Complex subsection combinations have caused hangs there even when each subsection worked fine in isolation.
+- When adding a new dashboard subsection, significantly expanding an existing subsection, or combining multiple rich subsections in one group, explicitly tell Patrick to test that surface on `iPhone SE (2nd generation)` for scroll performance and hangs.
+- Keep `SQBuildOverrides.useMockDashboardHealthData` in mind when adding dashboard or Health-driven functionality. If a new surface can reasonably be represented with mock dashboard data, extend the mock path too so SE/perf debugging does not depend on populated HealthKit data.
 
 Current intended dashboard structure:
 - `Daily Stats`: `Metrics`, `Performance`
@@ -244,6 +248,8 @@ When implementing changes, default to this checklist:
 7. Review whether relevant Amplitude events need to be added or updated.
 8. If the change introduces a new feature that seems worth tracking, ask Patrick before adding new Amplitude events.
 9. Keep shared logic in `BeastFitnessCore` and charts in `CoolCharts`.
+10. For dashboard subsection work, consider whether `SQBuildOverrides.useMockDashboardHealthData` should be extended so the new UI can be exercised without real HealthKit data.
+11. For dashboard subsection additions or complexity increases, remind Patrick to test on `iPhone SE (2nd generation)` to catch hangs/regressions early.
 
 ## Source of truth
 
