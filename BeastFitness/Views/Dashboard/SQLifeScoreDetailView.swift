@@ -89,9 +89,17 @@ struct SQLifeScoreDetailView: View {
 
     private var changesCard: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("What Changed")
-                .sqFont(.title4)
-                .sqForegroundColor(.textPrimary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("What Changed")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                if let timeframeText = controller.viewModel.changes.first?.timeframeText {
+                    Text(timeframeText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
 
             VStack(alignment: .leading, spacing: .SQSpace.s) {
                 ForEach(controller.viewModel.changes) { change in
@@ -156,11 +164,6 @@ struct SQLifeScoreDetailView: View {
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                 }
-
-                Text(driver.summary)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -186,11 +189,6 @@ struct SQLifeScoreDetailView: View {
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                 }
-
-                Text(change.summary)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -221,13 +219,6 @@ struct SQLifeScoreDetailView: View {
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-
-                if let context = action.context {
-                    Text(context)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
         }
     }

@@ -35,7 +35,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         var usedSummaries = Set<String>()
 
         for insight in insights {
-            let summary = insight.actionText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let summary = refinedActionSummary(for: insight)
             guard !summary.isEmpty else { continue }
             guard !usedSummaries.contains(summary) else { continue }
 
@@ -58,6 +58,61 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         return actions
+    }
+
+    private func refinedActionSummary(for insight: SQInsight) -> String {
+        let title = insight.title.lowercased()
+        let driver = insight.driverText.lowercased()
+        let outcome = insight.outcomeText.lowercased()
+
+        if title.contains("strain") || driver.contains("strain") {
+            return "Keep strain moderate."
+        }
+
+        if title.contains("sleep") || driver.contains("sleep") {
+            return "Protect sleep tonight."
+        }
+
+        if title.contains("alcohol") || driver.contains("alcohol") {
+            return "Keep alcohol low tonight."
+        }
+
+        if title.contains("caffeine") || driver.contains("caffeine") {
+            return "Keep caffeine earlier today."
+        }
+
+        if title.contains("weed") || driver.contains("weed") {
+            return "Keep weed light tonight."
+        }
+
+        if title.contains("workout") || title.contains("performance") || outcome.contains("performance") {
+            return insight.effect == .positive ? "Good day to push training." : "Watch strain today."
+        }
+
+        if title.contains("recovery") || title.contains("energy") || driver.contains("recovery") {
+            return insight.effect == .positive ? "Good day to push training." : "Keep strain moderate."
+        }
+
+        let cleaned = insight.actionText
+            .replacingOccurrences(of: "This recent shift looks favorable. ", with: "")
+            .replacingOccurrences(of: "Keep the pattern steady and see if it holds.", with: "Keep it steady.")
+            .replacingOccurrences(of: " while it holds and see if the rest of the day follows.", with: ".")
+            .replacingOccurrences(of: " while it holds.", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let normalized = cleaned.lowercased()
+        if normalized == "keep it steady." || normalized == "keep going." || normalized == "keep this going." {
+            switch insight.effect {
+            case .positive:
+                return "Good day to push training."
+            case .negative:
+                return "Keep strain moderate."
+            case .neutral:
+                return "Watch the trend today."
+            }
+        }
+
+        return cleaned
     }
 
     private func actionTone(for insight: SQInsight) -> SQInsightActionTone {

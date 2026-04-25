@@ -5,6 +5,7 @@
 
 import SwiftData
 import BeastFitnessCore
+import Foundation
 
 extension SQDashboardController {
     func handleLifeScoreTap() {
@@ -22,9 +23,11 @@ extension SQDashboardController {
     func buildLifeScoreViewModel(
         past7DaysCheckIns: [SQDailyCheckInStats],
         todaysWorkouts: [SQWorkoutSessionable],
+        yesterdaysWorkouts: [SQWorkoutSessionable],
         lastWeekWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
         hasCompletedCurrentCheckIn: Bool,
+        hasCompletedYesterdayCheckIn: Bool,
         primaryInsight: SQInsight?,
         insightDrivers: [SQInsightDriver],
         insightChanges: [SQInsightChange],
@@ -60,8 +63,19 @@ extension SQDashboardController {
             : nil
 
         let preliminaryScore = weightedScore.map { Int($0.rounded()) }
+        let previousScore = estimatedPreviousDayLifeScore(
+            past7DaysCheckIns: past7DaysCheckIns,
+            yesterdaysWorkouts: yesterdaysWorkouts,
+            lastWeekWorkouts: lastWeekWorkouts,
+            sleepData: sleepData,
+            hasCompletedYesterdayCheckIn: hasCompletedYesterdayCheckIn
+        )
         let state = lifeScoreState(for: preliminaryScore, availableWeight: totalWeight)
         let roundedScore = state == .calibrating ? nil : preliminaryScore
+        let scoreDeltaFromPreviousDay: Int? = {
+            guard let roundedScore, let previousScore else { return nil }
+            return roundedScore - previousScore
+        }()
 
         let subtitle: String
         if components.isEmpty {
@@ -76,6 +90,7 @@ extension SQDashboardController {
 
         return .init(
             score: roundedScore,
+            scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             state: state,
             subtitle: subtitle,
             components: components.sorted { $0.weight > $1.weight },
@@ -85,6 +100,56 @@ extension SQDashboardController {
             actions: Array(insightActions.prefix(1)),
             availableWeight: totalWeight
         )
+    }
+
+    private func estimatedPreviousDayLifeScore(
+        past7DaysCheckIns: [SQDailyCheckInStats],
+        yesterdaysWorkouts: [SQWorkoutSessionable],
+        lastWeekWorkouts: [SQWorkoutSessionable],
+        sleepData: SQSleepDashboardData?,
+        hasCompletedYesterdayCheckIn: Bool
+    ) -> Int? {
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: .now)
+
+        var components = [SQLifeScoreComponent]()
+
+        if let sleepComponent = previousLifeScoreSleepComponent(from: sleepData) {
+            components.append(sleepComponent)
+        }
+
+        let priorCheckIns = past7DaysCheckIns.filter {
+            calendar.startOfDay(for: $0.date) < startOfToday
+        }
+
+        if let habitsComponent = lifeScoreHabitsComponent(from: priorCheckIns) {
+            components.append(habitsComponent)
+        }
+
+        let priorWeekWorkouts = lastWeekWorkouts.filter {
+            guard let startDate = $0.startDate else { return false }
+            return calendar.startOfDay(for: startDate) < startOfToday
+        }
+
+        if let workoutsComponent = lifeScoreWorkoutComponent(
+            todaysWorkouts: yesterdaysWorkouts,
+            lastWeekWorkouts: priorWeekWorkouts
+        ) {
+            components.append(workoutsComponent)
+        }
+
+        if let consistencyComponent = lifeScoreConsistencyComponent(
+            past7DaysCheckIns: priorCheckIns,
+            hasCompletedCurrentCheckIn: hasCompletedYesterdayCheckIn
+        ) {
+            components.append(consistencyComponent)
+        }
+
+        let totalWeight = components.reduce(0) { $0 + $1.weight }
+        guard totalWeight > 0 else { return nil }
+
+        let weightedScore = components.reduce(0) { $0 + (Double($1.score) * $1.weight) } / totalWeight
+        return Int(weightedScore.rounded())
     }
 
     private func lifeScoreState(for score: Int?, availableWeight: Double) -> SQLifeScoreState {
@@ -111,6 +176,24 @@ extension SQDashboardController {
             sleepScore = sleepData?.averageScore?.totalScore
         }
 
+        return lifeScoreSleepComponent(for: sleepScore)
+    }
+
+    private func previousLifeScoreSleepComponent(from sleepData: SQSleepDashboardData?) -> SQLifeScoreComponent? {
+        let sleepScore: Double?
+        if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
+            sleepScore = sleepAggregationService.score(for: priorNight).totalScore
+        } else {
+            sleepScore = sleepData?.priorNights
+                .map { sleepAggregationService.score(for: $0).totalScore }
+                .average
+        }
+
+        return lifeScoreSleepComponent(for: sleepScore)
+    }
+
+    private func lifeScoreSleepComponent(for sleepScore: Double?) -> SQLifeScoreComponent? {
+        
         guard let sleepScore else { return nil }
         let roundedScore = Int(clamp(sleepScore, min: 0, max: 100).rounded())
 

@@ -412,6 +412,15 @@ final class SQDashboardController: SQDashboardInterface {
                 for: .now,
                 sleepSchedule: sleepSchedule
             )
+            let yesterdayReferenceDate = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+            let yesterdayCheckInDate = DashboardState.currentCheckInDate(
+                for: yesterdayReferenceDate,
+                sleepSchedule: sleepSchedule
+            )
+            let yesterdayCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
+                for: yesterdayReferenceDate,
+                sleepSchedule: sleepSchedule
+            )
             let hasCompletedCurrentCheckIn: Bool
             if let currentCheckInPromptPeriod {
                 hasCompletedCurrentCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
@@ -421,6 +430,16 @@ final class SQDashboardController: SQDashboardInterface {
                 )) ?? false
             } else {
                 hasCompletedCurrentCheckIn = true
+            }
+            let hasCompletedYesterdayCheckIn: Bool
+            if let yesterdayCheckInPromptPeriod {
+                hasCompletedYesterdayCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
+                    for: yesterdayCheckInDate,
+                    period: yesterdayCheckInPromptPeriod,
+                    context: context
+                )) ?? false
+            } else {
+                hasCompletedYesterdayCheckIn = true
             }
 
             // Fetch historical check-ins for different time ranges using SQTimeRange dates
@@ -565,9 +584,11 @@ final class SQDashboardController: SQDashboardInterface {
             lifeScoreViewModel = buildLifeScoreViewModel(
                 past7DaysCheckIns: past7DaysCheckIns,
                 todaysWorkouts: todaysWorkouts,
+                yesterdaysWorkouts: yesterdaysWorkouts,
                 lastWeekWorkouts: lastWeekWorkouts,
                 sleepData: sleepDashboardData,
                 hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn,
+                hasCompletedYesterdayCheckIn: hasCompletedYesterdayCheckIn,
                 primaryInsight: state.selectedTimeRange == .today ? insightsResult.insights.first : nil,
                 insightDrivers: insightsResult.drivers,
                 insightChanges: insightsResult.changes,
@@ -2401,7 +2422,7 @@ final class SQDashboardController: SQDashboardInterface {
     ) -> SQDashboardSubsectionViewModel {
         SQDashboardSubsectionViewModel(
             id: "recovery-score",
-            title: "Recovery Score",
+            title: "Overview",
             defaultPriority: 10,
             rowsByFilter: ["All": [row]],
             dropDownViewModel: nil

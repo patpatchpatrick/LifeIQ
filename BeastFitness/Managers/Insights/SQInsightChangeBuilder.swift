@@ -104,6 +104,7 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
                 direction: direction,
                 effectMagnitude: effectMagnitude
             ),
+            timeframeText: timeframeText(for: window),
             category: definition.category,
             direction: direction,
             recentAverage: recentAverage,
@@ -152,6 +153,12 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
         case .worsened:
             return "\(title) has moved in a worse direction by \(format(effectMagnitude)) recently."
         }
+    }
+
+    private func timeframeText(
+        for window: (recentCount: Int, priorCount: Int)
+    ) -> String {
+        "Last \(window.recentCount) days vs previous \(window.priorCount)"
     }
 
     private func average(of values: [Double]) -> Double? {

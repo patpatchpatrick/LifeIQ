@@ -109,6 +109,7 @@ enum SQLifeScoreState {
 
 struct SQLifeScoreViewModel {
     let score: Int?
+    let scoreDeltaFromPreviousDay: Int?
     let state: SQLifeScoreState
     let subtitle: String
     let components: [SQLifeScoreComponent]
@@ -120,6 +121,7 @@ struct SQLifeScoreViewModel {
 
     static let mock = SQLifeScoreViewModel(
         score: 76,
+        scoreDeltaFromPreviousDay: 2,
         state: .steady,
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         components: [],
@@ -174,5 +176,12 @@ struct SQLifeScoreViewModel {
 
     var dragDrivers: [SQInsightDriver] {
         drivers.filter { $0.direction == .drag }
+    }
+
+    var scoreDeltaText: String? {
+        guard let scoreDeltaFromPreviousDay, scoreDeltaFromPreviousDay != 0 else { return nil }
+        let direction = scoreDeltaFromPreviousDay > 0 ? "↑" : "↓"
+        let signedValue = scoreDeltaFromPreviousDay > 0 ? "+\(scoreDeltaFromPreviousDay)" : "\(scoreDeltaFromPreviousDay)"
+        return "\(direction) \(signedValue) vs yesterday"
     }
 }

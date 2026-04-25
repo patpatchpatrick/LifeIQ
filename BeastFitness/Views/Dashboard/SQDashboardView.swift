@@ -83,15 +83,25 @@ struct SQDashboardView: View {
                         timeRange: controller.state.selectedTimeRange,
                         onOpenDetail: controller.lifeScoreViewModel != nil && !controller.state.isLoading
                             ? { controller.handleLifeScoreTap() }
-                            : nil,
-                        onSeeMoreInsights: controller.state.selectedTimeRange == .today
-                            ? { controller.handleSeeMoreInsightsTap() }
                             : nil
                     )
                     .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 12)
+
+                    if controller.state.selectedTimeRange == .today,
+                       !lifeScoreViewModel.changes.isEmpty {
+                        SQLifeScoreRecentChangesCard(
+                            changes: Array(lifeScoreViewModel.changes.prefix(3)),
+                            onSeeMoreInsights: { controller.handleSeeMoreInsightsTap() }
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 28)
+                    } else {
+                        Color.clear
+                            .frame(height: 20)
+                    }
                 }
 
                 if let runtimeControlCtaViewModel = controller.runtimeControlCtaViewModel {
@@ -187,7 +197,6 @@ private struct SQLifeScoreHeroCard: View {
     let viewModel: SQLifeScoreViewModel
     let timeRange: AppTimeRange
     let onOpenDetail: (() -> Void)?
-    let onSeeMoreInsights: (() -> Void)?
 
     private var driverColumns: [GridItem] {
         [.init(.adaptive(minimum: 88), spacing: .SQSpace.xs, alignment: .center)]
@@ -197,8 +206,34 @@ private struct SQLifeScoreHeroCard: View {
         timeRange == .today && viewModel.primaryInsight != nil
     }
 
+    private var scoreDeltaColor: SQColor {
+        guard let scoreDelta = viewModel.scoreDeltaFromPreviousDay else { return .textSecondary }
+        if scoreDelta > 0 {
+            return .dashboardGlowMint
+        } else if scoreDelta < 0 {
+            return .colorErrorRed
+        } else {
+            return .textSecondary
+        }
+    }
+
+    private var scoreDeltaSymbol: SQImageSymbol? {
+        guard let scoreDelta = viewModel.scoreDeltaFromPreviousDay, scoreDelta != 0 else { return nil }
+        return scoreDelta > 0 ? .arrowUp : .arrowDown
+    }
+
     private var primaryAction: SQInsightAction? {
         viewModel.actions.first
+    }
+
+    private var compactActionText: String? {
+        guard let summary = primaryAction?.summary else { return nil }
+        let cleaned = summary
+            .replacingOccurrences(of: "This recent shift looks favorable. ", with: "")
+            .replacingOccurrences(of: "Keep the pattern steady and see if it holds.", with: "Keep it steady.")
+            .replacingOccurrences(of: " while it holds and see if the rest of the day follows.", with: " while it holds.")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned
     }
 
     var body: some View {
@@ -206,36 +241,39 @@ private struct SQLifeScoreHeroCard: View {
             VStack(spacing: .SQSpace.s) {
                 SQLifeScoreOrbView(viewModel: viewModel, size: 156, scoreFont: .title1)
 
+                if let scoreDeltaText = viewModel.scoreDeltaText,
+                   let scoreDeltaSymbol,
+                   shouldShowTodayBriefing {
+                    HStack(alignment: .center, spacing: 4) {
+                        SQImageView(
+                            image: .init(
+                                symbol: scoreDeltaSymbol,
+                                symbolStyle: .colorWithFont(scoreDeltaColor, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 10, height: 10)
+
+                        Text(scoreDeltaText.replacingOccurrences(of: "↑ ", with: "").replacingOccurrences(of: "↓ ", with: ""))
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                }
+
                 Text(viewModel.state.title)
-                    .sqFont(.title3)
-                    .sqForegroundColor(.textPrimary)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textSecondary)
 
                 if shouldShowTodayBriefing, let primaryInsight = viewModel.primaryInsight {
                     VStack(spacing: .SQSpace.s) {
-                        Text(primaryInsight.title)
-                            .sqFont(.bodySmallSemiBold)
-                            .sqForegroundColor(.textPrimary)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: 280)
-                            .fixedSize(horizontal: false, vertical: true)
-
                         if !viewModel.drivers.isEmpty {
                             heroDrivers
+                                .padding(.top, .SQSpace.xs)
                         }
 
-                        if let primaryAction {
-                            Text("Best move: \(primaryAction.summary)")
-                                .sqFont(.bodyExtraSmall)
-                                .sqForegroundColor(.textSecondary)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: 280)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        if !viewModel.changes.isEmpty {
-                            heroChanges
-                        }
+                        heroBriefing(summary: primaryInsight.title, action: compactActionText)
+                            .padding(.top, .SQSpace.s)
                     }
+                    .padding(.top, .SQSpace.s)
                 }
             }
             .contentShape(Rectangle())
@@ -243,17 +281,6 @@ private struct SQLifeScoreHeroCard: View {
                 onOpenDetail?()
             }
 
-            if shouldShowTodayBriefing, let onSeeMoreInsights {
-                Button {
-                    onSeeMoreInsights()
-                } label: {
-                    Text("See more insights")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, .SQSpace.xs)
-            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 18)
@@ -269,21 +296,60 @@ private struct SQLifeScoreHeroCard: View {
         .frame(maxWidth: 300)
     }
 
-    private var heroChanges: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xs) {
-            Text("Recently")
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+    private func heroBriefing(summary: String, action: String?) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            HeroBriefingRow(
+                text: summary,
+                tone: .summary
+            )
 
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(Array(viewModel.changes.prefix(3))) { change in
+            if let action, !action.isEmpty {
+                HeroBriefingRow(
+                    text: "Best move: \(action)",
+                    tone: .action
+                )
+            }
+        }
+        .frame(maxWidth: 300, alignment: .leading)
+    }
+}
+
+private struct SQLifeScoreRecentChangesCard: View {
+    let changes: [SQInsightChange]
+    let onSeeMoreInsights: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            HStack(spacing: .SQSpace.s) {
+                Text("Recently (last 2 days)")
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                Spacer(minLength: 0)
+
+                Button {
+                    onSeeMoreInsights()
+                } label: {
+                    SQImageView(
+                        image: .init(
+                            symbol: .chevronRight,
+                            symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 12, height: 12)
+                }
+                .buttonStyle(.plain)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(changes) { change in
                     HeroChangeRow(change: change)
                 }
             }
         }
-        .frame(maxWidth: 280, alignment: .leading)
-        .padding(.top, .SQSpace.xs)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 }
 
@@ -336,12 +402,51 @@ private struct HeroChangeRow: View {
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textPrimary)
                 .lineLimit(1)
+        }
+    }
+}
 
-            Spacer(minLength: 0)
+private struct HeroBriefingRow: View {
+    enum Tone {
+        case summary
+        case action
+    }
 
-            Text(change.deltaText)
+    let text: String
+    let tone: Tone
+
+    private var color: SQColor {
+        switch tone {
+        case .summary:
+            return .textPrimary
+        case .action:
+            return .dashboardGlowBlue
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+            Group {
+                switch tone {
+                case .summary:
+                    Circle()
+                        .fill(color.color)
+                        .frame(width: 6, height: 6)
+                case .action:
+                    SQImageView(
+                        image: .init(
+                            symbol: .arrowRight,
+                            symbolStyle: .colorWithFont(color, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 10, height: 10)
+                }
+            }
+
+            Text(text)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(tone == .summary ? .textPrimary : .textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
@@ -600,7 +705,7 @@ extension SQDashboardView {
         let sectionRowHorizPadding: CGFloat = .SQSpace.l
         let sectionRowVertPadding: CGFloat = .SQSpace.l
         let sectionRowSpacing: CGFloat = .SQSpace.xxl
-        let spacingBetweenSections: CGFloat = .SQSpace.l
+        let spacingBetweenSections: CGFloat = .SQSpace.xl
     }
     
     @ViewBuilder

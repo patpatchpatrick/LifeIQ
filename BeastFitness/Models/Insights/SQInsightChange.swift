@@ -17,6 +17,7 @@ struct SQInsightChange: Identifiable, Hashable {
     let signalId: String
     let title: String
     let summary: String
+    let timeframeText: String
     let category: SQInsightCategory
     let direction: SQInsightChangeDirection
     let recentAverage: Double
