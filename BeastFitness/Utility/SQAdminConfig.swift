@@ -25,6 +25,10 @@ enum SQAdminConfig {
 
     /// Gates the internal scenario/gallery lab used to QA dashboard and future view states.
     static var viewLabEnabled = true
+
+    /// Forces weekly/yearly insight freshness UI for on-device testing without waiting for
+    /// the real surfacing-memory conditions and cooldowns to line up.
+    static var forceInsightFreshnessBadges = true
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
@@ -32,5 +36,6 @@ enum SQAdminConfig {
     static let useMockHealthData = false
     static let verboseLoggingEnabled = false
     static let viewLabEnabled = false
+    static let forceInsightFreshnessBadges = false
     #endif
 }

@@ -40,6 +40,7 @@ struct SQInsight: Identifiable, Hashable {
     let effect: SQInsightEffect
     let sampleCount: Int
     let rankingScore: Double
+    let isNew: Bool
 
     init(
         id: String,
@@ -60,7 +61,8 @@ struct SQInsight: Identifiable, Hashable {
         confidence: SQInsightConfidence,
         effect: SQInsightEffect,
         sampleCount: Int,
-        rankingScore: Double
+        rankingScore: Double,
+        isNew: Bool = false
     ) {
         self.id = id
         self.familyKey = familyKey ?? id
@@ -81,6 +83,7 @@ struct SQInsight: Identifiable, Hashable {
         self.effect = effect
         self.sampleCount = sampleCount
         self.rankingScore = rankingScore
+        self.isNew = isNew
     }
 
     func withRankingScore(_ updatedRankingScore: Double) -> SQInsight {
@@ -103,7 +106,33 @@ struct SQInsight: Identifiable, Hashable {
             confidence: confidence,
             effect: effect,
             sampleCount: sampleCount,
-            rankingScore: updatedRankingScore
+            rankingScore: updatedRankingScore,
+            isNew: isNew
+        )
+    }
+
+    func withIsNew(_ updatedIsNew: Bool) -> SQInsight {
+        .init(
+            id: id,
+            familyKey: familyKey,
+            insightClass: insightClass,
+            variantPriority: variantPriority,
+            inputSignalId: inputSignalId,
+            outputSignalId: outputSignalId,
+            recommendationFamily: recommendationFamily,
+            title: title,
+            summary: summary,
+            evidenceText: evidenceText,
+            actionText: actionText,
+            driverText: driverText,
+            outcomeText: outcomeText,
+            deltaText: deltaText,
+            category: category,
+            confidence: confidence,
+            effect: effect,
+            sampleCount: sampleCount,
+            rankingScore: rankingScore,
+            isNew: updatedIsNew
         )
     }
 }

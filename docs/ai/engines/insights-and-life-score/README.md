@@ -67,6 +67,9 @@ The current agreed product direction is:
 - `Past Year` is a distilled personal playbook, not an endless list
 - the orb / Life Score should stay fast and simple on the main dashboard
 - tapping the orb should answer "Why this score?" rather than leading with formula math
+- `Today` should use novelty suppression so the same primary briefing does not repeat too often
+- `Past 7 Days` / `Past Year` should use a separate `New` insight freshness model so users have a clear reason to revisit those ranges
+- hidden weekly/yearly freshness should be discoverable from the time-range selector, not only after opening the section
 
 This means the system should optimize for:
 - one strong primary insight on `Today`

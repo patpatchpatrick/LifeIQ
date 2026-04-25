@@ -173,6 +173,36 @@ final class SQDashboardController: SQDashboardInterface {
         timeRangeMenuViewModel.defaultItem = .init(title: AppTimeRange.pastSevenDays.rawValue)
     }
 
+    private func updateTimeRangeMenuBadges(selectedTimeRange: AppTimeRange) {
+        let items = AppTimeRange.allCases
+            .sorted(by: { $0.sortOrder < $1.sortOrder })
+            .map { timeRange in
+                let hasUnseenNewInsights = timeRange.newInsightSurfaceIntent.map {
+                    insightsService.hasUnseenNewInsights(surfaceIntent: $0)
+                } ?? false
+
+                return SQDropDownMenuViewModel.Item(
+                    title: timeRange.rawValue,
+                    badgeText: hasUnseenNewInsights && timeRange != selectedTimeRange ? "New" : nil
+                )
+            }
+
+        let hasHiddenFreshness = AppTimeRange.allCases.contains { timeRange in
+            guard timeRange != selectedTimeRange,
+                  let surfaceIntent = timeRange.newInsightSurfaceIntent else {
+                return false
+            }
+
+            return insightsService.hasUnseenNewInsights(surfaceIntent: surfaceIntent)
+        }
+
+        timeRangeMenuViewModel.updateItems(
+            items,
+            defaultItem: items.first(where: { $0.title == selectedTimeRange.rawValue }) ?? .init(title: selectedTimeRange.rawValue),
+            showsIndicatorDotOnMainButton: hasHiddenFreshness
+        )
+    }
+
     func handleViewLabTrigger() {
         guard SQAdminConfig.viewLabEnabled else { return }
         state.hub.domainEvents.send(.pushDashboardRoute(.viewLab(controller: .init())))
@@ -587,19 +617,54 @@ final class SQDashboardController: SQDashboardInterface {
                     || sleepDashboardData?.averageScore != nil
             )
 
-            let healthIntelligenceInput = SQHealthIntelligenceInput(
-                referenceDate: .now,
-                timeRange: state.selectedTimeRange,
-                metricDefinitions: metricsManager.allMetrics(includeArchived: true),
-                checkIns: past30DaysCheckIns,
-                workouts: past30DaysWorkouts,
-                sleepData: sleepDashboardData,
-                isLoggedIn: userState.isLoggedIn
-            )
+            let referenceDate = Date()
+            let metricDefinitions = metricsManager.allMetrics(includeArchived: true)
+
+            func buildHealthIntelligenceInput(for timeRange: AppTimeRange) -> SQHealthIntelligenceInput {
+                let scopedCheckIns: [SQDailyCheckInStats]
+                let scopedWorkouts: [any SQWorkoutSessionable]
+
+                switch timeRange {
+                case .today, .pastSevenDays, .past30Days:
+                    scopedCheckIns = past30DaysCheckIns
+                    scopedWorkouts = past30DaysWorkouts
+                case .pastYear, .allTime:
+                    scopedCheckIns = pastYearCheckIns
+                    scopedWorkouts = lastYearWorkouts
+                }
+
+                return .init(
+                    referenceDate: referenceDate,
+                    timeRange: timeRange,
+                    metricDefinitions: metricDefinitions,
+                    checkIns: scopedCheckIns,
+                    workouts: scopedWorkouts,
+                    sleepData: sleepDashboardData,
+                    isLoggedIn: userState.isLoggedIn
+                )
+            }
+
+            let healthIntelligenceInput = buildHealthIntelligenceInput(for: state.selectedTimeRange)
 
             let insightsResult = buildDashboardInsightsResult(
                 input: healthIntelligenceInput
             )
+
+            for timeRange in [AppTimeRange.pastSevenDays, .pastYear] where timeRange != state.selectedTimeRange {
+                _ = buildDashboardInsightsResult(
+                    input: buildHealthIntelligenceInput(for: timeRange)
+                )
+            }
+
+            if state.selectedTimeRange.insightSurfaceIntent != .today {
+                insightsService.markVisibleInsightsSeenIfNeeded(
+                    insightsResult.insights,
+                    referenceDate: referenceDate,
+                    surfaceIntent: state.selectedTimeRange.insightSurfaceIntent
+                )
+            }
+
+            updateTimeRangeMenuBadges(selectedTimeRange: state.selectedTimeRange)
 
             lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
                 input: .init(

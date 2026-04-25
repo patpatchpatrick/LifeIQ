@@ -16,6 +16,12 @@ struct SQDropDownButton: View {
             Text(viewModel.title)
                 .sqFont(.body)
                 .sqForegroundColor(.textPrimary)
+
+            if viewModel.showsIndicatorDot {
+                Circle()
+                    .fill(SQColor.dashboardGlowBlue.color)
+                    .frame(width: 8, height: 8)
+            }
             
             SQImageView(image: .init(
                 symbol: .chevronDown,

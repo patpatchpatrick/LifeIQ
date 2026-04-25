@@ -88,6 +88,10 @@ struct SQDashboardInsightRowView: View {
     private var header: some View {
         HStack(alignment: .top, spacing: .SQSpace.s) {
             HStack(spacing: .SQSpace.s) {
+                if viewModel.model.isNew {
+                    SQDashboardNewBadge()
+                }
+
                 SQDashboardTrendBadge(
                     text: viewModel.model.category.badgeTitle,
                     tone: .neutral,

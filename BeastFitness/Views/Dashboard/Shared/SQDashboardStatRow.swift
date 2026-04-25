@@ -151,6 +151,33 @@ struct SQDashboardTrendBadge: View {
     }
 }
 
+struct SQDashboardNewBadge: View {
+    var text: String = "New"
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(SQColor.dashboardGlowBlueForeground.color)
+                .frame(width: 6, height: 6)
+
+            Text(text)
+                .font(.sqFont(.bodyExtraSmall))
+                .sqForegroundColor(.dashboardGlowBlueForeground)
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, .SQSpace.s)
+        .background(
+            Capsule(style: .continuous)
+                .fill(SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.88 : 0.72))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.62 : 0.44), lineWidth: 1)
+        )
+        .shadow(color: SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.20 : 0.10), radius: 10, x: 0, y: 4)
+    }
+}
+
 #Preview("With Emoji") {
     SQDashboardStatRow(
         data: SQStatRowData(

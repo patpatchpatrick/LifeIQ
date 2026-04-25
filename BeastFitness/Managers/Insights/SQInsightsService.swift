@@ -36,6 +36,25 @@ protocol SQInsightSurfacingMemoryStoring {
         surfaceIntent: SQInsightSurfaceIntent
     ) -> SQInsightSurfacingNoveltyState
 
+    func newInsightFamilyKey(
+        from surfacedInsights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> String?
+
+    func markInsightsSeen(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    )
+
+    func hasUnseenNewInsights(
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> Bool
+
     func recordShownFamilyKeys(
         _ familyKeys: [String],
         referenceDate: Date,
@@ -54,6 +73,29 @@ final class SQNoOpInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStoring {
         .init(currentStreak: 0, shownCountLast7: 0, daysSinceLastShown: nil)
     }
 
+    func newInsightFamilyKey(
+        from surfacedInsights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> String? {
+        nil
+    }
+
+    func markInsightsSeen(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {}
+
+    func hasUnseenNewInsights(
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> Bool {
+        false
+    }
+
     func recordShownFamilyKeys(
         _ familyKeys: [String],
         referenceDate: Date,
@@ -63,11 +105,23 @@ final class SQNoOpInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStoring {
 }
 
 final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStoring {
-    private struct Record: Codable {
+    private struct NoveltyRecord: Codable {
         var shownDayKeys: [String]
     }
 
-    private static let storageKey = "insights.today.surfacing-memory.v1"
+    private struct FreshnessSurfaceRecord: Codable {
+        var lastSeenFamilyKeys: [String]
+        var pendingFamilyKey: String?
+        var lastPromotedDayKey: String?
+        var surfacedDayKeysByFamily: [String: [String]]
+    }
+
+    private struct Storage: Codable {
+        var noveltyRecordsByScope: [String: [String: NoveltyRecord]]
+        var freshnessRecordsByScope: [String: [String: FreshnessSurfaceRecord]]
+    }
+
+    private static let storageKey = "insights.surfacing-memory.v2"
 
     private let defaults: UserDefaults
     private let calendar: Calendar
@@ -90,7 +144,7 @@ final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStor
             return .init(currentStreak: 0, shownCountLast7: 0, daysSinceLastShown: nil)
         }
 
-        let record = allRecords()[scopeKey]?[familyKey]
+        let record = storage().noveltyRecordsByScope[scopeKey]?[familyKey]
         let shownDayKeys = Set(record?.shownDayKeys ?? [])
         let referenceDay = calendar.startOfDay(for: referenceDate)
 
@@ -120,6 +174,128 @@ final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStor
         )
     }
 
+    func newInsightFamilyKey(
+        from surfacedInsights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> String? {
+        guard supportsFreshness(for: surfaceIntent) else { return nil }
+
+        let todayKey = dayKey(for: referenceDate)
+        let visibleInsights = surfacedInsights.filter { $0.confidence != .low }
+        let visibleFamilyKeys = visibleInsights.map(\.familyKey)
+
+        var storage = storage()
+        var freshnessRecords = storage.freshnessRecordsByScope[scopeKey] ?? [:]
+        var surfaceRecord = freshnessRecords[freshnessKey(for: surfaceIntent)] ?? .init(
+            lastSeenFamilyKeys: [],
+            pendingFamilyKey: nil,
+            lastPromotedDayKey: nil,
+            surfacedDayKeysByFamily: [:]
+        )
+
+        let minimumDayKey = dayKey(
+            for: calendar.date(
+                byAdding: .day,
+                value: -historyRetentionDays(for: surfaceIntent),
+                to: calendar.startOfDay(for: referenceDate)
+            ) ?? referenceDate
+        )
+
+        for familyKey in Set(visibleFamilyKeys) {
+            var dayKeys = surfaceRecord.surfacedDayKeysByFamily[familyKey] ?? []
+            if !dayKeys.contains(todayKey) {
+                dayKeys.append(todayKey)
+            }
+            surfaceRecord.surfacedDayKeysByFamily[familyKey] = Array(
+                Set(dayKeys.filter { $0 >= minimumDayKey })
+            ).sorted()
+        }
+
+        surfaceRecord.surfacedDayKeysByFamily = surfaceRecord.surfacedDayKeysByFamily
+            .filter { !$0.value.isEmpty }
+
+        var activeNewFamilyKey: String?
+
+        if let pendingFamilyKey = surfaceRecord.pendingFamilyKey {
+            if visibleFamilyKeys.contains(pendingFamilyKey) {
+                activeNewFamilyKey = pendingFamilyKey
+            } else {
+                surfaceRecord.pendingFamilyKey = nil
+            }
+        }
+
+        if activeNewFamilyKey == nil,
+           cooldownSatisfied(
+                lastPromotedDayKey: surfaceRecord.lastPromotedDayKey,
+                referenceDate: referenceDate,
+                minimumDayGap: minimumDaysBetweenNewInsights(for: surfaceIntent)
+           ) {
+            let seenFamilyKeys = Set(surfaceRecord.lastSeenFamilyKeys)
+
+            if let candidate = visibleInsights.first(where: { insight in
+                !seenFamilyKeys.contains(insight.familyKey)
+                && stableSurfacingDayCount(
+                    for: insight.familyKey,
+                    in: surfaceRecord
+                ) >= minimumStableDayCount(for: surfaceIntent)
+            }) {
+                surfaceRecord.pendingFamilyKey = candidate.familyKey
+                surfaceRecord.lastPromotedDayKey = todayKey
+                activeNewFamilyKey = candidate.familyKey
+            }
+        }
+
+        freshnessRecords[freshnessKey(for: surfaceIntent)] = surfaceRecord
+        storage.freshnessRecordsByScope[scopeKey] = freshnessRecords
+        save(storage)
+
+        return activeNewFamilyKey
+    }
+
+    func markInsightsSeen(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {
+        guard supportsFreshness(for: surfaceIntent) else { return }
+        guard !insights.isEmpty else { return }
+
+        var storage = storage()
+        var freshnessRecords = storage.freshnessRecordsByScope[scopeKey] ?? [:]
+        var surfaceRecord = freshnessRecords[freshnessKey(for: surfaceIntent)] ?? .init(
+            lastSeenFamilyKeys: [],
+            pendingFamilyKey: nil,
+            lastPromotedDayKey: nil,
+            surfacedDayKeysByFamily: [:]
+        )
+
+        let visibleFamilyKeys = Array(Set(insights.map(\.familyKey))).sorted()
+        surfaceRecord.lastSeenFamilyKeys = visibleFamilyKeys
+
+        if let pendingFamilyKey = surfaceRecord.pendingFamilyKey,
+           visibleFamilyKeys.contains(pendingFamilyKey) {
+            surfaceRecord.pendingFamilyKey = nil
+        }
+
+        freshnessRecords[freshnessKey(for: surfaceIntent)] = surfaceRecord
+        storage.freshnessRecordsByScope[scopeKey] = freshnessRecords
+        save(storage)
+    }
+
+    func hasUnseenNewInsights(
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> Bool {
+        guard supportsFreshness(for: surfaceIntent) else { return false }
+
+        return storage()
+            .freshnessRecordsByScope[scopeKey]?[freshnessKey(for: surfaceIntent)]?
+            .pendingFamilyKey != nil
+    }
+
     func recordShownFamilyKeys(
         _ familyKeys: [String],
         referenceDate: Date,
@@ -133,11 +309,11 @@ final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStor
         let minimumDay = calendar.date(byAdding: .day, value: -21, to: calendar.startOfDay(for: referenceDate)) ?? referenceDate
         let minimumDayKey = dayKey(for: minimumDay)
 
-        var records = allRecords()
-        var scopeRecords = records[scopeKey] ?? [:]
+        var storage = storage()
+        var noveltyRecords = storage.noveltyRecordsByScope[scopeKey] ?? [:]
 
         for familyKey in Set(familyKeys) {
-            var record = scopeRecords[familyKey] ?? .init(shownDayKeys: [])
+            var record = noveltyRecords[familyKey] ?? .init(shownDayKeys: [])
 
             if !record.shownDayKeys.contains(todayKey) {
                 record.shownDayKeys.append(todayKey)
@@ -147,24 +323,111 @@ final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStor
                 Set(record.shownDayKeys.filter { $0 >= minimumDayKey })
             )
             .sorted()
-            scopeRecords[familyKey] = record
+            noveltyRecords[familyKey] = record
         }
 
-        records[scopeKey] = scopeRecords
-        save(records)
+        storage.noveltyRecordsByScope[scopeKey] = noveltyRecords
+        save(storage)
     }
 
-    private func allRecords() -> [String: [String: Record]] {
+    private func storage() -> Storage {
         guard let data = defaults.data(forKey: Self.storageKey) else {
-            return [:]
+            return .init(noveltyRecordsByScope: [:], freshnessRecordsByScope: [:])
         }
 
-        return (try? JSONDecoder().decode([String: [String: Record]].self, from: data)) ?? [:]
+        return (try? JSONDecoder().decode(Storage.self, from: data))
+        ?? .init(noveltyRecordsByScope: [:], freshnessRecordsByScope: [:])
     }
 
-    private func save(_ records: [String: [String: Record]]) {
-        guard let data = try? JSONEncoder().encode(records) else { return }
+    private func save(_ storage: Storage) {
+        guard let data = try? JSONEncoder().encode(storage) else { return }
         defaults.set(data, forKey: Self.storageKey)
+    }
+
+    private func supportsFreshness(for surfaceIntent: SQInsightSurfaceIntent) -> Bool {
+        switch surfaceIntent {
+        case .today:
+            return false
+        case .pastWeek, .pastYear:
+            return true
+        }
+    }
+
+    private func minimumDaysBetweenNewInsights(for surfaceIntent: SQInsightSurfaceIntent) -> Int {
+        switch surfaceIntent {
+        case .today:
+            return 0
+        case .pastWeek:
+            return 2
+        case .pastYear:
+            return 10
+        }
+    }
+
+    private func minimumStableDayCount(for surfaceIntent: SQInsightSurfaceIntent) -> Int {
+        switch surfaceIntent {
+        case .today:
+            return 1
+        case .pastWeek, .pastYear:
+            return 2
+        }
+    }
+
+    private func historyRetentionDays(for surfaceIntent: SQInsightSurfaceIntent) -> Int {
+        switch surfaceIntent {
+        case .today:
+            return 30
+        case .pastWeek:
+            return 45
+        case .pastYear:
+            return 400
+        }
+    }
+
+    private func stableSurfacingDayCount(
+        for familyKey: String,
+        in surfaceRecord: FreshnessSurfaceRecord
+    ) -> Int {
+        Set(surfaceRecord.surfacedDayKeysByFamily[familyKey] ?? []).count
+    }
+
+    private func cooldownSatisfied(
+        lastPromotedDayKey: String?,
+        referenceDate: Date,
+        minimumDayGap: Int
+    ) -> Bool {
+        guard minimumDayGap > 0 else { return true }
+        guard let lastPromotedDayKey,
+              let lastPromotedDate = date(fromDayKey: lastPromotedDayKey) else {
+            return true
+        }
+
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        let components = calendar.dateComponents([.day], from: lastPromotedDate, to: referenceDay)
+        let elapsedDays = components.day ?? minimumDayGap
+        return elapsedDays >= minimumDayGap
+    }
+
+    private func freshnessKey(for surfaceIntent: SQInsightSurfaceIntent) -> String {
+        switch surfaceIntent {
+        case .today:
+            return "today"
+        case .pastWeek:
+            return "pastWeek"
+        case .pastYear:
+            return "pastYear"
+        }
+    }
+
+    private func date(fromDayKey dayKey: String) -> Date? {
+        let parts = dayKey.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+
+        return calendar.date(from: DateComponents(
+            year: parts[0],
+            month: parts[1],
+            day: parts[2]
+        ))
     }
 
     private func dayKey(for date: Date) -> String {
@@ -179,6 +442,12 @@ final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStor
 @MainActor
 protocol SQInsightsServicing {
     func dashboardInsights(input: SQHealthIntelligenceInput) -> SQInsightsResult
+    func markVisibleInsightsSeenIfNeeded(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    )
+    func hasUnseenNewInsights(surfaceIntent: SQInsightSurfaceIntent) -> Bool
 }
 
 @MainActor
@@ -255,8 +524,13 @@ final class SQInsightsService: SQInsightsServicing {
             referenceDate: input.referenceDate,
             surfaceIntent: input.timeRange.insightSurfaceIntent
         )
-        let insights = curatedInsights(
+        let curatedInsights = curatedInsights(
             from: noveltyAdjustedInsights,
+            surfaceIntent: input.timeRange.insightSurfaceIntent
+        )
+        let insights = freshnessAdjustedInsights(
+            from: curatedInsights,
+            referenceDate: input.referenceDate,
             surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let actions = curatedActions(
@@ -353,6 +627,34 @@ final class SQInsightsService: SQInsightsServicing {
             readinessItems: readinessItems,
             analyzedDayCount: effectiveAnalyzedDayCount,
             requiredMinimumDayCount: minimumAnalyzedDayCount
+        )
+    }
+
+    func markVisibleInsightsSeenIfNeeded(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {
+        guard !SQAdminConfig.forceInsightFreshnessBadges else { return }
+        guard surfaceIntent != .today else { return }
+        guard !insights.isEmpty else { return }
+
+        surfacingMemoryStore.markInsightsSeen(
+            insights,
+            referenceDate: referenceDate,
+            scopeKey: noveltyScopeKey,
+            surfaceIntent: surfaceIntent
+        )
+    }
+
+    func hasUnseenNewInsights(surfaceIntent: SQInsightSurfaceIntent) -> Bool {
+        if SQAdminConfig.forceInsightFreshnessBadges {
+            return surfaceIntent != .today
+        }
+
+        return surfacingMemoryStore.hasUnseenNewInsights(
+            scopeKey: noveltyScopeKey,
+            surfaceIntent: surfaceIntent
         )
     }
 
@@ -676,6 +978,38 @@ final class SQInsightsService: SQInsightsServicing {
                 return insight.withRankingScore(adjustedScore)
             }
             .sorted(by: { sortInsightsForDisplay($0, $1) })
+    }
+
+    private func freshnessAdjustedInsights(
+        from insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsight] {
+        guard surfaceIntent != .today else { return insights }
+
+        if SQAdminConfig.forceInsightFreshnessBadges {
+            guard let firstInsight = insights.first else { return insights }
+            return insights.map { $0.withIsNew($0.id == firstInsight.id) }
+        }
+
+        guard let newFamilyKey = surfacingMemoryStore.newInsightFamilyKey(
+            from: insights,
+            referenceDate: referenceDate,
+            scopeKey: noveltyScopeKey,
+            surfaceIntent: surfaceIntent
+        ) else {
+            return insights
+        }
+
+        return insights
+            .map { $0.withIsNew($0.familyKey == newFamilyKey) }
+            .sorted { lhs, rhs in
+                if lhs.isNew != rhs.isNew {
+                    return lhs.isNew && !rhs.isNew
+                }
+
+                return sortInsightsForDisplay(lhs, rhs)
+            }
     }
 
     private func recordSurfacedInsightsIfNeeded(

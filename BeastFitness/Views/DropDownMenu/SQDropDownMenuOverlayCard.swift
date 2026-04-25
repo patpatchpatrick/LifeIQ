@@ -56,6 +56,15 @@ struct SQDropDownMenuOverlayCard: View {
                         Text(item.title)
                             .sqFont(.body)
                             .sqForegroundColor(.textPrimary)
+
+                        if let badgeText = item.badgeText {
+                            SQDashboardNewBadge(text: badgeText)
+                        } else if item.showsIndicatorDot {
+                            Circle()
+                                .fill(SQColor.dashboardGlowBlue.color)
+                                .frame(width: 8, height: 8)
+                        }
+
                         Spacer()
                         if item.title == menu.selectedTitle {
                             SQImageView(

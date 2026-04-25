@@ -100,6 +100,14 @@ The current-state analyzer is allowed to evaluate either:
 - repeated families get a soft ranking penalty on following days
 - same-day dashboard reloads should not keep decaying novelty again
 
+Weekly/yearly insight freshness now has a separate first-pass memory layer:
+- `Past 7 Days` and `Past Year` still use the same core insights engine
+- they do not use `Today` novelty suppression
+- instead, they can mark one surfaced insight as `New` when it is newly relevant since the last time that surface was viewed
+- `New` stays attached until the user actually opens that surface and the insight is still present there
+- `Past 7 Days` and `Past Year` use different cooldowns, so yearly `New` insights appear much less often than weekly ones
+- the time-range selector can surface that freshness state via a subtle hidden-range indicator
+
 The current relationship registry is also broader than the original vice-only seed set. It now includes:
 - vice and carryover relationships
 - sleep -> recovery / mood / clarity relationships
