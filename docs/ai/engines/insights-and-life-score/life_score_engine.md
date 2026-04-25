@@ -67,6 +67,12 @@ These drivers are important because they create a clean bridge between:
 - insight explanation
 - user-facing action suggestions
 
+The app now has a first shared driver layer in the insights engine:
+- `SQInsightDriver`
+- `SQInsightDriverBuilder`
+
+That layer should remain reusable by Life Score rather than reimplemented separately inside dashboard-only score code.
+
 ## Dashboard Use
 
 On the dashboard, the orb should eventually support:

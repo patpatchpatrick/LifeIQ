@@ -9,7 +9,8 @@ import Foundation
 
 struct SQInsightCurrentStateAnalyzer {
     private struct SignalObservation {
-        let value: Double
+        let primaryValue: Double
+        let secondaryValue: Double?
     }
 
     func analyze(
@@ -19,10 +20,10 @@ struct SQInsightCurrentStateAnalyzer {
         surfaceIntent: SQInsightSurfaceIntent,
         surfacingPolicy: SQInsightSurfacingPolicy
     ) -> SQInsightAnalysisResult {
-        let observations = snapshots.compactMap { snapshot -> SignalObservation? in
-            guard let value = snapshot.rawSignalValue(for: relationship.inputSignalId) else { return nil }
-            return .init(value: value)
-        }
+        let observations = signalObservations(
+            from: snapshots,
+            relationship: relationship
+        )
 
         let recentCount = relationship.recentWindowDayCount
         let baselineCount = relationship.baselineWindowDayCount
@@ -42,8 +43,8 @@ struct SQInsightCurrentStateAnalyzer {
 
         guard recentValues.count >= recentCount,
               baselineValues.count >= minimumRequired,
-              let recentAverage = average(of: recentValues.map(\.value)),
-              let baselineAverage = average(of: baselineValues.map(\.value)) else {
+              let recentAverage = average(of: recentValues.map(\.primaryValue)),
+              let baselineAverage = average(of: baselineValues.map(\.primaryValue)) else {
             return .readiness(.init(
                 id: variant.id,
                 title: "\(relationship.inputTitle) Today",
@@ -54,6 +55,52 @@ struct SQInsightCurrentStateAnalyzer {
 
         let delta = recentAverage - baselineAverage
         let effectMagnitude = abs(delta)
+        let usesSecondarySignal = relationship.outputSignalId != relationship.inputSignalId
+
+        let secondaryRecentAverage: Double?
+        let secondaryBaselineAverage: Double?
+        let secondaryDelta: Double?
+        let secondaryEffect: SQInsightEffect?
+        let combinedMagnitude: Double
+
+        if usesSecondarySignal {
+            guard let recentSecondary = average(of: recentValues.compactMap(\.secondaryValue)),
+                  let baselineSecondary = average(of: baselineValues.compactMap(\.secondaryValue)) else {
+                return .readiness(.init(
+                    id: variant.id,
+                    title: "\(relationship.inputTitle) Today",
+                    status: .needsMoreData,
+                    summary: "Need both \(relationship.inputTitle.lowercased()) and \(relationship.outputTitle.lowercased()) data to surface this current-state read."
+                ))
+            }
+
+            let candidateSecondaryDelta = recentSecondary - baselineSecondary
+            let candidateSecondaryMagnitude = abs(candidateSecondaryDelta)
+
+            guard candidateSecondaryMagnitude >= relationship.minimumEffectMagnitude else {
+                return .readiness(.init(
+                    id: variant.id,
+                    title: "\(relationship.inputTitle) Today",
+                    status: .weakSignal,
+                    summary: "\(relationship.outputTitle) is still close to baseline, so the stacked current-state signal is not strong enough yet."
+                ))
+            }
+
+            secondaryRecentAverage = recentSecondary
+            secondaryBaselineAverage = baselineSecondary
+            secondaryDelta = candidateSecondaryDelta
+            secondaryEffect = directionalEffect(
+                delta: candidateSecondaryDelta,
+                expectedEffect: relationship.expectedEffect
+            )
+            combinedMagnitude = effectMagnitude + candidateSecondaryMagnitude
+        } else {
+            secondaryRecentAverage = nil
+            secondaryBaselineAverage = nil
+            secondaryDelta = nil
+            secondaryEffect = nil
+            combinedMagnitude = effectMagnitude
+        }
 
         guard effectMagnitude >= relationship.minimumEffectMagnitude else {
             return .readiness(.init(
@@ -69,7 +116,11 @@ struct SQInsightCurrentStateAnalyzer {
             expectedEffect: relationship.expectedEffect
         )
 
-        guard shouldSurface(effect: effect, for: relationship.insightClass) else {
+        guard shouldSurface(
+            primaryEffect: effect,
+            secondaryEffect: secondaryEffect,
+            for: relationship.insightClass
+        ) else {
             return .readiness(.init(
                 id: variant.id,
                 title: "\(relationship.inputTitle) Today",
@@ -81,11 +132,11 @@ struct SQInsightCurrentStateAnalyzer {
         let sampleCount = recentValues.count + baselineValues.count
         let confidence = SQInsightScoring.confidence(
             sampleCount: sampleCount,
-            effectMagnitude: effectMagnitude
+            effectMagnitude: combinedMagnitude
         )
         let baseRankingScore = SQInsightScoring.rankingScore(
             sampleCount: sampleCount,
-            effectMagnitude: effectMagnitude,
+            effectMagnitude: combinedMagnitude,
             confidence: confidence
         )
         let rankingScore = surfacingPolicy.adjustedRankingScore(
@@ -102,19 +153,29 @@ struct SQInsightCurrentStateAnalyzer {
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
                 title: currentStateTitle(
-                    relationship: relationship,
-                    effectMagnitude: effectMagnitude
+                    relationship: relationship
                 ),
                 summary: currentStateSummary(
                     relationship: relationship,
                     delta: delta,
-                    effectMagnitude: effectMagnitude
+                    effectMagnitude: effectMagnitude,
+                    secondaryDelta: secondaryDelta
                 ),
-                evidenceText: "Recent \(relationship.inputTitle.lowercased()) averaged \(format(recentAverage)) vs a baseline average of \(format(baselineAverage)) across the prior \(baselineValues.count) logged \(relationship.bucketUnitName).",
+                evidenceText: evidenceText(
+                    relationship: relationship,
+                    recentAverage: recentAverage,
+                    baselineAverage: baselineAverage,
+                    secondaryRecentAverage: secondaryRecentAverage,
+                    secondaryBaselineAverage: secondaryBaselineAverage,
+                    baselineCount: baselineValues.count
+                ),
                 actionText: currentStateActionText(for: relationship),
                 driverText: relationship.driverText,
                 outcomeText: relationship.outcomeText,
-                deltaText: signedDeltaText(delta),
+                deltaText: currentStateDeltaText(
+                    primaryDelta: delta,
+                    secondaryDelta: secondaryDelta
+                ),
                 category: relationship.category,
                 confidence: confidence,
                 effect: effect,
@@ -139,28 +200,34 @@ struct SQInsightCurrentStateAnalyzer {
     }
 
     private func shouldSurface(
-        effect: SQInsightEffect,
+        primaryEffect: SQInsightEffect,
+        secondaryEffect: SQInsightEffect?,
         for insightClass: SQInsightClass
     ) -> Bool {
         switch insightClass {
         case .opportunity:
-            return effect == .positive
+            return primaryEffect == .positive && (secondaryEffect == nil || secondaryEffect == .positive)
         case .risk:
-            return effect == .negative
+            return primaryEffect == .negative && (secondaryEffect == nil || secondaryEffect == .negative)
         default:
             return false
         }
     }
 
     private func currentStateTitle(
-        relationship: SQInsightRelationshipDefinition,
-        effectMagnitude: Double
+        relationship: SQInsightRelationshipDefinition
     ) -> String {
+        let usesSecondarySignal = relationship.outputSignalId != relationship.inputSignalId
+
         switch relationship.insightClass {
         case .opportunity:
-            return "\(relationship.inputTitle) is supporting today"
+            return usesSecondarySignal
+                ? "\(relationship.inputTitle) and \(relationship.outputTitle) are lining up today"
+                : "\(relationship.inputTitle) is supporting today"
         case .risk:
-            return "\(relationship.inputTitle) is putting pressure on today"
+            return usesSecondarySignal
+                ? "\(relationship.inputTitle) and \(relationship.outputTitle) are both under pressure today"
+                : "\(relationship.inputTitle) is putting pressure on today"
         default:
             return "\(relationship.inputTitle) stands out today"
         }
@@ -169,9 +236,24 @@ struct SQInsightCurrentStateAnalyzer {
     private func currentStateSummary(
         relationship: SQInsightRelationshipDefinition,
         delta: Double,
-        effectMagnitude: Double
+        effectMagnitude: Double,
+        secondaryDelta: Double?
     ) -> String {
         let directionText = delta >= 0 ? "above" : "below"
+        let usesSecondarySignal = relationship.outputSignalId != relationship.inputSignalId
+
+        if usesSecondarySignal, let secondaryDelta {
+            let secondaryDirectionText = secondaryDelta >= 0 ? "above" : "below"
+
+            switch relationship.insightClass {
+            case .opportunity:
+                return "\(relationship.inputTitle) is \(directionText) baseline and \(relationship.outputTitle.lowercased()) is \(secondaryDirectionText) baseline, which looks supportive right now."
+            case .risk:
+                return "\(relationship.inputTitle) is \(directionText) baseline and \(relationship.outputTitle.lowercased()) is \(secondaryDirectionText) baseline, which looks like a stacked drag today."
+            default:
+                break
+            }
+        }
 
         switch relationship.insightClass {
         case .opportunity:
@@ -194,6 +276,57 @@ struct SQInsightCurrentStateAnalyzer {
         default:
             return relationship.subtleActionText
         }
+    }
+
+    private func signalObservations(
+        from snapshots: [SQInsightFeatureSnapshot],
+        relationship: SQInsightRelationshipDefinition
+    ) -> [SignalObservation] {
+        snapshots.compactMap { snapshot in
+            guard let primaryValue = snapshot.rawSignalValue(for: relationship.inputSignalId) else {
+                return nil
+            }
+
+            let secondaryValue: Double?
+            if relationship.outputSignalId != relationship.inputSignalId {
+                secondaryValue = snapshot.rawSignalValue(for: relationship.outputSignalId)
+                guard secondaryValue != nil else { return nil }
+            } else {
+                secondaryValue = nil
+            }
+
+            return .init(
+                primaryValue: primaryValue,
+                secondaryValue: secondaryValue
+            )
+        }
+    }
+
+    private func evidenceText(
+        relationship: SQInsightRelationshipDefinition,
+        recentAverage: Double,
+        baselineAverage: Double,
+        secondaryRecentAverage: Double?,
+        secondaryBaselineAverage: Double?,
+        baselineCount: Int
+    ) -> String {
+        if relationship.outputSignalId != relationship.inputSignalId,
+           let secondaryRecentAverage,
+           let secondaryBaselineAverage {
+            return "Recent \(relationship.inputTitle.lowercased()) averaged \(format(recentAverage)) vs \(format(baselineAverage)) at baseline, while \(relationship.outputTitle.lowercased()) averaged \(format(secondaryRecentAverage)) vs \(format(secondaryBaselineAverage)) across the prior \(baselineCount) logged \(relationship.bucketUnitName)."
+        }
+
+        return "Recent \(relationship.inputTitle.lowercased()) averaged \(format(recentAverage)) vs a baseline average of \(format(baselineAverage)) across the prior \(baselineCount) logged \(relationship.bucketUnitName)."
+    }
+
+    private func currentStateDeltaText(
+        primaryDelta: Double,
+        secondaryDelta: Double?
+    ) -> String {
+        let primaryText = signedDeltaText(primaryDelta)
+
+        guard let secondaryDelta else { return primaryText }
+        return "\(primaryText) / \(signedDeltaText(secondaryDelta))"
     }
 
     private func average(of values: [Double]) -> Double? {

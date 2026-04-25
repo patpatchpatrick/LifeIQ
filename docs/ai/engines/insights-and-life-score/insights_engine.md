@@ -42,8 +42,10 @@ The app now has a rebuilt first-pass insights engine with the new architecture d
 Current code entry points:
 - active relationship definitions now live in [SQInsightRelationshipRegistry.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipRegistry.swift)
 - relationship and surface metadata now live in [SQInsightRelationshipDefinition.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightRelationshipDefinition.swift)
+- shared driver models now live in [SQInsightDriver.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightDriver.swift)
 - shared feature snapshots now live in [SQInsightFeatureSnapshot.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightFeatureSnapshot.swift)
 - feature construction now lives in [SQInsightFeatureBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightFeatureBuilder.swift)
+- shared driver construction now lives in [SQInsightDriverBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightDriverBuilder.swift)
 - relationship analysis now lives in [SQInsightRelationshipAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipAnalyzer.swift)
 - recent trend analysis now lives in [SQInsightTrendAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightTrendAnalyzer.swift)
 - baseline deviation analysis now lives in [SQInsightBaselineAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightBaselineAnalyzer.swift)
@@ -61,6 +63,7 @@ The old evaluator/config stack has been replaced as the live runtime path.
 The current runtime system now follows this mapping:
 - `SQInsightFeatureSnapshot` -> shared day feature layer
 - `SQInsightFeatureBuilder` -> normalized feature construction
+- `SQInsightDriver` / `SQInsightDriverBuilder` -> shared “what is helping / what is dragging” layer for insights + future Life Score alignment
 - `SQInsightRelationshipRegistry` -> active relationship source of truth
 - `SQInsightRelationshipAnalyzer` -> reusable analyzer for relationship / bucket-comparison insights
 - `SQInsightTrendAnalyzer` -> reusable analyzer for recent trend insights
@@ -69,6 +72,17 @@ The current runtime system now follows this mapping:
 - `SQInsightCurrentStateAnalyzer` -> reusable analyzer for `Today` risk/opportunity insights
 - `SQInsightAnalysisEngine` -> candidate generation and result orchestration
 - `SQInsightSurfacingPolicy` -> range-aware surfacing policy
+
+The current-state analyzer is allowed to evaluate either:
+- a single signal against baseline
+- or a stacked pair of aligned signals against baseline for stronger `Today` cards
+
+`SQInsightsService` now applies a separate surfacing pass after candidate generation:
+- `Today` is curated like a briefing
+- `Past 7 Days` is curated like a recent story
+- `Past Year` is curated like a longer-term playbook
+
+`SQInsightsResult` also now carries a curated driver list alongside surfaced cards. That driver list is not a UI surface yet, but it is the intended shared bridge into future orb / Life Score explanation.
 
 That is now the implementation baseline going forward.
 

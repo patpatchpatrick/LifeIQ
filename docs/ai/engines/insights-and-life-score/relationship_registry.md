@@ -126,3 +126,7 @@ The runtime now uses that registry for more than one analyzer family:
 - baseline deviation
 - follow-up / experiment outcome
 - current-state risk / opportunity
+
+For current-state entries, the registry can now define either:
+- a single-signal `Today` assessment
+- or a stacked two-signal `Today` assessment when both signals should align before surfacing

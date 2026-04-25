@@ -21,6 +21,7 @@ protocol SQInsightsServicing {
 @MainActor
 final class SQInsightsService: SQInsightsServicing {
     private let featureBuilder: SQInsightFeatureBuilding
+    private let driverBuilder: SQInsightDriverBuilding
     private let analysisEngine: SQInsightAnalyzing
     private let relationshipRegistry: SQInsightRelationshipRegistry
     private let minimumAnalyzedDayCount = 10
@@ -28,10 +29,12 @@ final class SQInsightsService: SQInsightsServicing {
 
     init(
         featureBuilder: SQInsightFeatureBuilding = SQInsightFeatureBuilder(),
+        driverBuilder: SQInsightDriverBuilding = SQInsightDriverBuilder(),
         analysisEngine: SQInsightAnalyzing = SQInsightAnalysisEngine(),
         relationshipRegistry: SQInsightRelationshipRegistry = .init()
     ) {
         self.featureBuilder = featureBuilder
+        self.driverBuilder = driverBuilder
         self.analysisEngine = analysisEngine
         self.relationshipRegistry = relationshipRegistry
         self.relevantMetricIds = relationshipRegistry.relevantSignalIds
@@ -63,8 +66,19 @@ final class SQInsightsService: SQInsightsServicing {
             relationships: relationshipRegistry.activeRelationships,
             surfaceIntent: timeRange.insightSurfaceIntent
         )
+        let drivers = curatedDrivers(
+            from: driverBuilder.buildDrivers(
+                from: snapshots,
+                surfaceIntent: timeRange.insightSurfaceIntent
+            ),
+            surfaceIntent: timeRange.insightSurfaceIntent
+        )
         let generatedInsights = analysisOutput.generatedInsights
-        let insights = deduplicatedInsights(from: generatedInsights)
+        let deduplicatedInsights = deduplicatedInsights(from: generatedInsights)
+        let insights = curatedInsights(
+            from: deduplicatedInsights,
+            surfaceIntent: timeRange.insightSurfaceIntent
+        )
         let readinessItems = analysisOutput.readinessItems
 
         if SQBuildOverrides.verboseLoggingEnabled {
@@ -91,6 +105,14 @@ final class SQInsightsService: SQInsightsServicing {
                     context: .dashboard
                 )
             }
+
+            for driver in drivers {
+                SQLogger.shared.log(
+                    "Surfaced driver [\(driver.title)] direction=\(driver.direction == .supportive ? "supportive" : "drag") delta=\(driver.deltaText) rank=\(String(format: "%.1f", driver.rankingScore))",
+                    .debug,
+                    context: .dashboard
+                )
+            }
         }
 
         let effectiveAnalyzedDayCount = max(analyzedDayCount, relevantDayCount)
@@ -112,6 +134,7 @@ final class SQInsightsService: SQInsightsServicing {
         return .init(
             state: state,
             insights: insights,
+            drivers: drivers,
             readinessItems: readinessItems,
             analyzedDayCount: effectiveAnalyzedDayCount,
             requiredMinimumDayCount: minimumAnalyzedDayCount
@@ -176,6 +199,120 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return lhs.sampleCount > rhs.sampleCount
+    }
+
+    private func curatedInsights(
+        from deduplicatedInsights: [SQInsight],
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsight] {
+        switch surfaceIntent {
+        case .today:
+            return curatedTodayInsights(from: deduplicatedInsights)
+        case .pastWeek:
+            return curatedWeeklyInsights(from: deduplicatedInsights)
+        case .pastYear:
+            return curatedYearlyInsights(from: deduplicatedInsights)
+        }
+    }
+
+    // `Today` should read like a briefing: one current-state card, one recent-change card,
+    // and then the strongest remaining pattern instead of a flat list of similar cards.
+    private func curatedTodayInsights(from deduplicatedInsights: [SQInsight]) -> [SQInsight] {
+        curateInsights(
+            from: deduplicatedInsights,
+            preferredBuckets: [
+                [.risk, .opportunity],
+                [.followUp, .trend, .baselineChange],
+                [.relationship]
+            ],
+            maximumCount: 4
+        )
+    }
+
+    private func curatedWeeklyInsights(from deduplicatedInsights: [SQInsight]) -> [SQInsight] {
+        curateInsights(
+            from: deduplicatedInsights,
+            preferredBuckets: [
+                [.trend, .baselineChange],
+                [.followUp, .risk, .opportunity],
+                [.relationship]
+            ],
+            maximumCount: 6
+        )
+    }
+
+    private func curatedYearlyInsights(from deduplicatedInsights: [SQInsight]) -> [SQInsight] {
+        curateInsights(
+            from: deduplicatedInsights,
+            preferredBuckets: [
+                [.relationship],
+                [.baselineChange],
+                [.trend, .followUp]
+            ],
+            maximumCount: 5
+        )
+    }
+
+    private func curateInsights(
+        from insights: [SQInsight],
+        preferredBuckets: [Set<SQInsightClass>],
+        maximumCount: Int
+    ) -> [SQInsight] {
+        var selected = [SQInsight]()
+        var usedIds = Set<String>()
+
+        for bucket in preferredBuckets {
+            guard let candidate = insights.first(where: { bucket.contains($0.insightClass) && !usedIds.contains($0.id) }) else {
+                continue
+            }
+
+            selected.append(candidate)
+            usedIds.insert(candidate.id)
+        }
+
+        for candidate in insights where !usedIds.contains(candidate.id) {
+            guard selected.count < maximumCount else { break }
+            selected.append(candidate)
+            usedIds.insert(candidate.id)
+        }
+
+        return selected
+    }
+
+    private func curatedDrivers(
+        from drivers: [SQInsightDriver],
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsightDriver] {
+        let maximumCount: Int
+        switch surfaceIntent {
+        case .today:
+            maximumCount = 3
+        case .pastWeek:
+            maximumCount = 4
+        case .pastYear:
+            maximumCount = 4
+        }
+
+        var selected = [SQInsightDriver]()
+        var usedDirections = Set<SQInsightDriverDirection>()
+
+        for driver in drivers {
+            if usedDirections.count < 2, !usedDirections.contains(driver.direction) {
+                selected.append(driver)
+                usedDirections.insert(driver.direction)
+            }
+
+            if selected.count >= maximumCount {
+                return selected
+            }
+        }
+
+        for driver in drivers where !selected.contains(driver) {
+            guard selected.count < maximumCount else { break }
+            selected.append(driver)
+        }
+
+        return selected
     }
 
 }
