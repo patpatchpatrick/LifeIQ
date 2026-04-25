@@ -552,25 +552,30 @@ final class SQDashboardController: SQDashboardInterface {
                     || sleepDashboardData?.averageScore != nil
             )
 
+            let insightsResult = buildDashboardInsightsResult(
+                checkIns: past30DaysCheckIns,
+                workouts: past30DaysWorkouts
+            )
+
             lifeScoreViewModel = buildLifeScoreViewModel(
                 past7DaysCheckIns: past7DaysCheckIns,
                 todaysWorkouts: todaysWorkouts,
                 lastWeekWorkouts: lastWeekWorkouts,
                 sleepData: sleepDashboardData,
-                hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn
+                hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn,
+                insightDrivers: insightsResult.drivers
             )
 
             let sectionGroups = try await buildSectionGroups(
                 checkIns: currentCheckIns,
                 priorCheckIns: priorCheckIns,
-                insightCheckIns: past30DaysCheckIns,
+                insightsResult: insightsResult,
                 vo2MaxSamples: currentVO2MaxSamples,
                 vo2MaxAllTime: vo2MaxAllTime,
                 todaysWorkouts: todaysWorkouts,
                 yesterdaysWorkouts: yesterdaysWorkouts,
                 workouts: currentWorkouts,
                 priorWorkouts: priorWorkouts,
-                insightWorkouts: past30DaysWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
                 sleepData: sleepDashboardData,
                 sleepAccessStatus: sleepAccessStatus,
@@ -1940,14 +1945,13 @@ final class SQDashboardController: SQDashboardInterface {
     private func buildSectionGroups(
         checkIns: [SQDailyCheckInStats],
         priorCheckIns: [SQDailyCheckInStats],
-        insightCheckIns: [SQDailyCheckInStats],
+        insightsResult: SQInsightsResult,
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         todaysWorkouts: [SQWorkoutSessionable],
         yesterdaysWorkouts: [SQWorkoutSessionable],
         workouts: [SQWorkoutSessionable],
         priorWorkouts: [SQWorkoutSessionable],
-        insightWorkouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
         sleepAccessStatus: SQHealthKitDashboardAccessStatus,
@@ -1994,10 +1998,7 @@ final class SQDashboardController: SQDashboardInterface {
             sectionGroups.append(dailyStatsGroup)
         }
 
-        let insightsSection = buildInsightsSubsection(
-            checkIns: insightCheckIns,
-            workouts: insightWorkouts
-        )
+        let insightsSection = buildInsightsSubsection(result: insightsResult)
 
         let insightsGroup = SQDashboardSectionGroupViewModel(
             id: "insights",
@@ -2145,16 +2146,21 @@ final class SQDashboardController: SQDashboardInterface {
         return sectionGroups
     }
 
-    private func buildInsightsSubsection(
+    private func buildDashboardInsightsResult(
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable]
-    ) -> SQDashboardSubsectionViewModel {
-        let result = insightsService.dashboardInsights(
+    ) -> SQInsightsResult {
+        insightsService.dashboardInsights(
             checkIns: checkIns,
             workouts: workouts,
             metricDefinitions: metricsManager.allMetrics(includeArchived: true),
             timeRange: state.selectedTimeRange
         )
+    }
+
+    private func buildInsightsSubsection(
+        result: SQInsightsResult
+    ) -> SQDashboardSubsectionViewModel {
 
         let emptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel?
         switch result.state {

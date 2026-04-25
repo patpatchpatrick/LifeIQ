@@ -17,6 +17,9 @@ struct SQLifeScoreDetailView: View {
             VStack(alignment: .leading, spacing: .SQSpace.l) {
                 heroCard
                 overviewCard
+                if !controller.viewModel.drivers.isEmpty {
+                    driversCard
+                }
                 breakdownSection
                 formulaCard
             }
@@ -97,6 +100,36 @@ struct SQLifeScoreDetailView: View {
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
+    private var driversCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("What's Driving It")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("These are the strongest shared signals the dashboard is using right now to understand what looks supportive versus what looks like a drag.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !controller.viewModel.supportiveDrivers.isEmpty {
+                driverGroup(
+                    title: "Helping Right Now",
+                    drivers: controller.viewModel.supportiveDrivers
+                )
+            }
+
+            if !controller.viewModel.dragDrivers.isEmpty {
+                driverGroup(
+                    title: "Dragging Right Now",
+                    drivers: controller.viewModel.dragDrivers
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
     private func overviewMetric(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.xs) {
             Text(title.uppercased())
@@ -112,6 +145,50 @@ struct SQLifeScoreDetailView: View {
         .background {
             RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
                 .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.98))
+        }
+    }
+
+    private func driverGroup(title: String, drivers: [SQInsightDriver]) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            Text(title.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                ForEach(drivers) { driver in
+                    driverRow(driver)
+                }
+            }
+        }
+    }
+
+    private func driverRow(_ driver: SQInsightDriver) -> some View {
+        let color: SQColor = driver.direction == .supportive ? .dashboardGlowMint : .colorErrorRed
+
+        return HStack(alignment: .top, spacing: .SQSpace.s) {
+            Circle()
+                .fill(color.color)
+                .frame(width: 8, height: 8)
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                    Text(driver.title)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+
+                    Spacer(minLength: 0)
+
+                    Text(driver.deltaText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+
+                Text(driver.summary)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

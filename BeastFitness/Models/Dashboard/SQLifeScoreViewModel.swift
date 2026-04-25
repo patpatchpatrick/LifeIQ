@@ -112,6 +112,7 @@ struct SQLifeScoreViewModel {
     let state: SQLifeScoreState
     let subtitle: String
     let components: [SQLifeScoreComponent]
+    let drivers: [SQInsightDriver]
     let availableWeight: Double
 
     static let mock = SQLifeScoreViewModel(
@@ -119,6 +120,7 @@ struct SQLifeScoreViewModel {
         state: .steady,
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         components: [],
+        drivers: [],
         availableWeight: 100
     )
 
@@ -144,5 +146,13 @@ struct SQLifeScoreViewModel {
         }
 
         return "Life Score, \(state.title)"
+    }
+
+    var supportiveDrivers: [SQInsightDriver] {
+        drivers.filter { $0.direction == .supportive }
+    }
+
+    var dragDrivers: [SQInsightDriver] {
+        drivers.filter { $0.direction == .drag }
     }
 }

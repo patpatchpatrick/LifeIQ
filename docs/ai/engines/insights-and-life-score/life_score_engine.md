@@ -73,6 +73,11 @@ The app now has a first shared driver layer in the insights engine:
 
 That layer should remain reusable by Life Score rather than reimplemented separately inside dashboard-only score code.
 
+The current app now also consumes that shared driver layer in the Life Score detail flow, without changing the existing score formula yet. That is the intended migration shape:
+- keep score math stable
+- move explanation onto shared drivers
+- later let the score formula reuse the same driver inputs more directly
+
 ## Dashboard Use
 
 On the dashboard, the orb should eventually support:
@@ -86,6 +91,17 @@ Insights should then use that context to surface explanation and action.
 Examples:
 - if the score is low, prioritize insights explaining the drag
 - if the score is strong, prioritize insights explaining strength and opportunity
+
+Current UI/product direction:
+- on the main dashboard, the orb should stay simple, emotional, and fast
+- the orb answers "How am I doing?"
+- the primary insight and drivers answer "Why?" and "What should I do?"
+
+The top of the `Today` dashboard should eventually combine:
+- orb / score / state
+- one primary insight
+- lightweight supportive and drag drivers
+- one suggested action
 
 ## Alignment Rule
 
@@ -121,3 +137,25 @@ Examples:
 - avoid insight-only data shaping that the score could not reuse
 - avoid building recommendation logic that ignores current score state entirely
 - avoid treating dashboard insights as detached cards with no score context
+
+## Life Score Detail Direction
+
+The Life Score tap-in view should remain, but its job should change.
+
+It should no longer lead with:
+- dense formula explanation
+- raw weighted math
+- too much prose before meaning
+
+It should instead lead with:
+- current score and state
+- one-sentence interpretation
+- "what's driving it" using shared drivers
+- one or two suggested actions
+
+Formula transparency should still exist, but as a secondary or collapsed section rather than the primary story.
+
+The intended hierarchy is:
+- orb on dashboard = state
+- Life Score detail = explanation
+- insights = ranked context and follow-through

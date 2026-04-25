@@ -321,6 +321,16 @@ Primary insight types:
 
 Today should be dynamic, but not random.
 
+Current UI/product direction for `Today`:
+- orb / Life Score hero
+- 1 primary insight
+- 2-3 lightweight drivers
+- 1 suggested action
+- optionally 1 lightweight "what changed" surface
+
+`Today` should feel like a briefing, not an insight feed.
+It should not show long lists of similar cards or lead with long statistical explanations.
+
 Daily surfacing should favor:
 - relevance now
 - recency
@@ -345,6 +355,11 @@ Primary insight types:
 
 This is likely the richest near-term range for the product.
 
+Current UI/product direction for `Past 7 Days`:
+- this is the main insight exploration surface
+- the current scrollable insight feed belongs here, refined over time
+- trend and baseline-change cards should carry most of the weight here
+
 ### Past Year
 
 Question answered:
@@ -357,6 +372,11 @@ Primary insight types:
 - future seasonal patterns
 
 This should behave like a personal playbook, not a noisy feed.
+
+Current UI/product direction for `Past Year`:
+- show only the strongest 3-5 durable patterns
+- emphasize top levers and stable truths
+- do not treat this like the same insight feed with a broader filter
 
 ## Daily Insight Dynamism
 
@@ -375,6 +395,32 @@ The system should eventually track suppression context such as:
 - show count over trailing days
 
 That is how daily insights stay fresh without feeling arbitrary.
+
+## Current UI Strategy Constraint
+
+The UI should not be treated as a separate concern from the engine outputs.
+
+The engine and dashboard should continue moving toward:
+- one shared candidate pool
+- explicit range-specific surfacing
+- one shared driver layer
+- primary insight + drivers + action on `Today`
+
+That is the shape another AI should use when brainstorming UI direction for this system.
+
+## Recommended Build Sequence
+
+The recommended sequence from the current implementation point is:
+1. Keep finishing the shared engine outputs first:
+   - drivers
+   - current-state cards
+   - stronger range-specific surfacing
+2. Use that stable output shape to redesign the dashboard surfaces:
+   - `Today`
+   - `Past 7 Days`
+   - `Past Year`
+3. Then tighten the Life Score/orb detail flow around the same outputs.
+4. Only after the surfaces feel right should premium gating and deeper monetization mechanics be finalized.
 
 ## Future Population Insights
 

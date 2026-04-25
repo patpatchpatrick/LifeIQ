@@ -58,3 +58,36 @@ That means:
 - The current deterministic insights engine is a useful reference, but the new system can be rebuilt cleanly if that is the faster path.
 - V1 does not need a large number of insight types. It does need the right engine shape, registry, and shared feature layer so the system can grow cleanly after launch.
 - Build the engine in a modular way so it can eventually move into its own package or module. Keep app-specific dependencies and adapter logic at the edges wherever practical.
+
+## Current Product Direction
+
+The current agreed product direction is:
+- `Today` is the primary experience and should feel like a briefing, not a feed
+- `Past 7 Days` is the main exploration surface for insights
+- `Past Year` is a distilled personal playbook, not an endless list
+- the orb / Life Score should stay fast and simple on the main dashboard
+- tapping the orb should answer "Why this score?" rather than leading with formula math
+
+This means the system should optimize for:
+- one strong primary insight on `Today`
+- lightweight drivers and one suggested action on `Today`
+- clearer explanation of score state through shared drivers
+- progressive disclosure instead of dense dashboard feeds
+
+Monetization should stay in mind, but it is not the current design driver.
+
+For now:
+- get the core surfaces right first
+- keep premium ideas secondary
+- avoid letting free/premium gating distort the base dashboard architecture too early
+
+## Current Implementation Stop Point
+
+The current backend/engine stopping point that is good enough for UI exploration is:
+- shared feature layer exists
+- multiple analyzer families exist
+- range-specific surfacing exists
+- shared drivers exist
+- the Life Score detail path already consumes shared drivers
+
+That is enough to start serious UI brainstorming without waiting for every future analyzer or score formula rewrite.
