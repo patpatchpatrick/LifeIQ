@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import HealthKit
 
 struct SQInsightTrendAnalyzer {
     private struct SignalObservation {
         let date: Date
         let value: Double
+        let activityType: HKWorkoutActivityType?
     }
 
     func analyze(
@@ -38,8 +40,16 @@ struct SQInsightTrendAnalyzer {
             ))
         }
 
-        let recentValues = Array(observations.suffix(recentCount))
-        let priorValues = Array(observations.dropLast(recentCount).suffix(priorCount))
+        var recentValues = Array(observations.suffix(recentCount))
+        var priorValues = Array(observations.dropLast(recentCount).suffix(priorCount))
+        var inputTitle = relationship.inputTitle
+
+        if relationship.inputSignalId == SQInsightAnalysisMetricId.workoutPerformance,
+           let recentActivityType = dominantActivityType(in: recentValues) {
+            recentValues = recentValues.filter { $0.activityType == recentActivityType }
+            priorValues = priorValues.filter { $0.activityType == recentActivityType }
+            inputTitle = "\(recentActivityType.name) Performance"
+        }
 
         guard recentValues.count >= minimumRequired,
               priorValues.count >= minimumRequired,
@@ -47,9 +57,9 @@ struct SQInsightTrendAnalyzer {
               let priorAverage = average(of: priorValues.map(\.value)) else {
             return .readiness(.init(
                 id: variant.id,
-                title: "\(relationship.inputTitle) Trend",
+                title: "\(inputTitle) Trend",
                 status: .needsMoreData,
-                summary: "Need at least \(minimumRequired) logged \(relationship.bucketUnitName) in both the recent and prior windows for \(relationship.inputTitle.lowercased())."
+                summary: "Need at least \(minimumRequired) logged \(relationship.bucketUnitName) in both the recent and prior windows for \(inputTitle.lowercased())."
             ))
         }
 
@@ -97,17 +107,17 @@ struct SQInsightTrendAnalyzer {
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
                 title: trendTitle(
-                    relationship: relationship,
+                    inputTitle: inputTitle,
                     effect: effect,
                     delta: delta
                 ),
-                summary: "\(relationship.inputTitle) has been trending \(directionText) by \(format(effectMagnitude)) versus \(priorLabel).",
-                evidenceText: "Recent \(relationship.inputTitle.lowercased()) averaged \(format(recentAverage)) across \(recentLabel) vs \(format(priorAverage)) across \(priorLabel).",
+                summary: "\(inputTitle) has been trending \(directionText) by \(format(effectMagnitude)) versus \(priorLabel).",
+                evidenceText: "Recent \(inputTitle.lowercased()) averaged \(format(recentAverage)) across \(recentLabel) vs \(format(priorAverage)) across \(priorLabel).",
                 actionText: trendActionText(
                     relationship: relationship,
                     effect: effect
                 ),
-                driverText: "Recent \(relationship.inputTitle)",
+                driverText: "Recent \(inputTitle)",
                 outcomeText: delta >= 0 ? "Trending Higher" : "Trending Lower",
                 deltaText: signedDeltaText(delta),
                 category: relationship.category,
@@ -125,7 +135,11 @@ struct SQInsightTrendAnalyzer {
     ) -> [SignalObservation] {
         snapshots.compactMap { snapshot in
             guard let value = snapshot.rawSignalValue(for: signalId) else { return nil }
-            return .init(date: snapshot.date, value: value)
+            return .init(
+                date: snapshot.date,
+                value: value,
+                activityType: snapshot.workoutActivityType(for: signalId)
+            )
         }
         .sorted { $0.date < $1.date }
     }
@@ -145,21 +159,21 @@ struct SQInsightTrendAnalyzer {
     }
 
     private func trendTitle(
-        relationship: SQInsightRelationshipDefinition,
+        inputTitle: String,
         effect: SQInsightEffect,
         delta: Double
     ) -> String {
         switch effect {
         case .positive:
             return delta >= 0
-                ? "\(relationship.inputTitle) is trending in a better direction"
-                : "\(relationship.inputTitle) is easing back toward a better range"
+                ? "\(inputTitle) is trending in a better direction"
+                : "\(inputTitle) is easing back toward a better range"
         case .negative:
             return delta >= 0
-                ? "\(relationship.inputTitle) has been moving the wrong way recently"
-                : "\(relationship.inputTitle) is slipping recently"
+                ? "\(inputTitle) has been moving the wrong way recently"
+                : "\(inputTitle) is slipping recently"
         case .neutral:
-            return "\(relationship.inputTitle) has been shifting recently"
+            return "\(inputTitle) has been shifting recently"
         }
     }
 
@@ -212,5 +226,21 @@ struct SQInsightTrendAnalyzer {
     private func signedDeltaText(_ value: Double) -> String {
         let magnitude = format(abs(value))
         return value >= 0 ? "+\(magnitude)" : "-\(magnitude)"
+    }
+
+    private func dominantActivityType(
+        in observations: [SignalObservation]
+    ) -> HKWorkoutActivityType? {
+        let counts = observations.reduce(into: [HKWorkoutActivityType: Int]()) { partialResult, observation in
+            guard let activityType = observation.activityType else { return }
+            partialResult[activityType, default: 0] += 1
+        }
+
+        return counts.max(by: { lhs, rhs in
+            if lhs.value == rhs.value {
+                return lhs.key.rawValue < rhs.key.rawValue
+            }
+            return lhs.value < rhs.value
+        })?.key
     }
 }

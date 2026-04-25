@@ -298,9 +298,22 @@ private struct SQLifeScoreHeroCard: View {
     }
 
     private var heroDrivers: some View {
-        LazyVGrid(columns: driverColumns, alignment: .center, spacing: .SQSpace.xs) {
-            ForEach(Array(viewModel.drivers.prefix(3))) { driver in
-                HeroDriverChip(driver: driver)
+        let displayedDrivers = Array(viewModel.drivers.prefix(3))
+
+        return Group {
+            if displayedDrivers.count <= 2 {
+                HStack(spacing: 4) {
+                    ForEach(displayedDrivers) { driver in
+                        HeroDriverChip(driver: driver)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                LazyVGrid(columns: driverColumns, alignment: .center, spacing: .SQSpace.xs) {
+                    ForEach(displayedDrivers) { driver in
+                        HeroDriverChip(driver: driver)
+                    }
+                }
             }
         }
         .frame(maxWidth: 300)
@@ -385,8 +398,12 @@ private struct HeroDriverChip: View {
         Text("\(symbolText) \(driver.title)")
             .sqFont(.bodyExtraSmall)
             .sqForegroundColor(.textPrimary)
-            .padding(.vertical, 5)
-            .padding(.horizontal, 6)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 92)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 5)
             .background {
                 Capsule(style: .continuous)
                     .fill(color.color.opacity(SQColor.isDarkMode ? 0.16 : 0.10))

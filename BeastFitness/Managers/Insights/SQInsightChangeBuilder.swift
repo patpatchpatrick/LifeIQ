@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HealthKit
 
 protocol SQInsightChangeBuilding {
     func buildChanges(
@@ -26,6 +27,7 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
 
     private struct SignalObservation {
         let value: Double
+        let activityType: HKWorkoutActivityType?
     }
 
     private let definitions: [ChangeDefinition]
@@ -57,7 +59,10 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
     ) -> SQInsightChange? {
         let observations = snapshots.compactMap { snapshot -> SignalObservation? in
             guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
-            return .init(value: value)
+            return .init(
+                value: value,
+                activityType: snapshot.workoutActivityType(for: definition.signalId)
+            )
         }
 
         let minimumRequired = max(definition.minimumSampleCount, 2)
@@ -65,8 +70,16 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             return nil
         }
 
-        let recentValues = Array(observations.suffix(window.recentCount))
-        let priorValues = Array(observations.dropLast(window.recentCount).suffix(window.priorCount))
+        var recentValues = Array(observations.suffix(window.recentCount))
+        var priorValues = Array(observations.dropLast(window.recentCount).suffix(window.priorCount))
+
+        var title = definition.title
+        if definition.signalId == SQInsightAnalysisMetricId.workoutPerformance,
+           let recentActivityType = dominantActivityType(in: recentValues) {
+            recentValues = recentValues.filter { $0.activityType == recentActivityType }
+            priorValues = priorValues.filter { $0.activityType == recentActivityType }
+            title = "\(recentActivityType.name) Performance"
+        }
 
         guard recentValues.count >= minimumRequired,
               priorValues.count >= minimumRequired,
@@ -98,9 +111,9 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
         return .init(
             id: "change.\(definition.signalId).\(direction == .improved ? "improved" : "worsened")",
             signalId: definition.signalId,
-            title: definition.title,
+            title: title,
             summary: changeSummary(
-                title: definition.title,
+                title: title,
                 direction: direction,
                 effectMagnitude: effectMagnitude
             ),
@@ -159,6 +172,22 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
         for window: (recentCount: Int, priorCount: Int)
     ) -> String {
         "Last \(window.recentCount) days vs previous \(window.priorCount)"
+    }
+
+    private func dominantActivityType(
+        in observations: [SignalObservation]
+    ) -> HKWorkoutActivityType? {
+        let counts = observations.reduce(into: [HKWorkoutActivityType: Int]()) { partialResult, observation in
+            guard let activityType = observation.activityType else { return }
+            partialResult[activityType, default: 0] += 1
+        }
+
+        return counts.max(by: { lhs, rhs in
+            if lhs.value == rhs.value {
+                return lhs.key.rawValue < rhs.key.rawValue
+            }
+            return lhs.value < rhs.value
+        })?.key
     }
 
     private func average(of values: [Double]) -> Double? {

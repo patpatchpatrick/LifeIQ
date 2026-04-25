@@ -84,7 +84,8 @@ final class SQInsightsService: SQInsightsServicing {
                 from: snapshots,
                 surfaceIntent: timeRange.insightSurfaceIntent
             ),
-            surfaceIntent: timeRange.insightSurfaceIntent
+            surfaceIntent: timeRange.insightSurfaceIntent,
+            selectedDrivers: drivers
         )
         let generatedInsights = analysisOutput.generatedInsights
         let deduplicatedInsights = deduplicatedInsights(from: generatedInsights)
@@ -323,16 +324,52 @@ final class SQInsightsService: SQInsightsServicing {
         from drivers: [SQInsightDriver],
         surfaceIntent: SQInsightSurfaceIntent
     ) -> [SQInsightDriver] {
-        let maximumCount: Int
         switch surfaceIntent {
         case .today:
-            maximumCount = 3
+            return curatedTodayDrivers(from: drivers)
         case .pastWeek:
-            maximumCount = 4
+            return curatedStandardDrivers(from: drivers, maximumCount: 4)
         case .pastYear:
-            maximumCount = 4
+            return curatedStandardDrivers(from: drivers, maximumCount: 4)
         }
+    }
 
+    private func curatedChanges(
+        from changes: [SQInsightChange],
+        surfaceIntent: SQInsightSurfaceIntent,
+        selectedDrivers: [SQInsightDriver]
+    ) -> [SQInsightChange] {
+        switch surfaceIntent {
+        case .today:
+            return curatedTodayChanges(
+                from: changes,
+                selectedDrivers: selectedDrivers
+            )
+        case .pastWeek:
+            return curatedStandardChanges(from: changes, maximumCount: 3)
+        case .pastYear:
+            return curatedStandardChanges(from: changes, maximumCount: 3)
+        }
+    }
+
+    private func curatedTodayDrivers(from drivers: [SQInsightDriver]) -> [SQInsightDriver] {
+        let preferredSignalIds: Set<String> = [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality,
+            SQMetricId.energy,
+            SQMetricId.mood,
+            SQInsightAnalysisMetricId.workoutPerformance,
+            SQInsightAnalysisMetricId.workoutDifficulty
+        ]
+
+        let preferredDrivers = drivers.filter { preferredSignalIds.contains($0.signalId) }
+        return Array(preferredDrivers.prefix(3))
+    }
+
+    private func curatedStandardDrivers(
+        from drivers: [SQInsightDriver],
+        maximumCount: Int
+    ) -> [SQInsightDriver] {
         var selected = [SQInsightDriver]()
         var usedDirections = Set<SQInsightDriverDirection>()
 
@@ -355,20 +392,46 @@ final class SQInsightsService: SQInsightsServicing {
         return selected
     }
 
-    private func curatedChanges(
+    private func curatedTodayChanges(
         from changes: [SQInsightChange],
-        surfaceIntent: SQInsightSurfaceIntent
+        selectedDrivers: [SQInsightDriver]
     ) -> [SQInsightChange] {
-        let maximumCount: Int
-        switch surfaceIntent {
-        case .today:
-            maximumCount = 2
-        case .pastWeek:
-            maximumCount = 3
-        case .pastYear:
-            maximumCount = 3
+        let driverSignalIds = Set(selectedDrivers.map(\.signalId))
+        let preferredSignalIds: Set<String> = [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn,
+            SQInsightAnalysisMetricId.workoutPerformance,
+            SQInsightAnalysisMetricId.workoutDifficulty
+        ]
+
+        let preferredNonOverlapping = changes.filter {
+            preferredSignalIds.contains($0.signalId) && !driverSignalIds.contains($0.signalId)
+        }
+        let preferredOverlapping = changes.filter {
+            preferredSignalIds.contains($0.signalId) && driverSignalIds.contains($0.signalId)
+        }
+        let fallbackNonOverlapping = changes.filter {
+            !preferredSignalIds.contains($0.signalId) && !driverSignalIds.contains($0.signalId)
+        }
+        let fallbackOverlapping = changes.filter {
+            !preferredSignalIds.contains($0.signalId) && driverSignalIds.contains($0.signalId)
         }
 
+        let prioritized = preferredNonOverlapping + preferredOverlapping
+        if prioritized.count >= 2 {
+            return Array(prioritized.prefix(2))
+        }
+
+        return Array((prioritized + fallbackNonOverlapping + fallbackOverlapping).prefix(2))
+    }
+
+    private func curatedStandardChanges(
+        from changes: [SQInsightChange],
+        maximumCount: Int
+    ) -> [SQInsightChange] {
         var selected = [SQInsightChange]()
         var usedDirections = Set<SQInsightChangeDirection>()
 

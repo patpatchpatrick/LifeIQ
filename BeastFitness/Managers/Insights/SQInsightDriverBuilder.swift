@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HealthKit
 
 protocol SQInsightDriverBuilding {
     func buildDrivers(
@@ -26,6 +27,7 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
 
     private struct SignalObservation {
         let value: Double
+        let activityType: HKWorkoutActivityType?
     }
 
     private let definitions: [DriverDefinition]
@@ -38,13 +40,11 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         from snapshots: [SQInsightFeatureSnapshot],
         surfaceIntent: SQInsightSurfaceIntent
     ) -> [SQInsightDriver] {
-        let window = window(for: surfaceIntent)
-
         return definitions.compactMap { definition in
             buildDriver(
                 definition: definition,
                 snapshots: snapshots,
-                window: window
+                surfaceIntent: surfaceIntent
             )
         }
         .sorted { $0.rankingScore > $1.rankingScore }
@@ -53,20 +53,39 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
     private func buildDriver(
         definition: DriverDefinition,
         snapshots: [SQInsightFeatureSnapshot],
-        window: (recentCount: Int, baselineCount: Int)
+        surfaceIntent: SQInsightSurfaceIntent
     ) -> SQInsightDriver? {
+        let window = window(for: surfaceIntent, signalId: definition.signalId)
         let observations = snapshots.compactMap { snapshot -> SignalObservation? in
             guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
-            return .init(value: value)
+            return .init(
+                value: value,
+                activityType: snapshot.workoutActivityType(for: definition.signalId)
+            )
         }
 
-        let minimumRequired = max(definition.minimumSampleCount, 2)
+        let minimumRequired = max(
+            effectiveMinimumSampleCount(
+                for: definition.signalId,
+                base: definition.minimumSampleCount,
+                surfaceIntent: surfaceIntent
+            ),
+            2
+        )
         guard observations.count >= max(window.recentCount + window.baselineCount, minimumRequired + window.recentCount) else {
             return nil
         }
 
-        let recentValues = Array(observations.suffix(window.recentCount))
-        let baselineValues = Array(observations.dropLast(window.recentCount).suffix(window.baselineCount))
+        var recentValues = Array(observations.suffix(window.recentCount))
+        var baselineValues = Array(observations.dropLast(window.recentCount).suffix(window.baselineCount))
+        var title = definition.title
+
+        if definition.signalId == SQInsightAnalysisMetricId.workoutPerformance,
+           let recentActivityType = dominantActivityType(in: recentValues) {
+            recentValues = recentValues.filter { $0.activityType == recentActivityType }
+            baselineValues = baselineValues.filter { $0.activityType == recentActivityType }
+            title = "\(recentActivityType.name) Performance"
+        }
 
         guard recentValues.count >= window.recentCount,
               baselineValues.count >= minimumRequired,
@@ -77,7 +96,12 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
 
         let delta = recentAverage - baselineAverage
         let effectMagnitude = abs(delta)
-        guard effectMagnitude >= definition.minimumEffectMagnitude else {
+        let minimumEffectMagnitude = effectiveMinimumEffectMagnitude(
+            for: definition.signalId,
+            base: definition.minimumEffectMagnitude,
+            surfaceIntent: surfaceIntent
+        )
+        guard effectMagnitude >= minimumEffectMagnitude else {
             return nil
         }
 
@@ -98,9 +122,9 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         return .init(
             id: "driver.\(definition.signalId).\(direction == .supportive ? "supportive" : "drag")",
             signalId: definition.signalId,
-            title: definition.title,
+            title: title,
             summary: driverSummary(
-                title: definition.title,
+                title: title,
                 direction: direction,
                 effectMagnitude: effectMagnitude
             ),
@@ -115,10 +139,14 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
     }
 
     private func window(
-        for surfaceIntent: SQInsightSurfaceIntent
+        for surfaceIntent: SQInsightSurfaceIntent,
+        signalId: String
     ) -> (recentCount: Int, baselineCount: Int) {
         switch surfaceIntent {
         case .today:
+            if Self.todayPreferredSignalIds.contains(signalId) {
+                return (recentCount: 1, baselineCount: 7)
+            }
             return (recentCount: 1, baselineCount: 14)
         case .pastWeek:
             return (recentCount: 3, baselineCount: 14)
@@ -171,6 +199,55 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         let magnitude = format(abs(value))
         return value >= 0 ? "+\(magnitude)" : "-\(magnitude)"
     }
+
+    private func dominantActivityType(
+        in observations: [SignalObservation]
+    ) -> HKWorkoutActivityType? {
+        let counts = observations.reduce(into: [HKWorkoutActivityType: Int]()) { partialResult, observation in
+            guard let activityType = observation.activityType else { return }
+            partialResult[activityType, default: 0] += 1
+        }
+
+        return counts.max(by: { lhs, rhs in
+            if lhs.value == rhs.value {
+                return lhs.key.rawValue < rhs.key.rawValue
+            }
+            return lhs.value < rhs.value
+        })?.key
+    }
+
+    private func effectiveMinimumSampleCount(
+        for signalId: String,
+        base: Int,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> Int {
+        guard surfaceIntent == .today, Self.todayPreferredSignalIds.contains(signalId) else {
+            return base
+        }
+
+        return min(base, 2)
+    }
+
+    private func effectiveMinimumEffectMagnitude(
+        for signalId: String,
+        base: Double,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> Double {
+        guard surfaceIntent == .today, Self.todayPreferredSignalIds.contains(signalId) else {
+            return base
+        }
+
+        return min(base, 0.35)
+    }
+
+    private static let todayPreferredSignalIds: Set<String> = [
+        SQMetricId.sleepHours,
+        SQMetricId.sleepQuality,
+        SQMetricId.energy,
+        SQMetricId.mood,
+        SQInsightAnalysisMetricId.workoutPerformance,
+        SQInsightAnalysisMetricId.workoutDifficulty
+    ]
 
     private static let defaultDefinitions: [DriverDefinition] = [
         .init(

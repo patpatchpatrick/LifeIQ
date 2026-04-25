@@ -6,10 +6,12 @@
 //
 
 import Foundation
+import HealthKit
 
 struct SQInsightBaselineAnalyzer {
     private struct SignalObservation {
         let value: Double
+        let activityType: HKWorkoutActivityType?
     }
 
     func analyze(
@@ -21,7 +23,10 @@ struct SQInsightBaselineAnalyzer {
     ) -> SQInsightAnalysisResult {
         let observations = snapshots.compactMap { snapshot -> SignalObservation? in
             guard let value = snapshot.rawSignalValue(for: relationship.inputSignalId) else { return nil }
-            return .init(value: value)
+            return .init(
+                value: value,
+                activityType: snapshot.workoutActivityType(for: relationship.inputSignalId)
+            )
         }
 
         let recentCount = relationship.recentWindowDayCount
@@ -37,8 +42,16 @@ struct SQInsightBaselineAnalyzer {
             ))
         }
 
-        let recentValues = Array(observations.suffix(recentCount))
-        let baselineValues = Array(observations.dropLast(recentCount).suffix(baselineCount))
+        var recentValues = Array(observations.suffix(recentCount))
+        var baselineValues = Array(observations.dropLast(recentCount).suffix(baselineCount))
+        var inputTitle = relationship.inputTitle
+
+        if relationship.inputSignalId == SQInsightAnalysisMetricId.workoutPerformance,
+           let recentActivityType = dominantActivityType(in: recentValues) {
+            recentValues = recentValues.filter { $0.activityType == recentActivityType }
+            baselineValues = baselineValues.filter { $0.activityType == recentActivityType }
+            inputTitle = "\(recentActivityType.name) Performance"
+        }
 
         guard recentValues.count >= minimumRequired,
               baselineValues.count >= minimumRequired,
@@ -46,9 +59,9 @@ struct SQInsightBaselineAnalyzer {
               let baselineAverage = average(of: baselineValues.map(\.value)) else {
             return .readiness(.init(
                 id: variant.id,
-                title: "\(relationship.inputTitle) vs Baseline",
+                title: "\(inputTitle) vs Baseline",
                 status: .needsMoreData,
-                summary: "Need at least \(minimumRequired) logged \(relationship.bucketUnitName) in both the recent and baseline windows for \(relationship.inputTitle.lowercased())."
+                summary: "Need at least \(minimumRequired) logged \(relationship.bucketUnitName) in both the recent and baseline windows for \(inputTitle.lowercased())."
             ))
         }
 
@@ -94,17 +107,22 @@ struct SQInsightBaselineAnalyzer {
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
                 title: baselineTitle(
-                    relationship: relationship,
+                    inputTitle: inputTitle,
                     effect: effect,
                     delta: delta
                 ),
-                summary: "\(relationship.inputTitle) is \(delta >= 0 ? "running above" : "sitting below") your recent baseline by \(format(effectMagnitude)).",
-                evidenceText: "Recent \(relationship.inputTitle.lowercased()) averaged \(format(recentAverage)) vs a baseline average of \(format(baselineAverage)) across the prior \(baselineValues.count) logged \(relationship.bucketUnitName).",
+                summary: baselineSummary(
+                    inputTitle: inputTitle,
+                    effect: effect,
+                    delta: delta,
+                    effectMagnitude: effectMagnitude
+                ),
+                evidenceText: "Recent \(inputTitle.lowercased()) averaged \(format(recentAverage)) vs a baseline average of \(format(baselineAverage)) across the prior \(baselineValues.count) logged \(relationship.bucketUnitName).",
                 actionText: baselineActionText(
                     relationship: relationship,
                     effect: effect
                 ),
-                driverText: relationship.inputTitle,
+                driverText: inputTitle,
                 outcomeText: statusText,
                 deltaText: signedDeltaText(delta),
                 category: relationship.category,
@@ -131,21 +149,41 @@ struct SQInsightBaselineAnalyzer {
     }
 
     private func baselineTitle(
-        relationship: SQInsightRelationshipDefinition,
+        inputTitle: String,
         effect: SQInsightEffect,
         delta: Double
     ) -> String {
         switch effect {
         case .positive:
             return delta >= 0
-                ? "\(relationship.inputTitle) is stronger than your baseline"
-                : "\(relationship.inputTitle) is pulling back into a better range"
+                ? "\(inputTitle) is stronger than your baseline"
+                : "\(inputTitle) is pulling back into a better range"
         case .negative:
             return delta >= 0
-                ? "\(relationship.inputTitle) is running worse than your baseline"
-                : "\(relationship.inputTitle) is below your usual baseline"
+                ? "\(inputTitle) is running worse than your baseline"
+                : "\(inputTitle) is below your usual baseline"
         case .neutral:
-            return "\(relationship.inputTitle) has moved away from baseline"
+            return "\(inputTitle) has moved away from baseline"
+        }
+    }
+
+    private func baselineSummary(
+        inputTitle: String,
+        effect: SQInsightEffect,
+        delta: Double,
+        effectMagnitude: Double
+    ) -> String {
+        switch effect {
+        case .positive:
+            return delta >= 0
+                ? "\(inputTitle) is higher than usual today by \(format(effectMagnitude))."
+                : "\(inputTitle) is a bit lower than usual today by \(format(effectMagnitude))."
+        case .negative:
+            return delta >= 0
+                ? "\(inputTitle) is higher than usual today by \(format(effectMagnitude))."
+                : "\(inputTitle) is lower than usual today by \(format(effectMagnitude))."
+        case .neutral:
+            return "\(inputTitle) has shifted by \(format(effectMagnitude)) versus your usual baseline."
         }
     }
 
@@ -179,5 +217,21 @@ struct SQInsightBaselineAnalyzer {
     private func signedDeltaText(_ value: Double) -> String {
         let magnitude = format(abs(value))
         return value >= 0 ? "+\(magnitude)" : "-\(magnitude)"
+    }
+
+    private func dominantActivityType(
+        in observations: [SignalObservation]
+    ) -> HKWorkoutActivityType? {
+        let counts = observations.reduce(into: [HKWorkoutActivityType: Int]()) { partialResult, observation in
+            guard let activityType = observation.activityType else { return }
+            partialResult[activityType, default: 0] += 1
+        }
+
+        return counts.max(by: { lhs, rhs in
+            if lhs.value == rhs.value {
+                return lhs.key.rawValue < rhs.key.rawValue
+            }
+            return lhs.value < rhs.value
+        })?.key
     }
 }

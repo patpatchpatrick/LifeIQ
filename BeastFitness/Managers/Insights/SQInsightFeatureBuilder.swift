@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HealthKit
 
 protocol SQInsightFeatureBuilding {
     func makeFeatureSnapshots(
@@ -72,8 +73,14 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
             }
 
             let dayWorkouts = workoutsByDay[dayKey, default: []]
-            let performanceRatings = dayWorkouts.compactMap { $0.ratingUserPerformance.map(Double.init) }
-            let difficultyRatings = dayWorkouts.compactMap { $0.ratingDifficulty.map(Double.init) }
+            let performanceSignal = dominantWorkoutSignal(
+                workouts: dayWorkouts,
+                value: { $0.ratingUserPerformance.map(Double.init) }
+            )
+            let difficultySignal = dominantWorkoutSignal(
+                workouts: dayWorkouts,
+                value: { $0.ratingDifficulty.map(Double.init) }
+            )
 
             return SQInsightFeatureSnapshot(
                 date: date,
@@ -81,10 +88,36 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                 rawSignalValues: rawValuesByDay[dayKey, default: [:]],
                 normalizedSignalValues: normalizedValuesByDay[dayKey, default: [:]],
                 workoutCount: dayWorkouts.count,
-                averageWorkoutPerformance: average(of: performanceRatings),
-                averageWorkoutDifficulty: average(of: difficultyRatings)
+                averageWorkoutPerformance: performanceSignal?.averageValue,
+                workoutPerformanceActivityTypeRaw: performanceSignal?.activityType.rawValue,
+                averageWorkoutDifficulty: difficultySignal?.averageValue,
+                workoutDifficultyActivityTypeRaw: difficultySignal?.activityType.rawValue
             )
         }
+    }
+
+    private func dominantWorkoutSignal(
+        workouts: [SQWorkoutSessionable],
+        value: (SQWorkoutSessionable) -> Double?
+    ) -> (activityType: HKWorkoutActivityType, averageValue: Double)? {
+        let grouped = Dictionary(grouping: workouts.compactMap { workout -> (HKWorkoutActivityType, Double)? in
+            guard let ratingValue = value(workout) else { return nil }
+            return (workout.activityType, ratingValue)
+        }) { $0.0 }
+
+        guard let dominantGroup = grouped.max(by: { lhs, rhs in
+            if lhs.value.count == rhs.value.count {
+                return lhs.key.rawValue < rhs.key.rawValue
+            }
+            return lhs.value.count < rhs.value.count
+        }) else {
+            return nil
+        }
+
+        return (
+            activityType: dominantGroup.key,
+            averageValue: average(of: dominantGroup.value.map(\.1)) ?? 0
+        )
     }
 
     private func average(of values: [Double]) -> Double? {

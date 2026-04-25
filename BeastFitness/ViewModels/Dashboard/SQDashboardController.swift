@@ -2422,7 +2422,7 @@ final class SQDashboardController: SQDashboardInterface {
     ) -> SQDashboardSubsectionViewModel {
         SQDashboardSubsectionViewModel(
             id: "recovery-score",
-            title: "",
+            title: "Recovery",
             defaultPriority: 10,
             rowsByFilter: ["All": [row]],
             dropDownViewModel: nil

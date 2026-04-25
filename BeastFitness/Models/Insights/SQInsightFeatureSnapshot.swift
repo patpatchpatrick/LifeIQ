@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HealthKit
 
 enum SQInsightAnalysisMetricId {
     static let workoutPerformance = "insight.workoutPerformance"
@@ -19,7 +20,9 @@ struct SQInsightFeatureSnapshot: Identifiable {
     let normalizedSignalValues: [String: Double]
     let workoutCount: Int
     let averageWorkoutPerformance: Double?
+    let workoutPerformanceActivityTypeRaw: UInt?
     let averageWorkoutDifficulty: Double?
+    let workoutDifficultyActivityTypeRaw: UInt?
 
     var id: String { anchorDayKey }
 
@@ -46,6 +49,19 @@ struct SQInsightFeatureSnapshot: Identifiable {
             return averageWorkoutDifficulty
         default:
             return normalizedSignalValues[signalId]
+        }
+    }
+
+    func workoutActivityType(for signalId: String) -> HKWorkoutActivityType? {
+        switch signalId {
+        case SQInsightAnalysisMetricId.workoutPerformance:
+            guard let workoutPerformanceActivityTypeRaw else { return nil }
+            return HKWorkoutActivityType(rawValue: workoutPerformanceActivityTypeRaw)
+        case SQInsightAnalysisMetricId.workoutDifficulty:
+            guard let workoutDifficultyActivityTypeRaw else { return nil }
+            return HKWorkoutActivityType(rawValue: workoutDifficultyActivityTypeRaw)
+        default:
+            return nil
         }
     }
 }
