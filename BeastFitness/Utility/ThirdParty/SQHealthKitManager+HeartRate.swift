@@ -5,6 +5,7 @@
 
 import Foundation
 import HealthKit
+import BeastFitnessCore
 
 struct SQHeartRateDailySummary: Sendable {
     let date: Date
@@ -146,6 +147,19 @@ extension SQHealthKitManager {
 
         try await requestAppAuthorization()
 
+        SQLogger.shared.log(
+            """
+            [Health Debug] Heart query starting:
+            identifier=\(identifier.rawValue)
+            timeRange=\(timeRange.rawValue)
+            start=\(timeRange.startDate.formattedString(with: .fullWithoutDayName))
+            end=\(timeRange.endDate.formattedString(with: .fullWithoutDayName))
+            authorization=\(String(describing: Self.healthStore.authorizationStatus(for: quantityType)))
+            """,
+            .debug,
+            context: .healthKit
+        )
+
         let predicate = HKQuery.predicateForSamples(
             withStart: timeRange.startDate,
             end: timeRange.endDate
@@ -199,6 +213,21 @@ extension SQHealthKitManager {
                         )
                     )
                 }
+
+                let firstSummaryDate = summaries.first?.date.formattedString(with: .medium) ?? "nil"
+                let lastSummaryDate = summaries.last?.date.formattedString(with: .medium) ?? "nil"
+                SQLogger.shared.log(
+                    """
+                    [Health Debug] Heart query finished:
+                    identifier=\(identifier.rawValue)
+                    timeRange=\(timeRange.rawValue)
+                    summaryCount=\(summaries.count)
+                    firstSummaryDate=\(firstSummaryDate)
+                    lastSummaryDate=\(lastSummaryDate)
+                    """,
+                    .debug,
+                    context: .healthKit
+                )
 
                 continuation.resume(returning: summaries.sorted { $0.date < $1.date })
             }

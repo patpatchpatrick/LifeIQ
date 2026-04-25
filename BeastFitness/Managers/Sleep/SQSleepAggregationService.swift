@@ -21,6 +21,43 @@ struct SQSleepAggregationService {
         sleepSchedule: SQSleepSchedule? = nil
     ) -> SQSleepDashboardWindow {
         let anchorWakeDay = latestCompletedWakeDay(now: now, sleepSchedule: sleepSchedule)
+        return makeDashboardWindow(
+            for: timeRange,
+            anchorWakeDay: anchorWakeDay,
+            sleepSchedule: sleepSchedule
+        )
+    }
+
+    func resolveDashboardWindow(
+        for timeRange: AppTimeRange,
+        segments: [SQSleepStageSegment],
+        baseWindow: SQSleepDashboardWindow,
+        sleepSchedule: SQSleepSchedule? = nil,
+        now: Date = .now
+    ) -> SQSleepDashboardWindow {
+        let candidateWakeDays = Array(
+            Set((baseWindow.currentWakeDays + baseWindow.priorWakeDays).map { calendar.startOfDay(for: $0) })
+        )
+        .sorted(by: >)
+
+        let fallbackAnchorWakeDay = candidateWakeDays.first
+            ?? latestCompletedWakeDay(now: now, sleepSchedule: sleepSchedule)
+        let resolvedAnchorWakeDay = candidateWakeDays.first(where: {
+            buildNight(for: $0, segments: segments, sleepSchedule: sleepSchedule) != nil
+        }) ?? fallbackAnchorWakeDay
+
+        return makeDashboardWindow(
+            for: timeRange,
+            anchorWakeDay: resolvedAnchorWakeDay,
+            sleepSchedule: sleepSchedule
+        )
+    }
+
+    private func makeDashboardWindow(
+        for timeRange: AppTimeRange,
+        anchorWakeDay: Date,
+        sleepSchedule: SQSleepSchedule?
+    ) -> SQSleepDashboardWindow {
         let currentCount = nightCount(for: timeRange)
 
         let currentWakeDays = (0..<currentCount).compactMap { offset in

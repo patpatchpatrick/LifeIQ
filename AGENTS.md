@@ -82,6 +82,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Always use `SQLogger`:
   - iOS: `log(...)`
   - watchOS: `logW(...)`
+- `SQLogger` lives in `BeastFitnessCore`; when adding logger usage in app-target files, make sure `import BeastFitnessCore` is present.
 - Use appropriate contexts (e.g. `.dashboard`, `.dailyCheckIn`, `.workoutSession`, `.healthKit`).
 - Use `isPriority: true` for important milestones.
 

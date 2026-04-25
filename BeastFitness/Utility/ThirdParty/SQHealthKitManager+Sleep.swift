@@ -18,7 +18,7 @@ extension SQHealthKitManager {
             try await requestAppAuthorization()
         } catch {
             SQLogger.shared.log(
-                "Error requesting healthStore auth for sleep: \(error.localizedDescription)",
+                "[Health Debug] Error requesting healthStore auth for sleep: \(error.localizedDescription)",
                 .error,
                 context: .healthKit
             )
@@ -26,9 +26,20 @@ extension SQHealthKitManager {
         }
 
         guard let categoryType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
-            SQLogger.shared.log("Cannot get sleep category type", .error, context: .healthKit)
+            SQLogger.shared.log("[Health Debug] Cannot get sleep category type", .error, context: .healthKit)
             throw SQError.standard
         }
+
+        SQLogger.shared.log(
+            """
+            [Health Debug] Sleep query starting:
+            start=\(startDate.formattedString(with: .fullWithoutDayName))
+            end=\(endDate.formattedString(with: .fullWithoutDayName))
+            authorization=\(String(describing: Self.healthStore.authorizationStatus(for: categoryType)))
+            """,
+            .debug,
+            context: .healthKit
+        )
 
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
@@ -49,8 +60,27 @@ extension SQHealthKitManager {
             )
         }
 
+        let rawValueCounts = Dictionary(grouping: samples, by: \.value)
+            .map { "\($0.key)=\($0.value.count)" }
+            .sorted()
+            .joined(separator: ", ")
+        let phaseCounts = Dictionary(grouping: segments, by: \.phase)
+            .map { "\($0.key.rawValue)=\($0.value.count)" }
+            .sorted()
+            .joined(separator: ", ")
+        let firstSample = samples.first?.startDate.formattedString(with: .fullWithoutDayName) ?? "nil"
+        let lastSample = samples.last?.endDate.formattedString(with: .fullWithoutDayName) ?? "nil"
+
         SQLogger.shared.log(
-            "Fetched \(segments.count) sleep stage segments",
+            """
+            [Health Debug] Sleep query finished:
+            rawSamples=\(samples.count)
+            parsedSegments=\(segments.count)
+            rawValues=[\(rawValueCounts)]
+            parsedPhases=[\(phaseCounts)]
+            firstSample=\(firstSample)
+            lastSample=\(lastSample)
+            """,
             .debug,
             context: .healthKit
         )
@@ -73,7 +103,7 @@ extension SQHealthKitManager {
             ) { _, result, error in
                 if let error {
                     SQLogger.shared.log(
-                        "Sleep HKSampleQuery failed: \(error.localizedDescription)",
+                        "[Health Debug] Sleep HKSampleQuery failed: \(error.localizedDescription)",
                         .error,
                         context: .healthKit
                     )

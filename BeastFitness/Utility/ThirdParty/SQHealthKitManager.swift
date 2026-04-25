@@ -408,7 +408,8 @@ final class SQHealthKitManager: SQHealthKitManaging {
         }
 
         let authorizationStatuses = dashboardAuthorizationTypes.map { Self.healthStore.authorizationStatus(for: $0) }
-        if authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized }) {
+        let isFullyAuthorized = authorizationStatuses.allSatisfy { $0 == .sharingAuthorized }
+        if isFullyAuthorized {
             return .available
         }
 
@@ -420,7 +421,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
             switch requestStatus {
             case .unnecessary:
-                return .available
+                return isFullyAuthorized ? .available : .unavailable
             case .shouldRequest, .unknown:
                 return .unavailable
             @unknown default:
@@ -443,7 +444,8 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
         let domainTypes = authorizationTypes(for: domain)
         let authorizationStatuses = domainTypes.map { Self.healthStore.authorizationStatus(for: $0) }
-        if authorizationStatuses.allSatisfy({ $0 == .sharingAuthorized }) {
+        let isFullyAuthorized = authorizationStatuses.allSatisfy { $0 == .sharingAuthorized }
+        if isFullyAuthorized {
             return .available
         }
 
@@ -455,7 +457,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
 
             switch requestStatus {
             case .unnecessary:
-                return .available
+                return isFullyAuthorized ? .available : .unavailable
             case .shouldRequest, .unknown:
                 return .unavailable
             @unknown default:

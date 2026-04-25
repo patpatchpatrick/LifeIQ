@@ -215,7 +215,6 @@ final class SQDailyCheckInViewModel: Identifiable {
                 row.attributedSubtitle = attributedSubtitle(
                     for: metric,
                     targetDate: targetDate,
-                    period: period,
                     healthKitPrefillMetricIds: healthKitPrefillMetricIds
                 )
                 built.append(row)
@@ -243,7 +242,6 @@ final class SQDailyCheckInViewModel: Identifiable {
                 row.attributedSubtitle = attributedSubtitle(
                     for: metric,
                     targetDate: targetDate,
-                    period: period,
                     healthKitPrefillMetricIds: healthKitPrefillMetricIds
                 )
 
@@ -269,18 +267,18 @@ final class SQDailyCheckInViewModel: Identifiable {
         let referencedNightDate = Calendar.current
             .date(byAdding: .day, value: -1, to: targetDate)?
             .formattedString(with: .medium) ?? "the previous night"
+        let applicabilitySubtitle = fullDaySubtitle(for: targetDate)
 
         if healthKitPrefillMetricIds.contains(metric.id) {
-            return "Previous night's sleep (\(referencedNightDate)). Prefilled from HealthKit; you can override it."
+            return "Previous night's sleep (\(referencedNightDate)). \(applicabilitySubtitle) Prefilled from HealthKit; you can override it."
         }
 
-        return "Previous night's sleep (\(referencedNightDate))."
+        return "Previous night's sleep (\(referencedNightDate)). \(applicabilitySubtitle)"
     }
 
     private func attributedSubtitle(
         for metric: SQMetricDefinition,
         targetDate: Date,
-        period: SQMetricPeriod,
         healthKitPrefillMetricIds: Set<String>
     ) -> AttributedString? {
         guard isPreviousNightSleepMetric(metric.id) else { return nil }
@@ -295,7 +293,11 @@ final class SQDailyCheckInViewModel: Identifiable {
 
         var result = AttributedString.build(with: "Previous night's sleep (", font: baseFont, color: secondaryColor)
         result += AttributedString.build(with: referencedNightDate, font: baseFont, color: highlightColor)
-        result += AttributedString.build(with: ").", font: baseFont, color: secondaryColor)
+        result += AttributedString.build(
+            with: "). \(fullDaySubtitle(for: targetDate))",
+            font: baseFont,
+            color: secondaryColor
+        )
 
         if healthKitPrefillMetricIds.contains(metric.id) {
             result += AttributedString.build(with: " Prefilled from HealthKit; you can override it.", font: baseFont, color: secondaryColor)
@@ -322,7 +324,7 @@ final class SQDailyCheckInViewModel: Identifiable {
             return sleepSubtitle
         }
 
-        let periodSubtitle = metric.isSingleDailyValue ? nil : periodWindowSubtitle(for: period, targetDate: targetDate)
+        let periodSubtitle = applicabilitySubtitle(for: metric, targetDate: targetDate, period: period)
         guard healthKitPrefillMetricIds.contains(metric.id) else {
             return periodSubtitle
         }
@@ -334,18 +336,38 @@ final class SQDailyCheckInViewModel: Identifiable {
         return "Prefilled from HealthKit; you can override it."
     }
 
+    private func applicabilitySubtitle(
+        for metric: SQMetricDefinition,
+        targetDate: Date,
+        period: SQMetricPeriod
+    ) -> String? {
+        if metric.isSingleDailyValue {
+            return fullDaySubtitle(for: targetDate)
+        }
+
+        return periodWindowSubtitle(for: period, targetDate: targetDate)
+    }
+
+    private func fullDaySubtitle(for targetDate: Date) -> String {
+        if Calendar.current.isDateInToday(targetDate) {
+            return "Applies to the full day."
+        }
+
+        return "Applies to the full day for \(targetDate.formattedString(with: .medium))."
+    }
+
     private func periodWindowSubtitle(for period: SQMetricPeriod, targetDate: Date) -> String? {
         switch period {
         case .evening:
             if Calendar.current.isDateInToday(targetDate) {
-                return "Applies to this evening's check-in."
+                return "Applies only to this evening's check-in."
             }
-            return "Applies to the evening check-in for \(targetDate.formattedString(with: .medium))."
+            return "Applies only to the evening check-in for \(targetDate.formattedString(with: .medium))."
         case .morning:
             if Calendar.current.isDateInToday(targetDate) {
-                return "Applies to this morning's check-in."
+                return "Applies only to this morning's check-in."
             }
-            return "Applies to the morning check-in for \(targetDate.formattedString(with: .medium))."
+            return "Applies only to the morning check-in for \(targetDate.formattedString(with: .medium))."
         case .unknown:
             return nil
         }
