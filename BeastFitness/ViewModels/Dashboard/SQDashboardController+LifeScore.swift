@@ -25,8 +25,10 @@ extension SQDashboardController {
         lastWeekWorkouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
         hasCompletedCurrentCheckIn: Bool,
+        primaryInsight: SQInsight?,
         insightDrivers: [SQInsightDriver],
-        insightChanges: [SQInsightChange]
+        insightChanges: [SQInsightChange],
+        insightActions: [SQInsightAction]
     ) -> SQLifeScoreViewModel {
         var components: [SQLifeScoreComponent] = []
 
@@ -77,8 +79,10 @@ extension SQDashboardController {
             state: state,
             subtitle: subtitle,
             components: components.sorted { $0.weight > $1.weight },
+            primaryInsight: primaryInsight,
             drivers: Array(insightDrivers.prefix(3)),
             changes: Array(insightChanges.prefix(2)),
+            actions: Array(insightActions.prefix(1)),
             availableWeight: totalWeight
         )
     }

@@ -83,12 +83,18 @@ struct SQDashboardView: View {
                             Button {
                                 controller.handleLifeScoreTap()
                             } label: {
-                                SQLifeScoreHeroCard(viewModel: lifeScoreViewModel)
+                                SQLifeScoreHeroCard(
+                                    viewModel: lifeScoreViewModel,
+                                    timeRange: controller.state.selectedTimeRange
+                                )
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                         } else {
-                            SQLifeScoreHeroCard(viewModel: lifeScoreViewModel)
+                            SQLifeScoreHeroCard(
+                                viewModel: lifeScoreViewModel,
+                                timeRange: controller.state.selectedTimeRange
+                            )
                         }
                     }
                     .padding(.horizontal, 16)
@@ -187,43 +193,94 @@ struct SQDashboardView: View {
 
 private struct SQLifeScoreHeroCard: View {
     let viewModel: SQLifeScoreViewModel
+    let timeRange: AppTimeRange
+
+    private var driverColumns: [GridItem] {
+        [.init(.adaptive(minimum: 88), spacing: .SQSpace.xs, alignment: .center)]
+    }
+
+    private var shouldShowTodayBriefing: Bool {
+        timeRange == .today && viewModel.primaryInsight != nil
+    }
+
+    private var primaryAction: SQInsightAction? {
+        viewModel.actions.first
+    }
 
     var body: some View {
         VStack(spacing: .SQSpace.m) {
             SQLifeScoreOrbView(viewModel: viewModel, size: 156, scoreFont: .title1)
 
-            VStack(spacing: .SQSpace.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
-                    Text("Life Score")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-
-                    if let score = viewModel.score {
-                        Text("\(score)/100")
-                            .sqFont(.bodySmallSemiBold)
-                            .sqForegroundColor(.textSecondary)
-                    }
-                }
-
+            VStack(spacing: .SQSpace.s) {
                 Text(viewModel.state.title)
                     .sqFont(.title3)
                     .sqForegroundColor(.textPrimary)
 
-                Text(viewModel.subtitle)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 260)
+                if shouldShowTodayBriefing, let primaryInsight = viewModel.primaryInsight {
+                    VStack(spacing: .SQSpace.s) {
+                        Text(primaryInsight.title)
+                            .sqFont(.bodySmallSemiBold)
+                            .sqForegroundColor(.textPrimary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 280)
+                            .fixedSize(horizontal: false, vertical: true)
 
-                Text("Tap for breakdown")
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textPrimary)
-                    .opacity(0.7)
+                        if !viewModel.drivers.isEmpty {
+                            heroDrivers
+                        }
+
+                        if let primaryAction {
+                            Text("Best move: \(primaryAction.summary)")
+                                .sqFont(.bodyExtraSmall)
+                                .sqForegroundColor(.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 280)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 18)
         .padding(.bottom, 10)
+    }
+
+    private var heroDrivers: some View {
+        LazyVGrid(columns: driverColumns, alignment: .center, spacing: .SQSpace.xs) {
+            ForEach(Array(viewModel.drivers.prefix(3))) { driver in
+                HeroDriverChip(driver: driver)
+            }
+        }
+        .frame(maxWidth: 300)
+    }
+}
+
+private struct HeroDriverChip: View {
+    let driver: SQInsightDriver
+
+    private var color: SQColor {
+        driver.direction == .supportive ? .dashboardGlowMint : .colorErrorRed
+    }
+
+    private var symbolText: String {
+        driver.direction == .supportive ? "+" : "-"
+    }
+
+    var body: some View {
+        Text("\(symbolText) \(driver.title)")
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textPrimary)
+            .padding(.vertical, 6)
+            .padding(.horizontal, .SQSpace.s)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(color.color.opacity(SQColor.isDarkMode ? 0.16 : 0.10))
+            }
+            .overlay {
+                Capsule(style: .continuous)
+                    .stroke(color.color.opacity(SQColor.isDarkMode ? 0.30 : 0.20), lineWidth: 1)
+            }
     }
 }
 

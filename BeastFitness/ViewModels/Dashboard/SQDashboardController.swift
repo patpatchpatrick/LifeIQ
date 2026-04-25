@@ -563,8 +563,10 @@ final class SQDashboardController: SQDashboardInterface {
                 lastWeekWorkouts: lastWeekWorkouts,
                 sleepData: sleepDashboardData,
                 hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn,
+                primaryInsight: state.selectedTimeRange == .today ? insightsResult.insights.first : nil,
                 insightDrivers: insightsResult.drivers,
-                insightChanges: insightsResult.changes
+                insightChanges: insightsResult.changes,
+                insightActions: insightsResult.actions
             )
 
             let sectionGroups = try await buildSectionGroups(
@@ -2282,6 +2284,45 @@ final class SQDashboardController: SQDashboardInterface {
 
         return sectionViewModel
     }
+
+    private func buildInsightActionsSubsection(
+        result: SQInsightsResult
+    ) -> SQDashboardSubsectionViewModel? {
+        guard !result.actions.isEmpty else { return nil }
+
+        let rows = result.actions.map {
+            SQDashboardInsightActionRowViewModel(model: $0) as SQDashboardRowViewModel
+        }
+
+        return SQDashboardSubsectionViewModel(
+            id: "insight-actions",
+            title: "What To Do",
+            defaultPriority: 13,
+            rowsByFilter: ["All": rows],
+            rowSpacing: .SQSpace.m,
+            maxVisibleRows: 1
+        )
+    }
+
+    private func buildInsightChangesSubsection(
+        result: SQInsightsResult
+    ) -> SQDashboardSubsectionViewModel? {
+        guard !result.changes.isEmpty else { return nil }
+
+        let rows = result.changes.map {
+            SQDashboardInsightChangeRowViewModel(model: $0) as SQDashboardRowViewModel
+        }
+
+        return SQDashboardSubsectionViewModel(
+            id: "insight-changes",
+            title: "What Changed",
+            defaultPriority: 14,
+            rowsByFilter: ["All": rows],
+            rowSpacing: .SQSpace.m,
+            maxVisibleRows: 2
+        )
+    }
+
     private func buildHealthAccessWarningSectionGroup(
         id: String,
         title: String,

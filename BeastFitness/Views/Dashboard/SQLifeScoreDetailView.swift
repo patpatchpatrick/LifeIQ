@@ -23,6 +23,9 @@ struct SQLifeScoreDetailView: View {
                 if !controller.viewModel.changes.isEmpty {
                     changesCard
                 }
+                if !controller.viewModel.actions.isEmpty {
+                    actionsCard
+                }
                 breakdownSection
                 formulaCard
             }
@@ -155,6 +158,28 @@ struct SQLifeScoreDetailView: View {
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
+    private var actionsCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("What To Do")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text("This is the clearest next move the current dashboard signals suggest.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: .SQSpace.s) {
+                ForEach(controller.viewModel.actions) { action in
+                    actionRow(action)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
     private func overviewMetric(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.xs) {
             Text(title.uppercased())
@@ -243,6 +268,43 @@ struct SQLifeScoreDetailView: View {
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func actionRow(_ action: SQInsightAction) -> some View {
+        let color: SQColor
+        switch action.tone {
+        case .maintain:
+            color = .dashboardGlowMint
+        case .improve:
+            color = .dashboardGlowBlue
+        case .caution:
+            color = .dashboardTrendWarm
+        }
+
+        return HStack(alignment: .top, spacing: .SQSpace.s) {
+            Circle()
+                .fill(color.color)
+                .frame(width: 8, height: 8)
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(action.title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
+
+                Text(action.summary)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let context = action.context {
+                    Text(context)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

@@ -63,6 +63,16 @@ struct SQDashboardSectionView: View {
                                         SQDashboardInsightRowView(viewModel: vm)
                                     }
 
+                                case .insightChange:
+                                    if let vm = row as? SQDashboardInsightChangeRowViewModel {
+                                        SQDashboardInsightChangeRowView(viewModel: vm)
+                                    }
+
+                                case .insightAction:
+                                    if let vm = row as? SQDashboardInsightActionRowViewModel {
+                                        SQDashboardInsightActionRowView(viewModel: vm)
+                                    }
+
                                 case .metricStats:
                                     if let vm = row as? SQDashboardMetricStatsRowViewModel {
                                         Button(action: { handleMetricRowTap(vm) }) {

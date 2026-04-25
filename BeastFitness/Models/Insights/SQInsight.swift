@@ -80,6 +80,7 @@ struct SQInsightsResult {
     let insights: [SQInsight]
     let drivers: [SQInsightDriver]
     let changes: [SQInsightChange]
+    let actions: [SQInsightAction]
     let readinessItems: [SQInsightReadinessItem]
     let analyzedDayCount: Int
     let requiredMinimumDayCount: Int

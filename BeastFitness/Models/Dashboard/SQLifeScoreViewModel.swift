@@ -112,8 +112,10 @@ struct SQLifeScoreViewModel {
     let state: SQLifeScoreState
     let subtitle: String
     let components: [SQLifeScoreComponent]
+    let primaryInsight: SQInsight?
     let drivers: [SQInsightDriver]
     let changes: [SQInsightChange]
+    let actions: [SQInsightAction]
     let availableWeight: Double
 
     static let mock = SQLifeScoreViewModel(
@@ -121,8 +123,24 @@ struct SQLifeScoreViewModel {
         state: .steady,
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         components: [],
+        primaryInsight: .init(
+            id: "mock-primary-insight",
+            title: "Sleep is helping, but strain is starting to build",
+            summary: "Sleep is helping, but strain is starting to build.",
+            evidenceText: "",
+            actionText: "Keep training moderate today.",
+            driverText: "Sleep",
+            outcomeText: "Recovery",
+            deltaText: "+0.8",
+            category: .recovery,
+            confidence: .medium,
+            effect: .positive,
+            sampleCount: 12,
+            rankingScore: 12
+        ),
         drivers: [],
         changes: [],
+        actions: [],
         availableWeight: 100
     )
 

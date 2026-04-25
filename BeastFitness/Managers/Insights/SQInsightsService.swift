@@ -23,6 +23,7 @@ final class SQInsightsService: SQInsightsServicing {
     private let featureBuilder: SQInsightFeatureBuilding
     private let driverBuilder: SQInsightDriverBuilding
     private let changeBuilder: SQInsightChangeBuilding
+    private let actionBuilder: SQInsightActionBuilding
     private let analysisEngine: SQInsightAnalyzing
     private let relationshipRegistry: SQInsightRelationshipRegistry
     private let minimumAnalyzedDayCount = 10
@@ -32,12 +33,14 @@ final class SQInsightsService: SQInsightsServicing {
         featureBuilder: SQInsightFeatureBuilding = SQInsightFeatureBuilder(),
         driverBuilder: SQInsightDriverBuilding = SQInsightDriverBuilder(),
         changeBuilder: SQInsightChangeBuilding = SQInsightChangeBuilder(),
+        actionBuilder: SQInsightActionBuilding = SQInsightActionBuilder(),
         analysisEngine: SQInsightAnalyzing = SQInsightAnalysisEngine(),
         relationshipRegistry: SQInsightRelationshipRegistry = .init()
     ) {
         self.featureBuilder = featureBuilder
         self.driverBuilder = driverBuilder
         self.changeBuilder = changeBuilder
+        self.actionBuilder = actionBuilder
         self.analysisEngine = analysisEngine
         self.relationshipRegistry = relationshipRegistry
         self.relevantMetricIds = relationshipRegistry.relevantSignalIds
@@ -89,6 +92,15 @@ final class SQInsightsService: SQInsightsServicing {
             from: deduplicatedInsights,
             surfaceIntent: timeRange.insightSurfaceIntent
         )
+        let actions = curatedActions(
+            from: actionBuilder.buildActions(
+                insights: insights,
+                drivers: drivers,
+                changes: changes,
+                surfaceIntent: timeRange.insightSurfaceIntent
+            ),
+            surfaceIntent: timeRange.insightSurfaceIntent
+        )
         let readinessItems = analysisOutput.readinessItems
 
         if SQAdminConfig.verboseLoggingEnabled {
@@ -131,6 +143,14 @@ final class SQInsightsService: SQInsightsServicing {
                     context: .dashboard
                 )
             }
+
+            for action in actions {
+                SQLogger.shared.log(
+                    "Surfaced action [\(action.title)] summary=\(action.summary)",
+                    .debug,
+                    context: .dashboard
+                )
+            }
         }
 
         let effectiveAnalyzedDayCount = max(analyzedDayCount, relevantDayCount)
@@ -154,6 +174,7 @@ final class SQInsightsService: SQInsightsServicing {
             insights: insights,
             drivers: drivers,
             changes: changes,
+            actions: actions,
             readinessItems: readinessItems,
             analyzedDayCount: effectiveAnalyzedDayCount,
             requiredMinimumDayCount: minimumAnalyzedDayCount
@@ -368,6 +389,21 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return selected
+    }
+
+    private func curatedActions(
+        from actions: [SQInsightAction],
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsightAction] {
+        let maximumCount: Int
+        switch surfaceIntent {
+        case .today:
+            maximumCount = 1
+        case .pastWeek, .pastYear:
+            maximumCount = 2
+        }
+
+        return Array(actions.prefix(maximumCount))
     }
 
 }

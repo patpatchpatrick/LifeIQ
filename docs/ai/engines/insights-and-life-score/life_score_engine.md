@@ -82,6 +82,8 @@ The Life Score detail flow now also consumes shared recent `changes`, so the exp
 - what is helping / dragging
 - what has shifted recently
 
+The Life Score detail flow now also consumes shared `actions`, so the explanation layer can recommend one concrete next move without inventing separate score-only advice logic.
+
 ## Dashboard Use
 
 On the dashboard, the orb should eventually support:
