@@ -38,6 +38,22 @@ struct SQWorkoutHeartRateZonesViewModel {
     let footnote: String
 }
 
+struct SQWorkoutSplitsViewModel {
+    struct SplitItem: Identifiable {
+        let id: String
+        let label: String
+        let timeText: String
+        let paceText: String
+        let heartRateText: String
+    }
+
+    let splitColumnTitle: String
+    let timeColumnTitle: String
+    let paceColumnTitle: String
+    let heartRateColumnTitle: String
+    let splitItems: [SplitItem]
+}
+
 struct SQWorkoutReviewHighlight: Identifiable {
     let id = UUID()
     let segments: [Segment]
@@ -122,6 +138,8 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     private let userState: SQUserStating
     private let workout: SQWorkoutSessionable
     var heartRateZonesViewModel: SQWorkoutHeartRateZonesViewModel?
+    var workoutSplitsViewModel: SQWorkoutSplitsViewModel?
+    private var rawRouteLocationsForSplits: [CLLocation] = []
     
     var navTitle: String {
         switch mode {
@@ -206,9 +224,12 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
         state.isLoading = true
         state.reset()
         heartRateZonesViewModel = nil
+        workoutSplitsViewModel = nil
+        rawRouteLocationsForSplits = []
         await state.load(workout: workout)
         await loadRouteIfNeeded()
         await loadHeartRateZonesIfNeeded(workout: workout)
+        await loadSplitsIfNeeded(workout: workout)
         await loadPerformanceDataIfNeeded(workout: workout)
         await loadPremiumInsightsIfNeeded(workout: workout)
         state.isLoading = false
@@ -467,6 +488,63 @@ extension SQWorkoutSummaryController {
 
 extension SQWorkoutSummaryController {
 
+    func loadSplitsIfNeeded(workout: SQWorkoutSessionable) async {
+        guard supportsSplits(for: workout.activityType) else {
+            workoutSplitsViewModel = nil
+            return
+        }
+
+        guard case .hkWorkout(let hkWorkout) = workout.workoutSource,
+              let distanceType = hkWorkout.hkWorkout.workoutActivityType.standardDistanceType else {
+            workoutSplitsViewModel = nil
+            return
+        }
+
+        let unitSystem = SQUnitSystemResolver.resolve(for: userState.loggedInUser)
+        let splitDistanceUnit: SQUnit = unitSystem == .metric ? .kilometer : .mile
+        guard let targetMeters = splitDistanceUnit.convert(1, to: .meter) else {
+            workoutSplitsViewModel = nil
+            return
+        }
+
+        let calculator = WorkoutSplitsCalculator(workout: hkWorkout.hkWorkout)
+        guard let splits = await calculator.consecutiveSplits(
+            targetMeters: targetMeters,
+            distanceType: distanceType,
+            routeLocations: rawRouteLocationsForSplits.isEmpty ? nil : rawRouteLocationsForSplits
+        ), !splits.isEmpty else {
+            workoutSplitsViewModel = nil
+            return
+        }
+
+        let heartRateSummaries = (try? await healthKitManager.fetchWorkoutHeartRateSummaries(for: hkWorkout.hkWorkout)) ?? []
+        let paceSuffix = splitDistanceUnit == .kilometer ? "/km" : "/mi"
+        let splitTitle = splitDistanceUnit == .kilometer ? "KM" : "Mile"
+
+        workoutSplitsViewModel = .init(
+            splitColumnTitle: "Split",
+            timeColumnTitle: "Time",
+            paceColumnTitle: "Pace",
+            heartRateColumnTitle: "Heart Rate",
+            splitItems: splits.map { split in
+                let distanceInDisplayUnit = SQUnit.meter.convert(split.distanceMeters, to: splitDistanceUnit) ?? 1
+                let pacePerUnit = split.durationSeconds / max(distanceInDisplayUnit, 0.0001)
+                let averageHeartRate = averageHeartRate(
+                    for: split,
+                    summaries: heartRateSummaries
+                )
+
+                return .init(
+                    id: "split-\(split.index)",
+                    label: "\(splitTitle) \(split.index)",
+                    timeText: split.durationSeconds.timeCode(),
+                    paceText: "\(pacePerUnit.asPaceString)\(paceSuffix)",
+                    heartRateText: averageHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "—"
+                )
+            }
+        )
+    }
+
     func loadHeartRateZonesIfNeeded(workout: SQWorkoutSessionable) async {
         guard let summary = await heartRateService.buildWorkoutZoneSummary(for: workout) else {
             heartRateZonesViewModel = nil
@@ -527,11 +605,13 @@ extension SQWorkoutSummaryController {
 
         do {
             let raw = try await healthKitManager.fetchRouteLocations(for: hk.hkWorkout)
+            rawRouteLocationsForSplits = raw.sorted { $0.timestamp < $1.timestamp }
             let reduced = downsample(raw, maxPoints: 1500).sorted { $0.timestamp < $1.timestamp }
             state.routeLocations = reduced
         } catch {
             state.routeLoadErrorMessage = error.localizedDescription
             state.routeLocations = []
+            rawRouteLocationsForSplits = []
         }
 
         state.isLoadingRoute = false
@@ -562,6 +642,37 @@ extension SQWorkoutSummaryController {
 }
 
 private extension SQWorkoutSummaryController {
+    func supportsSplits(for activityType: HKWorkoutActivityType) -> Bool {
+        switch activityType {
+        case .running, .walking, .hiking, .cycling, .handCycling:
+            return true
+        default:
+            return false
+        }
+    }
+
+    func averageHeartRate(
+        for split: SQWorkoutSplit,
+        summaries: [SQHeartRateIntervalSummary]
+    ) -> Double? {
+        let weightedValues = summaries.compactMap { summary -> (value: Double, duration: TimeInterval)? in
+            let overlapStart = max(summary.startDate, split.startDate)
+            let overlapEnd = min(summary.endDate, split.endDate)
+            let overlapDuration = overlapEnd.timeIntervalSince(overlapStart)
+            guard overlapDuration > 0 else { return nil }
+            return (summary.average, overlapDuration)
+        }
+
+        let totalDuration = weightedValues.reduce(0) { $0 + $1.duration }
+        guard totalDuration > 0 else { return nil }
+
+        let weightedAverage = weightedValues.reduce(0.0) { partial, item in
+            partial + (item.value * item.duration)
+        }
+
+        return weightedAverage / totalDuration
+    }
+
     func accentColor(for zone: SQHeartRateZone) -> SQColor {
         switch zone {
         case .zone1:

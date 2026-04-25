@@ -114,6 +114,8 @@
 		F679BC5C2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */; };
 		F679BC5E2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */; };
 		F679BC602F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */; };
+		F8A1C1023000100100AC1001 /* WorkoutSplitsCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A1C1013000100100AC1001 /* WorkoutSplitsCalculator.swift */; };
+		F8A1C1043000100200AC1001 /* SQWorkoutSplitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A1C1033000100200AC1001 /* SQWorkoutSplitsView.swift */; };
 		F679BDD32EE7C0C300A2F249 /* UnfrozenEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD22EE7C0BE00A2F249 /* UnfrozenEnum.swift */; };
 		F679BDD52EE7D3B100A2F249 /* ExercisesListState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD42EE7D3A700A2F249 /* ExercisesListState.swift */; };
 		F679BDD72EE7D46800A2F249 /* SQExercisesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679BDD62EE7D46100A2F249 /* SQExercisesListView.swift */; };
@@ -456,6 +458,8 @@
 		F679BC5B2EE8000100A2F249 /* SQWorkoutInsightDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailController.swift; sourceTree = "<group>"; };
 		F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutInsightDetailView.swift; sourceTree = "<group>"; };
 		F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutHeartRateZonesView.swift; sourceTree = "<group>"; };
+		F8A1C1013000100100AC1001 /* WorkoutSplitsCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSplitsCalculator.swift; sourceTree = "<group>"; };
+		F8A1C1033000100200AC1001 /* SQWorkoutSplitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSplitsView.swift; sourceTree = "<group>"; };
 		F679BDD22EE7C0BE00A2F249 /* UnfrozenEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnfrozenEnum.swift; sourceTree = "<group>"; };
 		F679BDD42EE7D3A700A2F249 /* ExercisesListState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisesListState.swift; sourceTree = "<group>"; };
 		F679BDD62EE7D46100A2F249 /* SQExercisesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQExercisesListView.swift; sourceTree = "<group>"; };
@@ -1065,6 +1069,7 @@
 			isa = PBXGroup;
 			children = (
 				F639F1032F43D35F004AC701 /* WorkoutFastestSplitCalculator.swift */,
+				F8A1C1013000100100AC1001 /* WorkoutSplitsCalculator.swift */,
 			);
 			path = Workouts;
 			sourceTree = "<group>";
@@ -1203,6 +1208,7 @@
 			children = (
 				F679BC5F2F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift */,
 				F67F0A112F09DC7B00D7BB90 /* SQWorkoutRouteMapView.swift */,
+				F8A1C1033000100200AC1001 /* SQWorkoutSplitsView.swift */,
 				F679BC4F2EE4FC1900A2F249 /* SQWorkoutSummaryView.swift */,
 				F679BC5D2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift */,
 			);
@@ -2238,6 +2244,7 @@
 				F615920D2EEE19C100223A63 /* SQWorkoutSessionEntity.swift in Sources */,
 				F61592052EEE16AD00223A63 /* SQWorkoutManager.swift in Sources */,
 				F639F1042F43D364004AC701 /* WorkoutFastestSplitCalculator.swift in Sources */,
+				F8A1C1023000100100AC1001 /* WorkoutSplitsCalculator.swift in Sources */,
 				F67F0A752F0DDB7800D7BB90 /* SQUITextFieldViewModel.swift in Sources */,
 				F6268B142F6F3B9000087C0F /* SQUserManager.swift in Sources */,
 				F6268B152F6F3B9000087C0F /* SQAuthManager.swift in Sources */,
@@ -2350,6 +2357,7 @@
 				F6940F252F379E860008A2A0 /* SQDashboardWorkoutTotalsRowViewModel.swift in Sources */,
 				F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */,
 				F679BC602F9E100100A2F249 /* SQWorkoutHeartRateZonesView.swift in Sources */,
+				F8A1C1043000100200AC1001 /* SQWorkoutSplitsView.swift in Sources */,
 				F679BC502EE4FC1D00A2F249 /* SQWorkoutSummaryView.swift in Sources */,
 				F679BC5E2EE8000100A2F249 /* SQWorkoutInsightDetailView.swift in Sources */,
 				F61591F72EE8F00F00223A63 /* HKDevice+Extensions.swift in Sources */,

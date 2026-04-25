@@ -16,6 +16,7 @@ struct SQWorkoutSummaryView: View {
     @State private var routeSectionCollapsed = false
     @State private var performanceSectionCollapsed = false
     @State private var heartRateZonesSectionCollapsed = false
+    @State private var splitsSectionCollapsed = false
     @State private var statsSectionCollapsed = false
     @State private var reviewScrollOffset: CGFloat = 0
 
@@ -392,6 +393,12 @@ struct SQWorkoutSummaryView: View {
                     ForEach(controller.state.workoutStatsRows) { row in
                         SQDashboardPerformanceRow(data: row)
                     }
+                }
+            }
+
+            if let workoutSplitsViewModel = controller.workoutSplitsViewModel {
+                SQDashboardSubsection(title: "Splits", isCollapsed: $splitsSectionCollapsed) {
+                    SQWorkoutSplitsView(viewModel: workoutSplitsViewModel)
                 }
             }
 
