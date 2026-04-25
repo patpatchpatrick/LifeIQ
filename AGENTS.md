@@ -131,6 +131,12 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - dashboard/root surfaces for user-facing status messaging
 - If a new feature has a meaningful degraded/read-only/maintenance mode, account for Remote Config during implementation rather than treating it as a later patch.
 
+## Admin/debug controls
+
+- `SQAdminConfig` is the repo home for controllable code-level admin/dev settings.
+- Internal debug tooling gates should live there rather than scattered feature flags.
+- Current example: the internal scenario/gallery `View Lab` is gated by `SQAdminConfig.viewLabEnabled`.
+
 ### Guest-mode write behavior
 
 - Any user-facing flow that writes Firestore-backed data must explicitly account for guest mode.
@@ -153,6 +159,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 
 - Colors: use `SQColor` + `.sqForegroundColor()` / `.sqBackgroundColor()`.
 - Fonts: use `SQFont` + `.sqFont()`.
+- Before choosing a font or color token, check the actual available cases in `SQFont` and `SQColor` rather than guessing token names. Prefer explicit verification over assumptions when selecting `sqFont` / `sqForegroundColor` values.
 - Text inputs:
   - Default to `SQUITextField` (UIKit-backed single-line)
   - Use `SQTextField` for multiline fallback

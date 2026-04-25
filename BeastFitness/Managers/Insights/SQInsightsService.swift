@@ -10,12 +10,7 @@ import BeastFitnessCore
 
 @MainActor
 protocol SQInsightsServicing {
-    func dashboardInsights(
-        checkIns: [SQDailyCheckInStats],
-        workouts: [SQWorkoutSessionable],
-        metricDefinitions: [SQMetricDefinition],
-        timeRange: AppTimeRange
-    ) -> SQInsightsResult
+    func dashboardInsights(input: SQHealthIntelligenceInput) -> SQInsightsResult
 }
 
 @MainActor
@@ -46,16 +41,11 @@ final class SQInsightsService: SQInsightsServicing {
         self.relevantMetricIds = relationshipRegistry.relevantSignalIds
     }
 
-    func dashboardInsights(
-        checkIns: [SQDailyCheckInStats],
-        workouts: [SQWorkoutSessionable],
-        metricDefinitions: [SQMetricDefinition],
-        timeRange: AppTimeRange
-    ) -> SQInsightsResult {
+    func dashboardInsights(input: SQHealthIntelligenceInput) -> SQInsightsResult {
         let snapshots = featureBuilder.makeFeatureSnapshots(
-            checkIns: checkIns,
-            workouts: workouts,
-            metricDefinitions: metricDefinitions
+            checkIns: input.checkIns,
+            workouts: input.workouts,
+            metricDefinitions: input.metricDefinitions
         )
 
         let analyzedDayCount = snapshots.filter { snapshot in
@@ -70,37 +60,37 @@ final class SQInsightsService: SQInsightsServicing {
         let analysisOutput = analysisEngine.analyze(
             snapshots: snapshots,
             relationships: relationshipRegistry.activeRelationships,
-            surfaceIntent: timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let drivers = curatedDrivers(
             from: driverBuilder.buildDrivers(
                 from: snapshots,
-                surfaceIntent: timeRange.insightSurfaceIntent
+                surfaceIntent: input.timeRange.insightSurfaceIntent
             ),
-            surfaceIntent: timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let changes = curatedChanges(
             from: changeBuilder.buildChanges(
                 from: snapshots,
-                surfaceIntent: timeRange.insightSurfaceIntent
+                surfaceIntent: input.timeRange.insightSurfaceIntent
             ),
-            surfaceIntent: timeRange.insightSurfaceIntent,
+            surfaceIntent: input.timeRange.insightSurfaceIntent,
             selectedDrivers: drivers
         )
         let generatedInsights = analysisOutput.generatedInsights
         let deduplicatedInsights = deduplicatedInsights(from: generatedInsights)
         let insights = curatedInsights(
             from: deduplicatedInsights,
-            surfaceIntent: timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let actions = curatedActions(
             from: actionBuilder.buildActions(
                 insights: insights,
                 drivers: drivers,
                 changes: changes,
-                surfaceIntent: timeRange.insightSurfaceIntent
+                surfaceIntent: input.timeRange.insightSurfaceIntent
             ),
-            surfaceIntent: timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let readinessItems = analysisOutput.readinessItems
 

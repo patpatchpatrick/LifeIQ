@@ -36,6 +36,7 @@ final class SQDashboardController: SQDashboardInterface {
     let heartRateService: SQHeartRateServicing
     let workoutScoreService: SQWorkoutScoreServicing
     let insightsService: SQInsightsServicing
+    let lifeScoreBuilder: SQLifeScoreBuilding
     let dashboardLayoutService: SQDashboardLayoutServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
@@ -75,12 +76,16 @@ final class SQDashboardController: SQDashboardInterface {
         heartRateService: SQHeartRateServicing? = nil,
         workoutScoreService: SQWorkoutScoreServicing? = nil,
         insightsService: SQInsightsServicing? = nil,
+        lifeScoreBuilder: SQLifeScoreBuilding? = nil,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil,
         remoteConfigManager: SQRemoteConfigManaging = SQRemoteConfigManager.shared
     ) {
         let resolvedHeartRateService = heartRateService ?? SQHeartRateService(
             healthKitManager: healthKitManager,
             userState: userState
+        )
+        let resolvedLifeScoreBuilder = lifeScoreBuilder ?? SQLifeScoreBuilder(
+            sleepAggregationService: sleepAggregationService
         )
 
         self.state = state
@@ -102,6 +107,7 @@ final class SQDashboardController: SQDashboardInterface {
             heartRateService: resolvedHeartRateService
         )
         self.insightsService = insightsService ?? SQInsightsService()
+        self.lifeScoreBuilder = resolvedLifeScoreBuilder
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         self.remoteConfigManager = remoteConfigManager
         self.emailVerificationController = .init(
@@ -165,6 +171,11 @@ final class SQDashboardController: SQDashboardInterface {
     func handleSeeMoreInsightsTap() {
         guard state.selectedTimeRange == .today else { return }
         timeRangeMenuViewModel.defaultItem = .init(title: AppTimeRange.pastSevenDays.rawValue)
+    }
+
+    func handleViewLabTrigger() {
+        guard SQAdminConfig.viewLabEnabled else { return }
+        state.hub.domainEvents.send(.pushDashboardRoute(.viewLab(controller: .init())))
     }
     
     private func handleEventSubscriptions(hub: EventHub) {
@@ -576,23 +587,25 @@ final class SQDashboardController: SQDashboardInterface {
                     || sleepDashboardData?.averageScore != nil
             )
 
-            let insightsResult = buildDashboardInsightsResult(
+            let healthIntelligenceInput = SQHealthIntelligenceInput(
+                referenceDate: .now,
+                timeRange: state.selectedTimeRange,
+                metricDefinitions: metricsManager.allMetrics(includeArchived: true),
                 checkIns: past30DaysCheckIns,
-                workouts: past30DaysWorkouts
+                workouts: past30DaysWorkouts,
+                sleepData: sleepDashboardData,
+                isLoggedIn: userState.isLoggedIn
             )
 
-            lifeScoreViewModel = buildLifeScoreViewModel(
-                past7DaysCheckIns: past7DaysCheckIns,
-                todaysWorkouts: todaysWorkouts,
-                yesterdaysWorkouts: yesterdaysWorkouts,
-                lastWeekWorkouts: lastWeekWorkouts,
-                sleepData: sleepDashboardData,
-                hasCompletedCurrentCheckIn: hasCompletedCurrentCheckIn,
-                hasCompletedYesterdayCheckIn: hasCompletedYesterdayCheckIn,
-                primaryInsight: state.selectedTimeRange == .today ? insightsResult.insights.first : nil,
-                insightDrivers: insightsResult.drivers,
-                insightChanges: insightsResult.changes,
-                insightActions: insightsResult.actions
+            let insightsResult = buildDashboardInsightsResult(
+                input: healthIntelligenceInput
+            )
+
+            lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                input: .init(
+                    intelligenceInput: healthIntelligenceInput,
+                    insightsResult: insightsResult
+                )
             )
 
             let sectionGroups = try await buildSectionGroups(
@@ -2178,15 +2191,9 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func buildDashboardInsightsResult(
-        checkIns: [SQDailyCheckInStats],
-        workouts: [SQWorkoutSessionable]
+        input: SQHealthIntelligenceInput
     ) -> SQInsightsResult {
-        insightsService.dashboardInsights(
-            checkIns: checkIns,
-            workouts: workouts,
-            metricDefinitions: metricsManager.allMetrics(includeArchived: true),
-            timeRange: state.selectedTimeRange
-        )
+        insightsService.dashboardInsights(input: input)
     }
 
     private func buildInsightsSubsection(

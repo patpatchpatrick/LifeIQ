@@ -172,6 +172,12 @@
 		F694B0032F7CD8A100453F0A /* SQDashboardController+LifeScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */; };
 		F694B0112F7E010100453F0A /* SQLifeScoreDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */; };
 		F694B0132F7E010100453F0A /* SQLifeScoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */; };
+		F8A100012FFF900100AA1001 /* SQLifeScoreHeroComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A100042FFF900100AA1001 /* SQLifeScoreHeroComponents.swift */; };
+		F8A100022FFF900100AA1001 /* SQViewLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A100052FFF900100AA1001 /* SQViewLabView.swift */; };
+		F8A100032FFF900100AA1001 /* SQViewLabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A100062FFF900100AA1001 /* SQViewLabController.swift */; };
+		F8A100072FFF900100AA1001 /* SQLifeScoreBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A100082FFF900100AA1001 /* SQLifeScoreBuilder.swift */; };
+		F8A100092FFF900100AA1001 /* SQViewLabScenarioRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A1000A2FFF900100AA1001 /* SQViewLabScenarioRunner.swift */; };
+		F8A1000D2FFF900100AA1001 /* SQHealthIntelligenceInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A1000E2FFF900100AA1001 /* SQHealthIntelligenceInput.swift */; };
 		F6993BD52F2BF6AF00B5FF81 /* SQActivityBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */; };
 		F6993E022F2BFD9800B5FF81 /* CoolCharts in Frameworks */ = {isa = PBXBuildFile; productRef = F6993E012F2BFD9800B5FF81 /* CoolCharts */; };
 		F6A311F52EF6084300A2E5F7 /* BeastFitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = F6A311F42EF6084300A2E5F7 /* BeastFitnessCore */; };
@@ -528,6 +534,12 @@
 		F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SQDashboardController+LifeScore.swift"; sourceTree = "<group>"; };
 		F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailController.swift; sourceTree = "<group>"; };
 		F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreDetailView.swift; sourceTree = "<group>"; };
+		F8A100042FFF900100AA1001 /* SQLifeScoreHeroComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreHeroComponents.swift; sourceTree = "<group>"; };
+		F8A100052FFF900100AA1001 /* SQViewLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQViewLabView.swift; sourceTree = "<group>"; };
+		F8A100062FFF900100AA1001 /* SQViewLabController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQViewLabController.swift; sourceTree = "<group>"; };
+		F8A100082FFF900100AA1001 /* SQLifeScoreBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLifeScoreBuilder.swift; sourceTree = "<group>"; };
+		F8A1000A2FFF900100AA1001 /* SQViewLabScenarioRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQViewLabScenarioRunner.swift; sourceTree = "<group>"; };
+		F8A1000E2FFF900100AA1001 /* SQHealthIntelligenceInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQHealthIntelligenceInput.swift; sourceTree = "<group>"; };
 		F6993BD42F2BF6AF00B5FF81 /* SQActivityBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQActivityBarChart.swift; sourceTree = "<group>"; };
 		F6A401112EF5B920002BC997 /* SQLaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchManager.swift; sourceTree = "<group>"; };
 		F6A848892CB3241900B09AD5 /* SQFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQFont.swift; sourceTree = "<group>"; };
@@ -769,6 +781,8 @@
 				F602DA2E2EC40F9D00404878 /* SQDashboardController.swift */,
 				F694B0102F7E010100453F0A /* SQLifeScoreDetailController.swift */,
 				F694B0022F7CD8A100453F0A /* SQDashboardController+LifeScore.swift */,
+				F8A100062FFF900100AA1001 /* SQViewLabController.swift */,
+				F8A1000A2FFF900100AA1001 /* SQViewLabScenarioRunner.swift */,
 				F7D100042F94000100AA1001 /* SQDashboardLayoutController.swift */,
 				F6940F1C2F36AE7B0008A2A0 /* SQDashboardSectionGroupViewModel.swift */,
 				F6940F1E2F36B0F50008A2A0 /* SQDashboardSubsectionViewModel.swift */,
@@ -794,7 +808,9 @@
 				F602DA402EC4EAA100404878 /* DashboardRows */,
 				F7D100062F94000100AA1001 /* SQDashboardLayoutView.swift */,
 				F694B0122F7E010100453F0A /* SQLifeScoreDetailView.swift */,
+				F8A100042FFF900100AA1001 /* SQLifeScoreHeroComponents.swift */,
 				F602DA392EC4118600404878 /* SQDashboardView.swift */,
+				F8A100052FFF900100AA1001 /* SQViewLabView.swift */,
 				F68C80512F365A0C00327250 /* Shared */,
 				F6940F182F36AC0F0008A2A0 /* SQDashboardSectionGroupView.swift */,
 				F6940F1A2F36AC390008A2A0 /* SQDashboardSectionView.swift */,
@@ -1466,6 +1482,7 @@
 				F6FE157F2F5686120023CF5C /* SQWorkoutStatsManager.swift */,
 				F6E179922F57DAED0099CAF2 /* Sleep */,
 				F7D1000B2F98010100AA1001 /* SQWorkoutScoreService.swift */,
+				F8A100082FFF900100AA1001 /* SQLifeScoreBuilder.swift */,
 				F6E179AE2F6357810099CAF2 /* SQMetricEntryManager.swift */,
 				F6268B122F6F3B9000087C0F /* SQAuthManager.swift */,
 				F6268B132F6F3B9000087C0F /* SQUserManager.swift */,
@@ -1783,6 +1800,7 @@
 				F7E400332FFE200100AA4001 /* SQInsightDriver.swift */,
 				F7E400432FFE200100AA4001 /* SQInsightChange.swift */,
 				F8B100113000200900AB2001 /* SQInsightAction.swift */,
+				F8A1000E2FFF900100AA1001 /* SQHealthIntelligenceInput.swift */,
 				F7E400352FFE200100AA4001 /* SQInsightFeatureSnapshot.swift */,
 			);
 			path = Insights;
@@ -2241,6 +2259,7 @@
 				F6A848B02CBD86A100B09AD5 /* SQHealthKitManager.swift in Sources */,
 				F6940F2B2F37A6730008A2A0 /* SQDashboardActivityListRowView.swift in Sources */,
 				F694B0132F7E010100453F0A /* SQLifeScoreDetailView.swift in Sources */,
+				F8A100012FFF900100AA1001 /* SQLifeScoreHeroComponents.swift in Sources */,
 				F694B0012F7CD80100453F0A /* SQLifeScoreViewModel.swift in Sources */,
 				F6E90B4C2ED5519C003441B5 /* SQDailyCheckInView.swift in Sources */,
 				F6C5FDAE2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift in Sources */,
@@ -2302,6 +2321,8 @@
 				F61592072EEE179200223A63 /* SQWorkoutService.swift in Sources */,
 				F6E1799A2F5B7E970099CAF2 /* SQEditWorkoutView.swift in Sources */,
 				F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */,
+				F8A100022FFF900100AA1001 /* SQViewLabView.swift in Sources */,
+				F8A100072FFF900100AA1001 /* SQLifeScoreBuilder.swift in Sources */,
 				F61592372EF3637000223A63 /* SQAlertHost.swift in Sources */,
 				F6A848A92CB619F700B09AD5 /* SQDeepLinkManager.swift in Sources */,
 				F61593C82EF4B81D00223A63 /* SQOverlayRootView.swift in Sources */,
@@ -2369,6 +2390,7 @@
 				F7E400342FFE200100AA4001 /* SQInsightDriver.swift in Sources */,
 				F7E400442FFE200100AA4001 /* SQInsightChange.swift in Sources */,
 				F8B100103000200900AB2001 /* SQInsightAction.swift in Sources */,
+				F8A1000D2FFF900100AA1001 /* SQHealthIntelligenceInput.swift in Sources */,
 				F7E400362FFE200100AA4001 /* SQInsightFeatureSnapshot.swift in Sources */,
 				F7E400382FFE200100AA4001 /* SQInsightFeatureBuilder.swift in Sources */,
 				F7E4003A2FFE200100AA4001 /* SQInsightScoring.swift in Sources */,
@@ -2435,6 +2457,8 @@
 				F602DA2F2EC40FA100404878 /* SQDashboardController.swift in Sources */,
 				F694B0032F7CD8A100453F0A /* SQDashboardController+LifeScore.swift in Sources */,
 				F694B0112F7E010100453F0A /* SQLifeScoreDetailController.swift in Sources */,
+				F8A100032FFF900100AA1001 /* SQViewLabController.swift in Sources */,
+				F8A100092FFF900100AA1001 /* SQViewLabScenarioRunner.swift in Sources */,
 				F61591FB2EEA48E100223A63 /* SQWorkoutSession+Mocks.swift in Sources */,
 				F6ABC3F72EDFBED700D3E679 /* SQDailyCheckInStats.swift in Sources */,
 				F679BC4D2EE4FB7100A2F249 /* SQWorkoutSummaryController.swift in Sources */,

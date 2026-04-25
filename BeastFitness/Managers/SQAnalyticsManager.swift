@@ -496,6 +496,8 @@ private extension SQNavRoute.DashboardRoute {
             return "dashboard_layout"
         case .dashboardSubsectionLayout:
             return "dashboard_subsection_layout"
+        case .viewLab:
+            return "view_lab"
         }
     }
 }

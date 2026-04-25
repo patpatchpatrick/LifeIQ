@@ -56,6 +56,8 @@ struct SQRootTabView: View {
             SQDashboardLayoutView(controller: controller)
         case .dashboardSubsectionLayout(controller: let controller, groupId: let groupId):
             SQDashboardSubsectionLayoutView(controller: controller, groupId: groupId)
+        case .viewLab(controller: let controller):
+            SQViewLabView(controller: controller)
         }
     }
     

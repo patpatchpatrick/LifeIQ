@@ -22,11 +22,15 @@ enum SQAdminConfig {
     static var useMockDashboardHealthData = false
     static var useMockHealthData: Bool { useMockDashboardHealthData }
     static var verboseLoggingEnabled = false
+
+    /// Gates the internal scenario/gallery lab used to QA dashboard and future view states.
+    static var viewLabEnabled = true
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
     static let useMockDashboardHealthData = false
     static let useMockHealthData = false
     static let verboseLoggingEnabled = false
+    static let viewLabEnabled = false
     #endif
 }

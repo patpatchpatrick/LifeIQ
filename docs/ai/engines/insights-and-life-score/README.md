@@ -89,5 +89,7 @@ The current backend/engine stopping point that is good enough for UI exploration
 - range-specific surfacing exists
 - shared drivers exist
 - the Life Score detail path already consumes shared drivers
+- a shared raw-input shape exists for both Insights and Life Score
+- an internal scenario/gallery `View Lab` exists for testing real dashboard surfaces against engine-backed mock inputs
 
 That is enough to start serious UI brainstorming without waiting for every future analyzer or score formula rewrite.

@@ -109,6 +109,7 @@ struct SQNavRoute {
         case settings(controller: SQSettingsController)
         case dashboardLayout(controller: SQDashboardLayoutController)
         case dashboardSubsectionLayout(controller: SQDashboardLayoutController, groupId: String)
+        case viewLab(controller: SQViewLabController)
         
         var id: String {
             switch self {
@@ -152,6 +153,8 @@ struct SQNavRoute {
                 return "dashboardLayout-\(controller.id)"
             case .dashboardSubsectionLayout(let controller, let groupId):
                 return "dashboardSubsectionLayout-\(controller.id)-\(groupId)"
+            case .viewLab(let controller):
+                return "viewLab-\(controller.id)"
             }
         }
         
@@ -170,6 +173,8 @@ struct SQNavRoute {
             case .insightDetail:
                 return [.medium, .large]
             case .webContent:
+                return [.large]
+            case .viewLab:
                 return [.large]
             default:
                 return nil
