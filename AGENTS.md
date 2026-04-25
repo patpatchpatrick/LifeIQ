@@ -2,6 +2,13 @@
 
 This file translates the existing `CLAUDE.md` guidance into a Codex-friendly operating guide for this repository.
 
+## AI docs source of truth
+
+- The canonical product-context doc for AI assistants in this repo is [docs/ai/product_context.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/product_context.md).
+- Use that file as the stable product brief when grounding product decisions, UX reasoning, naming, and feature intent.
+- Keep `AGENTS.md` focused on implementation guidance and repo rules; put broader product context in `docs/ai/`.
+- If product framing changes materially, update `docs/ai/product_context.md` alongside any related `AGENTS.md` edits so ChatGPT and Codex can stay aligned.
+
 ## Brand direction
 
 - Product-facing app name is now `LifeIQ`.
