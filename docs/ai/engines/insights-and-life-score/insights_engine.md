@@ -111,6 +111,7 @@ Weekly/yearly insight freshness now has a separate first-pass memory layer:
 The current relationship registry is also broader than the original vice-only seed set. It now includes:
 - vice and carryover relationships
 - sleep -> recovery / mood / clarity relationships
+- resting-heart-rate -> recovery / energy / workout-readiness relationships
 - training-readiness and workout-performance relationships
 - mind-and-body signals such as:
   - mental clarity

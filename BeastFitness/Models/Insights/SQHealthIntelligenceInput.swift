@@ -18,5 +18,26 @@ struct SQHealthIntelligenceInput {
     let checkIns: [SQDailyCheckInStats]
     let workouts: [SQWorkoutSessionable]
     let sleepData: SQSleepDashboardData?
+    let restingHeartRateSummaries: [SQHeartRateDailySummary]
     let isLoggedIn: Bool
+
+    init(
+        referenceDate: Date,
+        timeRange: AppTimeRange,
+        metricDefinitions: [SQMetricDefinition],
+        checkIns: [SQDailyCheckInStats],
+        workouts: [SQWorkoutSessionable],
+        sleepData: SQSleepDashboardData?,
+        restingHeartRateSummaries: [SQHeartRateDailySummary] = [],
+        isLoggedIn: Bool
+    ) {
+        self.referenceDate = referenceDate
+        self.timeRange = timeRange
+        self.metricDefinitions = metricDefinitions
+        self.checkIns = checkIns
+        self.workouts = workouts
+        self.sleepData = sleepData
+        self.restingHeartRateSummaries = restingHeartRateSummaries
+        self.isLoggedIn = isLoggedIn
+    }
 }

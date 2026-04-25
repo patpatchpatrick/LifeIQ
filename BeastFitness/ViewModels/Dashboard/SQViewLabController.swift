@@ -204,6 +204,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 88),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 57,
+                        recentValues: [53, 54]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -263,6 +268,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 86),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 58,
+                        recentValues: [54, 55]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -323,6 +333,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 63),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 58,
+                        recentValues: [65, 66]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -383,6 +398,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 71),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 59,
+                        recentValues: [64, 65]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -442,6 +462,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 60),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 60,
+                        recentValues: [66, 64]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -505,6 +530,11 @@ private extension SQViewLabController {
             checkIns: checkIns,
             workouts: workouts,
             sleepData: makeSleepDashboardData(score: 79),
+            restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                referenceDate: referenceDate,
+                baseline: 59,
+                recentValues: [58, 57]
+            ),
             isLoggedIn: true
         )
 
@@ -574,6 +604,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 67),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 60,
+                        recentValues: [67, 68]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -632,6 +667,11 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 80),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 61,
+                        recentValues: [56, 55]
+                    ),
                     isLoggedIn: true
                 )
             )
@@ -743,10 +783,44 @@ private extension SQViewLabController {
                     checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
                     workouts: workouts,
                     sleepData: makeSleepDashboardData(score: 76),
+                    restingHeartRateSummaries: makeRestingHeartRateSummaries(
+                        referenceDate: referenceDate,
+                        baseline: 60,
+                        recentValues: [61, 60]
+                    ),
                     isLoggedIn: true
                 )
             )
         )
+    }
+
+    static func makeRestingHeartRateSummaries(
+        referenceDate: Date,
+        baseline: Double,
+        recentValues: [Double],
+        dayCount: Int = 14
+    ) -> [SQHeartRateDailySummary] {
+        let calendar = Calendar.current
+        let startOfReferenceDay = calendar.startOfDay(for: referenceDate)
+
+        return (0..<dayCount).map { offset in
+            let dayDate = calendar.date(byAdding: .day, value: -offset, to: startOfReferenceDay) ?? startOfReferenceDay
+            let value: Double
+            if offset < recentValues.count {
+                value = recentValues[offset]
+            } else {
+                let jitter = Double((offset % 3) - 1) * 0.6
+                value = baseline + jitter
+            }
+
+            return SQHeartRateDailySummary(
+                date: dayDate,
+                average: value,
+                minimum: nil,
+                maximum: nil
+            )
+        }
+        .sorted { $0.date < $1.date }
     }
 
     static func defaultMetricDefinitions() -> [SQMetricDefinition] {

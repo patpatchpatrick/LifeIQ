@@ -277,6 +277,17 @@ struct SQInsightRelationshipRegistry {
             expectedEffect: .negative,
             strongActionText: "Weed use has been trending up recently. If recovery or sleep matters, try a lighter stretch and compare the next few days."
         ),
+        signalTrend(
+            id: "insight.trend.resting-heart-rate",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumEffectMagnitude: 2.0,
+            expectedEffect: .negative,
+            strongActionText: "Resting HR has been creeping up recently. Keep the next day lighter and protect recovery."
+        ),
         signalBaselineChange(
             id: "insight.baseline.sleep-hours",
             inputSignalId: SQMetricId.sleepHours,
@@ -367,6 +378,17 @@ struct SQInsightRelationshipRegistry {
             expectedEffect: .negative,
             strongActionText: "Soreness is sitting above your usual range. Favor recovery until it settles back down."
         ),
+        signalBaselineChange(
+            id: "insight.baseline.resting-heart-rate",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumEffectMagnitude: 2.0,
+            expectedEffect: .negative,
+            strongActionText: "Resting HR is running above your usual range. Keep strain a little lower and see if recovery opens back up."
+        ),
         currentStateRelationship(
             id: "insight.today.sleep-hours.opportunity",
             inputSignalId: SQMetricId.sleepHours,
@@ -434,6 +456,40 @@ struct SQInsightRelationshipRegistry {
             driverText: "Sleep quality is hurting today",
             outcomeText: "Recovery Drag",
             strongActionText: "Sleep quality is below your usual range. Keep the day steadier and set up tonight to recover better."
+        ),
+        currentStateRelationship(
+            id: "insight.today.resting-heart-rate.opportunity",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            insightClass: .opportunity,
+            category: .recovery,
+            recommendationFamily: .moderateStrain,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 2.0,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .negative,
+            driverText: "Resting HR is lower today",
+            outcomeText: "Recovery Window",
+            strongActionText: "Resting HR is lower than usual today. If the rest of your signals agree, this could be a good day for a quality session."
+        ),
+        currentStateRelationship(
+            id: "insight.today.resting-heart-rate.risk",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            insightClass: .risk,
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 3,
+            minimumEffectMagnitude: 2.0,
+            recentWindowDayCount: 1,
+            baselineWindowDayCount: 14,
+            expectedEffect: .negative,
+            driverText: "Resting HR is elevated today",
+            outcomeText: "Recovery Drag",
+            strongActionText: "Resting HR is above your usual range today. Keep strain moderate and protect recovery."
         ),
         currentStateRelationship(
             id: "insight.today.energy.opportunity",
@@ -976,6 +1032,21 @@ struct SQInsightRelationshipRegistry {
             outcomeText: "Lower clarity",
             strongActionText: "If anxiety is elevated, lower friction and protect focus before the day gets noisier."
         ),
+        signalRelationship(
+            id: "insight.resting-heart-rate.energy",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            outputSignalId: SQMetricId.energy,
+            outputTitle: "Energy",
+            category: .recovery,
+            recommendationFamily: .protectRecovery,
+            lowBucketUpperBound: 54,
+            highBucketLowerBound: 62,
+            expectedEffect: .negative,
+            driverText: "Higher resting HR",
+            outcomeText: "Lower energy",
+            strongActionText: "When resting HR runs high, keep the next day lighter and protect recovery."
+        ),
         workoutPerformanceRelationship(
             id: "insight.sleep-quality.workout-performance",
             inputSignalId: SQMetricId.sleepQuality,
@@ -1074,6 +1145,19 @@ struct SQInsightRelationshipRegistry {
             outcomeText: "Lower performance",
             strongActionText: "When soreness is high, favor recovery or a lighter session if performance matters.",
             subtleActionText: "Soreness may be shaving the edge off your better sessions."
+        ),
+        workoutPerformanceRelationship(
+            id: "insight.resting-heart-rate.workout-performance",
+            inputSignalId: SQInsightAnalysisMetricId.restingHeartRate,
+            inputTitle: "Resting HR",
+            driverText: "Higher resting HR",
+            lowBucketUpperBound: 54,
+            highBucketLowerBound: 62,
+            expectedEffect: .negative,
+            recommendationFamily: .protectRecovery,
+            outcomeText: "Lower performance",
+            strongActionText: "When resting HR runs high, favor a lighter session until recovery settles.",
+            subtleActionText: "Higher resting HR may be taking the edge off your better sessions."
         ),
         viceRelationship(
             idBase: "insight.alcohol.workout-performance",

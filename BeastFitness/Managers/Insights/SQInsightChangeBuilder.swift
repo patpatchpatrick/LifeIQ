@@ -226,6 +226,14 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             minimumEffectMagnitude: 0.75
         ),
         .init(
+            signalId: SQInsightAnalysisMetricId.restingHeartRate,
+            title: "Resting HR",
+            category: .recovery,
+            expectedEffect: .negative,
+            minimumSampleCount: 2,
+            minimumEffectMagnitude: 2.0
+        ),
+        .init(
             signalId: SQMetricId.energy,
             title: "Energy",
             category: .recovery,

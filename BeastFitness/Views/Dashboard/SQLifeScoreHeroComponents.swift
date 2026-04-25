@@ -12,10 +12,6 @@ struct SQLifeScoreHeroCard: View {
     let timeRange: AppTimeRange
     let onOpenDetail: (() -> Void)?
 
-    private var driverColumns: [GridItem] {
-        [.init(.adaptive(minimum: 84), spacing: 4, alignment: .center)]
-    }
-
     private var shouldShowTodayBriefing: Bool {
         timeRange == .today && viewModel.primaryInsight != nil
     }
@@ -113,24 +109,51 @@ struct SQLifeScoreHeroCard: View {
 
     private var heroDrivers: some View {
         let displayedDrivers = Array(viewModel.drivers.prefix(3))
+        let rows = driverRows(for: displayedDrivers)
 
-        return Group {
-            if displayedDrivers.count <= 2 {
-                HStack(spacing: 4) {
-                    ForEach(displayedDrivers) { driver in
+        return VStack(spacing: 6) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 6) {
+                    ForEach(row) { driver in
                         HeroDriverChip(driver: driver)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-            } else {
-                LazyVGrid(columns: driverColumns, alignment: .center, spacing: .SQSpace.xs) {
-                    ForEach(displayedDrivers) { driver in
-                        HeroDriverChip(driver: driver)
-                    }
-                }
             }
         }
         .frame(maxWidth: 300)
+    }
+
+    private func driverRows(for drivers: [SQInsightDriver]) -> [[SQInsightDriver]] {
+        guard !drivers.isEmpty else { return [] }
+
+        let maxRowScore = 36
+        var rows = [[SQInsightDriver]]()
+        var currentRow = [SQInsightDriver]()
+        var currentScore = 0
+
+        for driver in drivers {
+            let nextScore = chipRowScore(for: driver)
+
+            if !currentRow.isEmpty, currentScore + nextScore > maxRowScore {
+                rows.append(currentRow)
+                currentRow = [driver]
+                currentScore = nextScore
+            } else {
+                currentRow.append(driver)
+                currentScore += nextScore
+            }
+        }
+
+        if !currentRow.isEmpty {
+            rows.append(currentRow)
+        }
+
+        return rows
+    }
+
+    private func chipRowScore(for driver: SQInsightDriver) -> Int {
+        min(driver.title.count + 8, 28)
     }
 
     private func heroBriefing(summary: String, action: String?) -> some View {
@@ -218,24 +241,53 @@ struct HeroDriverChip: View {
         driver.direction == .supportive ? "+" : "-"
     }
 
+    private var movementSymbolText: String {
+        let normalizedDeltaText = driver.deltaText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if normalizedDeltaText.contains("-") {
+            return "↓"
+        } else if normalizedDeltaText.contains("+") {
+            return "↑"
+        } else if driver.recentAverage > driver.baselineAverage {
+            return "↑"
+        } else if driver.recentAverage < driver.baselineAverage {
+            return "↓"
+        } else {
+            return "→"
+        }
+    }
+
     var body: some View {
-        Text("\(symbolText) \(driver.title)")
-            .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textPrimary)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: 92)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 5)
-            .background {
-                Capsule(style: .continuous)
-                    .fill(color.color.opacity(SQColor.isDarkMode ? 0.16 : 0.10))
-            }
-            .overlay {
-                Capsule(style: .continuous)
-                    .stroke(color.color.opacity(SQColor.isDarkMode ? 0.30 : 0.20), lineWidth: 1)
-            }
+        HStack(alignment: .center, spacing: 4) {
+            Text(symbolText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .frame(width: 7, alignment: .center)
+
+            Text(driver.title)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 78, alignment: .center)
+
+            Text(movementSymbolText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .frame(width: 8, alignment: .center)
+        }
+        .frame(maxWidth: 104, minHeight: 24)
+        .padding(.vertical, 3)
+        .padding(.horizontal, 4)
+        .background {
+            Capsule(style: .continuous)
+                .fill(color.color.opacity(SQColor.isDarkMode ? 0.16 : 0.10))
+        }
+        .overlay {
+            Capsule(style: .continuous)
+                .stroke(color.color.opacity(SQColor.isDarkMode ? 0.30 : 0.20), lineWidth: 1)
+        }
     }
 }
 

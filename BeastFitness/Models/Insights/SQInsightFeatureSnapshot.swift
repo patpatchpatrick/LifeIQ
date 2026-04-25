@@ -11,6 +11,7 @@ import HealthKit
 enum SQInsightAnalysisMetricId {
     static let workoutPerformance = "insight.workoutPerformance"
     static let workoutDifficulty = "insight.workoutDifficulty"
+    static let restingHeartRate = "insight.restingHeartRate"
 }
 
 struct SQInsightFeatureSnapshot: Identifiable {

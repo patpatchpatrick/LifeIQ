@@ -415,6 +415,9 @@ final class SQDashboardController: SQDashboardInterface {
             let heartAccessStatus = await heartAccessStatusTask
             let workoutsAccessStatus = await workoutsAccessStatusTask
 
+            async let restingHeartRatePast30DaysTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.past30Days)
+            async let restingHeartRatePastYearTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastYear)
+
             let vo2MaxPast7Days: [SQVO2MaxSample]
             let vo2MaxPast30Days: [SQVO2MaxSample]
             let vo2MaxPastYear: [SQVO2MaxSample]
@@ -608,11 +611,14 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             let sleepDashboardData = try await buildSleepDashboardData(for: state.selectedTimeRange)
+            let restingHeartRatePast30Days = (try? await restingHeartRatePast30DaysTask) ?? []
+            let restingHeartRatePastYear = (try? await restingHeartRatePastYearTask) ?? []
 
             healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
                 for: context,
                 hasAnyHealthKitSignal: !allTimeWorkouts.isEmpty
                     || !vo2MaxAllTime.isEmpty
+                    || !restingHeartRatePast30Days.isEmpty
                     || sleepDashboardData?.latestNight != nil
                     || sleepDashboardData?.averageScore != nil
             )
@@ -623,14 +629,17 @@ final class SQDashboardController: SQDashboardInterface {
             func buildHealthIntelligenceInput(for timeRange: AppTimeRange) -> SQHealthIntelligenceInput {
                 let scopedCheckIns: [SQDailyCheckInStats]
                 let scopedWorkouts: [any SQWorkoutSessionable]
+                let scopedRestingHeartRateSummaries: [SQHeartRateDailySummary]
 
                 switch timeRange {
                 case .today, .pastSevenDays, .past30Days:
                     scopedCheckIns = past30DaysCheckIns
                     scopedWorkouts = past30DaysWorkouts
+                    scopedRestingHeartRateSummaries = restingHeartRatePast30Days
                 case .pastYear, .allTime:
                     scopedCheckIns = pastYearCheckIns
                     scopedWorkouts = lastYearWorkouts
+                    scopedRestingHeartRateSummaries = restingHeartRatePastYear
                 }
 
                 return .init(
@@ -640,6 +649,7 @@ final class SQDashboardController: SQDashboardInterface {
                     checkIns: scopedCheckIns,
                     workouts: scopedWorkouts,
                     sleepData: sleepDashboardData,
+                    restingHeartRateSummaries: scopedRestingHeartRateSummaries,
                     isLoggedIn: userState.isLoggedIn
                 )
             }

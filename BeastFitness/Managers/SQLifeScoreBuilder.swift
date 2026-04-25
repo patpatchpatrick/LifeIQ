@@ -70,6 +70,13 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             components.append(sleepComponent)
         }
 
+        if let heartComponent = lifeScoreHeartComponent(
+            from: intelligenceInput.restingHeartRateSummaries,
+            referenceDate: intelligenceInput.referenceDate
+        ) {
+            components.append(heartComponent)
+        }
+
         if let habitsComponent = lifeScoreHabitsComponent(
             from: pastSevenDaysCheckIns,
             metricDefinitions: intelligenceInput.metricDefinitions
@@ -104,6 +111,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             workouts: intelligenceInput.workouts,
             metricDefinitions: intelligenceInput.metricDefinitions,
             sleepData: intelligenceInput.sleepData,
+            restingHeartRateSummaries: intelligenceInput.restingHeartRateSummaries,
             isLoggedIn: intelligenceInput.isLoggedIn
         )
         let state = lifeScoreState(for: preliminaryScore, availableWeight: totalWeight)
@@ -121,7 +129,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         } else if totalWeight < 60 {
             subtitle = "LifeIQ is still calibrating because some of your usual signals are missing today."
         } else {
-            subtitle = "A lightweight read on how aligned your recovery, habits, and training look right now."
+            subtitle = "A lightweight read on how aligned your recovery, heart, habits, and training look right now."
         }
 
         return .init(
@@ -204,6 +212,9 @@ private extension SQLifeScoreBuilder {
         if normalizedText.contains("sleep") {
             synthesizedTitle = "Sleep"
             signalId = SQMetricId.sleepQuality
+        } else if normalizedText.contains("resting hr") || normalizedText.contains("resting heart") {
+            synthesizedTitle = "Resting HR"
+            signalId = SQInsightAnalysisMetricId.restingHeartRate
         } else if normalizedText.contains("energy") {
             synthesizedTitle = "Energy"
             signalId = SQMetricId.energy
@@ -257,6 +268,7 @@ private extension SQLifeScoreBuilder {
         text.lowercased()
             .replacingOccurrences(of: "sleep quality", with: "sleep")
             .replacingOccurrences(of: "sleep hours", with: "sleep")
+            .replacingOccurrences(of: "resting heart rate", with: "resting hr")
             .replacingOccurrences(of: "mental clarity", with: "clarity")
             .replacingOccurrences(of: "running performance", with: "performance")
             .replacingOccurrences(of: "cycling performance", with: "performance")
@@ -271,6 +283,7 @@ private extension SQLifeScoreBuilder {
         workouts: [SQWorkoutSessionable],
         metricDefinitions: [SQMetricDefinition],
         sleepData: SQSleepDashboardData?,
+        restingHeartRateSummaries: [SQHeartRateDailySummary],
         isLoggedIn: Bool
     ) -> Int? {
         let calendar = Calendar.current
@@ -282,6 +295,13 @@ private extension SQLifeScoreBuilder {
 
         if let sleepComponent = previousLifeScoreSleepComponent(from: sleepData) {
             components.append(sleepComponent)
+        }
+
+        if let heartComponent = lifeScoreHeartComponent(
+            from: restingHeartRateSummaries,
+            referenceDate: startOfYesterday
+        ) {
+            components.append(heartComponent)
         }
 
         let priorCheckIns = checkIns.filter {
@@ -394,6 +414,72 @@ private extension SQLifeScoreBuilder {
             summary: summary,
             weight: 30,
             detailItems: []
+        )
+    }
+
+    func lifeScoreHeartComponent(
+        from restingHeartRateSummaries: [SQHeartRateDailySummary],
+        referenceDate: Date
+    ) -> SQLifeScoreComponent? {
+        let calendar = Calendar.current
+        let startOfReferenceDay = calendar.startOfDay(for: referenceDate)
+        let summaries = restingHeartRateSummaries
+            .filter { $0.average != nil }
+            .sorted { $0.date < $1.date }
+            .filter { calendar.startOfDay(for: $0.date) <= startOfReferenceDay }
+
+        guard let latestSummary = summaries.last,
+              let latestAverage = latestSummary.average else {
+            return nil
+        }
+
+        let daysSinceLatest = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: latestSummary.date),
+            to: startOfReferenceDay
+        ).day ?? 0
+        guard daysSinceLatest <= 2 else { return nil }
+
+        let recentSummaries = Array(summaries.suffix(2))
+        let baselineSummaries = Array(summaries.dropLast(recentSummaries.count).suffix(7))
+
+        guard recentSummaries.count >= 1,
+              baselineSummaries.count >= 3,
+              let recentAverage = recentSummaries.compactMap(\.average).average,
+              let baselineAverage = baselineSummaries.compactMap(\.average).average else {
+            return nil
+        }
+
+        let delta = recentAverage - baselineAverage
+        let roundedScore = Int(clamp(78 - (delta * 8), min: 30, max: 95).rounded())
+
+        let summary: String
+        switch delta {
+        case ...(-2):
+            summary = "Resting HR is lower than usual and should be helping recovery."
+        case ...1:
+            summary = "Resting HR is close to your usual range and looks stable."
+        case ...4:
+            summary = "Resting HR is a bit elevated versus your usual range."
+        default:
+            summary = "Resting HR is elevated enough to drag recovery today."
+        }
+
+        return .init(
+            id: "heart",
+            title: "Heart",
+            score: roundedScore,
+            summary: summary,
+            weight: 20,
+            detailItems: [
+                .init(
+                    id: "resting-heart-rate",
+                    title: "Resting HR",
+                    valueText: "\(formattedWholeNumber(latestAverage)) bpm vs \(formattedWholeNumber(baselineAverage)) baseline",
+                    summary: summary,
+                    effect: delta <= 1 ? .positive : .negative
+                )
+            ]
         )
     }
 
@@ -545,6 +631,10 @@ private extension SQLifeScoreBuilder {
 
     func clamp(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
         Swift.max(minimum, Swift.min(maximum, value))
+    }
+
+    func formattedWholeNumber(_ value: Double) -> String {
+        String(Int(value.rounded()))
     }
 
     func habitScore(for value: Double, definition: SQMetricDefinition) -> Double? {

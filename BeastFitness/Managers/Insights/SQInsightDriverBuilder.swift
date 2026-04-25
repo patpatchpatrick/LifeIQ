@@ -225,6 +225,10 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             return base
         }
 
+        if signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            return base
+        }
+
         return min(base, 2)
     }
 
@@ -237,12 +241,17 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             return base
         }
 
+        if signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            return base
+        }
+
         return min(base, 0.35)
     }
 
     private static let todayPreferredSignalIds: Set<String> = [
         SQMetricId.sleepHours,
         SQMetricId.sleepQuality,
+        SQInsightAnalysisMetricId.restingHeartRate,
         SQMetricId.energy,
         SQMetricId.mood,
         SQMetricId.mentalClarity,
@@ -270,6 +279,14 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             expectedEffect: .positive,
             minimumSampleCount: 3,
             minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQInsightAnalysisMetricId.restingHeartRate,
+            title: "Resting HR",
+            category: .recovery,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 2.0
         ),
         .init(
             signalId: SQMetricId.energy,

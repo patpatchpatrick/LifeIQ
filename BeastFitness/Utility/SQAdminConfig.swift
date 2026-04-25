@@ -28,7 +28,7 @@ enum SQAdminConfig {
 
     /// Forces weekly/yearly insight freshness UI for on-device testing without waiting for
     /// the real surfacing-memory conditions and cooldowns to line up.
-    static var forceInsightFreshnessBadges = true
+    static var forceInsightFreshnessBadges = false
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium

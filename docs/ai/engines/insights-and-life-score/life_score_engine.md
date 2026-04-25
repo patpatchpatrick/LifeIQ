@@ -57,6 +57,7 @@ The score system should eventually expose a concept like score drivers or contri
 
 Examples:
 - sleep is lifting the score
+- resting HR is helping recovery
 - shorter sleep is dragging the score down
 - recovery is helping
 - recent strain is pulling the score down
@@ -77,6 +78,8 @@ The current app now also consumes that shared driver layer in the Life Score det
 - keep score math stable
 - move explanation onto shared drivers
 - later let the score formula reuse the same driver inputs more directly
+
+The shared Life Score input path now also carries resting-heart-rate summaries, so the score can start reflecting a broader recovery picture than sleep and habits alone.
 
 The Life Score detail flow now also consumes shared recent `changes`, so the explanation layer can answer both:
 - what is helping / dragging

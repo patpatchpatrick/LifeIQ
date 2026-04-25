@@ -485,7 +485,8 @@ final class SQInsightsService: SQInsightsServicing {
         let snapshots = featureBuilder.makeFeatureSnapshots(
             checkIns: input.checkIns,
             workouts: input.workouts,
-            metricDefinitions: input.metricDefinitions
+            metricDefinitions: input.metricDefinitions,
+            restingHeartRateSummaries: input.restingHeartRateSummaries
         )
 
         let analyzedDayCount = snapshots.filter { snapshot in
@@ -832,6 +833,7 @@ final class SQInsightsService: SQInsightsServicing {
         let preferredSignalIds: Set<String> = [
             SQMetricId.sleepHours,
             SQMetricId.sleepQuality,
+            SQInsightAnalysisMetricId.restingHeartRate,
             SQMetricId.energy,
             SQMetricId.mood,
             SQMetricId.mentalClarity,

@@ -105,6 +105,7 @@ The current backend/engine stopping point that is good enough for UI exploration
   - stress
   - anxiety
   - soreness
+  - resting heart rate
   - workout performance / workout difficulty
 
 That is enough to start serious UI brainstorming without waiting for every future analyzer or score formula rewrite.

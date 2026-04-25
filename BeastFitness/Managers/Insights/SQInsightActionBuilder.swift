@@ -73,6 +73,10 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             return "Keep the day lighter and protect recovery."
         }
 
+        if title.contains("resting hr") || driver.contains("resting hr") || title.contains("resting heart") || driver.contains("resting heart") {
+            return insight.effect == .positive ? "Good day for a quality workout." : "Keep strain moderate today."
+        }
+
         if title.contains("soreness") || driver.contains("soreness") {
             return insight.effect == .positive ? "Recovery looks good for a workout." : "Favor recovery over intensity today."
         }
@@ -234,6 +238,10 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                 return insight.effect == .positive
                     ? "Use the recovery window well."
                     : "Protect sleep tonight."
+            case SQInsightAnalysisMetricId.restingHeartRate:
+                return insight.effect == .positive
+                    ? "Good day for a quality workout."
+                    : "Keep strain moderate today."
             case SQMetricId.stress, SQMetricId.anxiety:
                 return "Keep the day lighter and protect recovery."
             case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
@@ -250,6 +258,10 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                 return insight.effect == .positive
                     ? "Good day for a quality workout."
                     : "Keep strain moderate today."
+            case SQInsightAnalysisMetricId.restingHeartRate:
+                return insight.effect == .positive
+                    ? "Good day for a quality workout."
+                    : "Favor a lighter session today."
             case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
                 return insight.effect == .positive
                     ? "Good day for a quality workout."

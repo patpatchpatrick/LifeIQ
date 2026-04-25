@@ -12,7 +12,8 @@ protocol SQInsightFeatureBuilding {
     func makeFeatureSnapshots(
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
-        metricDefinitions: [SQMetricDefinition]
+        metricDefinitions: [SQMetricDefinition],
+        restingHeartRateSummaries: [SQHeartRateDailySummary]
     ) -> [SQInsightFeatureSnapshot]
 }
 
@@ -20,7 +21,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
     func makeFeatureSnapshots(
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
-        metricDefinitions: [SQMetricDefinition]
+        metricDefinitions: [SQMetricDefinition],
+        restingHeartRateSummaries: [SQHeartRateDailySummary]
     ) -> [SQInsightFeatureSnapshot] {
         let definitionsById = Dictionary(
             uniqueKeysWithValues: metricDefinitions.map { ($0.id, $0) }
@@ -53,6 +55,20 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                     )
                 )
             }
+
+            rawValuesByDay[dayKey] = rawMap
+            normalizedValuesByDay[dayKey] = normalizedMap
+        }
+
+        for summary in restingHeartRateSummaries {
+            guard let averageRestingHeartRate = summary.average else { continue }
+
+            let dayKey = summary.date.anchorDayKey()
+            var rawMap = rawValuesByDay[dayKey, default: [:]]
+            var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
+
+            rawMap[SQInsightAnalysisMetricId.restingHeartRate] = averageRestingHeartRate
+            normalizedMap[SQInsightAnalysisMetricId.restingHeartRate] = averageRestingHeartRate
 
             rawValuesByDay[dayKey] = rawMap
             normalizedValuesByDay[dayKey] = normalizedMap
