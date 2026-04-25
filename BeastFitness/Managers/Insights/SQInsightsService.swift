@@ -74,28 +74,30 @@ final class SQInsightsService: SQInsightsServicing {
             return item
         }
 
-        for readiness in readinessItems {
-            SQLogger.shared.log(
-                "Insight readiness [\(readiness.title)]: \(readiness.summary)",
-                .debug,
-                context: .dashboard
-            )
-        }
+        if SQBuildOverrides.verboseLoggingEnabled {
+            for readiness in readinessItems {
+                SQLogger.shared.log(
+                    "Insight readiness [\(readiness.title)]: \(readiness.summary)",
+                    .debug,
+                    context: .dashboard
+                )
+            }
 
-        for insight in generatedInsights.sorted(by: { sortInsightsForDisplay($0, $1) }) {
-            SQLogger.shared.log(
-                "Generated candidate insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
-                .debug,
-                context: .dashboard
-            )
-        }
+            for insight in generatedInsights.sorted(by: { sortInsightsForDisplay($0, $1) }) {
+                SQLogger.shared.log(
+                    "Generated candidate insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
+                    .debug,
+                    context: .dashboard
+                )
+            }
 
-        for insight in insights {
-            SQLogger.shared.log(
-                "Surfaced insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
-                .debug,
-                context: .dashboard
-            )
+            for insight in insights {
+                SQLogger.shared.log(
+                    "Surfaced insight [\(insight.title)] family=\(insight.familyKey) priority=\(insight.variantPriority) sample=\(insight.sampleCount) delta=\(insight.deltaText) confidence=\(insight.confidence.badgeTitle)",
+                    .debug,
+                    context: .dashboard
+                )
+            }
         }
 
         let effectiveAnalyzedDayCount = max(analyzedDayCount, relevantDayCount)
@@ -106,11 +108,13 @@ final class SQInsightsService: SQInsightsServicing {
             state = insights.isEmpty ? .noPatterns : .ready
         }
 
-        SQLogger.shared.log(
-            "Insights dashboard result: state=\(debugTitle(for: state)), analyzedDays=\(effectiveAnalyzedDayCount), insights=\(insights.count), readiness=\(readinessItems.count)",
-            .debug,
-            context: .dashboard
-        )
+        if SQBuildOverrides.verboseLoggingEnabled {
+            SQLogger.shared.log(
+                "Insights dashboard result: state=\(debugTitle(for: state)), analyzedDays=\(effectiveAnalyzedDayCount), insights=\(insights.count), readiness=\(readinessItems.count)",
+                .debug,
+                context: .dashboard
+            )
+        }
 
         return .init(
             state: state,

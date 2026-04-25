@@ -17,7 +17,7 @@ extension SQDashboardSectionGroupViewModel {
             groups.append(mockRecovery)
         }
 
-        groups.append(contentsOf: [mockDailyStats, mockInsightsGroup, mockSleep, mockHeart, mockWorkouts])
+        groups.append(contentsOf: [mockDailyStats, mockSleep, mockHeart, mockWorkouts])
         return groups
     }
 

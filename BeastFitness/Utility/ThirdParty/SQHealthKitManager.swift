@@ -227,6 +227,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
     }
 
     func requestAppAuthorization() async throws {
+        guard !shouldUseMockHealthData else { return }
         try await Self.authorizationCoordinator.authorize(
             healthStore: Self.healthStore,
             shareTypes: allTypesToWrite,
@@ -238,6 +239,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
     func saveWorkout(
         workout: SQWorkoutSessionable
     ) async throws -> HKWorkout? {
+        guard !shouldUseMockHealthData else { return nil }
         
         guard let startDate = workout.startDate else {
                // You need a start date for HealthKit
@@ -316,6 +318,7 @@ final class SQHealthKitManager: SQHealthKitManaging {
     }
     
     func deleteWorkout(with healthKitId: String) async throws {
+        guard !shouldUseMockHealthData else { return }
         let healthStore = HKHealthStore()
         
         guard let uuid = UUID(uuidString: healthKitId) else {
@@ -351,6 +354,10 @@ final class SQHealthKitManager: SQHealthKitManaging {
     
     @MainActor
     func fetchWorkouts(_ timeRange: SQTimeRange) async throws -> [HKWorkout] {
+        if shouldUseMockHealthData {
+            return mockHealthData.workouts(for: timeRange)
+        }
+
         // Return cached result if fresh
         if let cached = workoutCache[timeRange], !cached.isStale {
             SQLogger.shared.log(
@@ -403,6 +410,10 @@ final class SQHealthKitManager: SQHealthKitManaging {
     }
 
     func dashboardAccessStatus() async -> SQHealthKitDashboardAccessStatus {
+        if shouldUseMockHealthData {
+            return .available
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             return .unavailable
         }
@@ -438,6 +449,10 @@ final class SQHealthKitManager: SQHealthKitManaging {
     }
 
     func dashboardAccessStatus(for domain: SQHealthKitDashboardDomain) async -> SQHealthKitDashboardAccessStatus {
+        if shouldUseMockHealthData {
+            return .available
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             return .unavailable
         }
@@ -598,6 +613,10 @@ extension SQHealthKitManager {
     }
     
     func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation] {
+        if shouldUseMockHealthData {
+            return mockHealthData.routeLocations(for: workout.uuid.uuidString)
+        }
+
         try await requestAppAuthorization()
 
         let routes = try await fetchRoutes(for: workout)
@@ -617,6 +636,10 @@ extension SQHealthKitManager {
     }
     
     func fetchRouteLocations(for healthKitId: String) async throws -> [CLLocation] {
+        if shouldUseMockHealthData {
+            return mockHealthData.routeLocations(for: healthKitId)
+        }
+
         guard let uuid = UUID(uuidString: healthKitId) else {
             throw SQError.standard(withDescription: "Unexpected UUID format")
         }
@@ -644,6 +667,10 @@ extension SQHealthKitManager {
     }
 
     func weatherTemperatureCelsius(from workout: HKWorkout) -> Double? {
+        if shouldUseMockHealthData {
+            return mockHealthData.weatherTemperatureCelsius(for: workout.uuid.uuidString)
+        }
+
         guard let quantity = workout.metadata?[HKMetadataKeyWeatherTemperature] as? HKQuantity else {
             return nil
         }
@@ -658,6 +685,7 @@ extension SQHealthKitManager {
         from startDate: Date,
         to endDate: Date
     ) async throws -> [String: [String: SQMetricLoggedValue]] {
+        guard !shouldUseMockHealthData else { return [:] }
         let supportedDefinitions = definitions.filter { $0.isHealthKitReadEnabledEffective }
         guard !supportedDefinitions.isEmpty else { return [:] }
         guard HKHealthStore.isHealthDataAvailable() else { return [:] }
@@ -712,6 +740,7 @@ extension SQHealthKitManager {
         loggedValue: SQMetricLoggedValue,
         date: Date
     ) async throws {
+        guard !shouldUseMockHealthData else { return }
         guard definition.isHealthKitWriteEnabledEffective else { return }
         guard HKHealthStore.isHealthDataAvailable() else { return }
         guard definition.isSingleDailyValue else { return }
@@ -771,6 +800,7 @@ extension SQHealthKitManager {
         metricId: String,
         date: Date
     ) async throws {
+        guard !shouldUseMockHealthData else { return }
         guard definition.hasHealthKitLink else { return }
         guard HKHealthStore.isHealthDataAvailable() else { return }
         guard let quantityType = quantityType(for: definition.healthKitType) else { return }

@@ -20,6 +20,10 @@ extension SQHealthKitManager {
 
     @MainActor
     func fetchLatestVO2Max() async throws -> SQVO2MaxSample? {
+        if shouldUseMockHealthData {
+            return mockHealthData.latestVO2Max()
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -56,6 +60,10 @@ extension SQHealthKitManager {
 
     @MainActor
     func fetchVO2MaxSamples(_ timeRange: SQTimeRange) async throws -> [SQVO2MaxSample] {
+        if shouldUseMockHealthData {
+            return mockHealthData.vo2MaxSamples(for: timeRange)
+        }
+
         // Return cached result if fresh
         if let cached = vo2MaxCache[timeRange], !cached.isStale {
             SQLogger.shared.log(
@@ -116,6 +124,10 @@ extension SQHealthKitManager {
 
     @MainActor
     func fetchVO2MaxSamples(upTo date: Date, limit: Int) async throws -> [SQVO2MaxSample] {
+        if shouldUseMockHealthData {
+            return mockHealthData.vo2MaxSamples(upTo: date, limit: limit)
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -159,6 +171,10 @@ extension SQHealthKitManager {
 extension SQHealthKitManager {
 
     func fetchLatestVO2MaxSample(strictlyBefore date: Date) async throws -> SQVO2MaxSample? {
+        if shouldUseMockHealthData {
+            return mockHealthData.latestVO2MaxSample(strictlyBefore: date)
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -191,6 +207,10 @@ extension SQHealthKitManager {
 extension SQHealthKitManager {
 
     func fetchLatestVO2MaxSample(onOrAfter date: Date, throughEndOfDay endOfDay: Date) async throws -> SQVO2MaxSample? {
+        if shouldUseMockHealthData {
+            return mockHealthData.latestVO2MaxSample(onOrAfter: date, throughEndOfDay: endOfDay)
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }

@@ -355,11 +355,6 @@ final class SQDashboardController: SQDashboardInterface {
             state.setLoading(true)
         }
 
-        if SQBuildOverrides.useMockDashboardHealthData {
-            applyMockDashboardState()
-            return
-        }
-
         do {
             try metricsManager.loadIfNeeded(using: context)
 
@@ -627,37 +622,6 @@ final class SQDashboardController: SQDashboardInterface {
 
             presentDashboardLoadError(error, context: context)
         }
-    }
-
-    private func applyMockDashboardState() {
-        let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
-        let appliedSectionGroups = dashboardLayoutService.apply(to: mockGroups)
-        let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
-
-        state.updateDailyCheckInCtaViewModel(nil)
-        state.updateUncustomizedSectionGroups(mockGroups)
-        availableLayoutGroups = updatedAvailableLayoutGroups
-        state.updateAvailableLayoutGroups(updatedAvailableLayoutGroups)
-        state.updateSectionGroups(to: appliedSectionGroups)
-
-        healthKitAccessCtaViewModel = nil
-        lifeScoreViewModel = .mock
-
-        lastLoadedUncustomizedSectionGroups = mockGroups
-        lastLoadedSectionGroups = appliedSectionGroups
-        lastLoadedAvailableLayoutGroups = updatedAvailableLayoutGroups
-        lastLoadedDailyCheckInCtaViewModel = nil
-        lastLoadedHealthKitAccessCtaViewModel = nil
-        lastLoadedLifeScoreViewModel = .mock
-        lastSuccessfulLoadAt = .now
-
-        state.setLoading(false)
-
-        SQLogger.shared.log(
-            "Using mock dashboard health data override.",
-            .debug,
-            context: .dashboard
-        )
     }
     
     func refreshUI(for context: ModelContext) async {
@@ -929,11 +893,13 @@ final class SQDashboardController: SQDashboardInterface {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
 
-        SQLogger.shared.log(
-            "Building Metrics subsection for \(timeRange.rawValue): current check-ins = \(stats.count), prior check-ins = \(priorCheckIns.count), definitions = \(allDefinitions.count)",
-            .debug,
-            context: .dashboard
-        )
+        if SQBuildOverrides.verboseLoggingEnabled {
+            SQLogger.shared.log(
+                "Building Metrics subsection for \(timeRange.rawValue): current check-ins = \(stats.count), prior check-ins = \(priorCheckIns.count), definitions = \(allDefinitions.count)",
+                .debug,
+                context: .dashboard
+            )
+        }
 
         // Only include groups that actually have data
         let groupsWithData: [String] = {
@@ -2017,11 +1983,6 @@ final class SQDashboardController: SQDashboardInterface {
         )
         dailyStatsSections.append(metricsSection)
 
-        let insightsSection = buildInsightsSubsection(
-            checkIns: insightCheckIns,
-            workouts: insightWorkouts
-        )
-
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
             let dailyStatsGroup = SQDashboardSectionGroupViewModel(
@@ -2032,6 +1993,11 @@ final class SQDashboardController: SQDashboardInterface {
             )
             sectionGroups.append(dailyStatsGroup)
         }
+
+        let insightsSection = buildInsightsSubsection(
+            checkIns: insightCheckIns,
+            workouts: insightWorkouts
+        )
 
         let insightsGroup = SQDashboardSectionGroupViewModel(
             id: "insights",
@@ -2283,11 +2249,13 @@ final class SQDashboardController: SQDashboardInterface {
             return insightRow.model.title
         }
 
-        SQLogger.shared.log(
-            "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
-            .debug,
-            context: .dashboard
-        )
+        if SQBuildOverrides.verboseLoggingEnabled {
+            SQLogger.shared.log(
+                "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
+                .debug,
+                context: .dashboard
+            )
+        }
 
         let sectionViewModel = SQDashboardSubsectionViewModel(
             id: "insights",
@@ -2418,11 +2386,13 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Skip if no data
         guard !values.isEmpty else {
-            SQLogger.shared.log(
-                "Metric row skipped for '\(definition.title)' (\(definition.id)) - no current values in \(stats.count) check-ins",
-                .debug,
-                context: .dashboard
-            )
+            if SQBuildOverrides.verboseLoggingEnabled {
+                SQLogger.shared.log(
+                    "Metric row skipped for '\(definition.title)' (\(definition.id)) - no current values in \(stats.count) check-ins",
+                    .debug,
+                    context: .dashboard
+                )
+            }
             return nil
         }
 

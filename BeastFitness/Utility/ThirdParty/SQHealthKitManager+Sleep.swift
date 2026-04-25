@@ -10,6 +10,10 @@ import BeastFitnessCore
 extension SQHealthKitManager {
 
     func fetchSleepSegments(from startDate: Date, to endDate: Date) async throws -> [SQSleepStageSegment] {
+        if shouldUseMockHealthData {
+            return mockHealthData.sleepSegments(from: startDate, to: endDate)
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQError.standard
         }

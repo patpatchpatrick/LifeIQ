@@ -26,7 +26,11 @@ struct SQHeartRateIntervalSummary: Sendable {
 
 extension SQHealthKitManager {
     func fetchDailyHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary] {
-        try await fetchDailyHeartRateSummaries(
+        if shouldUseMockHealthData {
+            return mockHealthData.dailyHeartRateSummaries(for: timeRange)
+        }
+
+        return try await fetchDailyHeartRateSummaries(
             for: .heartRate,
             timeRange: timeRange,
             options: [.discreteAverage, .discreteMin, .discreteMax],
@@ -35,7 +39,11 @@ extension SQHealthKitManager {
     }
 
     func fetchDailyRestingHeartRateSummaries(_ timeRange: SQTimeRange) async throws -> [SQHeartRateDailySummary] {
-        try await fetchDailyHeartRateSummaries(
+        if shouldUseMockHealthData {
+            return mockHealthData.dailyRestingHeartRateSummaries(for: timeRange)
+        }
+
+        return try await fetchDailyHeartRateSummaries(
             for: .restingHeartRate,
             timeRange: timeRange,
             options: [.discreteAverage],
@@ -44,6 +52,10 @@ extension SQHealthKitManager {
     }
 
     func fetchWorkoutHeartRateSummaries(for workout: HKWorkout) async throws -> [SQHeartRateIntervalSummary] {
+        if shouldUseMockHealthData {
+            return mockHealthData.workoutHeartRateIntervals(for: workout.uuid.uuidString)
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             throw SQHealthKitError.healthDataUnavailable
         }
@@ -124,6 +136,10 @@ extension SQHealthKitManager {
     }
 
     func fetchWorkoutHeartRateSummaries(for healthKitId: String) async throws -> [SQHeartRateIntervalSummary] {
+        if shouldUseMockHealthData {
+            return mockHealthData.workoutHeartRateIntervals(for: healthKitId)
+        }
+
         guard let workout = try await fetchWorkout(with: healthKitId) else {
             return []
         }
