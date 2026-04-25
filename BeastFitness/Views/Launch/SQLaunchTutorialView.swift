@@ -370,7 +370,7 @@ struct SQLaunchTutorialView: View {
         case .healthKit:
             return .dashboardGlowMint
         case .ready:
-            return .dashboardGlowBlue
+            return .dashboardGlowMint
         }
     }
 
