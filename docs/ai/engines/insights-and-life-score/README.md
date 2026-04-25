@@ -91,5 +91,17 @@ The current backend/engine stopping point that is good enough for UI exploration
 - the Life Score detail path already consumes shared drivers
 - a shared raw-input shape exists for both Insights and Life Score
 - an internal scenario/gallery `View Lab` exists for testing real dashboard surfaces against engine-backed mock inputs
+- the View Lab scenario library now intentionally includes both:
+  - expected states
+  - noisy / contradictory / odd states that still need coherent outputs
+- the current signal catalog now covers more than just sleep + alcohol + caffeine, including:
+  - mood
+  - energy
+  - mental clarity
+  - motivation
+  - stress
+  - anxiety
+  - soreness
+  - workout performance / workout difficulty
 
 That is enough to start serious UI brainstorming without waiting for every future analyzer or score formula rewrite.

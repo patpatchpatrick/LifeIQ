@@ -8,6 +8,174 @@
 import Foundation
 import BeastFitnessCore
 
+struct SQInsightSurfacingNoveltyState {
+    let currentStreak: Int
+    let shownCountLast7: Int
+    let daysSinceLastShown: Int?
+
+    func penalty(for insight: SQInsight) -> Double {
+        var penalty = (Double(currentStreak) * 4) + (Double(max(0, shownCountLast7 - 1)) * 1.5)
+
+        if insight.insightClass == .risk || insight.insightClass == .opportunity {
+            penalty *= 0.6
+        }
+
+        if insight.confidence == .high {
+            penalty *= 0.75
+        }
+
+        return penalty
+    }
+}
+
+protocol SQInsightSurfacingMemoryStoring {
+    func noveltyState(
+        for familyKey: String,
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> SQInsightSurfacingNoveltyState
+
+    func recordShownFamilyKeys(
+        _ familyKeys: [String],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    )
+}
+
+final class SQNoOpInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStoring {
+    func noveltyState(
+        for familyKey: String,
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> SQInsightSurfacingNoveltyState {
+        .init(currentStreak: 0, shownCountLast7: 0, daysSinceLastShown: nil)
+    }
+
+    func recordShownFamilyKeys(
+        _ familyKeys: [String],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {}
+}
+
+final class SQPersistedInsightSurfacingMemoryStore: SQInsightSurfacingMemoryStoring {
+    private struct Record: Codable {
+        var shownDayKeys: [String]
+    }
+
+    private static let storageKey = "insights.today.surfacing-memory.v1"
+
+    private let defaults: UserDefaults
+    private let calendar: Calendar
+
+    init(
+        defaults: UserDefaults = .standard,
+        calendar: Calendar = .current
+    ) {
+        self.defaults = defaults
+        self.calendar = calendar
+    }
+
+    func noveltyState(
+        for familyKey: String,
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> SQInsightSurfacingNoveltyState {
+        guard surfaceIntent == .today else {
+            return .init(currentStreak: 0, shownCountLast7: 0, daysSinceLastShown: nil)
+        }
+
+        let record = allRecords()[scopeKey]?[familyKey]
+        let shownDayKeys = Set(record?.shownDayKeys ?? [])
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+
+        var streak = 0
+        var cursor = calendar.date(byAdding: .day, value: -1, to: referenceDay)
+        while let currentCursor = cursor, shownDayKeys.contains(dayKey(for: currentCursor)) {
+            streak += 1
+            cursor = calendar.date(byAdding: .day, value: -1, to: currentCursor)
+        }
+
+        let shownCountLast7 = (1...7).reduce(into: 0) { partialResult, offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: referenceDay) else { return }
+            if shownDayKeys.contains(dayKey(for: date)) {
+                partialResult += 1
+            }
+        }
+
+        let daysSinceLastShown = (1...30).first(where: { offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: referenceDay) else { return false }
+            return shownDayKeys.contains(dayKey(for: date))
+        })
+
+        return .init(
+            currentStreak: streak,
+            shownCountLast7: shownCountLast7,
+            daysSinceLastShown: daysSinceLastShown
+        )
+    }
+
+    func recordShownFamilyKeys(
+        _ familyKeys: [String],
+        referenceDate: Date,
+        scopeKey: String,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {
+        guard surfaceIntent == .today else { return }
+        guard !familyKeys.isEmpty else { return }
+
+        let todayKey = dayKey(for: referenceDate)
+        let minimumDay = calendar.date(byAdding: .day, value: -21, to: calendar.startOfDay(for: referenceDate)) ?? referenceDate
+        let minimumDayKey = dayKey(for: minimumDay)
+
+        var records = allRecords()
+        var scopeRecords = records[scopeKey] ?? [:]
+
+        for familyKey in Set(familyKeys) {
+            var record = scopeRecords[familyKey] ?? .init(shownDayKeys: [])
+
+            if !record.shownDayKeys.contains(todayKey) {
+                record.shownDayKeys.append(todayKey)
+            }
+
+            record.shownDayKeys = Array(
+                Set(record.shownDayKeys.filter { $0 >= minimumDayKey })
+            )
+            .sorted()
+            scopeRecords[familyKey] = record
+        }
+
+        records[scopeKey] = scopeRecords
+        save(records)
+    }
+
+    private func allRecords() -> [String: [String: Record]] {
+        guard let data = defaults.data(forKey: Self.storageKey) else {
+            return [:]
+        }
+
+        return (try? JSONDecoder().decode([String: [String: Record]].self, from: data)) ?? [:]
+    }
+
+    private func save(_ records: [String: [String: Record]]) {
+        guard let data = try? JSONEncoder().encode(records) else { return }
+        defaults.set(data, forKey: Self.storageKey)
+    }
+
+    private func dayKey(for date: Date) -> String {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        let year = components.year ?? 0
+        let month = components.month ?? 0
+        let day = components.day ?? 0
+        return String(format: "%04d-%02d-%02d", year, month, day)
+    }
+}
+
 @MainActor
 protocol SQInsightsServicing {
     func dashboardInsights(input: SQHealthIntelligenceInput) -> SQInsightsResult
@@ -21,6 +189,7 @@ final class SQInsightsService: SQInsightsServicing {
     private let actionBuilder: SQInsightActionBuilding
     private let analysisEngine: SQInsightAnalyzing
     private let relationshipRegistry: SQInsightRelationshipRegistry
+    private let surfacingMemoryStore: SQInsightSurfacingMemoryStoring
     private let minimumAnalyzedDayCount = 10
     private let relevantMetricIds: Set<String>
 
@@ -30,7 +199,8 @@ final class SQInsightsService: SQInsightsServicing {
         changeBuilder: SQInsightChangeBuilding = SQInsightChangeBuilder(),
         actionBuilder: SQInsightActionBuilding = SQInsightActionBuilder(),
         analysisEngine: SQInsightAnalyzing = SQInsightAnalysisEngine(),
-        relationshipRegistry: SQInsightRelationshipRegistry = .init()
+        relationshipRegistry: SQInsightRelationshipRegistry = .init(),
+        surfacingMemoryStore: SQInsightSurfacingMemoryStoring = SQPersistedInsightSurfacingMemoryStore()
     ) {
         self.featureBuilder = featureBuilder
         self.driverBuilder = driverBuilder
@@ -38,6 +208,7 @@ final class SQInsightsService: SQInsightsServicing {
         self.actionBuilder = actionBuilder
         self.analysisEngine = analysisEngine
         self.relationshipRegistry = relationshipRegistry
+        self.surfacingMemoryStore = surfacingMemoryStore
         self.relevantMetricIds = relationshipRegistry.relevantSignalIds
     }
 
@@ -79,8 +250,13 @@ final class SQInsightsService: SQInsightsServicing {
         )
         let generatedInsights = analysisOutput.generatedInsights
         let deduplicatedInsights = deduplicatedInsights(from: generatedInsights)
-        let insights = curatedInsights(
+        let noveltyAdjustedInsights = noveltyAdjustedInsights(
             from: deduplicatedInsights,
+            referenceDate: input.referenceDate,
+            surfaceIntent: input.timeRange.insightSurfaceIntent
+        )
+        let insights = curatedInsights(
+            from: noveltyAdjustedInsights,
             surfaceIntent: input.timeRange.insightSurfaceIntent
         )
         let actions = curatedActions(
@@ -150,6 +326,14 @@ final class SQInsightsService: SQInsightsServicing {
             state = .notEnoughData
         } else {
             state = insights.isEmpty ? .noPatterns : .ready
+        }
+
+        if state == .ready {
+            recordSurfacedInsightsIfNeeded(
+                insights,
+                referenceDate: input.referenceDate,
+                surfaceIntent: input.timeRange.insightSurfaceIntent
+            )
         }
 
         if SQAdminConfig.verboseLoggingEnabled {
@@ -348,6 +532,11 @@ final class SQInsightsService: SQInsightsServicing {
             SQMetricId.sleepQuality,
             SQMetricId.energy,
             SQMetricId.mood,
+            SQMetricId.mentalClarity,
+            SQMetricId.motivation,
+            SQMetricId.stress,
+            SQMetricId.anxiety,
+            SQMetricId.soreness,
             SQInsightAnalysisMetricId.workoutPerformance,
             SQInsightAnalysisMetricId.workoutDifficulty
         ]
@@ -457,6 +646,60 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return Array(actions.prefix(maximumCount))
+    }
+
+    private func noveltyAdjustedInsights(
+        from insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsight] {
+        guard surfaceIntent == .today else { return insights }
+
+        return insights
+            .map { insight in
+                let noveltyState = surfacingMemoryStore.noveltyState(
+                    for: insight.familyKey,
+                    referenceDate: referenceDate,
+                    scopeKey: noveltyScopeKey,
+                    surfaceIntent: surfaceIntent
+                )
+                let adjustedScore = insight.rankingScore - noveltyState.penalty(for: insight)
+
+                if SQAdminConfig.verboseLoggingEnabled, noveltyState.currentStreak > 0 {
+                    SQLogger.shared.log(
+                        "Applied novelty penalty to [\(insight.title)] family=\(insight.familyKey) streak=\(noveltyState.currentStreak) last7=\(noveltyState.shownCountLast7) adjustedScore=\(String(format: "%.1f", adjustedScore))",
+                        .debug,
+                        context: .dashboard
+                    )
+                }
+
+                return insight.withRankingScore(adjustedScore)
+            }
+            .sorted(by: { sortInsightsForDisplay($0, $1) })
+    }
+
+    private func recordSurfacedInsightsIfNeeded(
+        _ insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) {
+        guard surfaceIntent == .today else { return }
+        guard let primaryInsight = insights.first else { return }
+
+        surfacingMemoryStore.recordShownFamilyKeys(
+            [primaryInsight.familyKey],
+            referenceDate: referenceDate,
+            scopeKey: noveltyScopeKey,
+            surfaceIntent: surfaceIntent
+        )
+    }
+
+    private var noveltyScopeKey: String {
+        if let userId = SQAppState.shared.userState.loggedInUser?.id, !userId.isEmpty {
+            return userId
+        }
+
+        return "guest"
     }
 
 }

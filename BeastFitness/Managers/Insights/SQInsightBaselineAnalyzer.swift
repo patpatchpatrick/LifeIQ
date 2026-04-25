@@ -106,6 +106,9 @@ struct SQInsightBaselineAnalyzer {
                 familyKey: relationship.familyKey,
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
+                inputSignalId: relationship.inputSignalId,
+                outputSignalId: relationship.outputSignalId,
+                recommendationFamily: relationship.recommendationFamily,
                 title: baselineTitle(
                     inputTitle: inputTitle,
                     effect: effect,

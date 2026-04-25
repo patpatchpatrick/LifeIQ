@@ -106,6 +106,9 @@ struct SQInsightTrendAnalyzer {
                 familyKey: relationship.familyKey,
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
+                inputSignalId: relationship.inputSignalId,
+                outputSignalId: relationship.outputSignalId,
+                recommendationFamily: relationship.recommendationFamily,
                 title: trendTitle(
                     inputTitle: inputTitle,
                     effect: effect,

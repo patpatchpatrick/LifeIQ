@@ -245,6 +245,11 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         SQMetricId.sleepQuality,
         SQMetricId.energy,
         SQMetricId.mood,
+        SQMetricId.mentalClarity,
+        SQMetricId.motivation,
+        SQMetricId.stress,
+        SQMetricId.anxiety,
+        SQMetricId.soreness,
         SQInsightAnalysisMetricId.workoutPerformance,
         SQInsightAnalysisMetricId.workoutDifficulty
     ]
@@ -283,6 +288,46 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             minimumEffectMagnitude: 0.75
         ),
         .init(
+            signalId: SQMetricId.mentalClarity,
+            title: "Mental Clarity",
+            category: .recovery,
+            expectedEffect: .positive,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.motivation,
+            title: "Motivation",
+            category: .training,
+            expectedEffect: .positive,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.stress,
+            title: "Stress",
+            category: .recovery,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.anxiety,
+            title: "Anxiety",
+            category: .recovery,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.soreness,
+            title: "Soreness",
+            category: .recovery,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
             signalId: SQMetricId.alcohol,
             title: "Alcohol",
             category: .habits,
@@ -311,6 +356,14 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             title: "Workout Performance",
             category: .training,
             expectedEffect: .positive,
+            minimumSampleCount: 2,
+            minimumEffectMagnitude: 0.4
+        ),
+        .init(
+            signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+            title: "Workout Difficulty",
+            category: .training,
+            expectedEffect: .negative,
             minimumSampleCount: 2,
             minimumEffectMagnitude: 0.4
         )

@@ -207,9 +207,24 @@ private extension SQLifeScoreBuilder {
         } else if normalizedText.contains("energy") {
             synthesizedTitle = "Energy"
             signalId = SQMetricId.energy
+        } else if normalizedText.contains("mental clarity") || normalizedText.contains("clarity") {
+            synthesizedTitle = "Mental Clarity"
+            signalId = SQMetricId.mentalClarity
         } else if normalizedText.contains("mood") {
             synthesizedTitle = "Mood"
             signalId = SQMetricId.mood
+        } else if normalizedText.contains("motivation") {
+            synthesizedTitle = "Motivation"
+            signalId = SQMetricId.motivation
+        } else if normalizedText.contains("stress") {
+            synthesizedTitle = "Stress"
+            signalId = SQMetricId.stress
+        } else if normalizedText.contains("anxiety") {
+            synthesizedTitle = "Anxiety"
+            signalId = SQMetricId.anxiety
+        } else if normalizedText.contains("soreness") {
+            synthesizedTitle = "Soreness"
+            signalId = SQMetricId.soreness
         } else if normalizedText.contains("recovery") {
             synthesizedTitle = "Recovery"
             signalId = "hero.recovery"
@@ -242,6 +257,7 @@ private extension SQLifeScoreBuilder {
         text.lowercased()
             .replacingOccurrences(of: "sleep quality", with: "sleep")
             .replacingOccurrences(of: "sleep hours", with: "sleep")
+            .replacingOccurrences(of: "mental clarity", with: "clarity")
             .replacingOccurrences(of: "running performance", with: "performance")
             .replacingOccurrences(of: "cycling performance", with: "performance")
             .replacingOccurrences(of: "walking performance", with: "performance")

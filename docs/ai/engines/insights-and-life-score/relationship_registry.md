@@ -130,3 +130,14 @@ The runtime now uses that registry for more than one analyzer family:
 For current-state entries, the registry can now define either:
 - a single-signal `Today` assessment
 - or a stacked two-signal `Today` assessment when both signals should align before surfacing
+
+The active set is also intentionally broader than the earliest sleep/vice-only slice. It now includes:
+- vice carryover and follow-up relationships
+- sleep -> mood / clarity / workout outcomes
+- motivation / clarity / energy / stress / anxiety / soreness -> workout outcomes
+- current-state mind-and-body relationships for `Today`
+
+The working rule is still:
+- keep the registry curated
+- expand breadth where it materially improves product diversity
+- do not activate relationships just to make the feed noisier

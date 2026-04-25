@@ -137,9 +137,13 @@ private extension SQViewLabController {
         let referenceDate = Calendar.current.startOfDay(for: .now)
         return [
             alignedSleepTailwindScenario(referenceDate: referenceDate),
+            motivationPerformanceWindowScenario(referenceDate: referenceDate),
             strainCatchUpScenario(referenceDate: referenceDate),
+            sorenessHeavyBlockScenario(referenceDate: referenceDate),
             heavyWeekendCarryoverScenario(referenceDate: referenceDate),
             energyMoodMismatchScenario(referenceDate: referenceDate),
+            stressAnxietySpiralScenario(referenceDate: referenceDate),
+            habitResetReboundScenario(referenceDate: referenceDate),
             sparseCalibratingScenario(referenceDate: referenceDate),
             mixedSportNoiseScenario(referenceDate: referenceDate)
         ]
@@ -155,11 +159,18 @@ private extension SQViewLabController {
                     SQMetricId.sleepHours: 7.5 + variant * 0.2,
                     SQMetricId.sleepQuality: 7.8 + variant * 0.4,
                     SQMetricId.energy: 7.1 + variant * 0.3,
-                    SQMetricId.mood: 6.7 + variant * 0.2
+                    SQMetricId.mood: 6.7 + variant * 0.2,
+                    SQMetricId.mentalClarity: 7.2 + variant * 0.3,
+                    SQMetricId.motivation: 7.0 + variant * 0.2,
+                    SQMetricId.stress: 2.7 - variant * 0.2,
+                    SQMetricId.anxiety: 2.2 - variant * 0.1,
+                    SQMetricId.soreness: 3.4 - variant * 0.2
                 ],
                 evening: [
                     SQMetricId.alcohol: offset % 5 == 0 ? 1 : 0,
-                    SQMetricId.caffeine: 110 + Float((offset % 2) * 20)
+                    SQMetricId.caffeine: 110 + Float((offset % 2) * 20),
+                    SQMetricId.weed: 0,
+                    SQMetricId.nicotine: 0
                 ]
             )
         }
@@ -199,6 +210,65 @@ private extension SQViewLabController {
         )
     }
 
+    static func motivationPerformanceWindowScenario(referenceDate: Date) -> Scenario {
+        let metricDefinitions = defaultMetricDefinitions()
+        let days = (0..<14).map { offset -> ScenarioDay in
+            let recentBoost: Float = offset <= 2 ? 0.9 : 0.3
+            return .init(
+                offset: offset,
+                morning: [
+                    SQMetricId.sleepHours: 7.3 + recentBoost * 0.2,
+                    SQMetricId.sleepQuality: 7.4 + recentBoost * 0.3,
+                    SQMetricId.energy: 7.2 + recentBoost * 0.4,
+                    SQMetricId.mood: 6.8 + recentBoost * 0.2,
+                    SQMetricId.mentalClarity: 7.5 + recentBoost * 0.3,
+                    SQMetricId.motivation: 7.8 + recentBoost * 0.4,
+                    SQMetricId.stress: 2.8,
+                    SQMetricId.anxiety: 2.1,
+                    SQMetricId.soreness: 3.0
+                ],
+                evening: [
+                    SQMetricId.alcohol: 0,
+                    SQMetricId.caffeine: 95,
+                    SQMetricId.weed: 0,
+                    SQMetricId.nicotine: 0
+                ]
+            )
+        }
+
+        let workouts = makeWorkouts(
+            referenceDate: referenceDate,
+            specs: [
+                .init(offset: 0, activityType: .running, performance: 8.8, difficulty: 6.5, startHour: 7, durationMinutes: 46, calories: 500),
+                .init(offset: 2, activityType: .running, performance: 8.4, difficulty: 6.2, startHour: 7, durationMinutes: 44, calories: 480),
+                .init(offset: 5, activityType: .running, performance: 8.1, difficulty: 6.1, startHour: 7, durationMinutes: 42, calories: 465)
+            ]
+        )
+
+        return .init(
+            id: "motivation-performance-window",
+            domain: .lifeScoreInsights,
+            title: "Motivation and Performance Window",
+            subtitle: "A state where motivation, clarity, and workouts should combine into a stronger training-oriented briefing.",
+            tags: ["Training", "Opportunity"],
+            notes: [
+                "This should surface more than just sleep.",
+                "Use it to tune workout-ready actions and performance-led briefings."
+            ],
+            content: .lifeScoreInsights(
+                .init(
+                    referenceDate: referenceDate,
+                    timeRange: .today,
+                    metricDefinitions: metricDefinitions,
+                    checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
+                    workouts: workouts,
+                    sleepData: makeSleepDashboardData(score: 86),
+                    isLoggedIn: true
+                )
+            )
+        )
+    }
+
     static func strainCatchUpScenario(referenceDate: Date) -> Scenario {
         let metricDefinitions = defaultMetricDefinitions()
         let days = (0..<14).map { offset -> ScenarioDay in
@@ -209,11 +279,18 @@ private extension SQViewLabController {
                     SQMetricId.sleepHours: max(5.8, 7.1 - recentDrop * 0.5),
                     SQMetricId.sleepQuality: max(4.9, 7.0 - recentDrop * 0.8),
                     SQMetricId.energy: max(5.2, 6.8 - recentDrop * 0.5),
-                    SQMetricId.mood: max(5.0, 6.5 - recentDrop * 0.4)
+                    SQMetricId.mood: max(5.0, 6.5 - recentDrop * 0.4),
+                    SQMetricId.mentalClarity: max(5.2, 7.0 - recentDrop * 0.6),
+                    SQMetricId.motivation: max(4.8, 6.7 - recentDrop * 0.6),
+                    SQMetricId.stress: min(8.5, 4.6 + recentDrop * 1.1),
+                    SQMetricId.anxiety: min(7.5, 3.8 + recentDrop * 0.9),
+                    SQMetricId.soreness: min(8.8, 4.2 + recentDrop * 1.3)
                 ],
                 evening: [
                     SQMetricId.alcohol: 0,
-                    SQMetricId.caffeine: 140 + recentDrop * 80
+                    SQMetricId.caffeine: 140 + recentDrop * 80,
+                    SQMetricId.weed: 0.4 + recentDrop * 0.2,
+                    SQMetricId.nicotine: 0
                 ]
             )
         }
@@ -252,6 +329,66 @@ private extension SQViewLabController {
         )
     }
 
+    static func sorenessHeavyBlockScenario(referenceDate: Date) -> Scenario {
+        let metricDefinitions = defaultMetricDefinitions()
+        let days = (0..<14).map { offset -> ScenarioDay in
+            let blockPressure: Float = offset <= 3 ? 1.4 : 0.4
+            return .init(
+                offset: offset,
+                morning: [
+                    SQMetricId.sleepHours: 6.9,
+                    SQMetricId.sleepQuality: 6.6,
+                    SQMetricId.energy: 6.0 - blockPressure * 0.2,
+                    SQMetricId.mood: 6.1 - blockPressure * 0.1,
+                    SQMetricId.mentalClarity: 6.4 - blockPressure * 0.2,
+                    SQMetricId.motivation: 6.5,
+                    SQMetricId.stress: 4.8 + blockPressure * 0.3,
+                    SQMetricId.anxiety: 3.4 + blockPressure * 0.2,
+                    SQMetricId.soreness: 5.8 + blockPressure * 1.2
+                ],
+                evening: [
+                    SQMetricId.alcohol: 0,
+                    SQMetricId.caffeine: 130,
+                    SQMetricId.weed: 0,
+                    SQMetricId.nicotine: 0
+                ]
+            )
+        }
+
+        let workouts = makeWorkouts(
+            referenceDate: referenceDate,
+            specs: [
+                .init(offset: 0, activityType: .running, performance: 6.3, difficulty: 8.2, startHour: 6, durationMinutes: 61, calories: 635),
+                .init(offset: 1, activityType: .running, performance: 6.5, difficulty: 8.0, startHour: 6, durationMinutes: 56, calories: 590),
+                .init(offset: 3, activityType: .running, performance: 6.8, difficulty: 7.6, startHour: 6, durationMinutes: 52, calories: 550),
+                .init(offset: 6, activityType: .cycling, performance: 7.4, difficulty: 6.7, startHour: 7, durationMinutes: 48, calories: 420)
+            ]
+        )
+
+        return .init(
+            id: "soreness-heavy-block",
+            domain: .lifeScoreInsights,
+            title: "Soreness Heavy Block",
+            subtitle: "A training block where soreness and workout difficulty should matter more than habits.",
+            tags: ["Training", "Recovery"],
+            notes: [
+                "Use this to check soreness, workout difficulty, and cautionary workout actions.",
+                "The outputs should feel training-specific rather than vice-led."
+            ],
+            content: .lifeScoreInsights(
+                .init(
+                    referenceDate: referenceDate,
+                    timeRange: .today,
+                    metricDefinitions: metricDefinitions,
+                    checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
+                    workouts: workouts,
+                    sleepData: makeSleepDashboardData(score: 71),
+                    isLoggedIn: true
+                )
+            )
+        )
+    }
+
     static func heavyWeekendCarryoverScenario(referenceDate: Date) -> Scenario {
         let metricDefinitions = defaultMetricDefinitions()
         let days = (0..<14).map { offset -> ScenarioDay in
@@ -262,11 +399,18 @@ private extension SQViewLabController {
                     SQMetricId.sleepHours: isWeekendCarryover ? 6.0 + Float(offset) * 0.1 : 7.2,
                     SQMetricId.sleepQuality: isWeekendCarryover ? 5.4 + Float(offset) * 0.3 : 7.1,
                     SQMetricId.energy: isWeekendCarryover ? 5.3 + Float(offset) * 0.2 : 6.8,
-                    SQMetricId.mood: isWeekendCarryover ? 5.5 + Float(offset) * 0.2 : 6.6
+                    SQMetricId.mood: isWeekendCarryover ? 5.5 + Float(offset) * 0.2 : 6.6,
+                    SQMetricId.mentalClarity: isWeekendCarryover ? 5.1 + Float(offset) * 0.3 : 7.0,
+                    SQMetricId.motivation: isWeekendCarryover ? 5.3 + Float(offset) * 0.2 : 6.7,
+                    SQMetricId.stress: isWeekendCarryover ? 6.6 - Float(offset) * 0.4 : 3.9,
+                    SQMetricId.anxiety: isWeekendCarryover ? 5.7 - Float(offset) * 0.3 : 3.0,
+                    SQMetricId.soreness: isWeekendCarryover ? 4.8 : 3.6
                 ],
                 evening: [
                     SQMetricId.alcohol: isWeekendCarryover ? 3.5 - Float(offset) : 0.5,
-                    SQMetricId.caffeine: isWeekendCarryover ? 180 : 120
+                    SQMetricId.caffeine: isWeekendCarryover ? 180 : 120,
+                    SQMetricId.weed: isWeekendCarryover ? 2.2 - Float(offset) * 0.5 : 0.4,
+                    SQMetricId.nicotine: isWeekendCarryover ? 1.0 : 0
                 ]
             )
         }
@@ -312,6 +456,11 @@ private extension SQViewLabController {
             let sleepQuality: Float = 7.1 + Float((offset + 2) % 2) * 0.3
             let energy: Float = 6.8 + recentLift
             let mood: Float = offset <= 2 ? 5.5 : 6.4
+            let mentalClarity: Float = offset <= 2 ? 7.3 : 6.5
+            let motivation: Float = offset <= 2 ? 6.1 : 6.8
+            let stress: Float = offset <= 2 ? 4.4 : 3.5
+            let anxiety: Float = offset <= 2 ? 4.0 : 2.9
+            let soreness: Float = 3.2
             let alcohol: Float = offset <= 2 ? 0 : 0.7
             let caffeine: Float = offset <= 2 ? 180 : 120
 
@@ -321,11 +470,18 @@ private extension SQViewLabController {
                     SQMetricId.sleepHours: sleepHours,
                     SQMetricId.sleepQuality: sleepQuality,
                     SQMetricId.energy: energy,
-                    SQMetricId.mood: mood
+                    SQMetricId.mood: mood,
+                    SQMetricId.mentalClarity: mentalClarity,
+                    SQMetricId.motivation: motivation,
+                    SQMetricId.stress: stress,
+                    SQMetricId.anxiety: anxiety,
+                    SQMetricId.soreness: soreness
                 ],
                 evening: [
                     SQMetricId.alcohol: alcohol,
-                    SQMetricId.caffeine: caffeine
+                    SQMetricId.caffeine: caffeine,
+                    SQMetricId.weed: 0,
+                    SQMetricId.nicotine: 0
                 ]
             )
         }
@@ -363,6 +519,122 @@ private extension SQViewLabController {
                 "Good for testing summary/action quality when no one theme is perfect."
             ],
             content: .lifeScoreInsights(scenarioInput)
+        )
+    }
+
+    static func stressAnxietySpiralScenario(referenceDate: Date) -> Scenario {
+        let metricDefinitions = defaultMetricDefinitions()
+        let days = (0..<14).map { offset -> ScenarioDay in
+            let recentSpike: Float = offset <= 2 ? 1.6 : 0.5
+            return .init(
+                offset: offset,
+                morning: [
+                    SQMetricId.sleepHours: 6.5 - recentSpike * 0.2,
+                    SQMetricId.sleepQuality: 6.1 - recentSpike * 0.3,
+                    SQMetricId.energy: 5.9 - recentSpike * 0.2,
+                    SQMetricId.mood: 5.6 - recentSpike * 0.2,
+                    SQMetricId.mentalClarity: 5.8 - recentSpike * 0.3,
+                    SQMetricId.motivation: 5.7 - recentSpike * 0.2,
+                    SQMetricId.stress: 5.6 + recentSpike * 1.0,
+                    SQMetricId.anxiety: 5.0 + recentSpike * 0.9,
+                    SQMetricId.soreness: 3.7
+                ],
+                evening: [
+                    SQMetricId.alcohol: 0.6,
+                    SQMetricId.caffeine: 175,
+                    SQMetricId.weed: 1.4,
+                    SQMetricId.nicotine: 1.6
+                ]
+            )
+        }
+
+        let workouts = makeWorkouts(
+            referenceDate: referenceDate,
+            specs: [
+                .init(offset: 1, activityType: .walking, performance: 6.8, difficulty: 4.8, startHour: 18, durationMinutes: 34, calories: 210),
+                .init(offset: 5, activityType: .running, performance: 7.1, difficulty: 6.2, startHour: 7, durationMinutes: 41, calories: 435)
+            ]
+        )
+
+        return .init(
+            id: "stress-anxiety-spiral",
+            domain: .lifeScoreInsights,
+            title: "Stress and Anxiety Spiral",
+            subtitle: "A state where stress and anxiety should lead the day more clearly than sleep or vices alone.",
+            tags: ["Mind & Body", "Unexpected"],
+            notes: [
+                "Use this to tune stress/anxiety actions and make sure they feel distinct from generic sleep actions.",
+                "The hero should not collapse back into caffeine every time this state appears."
+            ],
+            content: .lifeScoreInsights(
+                .init(
+                    referenceDate: referenceDate,
+                    timeRange: .today,
+                    metricDefinitions: metricDefinitions,
+                    checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
+                    workouts: workouts,
+                    sleepData: makeSleepDashboardData(score: 67),
+                    isLoggedIn: true
+                )
+            )
+        )
+    }
+
+    static func habitResetReboundScenario(referenceDate: Date) -> Scenario {
+        let metricDefinitions = defaultMetricDefinitions()
+        let days = (0..<14).map { offset -> ScenarioDay in
+            let recentImprovement: Float = offset <= 2 ? Float(2 - offset) : 0
+            return .init(
+                offset: offset,
+                morning: [
+                    SQMetricId.sleepHours: 6.8 + recentImprovement * 0.3,
+                    SQMetricId.sleepQuality: 6.5 + recentImprovement * 0.5,
+                    SQMetricId.energy: 6.0 + recentImprovement * 0.4,
+                    SQMetricId.mood: 5.9 + recentImprovement * 0.4,
+                    SQMetricId.mentalClarity: 6.1 + recentImprovement * 0.4,
+                    SQMetricId.motivation: 6.0 + recentImprovement * 0.3,
+                    SQMetricId.stress: 4.8 - recentImprovement * 0.4,
+                    SQMetricId.anxiety: 4.2 - recentImprovement * 0.4,
+                    SQMetricId.soreness: 3.4
+                ],
+                evening: [
+                    SQMetricId.alcohol: 2.2 - recentImprovement * 0.8,
+                    SQMetricId.caffeine: 180 - recentImprovement * 25,
+                    SQMetricId.weed: 2.4 - recentImprovement * 0.8,
+                    SQMetricId.nicotine: 1.8 - recentImprovement * 0.7
+                ]
+            )
+        }
+
+        let workouts = makeWorkouts(
+            referenceDate: referenceDate,
+            specs: [
+                .init(offset: 0, activityType: .running, performance: 7.6, difficulty: 6.2, startHour: 7, durationMinutes: 43, calories: 455),
+                .init(offset: 4, activityType: .running, performance: 7.1, difficulty: 6.3, startHour: 7, durationMinutes: 42, calories: 445)
+            ]
+        )
+
+        return .init(
+            id: "habit-reset-rebound",
+            domain: .lifeScoreInsights,
+            title: "Habit Reset Rebound",
+            subtitle: "A scenario where reducing habits should start to unlock better recovery and mood.",
+            tags: ["Habits", "Follow-Up"],
+            notes: [
+                "Use this to test follow-up insights and less vice-heavy hero states.",
+                "The action should feel like a concrete next step, not a generic encouragement."
+            ],
+            content: .lifeScoreInsights(
+                .init(
+                    referenceDate: referenceDate,
+                    timeRange: .today,
+                    metricDefinitions: metricDefinitions,
+                    checkIns: makeCheckIns(referenceDate: referenceDate, days: days, metricDefinitions: metricDefinitions),
+                    workouts: workouts,
+                    sleepData: makeSleepDashboardData(score: 80),
+                    isLoggedIn: true
+                )
+            )
         )
     }
 
@@ -426,11 +698,18 @@ private extension SQViewLabController {
                     SQMetricId.sleepHours: 7.0 + Float((offset + 1) % 3) * 0.1,
                     SQMetricId.sleepQuality: 6.8 + Float((offset + 2) % 3) * 0.2,
                     SQMetricId.energy: 6.6 + Float(offset % 2) * 0.2,
-                    SQMetricId.mood: offset <= 1 ? 5.8 : 6.5
+                    SQMetricId.mood: offset <= 1 ? 5.8 : 6.5,
+                    SQMetricId.mentalClarity: 6.4 + Float(offset % 3) * 0.2,
+                    SQMetricId.motivation: 6.6 + Float((offset + 1) % 2) * 0.2,
+                    SQMetricId.stress: offset <= 1 ? 4.7 : 3.8,
+                    SQMetricId.anxiety: offset <= 1 ? 4.0 : 3.1,
+                    SQMetricId.soreness: 4.0 + Float(offset % 2) * 0.3
                 ],
                 evening: [
                     SQMetricId.alcohol: 0.4,
-                    SQMetricId.caffeine: 120
+                    SQMetricId.caffeine: 120,
+                    SQMetricId.weed: 0.3,
+                    SQMetricId.nicotine: 0.2
                 ]
             )
         }
@@ -486,11 +765,12 @@ private extension SQViewLabController {
                 isDefault: true,
                 sortOrder: 0,
                 periods: [.morning, .evening],
-                goalStyle: .justTrack
+                goalStyle: .buildUp,
+                targetValue: 7
             ),
             .init(
-                id: SQMetricId.energy,
-                title: "Energy Level",
+                id: SQMetricId.mentalClarity,
+                title: "Mental Clarity",
                 kind: .scale,
                 unit: .none,
                 group: SQDefaultGroup.self_.rawValue,
@@ -502,8 +782,97 @@ private extension SQViewLabController {
                 isDefault: true,
                 sortOrder: 1,
                 periods: [.morning, .evening],
-                goalStyle: .justTrack,
+                goalStyle: .buildUp,
+                targetValue: 7
+            ),
+            .init(
+                id: SQMetricId.energy,
+                title: "Energy",
+                kind: .scale,
+                unit: .none,
+                group: SQDefaultGroup.self_.rawValue,
+                min: 0,
+                max: 10,
+                step: 1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: true,
+                sortOrder: 2,
+                periods: [.morning, .evening],
+                goalStyle: .buildUp,
+                targetValue: 7,
                 bodyBatteryEffect: .boostsWhenHigh
+            ),
+            .init(
+                id: SQMetricId.motivation,
+                title: "Motivation",
+                kind: .scale,
+                unit: .none,
+                group: SQDefaultGroup.self_.rawValue,
+                min: 0,
+                max: 10,
+                step: 1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: true,
+                sortOrder: 3,
+                periods: [.morning, .evening],
+                goalStyle: .buildUp,
+                targetValue: 7
+            ),
+            .init(
+                id: SQMetricId.stress,
+                title: "Stress",
+                kind: .scale,
+                unit: .none,
+                group: SQDefaultGroup.self_.rawValue,
+                min: 0,
+                max: 10,
+                step: 1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: true,
+                sortOrder: 4,
+                periods: [.morning, .evening],
+                goalStyle: .keepLow,
+                targetValue: 4,
+                bodyBatteryEffect: .drainsWhenHigh
+            ),
+            .init(
+                id: SQMetricId.anxiety,
+                title: "Anxiety",
+                kind: .scale,
+                unit: .none,
+                group: SQDefaultGroup.self_.rawValue,
+                min: 0,
+                max: 10,
+                step: 1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: true,
+                sortOrder: 5,
+                periods: [.morning, .evening],
+                goalStyle: .keepLow,
+                targetValue: 3,
+                bodyBatteryEffect: .drainsWhenHigh
+            ),
+            .init(
+                id: SQMetricId.soreness,
+                title: "Soreness",
+                kind: .scale,
+                unit: .none,
+                group: SQDefaultGroup.self_.rawValue,
+                min: 0,
+                max: 10,
+                step: 1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: true,
+                sortOrder: 6,
+                periods: [.morning, .evening],
+                goalStyle: .keepLow,
+                targetValue: 4,
+                bodyBatteryEffect: .drainsWhenHigh
             ),
             .init(
                 id: SQMetricId.sleepQuality,
@@ -517,10 +886,11 @@ private extension SQViewLabController {
                 isPreset: true,
                 isEnabled: true,
                 isDefault: false,
-                sortOrder: 2,
+                sortOrder: 7,
                 periods: [.morning, .evening],
                 isSingleDailyValue: true,
-                goalStyle: .justTrack
+                goalStyle: .buildUp,
+                targetValue: 7
             ),
             .init(
                 id: SQMetricId.sleepHours,
@@ -534,10 +904,11 @@ private extension SQViewLabController {
                 isPreset: true,
                 isEnabled: true,
                 isDefault: false,
-                sortOrder: 3,
+                sortOrder: 8,
                 periods: [.morning, .evening],
                 isSingleDailyValue: true,
-                goalStyle: .justTrack
+                goalStyle: .buildUp,
+                targetValue: 7
             ),
             .init(
                 id: SQMetricId.alcohol,
@@ -551,7 +922,7 @@ private extension SQViewLabController {
                 isPreset: true,
                 isEnabled: true,
                 isDefault: true,
-                sortOrder: 4,
+                sortOrder: 9,
                 periods: [.morning, .evening],
                 isSingleDailyValue: true,
                 goalStyle: .avoidIt,
@@ -570,12 +941,49 @@ private extension SQViewLabController {
                 isPreset: true,
                 isEnabled: true,
                 isDefault: true,
-                sortOrder: 5,
+                sortOrder: 10,
+                periods: [.morning, .evening],
+                isSingleDailyValue: true,
+                goalStyle: .keepLow,
+                targetValue: 150,
+                bodyBatteryEffect: .drainsWhenHigh,
+                scaleQuantityMapping: .init(quantityUnit: .milligrams, maxQuantityValue: 200)
+            ),
+            .init(
+                id: SQMetricId.weed,
+                title: "Weed",
+                kind: .number,
+                unit: .count,
+                group: SQDefaultGroup.vices.rawValue,
+                min: 0,
+                max: 10,
+                step: 0.1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: false,
+                sortOrder: 11,
                 periods: [.morning, .evening],
                 isSingleDailyValue: true,
                 goalStyle: .avoidIt,
-                bodyBatteryEffect: .drainsWhenHigh,
-                scaleQuantityMapping: .init(quantityUnit: .milligrams, maxQuantityValue: 200)
+                bodyBatteryEffect: .drainsWhenHigh
+            ),
+            .init(
+                id: SQMetricId.nicotine,
+                title: "Nicotine",
+                kind: .number,
+                unit: .count,
+                group: SQDefaultGroup.vices.rawValue,
+                min: 0,
+                max: 10,
+                step: 0.1,
+                isPreset: true,
+                isEnabled: true,
+                isDefault: false,
+                sortOrder: 12,
+                periods: [.morning, .evening],
+                isSingleDailyValue: true,
+                goalStyle: .avoidIt,
+                bodyBatteryEffect: .drainsWhenHigh
             )
         ]
     }

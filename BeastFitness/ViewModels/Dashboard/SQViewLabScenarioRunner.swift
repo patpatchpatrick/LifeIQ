@@ -37,7 +37,9 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         insightsService: SQInsightsServicing? = nil,
         lifeScoreBuilder: SQLifeScoreBuilding? = nil
     ) {
-        self.insightsService = insightsService ?? SQInsightsService()
+        self.insightsService = insightsService ?? SQInsightsService(
+            surfacingMemoryStore: SQNoOpInsightSurfacingMemoryStore()
+        )
         self.lifeScoreBuilder = lifeScoreBuilder ?? SQLifeScoreBuilder(
             sleepAggregationService: .init()
         )

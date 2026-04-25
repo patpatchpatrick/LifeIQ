@@ -152,6 +152,9 @@ struct SQInsightCurrentStateAnalyzer {
                 familyKey: relationship.familyKey,
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
+                inputSignalId: relationship.inputSignalId,
+                outputSignalId: relationship.outputSignalId,
+                recommendationFamily: relationship.recommendationFamily,
                 title: currentStateTitle(
                     relationship: relationship
                 ),
@@ -279,7 +282,7 @@ struct SQInsightCurrentStateAnalyzer {
     ) -> String {
         switch relationship.insightClass {
         case .opportunity:
-            return "This looks supportive right now. Lean into it while it holds and see if the rest of the day follows."
+            return relationship.strongActionText
         case .risk:
             return relationship.strongActionText
         default:

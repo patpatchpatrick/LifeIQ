@@ -94,6 +94,29 @@ The current-state analyzer is allowed to evaluate either:
 
 `SQInsightsResult` also now carries curated `actions`, which are intended to back the lightweight `What To Do` surface in the eventual `Today` dashboard and any orb/detail explanation surfaces that need one recommended next move.
 
+`Today` surfacing now also has a first-pass novelty layer in the surfacing step:
+- novelty is applied in surfacing, not in the core analyzers
+- the current implementation only tracks the primary visible `Today` insight family
+- repeated families get a soft ranking penalty on following days
+- same-day dashboard reloads should not keep decaying novelty again
+
+The current relationship registry is also broader than the original vice-only seed set. It now includes:
+- vice and carryover relationships
+- sleep -> recovery / mood / clarity relationships
+- training-readiness and workout-performance relationships
+- mind-and-body signals such as:
+  - mental clarity
+  - motivation
+  - stress
+  - anxiety
+  - soreness
+
+The internal engine-backed `View Lab` is expected to exercise both:
+- normal / desirable states
+- messy / contradictory states
+
+That matters because the engine needs to stay coherent when user data is uneven or behavior patterns are not “ideal.”
+
 That is now the implementation baseline going forward.
 
 ## Rebuild Principle

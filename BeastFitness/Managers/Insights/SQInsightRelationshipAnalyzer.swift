@@ -108,6 +108,9 @@ struct SQInsightRelationshipAnalyzer {
                 familyKey: relationship.familyKey,
                 insightClass: relationship.insightClass,
                 variantPriority: variant.priority,
+                inputSignalId: relationship.inputSignalId,
+                outputSignalId: relationship.outputSignalId,
+                recommendationFamily: relationship.recommendationFamily,
                 title: isSubtle
                     ? subtleInsightTitle(for: relationship, variant: variant)
                     : strongInsightTitle(for: relationship, variant: variant),
