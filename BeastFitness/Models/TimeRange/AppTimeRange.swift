@@ -70,4 +70,15 @@ enum AppTimeRange: String, CaseIterable {
         case .allTime: return 4
         }
     }
+
+    var insightSurfaceIntent: SQInsightSurfaceIntent {
+        switch self {
+        case .today:
+            return .today
+        case .pastSevenDays:
+            return .pastWeek
+        case .past30Days, .pastYear, .allTime:
+            return .pastYear
+        }
+    }
 }

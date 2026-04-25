@@ -1,8 +1,8 @@
 //
-//  SQInsightDailySnapshot.swift
+//  SQInsightFeatureSnapshot.swift
 //  BeastFitness
 //
-//  Created by Codex on 4/8/26.
+//  Created by Codex on 4/22/26.
 //
 
 import Foundation
@@ -12,11 +12,11 @@ enum SQInsightAnalysisMetricId {
     static let workoutDifficulty = "insight.workoutDifficulty"
 }
 
-struct SQInsightDailySnapshot: Identifiable {
+struct SQInsightFeatureSnapshot: Identifiable {
     let date: Date
     let anchorDayKey: String
-    let rawMetricValues: [String: Double]
-    let normalizedMetricValues: [String: Double]
+    let rawSignalValues: [String: Double]
+    let normalizedSignalValues: [String: Double]
     let workoutCount: Int
     let averageWorkoutPerformance: Double?
     let averageWorkoutDifficulty: Double?
@@ -27,29 +27,25 @@ struct SQInsightDailySnapshot: Identifiable {
         workoutCount > 0
     }
 
-    func rawMetricValue(for metricId: String) -> Double? {
-        switch metricId {
+    func rawSignalValue(for signalId: String) -> Double? {
+        switch signalId {
         case SQInsightAnalysisMetricId.workoutPerformance:
             return averageWorkoutPerformance
         case SQInsightAnalysisMetricId.workoutDifficulty:
             return averageWorkoutDifficulty
         default:
-            break
+            return rawSignalValues[signalId]
         }
-
-        return rawMetricValues[metricId]
     }
 
-    func normalizedMetricValue(for metricId: String) -> Double? {
-        switch metricId {
+    func normalizedSignalValue(for signalId: String) -> Double? {
+        switch signalId {
         case SQInsightAnalysisMetricId.workoutPerformance:
             return averageWorkoutPerformance
         case SQInsightAnalysisMetricId.workoutDifficulty:
             return averageWorkoutDifficulty
         default:
-            break
+            return normalizedSignalValues[signalId]
         }
-
-        return normalizedMetricValues[metricId]
     }
 }

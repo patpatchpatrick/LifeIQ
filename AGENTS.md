@@ -6,6 +6,8 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 
 - The canonical product-context doc for AI assistants in this repo is [docs/ai/product_context.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/product_context.md).
 - Use that file as the stable product brief when grounding product decisions, UX reasoning, naming, and feature intent.
+- Engine-planning docs for the shared `Insights` / `Life Score` direction live under [docs/ai/engines/insights-and-life-score/README.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/engines/insights-and-life-score/README.md).
+- When doing architecture or product-planning work for insights, the orb, score drivers, or relationship definitions, update the relevant docs in `docs/ai/engines/` so ChatGPT and Codex stay aligned.
 - Keep `AGENTS.md` focused on implementation guidance and repo rules; put broader product context in `docs/ai/`.
 - If product framing changes materially, update `docs/ai/product_context.md` alongside any related `AGENTS.md` edits so ChatGPT and Codex can stay aligned.
 

@@ -1,0 +1,410 @@
+# Insights Engine Plan
+
+This document describes the target architecture and product behavior for the LifeIQ insights engine.
+
+## Product Goal
+
+The insights engine should help users understand:
+- what is changing
+- what is helping or hurting them
+- what is relevant now
+- what they might try next
+
+The engine should feel:
+- personal
+- trustworthy
+- explainable
+- actionable
+
+It should not feel like:
+- random AI output
+- generic health advice
+- the same repeated card forever
+
+## V1 Launch Philosophy
+
+V1 does not need a huge insight catalog.
+
+For launch, the better tradeoff is:
+- build the right shared engine foundation
+- keep the active relationship set small and curated
+- make the surfaced insights feel trustworthy and relevant
+
+So the launch goal is:
+- strong system shape
+- modest insight breadth
+- high confidence in the relationships that are active
+
+## Current Reality
+
+The app now has a rebuilt first-pass insights engine with the new architecture direction in place.
+
+Current code entry points:
+- active relationship definitions now live in [SQInsightRelationshipRegistry.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipRegistry.swift)
+- relationship and surface metadata now live in [SQInsightRelationshipDefinition.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightRelationshipDefinition.swift)
+- shared feature snapshots now live in [SQInsightFeatureSnapshot.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Models/Insights/SQInsightFeatureSnapshot.swift)
+- feature construction now lives in [SQInsightFeatureBuilder.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightFeatureBuilder.swift)
+- relationship analysis now lives in [SQInsightRelationshipAnalyzer.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightRelationshipAnalyzer.swift)
+- engine orchestration now lives in [SQInsightAnalysisEngine.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightAnalysisEngine.swift)
+- range-aware ranking policy now lives in [SQInsightSurfacingPolicy.swift](/Users/patrickdoyle/Developer/mapps/BeastFitness/BeastFitness/Managers/Insights/SQInsightSurfacingPolicy.swift)
+
+That is the new base, and it should continue becoming more general than simple metric-to-metric comparisons.
+
+## Rebuild Status
+
+The old evaluator/config stack has been replaced as the live runtime path.
+
+The current runtime system now follows this mapping:
+- `SQInsightFeatureSnapshot` -> shared day feature layer
+- `SQInsightFeatureBuilder` -> normalized feature construction
+- `SQInsightRelationshipRegistry` -> active relationship source of truth
+- `SQInsightRelationshipAnalyzer` -> reusable analyzer for the current relationship family
+- `SQInsightAnalysisEngine` -> candidate generation and result orchestration
+- `SQInsightSurfacingPolicy` -> range-aware surfacing policy
+
+That is now the implementation baseline going forward.
+
+## Rebuild Principle
+
+The new insights system can be designed as a clean engine rather than a careful incremental migration.
+
+The product goal is to build the right long-term foundation now while the app is still early.
+
+That means it is acceptable to:
+- replace the current registry structure
+- replace the current evaluator layout
+- replace the current snapshot model
+- rebuild surfacing logic by range
+
+As long as the new system keeps the useful product intent:
+- trustworthy relationships
+- understandable insight cards
+- curated active relationships
+- strong dashboard relevance
+
+## Rebuild Strategy
+
+### Step 1: Define The New Engine Shape First
+
+Before implementation, lock down:
+- normalized input model
+- day/window feature model
+- relationship registry structure
+- analyzer families
+- insight classes
+- ranking rules by range
+
+### Step 2: Extend The Registry As The Source Of Truth
+
+The dedicated registry is now in place.
+
+Going forward:
+- add new relationship families there
+- keep one source of truth for active relationships
+- avoid rebuilding scattered config homes
+
+### Step 3: Build A Shared Feature Layer For Insights And Life Score
+
+The new system should build a shared feature layer that both engines can read from.
+
+That is a better long-term foundation than extending the current insights snapshot model indefinitely.
+
+### Step 4: Rebuild Analyzers Against The New Feature Layer
+
+Implement reusable analyzers against the new structure rather than wrapping legacy evaluators forever.
+
+### Step 5: Rebuild Surfacing Around Time-Range Intent
+
+Implement range-specific surfacing from the new engine:
+- `Today` = briefing
+- `Past 7 Days` = recent story
+- `Past Year` = personal playbook
+
+### Step 6: Add Orb / Life Score Alignment On Top Of Shared Features
+
+Once shared features exist, score/orb logic should be added as a sibling output system.
+
+## Target Architecture
+
+The target system should be built in layers:
+
+1. Source adapters
+2. Normalized analysis inputs
+3. Day/window feature layer
+4. Relationship registry
+5. Reusable analyzers
+6. Scoring and ranking
+7. Presentation / recommendation layer
+8. Dashboard surfacing policy by time range
+
+## Modularity Rule
+
+The engine should be built so it can eventually move into its own package or module.
+
+That means:
+- keep core relationship models and analysis types as app-light as practical
+- allow dependence on core shared models where needed
+- keep app-specific adapters and legacy bridges outside the core registry/analysis layer
+- avoid letting UI, dashboard view models, or feature-specific services leak deep into the engine core
+
+### 1. Source Adapters
+
+Raw app models should not all conform to one giant shared protocol.
+
+Instead, each source domain should have an adapter that converts data into a shared analysis language.
+
+Examples:
+- metric entry insight source
+- workout insight source
+- sleep insight source
+- heart / recovery insight source
+- future nutrition insight source
+- future menstrual-cycle insight source
+
+### 2. Normalized Analysis Inputs
+
+The system should normalize tracked data into shared analysis primitives.
+
+At a high level, the engine should support two kinds of inputs:
+- discrete events
+- time-anchored values / signals
+
+Examples:
+- event: completed workout
+- event: alcohol logged
+- event: caffeine logged late
+- value: mood = 7
+- value: sleep duration = 6.8 hours
+- value: workout performance = 8
+- value: resting heart rate = 54
+
+This is the long-term foundation that lets many domains participate in the same engine.
+
+### 3. Day / Window Feature Layer
+
+For V1 and near-term work, most analysis should still happen on day-based and rolling-window features.
+
+That means the engine should derive things like:
+- same-day values
+- previous-day values
+- next-day values
+- trailing 3-day and 7-day averages
+- change vs personal baseline
+- short multi-day carryover windows
+
+This is the main analysis substrate for near-term work.
+
+### 4. Relationship Registry
+
+The engine needs one clear place where active relationship definitions are curated.
+
+A relationship definition should describe:
+- input signal
+- output signal
+- time model
+- allowed analyzer type
+- category
+- expected direction if known
+- thresholds / guardrails
+- recommendation family
+- suppression / duplication rules
+
+This should become the single source of truth for:
+- what insight relationships are active
+- which ones are experimental
+- which ones are suppressed
+
+See [relationship_registry.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/engines/insights-and-life-score/relationship_registry.md).
+
+### 5. Reusable Analyzers
+
+The system should prefer a small set of reusable analyzers over many hardcoded one-off evaluators.
+
+Initial analyzer families:
+- bucket comparison
+- lagged effect analysis
+- rolling trend analysis
+- baseline deviation analysis
+- persistence / decay analysis
+- follow-up / experiment outcome analysis
+
+The goal is not fancy ML first.
+The goal is reusable and explainable analysis.
+
+### 6. Scoring and Ranking
+
+Every candidate insight should be scored on more than just sample size.
+
+Useful dimensions:
+- confidence
+- effect size
+- consistency
+- recency
+- actionability
+- novelty
+- relevance to current state
+
+### 7. Presentation and Recommendations
+
+Analysis and presentation should be separated.
+
+The analyzer should determine:
+- what appears to be true
+- how strong the effect is
+- how reliable it is
+
+The presentation layer should determine:
+- title
+- summary
+- confidence label
+- user-facing explanation
+- suggested next action
+
+Recommendations should be template-driven first, not freeform AI-generated first.
+
+### 8. Range-Specific Surfacing
+
+The engine should use one shared candidate pool, but different surfacing policies by range.
+
+`Today` is not just a smaller version of `Past Year`.
+
+## Insight Classes
+
+The engine should explicitly support multiple kinds of insight.
+
+Core classes:
+- `RelationshipInsight`
+- `TrendInsight`
+- `BaselineChangeInsight`
+- `FollowUpInsight`
+- `RiskInsight`
+- `OpportunityInsight`
+- future `PopulationBenchmarkInsight`
+- future `CohortInsight`
+
+If every card is only "X affects Y", the product will get repetitive quickly.
+
+## Time Range Strategy
+
+### Today
+
+Question answered:
+- what matters right now?
+
+Primary insight types:
+- current-state insight
+- recent-change insight
+- action / lever insight
+- follow-up insight
+
+Today should be dynamic, but not random.
+
+Daily surfacing should favor:
+- relevance now
+- recency
+- actionability
+- novelty
+- confidence
+
+The product goal is:
+- users should not see the exact same daily lead insight forever
+- a slightly weaker but much more relevant insight can win today
+
+### Past 7 Days
+
+Question answered:
+- what has been happening lately?
+
+Primary insight types:
+- trend insights
+- baseline-change insights
+- recent relationship insights
+- weekly opportunity or risk insights
+
+This is likely the richest near-term range for the product.
+
+### Past Year
+
+Question answered:
+- what have I learned about myself?
+
+Primary insight types:
+- strongest stable relationships
+- long-term recurring patterns
+- top levers
+- future seasonal patterns
+
+This should behave like a personal playbook, not a noisy feed.
+
+## Daily Insight Dynamism
+
+Daily insights should be ranked, not randomized.
+
+Useful inputs for a `Today` surfacing score:
+- relevance to latest sleep / recovery / workouts
+- relevance to last 1-3 days
+- actionability today
+- novelty vs recently shown insights
+- confidence
+
+The system should eventually track suppression context such as:
+- recently shown relationship family
+- recently shown insight type
+- show count over trailing days
+
+That is how daily insights stay fresh without feeling arbitrary.
+
+## Future Population Insights
+
+Population and cohort insights are a future layer, not a current requirement.
+
+They should be modeled separately from personal truths.
+
+Examples of future distinction:
+- `PersonalInsight`: "For you, alcohol tends to hurt next-day energy."
+- `PopulationBenchmark`: "Your alcohol usage is lower than 70% of similar users."
+- `CohortInsight`: "Among similar users, higher alcohol is associated with lower energy."
+
+The engine should stay compatible with that future, but V1 should remain personal-first.
+
+## Rollout Plan
+
+### Phase 1
+
+Design and build the new engine foundation.
+
+Goals:
+- define the new normalized input and feature layers
+- define the dedicated registry
+- re-express the curated relationships we still want
+- separate analysis from presentation from the start
+- design `Today`, `Past 7 Days`, and `Past Year` surfacing explicitly
+- keep orb alignment in scope through shared features
+- launch with a deliberately small set of product-approved relationships rather than trying to fill the dashboard with volume
+
+### Phase 2
+
+Expand the rebuilt engine across more domains and insight classes.
+
+Goals:
+- richer normalized signal layer
+- more domains beyond check-in metrics
+- multi-day lag support
+- change-vs-baseline and follow-up insight classes
+
+### Phase 3
+
+Add future benchmark and cohort layers.
+
+Goals:
+- backend analytics support
+- population benchmarks
+- cohort comparisons
+- privacy-conscious user-facing benchmark insights
+
+## Immediate Planning Rule
+
+When designing or implementing new insights work:
+- prefer a system that can eventually compare almost any tracked input with almost any outcome
+- but only activate curated, believable, product-approved relationships
+- and keep one obvious registry as the place where those active relationships are defined

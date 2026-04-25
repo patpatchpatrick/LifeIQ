@@ -1,18 +1,26 @@
 //
-//  SQInsightsAggregator.swift
+//  SQInsightFeatureBuilder.swift
 //  BeastFitness
 //
-//  Created by Codex on 4/8/26.
+//  Created by Codex on 4/22/26.
 //
 
 import Foundation
 
-final class SQInsightsAggregator {
-    func makeSnapshots(
+protocol SQInsightFeatureBuilding {
+    func makeFeatureSnapshots(
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
         metricDefinitions: [SQMetricDefinition]
-    ) -> [SQInsightDailySnapshot] {
+    ) -> [SQInsightFeatureSnapshot]
+}
+
+final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
+    func makeFeatureSnapshots(
+        checkIns: [SQDailyCheckInStats],
+        workouts: [SQWorkoutSessionable],
+        metricDefinitions: [SQMetricDefinition]
+    ) -> [SQInsightFeatureSnapshot] {
         let definitionsById = Dictionary(
             uniqueKeysWithValues: metricDefinitions.map { ($0.id, $0) }
         )
@@ -59,18 +67,19 @@ final class SQInsightsAggregator {
             .sorted()
 
         return dayKeys.compactMap { dayKey in
-            let date = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey)
-            guard let date else { return nil }
+            guard let date = SQDateFormatters.shared.date(from: dayKey, preferredStyle: .firebaseDayKey) else {
+                return nil
+            }
 
             let dayWorkouts = workoutsByDay[dayKey, default: []]
             let performanceRatings = dayWorkouts.compactMap { $0.ratingUserPerformance.map(Double.init) }
             let difficultyRatings = dayWorkouts.compactMap { $0.ratingDifficulty.map(Double.init) }
 
-            return SQInsightDailySnapshot(
+            return SQInsightFeatureSnapshot(
                 date: date,
                 anchorDayKey: dayKey,
-                rawMetricValues: rawValuesByDay[dayKey, default: [:]],
-                normalizedMetricValues: normalizedValuesByDay[dayKey, default: [:]],
+                rawSignalValues: rawValuesByDay[dayKey, default: [:]],
+                normalizedSignalValues: normalizedValuesByDay[dayKey, default: [:]],
                 workoutCount: dayWorkouts.count,
                 averageWorkoutPerformance: average(of: performanceRatings),
                 averageWorkoutDifficulty: average(of: difficultyRatings)

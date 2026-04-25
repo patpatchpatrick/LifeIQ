@@ -2152,7 +2152,8 @@ final class SQDashboardController: SQDashboardInterface {
         let result = insightsService.dashboardInsights(
             checkIns: checkIns,
             workouts: workouts,
-            metricDefinitions: metricsManager.allMetrics(includeArchived: true)
+            metricDefinitions: metricsManager.allMetrics(includeArchived: true),
+            timeRange: state.selectedTimeRange
         )
 
         let emptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel?
