@@ -33,10 +33,12 @@ struct SQWorkoutPremiumInsightsView: View {
                         }
                     }
 
-                    Text(model.footer)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if !model.footer.isEmpty {
+                        Text(model.footer)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .blur(radius: model.availability == .locked ? 8 : 0)
 

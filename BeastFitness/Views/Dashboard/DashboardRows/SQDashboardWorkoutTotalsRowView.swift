@@ -31,7 +31,7 @@ struct SQDashboardWorkoutTotalsRowView: View {
     }
     
     var totalValuesAndTrendsStack: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.s) {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
             SQDashboardWorkoutStatView(attributedTitle: viewModel.currentValueAndTrend.value)
 
             if let trend = viewModel.currentValueAndTrend.trend {
@@ -58,10 +58,12 @@ struct SQDashboardWorkoutTotalsRowView: View {
                     .sqFont(.bodySmall)
                     .sqForegroundColor(.textSecondary)
             }
+            .padding(.top, .SQSpace.xs)
         } else {
             Text("\(trend.prefix) \(trend.suffix)")
                 .sqFont(.bodySmall)
                 .sqForegroundColor(.textSecondary)
+                .padding(.top, .SQSpace.xs)
         }
     }
     

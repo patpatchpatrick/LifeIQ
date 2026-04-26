@@ -193,6 +193,7 @@ Brand direction:
 - The glowing orb can be treated as the primary brand object in dashboard/header concepts.
 - If introducing orb-driven UI, prefer it as a focused status object or navigator rather than decorative filler.
 - Avoid renaming or reframing `Body Battery` into an orb metaphor unless the product copy and score semantics are intentionally redesigned together.
+- Score explanation surfaces should follow the `Life Score` detail-screen pattern: use a dedicated sheet/detail view with clear section spacing and hierarchy, not a dense alert. Reuse that layout style for future score explainers such as Recovery, Performance Score, and Difficulty Score where possible.
 
 Sleep-specific range semantics:
 - Use completed nights only, anchored to the latest completed wake day.

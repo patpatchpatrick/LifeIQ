@@ -30,6 +30,8 @@ struct SQRootTabView: View {
             SQWebContentView(title: title, urlString: urlString)
         case .lifeScoreDetail(let controller):
             SQLifeScoreDetailView(controller: controller)
+        case .recoveryScoreDetail(let controller):
+            SQRecoveryScoreDetailView(controller: controller)
         case .editWorkout(workout: let workout):
             SQEditWorkoutView(controller: .init(workout: workout))
         case .workoutsList(workouts: let workouts):

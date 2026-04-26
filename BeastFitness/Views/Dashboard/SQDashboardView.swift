@@ -92,20 +92,7 @@ struct SQDashboardView: View {
                     .accessibilityLabel(lifeScoreViewModel.accessibilityLabel)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    .padding(.bottom, 12)
-
-                    if controller.state.selectedTimeRange == .today,
-                       !lifeScoreViewModel.changes.isEmpty {
-                        SQLifeScoreRecentChangesCard(
-                            changes: Array(lifeScoreViewModel.changes.prefix(3)),
-                            onAccessoryTap: { controller.handleSeeMoreInsightsTap() }
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 28)
-                    } else {
-                        Color.clear
-                            .frame(height: 20)
-                    }
+                    .padding(.bottom, 20)
                 }
 
                 if let runtimeControlCtaViewModel = controller.runtimeControlCtaViewModel {
@@ -139,7 +126,7 @@ struct SQDashboardView: View {
                     .padding(.top, 8)
                 } else {
                     // Main sections - always rendered so mock data shows as a redacted skeleton
-                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    LazyVStack(spacing: .SQSpace.s, pinnedViews: [.sectionHeaders]) {
                         ForEach(controller.state.sectionGroups) { sectionGroup in
                             SQDashboardSectionGroupView(sectionGroup: sectionGroup)
                         }

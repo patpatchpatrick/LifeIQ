@@ -17,4 +17,15 @@ extension SQDashboardController {
         let controller = SQLifeScoreDetailController(viewModel: lifeScoreViewModel)
         state.hub.domainEvents.send(.pushDashboardRoute(.lifeScoreDetail(controller: controller)))
     }
+
+    func handleRecoveryScoreInfoTap(row: SQDashboardBodyBatteryRowViewModel) {
+        SQAnalyticsManager.shared.track(.dashboardItemOpened(
+            itemType: "recovery_score",
+            itemId: nil,
+            sourceGroup: "recovery",
+            score: row.score
+        ))
+        let controller = SQRecoveryScoreDetailController(viewModel: row)
+        state.hub.domainEvents.send(.pushDashboardRoute(.recoveryScoreDetail(controller: controller)))
+    }
 }

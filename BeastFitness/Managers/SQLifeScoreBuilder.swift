@@ -79,7 +79,8 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
 
         if let habitsComponent = lifeScoreHabitsComponent(
             from: pastSevenDaysCheckIns,
-            metricDefinitions: intelligenceInput.metricDefinitions
+            metricDefinitions: intelligenceInput.metricDefinitions,
+            referenceDate: intelligenceInput.referenceDate
         ) {
             components.append(habitsComponent)
         }
@@ -120,6 +121,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             guard let roundedScore, let previousScore else { return nil }
             return roundedScore - previousScore
         }()
+        let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
 
         let subtitle: String
         if components.isEmpty {
@@ -137,6 +139,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             state: state,
             subtitle: subtitle,
+            refinementPromptText: refinementPromptText,
             components: components.sorted { $0.weight > $1.weight },
             primaryInsight: primaryInsight,
             drivers: alignedHeroDrivers(
@@ -151,6 +154,27 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
 }
 
 private extension SQLifeScoreBuilder {
+    func lifeScoreRefinementPromptText(for intelligenceInput: SQHealthIntelligenceInput) -> String? {
+        guard intelligenceInput.timeRange == .today,
+              intelligenceInput.isLoggedIn,
+              let currentCheckInPromptPeriod = intelligenceInput.currentCheckInPromptPeriod,
+              !intelligenceInput.hasCompletedCurrentPromptCheckIn else {
+            return nil
+        }
+
+        let periodTitle: String
+        switch currentCheckInPromptPeriod {
+        case .morning:
+            periodTitle = "morning"
+        case .evening:
+            periodTitle = "evening"
+        case .unknown:
+            return "Complete your check-in to refine today's score."
+        }
+
+        return "Complete your \(periodTitle) check-in to refine today's score."
+    }
+
     func alignedHeroDrivers(
         primaryInsight: SQInsight?,
         drivers: [SQInsightDriver]
@@ -311,7 +335,8 @@ private extension SQLifeScoreBuilder {
 
         if let habitsComponent = lifeScoreHabitsComponent(
             from: priorCheckIns,
-            metricDefinitions: metricDefinitions
+            metricDefinitions: metricDefinitions,
+            referenceDate: startOfYesterday
         ) {
             components.append(habitsComponent)
         }
@@ -369,39 +394,56 @@ private extension SQLifeScoreBuilder {
 
     func lifeScoreSleepComponent(from sleepData: SQSleepDashboardData?) -> SQLifeScoreComponent? {
         let sleepScore: Double?
+        let sleepDurationHours: Double?
         if let latestNight = sleepData?.latestNight {
             sleepScore = sleepAggregationService.score(for: latestNight).totalScore
+            sleepDurationHours = latestNight.totalSleepDuration / 3600.0
         } else {
             sleepScore = sleepData?.averageScore?.totalScore
+            if let averageDuration = sleepData?.currentNights.map(\.totalSleepDuration).average {
+                sleepDurationHours = averageDuration / 3600.0
+            } else {
+                sleepDurationHours = nil
+            }
         }
 
-        return lifeScoreSleepComponent(for: sleepScore)
+        return lifeScoreSleepComponent(for: sleepScore, durationHours: sleepDurationHours)
     }
 
     func previousLifeScoreSleepComponent(from sleepData: SQSleepDashboardData?) -> SQLifeScoreComponent? {
         let sleepScore: Double?
+        let sleepDurationHours: Double?
         if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
             sleepScore = sleepAggregationService.score(for: priorNight).totalScore
+            sleepDurationHours = priorNight.totalSleepDuration / 3600.0
         } else {
             sleepScore = sleepData?.priorNights
                 .map { sleepAggregationService.score(for: $0).totalScore }
                 .average
+            if let averageDuration = sleepData?.priorNights.map(\.totalSleepDuration).average {
+                sleepDurationHours = averageDuration / 3600.0
+            } else {
+                sleepDurationHours = nil
+            }
         }
 
-        return lifeScoreSleepComponent(for: sleepScore)
+        return lifeScoreSleepComponent(for: sleepScore, durationHours: sleepDurationHours)
     }
 
-    func lifeScoreSleepComponent(for sleepScore: Double?) -> SQLifeScoreComponent? {
+    func lifeScoreSleepComponent(for sleepScore: Double?, durationHours: Double?) -> SQLifeScoreComponent? {
         guard let sleepScore else { return nil }
-        let roundedScore = Int(clamp(sleepScore, min: 0, max: 100).rounded())
+        let roundedScore = adjustedLifeScoreSleepComponentScore(
+            rawSleepScore: sleepScore,
+            durationHours: durationHours
+        )
 
         let summary: String
         switch roundedScore {
-        case 80...:
+        case 85...:
             summary = "Sleep looked strong and should be helping recovery."
-        case 65...79:
+        case 70...84:
             summary = "Sleep was decent, but not elite enough to fully lift the day."
-        case 45...64:
+        case 55...69:
             summary = "Sleep was mixed, so recovery support looks only moderate."
         default:
             summary = "Sleep is the biggest drag on the score right now."
@@ -415,6 +457,34 @@ private extension SQLifeScoreBuilder {
             weight: 30,
             detailItems: []
         )
+    }
+
+    func adjustedLifeScoreSleepComponentScore(
+        rawSleepScore: Double,
+        durationHours: Double?
+    ) -> Int {
+        var adjustedScore = rawSleepScore
+
+        if rawSleepScore < 90 {
+            adjustedScore -= (90 - rawSleepScore) * 0.35
+        }
+
+        if let durationHours {
+            switch durationHours {
+            case ..<5.5:
+                adjustedScore -= 18
+            case ..<6.5:
+                adjustedScore -= 11
+            case ..<7.25:
+                adjustedScore -= 5
+            case 9.75...:
+                adjustedScore -= 4
+            default:
+                break
+            }
+        }
+
+        return Int(clamp(adjustedScore, min: 20, max: 98).rounded())
     }
 
     func lifeScoreHeartComponent(
@@ -485,32 +555,57 @@ private extension SQLifeScoreBuilder {
 
     func lifeScoreHabitsComponent(
         from recentCheckIns: [SQDailyCheckInStats],
-        metricDefinitions: [SQMetricDefinition]
+        metricDefinitions: [SQMetricDefinition],
+        referenceDate: Date
     ) -> SQLifeScoreComponent? {
-        let values = averagedMetricValues(from: recentCheckIns)
-        guard !values.isEmpty else { return nil }
+        let sevenDayValues = averagedMetricValues(from: recentCheckIns)
+        let recentValues = weightedRecentMetricValues(
+            from: recentCheckIns,
+            referenceDate: referenceDate,
+            maxDays: 2
+        )
+        guard !sevenDayValues.isEmpty || !recentValues.isEmpty else { return nil }
 
         let trackedDefinitions = metricDefinitions
             .filter { $0.isEnabled && !$0.isArchived }
 
         let scoredHabits = trackedDefinitions
-            .filter { values[$0.id] != nil }
+            .filter { sevenDayValues[$0.id] != nil || recentValues[$0.id] != nil }
             .filter { $0.goalStyle != .justTrack && $0.goalStyle != .unknown }
             .compactMap { definition -> (definition: SQMetricDefinition, value: Double, score: Double, item: SQLifeScoreDetailItem)? in
-                guard let rawValue = values[definition.id] else { return nil }
-                let value = rawValue
-                guard let score = habitScore(for: value, definition: definition) else { return nil }
-                let effect = habitEffect(for: value, score: score, definition: definition)
+                let sevenDayValue = sevenDayValues[definition.id]
+                let recentValue = recentValues[definition.id]
+                guard let baselineValue = sevenDayValue ?? recentValue,
+                      let baselineScore = habitScore(for: baselineValue, definition: definition) else {
+                    return nil
+                }
+
+                let recentScore = recentValue.flatMap { habitScore(for: $0, definition: definition) }
+                let blendedScore = blendedHabitScore(
+                    baselineScore: baselineScore,
+                    recentScore: recentScore
+                )
+                let effect = habitEffect(for: recentValue ?? baselineValue, score: blendedScore, definition: definition)
+                let valueText = habitValueText(
+                    sevenDayValue: sevenDayValue,
+                    recentValue: recentValue,
+                    definition: definition
+                )
 
                 return (
                     definition: definition,
-                    value: value,
-                    score: score,
+                    value: recentValue ?? baselineValue,
+                    score: blendedScore,
                     item: .init(
                         id: definition.id,
                         title: definition.title,
-                        valueText: "7d avg \(formattedMetricValue(value, definition: definition))",
-                        summary: habitScoreSummary(for: value, score: score, definition: definition),
+                        valueText: valueText,
+                        summary: habitScoreSummary(
+                            sevenDayValue: sevenDayValue,
+                            recentValue: recentValue,
+                            score: blendedScore,
+                            definition: definition
+                        ),
                         effect: effect
                     )
                 )
@@ -518,13 +613,20 @@ private extension SQLifeScoreBuilder {
 
         guard !scoredHabits.isEmpty else { return nil }
         let averageScore = scoredHabits.map(\.score).reduce(0, +) / Double(scoredHabits.count)
-        let roundedScore = Int(clamp(averageScore, min: 0, max: 100).rounded())
+        let vicePenalty = recentVicePenalty(
+            from: recentValues,
+            trackedDefinitions: trackedDefinitions
+        )
+        let adjustedScore = averageScore - vicePenalty
+        let roundedScore = Int(clamp(adjustedScore, min: 0, max: 100).rounded())
 
         let positiveCount = scoredHabits.filter { $0.item.effect == .positive }.count
         let negativeCount = scoredHabits.filter { $0.item.effect == .negative }.count
 
         let summary: String
-        if positiveCount > 0 && negativeCount > 0 {
+        if vicePenalty >= 10 {
+            summary = "Recent vice-heavy days are weighing on the score more than usual."
+        } else if positiveCount > 0 && negativeCount > 0 {
             summary = "\(positiveCount) recent habits supported the score, while \(negativeCount) pulled it down."
         } else if positiveCount > 0 {
             summary = "Your recent goal-based habits are mostly supportive."
@@ -547,6 +649,76 @@ private extension SQLifeScoreBuilder {
                 .sorted { lhs, rhs in
                     lifeScoreEffectPriority(lhs.effect) < lifeScoreEffectPriority(rhs.effect)
                 }
+        )
+    }
+
+    func blendedHabitScore(
+        baselineScore: Double,
+        recentScore: Double?
+    ) -> Double {
+        guard let recentScore else { return baselineScore }
+        return (baselineScore * 0.45) + (recentScore * 0.55)
+    }
+
+    func weightedRecentMetricValues(
+        from stats: [SQDailyCheckInStats],
+        referenceDate: Date,
+        maxDays: Int
+    ) -> [String: Double] {
+        let calendar = Calendar.current
+        let startOfReferenceDay = calendar.startOfDay(for: referenceDate)
+        var weightedValues: [String: [(value: Double, weight: Double)]] = [:]
+
+        for stat in stats {
+            let dayStart = calendar.startOfDay(for: stat.date)
+            let dayOffset = calendar.dateComponents([.day], from: dayStart, to: startOfReferenceDay).day ?? maxDays
+            guard dayOffset >= 0, dayOffset < maxDays else { continue }
+
+            let weight: Double = dayOffset == 0 ? 1.0 : 0.7
+            for (metricId, value) in stat.values {
+                weightedValues[metricId, default: []].append((Double(value), weight))
+            }
+        }
+
+        return weightedValues.reduce(into: [String: Double]()) { partialResult, pair in
+            let totalWeight = pair.value.reduce(0) { $0 + $1.weight }
+            guard totalWeight > 0 else { return }
+            let weightedSum = pair.value.reduce(0) { $0 + ($1.value * $1.weight) }
+            partialResult[pair.key] = weightedSum / totalWeight
+        }
+    }
+
+    func recentVicePenalty(
+        from recentValues: [String: Double],
+        trackedDefinitions: [SQMetricDefinition]
+    ) -> Double {
+        let definitionsById = Dictionary(uniqueKeysWithValues: trackedDefinitions.map { ($0.id, $0) })
+
+        let alcoholPenalty = recentValues[SQMetricId.alcohol].map {
+            clamp($0 * 4.2, min: 0, max: 18)
+        } ?? 0
+        let caffeinePenalty = recentValues[SQMetricId.caffeine].map {
+            clamp(($0 - 120.0) / 30.0, min: 0, max: 7)
+        } ?? 0
+
+        func normalizedPenalty(metricId: String, maxPenalty: Double) -> Double {
+            guard let value = recentValues[metricId],
+                  let definition = definitionsById[metricId],
+                  let normalized = normalizedMetricValue(value, definition: definition) else {
+                return 0
+            }
+
+            return clamp(normalized * maxPenalty, min: 0, max: maxPenalty)
+        }
+
+        let weedPenalty = normalizedPenalty(metricId: SQMetricId.weed, maxPenalty: 10)
+        let nicotinePenalty = normalizedPenalty(metricId: SQMetricId.nicotine, maxPenalty: 9)
+        let pornPenalty = normalizedPenalty(metricId: SQMetricId.porn, maxPenalty: 5)
+
+        return clamp(
+            alcoholPenalty + caffeinePenalty + weedPenalty + nicotinePenalty + pornPenalty,
+            min: 0,
+            max: 24
         )
     }
 
@@ -746,37 +918,65 @@ private extension SQLifeScoreBuilder {
         return "\(raw) \(unitSuffix)"
     }
 
-    func habitScoreSummary(for value: Double, score: Double, definition: SQMetricDefinition) -> String {
+    func habitValueText(
+        sevenDayValue: Double?,
+        recentValue: Double?,
+        definition: SQMetricDefinition
+    ) -> String {
+        switch (sevenDayValue, recentValue) {
+        case let (.some(sevenDayValue), .some(recentValue)):
+            return "7d avg \(formattedMetricValue(sevenDayValue, definition: definition)) • recent \(formattedMetricValue(recentValue, definition: definition))"
+        case let (.some(sevenDayValue), .none):
+            return "7d avg \(formattedMetricValue(sevenDayValue, definition: definition))"
+        case let (.none, .some(recentValue)):
+            return "recent \(formattedMetricValue(recentValue, definition: definition))"
+        case (.none, .none):
+            return "Tracked"
+        }
+    }
+
+    func habitScoreSummary(
+        sevenDayValue: Double?,
+        recentValue: Double?,
+        score: Double,
+        definition: SQMetricDefinition
+    ) -> String {
+        let comparisonValue = sevenDayValue ?? recentValue ?? 0
+
         switch definition.goalStyle {
         case .buildUp:
             if let target = definition.targetValue {
-                return value >= Double(target)
+                return comparisonValue >= Double(target)
                     ? "Your 7-day average met or exceeded the target of \(formattedTarget(target, definition: definition))."
                     : "Your 7-day average stayed below the target of \(formattedTarget(target, definition: definition))."
             }
-            return score >= 70 ? "Your 7-day average helped this goal." : "This goal still wants a higher recent average."
+            return score >= 70
+                ? "Your recent average is moving in a supportive direction."
+                : "Your recent average still wants a higher range."
 
         case .keepLow:
             if let target = definition.targetValue {
-                return value <= Double(target)
+                return comparisonValue <= Double(target)
                     ? "Your 7-day average stayed at or below the target of \(formattedTarget(target, definition: definition))."
                     : "Your 7-day average ran above the target of \(formattedTarget(target, definition: definition))."
             }
-            return score >= 70 ? "Your 7-day average stayed reasonably low." : "Your 7-day average ran higher than the goal."
+            return score >= 70
+                ? "Your recent average stayed reasonably low."
+                : "Your recent average has been running higher than ideal."
 
         case .avoidIt:
-            if value <= 0 {
-                return "Your 7-day average stayed at zero, which fully supports this goal."
+            if comparisonValue <= 0 {
+                return "Your recent average stayed at zero, which is strongly supportive."
             }
 
             return score >= 55
-                ? "Your 7-day average was above zero, so it slightly lowered this goal score."
-                : "Your 7-day average was well above zero, so it clearly lowered this goal score."
+                ? "Your recent average was above zero, so it slightly lowered this score."
+                : "Your recent average was high enough to clearly lower this score."
 
         case .stayInRange:
             let minText = definition.targetRangeMin.map { formattedTarget($0, definition: definition) } ?? "?"
             let maxText = definition.targetRangeMax.map { formattedTarget($0, definition: definition) } ?? "?"
-            return value >= Double(definition.targetRangeMin ?? 0) && value <= Double(definition.targetRangeMax ?? 0)
+            return comparisonValue >= Double(definition.targetRangeMin ?? 0) && comparisonValue <= Double(definition.targetRangeMax ?? 0)
                 ? "Your 7-day average stayed inside the target range of \(minText)-\(maxText)."
                 : "Your 7-day average sat outside the target range of \(minText)-\(maxText)."
 

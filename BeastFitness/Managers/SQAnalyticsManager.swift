@@ -470,6 +470,8 @@ private extension SQNavRoute.DashboardRoute {
             return "web_content"
         case .lifeScoreDetail:
             return "life_score_detail"
+        case .recoveryScoreDetail:
+            return "recovery_score_detail"
         case .workoutReview:
             return "workout_review"
         case .editWorkout:

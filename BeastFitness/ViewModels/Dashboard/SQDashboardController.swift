@@ -650,6 +650,8 @@ final class SQDashboardController: SQDashboardInterface {
                     workouts: scopedWorkouts,
                     sleepData: sleepDashboardData,
                     restingHeartRateSummaries: scopedRestingHeartRateSummaries,
+                    currentCheckInPromptPeriod: timeRange == .today ? currentCheckInPromptPeriod : nil,
+                    hasCompletedCurrentPromptCheckIn: timeRange == .today ? hasCompletedCurrentCheckIn : false,
                     isLoggedIn: userState.isLoggedIn
                 )
             }
@@ -2507,7 +2509,14 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Recovery",
             defaultPriority: 10,
             rowsByFilter: ["All": [row]],
-            dropDownViewModel: nil
+            dropDownViewModel: nil,
+            titleButton: .init(
+                icon: .infoCircle,
+                title: nil,
+                onTap: { [weak self] in
+                    self?.handleRecoveryScoreInfoTap(row: row)
+                }
+            )
         )
     }
 

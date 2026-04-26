@@ -56,29 +56,6 @@ struct SQDashboardBodyBatteryRowView: View {
                     RecoveryDriverRow(driver: driver)
                 }
             }
-
-            Button {
-                SQAppState.shared.hub.alertEvents.send(.present(viewModel.formulaAlert))
-            } label: {
-                HStack(spacing: .SQSpace.s) {
-                    SQImageView(
-                        image: .init(
-                            symbol: .infoCircle,
-                            symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
-                        )
-                    )
-                    .frame(width: 14, height: 14)
-
-                    Text("How this score is calculated")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
-
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, .SQSpace.s)
-            }
-            .buttonStyle(.plain)
         }
     }
 }
@@ -98,21 +75,10 @@ private struct RecoveryDriverRow: View {
     }
 
     var body: some View {
-        Group {
-            if let alert = driver.alert {
-                Button {
-                    SQAppState.shared.hub.alertEvents.send(.present(alert))
-                } label: {
-                    rowContent(showInfo: true)
-                }
-                .buttonStyle(.plain)
-            } else {
-                rowContent(showInfo: false)
-            }
-        }
+        rowContent()
     }
 
-    private func rowContent(showInfo: Bool) -> some View {
+    private func rowContent() -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
             Text(driver.title)
                 .sqFont(.bodySmall)
@@ -133,16 +99,6 @@ private struct RecoveryDriverRow: View {
                         )
                     )
                     .frame(width: 10, height: 10)
-                }
-
-                if showInfo {
-                    SQImageView(
-                        image: .init(
-                            symbol: .infoCircle,
-                            symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
-                        )
-                    )
-                    .frame(width: 12, height: 12)
                 }
             }
         }

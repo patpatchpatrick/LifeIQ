@@ -1247,40 +1247,7 @@ private extension SQWorkoutScoreService {
         scores: [SQWorkoutPremiumInsightScore],
         difficultySample: DifficultySample?
     ) -> String {
-        let activityName = workout.activityType.name.lowercased()
-        let hasPerformance = scores.contains { $0.kind == .performance }
-        let difficultySummary: String? = scores.first(where: { $0.kind == .difficulty }).map { difficultyScore in
-            switch difficultyScore.value {
-            case 85...:
-                return "one of your highest recent HR loads"
-            case 65...:
-                return "a meaningfully hard session"
-            case 40...:
-                return "a moderate training load"
-            default:
-                return "an easier or recovery-friendly load"
-            }
-        }
-
-        if hasPerformance, let performanceScore = scores.first(where: { $0.kind == .performance }), let difficultySummary {
-            let performanceSummary: String
-            switch performanceScore.value {
-            case 80...:
-                performanceSummary = "well above your recent \(activityName) baseline"
-            case 60...:
-                performanceSummary = "solid relative to your recent \(activityName) baseline"
-            default:
-                performanceSummary = "closer to an easy or maintenance effort"
-            }
-            return "This \(activityName) workout graded \(performanceSummary) for output and registered as \(difficultySummary)."
-        }
-
-        if let difficultySummary, let difficultySample {
-            let peakHeartRate = Int(difficultySample.zoneSummary.maximumObservedHeartRate.rounded())
-            return "This \(activityName) workout registered as \(difficultySummary), driven by time spent across your heart-rate zones. Peak observed HR was \(peakHeartRate) bpm."
-        }
-
-        return "This workout insight is based on your available workout output and training load."
+        ""
     }
 
     func accentColor(for zone: SQHeartRateZone) -> SQColor {

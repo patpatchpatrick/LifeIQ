@@ -81,7 +81,7 @@ enum SQLifeScoreState {
         case .aligned:
             return .dashboardGlowBlue
         case .steady:
-            return .accentNeutral4
+            return .dashboardGlowMint
         case .mixed:
             return .accentNeutral2
         case .strained:
@@ -112,6 +112,7 @@ struct SQLifeScoreViewModel {
     let scoreDeltaFromPreviousDay: Int?
     let state: SQLifeScoreState
     let subtitle: String
+    let refinementPromptText: String?
     let components: [SQLifeScoreComponent]
     let primaryInsight: SQInsight?
     let drivers: [SQInsightDriver]
@@ -124,6 +125,7 @@ struct SQLifeScoreViewModel {
         scoreDeltaFromPreviousDay: 2,
         state: .steady,
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
+        refinementPromptText: "Complete your morning check-in to refine today's score.",
         components: [],
         primaryInsight: .init(
             id: "mock-primary-insight",

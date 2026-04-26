@@ -13,7 +13,10 @@ struct SQLifeScoreHeroCard: View {
     let onOpenDetail: (() -> Void)?
 
     private var shouldShowTodayBriefing: Bool {
-        timeRange == .today && viewModel.primaryInsight != nil
+        timeRange == .today && (
+            viewModel.primaryInsight != nil
+            || viewModel.refinementPromptText != nil
+        )
     }
 
     private var scoreDeltaColor: SQColor {
@@ -80,18 +83,23 @@ struct SQLifeScoreHeroCard: View {
                     .sqFont(.bodySmallSemiBold)
                     .sqForegroundColor(.textSecondary)
 
-                if shouldShowTodayBriefing, let primaryInsight = viewModel.primaryInsight {
+                if shouldShowTodayBriefing {
                     VStack(spacing: .SQSpace.s) {
-                        if !viewModel.drivers.isEmpty {
-                            heroDrivers
-                                .padding(.top, .SQSpace.xs)
+                        if let primaryInsight = viewModel.primaryInsight {
+                            heroBriefing(
+                                summary: humanizedHeroText(primaryInsight.title),
+                                action: compactActionText
+                            )
+                            .padding(.top, .SQSpace.m)
                         }
 
-                        heroBriefing(
-                            summary: humanizedHeroText(primaryInsight.title),
-                            action: compactActionText
-                        )
-                        .padding(.top, .SQSpace.m)
+                        if let refinementPromptText = viewModel.refinementPromptText {
+                            HeroBriefingRow(
+                                text: refinementPromptText,
+                                tone: .refinement
+                            )
+                            .frame(maxWidth: 300, alignment: .leading)
+                        }
                     }
                     .padding(.top, .SQSpace.s)
                 }
@@ -107,55 +115,6 @@ struct SQLifeScoreHeroCard: View {
         .padding(.bottom, 10)
     }
 
-    private var heroDrivers: some View {
-        let displayedDrivers = Array(viewModel.drivers.prefix(3))
-        let rows = driverRows(for: displayedDrivers)
-
-        return VStack(spacing: 6) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 6) {
-                    ForEach(row) { driver in
-                        HeroDriverChip(driver: driver)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-        }
-        .frame(maxWidth: 300)
-    }
-
-    private func driverRows(for drivers: [SQInsightDriver]) -> [[SQInsightDriver]] {
-        guard !drivers.isEmpty else { return [] }
-
-        let maxRowScore = 36
-        var rows = [[SQInsightDriver]]()
-        var currentRow = [SQInsightDriver]()
-        var currentScore = 0
-
-        for driver in drivers {
-            let nextScore = chipRowScore(for: driver)
-
-            if !currentRow.isEmpty, currentScore + nextScore > maxRowScore {
-                rows.append(currentRow)
-                currentRow = [driver]
-                currentScore = nextScore
-            } else {
-                currentRow.append(driver)
-                currentScore += nextScore
-            }
-        }
-
-        if !currentRow.isEmpty {
-            rows.append(currentRow)
-        }
-
-        return rows
-    }
-
-    private func chipRowScore(for driver: SQInsightDriver) -> Int {
-        min(driver.title.count + 8, 28)
-    }
-
     private func heroBriefing(summary: String, action: String?) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             HeroBriefingRow(
@@ -165,7 +124,7 @@ struct SQLifeScoreHeroCard: View {
 
             if let action, !action.isEmpty {
                 HeroBriefingRow(
-                    text: "Best move: \(action)",
+                    text: action,
                     tone: .action
                 )
             }
@@ -320,6 +279,7 @@ struct HeroBriefingRow: View {
     enum Tone {
         case summary
         case action
+        case refinement
     }
 
     let text: String
@@ -330,34 +290,17 @@ struct HeroBriefingRow: View {
         case .summary:
             return .textPrimary
         case .action:
+            return .textSecondary
+        case .refinement:
             return .dashboardGlowBlue
         }
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
-            Group {
-                switch tone {
-                case .summary:
-                    Circle()
-                        .fill(color.color)
-                        .frame(width: 6, height: 6)
-                case .action:
-                    SQImageView(
-                        image: .init(
-                            symbol: .arrowRight,
-                            symbolStyle: .colorWithFont(color, font: .bodyExtraSmall)
-                        )
-                    )
-                    .frame(width: 10, height: 10)
-                }
-            }
-
-            Text(text)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(tone == .summary ? .textPrimary : .textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        Text(text)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(color)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -374,9 +317,9 @@ struct SQLifeScoreOrbView: View {
     private var currentLineWidth: CGFloat { max(6, size * 0.055) }
     private var usesQuePalette: Bool {
         switch viewModel.state {
-        case .aligned, .steady:
+        case .aligned:
             return true
-        case .mixed, .strained, .calibrating:
+        case .steady, .mixed, .strained, .calibrating:
             return false
         }
     }

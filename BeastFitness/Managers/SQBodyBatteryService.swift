@@ -188,7 +188,10 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .init(
                     title: "Sleep",
                     valueText: sleepAdjustment.map { signedValueText(for: $0) } ?? "--",
-                    detailText: sleepScoreSignal?.detailText ?? "Not included, no sleep data",
+                    detailText: sleepDriverDetailLabel(
+                        sleepScoreSignal: sleepScoreSignal,
+                        sleepAdjustment: sleepAdjustment
+                    ),
                     attributedDetailText: sleepDriverDetailText(
                         sleepScoreSignal: sleepScoreSignal,
                         sleepAdjustment: sleepAdjustment
@@ -203,14 +206,18 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .init(
                     title: "Strain",
                     valueText: "-\(Int(totalStrain.rounded()))",
-                    detailText: todaysWorkouts.isEmpty && yesterdaysWorkouts.isEmpty ? "No recent load" : "Today + carryover load",
+                    detailText: strainDriverDetailLabel(
+                        totalStrain: totalStrain,
+                        todaysWorkoutsCount: todaysWorkouts.count,
+                        yesterdaysWorkoutsCount: yesterdaysWorkouts.count
+                    ),
                     attributedDetailText: strainDriverDetailText(
                         totalStrain: totalStrain,
                         todaysWorkoutsCount: todaysWorkouts.count,
                         yesterdaysWorkoutsCount: yesterdaysWorkouts.count
                     ),
-                    tone: totalStrain > 8 ? .negative : .neutral,
-                    symbol: totalStrain > 8 ? .arrowDown : nil,
+                    tone: totalStrain > 0 ? .negative : .neutral,
+                    symbol: totalStrain > 0 ? .arrowDown : nil,
                     alert: strainAlert(
                         totalStrain: totalStrain,
                         todaysWorkoutsCount: todaysWorkouts.count,
@@ -220,7 +227,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .init(
                     title: "Check-ins",
                     valueText: checkInAdjustment.hasScoringSignals ? signedValueText(for: checkInAdjustment.totalAdjustment) : "--",
-                    detailText: checkInsDriverDetailLabel(checkInAdjustment: checkInAdjustment),
+                    detailText: checkInsDriverDetailExplanation(checkInAdjustment: checkInAdjustment),
                     attributedDetailText: checkInsDriverDetailText(checkInAdjustment: checkInAdjustment),
                     tone: tone(for: checkInAdjustment.totalAdjustment),
                     symbol: symbol(for: checkInAdjustment.totalAdjustment),
@@ -229,9 +236,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .init(
                     title: "Heart",
                     valueText: hasHeartScoreSignal ? heartRecovery.valueText : "--",
-                    detailText: hasHeartScoreSignal
-                        ? heartRecovery.detailText
-                        : (heartRecovery.hasTodayData ? "Building resting HR baseline" : "Not included, no resting HR"),
+                    detailText: heartDriverDetailLabel(heartRecovery: heartRecovery),
                     attributedDetailText: hasHeartScoreSignal ? heartDriverDetailText(heartRecovery: heartRecovery) : nil,
                     tone: hasHeartScoreSignal ? heartRecovery.tone : .neutral,
                     symbol: hasHeartScoreSignal ? heartRecovery.symbol : nil,
@@ -1053,6 +1058,17 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         ])
     }
 
+    private func sleepDriverDetailLabel(
+        sleepScoreSignal: SleepScoreSignal?,
+        sleepAdjustment: Double?
+    ) -> String {
+        guard let sleepScoreSignal, let sleepAdjustment else {
+            return "Not included because sleep data is missing."
+        }
+
+        return "Sleep score \(Int(sleepScoreSignal.score.rounded())) from \(sleepScoreSignal.formulaSourceText) changed Recovery Score by \(signedValueText(for: sleepAdjustment))."
+    }
+
     private func strainDriverDetailText(
         totalStrain: Double,
         todaysWorkoutsCount: Int,
@@ -1070,6 +1086,20 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         ])
     }
 
+    private func strainDriverDetailLabel(
+        totalStrain: Double,
+        todaysWorkoutsCount: Int,
+        yesterdaysWorkoutsCount: Int
+    ) -> String {
+        guard todaysWorkoutsCount > 0 || yesterdaysWorkoutsCount > 0 else {
+            return "No recent workout load was counted."
+        }
+
+        let todayText = "\(todaysWorkoutsCount) workout\(todaysWorkoutsCount == 1 ? "" : "s") today"
+        let yesterdayText = "\(yesterdaysWorkoutsCount) workout\(yesterdaysWorkoutsCount == 1 ? "" : "s") yesterday"
+        return "\(Int(totalStrain.rounded())) points from \(todayText) and \(yesterdayText)."
+    }
+
     private func checkInsDriverDetailLabel(checkInAdjustment: CheckInAdjustment) -> String {
         guard checkInAdjustment.hasScoringSignals else {
             return "No recovery metrics logged"
@@ -1084,6 +1114,22 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         return "Energy, Recovery, habits"
+    }
+
+    private func checkInsDriverDetailExplanation(checkInAdjustment: CheckInAdjustment) -> String {
+        guard checkInAdjustment.hasScoringSignals else {
+            return "Not included because no recovery check-ins were logged."
+        }
+
+        if checkInAdjustment.hasCustomSignals {
+            return "Today's recovery check-ins, including \(checkInAdjustment.customMetricTitles.count) custom metric\(checkInAdjustment.customMetricTitles.count == 1 ? "" : "s"), changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment))."
+        }
+
+        if checkInAdjustment.totalAdjustment == 0 {
+            return "Today's energy, recovery, and habit check-ins landed near neutral."
+        }
+
+        return "Today's energy, recovery, and habit check-ins changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment))."
     }
 
     private func checkInsDriverDetailText(checkInAdjustment: CheckInAdjustment) -> AttributedString? {
@@ -1148,6 +1194,26 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         return nil
+    }
+
+    private func heartDriverDetailLabel(heartRecovery: HeartRecoverySignal) -> String {
+        if let todaysAverage = heartRecovery.todaysAverage, let baselineAverage = heartRecovery.baselineAverage {
+            let delta = Int(abs(todaysAverage - baselineAverage).rounded())
+            let direction = todaysAverage <= baselineAverage ? "below" : "above"
+            let sourceText = heartRecovery.source?.metricName ?? "heart"
+            return "\(Int(todaysAverage.rounded())) bpm \(sourceText), \(delta) \(direction) baseline."
+        }
+
+        if let baselineAverage = heartRecovery.baselineAverage, !heartRecovery.hasTodayData {
+            return "Waiting for today's heart data. Recent baseline is \(Int(baselineAverage.rounded())) bpm."
+        }
+
+        if let todaysAverage = heartRecovery.todaysAverage {
+            let sourceText = heartRecovery.source?.metricName ?? "heart"
+            return "\(Int(todaysAverage.rounded())) bpm \(sourceText) today. More history is needed for a baseline comparison."
+        }
+
+        return "Not included because resting heart data is missing."
     }
 
     private enum BodyBatteryTextSegment {

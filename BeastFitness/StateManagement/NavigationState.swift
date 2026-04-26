@@ -96,6 +96,7 @@ struct SQNavRoute {
         case insightDetail(model: SQInsight)
         case webContent(title: String, urlString: String)
         case lifeScoreDetail(controller: SQLifeScoreDetailController)
+        case recoveryScoreDetail(controller: SQRecoveryScoreDetailController)
         case workoutReview(workouts: [SQWorkoutSessionable])
         case editWorkout(workout: SQWorkoutSessionable)
         case leaderboard(controller: SQLeaderboardController)
@@ -129,6 +130,8 @@ struct SQNavRoute {
                 return "webContent-\(title)-\(urlString)"
             case .lifeScoreDetail(let controller):
                 return "lifeScoreDetail-\(controller.id)"
+            case .recoveryScoreDetail(let controller):
+                return "recoveryScoreDetail-\(controller.id)"
             case .editWorkout(let workout):
                 return "editWorkout-\(workout.id)"
             case .leaderboard(controller: let controller):
@@ -174,6 +177,8 @@ struct SQNavRoute {
                 return [.medium, .large]
             case .webContent:
                 return [.large]
+            case .recoveryScoreDetail:
+                return [.medium, .large]
             case .viewLab:
                 return [.large]
             default:

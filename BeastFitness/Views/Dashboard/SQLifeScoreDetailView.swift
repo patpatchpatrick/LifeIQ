@@ -9,13 +9,9 @@ struct SQLifeScoreDetailView: View {
     @State var controller: SQLifeScoreDetailController
     @State private var isBreakdownExpanded = false
 
-    private var componentColumns: [GridItem] {
-        [.init(.adaptive(minimum: 160), spacing: .SQSpace.s, alignment: .topLeading)]
-    }
-
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: .SQSpace.l) {
+            VStack(alignment: .leading, spacing: .SQSpace.xl) {
                 heroCard
                 if !controller.viewModel.drivers.isEmpty {
                     driversCard
@@ -28,9 +24,9 @@ struct SQLifeScoreDetailView: View {
                 }
                 breakdownDisclosure
             }
-            .padding(.horizontal, .SQSpace.l)
-            .padding(.top, .SQSpace.l)
-            .padding(.bottom, .SQSpace.xl)
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.top, .SQSpace.xl)
+            .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("Life Score")
@@ -41,7 +37,7 @@ struct SQLifeScoreDetailView: View {
     }
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
                 Text(controller.viewModel.scoreText)
                     .sqFont(.title1)
@@ -56,39 +52,48 @@ struct SQLifeScoreDetailView: View {
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let refinementPromptText = controller.viewModel.refinementPromptText {
+                Text(refinementPromptText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.dashboardGlowBlue)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private var driversCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             Text("What's Driving It")
                 .sqFont(.title4)
                 .sqForegroundColor(.textPrimary)
 
-            if !controller.viewModel.supportiveDrivers.isEmpty {
-                driverGroup(
-                    title: "Helping Right Now",
-                    drivers: controller.viewModel.supportiveDrivers
-                )
-            }
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                ForEach(controller.viewModel.supportiveDrivers) { driver in
+                    driverRow(driver)
+                }
 
-            if !controller.viewModel.dragDrivers.isEmpty {
-                driverGroup(
-                    title: "Dragging Right Now",
-                    drivers: controller.viewModel.dragDrivers
-                )
+                if !controller.viewModel.supportiveDrivers.isEmpty,
+                   !controller.viewModel.dragDrivers.isEmpty {
+                    Spacer()
+                        .frame(height: .SQSpace.xs)
+                }
+
+                ForEach(controller.viewModel.dragDrivers) { driver in
+                    driverRow(driver)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private var changesCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("What Changed")
                     .sqFont(.title4)
@@ -101,69 +106,52 @@ struct SQLifeScoreDetailView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: .SQSpace.s) {
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
                 ForEach(controller.viewModel.changes) { change in
                     changeRow(change)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private var actionsCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
             Text("What To Do")
                 .sqFont(.title4)
                 .sqForegroundColor(.textPrimary)
 
-            VStack(alignment: .leading, spacing: .SQSpace.s) {
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
                 ForEach(controller.viewModel.actions) { action in
                     actionRow(action)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
-    }
-
-    private func driverGroup(title: String, drivers: [SQInsightDriver]) -> some View {
-        VStack(alignment: .leading, spacing: .SQSpace.xs) {
-            Text(title.uppercased())
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
-
-            VStack(alignment: .leading, spacing: .SQSpace.s) {
-                ForEach(drivers) { driver in
-                    driverRow(driver)
-                }
-            }
-        }
     }
 
     private func driverRow(_ driver: SQInsightDriver) -> some View {
         let color: SQColor = driver.direction == .supportive ? .dashboardGlowMint : .colorErrorRed
 
-        return HStack(alignment: .top, spacing: .SQSpace.s) {
+        return HStack(alignment: .center, spacing: .SQSpace.s) {
             Circle()
                 .fill(color.color)
                 .frame(width: 8, height: 8)
-                .padding(.top, 4)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
-                    Text(driver.title)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                Text(driver.title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
 
-                    Spacer(minLength: 0)
+                Spacer(minLength: 0)
 
-                    Text(driver.deltaText)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                }
+                Text(driver.deltaText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
             }
         }
     }
@@ -171,56 +159,30 @@ struct SQLifeScoreDetailView: View {
     private func changeRow(_ change: SQInsightChange) -> some View {
         let color: SQColor = change.direction == .improved ? .dashboardGlowMint : .colorErrorRed
 
-        return HStack(alignment: .top, spacing: .SQSpace.s) {
+        return HStack(alignment: .center, spacing: .SQSpace.s) {
             Circle()
                 .fill(color.color)
                 .frame(width: 8, height: 8)
-                .padding(.top, 4)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
-                    Text(change.title)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                Text(change.title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
 
-                    Spacer(minLength: 0)
+                Spacer(minLength: 0)
 
-                    Text(change.deltaText)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                }
+                Text(change.deltaText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
             }
         }
     }
 
     private func actionRow(_ action: SQInsightAction) -> some View {
-        let color: SQColor
-        switch action.tone {
-        case .maintain:
-            color = .dashboardGlowMint
-        case .improve:
-            color = .dashboardGlowBlue
-        case .caution:
-            color = .dashboardTrendWarm
-        }
-
-        return HStack(alignment: .top, spacing: .SQSpace.s) {
-            Circle()
-                .fill(color.color)
-                .frame(width: 8, height: 8)
-                .padding(.top, 4)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(action.title)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textPrimary)
-
-                Text(action.summary)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
+        Text(action.summary)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var breakdownDisclosure: some View {
@@ -228,13 +190,20 @@ struct SQLifeScoreDetailView: View {
             isExpanded: $isBreakdownExpanded,
             content: {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    LazyVGrid(columns: componentColumns, alignment: .leading, spacing: .SQSpace.s) {
-                        ForEach(controller.viewModel.components) { component in
-                            componentCard(component)
+                    VStack(alignment: .leading, spacing: .SQSpace.m) {
+                        ForEach(Array(componentRows.enumerated()), id: \.offset) { _, row in
+                            if row.count == 1, let component = row.first {
+                                componentCard(component)
+                            } else {
+                                HStack(alignment: .top, spacing: .SQSpace.s) {
+                                    ForEach(row) { component in
+                                        componentCard(component)
+                                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    formulaCard
                 }
                 .padding(.top, .SQSpace.s)
             },
@@ -245,8 +214,42 @@ struct SQLifeScoreDetailView: View {
             }
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private var componentRows: [[SQLifeScoreComponent]] {
+        let components = controller.viewModel.components
+        var rows = [[SQLifeScoreComponent]]()
+        var compactRow = [SQLifeScoreComponent]()
+
+        for component in components {
+            if shouldUseFullWidthComponentCard(component) {
+                if !compactRow.isEmpty {
+                    rows.append(compactRow)
+                    compactRow.removeAll()
+                }
+                rows.append([component])
+            } else {
+                compactRow.append(component)
+                if compactRow.count == 2 {
+                    rows.append(compactRow)
+                    compactRow.removeAll()
+                }
+            }
+        }
+
+        if !compactRow.isEmpty {
+            rows.append(compactRow)
+        }
+
+        return rows
+    }
+
+    private func shouldUseFullWidthComponentCard(_ component: SQLifeScoreComponent) -> Bool {
+        component.detailItems.count >= 3
+            || component.id == "sleep"
+            || component.id == "workouts"
     }
 
     private func componentCard(_ component: SQLifeScoreComponent) -> some View {
@@ -256,30 +259,40 @@ struct SQLifeScoreDetailView: View {
         let neutralItems = component.detailItems.filter { $0.effect == .neutral }
 
         return VStack(alignment: .leading, spacing: .SQSpace.s) {
-            HStack(alignment: .center, spacing: .SQSpace.s) {
-                Circle()
-                    .fill(tone.color.color)
-                    .frame(width: 10, height: 10)
+            HStack(alignment: .top, spacing: .SQSpace.s) {
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    HStack(alignment: .center, spacing: .SQSpace.s) {
+                        Circle()
+                            .fill(tone.color.color)
+                            .frame(width: 10, height: 10)
 
-                Text(component.title)
-                    .sqFont(.bodySmallSemiBold)
-                    .sqForegroundColor(.textPrimary)
+                        Text(component.title)
+                            .sqFont(.bodySmallSemiBold)
+                            .sqForegroundColor(.textPrimary)
+                    }
+
+                    HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                        Text("\(component.score)")
+                            .sqFont(.title3)
+                            .sqForegroundColor(.textPrimary)
+
+                        Text("/100")
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                }
 
                 Spacer(minLength: 0)
 
-                Text(tone.label)
-                    .sqFont(.headerSmall)
-                    .sqForegroundColor(.textSecondary)
-            }
+                VStack(alignment: .trailing, spacing: .SQSpace.s) {
+                    Text(tone.label)
+                        .sqFont(.headerSmall)
+                        .sqForegroundColor(.textSecondary)
 
-            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
-                Text("\(component.score)")
-                    .sqFont(.title3)
-                    .sqForegroundColor(.textPrimary)
-
-                Text("/100")
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
+                    Text("\(Int(component.weight.rounded()))%")
+                        .sqFont(.title4)
+                        .sqForegroundColor(.textTertiary)
+                }
             }
 
             Text(component.summary)
@@ -300,7 +313,7 @@ struct SQLifeScoreDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.m)
+        .padding(.SQSpace.l)
         .background {
             RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
                 .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.98))
@@ -316,7 +329,7 @@ struct SQLifeScoreDetailView: View {
             Text(title.uppercased())
                 .sqFont(.headerSmall)
                 .sqForegroundColor(.textSecondary)
-                .padding(.top, .SQSpace.xs)
+                .padding(.top, .SQSpace.m)
 
             VStack(alignment: .leading, spacing: .SQSpace.s) {
                 ForEach(items) { item in
@@ -333,18 +346,15 @@ struct SQLifeScoreDetailView: View {
                 .frame(width: 8, height: 8)
                 .padding(.top, 4)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
-                    Text(item.title)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
 
-                    Spacer(minLength: 0)
-
-                    Text(item.valueText)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                }
+                Text(item.valueText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(item.summary)
                     .sqFont(.bodyExtraSmall)
@@ -352,32 +362,6 @@ struct SQLifeScoreDetailView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-
-    private var formulaCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text("Each subscore contributes based on its weight. The final score is the weighted average of all available subscores, then rounded to the nearest whole number.")
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text(formulaText)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var formulaText: String {
-        let components = controller.viewModel.components
-        guard !components.isEmpty else { return "No subscores are currently available." }
-
-        let numerator = components.map { "\(componentContributionNumerator($0))" }.joined(separator: " + ")
-        return "(\(numerator)) / \(Int(controller.viewModel.availableWeight.rounded()))"
-    }
-
-    private func componentContributionNumerator(_ component: SQLifeScoreComponent) -> String {
-        "\(component.score)×\(Int(component.weight.rounded()))"
     }
 
     private func tone(for score: Int) -> (label: String, color: SQColor) {
@@ -391,5 +375,174 @@ struct SQLifeScoreDetailView: View {
         default:
             return ("Low", .colorErrorRed)
         }
+    }
+}
+
+struct SQRecoveryScoreDetailView: View {
+    @State var controller: SQRecoveryScoreDetailController
+
+    private var displayStatusTitle: String {
+        switch controller.viewModel.statusTitle {
+        case "Solid":
+            return "Strong"
+        default:
+            return controller.viewModel.statusTitle
+        }
+    }
+
+    private var scoreText: String {
+        controller.viewModel.score.map(String.init) ?? "?"
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: .SQSpace.xl) {
+                heroCard
+
+                if let warning = controller.viewModel.dataQualityWarning {
+                    warningCard(warning)
+                }
+
+                explanationCard
+            }
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.top, .SQSpace.xl)
+            .padding(.bottom, 20)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle("Recovery Score")
+        .navigationBarTitleDisplayMode(.inline)
+        .background {
+            SQSheetBackground()
+        }
+    }
+
+    private var heroCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                Text(scoreText)
+                    .sqFont(.title1)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("— \(displayStatusTitle)")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textSecondary)
+            }
+
+            Text(controller.viewModel.headline)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(controller.viewModel.summary)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func warningCard(_ warning: String) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            Text("Data Quality")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text(warning)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func recoveryDriverCard(_ driver: SQDashboardBodyBatteryRowViewModel.Driver) -> some View {
+        let accentColor: SQColor = {
+            switch driver.tone {
+            case .positive:
+                return .dashboardGlowMint
+            case .negative:
+                return .dashboardTrendWarm
+            case .neutral:
+                return .textTertiary
+            }
+        }()
+
+        return VStack(alignment: .leading, spacing: .SQSpace.s) {
+            HStack(alignment: .top, spacing: .SQSpace.s) {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text(driver.title)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text(driver.detailText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+
+                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                    Text(driver.valueText)
+                        .sqFont(.title4)
+                        .sqForegroundColor(.textPrimary)
+
+                    if let symbol = driver.symbol {
+                        SQImageView(
+                            image: .init(
+                                symbol: symbol,
+                                symbolStyle: .colorWithFont(accentColor, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 10, height: 10)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.98))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(accentColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.16), lineWidth: 1)
+                }
+        }
+    }
+
+    private var explanationCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            Text("How This Score Is Calculated")
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
+
+            Text(calculationIntroText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                ForEach(controller.viewModel.drivers) { driver in
+                    recoveryDriverCard(driver)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.xl)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private var calculationIntroText: String {
+        if controller.viewModel.score == nil {
+            return "Recovery Score needs at least one usable signal. When data is available, sleep, strain, check-ins, and heart data can each lift or lower the score."
+        }
+
+        return "Recovery Score starts from a neutral baseline, then adjusts for sleep, strain, check-ins, and heart data."
     }
 }
