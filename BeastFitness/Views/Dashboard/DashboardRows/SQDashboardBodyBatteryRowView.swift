@@ -17,11 +17,40 @@ struct SQDashboardBodyBatteryRowView: View {
         }
     }
 
+    private var statusColor: SQColor {
+        switch viewModel.statusTone {
+        case .positive:
+            return .dashboardGlowMint
+        case .negative:
+            return .dashboardTrendWarm
+        case .neutral:
+            return .dashboardGlowBlue
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text(displayStatusTitle)
-                .sqFont(.title3)
-                .sqForegroundColor(.textPrimary)
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                Text(displayStatusTitle)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(statusColor)
+
+                if let score = viewModel.score {
+                    Text("\(score)/100")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+            .padding(.horizontal, .SQSpace.s)
+            .padding(.vertical, .SQSpace.xs)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(statusColor.color.opacity(SQColor.isDarkMode ? 0.14 : 0.10))
+                    .overlay {
+                        Capsule(style: .continuous)
+                            .stroke(statusColor.color.opacity(SQColor.isDarkMode ? 0.28 : 0.18), lineWidth: 1)
+                    }
+            }
 
             if let warning = viewModel.dataQualityWarning {
                 HStack(alignment: .top, spacing: .SQSpace.s) {
