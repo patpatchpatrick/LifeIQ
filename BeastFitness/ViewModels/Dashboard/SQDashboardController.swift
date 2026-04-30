@@ -14,7 +14,7 @@ import CoolCharts
 
 @MainActor
 protocol SQDashboardInterface {
-    func loadUI(for context: ModelContext, shouldForceRefresh: Bool, showLoadingState: Bool) async
+    func loadUI(for context: ModelContext, shouldForceRefresh: Bool, showLoadingState: Bool, suppressErrorAlert: Bool) async
     func refreshUI(for context: ModelContext) async
     func displayDailyCheckInSheet(for context: ModelContext, date: Date?) async
 }
@@ -42,6 +42,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var isLoadUIInProgress = false
     private var pendingForcedRefresh = false
     private var pendingRefreshShowsLoadingState = false
+    private var pendingRefreshSuppressesErrorAlert = false
     private var lastSuccessfulLoadAt: Date?
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
     private(set) var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
@@ -304,7 +305,12 @@ final class SQDashboardController: SQDashboardInterface {
             return
         }
 
-        await refreshUI(for: context)
+        await loadUI(
+            for: context,
+            shouldForceRefresh: true,
+            showLoadingState: false,
+            suppressErrorAlert: true
+        )
     }
 
     private func applyLayoutCustomizationToCurrentState() {
@@ -333,7 +339,8 @@ final class SQDashboardController: SQDashboardInterface {
     func loadUI(
         for context: ModelContext,
         shouldForceRefresh: Bool = false,
-        showLoadingState: Bool = true
+        showLoadingState: Bool = true,
+        suppressErrorAlert: Bool = false
     ) async {
         guard userState.hasResolvedInitialAuthState else {
             SQLogger.shared.log(
@@ -354,6 +361,7 @@ final class SQDashboardController: SQDashboardInterface {
             if shouldForceRefresh {
                 pendingForcedRefresh = true
                 pendingRefreshShowsLoadingState = pendingRefreshShowsLoadingState || showLoadingState
+                pendingRefreshSuppressesErrorAlert = pendingRefreshSuppressesErrorAlert || suppressErrorAlert
                 SQLogger.shared.log(
                     "Dashboard load in progress. Queuing a forced refresh for after completion.",
                     .debug,
@@ -374,12 +382,15 @@ final class SQDashboardController: SQDashboardInterface {
             if pendingForcedRefresh {
                 pendingForcedRefresh = false
                 let queuedRefreshShowsLoadingState = pendingRefreshShowsLoadingState
+                let queuedRefreshSuppressesErrorAlert = pendingRefreshSuppressesErrorAlert
                 pendingRefreshShowsLoadingState = false
+                pendingRefreshSuppressesErrorAlert = false
                 Task { @MainActor in
                     await self.loadUI(
                         for: context,
                         shouldForceRefresh: true,
-                        showLoadingState: queuedRefreshShowsLoadingState
+                        showLoadingState: queuedRefreshShowsLoadingState,
+                        suppressErrorAlert: queuedRefreshSuppressesErrorAlert
                     )
                 }
             }
@@ -755,7 +766,15 @@ final class SQDashboardController: SQDashboardInterface {
                 state.setLoading(false)
             }
 
-            presentDashboardLoadError(error, context: context)
+            if suppressErrorAlert {
+                SQLogger.shared.log(
+                    "Automatic foreground dashboard refresh failed. Preserving last successful dashboard state without showing an alert.",
+                    .debug,
+                    context: .dashboard
+                )
+            } else {
+                presentDashboardLoadError(error, context: context)
+            }
         }
     }
     
