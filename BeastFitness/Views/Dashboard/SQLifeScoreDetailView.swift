@@ -48,7 +48,7 @@ struct SQLifeScoreDetailView: View {
                     .sqForegroundColor(.textSecondary)
             }
 
-            Text(controller.viewModel.primaryInsight?.title ?? controller.viewModel.state.summary)
+            Text(controller.viewModel.headlineText ?? controller.viewModel.primaryInsight?.title ?? controller.viewModel.state.summary)
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -74,12 +74,6 @@ struct SQLifeScoreDetailView: View {
             VStack(alignment: .leading, spacing: .SQSpace.m) {
                 ForEach(controller.viewModel.supportiveDrivers) { driver in
                     driverRow(driver)
-                }
-
-                if !controller.viewModel.supportiveDrivers.isEmpty,
-                   !controller.viewModel.dragDrivers.isEmpty {
-                    Spacer()
-                        .frame(height: .SQSpace.xs)
                 }
 
                 ForEach(controller.viewModel.dragDrivers) { driver in
@@ -300,16 +294,20 @@ struct SQLifeScoreDetailView: View {
                 .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if !positiveItems.isEmpty {
-                signalGroup(title: "Lifted Score", items: positiveItems)
-            }
+            if component.id == "sleep" {
+                sleepCompactDetailBlock(component)
+            } else {
+                if !positiveItems.isEmpty {
+                    signalGroup(title: "Lifted Score", items: positiveItems)
+                }
 
-            if !negativeItems.isEmpty {
-                signalGroup(title: "Lowered Score", items: negativeItems)
-            }
+                if !negativeItems.isEmpty {
+                    signalGroup(title: "Lowered Score", items: negativeItems)
+                }
 
-            if !neutralItems.isEmpty {
-                signalGroup(title: "Mixed Signals", items: neutralItems)
+                if !neutralItems.isEmpty {
+                    signalGroup(title: "Mixed Signals", items: neutralItems)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -321,6 +319,43 @@ struct SQLifeScoreDetailView: View {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
                         .stroke(tone.color.color.opacity(SQColor.isDarkMode ? 0.40 : 0.22), lineWidth: 1)
                 }
+        }
+    }
+
+    private func sleepCompactDetailBlock(_ component: SQLifeScoreComponent) -> some View {
+        let sourceItem = component.detailItems.first { $0.id.hasPrefix("sleep-source") }
+        let adjustmentItem = component.detailItems.first { $0.id == "sleep-life-score-adjustment" }
+        let conversionText = adjustmentItem == nil ? nil : "Converts to a sleep score of \(component.score)/100."
+
+        return VStack(alignment: .leading, spacing: .SQSpace.s) {
+            if let sourceItem {
+                compactDetailLine(
+                    title: "Source",
+                    valueText: sourceItem.valueText,
+                    footnoteText: conversionText
+                )
+            }
+        }
+        .padding(.top, .SQSpace.xs)
+    }
+
+    private func compactDetailLine(title: String, valueText: String, footnoteText: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title.uppercased())
+                .sqFont(.headerSmall)
+                .sqForegroundColor(.textSecondary)
+
+            Text(valueText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let footnoteText {
+                Text(footnoteText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

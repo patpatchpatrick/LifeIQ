@@ -131,6 +131,7 @@ struct SQLifeScoreViewModel {
     let subtitle: String
     let refinementPromptText: String?
     let components: [SQLifeScoreComponent]
+    let headlineText: String?
     let primaryInsight: SQInsight?
     let drivers: [SQInsightDriver]
     let changes: [SQInsightChange]
@@ -144,6 +145,7 @@ struct SQLifeScoreViewModel {
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         refinementPromptText: "Complete your morning check-in to refine today's score.",
         components: [],
+        headlineText: nil,
         primaryInsight: .init(
             id: "mock-primary-insight",
             title: "Sleep is helping, but strain is starting to build",

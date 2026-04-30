@@ -20,6 +20,7 @@ struct SQInsightTrendAnalyzer {
         relationship: SQInsightRelationshipDefinition,
         variant: SQInsightRelationshipVariantDefinition,
         surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date,
         surfacingPolicy: SQInsightSurfacingPolicy
     ) -> SQInsightAnalysisResult {
         let observations = signalObservations(
@@ -43,6 +44,20 @@ struct SQInsightTrendAnalyzer {
         var recentValues = Array(observations.suffix(recentCount))
         var priorValues = Array(observations.dropLast(recentCount).suffix(priorCount))
         var inputTitle = relationship.inputTitle
+
+        guard hasFreshRecentObservation(
+            recentValues,
+            signalId: relationship.inputSignalId,
+            surfaceIntent: surfaceIntent,
+            referenceDate: referenceDate
+        ) else {
+            return .readiness(.init(
+                id: variant.id,
+                title: "\(relationship.inputTitle) Trend",
+                status: .weakSignal,
+                summary: "\(relationship.inputTitle) has not been logged recently enough to treat it as a current trend."
+            ))
+        }
 
         if relationship.inputSignalId == SQInsightAnalysisMetricId.workoutPerformance,
            let recentActivityType = dominantActivityType(in: recentValues) {
@@ -147,6 +162,25 @@ struct SQInsightTrendAnalyzer {
         .sorted { $0.date < $1.date }
     }
 
+    private func hasFreshRecentObservation(
+        _ observations: [SignalObservation],
+        signalId: String,
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
+    ) -> Bool {
+        guard surfaceIntent == .today,
+              Self.staleSensitiveTodayTrendSignalIds.contains(signalId),
+              let latestDate = observations.map(\.date).max() else {
+            return true
+        }
+
+        let calendar = Calendar.current
+        let latestDay = calendar.startOfDay(for: latestDate)
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        let daysSinceLatest = calendar.dateComponents([.day], from: latestDay, to: referenceDay).day ?? 0
+        return daysSinceLatest <= 1
+    }
+
     private func directionalEffect(
         delta: Double,
         expectedEffect: SQInsightEffect
@@ -246,4 +280,12 @@ struct SQInsightTrendAnalyzer {
             return lhs.value < rhs.value
         })?.key
     }
+
+    private static let staleSensitiveTodayTrendSignalIds: Set<String> = [
+        SQMetricId.alcohol,
+        SQMetricId.caffeine,
+        SQMetricId.weed,
+        SQMetricId.nicotine,
+        SQMetricId.porn
+    ]
 }

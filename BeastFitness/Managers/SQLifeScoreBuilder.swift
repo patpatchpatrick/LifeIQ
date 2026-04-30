@@ -111,7 +111,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             : nil
 
         let preliminaryScore = weightedScore.map { Int($0.rounded()) }
-        let previousScore = estimatedPreviousDayLifeScore(
+        let previousComponents = previousDayLifeScoreComponents(
             referenceDate: intelligenceInput.referenceDate,
             checkIns: intelligenceInput.checkIns,
             sleepCheckIns: intelligenceInput.sleepCheckIns,
@@ -121,6 +121,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             restingHeartRateSummaries: intelligenceInput.restingHeartRateSummaries,
             isLoggedIn: intelligenceInput.isLoggedIn
         )
+        let previousScore = lifeScore(from: previousComponents)
         let scoreDeltaFromPreviousDay: Int? = {
             guard let preliminaryScore, let previousScore else { return nil }
             return preliminaryScore - previousScore
@@ -140,6 +141,11 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             score: roundedScore,
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             components: components
+        )
+        let headlineText = lifeScoreHeadlineText(
+            components: components,
+            previousComponents: previousComponents,
+            totalWeight: totalWeight
         )
         let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
 
@@ -161,6 +167,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             subtitle: subtitle,
             refinementPromptText: refinementPromptText,
             components: components.sorted { $0.weight > $1.weight },
+            headlineText: headlineText,
             primaryInsight: primaryInsight,
             drivers: alignedHeroDrivers(
                 primaryInsight: primaryInsight,
@@ -174,6 +181,77 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
 }
 
 private extension SQLifeScoreBuilder {
+    func lifeScoreHeadlineText(
+        components: [SQLifeScoreComponent],
+        previousComponents: [SQLifeScoreComponent],
+        totalWeight: Double
+    ) -> String? {
+        guard totalWeight > 0 else { return nil }
+
+        let previousTotalWeight = previousComponents.reduce(0) { $0 + $1.weight }
+        guard previousTotalWeight > 0 else { return nil }
+
+        let previousComponentsById = Dictionary(uniqueKeysWithValues: previousComponents.map { ($0.id, $0) })
+        let componentImpacts = components.compactMap { component -> (component: SQLifeScoreComponent, delta: Double)? in
+            guard let previousComponent = previousComponentsById[component.id] else { return nil }
+            let currentContribution = Double(component.score) * (component.weight / totalWeight)
+            let previousContribution = Double(previousComponent.score) * (previousComponent.weight / previousTotalWeight)
+            return (component, currentContribution - previousContribution)
+        }
+
+        if let strongestDrop = componentImpacts
+            .filter({ $0.delta <= -10 })
+            .min(by: { $0.delta < $1.delta }) {
+            return componentDropHeadlineText(for: strongestDrop.component)
+        }
+
+        guard let strongestLift = componentImpacts
+            .filter({ $0.delta >= 10 })
+            .max(by: { $0.delta < $1.delta }) else {
+            return nil
+        }
+
+        return componentLiftHeadlineText(for: strongestLift.component)
+    }
+
+    func componentDropHeadlineText(for component: SQLifeScoreComponent) -> String {
+        switch component.id {
+        case "sleep":
+            if component.score < 55 {
+                return "Poor sleep quality is dragging you down today."
+            }
+
+            return "Sleep quality is a little mixed today."
+        case "heart":
+            return "Recovery signals look lower today, and they're weighing on your Life Score."
+        case "habits":
+            return "Recent habits look less aligned today, and they're weighing on your Life Score."
+        case "workouts":
+            return "Recent training looks harder to absorb today, and it's weighing on your Life Score."
+        case "consistency":
+            return "Missing check-ins are making today's Life Score less complete."
+        default:
+            return "\(component.title) looks lower today, and it's weighing on your Life Score."
+        }
+    }
+
+    func componentLiftHeadlineText(for component: SQLifeScoreComponent) -> String {
+        switch component.id {
+        case "sleep":
+            return "Sleep looks stronger today, and it's helping your Life Score."
+        case "heart":
+            return "Recovery signals look stronger today, and they're helping your Life Score."
+        case "habits":
+            return "Recent habits look more aligned today, and they're helping your Life Score."
+        case "workouts":
+            return "Recent training looks easier to absorb today, and it's helping your Life Score."
+        case "consistency":
+            return "Your recent check-ins are helping LifeIQ understand today more clearly."
+        default:
+            return "\(component.title) looks stronger today, and it's helping your Life Score."
+        }
+    }
+
     func lifeScoreAlignedActions(
         _ actions: [SQInsightAction],
         state: SQLifeScoreState,
@@ -242,7 +320,7 @@ private extension SQLifeScoreBuilder {
         components: [SQLifeScoreComponent]
     ) -> String {
         if let sleepScore = componentScore("sleep", in: components), sleepScore < 72 {
-            return "Keep training moderate until sleep and recovery look stronger."
+            return "Prioritize quality sleep tonight and keep workouts lighter today."
         }
 
         if let heartScore = componentScore("heart", in: components), heartScore < 65 {
@@ -250,7 +328,7 @@ private extension SQLifeScoreBuilder {
         }
 
         if state == .dipping {
-            return "Keep strain moderate while the score is dipping."
+            return "Keep workouts lighter today and protect recovery tonight."
         }
 
         return "Protect recovery before adding extra intensity."
@@ -414,7 +492,15 @@ private extension SQLifeScoreBuilder {
             .replacingOccurrences(of: "workout performance", with: "performance")
     }
 
-    func estimatedPreviousDayLifeScore(
+    func lifeScore(from components: [SQLifeScoreComponent]) -> Int? {
+        let totalWeight = components.reduce(0) { $0 + $1.weight }
+        guard totalWeight > 0 else { return nil }
+
+        let weightedScore = components.reduce(0) { $0 + (Double($1.score) * $1.weight) } / totalWeight
+        return Int(weightedScore.rounded())
+    }
+
+    func previousDayLifeScoreComponents(
         referenceDate: Date,
         checkIns: [SQDailyCheckInStats],
         sleepCheckIns: [SQDailyCheckInStats],
@@ -423,7 +509,7 @@ private extension SQLifeScoreBuilder {
         sleepData: SQSleepDashboardData?,
         restingHeartRateSummaries: [SQHeartRateDailySummary],
         isLoggedIn: Bool
-    ) -> Int? {
+    ) -> [SQLifeScoreComponent] {
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: referenceDate)
         let startOfYesterday = calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
@@ -488,11 +574,7 @@ private extension SQLifeScoreBuilder {
             components.append(consistencyComponent)
         }
 
-        let totalWeight = components.reduce(0) { $0 + $1.weight }
-        guard totalWeight > 0 else { return nil }
-
-        let weightedScore = components.reduce(0) { $0 + (Double($1.score) * $1.weight) } / totalWeight
-        return Int(weightedScore.rounded())
+        return components
     }
 
     func lifeScoreState(
@@ -681,8 +763,7 @@ private extension SQLifeScoreBuilder {
         }
 
         return lifeScoreSleepComponent(
-            for: sleepInput.score,
-            durationHours: sleepInput.durationHours
+            for: sleepInput
         )
     }
 
@@ -704,14 +785,22 @@ private extension SQLifeScoreBuilder {
         }
 
         return lifeScoreSleepComponent(
-            for: sleepInput.score,
-            durationHours: sleepInput.durationHours
+            for: sleepInput
         )
     }
 
     struct LifeScoreSleepInput {
         let score: Double
         let durationHours: Double?
+        let source: LifeScoreSleepSource
+    }
+
+    enum LifeScoreSleepSource {
+        case checkIn(quality: Double?, hours: Double?)
+        case healthKitLatest(score: SQSleepScoreBreakdown, durationHours: Double)
+        case healthKitAverage(score: Double, durationHours: Double?, nightCount: Int)
+        case priorHealthKitLatest(score: SQSleepScoreBreakdown, durationHours: Double)
+        case priorHealthKitAverage(score: Double, durationHours: Double?, nightCount: Int)
     }
 
     func sleepComponentInput(
@@ -735,48 +824,79 @@ private extension SQLifeScoreBuilder {
                 let durationScore = sleepDurationScore(hours: sleepHours)
                 return .init(
                     score: (qualityScore * 0.75) + (durationScore * 0.25),
-                    durationHours: sleepHours
+                    durationHours: sleepHours,
+                    source: .checkIn(quality: sleepQuality, hours: sleepHours)
                 )
             }
 
-            return .init(score: qualityScore, durationHours: sleepHours)
+            return .init(
+                score: qualityScore,
+                durationHours: sleepHours,
+                source: .checkIn(quality: sleepQuality, hours: sleepHours)
+            )
         }
 
         if let sleepHours {
             return .init(
                 score: sleepDurationScore(hours: sleepHours),
-                durationHours: sleepHours
+                durationHours: sleepHours,
+                source: .checkIn(quality: nil, hours: sleepHours)
             )
         }
 
         if usePreviousHealthNight {
             if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
+                let score = sleepAggregationService.score(for: priorNight)
                 return .init(
-                    score: sleepAggregationService.score(for: priorNight).totalScore,
-                    durationHours: priorNight.totalSleepDuration / 3600.0
+                    score: score.totalScore,
+                    durationHours: priorNight.totalSleepDuration / 3600.0,
+                    source: .priorHealthKitLatest(
+                        score: score,
+                        durationHours: priorNight.totalSleepDuration / 3600.0
+                    )
                 )
             }
 
-            if let averageScore = sleepData?.priorNights
-                .map({ sleepAggregationService.score(for: $0).totalScore })
-                .average {
+            let priorScores = sleepData?.priorNights.map({ sleepAggregationService.score(for: $0).totalScore }) ?? []
+            if let averageScore = priorScores.average {
                 let averageDuration = sleepData?.priorNights.map(\.totalSleepDuration).average.map { $0 / 3600.0 }
-                return .init(score: averageScore, durationHours: averageDuration)
+                return .init(
+                    score: averageScore,
+                    durationHours: averageDuration,
+                    source: .priorHealthKitAverage(
+                        score: averageScore,
+                        durationHours: averageDuration,
+                        nightCount: priorScores.count
+                    )
+                )
             }
 
             return nil
         }
 
         if let latestNight = sleepData?.latestNight {
+            let score = sleepAggregationService.score(for: latestNight)
             return .init(
-                score: sleepAggregationService.score(for: latestNight).totalScore,
-                durationHours: latestNight.totalSleepDuration / 3600.0
+                score: score.totalScore,
+                durationHours: latestNight.totalSleepDuration / 3600.0,
+                source: .healthKitLatest(
+                    score: score,
+                    durationHours: latestNight.totalSleepDuration / 3600.0
+                )
             )
         }
 
         if let averageScore = sleepData?.averageScore?.totalScore {
             let averageDuration = sleepData?.currentNights.map(\.totalSleepDuration).average.map { $0 / 3600.0 }
-            return .init(score: averageScore, durationHours: averageDuration)
+            return .init(
+                score: averageScore,
+                durationHours: averageDuration,
+                source: .healthKitAverage(
+                    score: averageScore,
+                    durationHours: averageDuration,
+                    nightCount: sleepData?.currentNights.count ?? 0
+                )
+            )
         }
 
         return nil
@@ -798,11 +918,10 @@ private extension SQLifeScoreBuilder {
         return checkIns
     }
 
-    func lifeScoreSleepComponent(for sleepScore: Double?, durationHours: Double?) -> SQLifeScoreComponent? {
-        guard let sleepScore else { return nil }
+    func lifeScoreSleepComponent(for input: LifeScoreSleepInput) -> SQLifeScoreComponent {
         let roundedScore = adjustedLifeScoreSleepComponentScore(
-            rawSleepScore: sleepScore,
-            durationHours: durationHours
+            rawSleepScore: input.score,
+            durationHours: input.durationHours
         )
 
         let summary: String
@@ -823,8 +942,153 @@ private extension SQLifeScoreBuilder {
             score: roundedScore,
             summary: summary,
             weight: 30,
-            detailItems: []
+            detailItems: sleepDetailItems(
+                input: input,
+                adjustedScore: roundedScore
+            )
         )
+    }
+
+    func sleepDetailItems(
+        input: LifeScoreSleepInput,
+        adjustedScore: Int
+    ) -> [SQLifeScoreDetailItem] {
+        let rawScore = Int(input.score.rounded())
+        let sourceItem: SQLifeScoreDetailItem
+
+        switch input.source {
+        case .checkIn(let quality, let hours):
+            sourceItem = .init(
+                id: "sleep-source-check-in",
+                title: "Source",
+                valueText: sleepCheckInSourceValueText(quality: quality, hours: hours),
+                summary: sleepCheckInSourceSummary(
+                    quality: quality,
+                    hours: hours,
+                    rawScore: rawScore
+                ),
+                effect: sleepEffect(for: adjustedScore)
+            )
+        case .healthKitLatest(let score, let durationHours):
+            sourceItem = .init(
+                id: "sleep-source-healthkit",
+                title: "Source",
+                valueText: "HealthKit Sleep Score \(Int(score.totalScore.rounded()))/100 • \(formattedHours(durationHours)) asleep",
+                summary: "LifeIQ used last night's HealthKit sleep stages: duration \(Int(score.durationScore.rounded()))/\(Int(SQSleepScoreBreakdown.maxDurationScore)), efficiency \(Int(score.efficiencyScore.rounded()))/\(Int(SQSleepScoreBreakdown.maxEfficiencyScore)), fragmentation \(Int(score.fragmentationScore.rounded()))/\(Int(SQSleepScoreBreakdown.maxFragmentationScore)), architecture \(Int(score.architectureScore.rounded()))/\(Int(SQSleepScoreBreakdown.maxArchitectureScore)).",
+                effect: sleepEffect(for: adjustedScore)
+            )
+        case .healthKitAverage(let score, let durationHours, let nightCount):
+            sourceItem = .init(
+                id: "sleep-source-healthkit-average",
+                title: "Source",
+                valueText: "HealthKit average \(Int(score.rounded()))/100 across \(nightCount) night\(nightCount == 1 ? "" : "s")",
+                summary: healthKitAverageSleepSummary(durationHours: durationHours),
+                effect: sleepEffect(for: adjustedScore)
+            )
+        case .priorHealthKitLatest(let score, let durationHours):
+            sourceItem = .init(
+                id: "sleep-source-prior-healthkit",
+                title: "Source",
+                valueText: "Previous HealthKit Sleep Score \(Int(score.totalScore.rounded()))/100 • \(formattedHours(durationHours)) asleep",
+                summary: "This prior-night value is only used to compare Life Score against yesterday, not to fill in today's missing sleep.",
+                effect: sleepEffect(for: adjustedScore)
+            )
+        case .priorHealthKitAverage(let score, let durationHours, let nightCount):
+            sourceItem = .init(
+                id: "sleep-source-prior-healthkit-average",
+                title: "Source",
+                valueText: "Previous HealthKit average \(Int(score.rounded()))/100 across \(nightCount) night\(nightCount == 1 ? "" : "s")",
+                summary: priorHealthKitAverageSleepSummary(durationHours: durationHours),
+                effect: sleepEffect(for: adjustedScore)
+            )
+        }
+
+        let adjustmentItem = SQLifeScoreDetailItem(
+            id: "sleep-life-score-adjustment",
+            title: "Life Score Adjustment",
+            valueText: "Raw sleep \(rawScore)/100 -> Life Score sleep \(adjustedScore)/100",
+            summary: sleepAdjustmentSummary(rawScore: rawScore, adjustedScore: adjustedScore, durationHours: input.durationHours),
+            effect: sleepEffect(for: adjustedScore)
+        )
+
+        return [sourceItem, adjustmentItem]
+    }
+
+    func sleepCheckInSourceValueText(quality: Double?, hours: Double?) -> String {
+        var parts = ["Daily Check-In"]
+        if let quality {
+            parts.append("Sleep Quality \(formattedDecimal(quality))/10")
+        }
+        if let hours {
+            parts.append("Sleep Hours \(formattedHours(hours))")
+        }
+        return parts.joined(separator: " • ")
+    }
+
+    func sleepCheckInSourceSummary(quality: Double?, hours: Double?, rawScore: Int) -> String {
+        if let quality, let hours {
+            let qualityScore = Int((quality * 10).rounded())
+            let durationScore = Int(sleepDurationScore(hours: hours).rounded())
+            return "LifeIQ used Daily Check-In: sleep quality \(formattedDecimal(quality))/10 became \(qualityScore)/100, sleep hours \(formattedHours(hours)) became \(durationScore)/100, then 75% quality and 25% duration produced raw sleep \(rawScore)/100."
+        }
+
+        if let quality {
+            let qualityScore = Int((quality * 10).rounded())
+            return "LifeIQ used your Sleep Quality check-in as raw sleep \(qualityScore)/100 because sleep hours were not logged."
+        }
+
+        if let hours {
+            let durationScore = Int(sleepDurationScore(hours: hours).rounded())
+            return "LifeIQ used your Sleep Hours check-in as raw sleep \(durationScore)/100 because sleep quality was not logged."
+        }
+
+        return "LifeIQ used Daily Check-In sleep data as raw sleep \(rawScore)/100."
+    }
+
+    func healthKitAverageSleepSummary(durationHours: Double?) -> String {
+        var summary = "LifeIQ used the average HealthKit sleep score for the selected completed-night window."
+        if let durationHours {
+            summary += " Average sleep was \(formattedHours(durationHours))."
+        }
+        return summary
+    }
+
+    func priorHealthKitAverageSleepSummary(durationHours: Double?) -> String {
+        var summary = "This prior-window value is only used to compare Life Score against yesterday, not to fill in today's missing sleep."
+        if let durationHours {
+            summary += " Average sleep was \(formattedHours(durationHours))."
+        }
+        return summary
+    }
+
+    func sleepAdjustmentSummary(
+        rawScore: Int,
+        adjustedScore: Int,
+        durationHours: Double?
+    ) -> String {
+        var summary = "Life Score is stricter than the dashboard Sleep Score, so sleep below 90 is pulled down before it affects the day."
+
+        if let durationHours, durationHours < 7.25 {
+            summary += " A short sleep duration added an extra penalty."
+        }
+
+        if adjustedScore < rawScore {
+            summary += " That changed sleep's Life Score contribution by \(rawScore - adjustedScore) point\(rawScore - adjustedScore == 1 ? "" : "s")."
+        }
+
+        return summary
+    }
+
+    func sleepEffect(for score: Int) -> SQLifeScoreSignalEffect {
+        if score >= 80 {
+            return .positive
+        }
+
+        if score < 65 {
+            return .negative
+        }
+
+        return .neutral
     }
 
     func adjustedLifeScoreSleepComponentScore(
@@ -1187,6 +1451,18 @@ private extension SQLifeScoreBuilder {
 
     func formattedWholeNumber(_ value: Double) -> String {
         String(Int(value.rounded()))
+    }
+
+    func formattedDecimal(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+
+        return String(format: "%.1f", value)
+    }
+
+    func formattedHours(_ value: Double) -> String {
+        "\(formattedDecimal(value))h"
     }
 
     func habitScore(for value: Double, definition: SQMetricDefinition) -> Double? {

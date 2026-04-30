@@ -40,7 +40,7 @@ struct SQInsightRelationshipRegistry {
             bucketUnitName: "evenings",
             lowBucketUpperBound: 2,
             highBucketLowerBound: 3,
-            driverText: "Higher alcohol",
+            driverText: "Alcohol",
             outcomeText: "Lower sleep",
             strongActionText: "Try cutting back on alcohol before recovery-focused or training-heavy days.",
             subtleActionText: "Even a small sleep dip can add up. Keep alcohol lighter before recovery-focused days."
@@ -55,7 +55,7 @@ struct SQInsightRelationshipRegistry {
             bucketUnitName: "evenings",
             lowBucketUpperBound: 2,
             highBucketLowerBound: 3,
-            driverText: "Higher alcohol",
+            driverText: "Alcohol",
             outcomeText: "Lower energy",
             strongActionText: "If energy matters the next day, keep alcohol lower on the nights before.",
             subtleActionText: "Even a small energy drop can matter on training days. Keep alcohol lighter the night before."
@@ -70,7 +70,7 @@ struct SQInsightRelationshipRegistry {
             bucketUnitName: "evenings",
             lowBucketUpperBound: 2,
             highBucketLowerBound: 3,
-            driverText: "Higher alcohol",
+            driverText: "Alcohol",
             outcomeText: "Lower mood",
             strongActionText: "If mood matters the next day, keep alcohol lower the night before."
         ),
@@ -84,7 +84,7 @@ struct SQInsightRelationshipRegistry {
             bucketUnitName: "evenings",
             lowBucketUpperBound: 2,
             highBucketLowerBound: 3,
-            driverText: "Higher alcohol",
+            driverText: "Alcohol",
             outcomeText: "Lower motivation",
             strongActionText: "If motivation matters the next day, keep alcohol lower the night before."
         ),
@@ -1169,7 +1169,7 @@ struct SQInsightRelationshipRegistry {
             bucketUnitName: "evenings",
             lowBucketUpperBound: 2,
             highBucketLowerBound: 3,
-            driverText: "Higher alcohol",
+            driverText: "Alcohol",
             outcomeText: "Lower performance",
             strongActionText: "If workout performance matters the next day, keep alcohol lower the night before.",
             subtleActionText: "Even a small performance dip can matter on important training days. Keep alcohol lighter the night before."

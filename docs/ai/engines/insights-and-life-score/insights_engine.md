@@ -94,6 +94,8 @@ The current-state analyzer is allowed to evaluate either:
 
 `SQInsightsResult` also now carries curated `actions`, which are intended to back the lightweight `What To Do` surface in the eventual `Today` dashboard and any orb/detail explanation surfaces that need one recommended next move.
 
+`Today` surfacing should not show habit/vice relationship, trend, baseline, or follow-up insights just because the historical pattern is true. For stale-sensitive signals such as alcohol, caffeine, weed, nicotine, and porn, the latest value needs to be fresh and non-zero to be treated as currently relevant.
+
 `Today` surfacing now also has a first-pass novelty layer in the surfacing step:
 - novelty is applied in surfacing, not in the core analyzers
 - the current implementation only tracks the primary visible `Today` insight family

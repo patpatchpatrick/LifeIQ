@@ -87,6 +87,10 @@ The Life Score detail flow now also consumes shared recent `changes`, so the exp
 
 The Life Score detail flow now also consumes shared `actions`, so the explanation layer can recommend one concrete next move without inventing separate score-only advice logic.
 
+When an individual Life Score component changes the weighted score by about 10+ points versus yesterday, that component should be allowed to override the generic insight headline. Significant drops take priority over lifts because they usually explain the user's immediate concern best. The point impact should drive prioritization, but the surfaced headline should stay human-readable instead of saying the exact point drag.
+
+Sleep detail should stay source-transparent. If Life Score sleep comes from Daily Check-In, show the check-in calculation. If it comes from HealthKit, identify the HealthKit sleep score/breakdown. If Life Score applies a stricter adjustment than the dashboard Sleep Score, show the raw sleep score and the adjusted Life Score sleep component separately.
+
 ## Dashboard Use
 
 On the dashboard, the orb should eventually support:

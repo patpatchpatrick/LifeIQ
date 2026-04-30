@@ -830,7 +830,8 @@ final class SQInsightsService: SQInsightsServicing {
         let analysisOutput = analysisEngine.analyze(
             snapshots: snapshots,
             relationships: relationshipRegistry.activeRelationships,
-            surfaceIntent: input.timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent,
+            referenceDate: input.referenceDate
         )
         let drivers = curatedDrivers(
             from: driverBuilder.buildDrivers(
@@ -839,15 +840,22 @@ final class SQInsightsService: SQInsightsServicing {
             ),
             surfaceIntent: input.timeRange.insightSurfaceIntent
         )
-        let changes = curatedChanges(
+        let changes = todayRelevantChanges(
             from: changeBuilder.buildChanges(
                 from: snapshots,
                 surfaceIntent: input.timeRange.insightSurfaceIntent
             ),
+            snapshots: snapshots,
+            referenceDate: input.referenceDate,
             surfaceIntent: input.timeRange.insightSurfaceIntent,
             selectedDrivers: drivers
         )
-        let generatedInsights = analysisOutput.generatedInsights
+        let generatedInsights = todayRelevantInsights(
+            from: analysisOutput.generatedInsights,
+            snapshots: snapshots,
+            referenceDate: input.referenceDate,
+            surfaceIntent: input.timeRange.insightSurfaceIntent
+        )
         let deduplicatedInsights = deduplicatedInsights(from: generatedInsights)
         let noveltyAdjustedInsights = noveltyAdjustedInsights(
             from: deduplicatedInsights,
@@ -999,6 +1007,85 @@ final class SQInsightsService: SQInsightsServicing {
         case .noPatterns:
             return "noPatterns"
         }
+    }
+
+    private func todayRelevantInsights(
+        from insights: [SQInsight],
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> [SQInsight] {
+        guard surfaceIntent == .today else { return insights }
+
+        return insights.filter { insight in
+            guard let signalId = insight.inputSignalId,
+                  isHabitSignalId(signalId),
+                  isHabitCurrentRelevanceRequired(for: insight) else {
+                return true
+            }
+
+            return hasFreshNonZeroSignal(
+                signalId,
+                snapshots: snapshots,
+                referenceDate: referenceDate
+            )
+        }
+    }
+
+    private func todayRelevantChanges(
+        from changes: [SQInsightChange],
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent,
+        selectedDrivers: [SQInsightDriver]
+    ) -> [SQInsightChange] {
+        let curated = curatedChanges(
+            from: changes,
+            surfaceIntent: surfaceIntent,
+            selectedDrivers: selectedDrivers
+        )
+
+        guard surfaceIntent == .today else { return curated }
+
+        return curated.filter { change in
+            guard isHabitSignalId(change.signalId) else { return true }
+
+            return hasFreshNonZeroSignal(
+                change.signalId,
+                snapshots: snapshots,
+                referenceDate: referenceDate
+            )
+        }
+    }
+
+    private func isHabitCurrentRelevanceRequired(for insight: SQInsight) -> Bool {
+        switch insight.insightClass {
+        case .relationship, .trend, .baselineChange, .followUp:
+            return true
+        case .risk, .opportunity, .populationBenchmark, .cohort:
+            return false
+        }
+    }
+
+    private func hasFreshNonZeroSignal(
+        _ signalId: String,
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> Bool {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        let latestObservation = snapshots
+            .compactMap { snapshot -> (date: Date, value: Double)? in
+                guard let value = snapshot.rawSignalValue(for: signalId) else { return nil }
+                return (date: snapshot.date, value: value)
+            }
+            .max { lhs, rhs in lhs.date < rhs.date }
+
+        guard let latestObservation else { return false }
+
+        let latestDay = calendar.startOfDay(for: latestObservation.date)
+        let daysSinceLatest = calendar.dateComponents([.day], from: latestDay, to: referenceDay).day ?? 0
+        return daysSinceLatest <= 1 && latestObservation.value > 0
     }
 
     private func deduplicatedInsights(from generatedInsights: [SQInsight]) -> [SQInsight] {

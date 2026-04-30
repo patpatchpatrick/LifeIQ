@@ -252,7 +252,7 @@ struct SQInsightRelationshipAnalyzer {
         case .nextDay(_, _, let controlRequirement):
             switch controlRequirement {
             case .absent:
-                return "Need more logged \(relationship.bucketUnitName) with \(relationship.inputTitle.lowercased()) data and next-day \(relationship.outputTitle.lowercased()) data where \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero."
+                return "Need more logged \(relationship.bucketUnitName) with \(relationship.inputTitle.lowercased()) data and next-day \(relationship.outputTitle.lowercased()) data when \(noNextDayControlPhrase(for: relationship, variant: variant))."
             case .present:
                 return "Need more logged \(relationship.bucketUnitName) with \(relationship.inputTitle.lowercased()) data and next-day \(relationship.outputTitle.lowercased()) data where \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) continues."
             case .none:
@@ -399,6 +399,24 @@ struct SQInsightRelationshipAnalyzer {
         }
     }
 
+    private func noNextDayControlPhrase(
+        for relationship: SQInsightRelationshipDefinition,
+        variant: SQInsightRelationshipVariantDefinition
+    ) -> String {
+        let title = controlDisplayTitle(for: relationship, variant: variant).lowercased()
+
+        switch title {
+        case "alcohol":
+            return "the next day was alcohol-free"
+        case "caffeine":
+            return "there was no caffeine logged the next day"
+        case "weed":
+            return "there was no weed logged the next day"
+        default:
+            return "there was no next-day \(title)"
+        }
+    }
+
     private func displayOutcomeTitle(
         for relationship: SQInsightRelationshipDefinition,
         variant: SQInsightRelationshipVariantDefinition
@@ -407,7 +425,7 @@ struct SQInsightRelationshipAnalyzer {
         case .sameDay:
             return relationship.outputTitle
         case .nextDay(_, _, .absent):
-            return "Next-day \(relationship.outputTitle.lowercased()) without \(controlDisplayTitle(for: relationship, variant: variant).lowercased())"
+            return "Next-day \(relationship.outputTitle.lowercased())"
         case .nextDay(_, _, .present):
             return "Next-day \(relationship.outputTitle.lowercased()) with \(controlDisplayTitle(for: relationship, variant: variant).lowercased())"
         case .nextDay:
@@ -423,7 +441,7 @@ struct SQInsightRelationshipAnalyzer {
         case .sameDay:
             return " on the same day"
         case .nextDay(_, _, .absent):
-            return " when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stayed at zero the next day"
+            return " even when \(noNextDayControlPhrase(for: relationship, variant: variant))"
         case .nextDay(_, _, .present):
             return " when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) continued the next day"
         case .nextDay:
@@ -439,7 +457,7 @@ struct SQInsightRelationshipAnalyzer {
         case .sameDay:
             return ""
         case .nextDay(_, _, .absent):
-            return " when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero the next day"
+            return " when \(noNextDayControlPhrase(for: relationship, variant: variant))"
         case .nextDay(_, _, .present):
             return " when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) continues the next day"
         case .nextDay:
@@ -483,7 +501,7 @@ struct SQInsightRelationshipAnalyzer {
         case .sameDay:
             return relationship.outputTitle.lowercased()
         case .nextDay(_, _, .absent):
-            return "next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero"
+            return "next-day \(relationship.outputTitle.lowercased())"
         case .nextDay(_, _, .present):
             return "next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) continues"
         case .nextDay:
@@ -518,11 +536,11 @@ struct SQInsightRelationshipAnalyzer {
         case (.neutral, .sameDay):
             return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point shift in \(relationship.outputTitle.lowercased()) on the same day."
         case (.negative, .nextDay(_, _, .absent)):
-            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point lower next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero."
+            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point lower next-day \(relationship.outputTitle.lowercased()), even when \(noNextDayControlPhrase(for: relationship, variant: variant))."
         case (.positive, .nextDay(_, _, .absent)):
-            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point higher next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero."
+            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point higher next-day \(relationship.outputTitle.lowercased()), even when \(noNextDayControlPhrase(for: relationship, variant: variant))."
         case (.neutral, .nextDay(_, _, .absent)):
-            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point shift in next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) stays at zero."
+            return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point shift in next-day \(relationship.outputTitle.lowercased()), even when \(noNextDayControlPhrase(for: relationship, variant: variant))."
         case (.negative, .nextDay(_, _, .present)):
             return "\(relationship.driverText) is associated with a \(format(effectMagnitude)) point lower next-day \(relationship.outputTitle.lowercased()) when \(controlDisplayTitle(for: relationship, variant: variant).lowercased()) continues."
         case (.positive, .nextDay(_, _, .present)):

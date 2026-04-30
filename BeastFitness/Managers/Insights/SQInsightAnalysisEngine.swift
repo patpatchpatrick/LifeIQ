@@ -16,7 +16,8 @@ protocol SQInsightAnalyzing {
     func analyze(
         snapshots: [SQInsightFeatureSnapshot],
         relationships: [SQInsightRelationshipDefinition],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
     ) -> SQInsightAnalysisEngineOutput
 }
 
@@ -47,7 +48,8 @@ struct SQInsightAnalysisEngine: SQInsightAnalyzing {
     func analyze(
         snapshots: [SQInsightFeatureSnapshot],
         relationships: [SQInsightRelationshipDefinition],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
     ) -> SQInsightAnalysisEngineOutput {
         let results = relationships
             .filter { $0.eligibleSurfaceIntents.contains(surfaceIntent) }
@@ -68,6 +70,7 @@ struct SQInsightAnalysisEngine: SQInsightAnalyzing {
                         relationship: relationship,
                         variant: variant,
                         surfaceIntent: surfaceIntent,
+                        referenceDate: referenceDate,
                         surfacingPolicy: surfacingPolicy
                     )
                 case .baselineDeviation:

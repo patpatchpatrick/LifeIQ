@@ -170,7 +170,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         if outputSignalId == SQInsightAnalysisMetricId.workoutPerformance {
             return insight.effect == .positive
                 ? "Good day to push training."
-                : "Favor a lighter session today."
+                : "Keep workouts lighter today and focus on recovery tonight."
         }
 
         switch recommendationFamily {
@@ -307,11 +307,11 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                         drivers: drivers,
                         changes: changes
                     )
-                    : "Favor a lighter session today."
+                    : "Keep workouts lighter today while recovery settles."
             case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
                 return insight.effect == .positive
                     ? "Good day to push training."
-                    : "Favor a lighter session today."
+                    : "Favor recovery or easier work over intensity today."
             default:
                 return insight.effect == .positive
                     ? "Good day to push training."

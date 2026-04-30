@@ -14,7 +14,8 @@ struct SQLifeScoreHeroCard: View {
 
     private var shouldShowTodayBriefing: Bool {
         timeRange == .today && (
-            viewModel.primaryInsight != nil
+            viewModel.headlineText != nil
+            || viewModel.primaryInsight != nil
             || viewModel.refinementPromptText != nil
         )
     }
@@ -98,9 +99,9 @@ struct SQLifeScoreHeroCard: View {
 
                 if shouldShowTodayBriefing {
                     VStack(spacing: .SQSpace.s) {
-                        if let primaryInsight = viewModel.primaryInsight {
+                        if let summaryText = viewModel.headlineText ?? viewModel.primaryInsight?.title {
                             heroBriefing(
-                                summary: humanizedHeroText(primaryInsight.title),
+                                summary: humanizedHeroText(summaryText),
                                 action: compactActionText
                             )
                             .padding(.top, .SQSpace.m)
