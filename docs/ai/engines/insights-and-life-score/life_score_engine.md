@@ -89,6 +89,8 @@ The Life Score detail flow now also consumes shared `actions`, so the explanatio
 
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 
+`Under Pressure` should be reserved for stacked or severe negatives. A single mild drag should usually become `Slightly Off` or `Dipping`, especially for balanced personas with otherwise good sleep, training, and habit patterns. Scores at or above 88 should not become `Under Pressure` unless there is an unusually severe stacked condition.
+
 When an individual Life Score component changes the weighted score by about 10+ points versus yesterday, that component should be allowed to override the generic insight headline. Significant drops take priority over lifts because they usually explain the user's immediate concern best. The point impact should drive prioritization, but the surfaced headline should stay human-readable instead of saying the exact point drag.
 
 Life Score hero actions should also be state-first. Use the state to choose the decision style (`push`, `maintain`, `adjust`, `recover`) and only use component-specific actions when a low component is clearly the context.

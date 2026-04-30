@@ -237,12 +237,14 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                     score: lifeScoreViewModel.score,
                     stateTitle: lifeScoreViewModel.state.title,
                     heroSummary: punctuatedSentence(
-                        lifeScoreViewModel.primaryInsight?.title ?? lifeScoreViewModel.state.summary
+                        lifeScoreViewModel.headlineText
+                            ?? lifeScoreViewModel.primaryInsight?.title
+                            ?? lifeScoreViewModel.state.summary
                     ),
                     heroAction: punctuatedSentence(
                         lifeScoreViewModel.actions.first?.summary ?? "No action."
                     ),
-                    heroFamilyKey: lifeScoreViewModel.primaryInsight?.familyKey ?? "none",
+                    heroFamilyKey: "lifeScore.state.\(lifeScoreViewModel.state.title)",
                     surfacedInsightTitles: insightsResult.insights.map(\.title),
                     morningValues: currentDay.morningValues,
                     eveningValues: currentDay.eveningValues,

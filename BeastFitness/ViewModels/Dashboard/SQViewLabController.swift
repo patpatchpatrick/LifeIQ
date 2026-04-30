@@ -438,7 +438,7 @@ import UIKit
         lines.append("- Score: \(viewModel.score.map(String.init) ?? "Calibrating")")
         lines.append("- State: \(viewModel.state.title)")
         lines.append("- Delta vs yesterday: \(viewModel.scoreDeltaText ?? "None")")
-        lines.append("- Hero summary: \(viewModel.primaryInsight?.title ?? viewModel.state.summary)")
+        lines.append("- Hero summary: \(viewModel.headlineText ?? viewModel.primaryInsight?.title ?? viewModel.state.summary)")
         lines.append("- Hero action: \(viewModel.actions.first?.summary ?? "None")")
         if let refinementPromptText = viewModel.refinementPromptText {
             lines.append("- Refinement prompt: \(refinementPromptText)")

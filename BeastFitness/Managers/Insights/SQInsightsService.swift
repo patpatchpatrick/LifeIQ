@@ -1202,10 +1202,16 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         let filteredInsights: [SQInsight]
-        let hasAlternativeCandidate = insights.contains { !isPositiveCleanupHabitHeroCandidate($0) }
+        let hasAlternativeCandidate = insights.contains {
+            !isPositiveCleanupHabitHeroCandidate($0)
+                && !isHabitTrendHeroCandidate($0)
+        }
 
         if hasAlternativeCandidate {
-            filteredInsights = insights.filter { !isPositiveCleanupHabitHeroCandidate($0) }
+            filteredInsights = insights.filter {
+                !isPositiveCleanupHabitHeroCandidate($0)
+                    && !isHabitTrendHeroCandidate($0)
+            }
         } else {
             filteredInsights = insights
         }
@@ -1345,6 +1351,14 @@ final class SQInsightsService: SQInsightsServicing {
         }
     }
 
+    private func isHabitTrendHeroCandidate(_ insight: SQInsight) -> Bool {
+        let inputSignalId = insight.inputSignalId ?? ""
+        let outputSignalId = insight.outputSignalId ?? ""
+        let isHabitSignal = isHabitSignalId(inputSignalId) || isHabitSignalId(outputSignalId)
+
+        return isHabitSignal && insight.insightClass == .trend
+    }
+
     private func todayHeroPriorityScore(
         for insight: SQInsight,
         drivers: [SQInsightDriver],
@@ -1381,9 +1395,9 @@ final class SQInsightsService: SQInsightsServicing {
                 score += 4
             } else if isHabitSignal {
                 if insight.effect == .negative {
-                    score += hasStatePressure ? 6 : 1
+                    score -= hasStatePressure ? 6 : 16
                 } else {
-                    score -= 10
+                    score -= 30
                 }
             }
         case .populationBenchmark, .cohort:
@@ -1412,7 +1426,7 @@ final class SQInsightsService: SQInsightsServicing {
             case .positive:
                 score -= hasStatePressure ? 18 : 40
             case .negative:
-                score += hasStatePressure ? 4 : 0
+                score -= insight.insightClass == .trend ? 16 : (hasStatePressure ? 0 : 8)
             case .neutral:
                 score -= 6
             }
@@ -1436,9 +1450,9 @@ final class SQInsightsService: SQInsightsServicing {
 
             let allowedClass: Bool
             switch insight.insightClass {
-            case .trend, .baselineChange, .followUp, .relationship, .risk:
+            case .baselineChange, .followUp, .relationship, .risk:
                 allowedClass = true
-            case .opportunity, .populationBenchmark, .cohort:
+            case .trend, .opportunity, .populationBenchmark, .cohort:
                 allowedClass = false
             }
 
@@ -1453,7 +1467,7 @@ final class SQInsightsService: SQInsightsServicing {
             habitSignalId == change.signalId && change.direction == .worsened
         }
 
-        if bestCandidate.rankingScore >= dragStrength + 5 || relatedWorseningChange {
+        if bestCandidate.rankingScore >= dragStrength + 10 || relatedWorseningChange {
             return bestCandidate
         }
 

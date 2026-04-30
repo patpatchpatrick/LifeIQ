@@ -100,6 +100,8 @@ The current-state analyzer is allowed to evaluate either:
 
 `Today` surfacing should not show habit/vice relationship, trend, baseline, or follow-up insights just because the historical pattern is true. For stale-sensitive signals such as alcohol, caffeine, weed, nicotine, and porn, the latest value needs to be fresh and non-zero to be treated as currently relevant.
 
+Habit trends, especially caffeine, should almost never become the hero when a non-habit candidate exists. Keep them available as secondary insight cards, but penalize them in hero selection so recovery, sleep, training, and mental-state interpretations carry the main daily read.
+
 `Today` surfacing now also has a first-pass novelty layer in the surfacing step:
 - novelty is applied in surfacing, not in the core analyzers
 - the current implementation only tracks the primary visible `Today` insight family

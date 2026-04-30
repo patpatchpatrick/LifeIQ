@@ -997,9 +997,9 @@ private extension SQLifeScoreBuilder {
 
         let hasRecoveryDrag = (sleepScore ?? 100) < 62
             || (heartScore ?? 100) < 58
-            || dragDrivers.contains { recoveryPressureSignalIds.contains($0.signalId) }
-        let hasMentalPressure = dragDrivers.contains { mentalPressureSignalIds.contains($0.signalId) }
-        let hasTrainingPressure = dragDrivers.contains { trainingPressureSignalIds.contains($0.signalId) }
+            || dragDrivers.contains { recoveryPressureSignalIds.contains($0.signalId) && $0.rankingScore >= 10 }
+        let hasMentalPressure = dragDrivers.contains { mentalPressureSignalIds.contains($0.signalId) && $0.rankingScore >= 8 }
+        let hasTrainingPressure = dragDrivers.contains { trainingPressureSignalIds.contains($0.signalId) && $0.rankingScore >= 8 }
         let hasReadinessLift = supportiveDrivers.contains { readinessLiftSignalIds.contains($0.signalId) }
         let hasTrainingLift = supportiveDrivers.contains { trainingLiftSignalIds.contains($0.signalId) }
 
@@ -1019,10 +1019,26 @@ private extension SQLifeScoreBuilder {
             || primaryInsightText.contains("helping")
             || primaryInsightText.contains("setting up a good day")
 
-        if score < 56
-            || lowComponentCount >= 2
-            || (hasRecoveryDrag && (hasMentalPressure || hasTrainingPressure))
-            || ((habitsScore ?? 100) < 42 && (sleepScore ?? 100) < 72) {
+        let majorNegativeComponentCount = components.filter { isMajorNegativeLifeScoreComponent($0) }.count
+        let severeNegativeComponentCount = components.filter { isSevereNegativeLifeScoreComponent($0) }.count
+        let majorMentalPressure = dragDrivers.contains { mentalPressureSignalIds.contains($0.signalId) && $0.rankingScore >= 11 }
+        let majorTrainingPressure = dragDrivers.contains { trainingPressureSignalIds.contains($0.signalId) && $0.rankingScore >= 11 }
+        let majorSignalPressureCount = [majorMentalPressure, majorTrainingPressure].filter { $0 }.count
+        let majorPressureCount = majorNegativeComponentCount + majorSignalPressureCount
+        let hasStackedMajorPressure = hasRecoveryDrag
+            && (majorMentalPressure || majorTrainingPressure)
+            && score < 78
+        let allowsUnderPressure = score < 78
+            || severeNegativeComponentCount >= 2
+            || (score < 88 && severeNegativeComponentCount >= 1 && majorPressureCount >= 2)
+
+        if allowsUnderPressure && (
+            score < 50
+                || (majorPressureCount >= 2 && score < 78)
+                || (severeNegativeComponentCount >= 1 && score < 78)
+                || hasStackedMajorPressure
+                || ((habitsScore ?? 100) < 40 && (sleepScore ?? 100) < 65 && score < 78)
+        ) {
             return .underPressure
         }
 
@@ -1075,7 +1091,45 @@ private extension SQLifeScoreBuilder {
             return .slightlyOff
         }
 
-        return .underPressure
+        if score >= 58 {
+            return .slightlyOff
+        }
+
+        return (score < 78 && severeNegativeComponentCount >= 1) ? .underPressure : .slightlyOff
+    }
+
+    func isMajorNegativeLifeScoreComponent(_ component: SQLifeScoreComponent) -> Bool {
+        switch component.id {
+        case "sleep":
+            return component.score < 58
+        case "heart":
+            return component.score < 58
+        case "habits":
+            return component.score < 50
+        case "workouts":
+            return component.score < 55
+        case "consistency":
+            return component.score < 40
+        default:
+            return component.score < 55
+        }
+    }
+
+    func isSevereNegativeLifeScoreComponent(_ component: SQLifeScoreComponent) -> Bool {
+        switch component.id {
+        case "sleep":
+            return component.score < 48
+        case "heart":
+            return component.score < 50
+        case "habits":
+            return component.score < 38
+        case "workouts":
+            return component.score < 42
+        case "consistency":
+            return component.score < 25
+        default:
+            return component.score < 45
+        }
     }
 
     func isLifeScoreStateSignalId(_ signalId: String) -> Bool {
