@@ -67,9 +67,16 @@ struct SQLifeScoreDetailView: View {
 
     private var driversCard: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
-            Text("What's Driving It")
-                .sqFont(.title4)
-                .sqForegroundColor(.textPrimary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("What's Driving It")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("Latest value vs previous 7-14 day avg.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             VStack(alignment: .leading, spacing: .SQSpace.m) {
                 ForEach(controller.viewModel.supportiveDrivers) { driver in

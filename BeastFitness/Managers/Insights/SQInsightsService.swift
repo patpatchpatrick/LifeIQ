@@ -815,6 +815,7 @@ final class SQInsightsService: SQInsightsServicing {
             checkIns: input.checkIns,
             workouts: input.workouts,
             metricDefinitions: input.metricDefinitions,
+            sleepData: input.sleepData,
             restingHeartRateSummaries: input.restingHeartRateSummaries
         )
 
@@ -836,7 +837,8 @@ final class SQInsightsService: SQInsightsServicing {
         let drivers = curatedDrivers(
             from: driverBuilder.buildDrivers(
                 from: snapshots,
-                surfaceIntent: input.timeRange.insightSurfaceIntent
+                surfaceIntent: input.timeRange.insightSurfaceIntent,
+                referenceDate: input.referenceDate
             ),
             surfaceIntent: input.timeRange.insightSurfaceIntent
         )

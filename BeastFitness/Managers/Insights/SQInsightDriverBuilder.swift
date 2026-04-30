@@ -11,7 +11,8 @@ import HealthKit
 protocol SQInsightDriverBuilding {
     func buildDrivers(
         from snapshots: [SQInsightFeatureSnapshot],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
     ) -> [SQInsightDriver]
 }
 
@@ -26,6 +27,7 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
     }
 
     private struct SignalObservation {
+        let date: Date
         let value: Double
         let activityType: HKWorkoutActivityType?
     }
@@ -38,13 +40,15 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
 
     func buildDrivers(
         from snapshots: [SQInsightFeatureSnapshot],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
     ) -> [SQInsightDriver] {
         return definitions.compactMap { definition in
             buildDriver(
                 definition: definition,
                 snapshots: snapshots,
-                surfaceIntent: surfaceIntent
+                surfaceIntent: surfaceIntent,
+                referenceDate: referenceDate
             )
         }
         .sorted { $0.rankingScore > $1.rankingScore }
@@ -53,15 +57,27 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
     private func buildDriver(
         definition: DriverDefinition,
         snapshots: [SQInsightFeatureSnapshot],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
     ) -> SQInsightDriver? {
         let window = window(for: surfaceIntent, signalId: definition.signalId)
         let observations = snapshots.compactMap { snapshot -> SignalObservation? in
             guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
             return .init(
+                date: snapshot.date,
                 value: value,
                 activityType: snapshot.workoutActivityType(for: definition.signalId)
             )
+        }
+        .sorted { $0.date < $1.date }
+
+        guard hasFreshTodayObservation(
+            observations,
+            signalId: definition.signalId,
+            surfaceIntent: surfaceIntent,
+            referenceDate: referenceDate
+        ) else {
+            return nil
         }
 
         let minimumRequired = max(
@@ -237,6 +253,55 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             }
             return lhs.value < rhs.value
         })?.key
+    }
+
+    private func hasFreshTodayObservation(
+        _ observations: [SignalObservation],
+        signalId: String,
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date
+    ) -> Bool {
+        guard surfaceIntent == .today,
+              let latestDate = observations.map(\.date).max() else {
+            return true
+        }
+
+        let calendar = Calendar.current
+        let latestDay = calendar.startOfDay(for: latestDate)
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        let daysSinceLatest = calendar.dateComponents([.day], from: latestDay, to: referenceDay).day ?? Int.max
+
+        guard daysSinceLatest >= 0 else {
+            return true
+        }
+
+        return daysSinceLatest <= maximumTodayObservationAgeDays(for: signalId)
+    }
+
+    private func maximumTodayObservationAgeDays(for signalId: String) -> Int {
+        switch signalId {
+        case SQMetricId.sleepHours,
+             SQMetricId.sleepQuality,
+             SQInsightAnalysisMetricId.restingHeartRate,
+             SQMetricId.energy,
+             SQMetricId.mood,
+             SQMetricId.mentalClarity,
+             SQMetricId.motivation,
+             SQMetricId.stress,
+             SQMetricId.anxiety,
+             SQMetricId.soreness:
+            return 0
+        case SQInsightAnalysisMetricId.workoutPerformance,
+             SQInsightAnalysisMetricId.workoutDifficulty,
+             SQMetricId.alcohol,
+             SQMetricId.caffeine,
+             SQMetricId.weed,
+             SQMetricId.nicotine,
+             SQMetricId.porn:
+            return 1
+        default:
+            return 0
+        }
     }
 
     private func effectiveMinimumSampleCount(

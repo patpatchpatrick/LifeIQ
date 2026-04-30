@@ -91,11 +91,15 @@ Life Score hero copy should be state-first, not signal-first. The default headli
 
 `Under Pressure` should be reserved for stacked or severe negatives. A single mild drag should usually become `Slightly Off` or `Dipping`, especially for balanced personas with otherwise good sleep, training, and habit patterns. Scores at or above 88 should not become `Under Pressure` unless there is an unusually severe stacked condition.
 
+Positive momentum should be allowed to produce `Rebounding` before `Under Pressure` is considered. For example, a score in the mid-70s that is up meaningfully from yesterday should not be red unless there are multiple severe negatives.
+
 When an individual Life Score component changes the weighted score by about 10+ points versus yesterday, that component should be allowed to override the generic insight headline. Significant drops take priority over lifts because they usually explain the user's immediate concern best. The point impact should drive prioritization, but the surfaced headline should stay human-readable instead of saying the exact point drag.
 
 Life Score hero actions should also be state-first. Use the state to choose the decision style (`push`, `maintain`, `adjust`, `recover`) and only use component-specific actions when a low component is clearly the context.
 
 Sleep detail should stay source-transparent. If Life Score sleep comes from Daily Check-In, show the check-in calculation. If it comes from HealthKit, identify the HealthKit sleep score/breakdown. If Life Score applies a stricter adjustment than the dashboard Sleep Score, show the raw sleep score and the adjusted Life Score sleep component separately.
+
+Sleep freshness should be day-anchored. User-entered sleep quality/duration wins for the same wake day, but newer HealthKit sleep should replace older or HealthKit-prefilled sleep check-in values for Today-facing drivers and score context. Stale sleep values should not be treated as the latest Today signal.
 
 ## Dashboard Use
 

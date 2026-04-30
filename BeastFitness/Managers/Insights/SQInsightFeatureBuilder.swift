@@ -13,15 +13,25 @@ protocol SQInsightFeatureBuilding {
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
         metricDefinitions: [SQMetricDefinition],
+        sleepData: SQSleepDashboardData?,
         restingHeartRateSummaries: [SQHeartRateDailySummary]
     ) -> [SQInsightFeatureSnapshot]
 }
 
 final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
+    private let sleepAggregationService: SQSleepAggregationService
+
+    init(
+        sleepAggregationService: SQSleepAggregationService = .init()
+    ) {
+        self.sleepAggregationService = sleepAggregationService
+    }
+
     func makeFeatureSnapshots(
         checkIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
         metricDefinitions: [SQMetricDefinition],
+        sleepData: SQSleepDashboardData?,
         restingHeartRateSummaries: [SQHeartRateDailySummary]
     ) -> [SQInsightFeatureSnapshot] {
         let definitionsById = Dictionary(
@@ -30,6 +40,7 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
         var rawValuesByDay = [String: [String: Double]]()
         var normalizedValuesByDay = [String: [String: Double]]()
+        var healthKitSleepMetricIdsByDay = [String: Set<String>]()
 
         for checkIn in checkIns {
             let dayKey = checkIn.uniqueDateKey
@@ -54,6 +65,11 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                         definition: definition
                     )
                 )
+
+                if Self.sleepSignalIds.contains(metricId),
+                   checkIn.healthKitMetricIds.contains(metricId) {
+                    healthKitSleepMetricIdsByDay[dayKey, default: []].insert(metricId)
+                }
             }
 
             rawValuesByDay[dayKey] = rawMap
@@ -73,6 +89,14 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
             rawValuesByDay[dayKey] = rawMap
             normalizedValuesByDay[dayKey] = normalizedMap
         }
+
+        mergeHealthKitSleepValues(
+            from: sleepData,
+            definitionsById: definitionsById,
+            healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
+            rawValuesByDay: &rawValuesByDay,
+            normalizedValuesByDay: &normalizedValuesByDay
+        )
 
         let workoutsByDay = Dictionary(grouping: workouts) { workout in
             (workout.startDate ?? .now).anchorDayKey()
@@ -140,4 +164,77 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
         guard !values.isEmpty else { return nil }
         return values.reduce(0, +) / Double(values.count)
     }
+
+    private func mergeHealthKitSleepValues(
+        from sleepData: SQSleepDashboardData?,
+        definitionsById: [String: SQMetricDefinition],
+        healthKitSleepMetricIdsByDay: [String: Set<String>],
+        rawValuesByDay: inout [String: [String: Double]],
+        normalizedValuesByDay: inout [String: [String: Double]]
+    ) {
+        let nights = ((sleepData?.priorNights ?? []) + (sleepData?.currentNights ?? []))
+            .sorted { $0.wakeDay < $1.wakeDay }
+
+        for night in nights {
+            let dayKey = night.wakeDay.anchorDayKey()
+            let score = sleepAggregationService.score(for: night).totalScore
+
+            writeHealthKitSleepValue(
+                metricId: SQMetricId.sleepQuality,
+                value: min(max(score / 10.0, 0), 10),
+                dayKey: dayKey,
+                definitionsById: definitionsById,
+                healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
+                rawValuesByDay: &rawValuesByDay,
+                normalizedValuesByDay: &normalizedValuesByDay
+            )
+
+            writeHealthKitSleepValue(
+                metricId: SQMetricId.sleepHours,
+                value: min(max(night.totalSleepDuration / 3600.0, 0), 24),
+                dayKey: dayKey,
+                definitionsById: definitionsById,
+                healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
+                rawValuesByDay: &rawValuesByDay,
+                normalizedValuesByDay: &normalizedValuesByDay
+            )
+        }
+    }
+
+    private func writeHealthKitSleepValue(
+        metricId: String,
+        value: Double,
+        dayKey: String,
+        definitionsById: [String: SQMetricDefinition],
+        healthKitSleepMetricIdsByDay: [String: Set<String>],
+        rawValuesByDay: inout [String: [String: Double]],
+        normalizedValuesByDay: inout [String: [String: Double]]
+    ) {
+        let existingWasHealthKitPrefill = healthKitSleepMetricIdsByDay[dayKey]?.contains(metricId) == true
+        guard rawValuesByDay[dayKey]?[metricId] == nil || existingWasHealthKitPrefill else {
+            return
+        }
+
+        var rawMap = rawValuesByDay[dayKey, default: [:]]
+        var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
+
+        rawMap[metricId] = value
+
+        if let definition = definitionsById[metricId] {
+            normalizedMap[metricId] = Double(SQMetricEntry.normalizedScore(
+                for: Float(value),
+                definition: definition
+            ))
+        } else {
+            normalizedMap[metricId] = value
+        }
+
+        rawValuesByDay[dayKey] = rawMap
+        normalizedValuesByDay[dayKey] = normalizedMap
+    }
+
+    private static let sleepSignalIds: Set<String> = [
+        SQMetricId.sleepQuality,
+        SQMetricId.sleepHours
+    ]
 }

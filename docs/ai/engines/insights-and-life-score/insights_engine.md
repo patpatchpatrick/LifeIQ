@@ -102,6 +102,8 @@ The current-state analyzer is allowed to evaluate either:
 
 Habit trends, especially caffeine, should almost never become the hero when a non-habit candidate exists. Keep them available as secondary insight cards, but penalize them in hero selection so recovery, sleep, training, and mental-state interpretations carry the main daily read.
 
+`Today` drivers should only use fresh latest values. Daily check-in/recovery signals need a value from the reference day, workout and habit carryover can use yesterday, and anything older should be ignored instead of becoming a current driver.
+
 `Today` surfacing now also has a first-pass novelty layer in the surfacing step:
 - novelty is applied in surfacing, not in the core analyzers
 - the current implementation only tracks the primary visible `Today` insight family

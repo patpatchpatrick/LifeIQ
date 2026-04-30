@@ -1032,6 +1032,13 @@ private extension SQLifeScoreBuilder {
             || severeNegativeComponentCount >= 2
             || (score < 88 && severeNegativeComponentCount >= 1 && majorPressureCount >= 2)
 
+        if positiveMomentum
+            && score >= 70
+            && score < 88
+            && severeNegativeComponentCount < 2 {
+            return .rebounding
+        }
+
         if allowsUnderPressure && (
             score < 50
                 || (majorPressureCount >= 2 && score < 78)
@@ -1048,15 +1055,6 @@ private extension SQLifeScoreBuilder {
 
         if negativeMomentum && (score < 78 || hasMentalPressure || hasTrainingPressure || softDragComponentCount >= 2) {
             return .dipping
-        }
-
-        if positiveMomentum
-            && score >= 72
-            && score < 88
-            && lowComponentCount == 0
-            && !hasRecoveryDrag
-            && !hasMentalPressure {
-            return .rebounding
         }
 
         if score >= 90
@@ -1259,6 +1257,17 @@ private extension SQLifeScoreBuilder {
 
         let sleepQuality = targetCheckIn?.values[SQMetricId.sleepQuality].map { clamp(Double($0), min: 0, max: 10) }
         let sleepHours = targetCheckIn?.values[SQMetricId.sleepHours].map { clamp(Double($0), min: 0, max: 24) }
+        let resolvedHealthKitSleepInput = healthKitSleepInput(
+            sleepData: sleepData,
+            usePreviousHealthNight: usePreviousHealthNight
+        )
+        let healthKitMetricIds = targetCheckIn?.healthKitMetricIds ?? []
+        let hasUserEnteredSleepMetric = (sleepQuality != nil && !healthKitMetricIds.contains(SQMetricId.sleepQuality))
+            || (sleepHours != nil && !healthKitMetricIds.contains(SQMetricId.sleepHours))
+
+        if !hasUserEnteredSleepMetric, let resolvedHealthKitSleepInput {
+            return resolvedHealthKitSleepInput
+        }
 
         if let sleepQuality {
             let qualityScore = sleepQuality * 10
@@ -1286,6 +1295,13 @@ private extension SQLifeScoreBuilder {
             )
         }
 
+        return resolvedHealthKitSleepInput
+    }
+
+    func healthKitSleepInput(
+        sleepData: SQSleepDashboardData?,
+        usePreviousHealthNight: Bool
+    ) -> LifeScoreSleepInput? {
         if usePreviousHealthNight {
             if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
                 let score = sleepAggregationService.score(for: priorNight)
