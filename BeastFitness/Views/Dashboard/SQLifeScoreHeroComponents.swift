@@ -330,9 +330,9 @@ struct SQLifeScoreOrbView: View {
     private var currentLineWidth: CGFloat { max(6, size * 0.055) }
     private var usesQuePalette: Bool {
         switch viewModel.state {
-        case .aligned:
+        case .strong:
             return true
-        case .steady, .mixed, .strained, .calibrating:
+        case .primed, .balanced, .rebounding, .slightlyOff, .dipping, .underPressure, .calibrating:
             return false
         }
     }

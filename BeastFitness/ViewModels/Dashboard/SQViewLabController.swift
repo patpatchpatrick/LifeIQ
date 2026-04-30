@@ -14,6 +14,7 @@ import UIKit
     enum Mode: String, CaseIterable, Identifiable {
         case gallery = "Gallery"
         case scenario = "Scenario"
+        case simulation = "Simulation"
 
         var id: String { rawValue }
     }
@@ -49,7 +50,9 @@ import UIKit
     private let hub: EventHub
     private let scenarioRunner: SQViewLabScenarioRunning
     @ObservationIgnored private var runtimeCache = [String: SQViewLabScenarioRuntime]()
-    var auditPreviewMarkdown: String?
+    @ObservationIgnored private var simulationCache = [String: SQViewLabSimulationReport]()
+    var previewMarkdown: String?
+    var previewTitle: String = "Scenario Audit"
 
     var selectedMode: Mode = .gallery
     var selectedDomain: Domain = .lifeScoreInsights {
@@ -61,20 +64,28 @@ import UIKit
         }
     }
     var selectedScenarioId: String
+    var selectedSimulationPersonaId: String
+    var selectedSimulationDayCount: SQViewLabSimulationDayCount = .thirty
+    var selectedSimulationSeed: Int = 42
 
     let scenarios: [Scenario]
+    let simulationPersonas: [SQViewLabSimulationPersona]
 
     init(
         hub: EventHub? = nil,
         scenarioRunner: SQViewLabScenarioRunning? = nil,
-        scenarios: [Scenario]? = nil
+        scenarios: [Scenario]? = nil,
+        simulationPersonas: [SQViewLabSimulationPersona]? = nil
     ) {
         let resolvedScenarios = scenarios ?? Self.defaultScenarios()
+        let resolvedSimulationPersonas = simulationPersonas ?? Self.defaultSimulationPersonas()
 
         self.hub = hub ?? SQAppState.shared.hub
         self.scenarioRunner = scenarioRunner ?? SQViewLabScenarioRunner()
         self.scenarios = resolvedScenarios
+        self.simulationPersonas = resolvedSimulationPersonas
         self.selectedScenarioId = resolvedScenarios.first?.id ?? ""
+        self.selectedSimulationPersonaId = resolvedSimulationPersonas.first?.id ?? ""
     }
 
     var currentScenarios: [Scenario] {
@@ -88,6 +99,27 @@ import UIKit
     var selectedScenarioRuntime: SQViewLabScenarioRuntime? {
         guard let selectedScenario else { return nil }
         return runtime(for: selectedScenario)
+    }
+
+    var selectedSimulationPersona: SQViewLabSimulationPersona? {
+        simulationPersonas.first(where: { $0.id == selectedSimulationPersonaId }) ?? simulationPersonas.first
+    }
+
+    var selectedSimulationRequest: SQViewLabSimulationRequest? {
+        guard let selectedSimulationPersona else { return nil }
+
+        return .init(
+            persona: selectedSimulationPersona,
+            dayCount: selectedSimulationDayCount,
+            seed: selectedSimulationSeed,
+            referenceDate: Calendar.current.startOfDay(for: .now),
+            metricDefinitions: Self.defaultMetricDefinitions()
+        )
+    }
+
+    var selectedSimulationReport: SQViewLabSimulationReport? {
+        guard let selectedSimulationRequest else { return nil }
+        return simulationReport(for: selectedSimulationRequest)
     }
 
     func scenarios(for domain: Domain) -> [Scenario] {
@@ -104,6 +136,17 @@ import UIKit
         return runtime
     }
 
+    func simulationReport(for request: SQViewLabSimulationRequest) -> SQViewLabSimulationReport {
+        let cacheKey = "\(request.persona.id)-\(request.dayCount.rawValue)-\(request.seed)"
+        if let cachedReport = simulationCache[cacheKey] {
+            return cachedReport
+        }
+
+        let report = scenarioRunner.simulationReport(for: request)
+        simulationCache[cacheKey] = report
+        return report
+    }
+
     func focus(on scenario: Scenario) {
         selectedDomain = scenario.domain
         selectedScenarioId = scenario.id
@@ -118,16 +161,24 @@ import UIKit
     }
 
     func previewDomainAudit() {
-        auditPreviewMarkdown = auditMarkdown(for: currentScenarios)
+        previewTitle = "Scenario Audit"
+        previewMarkdown = auditMarkdown(for: currentScenarios)
     }
 
     func previewSelectedScenarioAudit() {
         guard let selectedScenario else { return }
-        auditPreviewMarkdown = auditMarkdown(for: [selectedScenario])
+        previewTitle = "Scenario Audit"
+        previewMarkdown = auditMarkdown(for: [selectedScenario])
+    }
+
+    func previewSimulationReport() {
+        guard let selectedSimulationReport else { return }
+        previewTitle = "Simulation Report"
+        previewMarkdown = simulationMarkdown(for: selectedSimulationReport)
     }
 
     func clearAuditPreview() {
-        auditPreviewMarkdown = nil
+        previewMarkdown = nil
     }
 
     func copyDomainAudit() {
@@ -137,9 +188,15 @@ import UIKit
     }
 
     func copyAuditPreview() {
-        guard let auditPreviewMarkdown else { return }
-        UIPasteboard.general.string = auditPreviewMarkdown
+        guard let previewMarkdown else { return }
+        UIPasteboard.general.string = previewMarkdown
         hub.toastEvents.send(.present(.init(title: "Audit copied", style: .success)))
+    }
+
+    func copySimulationReport() {
+        guard let selectedSimulationReport else { return }
+        UIPasteboard.general.string = simulationMarkdown(for: selectedSimulationReport)
+        hub.toastEvents.send(.present(.init(title: "Simulation report copied", style: .success)))
     }
 
     private func auditMarkdown(for scenarios: [Scenario]) -> String {
@@ -153,6 +210,99 @@ import UIKit
         for scenario in scenarios {
             lines.append(contentsOf: auditMarkdownLines(for: scenario))
             lines.append("")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func simulationMarkdown(for report: SQViewLabSimulationReport) -> String {
+        var lines = [String]()
+        lines.append("# View Lab Simulation Report")
+        lines.append("")
+        lines.append("- Persona: \(report.persona.title)")
+        lines.append("- Subtitle: \(report.persona.subtitle)")
+        lines.append("- Simulated Days: \(report.dayCount)")
+        lines.append("- Seed: \(report.seed)")
+        lines.append("- Reference Date: \(report.referenceDate.formattedString(with: .medium))")
+        lines.append("")
+
+        if !report.persona.notes.isEmpty {
+            lines.append("## Intended Coverage")
+            for note in report.persona.notes {
+                lines.append("- \(note)")
+            }
+            lines.append("")
+        }
+
+        lines.append("## Persona Inputs")
+        lines.append("- Morning check-in completion: \(formattedPercent(report.persona.morningCompletionProbability * 100))")
+        lines.append("- Evening check-in completion: \(formattedPercent(report.persona.eveningCompletionProbability * 100))")
+        lines.append("- Workout probability: \(formattedPercent(report.persona.workoutProbability * 100))")
+        lines.append("- Hard workout probability: \(formattedPercent(report.persona.hardWorkoutProbability * 100))")
+        lines.append("- Stress spike probability: \(formattedPercent(report.persona.stressSpikeProbability * 100))")
+        lines.append("- Weekend vice multiplier: \(formattedDouble(report.persona.weekendViceMultiplier))x")
+        lines.append("- Baseline sleep hours range: \(formattedFloat(report.persona.sleepHoursRange.lowerBound))-\(formattedFloat(report.persona.sleepHoursRange.upperBound))")
+        lines.append("- Baseline sleep quality range: \(formattedFloat(report.persona.sleepQualityRange.lowerBound))-\(formattedFloat(report.persona.sleepQualityRange.upperBound))")
+        lines.append("- Baseline energy range: \(formattedFloat(report.persona.energyRange.lowerBound))-\(formattedFloat(report.persona.energyRange.upperBound))")
+        lines.append("- Baseline mood range: \(formattedFloat(report.persona.moodRange.lowerBound))-\(formattedFloat(report.persona.moodRange.upperBound))")
+        lines.append("- Baseline stress range: \(formattedFloat(report.persona.stressRange.lowerBound))-\(formattedFloat(report.persona.stressRange.upperBound))")
+        lines.append("- Baseline anxiety range: \(formattedFloat(report.persona.anxietyRange.lowerBound))-\(formattedFloat(report.persona.anxietyRange.upperBound))")
+        lines.append("- Baseline soreness range: \(formattedFloat(report.persona.sorenessRange.lowerBound))-\(formattedFloat(report.persona.sorenessRange.upperBound))")
+        lines.append("- Alcohol probability/range: \(formattedPercent(report.persona.alcoholProbability * 100)) / \(formattedFloat(report.persona.alcoholRange.lowerBound))-\(formattedFloat(report.persona.alcoholRange.upperBound))")
+        lines.append("- Caffeine probability/range: \(formattedPercent(report.persona.caffeineProbability * 100)) / \(formattedFloat(report.persona.caffeineRange.lowerBound))-\(formattedFloat(report.persona.caffeineRange.upperBound)) mg")
+        lines.append("- Weed probability/range: \(formattedPercent(report.persona.weedProbability * 100)) / \(formattedFloat(report.persona.weedRange.lowerBound))-\(formattedFloat(report.persona.weedRange.upperBound))")
+        lines.append("- Nicotine probability/range: \(formattedPercent(report.persona.nicotineProbability * 100)) / \(formattedFloat(report.persona.nicotineRange.lowerBound))-\(formattedFloat(report.persona.nicotineRange.upperBound))")
+        lines.append("- Resting HR baseline range: \(formattedDouble(report.persona.restingHeartRateBaselineRange.lowerBound))-\(formattedDouble(report.persona.restingHeartRateBaselineRange.upperBound))")
+        lines.append("- Activity mix: \(report.persona.activityMix.map { "\($0.activityType.name) \(formattedPercent($0.weight * 100))" }.joined(separator: ", "))")
+        lines.append("")
+
+        lines.append("## Aggregate Outputs")
+        lines.append("- Average Life Score: \(report.averageScore.map(formattedDouble) ?? "n/a")")
+        if let minimumScore = report.minimumScore, let maximumScore = report.maximumScore {
+            lines.append("- Score range: \(minimumScore)-\(maximumScore)")
+        }
+        lines.append("- Workout days: \(formattedPercent(report.workoutDayPercentage))")
+        lines.append("- Morning completion: \(formattedPercent(report.morningCheckInCompletionPercentage))")
+        lines.append("- Evening completion: \(formattedPercent(report.eveningCheckInCompletionPercentage))")
+        lines.append("- Avg sleep hours: \(report.averageSleepHours.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg sleep quality: \(report.averageSleepQuality.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")")
+        lines.append("- Longest repeated hero summary streak: \(report.longestHeroSummaryRepeatStreak) days")
+        lines.append("- Longest repeated hero action streak: \(report.longestHeroActionRepeatStreak) days")
+        lines.append("- Longest repeated hero family streak: \(report.longestHeroFamilyRepeatStreak) days")
+        lines.append("")
+
+        lines.append("## State Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.stateDistribution))
+        lines.append("")
+        lines.append("## Hero Summary Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.heroSummaryDistribution))
+        lines.append("")
+        lines.append("## Hero Action Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.heroActionDistribution))
+        lines.append("")
+        lines.append("## Hero Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.heroFamilyDistribution))
+        lines.append("")
+        lines.append("## Surfaced Insight Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.surfacedInsightDistribution))
+        lines.append("")
+
+        lines.append("## Daily Log")
+        for day in report.days {
+            lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
+            lines.append("  - hero summary: \(day.heroSummary)")
+            lines.append("  - hero action: \(day.heroAction)")
+            lines.append("  - hero family: \(day.heroFamilyKey)")
+            lines.append("  - morning check-in complete: \(day.completedMorningCheckIn ? "yes" : "no")")
+            lines.append("  - evening check-in complete: \(day.completedEveningCheckIn ? "yes" : "no")")
+            lines.append("  - morning values: \(metricDictionaryText(day.morningValues))")
+            lines.append("  - evening values: \(metricDictionaryText(day.eveningValues))")
+            lines.append("  - resting HR: \(day.restingHeartRate.map(formattedDouble) ?? "n/a")")
+            lines.append("  - workouts: \(day.workoutDescriptions.isEmpty ? "none" : day.workoutDescriptions.joined(separator: " | "))")
+            lines.append("  - surfaced insights: \(day.surfacedInsightTitles.isEmpty ? "none" : day.surfacedInsightTitles.joined(separator: " | "))")
         }
 
         return lines.joined(separator: "\n")
@@ -379,6 +529,35 @@ import UIKit
             return "neutral"
         }
     }
+
+    private func formattedPercent(_ value: Double) -> String {
+        String(format: "%.1f%%", value)
+    }
+
+    private func simulationDistributionLines(
+        _ rows: [SQViewLabSimulationDistributionRow]
+    ) -> [String] {
+        guard !rows.isEmpty else { return ["- None"] }
+
+        return rows.map { row in
+            "- \(row.label) — \(row.count) days (\(formattedPercent(row.percentage)))"
+        }
+    }
+
+    private func metricDictionaryText(_ values: [String: Float]) -> String {
+        guard !values.isEmpty else { return "none" }
+
+        let definitionsById = Dictionary(
+            uniqueKeysWithValues: Self.defaultMetricDefinitions().map { ($0.id, $0.title) }
+        )
+
+        return values.keys.sorted().compactMap { metricId in
+            guard let value = values[metricId] else { return nil }
+            let title = definitionsById[metricId] ?? metricId
+            return "\(title) \(formattedFloat(value))"
+        }
+        .joined(separator: " • ")
+    }
 }
 
 private extension SQViewLabController {
@@ -396,6 +575,211 @@ private extension SQViewLabController {
         let startHour: Int
         let durationMinutes: Double
         let calories: Double
+    }
+
+    static func defaultSimulationPersonas() -> [SQViewLabSimulationPersona] {
+        [
+            .init(
+                id: "balanced-builder",
+                title: "Balanced Builder",
+                subtitle: "A fairly consistent user with decent sleep, moderate training, and low vice load.",
+                notes: [
+                    "Use this as the baseline persona for healthy but realistic daily variation.",
+                    "The hero should rotate between sleep, readiness, and moderate caution instead of over-firing habits."
+                ],
+                morningCompletionProbability: 0.96,
+                eveningCompletionProbability: 0.90,
+                restingHeartRateAvailability: 0.95,
+                workoutProbability: 0.58,
+                hardWorkoutProbability: 0.34,
+                weekendViceMultiplier: 1.25,
+                stressSpikeProbability: 0.12,
+                sleepHoursRange: 6.9...8.2,
+                sleepQualityRange: 6.9...8.5,
+                energyRange: 6.2...8.2,
+                moodRange: 6.0...8.0,
+                mentalClarityRange: 6.1...8.3,
+                motivationRange: 6.0...8.4,
+                stressRange: 2.1...4.8,
+                anxietyRange: 1.8...4.2,
+                sorenessRange: 2.0...5.8,
+                alcoholProbability: 0.18,
+                alcoholRange: 0.8...2.8,
+                caffeineProbability: 0.78,
+                caffeineRange: 85...180,
+                weedProbability: 0.05,
+                weedRange: 0.5...1.5,
+                nicotineProbability: 0.02,
+                nicotineRange: 0.5...1.0,
+                restingHeartRateBaselineRange: 53...59,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.48),
+                    .init(activityType: .cycling, weight: 0.22),
+                    .init(activityType: .walking, weight: 0.12),
+                    .init(activityType: .pickleball, weight: 0.18)
+                ]
+            ),
+            .init(
+                id: "vice-heavy",
+                title: "Vice-Heavy User",
+                subtitle: "A user with heavier alcohol/caffeine/weed patterns and softer sleep quality.",
+                notes: [
+                    "Helpful for checking whether harmful habit trends surface when they actually define the day.",
+                    "Life Score should not stay unrealistically high when vice-heavy nights stack together."
+                ],
+                morningCompletionProbability: 0.90,
+                eveningCompletionProbability: 0.78,
+                restingHeartRateAvailability: 0.88,
+                workoutProbability: 0.34,
+                hardWorkoutProbability: 0.20,
+                weekendViceMultiplier: 1.65,
+                stressSpikeProbability: 0.20,
+                sleepHoursRange: 5.7...7.2,
+                sleepQualityRange: 4.6...7.0,
+                energyRange: 4.8...7.1,
+                moodRange: 4.6...7.0,
+                mentalClarityRange: 4.4...6.8,
+                motivationRange: 4.5...7.0,
+                stressRange: 3.4...6.6,
+                anxietyRange: 2.8...6.2,
+                sorenessRange: 2.2...5.5,
+                alcoholProbability: 0.44,
+                alcoholRange: 1.5...4.8,
+                caffeineProbability: 0.92,
+                caffeineRange: 140...280,
+                weedProbability: 0.30,
+                weedRange: 1.0...3.8,
+                nicotineProbability: 0.24,
+                nicotineRange: 0.8...3.6,
+                restingHeartRateBaselineRange: 58...66,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.30),
+                    .init(activityType: .cycling, weight: 0.18),
+                    .init(activityType: .walking, weight: 0.24),
+                    .init(activityType: .pickleball, weight: 0.28)
+                ]
+            ),
+            .init(
+                id: "training-block",
+                title: "Hard Training Block",
+                subtitle: "A user training frequently enough that strain, soreness, and readiness should matter a lot.",
+                notes: [
+                    "Use this to pressure-test push-vs-moderate actions.",
+                    "Recovery-positive heroes should still downgrade when fatigue signals pile up."
+                ],
+                morningCompletionProbability: 0.97,
+                eveningCompletionProbability: 0.93,
+                restingHeartRateAvailability: 0.97,
+                workoutProbability: 0.78,
+                hardWorkoutProbability: 0.54,
+                weekendViceMultiplier: 1.10,
+                stressSpikeProbability: 0.10,
+                sleepHoursRange: 6.6...7.9,
+                sleepQualityRange: 6.3...8.0,
+                energyRange: 5.8...8.0,
+                moodRange: 5.8...7.8,
+                mentalClarityRange: 5.8...7.9,
+                motivationRange: 6.8...8.9,
+                stressRange: 2.5...5.4,
+                anxietyRange: 1.8...4.6,
+                sorenessRange: 3.6...7.0,
+                alcoholProbability: 0.08,
+                alcoholRange: 0.5...1.6,
+                caffeineProbability: 0.84,
+                caffeineRange: 110...220,
+                weedProbability: 0.04,
+                weedRange: 0.5...1.0,
+                nicotineProbability: 0.01,
+                nicotineRange: 0.5...1.0,
+                restingHeartRateBaselineRange: 52...60,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.58),
+                    .init(activityType: .cycling, weight: 0.22),
+                    .init(activityType: .walking, weight: 0.05),
+                    .init(activityType: .pickleball, weight: 0.15)
+                ]
+            ),
+            .init(
+                id: "stressed-inconsistent",
+                title: "Stressed and Inconsistent",
+                subtitle: "A user whose stress/anxiety and inconsistent recovery should shape the day more than habits alone.",
+                notes: [
+                    "Useful for validating stress/anxiety-led heroes and low-friction actions.",
+                    "This should not collapse into caffeine on every bad day."
+                ],
+                morningCompletionProbability: 0.88,
+                eveningCompletionProbability: 0.74,
+                restingHeartRateAvailability: 0.84,
+                workoutProbability: 0.31,
+                hardWorkoutProbability: 0.18,
+                weekendViceMultiplier: 1.20,
+                stressSpikeProbability: 0.28,
+                sleepHoursRange: 5.9...7.4,
+                sleepQualityRange: 4.9...7.1,
+                energyRange: 4.7...7.0,
+                moodRange: 4.5...6.9,
+                mentalClarityRange: 4.4...6.8,
+                motivationRange: 4.8...7.1,
+                stressRange: 4.4...7.4,
+                anxietyRange: 4.0...7.0,
+                sorenessRange: 2.6...5.8,
+                alcoholProbability: 0.16,
+                alcoholRange: 0.8...2.4,
+                caffeineProbability: 0.86,
+                caffeineRange: 150...290,
+                weedProbability: 0.16,
+                weedRange: 0.8...2.6,
+                nicotineProbability: 0.12,
+                nicotineRange: 0.8...2.8,
+                restingHeartRateBaselineRange: 58...67,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.24),
+                    .init(activityType: .cycling, weight: 0.16),
+                    .init(activityType: .walking, weight: 0.36),
+                    .init(activityType: .pickleball, weight: 0.24)
+                ]
+            ),
+            .init(
+                id: "sparse-noisy",
+                title: "Sparse and Noisy Logger",
+                subtitle: "A user with inconsistent check-ins, mixed sports, and plenty of missing or contradictory signal.",
+                notes: [
+                    "This is for auditing not-enough-data and weird-state outputs over time.",
+                    "The engine should stay honest instead of forcing false precision every day."
+                ],
+                morningCompletionProbability: 0.58,
+                eveningCompletionProbability: 0.52,
+                restingHeartRateAvailability: 0.62,
+                workoutProbability: 0.42,
+                hardWorkoutProbability: 0.30,
+                weekendViceMultiplier: 1.35,
+                stressSpikeProbability: 0.18,
+                sleepHoursRange: 5.6...8.3,
+                sleepQualityRange: 4.6...8.2,
+                energyRange: 4.2...8.0,
+                moodRange: 4.0...7.9,
+                mentalClarityRange: 4.0...8.0,
+                motivationRange: 4.2...8.3,
+                stressRange: 2.4...7.2,
+                anxietyRange: 2.0...6.8,
+                sorenessRange: 1.8...6.8,
+                alcoholProbability: 0.24,
+                alcoholRange: 0.8...3.4,
+                caffeineProbability: 0.74,
+                caffeineRange: 90...250,
+                weedProbability: 0.12,
+                weedRange: 0.5...2.6,
+                nicotineProbability: 0.08,
+                nicotineRange: 0.5...2.2,
+                restingHeartRateBaselineRange: 56...65,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.25),
+                    .init(activityType: .cycling, weight: 0.22),
+                    .init(activityType: .walking, weight: 0.21),
+                    .init(activityType: .pickleball, weight: 0.32)
+                ]
+            )
+        ]
     }
 
     static func defaultScenarios() -> [Scenario] {

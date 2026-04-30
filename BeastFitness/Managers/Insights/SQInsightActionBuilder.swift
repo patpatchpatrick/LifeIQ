@@ -86,11 +86,11 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("resting hr") || driver.contains("resting hr") || title.contains("resting heart") || driver.contains("resting heart") {
-            return insight.effect == .positive ? "Good day for a quality workout." : "Keep strain moderate today."
+            return insight.effect == .positive ? "Good day to push training." : "Keep strain moderate today."
         }
 
         if title.contains("soreness") || driver.contains("soreness") {
-            return insight.effect == .positive ? "Recovery looks good for a workout." : "Favor recovery over intensity today."
+            return insight.effect == .positive ? "Good day to push training." : "Favor recovery over intensity today."
         }
 
         if title.contains("mental clarity") || driver.contains("mental clarity") || title.contains("clarity") {
@@ -98,7 +98,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("motivation") || driver.contains("motivation") {
-            return insight.effect == .positive ? "Good day for a quality workout." : "Keep the day simple and lower friction."
+            return insight.effect == .positive ? "Good day to push training." : "Keep the day simple and lower friction."
         }
 
         if title.contains("strain") || driver.contains("strain") {
@@ -106,7 +106,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("sleep") || driver.contains("sleep") {
-            return insight.effect == .positive ? "Good day for a quality workout." : "Protect sleep tonight."
+            return insight.effect == .positive ? "Good day to push training." : "Protect sleep tonight."
         }
 
         if title.contains("alcohol") || driver.contains("alcohol") {
@@ -122,15 +122,15 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("difficulty") || driver.contains("difficulty") {
-            return insight.effect == .positive ? "Harder sessions are landing well." : "Favor an easier session today."
+            return insight.effect == .positive ? "Good day to push training." : "Favor an easier session today."
         }
 
         if title.contains("workout") || title.contains("performance") || outcome.contains("performance") {
-            return insight.effect == .positive ? "Good day for a quality workout." : "Watch strain today."
+            return insight.effect == .positive ? "Good day to push training." : "Watch strain today."
         }
 
         if title.contains("recovery") || title.contains("energy") || driver.contains("recovery") {
-            return insight.effect == .positive ? "Good day for a quality workout." : "Keep strain moderate."
+            return insight.effect == .positive ? "Good day to push training." : "Keep strain moderate."
         }
 
         let cleaned = insight.actionText
@@ -144,7 +144,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         if normalized == "keep it steady." || normalized == "keep going." || normalized == "keep this going." {
             switch insight.effect {
             case .positive:
-                return "Good day for a quality workout."
+                return "Good day to push training."
             case .negative:
                 return "Keep strain moderate."
             case .neutral:
@@ -169,7 +169,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
 
         if outputSignalId == SQInsightAnalysisMetricId.workoutPerformance {
             return insight.effect == .positive
-                ? "Good day for a quality workout."
+                ? "Good day to push training."
                 : "Favor a lighter session today."
         }
 
@@ -222,7 +222,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                     : "Lower extra drains today."
             default:
                 return insight.effect == .positive
-                    ? "Use the stronger window well."
+                    ? "Good day to push training."
                     : "Protect recovery today."
             }
 
@@ -310,11 +310,11 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                     : "Favor a lighter session today."
             case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
                 return insight.effect == .positive
-                    ? "Good day for a quality workout."
+                    ? "Good day to push training."
                     : "Favor a lighter session today."
             default:
                 return insight.effect == .positive
-                    ? "Good day for a quality workout."
+                    ? "Good day to push training."
                     : "Keep strain moderate today."
             }
 

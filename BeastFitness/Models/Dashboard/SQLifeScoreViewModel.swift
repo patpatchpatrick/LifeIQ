@@ -40,22 +40,31 @@ struct SQLifeScoreComponent: Identifiable {
 }
 
 enum SQLifeScoreState {
-    case aligned
-    case steady
-    case mixed
-    case strained
+    case strong
+    case primed
+    case balanced
+    case rebounding
+    case slightlyOff
+    case dipping
+    case underPressure
     case calibrating
 
     var title: String {
         switch self {
-        case .aligned:
-            return "Aligned"
-        case .steady:
-            return "Steady"
-        case .mixed:
-            return "Mixed"
-        case .strained:
-            return "Off Track"
+        case .strong:
+            return "Strong"
+        case .primed:
+            return "Primed"
+        case .balanced:
+            return "Balanced"
+        case .rebounding:
+            return "Rebounding"
+        case .slightlyOff:
+            return "Slightly Off"
+        case .dipping:
+            return "Dipping"
+        case .underPressure:
+            return "Under Pressure"
         case .calibrating:
             return "Calibrating"
         }
@@ -63,13 +72,13 @@ enum SQLifeScoreState {
 
     var primaryColor: SQColor {
         switch self {
-        case .aligned:
+        case .strong:
             return .dashboardGlowMint
-        case .steady:
+        case .primed, .balanced, .rebounding:
             return .dashboardGlowBlue
-        case .mixed:
+        case .slightlyOff, .dipping:
             return .dashboardTrendWarm
-        case .strained:
+        case .underPressure:
             return .colorErrorRed
         case .calibrating:
             return .accentNeutral4
@@ -78,13 +87,15 @@ enum SQLifeScoreState {
 
     var secondaryColor: SQColor {
         switch self {
-        case .aligned:
+        case .strong, .primed, .rebounding:
             return .dashboardGlowBlue
-        case .steady:
+        case .balanced:
             return .dashboardGlowMint
-        case .mixed:
+        case .slightlyOff:
             return .accentNeutral2
-        case .strained:
+        case .dipping:
+            return .colorErrorRed
+        case .underPressure:
             return .dashboardTrendWarm
         case .calibrating:
             return .textSecondary
@@ -93,14 +104,20 @@ enum SQLifeScoreState {
 
     var summary: String {
         switch self {
-        case .aligned:
-            return "Your recent sleep, habits, and training signals are working together."
-        case .steady:
-            return "You look broadly on track, with a few areas that could tighten up."
-        case .mixed:
-            return "Some signals are supportive, but the overall picture is uneven right now."
-        case .strained:
-            return "Recovery or consistency signals are slipping enough that the overall picture looks off."
+        case .strong:
+            return "Your recent sleep, recovery, and habit signals are lining up cleanly."
+        case .primed:
+            return "A solid recovery base is setting the day up well."
+        case .balanced:
+            return "The overall picture looks steady, without a strong lift or drag."
+        case .rebounding:
+            return "The score is recovering after a softer stretch and looks to be moving the right way."
+        case .slightlyOff:
+            return "The day still has enough support, but one or two signals are slipping."
+        case .dipping:
+            return "Recent drag is pulling the day down more than usual."
+        case .underPressure:
+            return "Recovery or stress signals are weighing on the day enough to show up clearly."
         case .calibrating:
             return "There isn't enough signal yet to make this feel fully personalized."
         }
@@ -123,7 +140,7 @@ struct SQLifeScoreViewModel {
     static let mock = SQLifeScoreViewModel(
         score: 76,
         scoreDeltaFromPreviousDay: 2,
-        state: .steady,
+        state: .balanced,
         subtitle: "A lightweight read on how aligned your recovery, habits, and training look right now.",
         refinementPromptText: "Complete your morning check-in to refine today's score.",
         components: [],

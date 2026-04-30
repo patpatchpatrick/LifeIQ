@@ -121,12 +121,19 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             restingHeartRateSummaries: intelligenceInput.restingHeartRateSummaries,
             isLoggedIn: intelligenceInput.isLoggedIn
         )
-        let state = lifeScoreState(for: preliminaryScore, availableWeight: totalWeight)
-        let roundedScore = state == .calibrating ? nil : preliminaryScore
         let scoreDeltaFromPreviousDay: Int? = {
-            guard let roundedScore, let previousScore else { return nil }
-            return roundedScore - previousScore
+            guard let preliminaryScore, let previousScore else { return nil }
+            return preliminaryScore - previousScore
         }()
+        let state = lifeScoreState(
+            score: preliminaryScore,
+            availableWeight: totalWeight,
+            scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
+            components: components,
+            drivers: input.insightsResult.drivers,
+            primaryInsight: primaryInsight
+        )
+        let roundedScore = state == .calibrating ? nil : preliminaryScore
         let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
 
         let subtitle: String
@@ -137,7 +144,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         } else if totalWeight < 60 {
             subtitle = "LifeIQ is still calibrating because some of your usual signals are missing today."
         } else {
-            subtitle = "A lightweight read on how aligned your recovery, heart, habits, and training look right now."
+            subtitle = "A lightweight read on how your recovery, heart, habits, and training are lining up right now."
         }
 
         return .init(
@@ -388,20 +395,174 @@ private extension SQLifeScoreBuilder {
         return Int(weightedScore.rounded())
     }
 
-    func lifeScoreState(for score: Int?, availableWeight: Double) -> SQLifeScoreState {
+    func lifeScoreState(
+        score: Int?,
+        availableWeight: Double,
+        scoreDeltaFromPreviousDay: Int?,
+        components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        primaryInsight: SQInsight?
+    ) -> SQLifeScoreState {
         guard let score else { return .calibrating }
         guard availableWeight >= 45 else { return .calibrating }
 
-        switch score {
-        case 82...:
-            return .aligned
-        case 68...81:
-            return .steady
-        case 50...67:
-            return .mixed
-        default:
-            return .strained
+        let componentScores = Dictionary(uniqueKeysWithValues: components.map { ($0.id, $0.score) })
+        let sleepScore = componentScores["sleep"]
+        let heartScore = componentScores["heart"]
+        let habitsScore = componentScores["habits"]
+        let workoutsScore = componentScores["workouts"]
+        let consistencyScore = componentScores["consistency"]
+
+        let lowComponentCount = components.filter { $0.score < 60 }.count
+        let softDragComponentCount = components.filter { $0.score < 72 }.count
+        let strongComponentCount = components.filter { $0.score >= 85 }.count
+
+        let stateDrivers = drivers.filter { isLifeScoreStateSignalId($0.signalId) }
+        let supportiveDrivers = stateDrivers.filter { $0.direction == .supportive }
+        let dragDrivers = stateDrivers.filter { $0.direction == .drag }
+
+        let strongNegativeMomentum = (scoreDeltaFromPreviousDay ?? 0) <= -7
+        let negativeMomentum = (scoreDeltaFromPreviousDay ?? 0) <= -4
+        let positiveMomentum = (scoreDeltaFromPreviousDay ?? 0) >= 4
+
+        let hasRecoveryDrag = (sleepScore ?? 100) < 62
+            || (heartScore ?? 100) < 58
+            || dragDrivers.contains { recoveryPressureSignalIds.contains($0.signalId) }
+        let hasMentalPressure = dragDrivers.contains { mentalPressureSignalIds.contains($0.signalId) }
+        let hasTrainingPressure = dragDrivers.contains { trainingPressureSignalIds.contains($0.signalId) }
+        let hasReadinessLift = supportiveDrivers.contains { readinessLiftSignalIds.contains($0.signalId) }
+        let hasTrainingLift = supportiveDrivers.contains { trainingLiftSignalIds.contains($0.signalId) }
+
+        let primaryInsightText = normalizedHeroMatchText(
+            [
+                primaryInsight?.title ?? "",
+                primaryInsight?.summary ?? ""
+            ]
+            .joined(separator: " ")
+        )
+        let insightSuggestsPressure = primaryInsight?.effect == .negative
+            || primaryInsightText.contains("under pressure")
+            || primaryInsightText.contains("dragging")
+            || primaryInsightText.contains("stress")
+            || primaryInsightText.contains("anxiety")
+        let insightSuggestsLift = primaryInsight?.effect == .positive
+            || primaryInsightText.contains("helping")
+            || primaryInsightText.contains("setting up a good day")
+
+        if score < 56
+            || lowComponentCount >= 2
+            || (hasRecoveryDrag && (hasMentalPressure || hasTrainingPressure))
+            || ((habitsScore ?? 100) < 42 && (sleepScore ?? 100) < 72) {
+            return .underPressure
         }
+
+        if strongNegativeMomentum && (score < 82 || softDragComponentCount >= 1 || insightSuggestsPressure) {
+            return .dipping
+        }
+
+        if negativeMomentum && (score < 78 || hasMentalPressure || hasTrainingPressure || softDragComponentCount >= 2) {
+            return .dipping
+        }
+
+        if positiveMomentum
+            && score >= 72
+            && score < 88
+            && lowComponentCount == 0
+            && !hasRecoveryDrag
+            && !hasMentalPressure {
+            return .rebounding
+        }
+
+        if score >= 90
+            && strongComponentCount >= 3
+            && !hasRecoveryDrag
+            && !hasMentalPressure
+            && !negativeMomentum {
+            return .strong
+        }
+
+        if score >= 84
+            && !hasRecoveryDrag
+            && !negativeMomentum
+            && (hasReadinessLift
+                || hasTrainingLift
+                || insightSuggestsLift
+                || (sleepScore ?? 0) >= 85
+                || (heartScore ?? 0) >= 82
+                || (workoutsScore ?? 0) >= 78) {
+            return .primed
+        }
+
+        if score >= 78
+            && softDragComponentCount <= 1
+            && !negativeMomentum
+            && (consistencyScore ?? 100) >= 55 {
+            return .balanced
+        }
+
+        if score >= 66
+            || (score >= 60 && lowComponentCount == 0) {
+            return .slightlyOff
+        }
+
+        return .underPressure
+    }
+
+    func isLifeScoreStateSignalId(_ signalId: String) -> Bool {
+        readinessLiftSignalIds.contains(signalId)
+            || mentalPressureSignalIds.contains(signalId)
+            || trainingPressureSignalIds.contains(signalId)
+    }
+
+    var readinessLiftSignalIds: Set<String> {
+        [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality,
+            SQInsightAnalysisMetricId.restingHeartRate,
+            SQMetricId.energy,
+            SQMetricId.mood,
+            SQMetricId.mentalClarity,
+            SQMetricId.motivation,
+            SQInsightAnalysisMetricId.workoutPerformance
+        ]
+    }
+
+    var mentalPressureSignalIds: Set<String> {
+        [
+            SQMetricId.stress,
+            SQMetricId.anxiety,
+            SQMetricId.mood,
+            SQMetricId.energy,
+            SQMetricId.mentalClarity
+        ]
+    }
+
+    var recoveryPressureSignalIds: Set<String> {
+        [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality,
+            SQInsightAnalysisMetricId.restingHeartRate,
+            SQMetricId.soreness,
+            SQMetricId.stress,
+            SQMetricId.anxiety
+        ]
+    }
+
+    var trainingPressureSignalIds: Set<String> {
+        [
+            SQInsightAnalysisMetricId.workoutDifficulty,
+            SQInsightAnalysisMetricId.workoutPerformance,
+            SQMetricId.soreness,
+            SQMetricId.motivation
+        ]
+    }
+
+    var trainingLiftSignalIds: Set<String> {
+        [
+            SQMetricId.motivation,
+            SQInsightAnalysisMetricId.workoutPerformance,
+            SQMetricId.energy
+        ]
     }
 
     func lifeScoreSleepComponent(

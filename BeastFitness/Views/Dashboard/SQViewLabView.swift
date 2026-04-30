@@ -21,6 +21,8 @@ struct SQViewLabView: View {
                     galleryContent
                 case .scenario:
                     focusedScenarioContent
+                case .simulation:
+                    simulationContent
                 }
             }
             .padding(.horizontal, .SQSpace.l)
@@ -34,7 +36,7 @@ struct SQViewLabView: View {
         }
         .sheet(
             isPresented: .init(
-                get: { controller.auditPreviewMarkdown != nil },
+                get: { controller.previewMarkdown != nil },
                 set: { isPresented in
                     if !isPresented {
                         controller.clearAuditPreview()
@@ -44,7 +46,7 @@ struct SQViewLabView: View {
         ) {
             NavigationStack {
                 ScrollView {
-                    Text(controller.auditPreviewMarkdown ?? "")
+                    Text(controller.previewMarkdown ?? "")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.textPrimary)
                         .textSelection(.enabled)
@@ -56,7 +58,7 @@ struct SQViewLabView: View {
                 .background {
                     SQSheetBackground()
                 }
-                .navigationTitle("Scenario Audit")
+                .navigationTitle(controller.previewTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -171,6 +173,18 @@ struct SQViewLabView: View {
 
             if let scenario = controller.selectedScenario {
                 scenarioDetail(for: scenario)
+            }
+        }
+    }
+
+    private var simulationContent: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            simulationControls
+
+            if let report = controller.selectedSimulationReport {
+                simulationSummary(report)
+                simulationDistributions(report)
+                simulationDayPreview(report)
             }
         }
     }
@@ -455,5 +469,222 @@ struct SQViewLabView: View {
                 }
             }
         }
+    }
+
+    private var simulationControls: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text("Persona")
+                    .sqFont(SQFont.FontType.headerSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                Picker("Persona", selection: $controller.selectedSimulationPersonaId) {
+                    ForEach(controller.simulationPersonas) { persona in
+                        Text(persona.title).tag(persona.id)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            HStack(spacing: .SQSpace.m) {
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text("Duration")
+                        .sqFont(SQFont.FontType.headerSmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    Picker("Duration", selection: $controller.selectedSimulationDayCount) {
+                        ForEach(SQViewLabSimulationDayCount.allCases) { dayCount in
+                            Text(dayCount.title).tag(dayCount)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                HStack {
+                    Text("Seed")
+                        .sqFont(SQFont.FontType.headerSmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    Spacer(minLength: 0)
+
+                    Text("\(controller.selectedSimulationSeed)")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                }
+
+                Stepper(value: $controller.selectedSimulationSeed, in: 1...9999) {
+                    Text("Adjust seed")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                }
+            }
+
+            HStack(spacing: .SQSpace.s) {
+                Button {
+                    controller.previewSimulationReport()
+                } label: {
+                    Text("Preview Report")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .SQSpace.s)
+                }
+                .buttonStyle(.plain)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+                }
+
+                Button {
+                    controller.copySimulationReport()
+                } label: {
+                    Text("Copy Report")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .SQSpace.s)
+                }
+                .buttonStyle(.plain)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+                }
+            }
+
+            if let persona = controller.selectedSimulationPersona {
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    Text(persona.title)
+                        .sqFont(SQFont.FontType.title4)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text(persona.subtitle)
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    ForEach(persona.notes, id: \.self) { note in
+                        HStack(alignment: .top, spacing: .SQSpace.s) {
+                            Circle()
+                                .fill(SQColor.dashboardGlowBlue.color)
+                                .frame(width: 6, height: 6)
+                                .padding(.top, 6)
+
+                            Text(note)
+                                .sqFont(SQFont.FontType.bodyExtraSmall)
+                                .sqForegroundColor(.textSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .padding(.SQSpace.l)
+                .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+            }
+        }
+    }
+
+    private func simulationSummary(_ report: SQViewLabSimulationReport) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Simulation Output")
+                .sqFont(SQFont.FontType.title4)
+                .sqForegroundColor(.textPrimary)
+
+            outputGroup(
+                title: "Summary",
+                values: [
+                    "Average Life Score: \(report.averageScore.map(formattedDouble) ?? "n/a")",
+                    "Score Range: \(report.minimumScore.map(String.init) ?? "n/a")-\(report.maximumScore.map(String.init) ?? "n/a")",
+                    "Workout Days: \(formattedPercent(report.workoutDayPercentage))",
+                    "Morning Completion: \(formattedPercent(report.morningCheckInCompletionPercentage))",
+                    "Evening Completion: \(formattedPercent(report.eveningCheckInCompletionPercentage))",
+                    "Avg Sleep Hours: \(report.averageSleepHours.map(formattedDouble) ?? "n/a")",
+                    "Avg Sleep Quality: \(report.averageSleepQuality.map(formattedDouble) ?? "n/a")",
+                    "Avg Alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")",
+                    "Avg Caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")",
+                    "Avg Resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")",
+                    "Longest Hero Summary Streak: \(report.longestHeroSummaryRepeatStreak) days",
+                    "Longest Hero Action Streak: \(report.longestHeroActionRepeatStreak) days",
+                    "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days"
+                ]
+            )
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func simulationDistributions(_ report: SQViewLabSimulationReport) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Distributions")
+                .sqFont(SQFont.FontType.title4)
+                .sqForegroundColor(.textPrimary)
+
+            outputGroup(
+                title: "State",
+                values: report.stateDistribution.prefix(5).map(distributionText)
+            )
+            outputGroup(
+                title: "Hero Summaries",
+                values: report.heroSummaryDistribution.prefix(5).map(distributionText)
+            )
+            outputGroup(
+                title: "Hero Actions",
+                values: report.heroActionDistribution.prefix(5).map(distributionText)
+            )
+            outputGroup(
+                title: "Hero Families",
+                values: report.heroFamilyDistribution.prefix(5).map(distributionText)
+            )
+            outputGroup(
+                title: "Surfaced Insights",
+                values: report.surfacedInsightDistribution.prefix(5).map(distributionText)
+            )
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func simulationDayPreview(_ report: SQViewLabSimulationReport) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Latest Days")
+                .sqFont(SQFont.FontType.title4)
+                .sqForegroundColor(.textPrimary)
+
+            ForEach(Array(report.days.suffix(5).reversed())) { day in
+                VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                    Text("\(day.date.formattedString(with: .medium)) • \(day.score.map(String.init) ?? "n/a") • \(day.stateTitle)")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text(day.heroSummary)
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(day.heroAction)
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, .SQSpace.xs)
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func distributionText(_ row: SQViewLabSimulationDistributionRow) -> String {
+        "\(row.label) — \(row.count) days (\(formattedPercent(row.percentage)))"
+    }
+
+    private func formattedPercent(_ value: Double) -> String {
+        String(format: "%.1f%%", value)
+    }
+
+    private func formattedDouble(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+        return String(format: "%.1f", value)
     }
 }
