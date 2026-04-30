@@ -61,6 +61,12 @@ struct SQWorkoutPremiumInsightsModel {
 }
 
 struct SQWorkoutPremiumInsightDetailModel {
+    struct DefinitionLine: Identifiable {
+        let id: String
+        let valueText: String
+        let summaryText: String
+    }
+
     struct ScoreCard: Identifiable {
         let id: String
         let title: String
@@ -75,6 +81,23 @@ struct SQWorkoutPremiumInsightDetailModel {
         let value: String
         let detail: String
         let accentColor: SQColor
+        let definitionLines: [DefinitionLine]
+
+        init(
+            id: String,
+            title: String,
+            value: String,
+            detail: String,
+            accentColor: SQColor,
+            definitionLines: [DefinitionLine] = []
+        ) {
+            self.id = id
+            self.title = title
+            self.value = value
+            self.detail = detail
+            self.accentColor = accentColor
+            self.definitionLines = definitionLines
+        }
     }
 
     struct Example: Identifiable {
@@ -899,7 +922,8 @@ private extension SQWorkoutScoreService {
                         title: "VDOT estimate",
                         value: breakdown.referenceValue.sqStringRoundedTo(places: 1),
                         detail: "Derived from pace and duration using a Daniels-style running model. This is the main input behind your performance score.",
-                        accentColor: .accentNeutral1
+                        accentColor: .accentNeutral1,
+                        definitionLines: vdotGuideDefinitionLines()
                     ),
                     .init(
                         id: "pace",
@@ -914,13 +938,6 @@ private extension SQWorkoutScoreService {
                         value: formattedDistance(runningSample.distanceMiles),
                         detail: "Meaningful distance makes the pace effort more representative than a very short burst.",
                         accentColor: .dashboardGlowMint
-                    ),
-                    .init(
-                        id: "vdot-guide",
-                        title: "VDOT ranges",
-                        value: "Guide",
-                        detail: "60+: elite-level endurance output. 50-59: advanced recreational range. 40-49: strong healthy recreational range. 30-39: developing aerobic base. Under 30: early-stage endurance fitness.",
-                        accentColor: .dashboardGlowBlue
                     )
                 ],
                 examples: [],
@@ -1135,7 +1152,8 @@ private extension SQWorkoutScoreService {
                     title: "VDOT estimate",
                     value: "Included",
                     detail: "The score is centered around a Daniels-style VDOT estimate.",
-                    accentColor: .dashboardGlowBlue
+                    accentColor: .dashboardGlowBlue,
+                    definitionLines: vdotGuideDefinitionLines()
                 ),
                 .init(
                     id: "pace",
@@ -1150,13 +1168,6 @@ private extension SQWorkoutScoreService {
                     value: "Included",
                     detail: "A meaningful distance makes the pace effort more representative.",
                     accentColor: .dashboardGlowMint
-                ),
-                .init(
-                    id: "vdot-guide",
-                    title: "VDOT ranges",
-                    value: "Guide",
-                    detail: "60+: elite-level endurance output. 50-59: advanced recreational range. 40-49: strong healthy recreational range. 30-39: developing aerobic base. Under 30: early-stage endurance fitness.",
-                    accentColor: .dashboardGlowBlue
                 )
             ],
             examples: [],
@@ -1184,6 +1195,16 @@ private extension SQWorkoutScoreService {
             ],
             footnote: "Unlock premium to see your actual difficulty breakdown."
         )
+    }
+
+    func vdotGuideDefinitionLines() -> [SQWorkoutPremiumInsightDetailModel.DefinitionLine] {
+        [
+            .init(id: "vdot-60", valueText: "60+", summaryText: "exceptional endurance range"),
+            .init(id: "vdot-50", valueText: "50-59", summaryText: "advanced endurance range"),
+            .init(id: "vdot-40", valueText: "40-49", summaryText: "strong recreational endurance range"),
+            .init(id: "vdot-30", valueText: "30-39", summaryText: "solid recreational endurance range"),
+            .init(id: "vdot-under-30", valueText: "<30", summaryText: "early endurance-building range")
+        ]
     }
 
     func insightsTitle(

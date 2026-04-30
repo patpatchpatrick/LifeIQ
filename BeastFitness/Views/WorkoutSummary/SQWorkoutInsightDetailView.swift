@@ -8,34 +8,26 @@ import SwiftUI
 struct SQWorkoutInsightDetailView: View {
     @State var controller: SQWorkoutInsightDetailController
 
-    private let scoreColumns = [
-        GridItem(.adaptive(minimum: 150), spacing: .SQSpace.s, alignment: .leading)
-    ]
-
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: .SQSpace.l) {
+            VStack(alignment: .leading, spacing: .SQSpace.xl) {
                 heroCard
 
-                if !controller.model.scoreCards.isEmpty {
-                    scoreCardsSection
-                }
-
-                if !controller.model.components.isEmpty {
-                    componentsSection
+                if !breakdownComponents.isEmpty {
+                    breakdownCard
                 }
 
                 if !controller.model.examples.isEmpty {
-                    examplesSection
+                    guideCard
                 }
 
                 if let footnote = controller.model.footnote {
-                    footnoteCard(footnote)
+                    noteCard(footnote)
                 }
             }
-            .padding(.horizontal, .SQSpace.l)
-            .padding(.top, .SQSpace.l)
-            .padding(.bottom, .SQSpace.xl)
+            .padding(.horizontal, .SQSpace.xl)
+            .padding(.top, .SQSpace.xl)
+            .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(controller.model.title)
@@ -46,23 +38,21 @@ struct SQWorkoutInsightDetailView: View {
     }
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            SQDashboardTrendBadge(
-                text: "How It Works",
-                tone: .neutral,
-                symbol: nil
-            )
-
-            VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                Text(controller.model.title)
-                    .sqFont(.title2)
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                Text(displayScoreText)
+                    .sqFont(.title1)
                     .sqForegroundColor(.textPrimary)
 
-                Text(controller.model.subtitle)
-                    .sqFont(.bodySmall)
+                Text("— \(scoreStateTitle)")
+                    .sqFont(.title4)
                     .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            Text(controller.model.subtitle)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(controller.model.summary)
                 .sqFont(.bodyExtraSmall)
@@ -70,141 +60,72 @@ struct SQWorkoutInsightDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
-    private var scoreCardsSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("Key Scores")
+    private var breakdownCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            Text("How This Score Is Calculated")
                 .sqFont(.title4)
                 .sqForegroundColor(.textPrimary)
 
-            LazyVGrid(columns: scoreColumns, alignment: .leading, spacing: .SQSpace.s) {
-                ForEach(controller.model.scoreCards) { card in
-                    detailScoreCard(card)
-                }
-            }
-        }
-    }
-
-    private func detailScoreCard(_ card: SQWorkoutPremiumInsightDetailModel.ScoreCard) -> some View {
-        VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(card.title.uppercased())
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
-
-            Text(card.value)
-                .sqFont(.title2)
-                .sqForegroundColor(.textPrimary)
-
-            Text(card.caption)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.m)
-        .background {
-            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.98))
-                .overlay {
-                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                        .stroke(card.accentColor.color.opacity(SQColor.isDarkMode ? 0.42 : 0.24), lineWidth: 1)
-                }
-        }
-    }
-
-    private var componentsSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("Breakdown")
-                .sqFont(.title4)
-                .sqForegroundColor(.textPrimary)
-
-            VStack(spacing: .SQSpace.s) {
-                ForEach(controller.model.components) { component in
-                    componentRow(component)
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                ForEach(breakdownComponents) { component in
+                    componentCard(component)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
-    private func componentRow(_ component: SQWorkoutPremiumInsightDetailModel.Component) -> some View {
-        HStack(alignment: .top, spacing: .SQSpace.m) {
-            RoundedRectangle(cornerRadius: .SQCornerRadius.s, style: .continuous)
-                .fill(component.accentColor.color.opacity(0.8))
-                .frame(width: 6)
-
-            VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
-                    Text(component.title)
-                        .sqFont(.bodySmallSemiBold)
-                        .sqForegroundColor(.textPrimary)
-
-                    Spacer(minLength: 0)
-
-                    Text(component.value)
-                        .sqFont(.bodySmallSemiBold)
-                        .sqForegroundColor(.textPrimary)
-                }
-
-                Text(component.detail)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, .SQSpace.xs)
-    }
-
-    private var examplesSection: some View {
-        VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("Real-World Anchors")
+    private var guideCard: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            Text("How To Read This Score")
                 .sqFont(.title4)
                 .sqForegroundColor(.textPrimary)
 
-            VStack(spacing: .SQSpace.s) {
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
                 ForEach(controller.model.examples) { example in
                     exampleRow(example)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private func exampleRow(_ example: SQWorkoutPremiumInsightDetailModel.Example) -> some View {
-        HStack(alignment: .top, spacing: .SQSpace.m) {
-            Text(example.range)
-                .sqFont(.bodySmallSemiBold)
-                .sqForegroundColor(.dashboardGlowBlue)
-                .frame(width: 68, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                Text(example.title)
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                Text(example.range)
                     .sqFont(.bodySmallSemiBold)
                     .sqForegroundColor(.textPrimary)
 
-                Text(example.detail)
+                Spacer(minLength: 0)
+
+                Text(example.title)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            Text(example.detail)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, .SQSpace.xs)
     }
 
-    private func footnoteCard(_ footnote: String) -> some View {
+    private func noteCard(_ footnote: String) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             Text("Note")
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqFont(.title4)
+                .sqForegroundColor(.textPrimary)
 
             Text(footnote)
                 .sqFont(.bodyExtraSmall)
@@ -212,7 +133,108 @@ struct SQWorkoutInsightDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.SQSpace.l)
+        .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private var overallComponent: SQWorkoutPremiumInsightDetailModel.Component? {
+        controller.model.components.first(where: { $0.id == "overall" || $0.id == "overall-difficulty" })
+            ?? controller.model.components.first
+    }
+
+    private var breakdownComponents: [SQWorkoutPremiumInsightDetailModel.Component] {
+        let overallId = overallComponent?.id
+        return controller.model.components.filter { $0.id != overallId }
+    }
+
+    private var displayScoreText: String {
+        overallComponent?.value ?? "--/100"
+    }
+
+    private var scoreValue: Int? {
+        guard let numericText = displayScoreText.split(separator: "/").first else { return nil }
+        return Int(numericText)
+    }
+
+    private var scoreStateTitle: String {
+        guard let scoreValue else { return "Locked" }
+        switch scoreValue {
+        case 85...:
+            return "Strong"
+        case 70...84:
+            return "Good"
+        case 50...69:
+            return "Mixed"
+        default:
+            return "Low"
+        }
+    }
+
+    private func componentCard(_ component: SQWorkoutPremiumInsightDetailModel.Component) -> some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            HStack(alignment: .top, spacing: .SQSpace.s) {
+                Circle()
+                    .fill(component.accentColor.color)
+                    .frame(width: 10, height: 10)
+                    .padding(.top, 4)
+
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                        Text(component.title)
+                            .sqFont(.bodySmallSemiBold)
+                            .sqForegroundColor(.textPrimary)
+
+                        Spacer(minLength: 0)
+
+                        Text(component.value)
+                            .sqFont(.title4)
+                            .sqForegroundColor(.textPrimary)
+                    }
+
+                    Text(component.detail)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !component.definitionLines.isEmpty {
+                        WorkoutScoreDefinitionLinesView(lines: component.definitionLines)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.98))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(component.accentColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.16), lineWidth: 1)
+                }
+        }
+    }
+}
+
+private struct WorkoutScoreDefinitionLinesView: View {
+    let lines: [SQWorkoutPremiumInsightDetailModel.DefinitionLine]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            ForEach(lines) { line in
+                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                    Text(line.valueText)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textSecondary)
+
+                    Text(line.summaryText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding(.top, .SQSpace.xs)
     }
 }
