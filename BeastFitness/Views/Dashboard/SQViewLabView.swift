@@ -621,23 +621,23 @@ struct SQViewLabView: View {
 
             outputGroup(
                 title: "State",
-                values: report.stateDistribution.prefix(5).map(distributionText)
+                values: report.stateDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Hero Summaries",
-                values: report.heroSummaryDistribution.prefix(5).map(distributionText)
+                values: report.heroSummaryDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Hero Actions",
-                values: report.heroActionDistribution.prefix(5).map(distributionText)
+                values: report.heroActionDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Hero Families",
-                values: report.heroFamilyDistribution.prefix(5).map(distributionText)
+                values: report.heroFamilyDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Surfaced Insights",
-                values: report.surfacedInsightDistribution.prefix(5).map(distributionText)
+                values: report.surfacedInsightDistribution.map(distributionText)
             )
         }
         .padding(.SQSpace.l)

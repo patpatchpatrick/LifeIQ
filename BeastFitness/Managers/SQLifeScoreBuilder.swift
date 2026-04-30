@@ -142,10 +142,18 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             components: components
         )
-        let headlineText = lifeScoreHeadlineText(
+        let headlineText = lifeScoreHeroSummaryText(
+            state: state,
             components: components,
             previousComponents: previousComponents,
-            totalWeight: totalWeight
+            totalWeight: totalWeight,
+            referenceDate: intelligenceInput.referenceDate
+        )
+        let heroAction = lifeScoreHeroAction(
+            fallbackActions: alignedActions,
+            state: state,
+            components: components,
+            referenceDate: intelligenceInput.referenceDate
         )
         let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
 
@@ -174,22 +182,28 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
                 drivers: input.insightsResult.drivers
             ),
             changes: Array(input.insightsResult.changes.prefix(2)),
-            actions: alignedActions,
+            actions: heroAction.map { [$0] } ?? alignedActions,
             availableWeight: totalWeight
         )
     }
 }
 
 private extension SQLifeScoreBuilder {
-    func lifeScoreHeadlineText(
+    func lifeScoreHeroSummaryText(
+        state: SQLifeScoreState,
         components: [SQLifeScoreComponent],
         previousComponents: [SQLifeScoreComponent],
-        totalWeight: Double
+        totalWeight: Double,
+        referenceDate: Date
     ) -> String? {
-        guard totalWeight > 0 else { return nil }
+        guard totalWeight > 0 else {
+            return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+        }
 
         let previousTotalWeight = previousComponents.reduce(0) { $0 + $1.weight }
-        guard previousTotalWeight > 0 else { return nil }
+        guard previousTotalWeight > 0 else {
+            return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+        }
 
         let previousComponentsById = Dictionary(uniqueKeysWithValues: previousComponents.map { ($0.id, $0) })
         let componentImpacts = components.compactMap { component -> (component: SQLifeScoreComponent, delta: Double)? in
@@ -202,19 +216,52 @@ private extension SQLifeScoreBuilder {
         if let strongestDrop = componentImpacts
             .filter({ $0.delta <= -10 })
             .min(by: { $0.delta < $1.delta }) {
-            return componentDropHeadlineText(for: strongestDrop.component)
+            return componentDropHeadlineText(
+                for: strongestDrop.component,
+                state: state
+            )
         }
 
-        guard let strongestLift = componentImpacts
+        if shouldSurfaceLiftHeadline(for: state),
+           let strongestLift = componentImpacts
             .filter({ $0.delta >= 10 })
-            .max(by: { $0.delta < $1.delta }) else {
-            return nil
+            .max(by: { $0.delta < $1.delta }) {
+            return componentLiftHeadlineText(
+                for: strongestLift.component,
+                state: state,
+                referenceDate: referenceDate
+            )
         }
 
-        return componentLiftHeadlineText(for: strongestLift.component)
+        return stateHeroSummaryText(for: state, referenceDate: referenceDate)
     }
 
-    func componentDropHeadlineText(for component: SQLifeScoreComponent) -> String {
+    func shouldSurfaceLiftHeadline(for state: SQLifeScoreState) -> Bool {
+        switch state {
+        case .strong, .primed, .rebounding, .balanced:
+            return true
+        case .slightlyOff, .dipping, .underPressure, .calibrating:
+            return false
+        }
+    }
+
+    func componentDropHeadlineText(
+        for component: SQLifeScoreComponent,
+        state: SQLifeScoreState
+    ) -> String {
+        if state == .strong || state == .primed {
+            switch component.id {
+            case "sleep":
+                return "Sleep took a hit, but you're still in a good position today."
+            case "heart":
+                return "Recovery dipped, but the day still has enough support."
+            case "workouts":
+                return "Training strain is up, but you're still holding a solid baseline."
+            default:
+                return "\(component.title) is off, but the overall day still looks solid."
+            }
+        }
+
         switch component.id {
         case "sleep":
             if component.score < 55 {
@@ -235,20 +282,361 @@ private extension SQLifeScoreBuilder {
         }
     }
 
-    func componentLiftHeadlineText(for component: SQLifeScoreComponent) -> String {
+    func componentLiftHeadlineText(
+        for component: SQLifeScoreComponent,
+        state: SQLifeScoreState,
+        referenceDate: Date
+    ) -> String {
+        if state == .balanced {
+            return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+        }
+
         switch component.id {
         case "sleep":
-            return "Sleep looks stronger today, and it's helping your Life Score."
+            return "Sleep is giving you a better base today."
         case "heart":
-            return "Recovery signals look stronger today, and they're helping your Life Score."
+            return "Recovery signals are giving you a better base today."
         case "habits":
-            return "Recent habits look more aligned today, and they're helping your Life Score."
+            return "Your recent habits are giving the day some momentum."
         case "workouts":
-            return "Recent training looks easier to absorb today, and it's helping your Life Score."
+            return "Training looks easier to absorb today."
         case "consistency":
             return "Your recent check-ins are helping LifeIQ understand today more clearly."
         default:
-            return "\(component.title) looks stronger today, and it's helping your Life Score."
+            return "\(component.title) is giving the day some momentum."
+        }
+    }
+
+    func stateHeroSummaryText(for state: SQLifeScoreState, referenceDate: Date) -> String {
+        let options: [String]
+        switch state {
+        case .strong:
+            options = [
+                "You're in a strong position today.",
+                "Everything is lining up for a good day.",
+                "You're well recovered and ready to go.",
+                "You're in one of your better windows right now.",
+                "Your body is in a good place today."
+            ]
+        case .primed:
+            options = [
+                "You're primed for a solid day.",
+                "You've got good momentum today.",
+                "This is a good window to get things done.",
+                "You're set up to perform today.",
+                "Energy and motivation are working in your favor."
+            ]
+        case .balanced:
+            options = [
+                "Things look steady today.",
+                "You're in a decent rhythm.",
+                "Today is fairly neutral.",
+                "You're holding a stable baseline.",
+                "Nothing is off, but nothing is pushing you forward either."
+            ]
+        case .rebounding:
+            options = [
+                "You're trending in the right direction.",
+                "Things are improving today.",
+                "You're bouncing back from a rougher stretch.",
+                "Recovery is moving back up.",
+                "You're regaining momentum."
+            ]
+        case .slightlyOff:
+            options = [
+                "One or two things are slightly off today.",
+                "The day may feel a bit uneven.",
+                "You're mostly fine, but not at your best.",
+                "There's a small drag on the day.",
+                "You might feel a bit off compared to normal."
+            ]
+        case .dipping:
+            options = [
+                "You're starting to trend downward.",
+                "Things are slipping compared to yesterday.",
+                "The day is losing momentum.",
+                "You're trending in the wrong direction.",
+                "Recovery and performance are dipping."
+            ]
+        case .underPressure:
+            options = [
+                "The day is working against you a bit.",
+                "Recovery is falling behind today.",
+                "You're carrying more strain than usual.",
+                "This is a lower-quality day overall.",
+                "Several signals are dragging you down."
+            ]
+        case .calibrating:
+            options = [
+                "LifeIQ needs a little more data to read the day clearly.",
+                "There isn't enough signal yet to make this fully personal.",
+                "The day is still calibrating."
+            ]
+        }
+
+        return deterministicOption(
+            from: options,
+            referenceDate: referenceDate,
+            salt: stateVariationSalt(for: state)
+        )
+    }
+
+    func lifeScoreHeroAction(
+        fallbackActions: [SQInsightAction],
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        referenceDate: Date
+    ) -> SQInsightAction? {
+        guard state != .calibrating else { return fallbackActions.first }
+
+        let summary = contextualLifeScoreActionSummary(
+            state: state,
+            components: components,
+            referenceDate: referenceDate
+        ) ?? stateHeroActionSummary(for: state, referenceDate: referenceDate)
+        let tone = lifeScoreActionTone(for: state)
+
+        return .init(
+            id: "life-score-action-\(lifeScoreActionIdSuffix(for: state, referenceDate: referenceDate))",
+            title: lifeScoreActionTitle(for: state),
+            summary: summary,
+            context: nil,
+            tone: tone,
+            rankingScore: (fallbackActions.first?.rankingScore ?? 0) + 1
+        )
+    }
+
+    func contextualLifeScoreActionSummary(
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        referenceDate: Date
+    ) -> String? {
+        switch state {
+        case .slightlyOff, .dipping, .underPressure:
+            break
+        case .strong, .primed, .balanced, .rebounding, .calibrating:
+            return nil
+        }
+
+        let lowComponents = components
+            .filter { component in
+                switch component.id {
+                case "sleep":
+                    return component.score < 72
+                case "heart":
+                    return component.score < 65
+                case "habits", "workouts":
+                    return component.score < 60
+                case "consistency":
+                    return component.score < 50
+                default:
+                    return component.score < 60
+                }
+            }
+            .sorted { $0.score < $1.score }
+
+        guard let lowestComponent = lowComponents.first else { return nil }
+
+        let options: [String]
+        switch lowestComponent.id {
+        case "sleep":
+            options = [
+                "Prioritize quality sleep tonight and keep workouts lighter today.",
+                "Make sleep the priority tonight; keep training easy today.",
+                "Keep workouts lighter today and give sleep a chance to rebound tonight."
+            ]
+        case "heart":
+            options = [
+                "Keep workouts lighter today while recovery settles.",
+                "Pull back on intensity until recovery looks steadier.",
+                "Protect recovery today before adding more strain."
+            ]
+        case "habits":
+            options = [
+                "Tighten the basics today and avoid adding extra drag.",
+                "Keep the day simple and make the next healthy choice obvious.",
+                "Clean up the easy levers before chasing intensity."
+            ]
+        case "workouts":
+            options = [
+                "Pull back on intensity and let recent training absorb.",
+                "Make today more about recovery than output.",
+                "Choose easier work over another hard push."
+            ]
+        case "consistency":
+            options = [
+                "Complete a check-in so LifeIQ can read the day more clearly.",
+                "Log the basics today so the score has a cleaner signal.",
+                "Give LifeIQ a fresh check-in before reading too much into the score."
+            ]
+        default:
+            return nil
+        }
+
+        return deterministicOption(
+            from: options,
+            referenceDate: referenceDate,
+            salt: componentVariationSalt(for: lowestComponent.id)
+        )
+    }
+
+    func stateHeroActionSummary(for state: SQLifeScoreState, referenceDate: Date) -> String {
+        let options: [String]
+        switch state {
+        case .strong:
+            options = [
+                "Push training today if you want.",
+                "Go for a harder session if it fits your plan.",
+                "Use this window for a strong workout.",
+                "Take advantage of the momentum today.",
+                "Lean into intensity while it's there."
+            ]
+        case .primed:
+            options = [
+                "Use the energy for something meaningful.",
+                "Push where it matters most.",
+                "Take on something that requires focus or effort.",
+                "Channel this into a strong session or task.",
+                "Make the most of this window."
+            ]
+        case .balanced:
+            options = [
+                "Stay consistent and keep effort moderate.",
+                "Stick to your plan without overreaching.",
+                "Keep things moderate.",
+                "Don't overreach; just execute.",
+                "Maintain your current rhythm."
+            ]
+        case .rebounding:
+            options = [
+                "Keep this rebound going.",
+                "Build on the rebound, but don't rush it.",
+                "Stay steady and let it compound.",
+                "Keep doing what is working and let it build.",
+                "Let the improvement stabilize before pushing harder."
+            ]
+        case .slightlyOff:
+            options = [
+                "Keep effort moderate today.",
+                "Be more intentional with your energy.",
+                "Avoid pushing too hard.",
+                "Focus on doing things well, not hard.",
+                "Adjust expectations slightly."
+            ]
+        case .dipping:
+            options = [
+                "Keep strain moderate today.",
+                "Protect recovery before things slide further.",
+                "Pull things back slightly.",
+                "Stabilize before pushing again.",
+                "Don't let the dip turn into a slide."
+            ]
+        case .underPressure:
+            options = [
+                "Make recovery the priority today.",
+                "Keep things light and low stress.",
+                "Pull back on intensity.",
+                "Focus on rest and reset.",
+                "Avoid adding extra strain today."
+            ]
+        case .calibrating:
+            options = [
+                "Complete a check-in to make this more personal.",
+                "Log the basics so LifeIQ can calibrate.",
+                "Add today's signals before reading too much into the score."
+            ]
+        }
+
+        return deterministicOption(
+            from: options,
+            referenceDate: referenceDate,
+            salt: stateVariationSalt(for: state) + 41
+        )
+    }
+
+    func lifeScoreActionTone(for state: SQLifeScoreState) -> SQInsightActionTone {
+        switch state {
+        case .strong, .primed, .balanced, .rebounding:
+            return .maintain
+        case .slightlyOff:
+            return .improve
+        case .dipping, .underPressure, .calibrating:
+            return .caution
+        }
+    }
+
+    func lifeScoreActionTitle(for state: SQLifeScoreState) -> String {
+        switch state {
+        case .strong, .primed:
+            return "Use The Window"
+        case .balanced, .rebounding:
+            return "Best Move Today"
+        case .slightlyOff:
+            return "Adjust Today"
+        case .dipping, .underPressure:
+            return "Watch Today"
+        case .calibrating:
+            return "Next Step"
+        }
+    }
+
+    func lifeScoreActionIdSuffix(for state: SQLifeScoreState, referenceDate: Date) -> String {
+        let dayIndex = dayVariationIndex(for: referenceDate)
+        return "\(state.title.lowercased().replacingOccurrences(of: " ", with: "-"))-\(dayIndex)"
+    }
+
+    func deterministicOption(
+        from options: [String],
+        referenceDate: Date,
+        salt: Int
+    ) -> String {
+        guard !options.isEmpty else { return "" }
+
+        let rawIndex = dayVariationIndex(for: referenceDate) + salt
+        let index = ((rawIndex % options.count) + options.count) % options.count
+        return options[index]
+    }
+
+    func dayVariationIndex(for referenceDate: Date) -> Int {
+        Calendar.current.ordinality(of: .day, in: .era, for: referenceDate)
+            ?? Int(referenceDate.timeIntervalSinceReferenceDate / 86_400)
+    }
+
+    func stateVariationSalt(for state: SQLifeScoreState) -> Int {
+        switch state {
+        case .strong:
+            return 3
+        case .primed:
+            return 11
+        case .balanced:
+            return 17
+        case .rebounding:
+            return 23
+        case .slightlyOff:
+            return 31
+        case .dipping:
+            return 37
+        case .underPressure:
+            return 43
+        case .calibrating:
+            return 47
+        }
+    }
+
+    func componentVariationSalt(for componentId: String) -> Int {
+        switch componentId {
+        case "sleep":
+            return 5
+        case "heart":
+            return 13
+        case "habits":
+            return 19
+        case "workouts":
+            return 29
+        case "consistency":
+            return 53
+        default:
+            return 59
         }
     }
 

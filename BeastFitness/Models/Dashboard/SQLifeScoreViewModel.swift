@@ -105,19 +105,19 @@ enum SQLifeScoreState {
     var summary: String {
         switch self {
         case .strong:
-            return "Your recent sleep, recovery, and habit signals are lining up cleanly."
+            return "You're in a strong position today."
         case .primed:
-            return "A solid recovery base is setting the day up well."
+            return "You're primed for a solid day."
         case .balanced:
-            return "The overall picture looks steady, without a strong lift or drag."
+            return "Things look steady today."
         case .rebounding:
-            return "The score is recovering after a softer stretch and looks to be moving the right way."
+            return "You're trending in the right direction."
         case .slightlyOff:
-            return "The day still has enough support, but one or two signals are slipping."
+            return "One or two things are slightly off today."
         case .dipping:
-            return "Recent drag is pulling the day down more than usual."
+            return "Things are slipping compared to yesterday."
         case .underPressure:
-            return "Recovery or stress signals are weighing on the day enough to show up clearly."
+            return "The day is working against you a bit."
         case .calibrating:
             return "There isn't enough signal yet to make this feel fully personalized."
         }
@@ -151,7 +151,7 @@ struct SQLifeScoreViewModel {
             title: "Sleep is helping, but strain is starting to build",
             summary: "Sleep is helping, but strain is starting to build.",
             evidenceText: "",
-            actionText: "Keep training moderate today.",
+            actionText: "Keep effort moderate today.",
             driverText: "Sleep",
             outcomeText: "Recovery",
             deltaText: "+0.8",

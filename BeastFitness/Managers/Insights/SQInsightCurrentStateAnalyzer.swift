@@ -287,14 +287,120 @@ struct SQInsightCurrentStateAnalyzer {
         switch relationship.insightClass {
         case .opportunity:
             return usesSecondarySignal
-                ? "\(inputTitle) and \(outputTitle) are lining up today"
-                : "\(inputTitle) is helping today"
+                ? pairedCurrentStateTitle(
+                    direction: .supportive,
+                    inputSignalId: relationship.inputSignalId,
+                    outputSignalId: relationship.outputSignalId
+                )
+                : supportiveCurrentStateTitle(
+                    signalId: relationship.inputSignalId,
+                    displayTitle: inputTitle
+                )
         case .risk:
             return usesSecondarySignal
-                ? "\(inputTitle) and \(outputTitle) are both under pressure today"
-                : "\(inputTitle) is under pressure today"
+                ? pairedCurrentStateTitle(
+                    direction: .drag,
+                    inputSignalId: relationship.inputSignalId,
+                    outputSignalId: relationship.outputSignalId
+                )
+                : dragCurrentStateTitle(
+                    signalId: relationship.inputSignalId,
+                    displayTitle: inputTitle
+                )
         default:
             return "\(inputTitle) stands out today"
+        }
+    }
+
+    private func pairedCurrentStateTitle(
+        direction: SQInsightDriverDirection,
+        inputSignalId: String,
+        outputSignalId: String
+    ) -> String {
+        let signalIds = Set([inputSignalId, outputSignalId])
+
+        switch direction {
+        case .supportive:
+            if signalIds.contains(SQMetricId.sleepQuality)
+                || signalIds.contains(SQMetricId.sleepHours)
+                || signalIds.contains(SQInsightAnalysisMetricId.restingHeartRate) {
+                return "You're well recovered today"
+            }
+
+            if signalIds.contains(SQMetricId.stress) || signalIds.contains(SQMetricId.anxiety) {
+                return "The day should feel relatively smooth"
+            }
+
+            if signalIds.contains(SQMetricId.soreness)
+                || signalIds.contains(SQInsightAnalysisMetricId.workoutDifficulty)
+                || signalIds.contains(SQInsightAnalysisMetricId.workoutPerformance) {
+                return "You're in a good position to train today"
+            }
+
+            return "Things are lining up for a solid day"
+        case .drag:
+            if signalIds.contains(SQMetricId.sleepQuality) || signalIds.contains(SQMetricId.sleepHours) {
+                return "Poor sleep is dragging you down today"
+            }
+
+            if signalIds.contains(SQMetricId.stress) || signalIds.contains(SQMetricId.anxiety) {
+                return "The day may feel heavier than usual"
+            }
+
+            if signalIds.contains(SQMetricId.soreness)
+                || signalIds.contains(SQInsightAnalysisMetricId.workoutDifficulty) {
+                return "Your body may need more recovery today"
+            }
+
+            return "Several signals are dragging you down"
+        }
+    }
+
+    private func supportiveCurrentStateTitle(
+        signalId: String,
+        displayTitle: String
+    ) -> String {
+        switch signalId {
+        case SQMetricId.sleepQuality, SQMetricId.sleepHours, SQInsightAnalysisMetricId.restingHeartRate:
+            return "You're well recovered today"
+        case SQMetricId.stress, SQMetricId.anxiety:
+            return "The day should feel relatively smooth"
+        case SQMetricId.soreness:
+            return "Your body looks ready to handle more"
+        case SQInsightAnalysisMetricId.workoutDifficulty, SQInsightAnalysisMetricId.workoutPerformance:
+            return "You're in a good position to train today"
+        case SQMetricId.energy, SQMetricId.motivation:
+            return "You've got good momentum today"
+        case SQMetricId.mentalClarity:
+            return "You have a good window for focused work"
+        default:
+            return "\(displayTitle) is working in your favor"
+        }
+    }
+
+    private func dragCurrentStateTitle(
+        signalId: String,
+        displayTitle: String
+    ) -> String {
+        switch signalId {
+        case SQMetricId.sleepQuality, SQMetricId.sleepHours:
+            return "Poor sleep is dragging you down today"
+        case SQInsightAnalysisMetricId.restingHeartRate:
+            return "Recovery isn't fully keeping up"
+        case SQMetricId.stress, SQMetricId.anxiety:
+            return "The day may feel heavier than usual"
+        case SQMetricId.soreness:
+            return "Your body may need more recovery today"
+        case SQInsightAnalysisMetricId.workoutDifficulty:
+            return "Training load is catching up with you"
+        case SQInsightAnalysisMetricId.workoutPerformance:
+            return "Performance may feel harder to access today"
+        case SQMetricId.energy, SQMetricId.motivation:
+            return "Momentum may be harder to find today"
+        case SQMetricId.mentalClarity:
+            return "Focus may take more effort today"
+        default:
+            return "\(displayTitle) is working against you today"
         }
     }
 

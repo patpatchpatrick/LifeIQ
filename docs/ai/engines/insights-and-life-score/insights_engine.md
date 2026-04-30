@@ -94,6 +94,10 @@ The current-state analyzer is allowed to evaluate either:
 
 `SQInsightsResult` also now carries curated `actions`, which are intended to back the lightweight `What To Do` surface in the eventual `Today` dashboard and any orb/detail explanation surfaces that need one recommended next move.
 
+`Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
+
+`Today` actions should be concrete decisions, not generic advice. Positive training-readiness actions can rotate across a small stable library, while caution actions should say whether to moderate effort, recover, or adjust a specific habit.
+
 `Today` surfacing should not show habit/vice relationship, trend, baseline, or follow-up insights just because the historical pattern is true. For stale-sensitive signals such as alcohol, caffeine, weed, nicotine, and porn, the latest value needs to be fresh and non-zero to be treated as currently relevant.
 
 `Today` surfacing now also has a first-pass novelty layer in the surfacing step:

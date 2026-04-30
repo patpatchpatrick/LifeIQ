@@ -436,7 +436,7 @@ struct SQInsightRelationshipRegistry {
             recentWindowDayCount: 1,
             baselineWindowDayCount: 14,
             expectedEffect: .positive,
-            driverText: "Sleep quality is helping today",
+            driverText: "Sleep quality",
             outcomeText: "Recovery Tailwind",
             strongActionText: "Sleep quality looks better than usual. This is a good day to take advantage of that recovery if the rest of the signals cooperate."
         ),
@@ -521,7 +521,7 @@ struct SQInsightRelationshipRegistry {
             recentWindowDayCount: 1,
             baselineWindowDayCount: 14,
             expectedEffect: .positive,
-            driverText: "Energy is under pressure today",
+            driverText: "Lower energy",
             outcomeText: "Low Reserve",
             strongActionText: "Energy is below your usual range today. Protect the basics and avoid making the day harder than it needs to be."
         ),

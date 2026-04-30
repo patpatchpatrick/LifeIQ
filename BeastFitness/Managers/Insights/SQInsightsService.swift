@@ -1300,7 +1300,7 @@ final class SQInsightsService: SQInsightsServicing {
             title: title,
             summary: summary,
             evidenceText: selectedDrivers.map(\.summary).joined(separator: " "),
-            actionText: selectedDirection == .supportive ? "Good day to push training." : "Protect recovery today.",
+            actionText: selectedDirection == .supportive ? "Use this window for a strong workout." : "Make recovery the priority today.",
             driverText: primaryTheme.displayTitle,
             outcomeText: "today",
             deltaText: primaryDriver.deltaText,
@@ -1547,35 +1547,43 @@ final class SQInsightsService: SQInsightsServicing {
         if let secondaryTheme {
             switch (direction, primaryTheme.key, secondaryTheme.key) {
             case (.drag, "stress", "anxiety"), (.drag, "anxiety", "stress"):
-                return "Stress and anxiety are driving the day"
+                return "The day may feel heavier than usual"
             case (.supportive, "sleep", "recovery"), (.supportive, "recovery", "sleep"):
-                return "Sleep and recovery are helping today"
+                return "You're well recovered today"
+            case (.supportive, "stress", "anxiety"), (.supportive, "anxiety", "stress"):
+                return "The day should feel relatively smooth"
+            case (.supportive, "soreness", "strain"), (.supportive, "strain", "soreness"):
+                return "You're in a good position to train today"
             default:
-                let verb = direction == .supportive ? "are helping today" : "are under pressure today"
-                return "\(primaryTheme.displayTitle) and \(secondaryTheme.displayTitle.lowercased()) \(verb)"
+                return direction == .supportive
+                    ? "Things are lining up for a solid day"
+                    : "Several signals are dragging you down"
             }
         }
 
         switch (direction, primaryTheme.key) {
         case (.supportive, "stress"):
-            return "Stress looks manageable today"
+            return "The day should feel relatively smooth"
         case (.supportive, "anxiety"):
-            return "Anxiety looks manageable today"
+            return "The day should feel relatively smooth"
         case (.supportive, "soreness"):
-            return "Soreness looks manageable today"
+            return "Your body looks ready to handle more"
         case (.supportive, "strain"):
-            return "Training load looks manageable today"
+            return "You're in a good position to train today"
+        case (.supportive, "sleep"), (.supportive, "recovery"):
+            return "You're well recovered today"
         case (.drag, "stress"):
-            return "Stress is weighing on the day"
+            return "The day may feel heavier than usual"
         case (.drag, "anxiety"):
-            return "Anxiety is weighing on the day"
+            return "The day may feel heavier than usual"
         case (.drag, "strain"):
             return "Training load is catching up with you"
         case (.drag, "recovery"):
-            return "Recovery is under pressure today"
+            return "Recovery isn't fully keeping up"
         default:
-            let verb = direction == .supportive ? "is helping today" : "is under pressure today"
-            return "\(primaryTheme.displayTitle) \(verb)"
+            return direction == .supportive
+                ? "You're in a good position today"
+                : "Some signals are starting to slip"
         }
     }
 

@@ -86,11 +86,15 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("resting hr") || driver.contains("resting hr") || title.contains("resting heart") || driver.contains("resting heart") {
-            return insight.effect == .positive ? "Good day to push training." : "Keep strain moderate today."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Keep strain moderate today."
         }
 
         if title.contains("soreness") || driver.contains("soreness") {
-            return insight.effect == .positive ? "Good day to push training." : "Favor recovery over intensity today."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Favor recovery over intensity today."
         }
 
         if title.contains("mental clarity") || driver.contains("mental clarity") || title.contains("clarity") {
@@ -98,7 +102,9 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("motivation") || driver.contains("motivation") {
-            return insight.effect == .positive ? "Good day to push training." : "Keep the day simple and lower friction."
+            return insight.effect == .positive
+                ? "Use the motivation for something that matters."
+                : "Keep the day simple and lower friction."
         }
 
         if title.contains("strain") || driver.contains("strain") {
@@ -106,7 +112,9 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("sleep") || driver.contains("sleep") {
-            return insight.effect == .positive ? "Good day to push training." : "Protect sleep tonight."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Protect sleep tonight."
         }
 
         if title.contains("alcohol") || driver.contains("alcohol") {
@@ -122,15 +130,21 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         }
 
         if title.contains("difficulty") || driver.contains("difficulty") {
-            return insight.effect == .positive ? "Good day to push training." : "Favor an easier session today."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Favor an easier session today."
         }
 
         if title.contains("workout") || title.contains("performance") || outcome.contains("performance") {
-            return insight.effect == .positive ? "Good day to push training." : "Watch strain today."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Watch strain today."
         }
 
         if title.contains("recovery") || title.contains("energy") || driver.contains("recovery") {
-            return insight.effect == .positive ? "Good day to push training." : "Keep strain moderate."
+            return insight.effect == .positive
+                ? positiveTrainingAction(for: insight)
+                : "Keep strain moderate."
         }
 
         let cleaned = insight.actionText
@@ -144,7 +158,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
         if normalized == "keep it steady." || normalized == "keep going." || normalized == "keep this going." {
             switch insight.effect {
             case .positive:
-                return "Good day to push training."
+                return positiveTrainingAction(for: insight)
             case .negative:
                 return "Keep strain moderate."
             case .neutral:
@@ -169,7 +183,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
 
         if outputSignalId == SQInsightAnalysisMetricId.workoutPerformance {
             return insight.effect == .positive
-                ? "Good day to push training."
+                ? positiveTrainingAction(for: insight)
                 : "Keep workouts lighter today and focus on recovery tonight."
         }
 
@@ -197,8 +211,8 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQMetricId.sleepHours, SQMetricId.sleepQuality:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
@@ -206,8 +220,8 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQMetricId.energy, SQMetricId.motivation:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
@@ -222,7 +236,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                     : "Lower extra drains today."
             default:
                 return insight.effect == .positive
-                    ? "Good day to push training."
+                    ? positiveTrainingAction(for: insight)
                     : "Protect recovery today."
             }
 
@@ -263,8 +277,8 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQMetricId.sleepHours, SQMetricId.sleepQuality, SQMetricId.energy:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
@@ -272,8 +286,8 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQInsightAnalysisMetricId.restingHeartRate:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
@@ -284,7 +298,7 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                 return "Favor recovery over intensity today."
             default:
                 return insight.effect == .positive
-                    ? "Use the recovery window well."
+                    ? "Use the recovery window for something that matters."
                     : "Protect recovery today."
             }
 
@@ -293,8 +307,8 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQMetricId.energy, SQMetricId.motivation, SQMetricId.sleepHours, SQMetricId.sleepQuality:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
@@ -302,19 +316,19 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
             case SQInsightAnalysisMetricId.restingHeartRate:
                 return insight.effect == .positive
                     ? trainingReadinessAction(
-                        fallbackPositive: "Good day to push harder.",
-                        fallbackCaution: "Keep training moderate today.",
+                        fallbackPositive: positiveTrainingAction(for: insight),
+                        fallbackCaution: moderateTrainingAction(for: insight),
                         drivers: drivers,
                         changes: changes
                     )
                     : "Keep workouts lighter today while recovery settles."
             case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
                 return insight.effect == .positive
-                    ? "Good day to push training."
+                    ? positiveTrainingAction(for: insight)
                     : "Favor recovery or easier work over intensity today."
             default:
                 return insight.effect == .positive
-                    ? "Good day to push training."
+                    ? positiveTrainingAction(for: insight)
                     : "Keep strain moderate today."
             }
 
@@ -334,6 +348,41 @@ struct SQInsightActionBuilder: SQInsightActionBuilding {
                 return "Keep the change steady and compare the next few days."
             }
         }
+    }
+
+    private func positiveTrainingAction(for insight: SQInsight) -> String {
+        stableOption(
+            from: [
+                "Push training today if you want.",
+                "Go for a harder session if it fits your plan.",
+                "Use this window for a strong workout.",
+                "Take advantage of the momentum today.",
+                "Lean into intensity while it is there."
+            ],
+            key: insight.id
+        )
+    }
+
+    private func moderateTrainingAction(for insight: SQInsight) -> String {
+        stableOption(
+            from: [
+                "Stick to moderate effort today.",
+                "Keep the session controlled today.",
+                "Stay consistent without overreaching.",
+                "Do the work, but leave some margin.",
+                "Keep intensity in check today."
+            ],
+            key: insight.id
+        )
+    }
+
+    private func stableOption(from options: [String], key: String) -> String {
+        guard !options.isEmpty else { return "" }
+
+        let hash = key.unicodeScalars.reduce(UInt64(5_381)) { partialResult, scalar in
+            ((partialResult << 5) &+ partialResult) &+ UInt64(scalar.value)
+        }
+        return options[Int(hash % UInt64(options.count))]
     }
 
     private func trainingReadinessAction(
