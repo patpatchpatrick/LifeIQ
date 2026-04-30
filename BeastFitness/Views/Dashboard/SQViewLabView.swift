@@ -32,6 +32,47 @@ struct SQViewLabView: View {
         .background {
             SQSheetBackground()
         }
+        .sheet(
+            isPresented: .init(
+                get: { controller.auditPreviewMarkdown != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        controller.clearAuditPreview()
+                    }
+                }
+            )
+        ) {
+            NavigationStack {
+                ScrollView {
+                    Text(controller.auditPreviewMarkdown ?? "")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, .SQSpace.l)
+                        .padding(.top, .SQSpace.l)
+                        .padding(.bottom, .SQSpace.xl)
+                }
+                .background {
+                    SQSheetBackground()
+                }
+                .navigationTitle("Scenario Audit")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close") {
+                            controller.clearAuditPreview()
+                        }
+                    }
+
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Copy") {
+                            controller.copyAuditPreview()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private var header: some View {
@@ -63,6 +104,42 @@ struct SQViewLabView: View {
                     }
                 }
                 .pickerStyle(.menu)
+            }
+
+            auditControls
+        }
+    }
+
+    private var auditControls: some View {
+        HStack(spacing: .SQSpace.s) {
+            Button {
+                controller.previewDomainAudit()
+            } label: {
+                Text("Preview Audit")
+                    .sqFont(SQFont.FontType.bodyExtraSmall)
+                    .sqForegroundColor(.dashboardGlowBlue)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, .SQSpace.s)
+            }
+            .buttonStyle(.plain)
+            .background {
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+            }
+
+            Button {
+                controller.copyDomainAudit()
+            } label: {
+                Text("Copy Audit")
+                    .sqFont(SQFont.FontType.bodyExtraSmall)
+                    .sqForegroundColor(.dashboardGlowBlue)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, .SQSpace.s)
+            }
+            .buttonStyle(.plain)
+            .background {
+                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                    .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
             }
         }
     }
@@ -160,6 +237,38 @@ struct SQViewLabView: View {
             if let runtime = controller.selectedScenarioRuntime {
                 preview(for: scenario, runtime: runtime, isFocused: true)
                 engineInspector(for: runtime)
+            }
+
+            HStack(spacing: .SQSpace.s) {
+                Button {
+                    controller.previewSelectedScenarioAudit()
+                } label: {
+                    Text("Preview Scenario Audit")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .SQSpace.s)
+                }
+                .buttonStyle(.plain)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+                }
+
+                Button {
+                    controller.copyDomainAudit()
+                } label: {
+                    Text("Copy Full Audit")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.dashboardGlowBlue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .SQSpace.s)
+                }
+                .buttonStyle(.plain)
+                .background {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.52 : 0.72))
+                }
             }
 
             if !scenario.notes.isEmpty {

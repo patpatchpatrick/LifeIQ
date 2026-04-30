@@ -7,6 +7,7 @@
 
 import Foundation
 import HealthKit
+import UIKit
 
 @MainActor
 @Observable final class SQViewLabController: Identifiable {
@@ -48,6 +49,7 @@ import HealthKit
     private let hub: EventHub
     private let scenarioRunner: SQViewLabScenarioRunning
     @ObservationIgnored private var runtimeCache = [String: SQViewLabScenarioRuntime]()
+    var auditPreviewMarkdown: String?
 
     var selectedMode: Mode = .gallery
     var selectedDomain: Domain = .lifeScoreInsights {
@@ -112,6 +114,269 @@ import HealthKit
         switch runtime.content {
         case .lifeScoreInsights(let content):
             hub.domainEvents.send(.pushDashboardRoute(.lifeScoreDetail(controller: .init(viewModel: content.lifeScoreViewModel))))
+        }
+    }
+
+    func previewDomainAudit() {
+        auditPreviewMarkdown = auditMarkdown(for: currentScenarios)
+    }
+
+    func previewSelectedScenarioAudit() {
+        guard let selectedScenario else { return }
+        auditPreviewMarkdown = auditMarkdown(for: [selectedScenario])
+    }
+
+    func clearAuditPreview() {
+        auditPreviewMarkdown = nil
+    }
+
+    func copyDomainAudit() {
+        let markdown = auditMarkdown(for: currentScenarios)
+        UIPasteboard.general.string = markdown
+        hub.toastEvents.send(.present(.init(title: "Scenario audit copied", style: .success)))
+    }
+
+    func copyAuditPreview() {
+        guard let auditPreviewMarkdown else { return }
+        UIPasteboard.general.string = auditPreviewMarkdown
+        hub.toastEvents.send(.present(.init(title: "Audit copied", style: .success)))
+    }
+
+    private func auditMarkdown(for scenarios: [Scenario]) -> String {
+        var lines = [String]()
+        lines.append("# View Lab Scenario Audit")
+        lines.append("")
+        lines.append("- Domain: \(selectedDomain.rawValue)")
+        lines.append("- Scenario Count: \(scenarios.count)")
+        lines.append("")
+
+        for scenario in scenarios {
+            lines.append(contentsOf: auditMarkdownLines(for: scenario))
+            lines.append("")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func auditMarkdownLines(for scenario: Scenario) -> [String] {
+        let runtime = runtime(for: scenario)
+        var lines = [String]()
+
+        lines.append("## \(scenario.title)")
+        lines.append("")
+        lines.append("- Subtitle: \(scenario.subtitle)")
+
+        if !scenario.tags.isEmpty {
+            lines.append("- Tags: \(scenario.tags.joined(separator: ", "))")
+        }
+
+        if !scenario.notes.isEmpty {
+            lines.append("- Intended coverage:")
+            for note in scenario.notes {
+                lines.append("  - \(note)")
+            }
+        }
+
+        switch runtime.content {
+        case .lifeScoreInsights(let content):
+            lines.append("")
+            lines.append("### Trigger Inputs")
+            lines.append(contentsOf: triggerInputLines(for: content))
+            lines.append("")
+            lines.append("### Life Score Output")
+            lines.append(contentsOf: lifeScoreAuditLines(for: content))
+            lines.append("")
+            lines.append("### Surfaced Insights")
+            if content.insightsResult.insights.isEmpty {
+                lines.append("- None")
+            } else {
+                for insight in content.insightsResult.insights {
+                    lines.append(contentsOf: insightAuditLines(insight))
+                }
+            }
+            lines.append("")
+            lines.append("### Drivers")
+            if content.insightsResult.drivers.isEmpty {
+                lines.append("- None")
+            } else {
+                for driver in content.insightsResult.drivers {
+                    lines.append(driverAuditLine(driver))
+                }
+            }
+            lines.append("")
+            lines.append("### Recent Changes")
+            if content.insightsResult.changes.isEmpty {
+                lines.append("- None")
+            } else {
+                for change in content.insightsResult.changes {
+                    lines.append(changeAuditLine(change))
+                }
+            }
+            lines.append("")
+            lines.append("### Actions")
+            if content.insightsResult.actions.isEmpty {
+                lines.append("- None")
+            } else {
+                for action in content.insightsResult.actions {
+                    lines.append(actionAuditLine(action))
+                }
+            }
+        }
+
+        return lines
+    }
+
+    private func triggerInputLines(for content: SQViewLabLifeScoreInsightsRuntime) -> [String] {
+        let input = content.input
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: input.referenceDate)
+        let latestMorning = input.checkIns.first(where: {
+            calendar.isDate($0.date, inSameDayAs: referenceDay) && $0.period == .morning
+        })
+        let latestEvening = input.checkIns.first(where: {
+            calendar.isDate($0.date, inSameDayAs: referenceDay) && $0.period == .evening
+        })
+        let recentWorkouts = input.workouts
+            .filter { workout in
+                guard let startDate = workout.startDate else { return false }
+                let startOfWorkoutDay = calendar.startOfDay(for: startDate)
+                let dayDifference = calendar.dateComponents([.day], from: startOfWorkoutDay, to: referenceDay).day ?? .max
+                return dayDifference >= 0 && dayDifference <= 2
+            }
+            .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
+
+        var lines = [String]()
+        lines.append("- Time range: \(input.timeRange.rawValue)")
+        lines.append("- Check-ins: \(input.checkIns.count)")
+        lines.append("- Workouts: \(input.workouts.count)")
+        lines.append("- Sleep data provided: \(input.sleepData == nil ? "no" : "yes")")
+        lines.append("- Resting HR summaries: \(input.restingHeartRateSummaries.count)")
+
+        if let latestMorning {
+            lines.append("- Morning check-in:")
+            lines.append(contentsOf: metricValueLines(
+                values: latestMorning.values,
+                definitions: input.metricDefinitions,
+                prefix: "  - "
+            ))
+        }
+
+        if let latestEvening {
+            lines.append("- Evening check-in:")
+            lines.append(contentsOf: metricValueLines(
+                values: latestEvening.values,
+                definitions: input.metricDefinitions,
+                prefix: "  - "
+            ))
+        }
+
+        if recentWorkouts.isEmpty {
+            lines.append("- Recent workouts (last 3 days): none")
+        } else {
+            lines.append("- Recent workouts (last 3 days):")
+            for workout in recentWorkouts {
+                lines.append("  - \(workout.activityType.name) • perf \(formattedOptionalFloat(workout.ratingUserPerformance)) • diff \(formattedOptionalFloat(workout.ratingDifficulty)) • duration \(formattedDuration(workout.activeDuration))")
+            }
+        }
+
+        return lines
+    }
+
+    private func lifeScoreAuditLines(for content: SQViewLabLifeScoreInsightsRuntime) -> [String] {
+        let viewModel = content.lifeScoreViewModel
+        var lines = [String]()
+        lines.append("- Score: \(viewModel.score.map(String.init) ?? "Calibrating")")
+        lines.append("- State: \(viewModel.state.title)")
+        lines.append("- Delta vs yesterday: \(viewModel.scoreDeltaText ?? "None")")
+        lines.append("- Hero summary: \(viewModel.primaryInsight?.title ?? viewModel.state.summary)")
+        lines.append("- Hero action: \(viewModel.actions.first?.summary ?? "None")")
+        if let refinementPromptText = viewModel.refinementPromptText {
+            lines.append("- Refinement prompt: \(refinementPromptText)")
+        }
+        if !viewModel.drivers.isEmpty {
+            lines.append("- Hero drivers: \(viewModel.drivers.map(\.title).joined(separator: ", "))")
+        }
+        return lines
+    }
+
+    private func insightAuditLines(_ insight: SQInsight) -> [String] {
+        [
+            "- \(insight.title)",
+            "  - summary: \(insight.summary)",
+            "  - actionText: \(insight.actionText)",
+            "  - familyKey: \(insight.familyKey)",
+            "  - class: \(String(describing: insight.insightClass))",
+            "  - category: \(insight.category.rawValue)",
+            "  - effect: \(formattedEffect(insight.effect))",
+            "  - confidence: \(insight.confidence.rawValue)",
+            "  - inputSignalId: \(insight.inputSignalId ?? "nil")",
+            "  - outputSignalId: \(insight.outputSignalId ?? "nil")",
+            "  - recommendationFamily: \(insight.recommendationFamily.map { String(describing: $0) } ?? "nil")",
+            "  - driverText: \(insight.driverText)",
+            "  - outcomeText: \(insight.outcomeText)",
+            "  - deltaText: \(insight.deltaText)",
+            "  - sampleCount: \(insight.sampleCount)",
+            "  - rankingScore: \(formattedDouble(insight.rankingScore))"
+        ]
+    }
+
+    private func driverAuditLine(_ driver: SQInsightDriver) -> String {
+        "- \(driver.direction == .supportive ? "+" : "-") \(driver.title) • signalId=\(driver.signalId) • delta=\(driver.deltaText) • recent=\(formattedDouble(driver.recentAverage)) • baseline=\(formattedDouble(driver.baselineAverage)) • summary=\(driver.summary)"
+    }
+
+    private func changeAuditLine(_ change: SQInsightChange) -> String {
+        "- \(change.direction == .improved ? "↑" : "↓") \(change.title) • signalId=\(change.signalId) • delta=\(change.deltaText) • recent=\(formattedDouble(change.recentAverage)) • prior=\(formattedDouble(change.priorAverage)) • timeframe=\(change.timeframeText)"
+    }
+
+    private func actionAuditLine(_ action: SQInsightAction) -> String {
+        "- \(action.summary) • title=\(action.title) • tone=\(String(describing: action.tone)) • rankingScore=\(formattedDouble(action.rankingScore))"
+    }
+
+    private func metricValueLines(
+        values: [String: Float],
+        definitions: [SQMetricDefinition],
+        prefix: String
+    ) -> [String] {
+        values.keys.sorted().compactMap { metricId in
+            guard let value = values[metricId] else { return nil }
+            let title = definitions.first(where: { $0.id == metricId })?.title ?? metricId
+            return "\(prefix)\(title): \(formattedFloat(value))"
+        }
+    }
+
+    private func formattedFloat(_ value: Float) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+        return String(format: "%.1f", value)
+    }
+
+    private func formattedOptionalFloat(_ value: Float?) -> String {
+        guard let value else { return "n/a" }
+        return formattedFloat(value)
+    }
+
+    private func formattedDouble(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+        return String(format: "%.1f", value)
+    }
+
+    private func formattedDuration(_ duration: Double?) -> String {
+        guard let duration else { return "n/a" }
+        let minutes = Int((duration / 60).rounded())
+        return "\(minutes)m"
+    }
+
+    private func formattedEffect(_ effect: SQInsightEffect) -> String {
+        switch effect {
+        case .positive:
+            return "positive"
+        case .negative:
+            return "negative"
+        case .neutral:
+            return "neutral"
         }
     }
 }

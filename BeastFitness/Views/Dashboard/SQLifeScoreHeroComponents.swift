@@ -46,14 +46,27 @@ struct SQLifeScoreHeroCard: View {
             .replacingOccurrences(of: "Keep the pattern steady and see if it holds.", with: "Keep it steady.")
             .replacingOccurrences(of: " while it holds and see if the rest of the day follows.", with: " while it holds.")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return cleaned
+        return punctuatedSentence(cleaned)
     }
 
     private func humanizedHeroText(_ text: String) -> String {
-        text
+        let humanized = text
             .replacingOccurrences(of: "Sleep Quality", with: "Sleep")
             .replacingOccurrences(of: "Sleep Hours", with: "Sleep")
             .replacingOccurrences(of: "Workout Performance", with: "Performance")
+        return punctuatedSentence(humanized)
+    }
+
+    private func punctuatedSentence(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        let endingPunctuation = CharacterSet(charactersIn: ".!?")
+        if let scalar = trimmed.unicodeScalars.last, endingPunctuation.contains(scalar) {
+            return trimmed
+        }
+
+        return "\(trimmed)."
     }
 
     var body: some View {
@@ -95,7 +108,7 @@ struct SQLifeScoreHeroCard: View {
 
                         if let refinementPromptText = viewModel.refinementPromptText {
                             HeroBriefingRow(
-                                text: refinementPromptText,
+                                text: punctuatedSentence(refinementPromptText),
                                 tone: .refinement
                             )
                             .frame(maxWidth: 300, alignment: .leading)

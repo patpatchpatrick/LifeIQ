@@ -527,7 +527,9 @@ final class SQInsightsService: SQInsightsServicing {
         )
         let curatedInsights = curatedInsights(
             from: noveltyAdjustedInsights,
-            surfaceIntent: input.timeRange.insightSurfaceIntent
+            surfaceIntent: input.timeRange.insightSurfaceIntent,
+            drivers: drivers,
+            changes: changes
         )
         let insights = freshnessAdjustedInsights(
             from: curatedInsights,
@@ -721,11 +723,17 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func curatedInsights(
         from deduplicatedInsights: [SQInsight],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
     ) -> [SQInsight] {
         switch surfaceIntent {
         case .today:
-            return curatedTodayInsights(from: deduplicatedInsights)
+            return curatedTodayInsights(
+                from: deduplicatedInsights,
+                drivers: drivers,
+                changes: changes
+            )
         case .pastWeek:
             return curatedWeeklyInsights(from: deduplicatedInsights)
         case .pastYear:
@@ -735,16 +743,210 @@ final class SQInsightsService: SQInsightsServicing {
 
     // `Today` should read like a briefing: one current-state card, one recent-change card,
     // and then the strongest remaining pattern instead of a flat list of similar cards.
-    private func curatedTodayInsights(from deduplicatedInsights: [SQInsight]) -> [SQInsight] {
-        curateInsights(
+    private func curatedTodayInsights(
+        from deduplicatedInsights: [SQInsight],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> [SQInsight] {
+        let heroInsight = todayHeroInsight(
             from: deduplicatedInsights,
+            drivers: drivers,
+            changes: changes
+        )
+
+        let remainingInsights = deduplicatedInsights.filter { $0.id != heroInsight?.id }
+        let supportingInsights = curateInsights(
+            from: remainingInsights,
             preferredBuckets: [
                 [.risk, .opportunity],
                 [.followUp, .trend, .baselineChange],
                 [.relationship]
             ],
-            maximumCount: 4
+            maximumCount: heroInsight == nil ? 4 : 3
         )
+
+        if let heroInsight {
+            return [heroInsight] + supportingInsights
+        }
+
+        return supportingInsights
+    }
+
+    private func todayHeroInsight(
+        from insights: [SQInsight],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> SQInsight? {
+        let filteredInsights: [SQInsight]
+        let hasAlternativeCandidate = insights.contains { !isPositiveCleanupHabitHeroCandidate($0) }
+
+        if hasAlternativeCandidate {
+            filteredInsights = insights.filter { !isPositiveCleanupHabitHeroCandidate($0) }
+        } else {
+            filteredInsights = insights
+        }
+
+        return filteredInsights.max { lhs, rhs in
+            let lhsScore = todayHeroPriorityScore(
+                for: lhs,
+                drivers: drivers,
+                changes: changes
+            )
+            let rhsScore = todayHeroPriorityScore(
+                for: rhs,
+                drivers: drivers,
+                changes: changes
+            )
+
+            if lhsScore != rhsScore {
+                return lhsScore < rhsScore
+            }
+
+            return !sortInsightsForDisplay(lhs, rhs)
+        }
+    }
+
+    private func isStateDrivenHeroCandidate(_ insight: SQInsight) -> Bool {
+        let stateSignalIds: Set<String> = [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality,
+            SQInsightAnalysisMetricId.restingHeartRate,
+            SQMetricId.energy,
+            SQMetricId.mood,
+            SQMetricId.mentalClarity,
+            SQMetricId.motivation,
+            SQMetricId.stress,
+            SQMetricId.anxiety,
+            SQMetricId.soreness,
+            SQInsightAnalysisMetricId.workoutDifficulty,
+            SQInsightAnalysisMetricId.workoutPerformance
+        ]
+
+        let inputSignalId = insight.inputSignalId ?? ""
+        let outputSignalId = insight.outputSignalId ?? ""
+        return stateSignalIds.contains(inputSignalId) || stateSignalIds.contains(outputSignalId)
+    }
+
+    private func isPositiveCleanupHabitHeroCandidate(_ insight: SQInsight) -> Bool {
+        let habitSignalIds: Set<String> = [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn
+        ]
+
+        let inputSignalId = insight.inputSignalId ?? ""
+        let outputSignalId = insight.outputSignalId ?? ""
+        let isHabitSignal = habitSignalIds.contains(inputSignalId) || habitSignalIds.contains(outputSignalId)
+
+        guard isHabitSignal else { return false }
+        guard insight.effect == .positive else { return false }
+
+        switch insight.insightClass {
+        case .trend, .baselineChange, .followUp:
+            return true
+        case .relationship, .risk, .opportunity, .populationBenchmark, .cohort:
+            return false
+        }
+    }
+
+    private func todayHeroPriorityScore(
+        for insight: SQInsight,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Double {
+        let stateSignalIds: Set<String> = [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality,
+            SQInsightAnalysisMetricId.restingHeartRate,
+            SQMetricId.energy,
+            SQMetricId.mood,
+            SQMetricId.mentalClarity,
+            SQMetricId.motivation,
+            SQMetricId.stress,
+            SQMetricId.anxiety,
+            SQMetricId.soreness,
+            SQInsightAnalysisMetricId.workoutDifficulty,
+            SQInsightAnalysisMetricId.workoutPerformance
+        ]
+        let habitSignalIds: Set<String> = [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn
+        ]
+
+        let inputSignalId = insight.inputSignalId ?? ""
+        let outputSignalId = insight.outputSignalId ?? ""
+        let isStateSignal = stateSignalIds.contains(inputSignalId) || stateSignalIds.contains(outputSignalId)
+        let isHabitSignal = habitSignalIds.contains(inputSignalId) || habitSignalIds.contains(outputSignalId)
+        let hasStatePressure = drivers.contains {
+            stateSignalIds.contains($0.signalId) && $0.direction == .drag
+        } || changes.contains {
+            stateSignalIds.contains($0.signalId) && $0.direction == .worsened
+        }
+        let hasSupportiveState = drivers.contains {
+            stateSignalIds.contains($0.signalId) && $0.direction == .supportive
+        } || changes.contains {
+            stateSignalIds.contains($0.signalId) && $0.direction == .improved
+        }
+
+        var score = insight.rankingScore
+
+        switch insight.insightClass {
+        case .risk, .opportunity:
+            score += 10
+        case .baselineChange:
+            score += isStateSignal ? 7 : 3
+        case .followUp:
+            score += 5
+        case .relationship:
+            score += isStateSignal ? 3 : 1
+        case .trend:
+            if isStateSignal {
+                score += 4
+            } else if isHabitSignal {
+                if insight.effect == .negative {
+                    score += hasStatePressure ? 6 : 1
+                } else {
+                    score -= 10
+                }
+            }
+        case .populationBenchmark, .cohort:
+            score -= 4
+        }
+
+        if isStateSignal {
+            switch insight.effect {
+            case .positive:
+                if hasSupportiveState {
+                    score += 4
+                }
+                score += 2
+            case .negative:
+                if hasStatePressure {
+                    score += 4
+                }
+                score += 3
+            case .neutral:
+                break
+            }
+        }
+
+        if isHabitSignal {
+            switch insight.effect {
+            case .positive:
+                score -= hasStatePressure ? 18 : 40
+            case .negative:
+                score += hasStatePressure ? 4 : 0
+            case .neutral:
+                score -= 6
+            }
+        }
+
+        return score
     }
 
     private func curatedWeeklyInsights(from deduplicatedInsights: [SQInsight]) -> [SQInsight] {
