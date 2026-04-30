@@ -134,6 +134,13 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             primaryInsight: primaryInsight
         )
         let roundedScore = state == .calibrating ? nil : preliminaryScore
+        let alignedActions = lifeScoreAlignedActions(
+            input.insightsResult.actions,
+            state: state,
+            score: roundedScore,
+            scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
+            components: components
+        )
         let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
 
         let subtitle: String
@@ -160,13 +167,106 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
                 drivers: input.insightsResult.drivers
             ),
             changes: Array(input.insightsResult.changes.prefix(2)),
-            actions: Array(input.insightsResult.actions.prefix(1)),
+            actions: alignedActions,
             availableWeight: totalWeight
         )
     }
 }
 
 private extension SQLifeScoreBuilder {
+    func lifeScoreAlignedActions(
+        _ actions: [SQInsightAction],
+        state: SQLifeScoreState,
+        score: Int?,
+        scoreDeltaFromPreviousDay: Int?,
+        components: [SQLifeScoreComponent]
+    ) -> [SQInsightAction] {
+        let limitedActions = Array(actions.prefix(1))
+        guard shouldCautionLifeScoreTraining(
+            state: state,
+            score: score,
+            scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
+            components: components
+        ) else {
+            return limitedActions
+        }
+
+        guard let action = limitedActions.first else { return [] }
+        guard isTrainingPushAction(action.summary) else { return limitedActions }
+
+        return [
+            .init(
+                id: "\(action.id)-life-score-caution",
+                title: "Watch Today",
+                summary: lifeScoreCautionActionSummary(state: state, components: components),
+                context: action.context,
+                tone: .caution,
+                rankingScore: action.rankingScore
+            )
+        ]
+    }
+
+    func shouldCautionLifeScoreTraining(
+        state: SQLifeScoreState,
+        score: Int?,
+        scoreDeltaFromPreviousDay: Int?,
+        components: [SQLifeScoreComponent]
+    ) -> Bool {
+        if state == .dipping || state == .underPressure {
+            return true
+        }
+
+        if (score ?? 100) < 72 {
+            return true
+        }
+
+        if (scoreDeltaFromPreviousDay ?? 0) < 0,
+           (score ?? 100) < 80 {
+            return true
+        }
+
+        return components.contains { component in
+            switch component.id {
+            case "sleep":
+                return component.score < 72
+            case "heart", "habits":
+                return component.score < 65
+            default:
+                return false
+            }
+        }
+    }
+
+    func lifeScoreCautionActionSummary(
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent]
+    ) -> String {
+        if let sleepScore = componentScore("sleep", in: components), sleepScore < 72 {
+            return "Keep training moderate until sleep and recovery look stronger."
+        }
+
+        if let heartScore = componentScore("heart", in: components), heartScore < 65 {
+            return "Keep strain moderate while heart recovery is still soft."
+        }
+
+        if state == .dipping {
+            return "Keep strain moderate while the score is dipping."
+        }
+
+        return "Protect recovery before adding extra intensity."
+    }
+
+    func componentScore(_ id: String, in components: [SQLifeScoreComponent]) -> Int? {
+        components.first { $0.id == id }?.score
+    }
+
+    func isTrainingPushAction(_ summary: String) -> Bool {
+        let normalizedSummary = normalizedHeroMatchText(summary)
+        return normalizedSummary.contains("push harder")
+            || normalizedSummary.contains("push training")
+            || normalizedSummary.contains("good day to push")
+    }
+
     func lifeScoreRefinementPromptText(for intelligenceInput: SQHealthIntelligenceInput) -> String? {
         guard intelligenceInput.timeRange == .today,
               intelligenceInput.isLoggedIn,

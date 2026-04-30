@@ -35,6 +35,10 @@ struct SQSleepAggregationService {
         sleepSchedule: SQSleepSchedule? = nil,
         now: Date = .now
     ) -> SQSleepDashboardWindow {
+        if timeRange == .today {
+            return baseWindow
+        }
+
         let candidateWakeDays = Array(
             Set((baseWindow.currentWakeDays + baseWindow.priorWakeDays).map { calendar.startOfDay(for: $0) })
         )

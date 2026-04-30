@@ -109,6 +109,14 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             delta: delta,
             expectedEffect: definition.expectedEffect
         )
+        guard shouldSurfaceDriver(
+            signalId: definition.signalId,
+            direction: direction,
+            recentAverage: recentAverage
+        ) else {
+            return nil
+        }
+
         let sampleCount = recentValues.count + baselineValues.count
         let rankingScore = SQInsightScoring.rankingScore(
             sampleCount: sampleCount,
@@ -167,6 +175,21 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         case .neutral:
             return .supportive
         }
+    }
+
+    private func shouldSurfaceDriver(
+        signalId: String,
+        direction: SQInsightDriverDirection,
+        recentAverage: Double
+    ) -> Bool {
+        guard direction == .supportive else {
+            return true
+        }
+
+        return SQInsightSupportiveReadinessGate.allowsSupportiveSignal(
+            signalId: signalId,
+            recentAverage: recentAverage
+        )
     }
 
     private func driverSummary(

@@ -168,3 +168,5 @@ The intended hierarchy is:
 - orb on dashboard = state
 - Life Score detail = explanation
 - insights = ranked context and follow-through
+
+Shared insight drivers should not call a signal supportive only because it improved versus baseline. Readiness signals also need a reasonable absolute value before they can produce "helping today" language. Life Score can still apply a final action guard so low sleep/recovery, negative momentum, `Dipping`, or `Under Pressure` states do not become "push harder" training advice.

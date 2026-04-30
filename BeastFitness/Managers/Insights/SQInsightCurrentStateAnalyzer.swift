@@ -129,6 +129,21 @@ struct SQInsightCurrentStateAnalyzer {
             ))
         }
 
+        guard shouldSurfaceCurrentStateInsight(
+            relationship: relationship,
+            primaryEffect: effect,
+            primaryRecentAverage: recentAverage,
+            secondaryEffect: secondaryEffect,
+            secondaryRecentAverage: secondaryRecentAverage
+        ) else {
+            return .readiness(.init(
+                id: variant.id,
+                title: "\(relationship.inputTitle) Today",
+                status: .weakSignal,
+                summary: "\(relationship.inputTitle) improved versus baseline, but the current value is not strong enough to call it supportive."
+            ))
+        }
+
         let sampleCount = recentValues.count + baselineValues.count
         let confidence = SQInsightScoring.confidence(
             sampleCount: sampleCount,
@@ -185,6 +200,51 @@ struct SQInsightCurrentStateAnalyzer {
                 sampleCount: sampleCount,
                 rankingScore: rankingScore
             )
+        )
+    }
+
+    private func shouldSurfaceCurrentStateInsight(
+        relationship: SQInsightRelationshipDefinition,
+        primaryEffect: SQInsightEffect,
+        primaryRecentAverage: Double,
+        secondaryEffect: SQInsightEffect?,
+        secondaryRecentAverage: Double?
+    ) -> Bool {
+        guard relationship.insightClass == .opportunity else { return true }
+
+        guard meetsSupportiveAbsoluteThreshold(
+            signalId: relationship.inputSignalId,
+            effect: primaryEffect,
+            recentAverage: primaryRecentAverage
+        ) else {
+            return false
+        }
+
+        if relationship.outputSignalId != relationship.inputSignalId,
+           let secondaryEffect,
+           let secondaryRecentAverage {
+            return meetsSupportiveAbsoluteThreshold(
+                signalId: relationship.outputSignalId,
+                effect: secondaryEffect,
+                recentAverage: secondaryRecentAverage
+            )
+        }
+
+        return true
+    }
+
+    private func meetsSupportiveAbsoluteThreshold(
+        signalId: String,
+        effect: SQInsightEffect,
+        recentAverage: Double
+    ) -> Bool {
+        guard effect == .positive else {
+            return true
+        }
+
+        return SQInsightSupportiveReadinessGate.allowsSupportiveSignal(
+            signalId: signalId,
+            recentAverage: recentAverage
         )
     }
 

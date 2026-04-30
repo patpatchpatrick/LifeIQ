@@ -37,3 +37,41 @@ enum SQInsightScoring {
         return (effectMagnitude * 10) + Double(sampleCount) + confidenceWeight
     }
 }
+
+enum SQInsightSupportiveReadinessGate {
+    private enum AbsoluteThreshold {
+        case minimum(Double)
+        case maximum(Double)
+    }
+
+    static func allowsSupportiveSignal(
+        signalId: String,
+        recentAverage: Double
+    ) -> Bool {
+        guard let threshold = supportiveAbsoluteThreshold(for: signalId) else {
+            return true
+        }
+
+        switch threshold {
+        case .minimum(let minimumValue):
+            return recentAverage >= minimumValue
+        case .maximum(let maximumValue):
+            return recentAverage <= maximumValue
+        }
+    }
+
+    private static func supportiveAbsoluteThreshold(for signalId: String) -> AbsoluteThreshold? {
+        switch signalId {
+        case SQMetricId.sleepHours:
+            return .minimum(6.75)
+        case SQMetricId.sleepQuality:
+            return .minimum(7.2)
+        case SQMetricId.energy, SQMetricId.mood, SQMetricId.mentalClarity, SQMetricId.motivation:
+            return .minimum(6)
+        case SQMetricId.stress, SQMetricId.anxiety, SQMetricId.soreness:
+            return .maximum(4.5)
+        default:
+            return nil
+        }
+    }
+}
