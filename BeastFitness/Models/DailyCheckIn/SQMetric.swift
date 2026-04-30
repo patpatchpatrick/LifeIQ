@@ -29,6 +29,7 @@ enum SQMetricUnit: String, Codable, CaseIterable, UnfrozenEnum {
     case pounds
     case kilograms
     case percent
+    case dollars
     case unknown     // Fallback for unrecognized values from Firestore
 }
 
@@ -523,7 +524,7 @@ extension SQMetricUnit {
             return .kilogram
         case .percent:
             return .percent
-        case .none, .unknown:
+        case .none, .dollars, .unknown:
             return nil
         }
     }
@@ -574,6 +575,8 @@ extension SQMetricUnit {
             return "kg"
         case .percent:
             return "%"
+        case .dollars:
+            return "$"
         case .unknown:
             return ""
         }
@@ -605,6 +608,8 @@ extension SQMetricUnit {
             return "Kilograms (kg)"
         case .percent:
             return "Percent (%)"
+        case .dollars:
+            return "Dollars ($)"
         case .unknown:
             return "Unknown"
         }
@@ -628,6 +633,9 @@ enum SQMetricId {
     static let motivation    = "metric.motivation"      // scale 0–10; morning + evening
     static let anxiety       = "metric.anxiety"         // scale 0–10; morning + evening
     static let sickness      = "metric.sickness"        // scale 0–10; morning + evening
+    static let pain          = "metric.pain"            // scale 0–10; morning + evening
+    static let productivity  = "metric.productivity"    // scale 0–10; morning + evening
+    static let socialConnection = "metric.socialConnection" // scale 0–10; morning + evening
 
     // MARK: Sleep
     static let sleepQuality  = "metric.sleepQuality"   // scale 0–10; morning + evening
@@ -644,7 +652,11 @@ enum SQMetricId {
     static let caffeine      = "metric.caffeine"       // scale 0–10; evening
     static let weed          = "metric.weed"           // scale 0–10; evening
     static let porn          = "metric.porn"           // scale 0–10; evening
-    static let nicotine      = "metric.nicotine"       // scale 0–10; evening — NEW
+    static let nicotine      = "metric.nicotine"       // scale 0–10; evening
+    static let gambling      = "metric.gambling"       // number 0+ dollars; morning + evening
+    static let gaming        = "metric.gaming"         // number 0–1440 minutes; morning + evening
+    static let cravings      = "metric.cravings"       // scale 0–10; morning + evening
+    static let screenTime    = "metric.screenTime"     // number 0–24 hrs; morning + evening
 
     // MARK: - Custom metric ID generator
     static func custom(_ uuid: UUID = UUID()) -> String {

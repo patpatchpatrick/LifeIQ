@@ -699,7 +699,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             // MARK: Stats — single daily value; appears in both sessions so it can be entered any time
             .init(id: SQMetricId.weight, title: "Weight", kind: .number, unit: .pounds,
                   group: SQDefaultGroup.stats.rawValue, min: 0, max: 1000, step: 0.1,
-                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "⚖️", periods: both, isSingleDailyValue: true, goalStyle: .justTrack,
                   healthKitType: .bodyMass, healthKitReadEnabled: true, healthKitWriteEnabled: true),
 
@@ -714,7 +714,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "🧠", periods: both, goalStyle: .justTrack),
 
-            .init(id: SQMetricId.energy, title: "Energy Level", kind: .scale, unit: .none,
+            .init(id: SQMetricId.energy, title: "Energy", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "⚡", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
@@ -726,7 +726,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
             .init(id: SQMetricId.stress, title: "Stress", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
-                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "😵", periods: both, goalStyle: .keepLow),
 
             .init(id: SQMetricId.motivation, title: "Motivation", kind: .scale, unit: .none,
@@ -744,15 +744,30 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
                   emoji: "🤒", periods: both, goalStyle: .keepLow),
 
+            .init(id: SQMetricId.pain, title: "Pain", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🩹", periods: both, goalStyle: .keepLow),
+
+            .init(id: SQMetricId.productivity, title: "Productivity", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "📈", periods: both, goalStyle: .buildUp, targetValue: 7),
+
+            .init(id: SQMetricId.socialConnection, title: "Social Connection", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🤝", periods: both, goalStyle: .buildUp, targetValue: 7),
+
             // MARK: Sleep — single daily value for last night's sleep; editable from either session
             .init(id: SQMetricId.sleepQuality, title: "Sleep Quality", kind: .scale, unit: .none,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 10, step: 1,
-                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "😴", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             .init(id: SQMetricId.sleepHours, title: "Sleep Duration", kind: .number, unit: .hours,
                   group: SQDefaultGroup.sleep.rawValue, min: 0, max: 24, step: 0.1,
-                  isPreset: true, isEnabled: true, isDefault: false, sortOrder: next(),
+                  isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "🌙", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
 
             // MARK: Nutrition & Recovery — independent morning + evening tracking
@@ -808,6 +823,26 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
                   emoji: "🚬", periods: both, goalStyle: .avoidIt,
                   scaleQuantityMapping: .init(quantityUnit: .count, maxQuantityValue: 10, quantityLabelOverride: "count")),
+
+            .init(id: SQMetricId.gambling, title: "Gambling", kind: .number, unit: .dollars,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10_000, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🎲", periods: both, isSingleDailyValue: true, goalStyle: .avoidIt),
+
+            .init(id: SQMetricId.gaming, title: "Gaming", kind: .number, unit: .minutes,
+                  group: SQDefaultGroup.otherHabits.rawValue, min: 0, max: 1440, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🎮", periods: both, isSingleDailyValue: true, goalStyle: .justTrack),
+
+            .init(id: SQMetricId.cravings, title: "Cravings", kind: .scale, unit: .none,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 10, step: 1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "🍬", periods: both, goalStyle: .keepLow),
+
+            .init(id: SQMetricId.screenTime, title: "Screen Time", kind: .number, unit: .hours,
+                  group: SQDefaultGroup.vices.rawValue, min: 0, max: 24, step: 0.1,
+                  isPreset: true, isEnabled: false, isDefault: false, sortOrder: next(),
+                  emoji: "📱", periods: both, isSingleDailyValue: true, goalStyle: .keepLow),
         ]
     }
 }

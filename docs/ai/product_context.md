@@ -9,7 +9,7 @@ LifeIQ helps people track and improve their life and health with data.
 The product combines:
 - Health data from Apple Health / HealthKit
 - Workout history and workout summaries
-- Daily self-tracked check-ins such as mood, energy, sleep quality, alcohol, caffeine, recovery, and custom metrics
+- Daily self-tracked check-ins such as mood, energy, stress, recovery, sleep, nutrition, alcohol, caffeine, and custom metrics
 
 The goal is to help users understand what is helping or hurting their health, recovery, energy, mood, and performance.
 
