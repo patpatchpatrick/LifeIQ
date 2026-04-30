@@ -7,15 +7,43 @@ import Foundation
 
 @Observable @MainActor
 final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
+    struct DefinitionLine: Identifiable, Hashable {
+        let id: String
+        let valueText: String
+        let summaryText: String
+        let weightText: String?
+    }
+
     struct Driver: Identifiable {
         let id = UUID()
         let title: String
         let valueText: String
         let detailText: String
         let attributedDetailText: AttributedString?
+        let definitionLines: [DefinitionLine]
         let tone: SQDashboardTrendTone
         let symbol: SQImageSymbol?
         let alert: SQAlertViewModel?
+
+        init(
+            title: String,
+            valueText: String,
+            detailText: String,
+            attributedDetailText: AttributedString?,
+            definitionLines: [DefinitionLine] = [],
+            tone: SQDashboardTrendTone,
+            symbol: SQImageSymbol?,
+            alert: SQAlertViewModel?
+        ) {
+            self.title = title
+            self.valueText = valueText
+            self.detailText = detailText
+            self.attributedDetailText = attributedDetailText
+            self.definitionLines = definitionLines
+            self.tone = tone
+            self.symbol = symbol
+            self.alert = alert
+        }
     }
 
     let score: Int?

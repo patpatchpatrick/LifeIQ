@@ -492,6 +492,16 @@ final class SQDashboardController: SQDashboardInterface {
                 to: SQTimeRange.today.endDate,
                 context: context
             )
+            let todaysMorningSleepCheckIn = try await metricEntryManager.getDailyCheckInStats(
+                for: currentCheckInDate,
+                period: .morning,
+                context: context
+            )
+            let yesterdaysMorningSleepCheckIn = try await metricEntryManager.getDailyCheckInStats(
+                for: yesterdayCheckInDate,
+                period: .morning,
+                context: context
+            )
 
             let past7DaysCheckIns = try await metricEntryManager.getDailyCheckInStats(
                 from: SQTimeRange.pastWeek.startDate,
@@ -647,6 +657,7 @@ final class SQDashboardController: SQDashboardInterface {
                     timeRange: timeRange,
                     metricDefinitions: metricDefinitions,
                     checkIns: scopedCheckIns,
+                    sleepCheckIns: [todaysMorningSleepCheckIn, yesterdaysMorningSleepCheckIn].compactMap { $0 },
                     workouts: scopedWorkouts,
                     sleepData: sleepDashboardData,
                     restingHeartRateSummaries: scopedRestingHeartRateSummaries,

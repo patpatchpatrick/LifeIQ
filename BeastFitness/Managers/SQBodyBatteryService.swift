@@ -50,14 +50,26 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             to: SQTimeRange.today.endDate,
             context: context
         )
+        async let todaysMorningSleepCheckInTask = metricEntryManager.getDailyCheckInStats(
+            for: SQTimeRange.today.startDate,
+            period: .morning,
+            context: context
+        )
         async let yesterdaysCheckInsTask = metricEntryManager.getDailyCheckInStats(
             from: SQTimeRange.yesterday.startDate,
             to: SQTimeRange.yesterday.endDate,
             context: context
         )
+        async let yesterdaysMorningSleepCheckInTask = metricEntryManager.getDailyCheckInStats(
+            for: SQTimeRange.yesterday.startDate,
+            period: .morning,
+            context: context
+        )
 
         let todaysCheckIns = try await todaysCheckInsTask
+        let todaysMorningSleepCheckIn = try await todaysMorningSleepCheckInTask
         let yesterdaysCheckIns = try await yesterdaysCheckInsTask
+        let yesterdaysMorningSleepCheckIn = try await yesterdaysMorningSleepCheckInTask
         let todaysRestingSummaries: [SQHeartRateDailySummary]
         let recentRestingSummaries: [SQHeartRateDailySummary]
         let todaysHeartRateSummaries: [SQHeartRateDailySummary]
@@ -93,17 +105,19 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
 
         let todaysCheckInValues = todaysCheckIns.last?.values ?? [:]
         let yesterdaysCheckInValues = yesterdaysCheckIns.last?.values ?? [:]
+        let todaysSleepCheckInValues = todaysMorningSleepCheckIn?.values ?? [:]
+        let yesterdaysSleepCheckInValues = yesterdaysMorningSleepCheckIn?.values ?? [:]
         let latestHealthSleepScore = sleepData?.latestNight.map { sleepAggregationService.score(for: $0).totalScore }
         let previousHealthSleepScore = previousHealthSleepScore(from: sleepData)
         let latestSleepSignal = sleepScoreSignal(
-            from: todaysCheckInValues,
+            from: todaysSleepCheckInValues,
             healthSleepScore: latestHealthSleepScore,
             nightLabel: "last night"
         )
         let previousSleepSignal = sleepScoreSignal(
-            from: yesterdaysCheckInValues,
+            from: yesterdaysSleepCheckInValues,
             healthSleepScore: previousHealthSleepScore,
-            nightLabel: "the prior night"
+            nightLabel: "previous night"
         )
         let sleepScoreSignal = combinedSleepScoreSignal(
             latest: latestSleepSignal,
@@ -171,6 +185,86 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             headline = "Recovery score is not ready"
         }
 
+        let sleepDriver = SQDashboardBodyBatteryRowViewModel.Driver(
+            title: "Sleep",
+            valueText: sleepAdjustment.map { signedValueText(for: $0) } ?? "--",
+            detailText: sleepDriverDetailLabel(
+                sleepScoreSignal: sleepScoreSignal,
+                sleepAdjustment: sleepAdjustment
+            ),
+            attributedDetailText: sleepDriverDetailText(
+                sleepScoreSignal: sleepScoreSignal,
+                sleepAdjustment: sleepAdjustment
+            ),
+            definitionLines: sleepScoreSignal?.definitionLines ?? [],
+            tone: sleepAdjustment.map { tone(for: $0) } ?? .neutral,
+            symbol: sleepAdjustment.flatMap { symbol(for: $0) },
+            alert: sleepAlert(
+                sleepScoreSignal: sleepScoreSignal,
+                sleepAdjustment: sleepAdjustment
+            )
+        )
+
+        let totalStrainPoints = Int(totalStrain.rounded())
+        let strainValueText = "-\(totalStrainPoints)"
+        let strainDefinitionLines = strainDefinitionLines(
+            todaysStrain: todaysStrain,
+            carryoverStrain: carryoverStrain
+        )
+        let strainDriver = SQDashboardBodyBatteryRowViewModel.Driver(
+            title: "Strain",
+            valueText: strainValueText,
+            detailText: strainDriverDetailLabel(
+                totalStrain: totalStrain,
+                todaysWorkoutsCount: todaysWorkouts.count,
+                yesterdaysWorkoutsCount: yesterdaysWorkouts.count
+            ),
+            attributedDetailText: strainDriverDetailText(
+                totalStrain: totalStrain,
+                todaysWorkoutsCount: todaysWorkouts.count,
+                yesterdaysWorkoutsCount: yesterdaysWorkouts.count
+            ),
+            definitionLines: strainDefinitionLines,
+            tone: totalStrain > 0 ? .negative : .neutral,
+            symbol: totalStrain > 0 ? .arrowDown : nil,
+            alert: strainAlert(
+                totalStrain: totalStrain,
+                todaysWorkoutsCount: todaysWorkouts.count,
+                yesterdaysWorkoutsCount: yesterdaysWorkouts.count
+            )
+        )
+
+        let checkInDefinitionLines = checkInDefinitionLines(checkInAdjustment: checkInAdjustment)
+        let checkInsDriver = SQDashboardBodyBatteryRowViewModel.Driver(
+            title: "Check-ins",
+            valueText: checkInAdjustment.hasScoringSignals ? signedValueText(for: checkInAdjustment.totalAdjustment) : "--",
+            detailText: checkInsDriverDetailExplanation(checkInAdjustment: checkInAdjustment),
+            attributedDetailText: checkInsDriverDetailText(checkInAdjustment: checkInAdjustment),
+            definitionLines: checkInDefinitionLines,
+            tone: tone(for: checkInAdjustment.totalAdjustment),
+            symbol: symbol(for: checkInAdjustment.totalAdjustment),
+            alert: checkInsAlert(checkInAdjustment: checkInAdjustment)
+        )
+
+        let heartDefinitionLines = heartDefinitionLines(heartRecovery: heartRecovery)
+        let heartDriver = SQDashboardBodyBatteryRowViewModel.Driver(
+            title: "Heart",
+            valueText: hasHeartScoreSignal ? heartRecovery.valueText : "--",
+            detailText: heartDriverDetailLabel(heartRecovery: heartRecovery),
+            attributedDetailText: hasHeartScoreSignal ? heartDriverDetailText(heartRecovery: heartRecovery) : nil,
+            definitionLines: heartDefinitionLines,
+            tone: hasHeartScoreSignal ? heartRecovery.tone : .neutral,
+            symbol: hasHeartScoreSignal ? heartRecovery.symbol : nil,
+            alert: heartAlert(heartRecovery: heartRecovery)
+        )
+
+        let drivers: [SQDashboardBodyBatteryRowViewModel.Driver] = [
+            sleepDriver,
+            strainDriver,
+            checkInsDriver,
+            heartDriver
+        ]
+
         return SQDashboardBodyBatteryRowViewModel(
             score: score,
             statusTitle: statusTitle,
@@ -184,65 +278,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                     habitAdjustment: checkInAdjustment.totalAdjustment,
                     heartAdjustment: hasHeartScoreSignal ? heartRecovery.adjustment : 0
                 ),
-            drivers: [
-                .init(
-                    title: "Sleep",
-                    valueText: sleepAdjustment.map { signedValueText(for: $0) } ?? "--",
-                    detailText: sleepDriverDetailLabel(
-                        sleepScoreSignal: sleepScoreSignal,
-                        sleepAdjustment: sleepAdjustment
-                    ),
-                    attributedDetailText: sleepDriverDetailText(
-                        sleepScoreSignal: sleepScoreSignal,
-                        sleepAdjustment: sleepAdjustment
-                    ),
-                    tone: sleepAdjustment.map { tone(for: $0) } ?? .neutral,
-                    symbol: sleepAdjustment.flatMap { symbol(for: $0) },
-                    alert: sleepAlert(
-                        sleepScoreSignal: sleepScoreSignal,
-                        sleepAdjustment: sleepAdjustment
-                    )
-                ),
-                .init(
-                    title: "Strain",
-                    valueText: "-\(Int(totalStrain.rounded()))",
-                    detailText: strainDriverDetailLabel(
-                        totalStrain: totalStrain,
-                        todaysWorkoutsCount: todaysWorkouts.count,
-                        yesterdaysWorkoutsCount: yesterdaysWorkouts.count
-                    ),
-                    attributedDetailText: strainDriverDetailText(
-                        totalStrain: totalStrain,
-                        todaysWorkoutsCount: todaysWorkouts.count,
-                        yesterdaysWorkoutsCount: yesterdaysWorkouts.count
-                    ),
-                    tone: totalStrain > 0 ? .negative : .neutral,
-                    symbol: totalStrain > 0 ? .arrowDown : nil,
-                    alert: strainAlert(
-                        totalStrain: totalStrain,
-                        todaysWorkoutsCount: todaysWorkouts.count,
-                        yesterdaysWorkoutsCount: yesterdaysWorkouts.count
-                    )
-                ),
-                .init(
-                    title: "Check-ins",
-                    valueText: checkInAdjustment.hasScoringSignals ? signedValueText(for: checkInAdjustment.totalAdjustment) : "--",
-                    detailText: checkInsDriverDetailExplanation(checkInAdjustment: checkInAdjustment),
-                    attributedDetailText: checkInsDriverDetailText(checkInAdjustment: checkInAdjustment),
-                    tone: tone(for: checkInAdjustment.totalAdjustment),
-                    symbol: symbol(for: checkInAdjustment.totalAdjustment),
-                    alert: checkInsAlert(checkInAdjustment: checkInAdjustment)
-                ),
-                .init(
-                    title: "Heart",
-                    valueText: hasHeartScoreSignal ? heartRecovery.valueText : "--",
-                    detailText: heartDriverDetailLabel(heartRecovery: heartRecovery),
-                    attributedDetailText: hasHeartScoreSignal ? heartDriverDetailText(heartRecovery: heartRecovery) : nil,
-                    tone: hasHeartScoreSignal ? heartRecovery.tone : .neutral,
-                    symbol: hasHeartScoreSignal ? heartRecovery.symbol : nil,
-                    alert: heartAlert(heartRecovery: heartRecovery)
-                )
-            ],
+            drivers: drivers,
             formulaAlert: formulaAlert(
                 score: score,
                 rawScore: rawScore,
@@ -297,6 +333,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let detailText: String
         let formulaSourceText: String
         let alertDescription: String
+        let definitionLines: [SQDashboardBodyBatteryRowViewModel.DefinitionLine]
     }
 
     private enum HeartRecoverySource {
@@ -354,7 +391,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                     score: score,
                     detailText: "Check-in quality + hours",
                     formulaSourceText: "Daily Check-In sleep quality and hours",
-                    alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 and Sleep Hours \(formatSleepValue(sleepHours))h were used. Sleep Quality carries most of the score because it is user-reported."
+                    alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 and Sleep Hours \(formatSleepValue(sleepHours))h were used. Sleep Quality carries most of the score because it is user-reported.",
+                    definitionLines: [
+                        .init(
+                            id: "sleep-checkin-\(nightLabel)-quality-hours",
+                            valueText: "\(Int(score.rounded()))",
+                            summaryText: "daily check-in sleep score \(nightLabel)",
+                            weightText: nil
+                        )
+                    ]
                 )
             }
 
@@ -362,7 +407,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 score: qualityScore,
                 detailText: "Check-in sleep quality",
                 formulaSourceText: "Daily Check-In sleep quality",
-                alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 was used as the sleep source."
+                alertDescription: "For \(nightLabel), Daily Check-In Sleep Quality \(formatSleepValue(sleepQuality))/10 was used as the sleep source.",
+                definitionLines: [
+                    .init(
+                        id: "sleep-checkin-\(nightLabel)-quality",
+                        valueText: "\(Int(qualityScore.rounded()))",
+                        summaryText: "daily check-in sleep quality \(nightLabel)",
+                        weightText: nil
+                    )
+                ]
             )
         }
 
@@ -371,7 +424,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 score: healthSleepScore,
                 detailText: "Health sleep score",
                 formulaSourceText: "Health sleep score",
-                alertDescription: "For \(nightLabel), Health sleep data was used because Daily Check-In Sleep Quality was not logged."
+                alertDescription: "For \(nightLabel), Health sleep data was used because Daily Check-In Sleep Quality was not logged.",
+                definitionLines: [
+                    .init(
+                        id: "sleep-health-\(nightLabel)",
+                        valueText: "\(Int(healthSleepScore.rounded()))",
+                        summaryText: "Health sleep score \(nightLabel)".lowercased(),
+                        weightText: nil
+                    )
+                ]
             )
         }
 
@@ -381,7 +442,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 score: score,
                 detailText: "Check-in sleep hours",
                 formulaSourceText: "Daily Check-In sleep hours",
-                alertDescription: "For \(nightLabel), Daily Check-In Sleep Hours \(formatSleepValue(sleepHours))h was used because Sleep Quality and Health sleep data were not available."
+                alertDescription: "For \(nightLabel), Daily Check-In Sleep Hours \(formatSleepValue(sleepHours))h was used because Sleep Quality and Health sleep data were not available.",
+                definitionLines: [
+                    .init(
+                        id: "sleep-checkin-\(nightLabel)-hours",
+                        valueText: "\(Int(score.rounded()))",
+                        summaryText: "daily check-in sleep-hours estimate \(nightLabel)",
+                        weightText: nil
+                    )
+                ]
             )
         }
 
@@ -396,12 +465,31 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         guard let previous else { return latest }
 
         let score = (latest.score * 0.70) + (previous.score * 0.30)
+        let latestDefinitionLines: [SQDashboardBodyBatteryRowViewModel.DefinitionLine] = latest.definitionLines.map { line in
+            .init(
+                id: "\(line.id)-latest",
+                valueText: line.valueText,
+                summaryText: line.summaryText,
+                weightText: "70% weight"
+            )
+        }
+        let previousDefinitionLines: [SQDashboardBodyBatteryRowViewModel.DefinitionLine] = previous.definitionLines.map { line in
+            let summaryText = line.summaryText.replacingOccurrences(of: "last night", with: "previous night")
+            return .init(
+                id: "\(line.id)-previous",
+                valueText: line.valueText,
+                summaryText: summaryText,
+                weightText: "30% weight"
+            )
+        }
+        let definitionLines = latestDefinitionLines + previousDefinitionLines
 
         return .init(
             score: score,
             detailText: "Last 2 nights",
             formulaSourceText: "70% last night, 30% prior night",
-            alertDescription: "\(latest.alertDescription) \(previous.alertDescription) Recovery Score weights sleep as 70% last night and 30% the prior night so consecutive good or bad nights can stack."
+            alertDescription: "\(latest.alertDescription) \(previous.alertDescription) Recovery Score weights sleep as 70% last night and 30% the prior night so consecutive good or bad nights can stack.",
+            definitionLines: definitionLines
         )
     }
 
@@ -1066,7 +1154,11 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             return "Not included because sleep data is missing."
         }
 
-        return "Sleep score \(Int(sleepScoreSignal.score.rounded())) from \(sleepScoreSignal.formulaSourceText) changed Recovery Score by \(signedValueText(for: sleepAdjustment))."
+        if sleepScoreSignal.definitionLines.count > 1 {
+            return "The last 2 nights are blended, with more weight on last night. That changed Recovery Score by \(signedValueText(for: sleepAdjustment))."
+        }
+
+        return "Sleep changed Recovery Score by \(signedValueText(for: sleepAdjustment))."
     }
 
     private func strainDriverDetailText(
@@ -1214,6 +1306,98 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         return "Not included because resting heart data is missing."
+    }
+
+    private func strainDefinitionLines(
+        todaysStrain: Double,
+        carryoverStrain: Double
+    ) -> [SQDashboardBodyBatteryRowViewModel.DefinitionLine] {
+        var lines = [SQDashboardBodyBatteryRowViewModel.DefinitionLine]()
+
+        if todaysStrain > 0 {
+            lines.append(
+                .init(
+                    id: "strain-today",
+                    valueText: signedValueText(for: -todaysStrain),
+                    summaryText: "strain from today's workout load",
+                    weightText: nil
+                )
+            )
+        }
+
+        if carryoverStrain > 0 {
+            lines.append(
+                .init(
+                    id: "strain-carryover",
+                    valueText: signedValueText(for: -carryoverStrain),
+                    summaryText: "carryover from yesterday's workout load",
+                    weightText: nil
+                )
+            )
+        }
+
+        return lines
+    }
+
+    private func checkInDefinitionLines(
+        checkInAdjustment: CheckInAdjustment
+    ) -> [SQDashboardBodyBatteryRowViewModel.DefinitionLine] {
+        var lines = [SQDashboardBodyBatteryRowViewModel.DefinitionLine]()
+
+        if checkInAdjustment.hasPresetSignals {
+            lines.append(
+                .init(
+                    id: "checkins-preset",
+                    valueText: signedValueText(for: checkInAdjustment.presetAdjustment),
+                    summaryText: "built-in recovery signals today",
+                    weightText: nil
+                )
+            )
+        }
+
+        if checkInAdjustment.hasCustomScoringSignals {
+            lines.append(
+                .init(
+                    id: "checkins-custom",
+                    valueText: signedValueText(for: checkInAdjustment.customAdjustment),
+                    summaryText: "custom recovery metrics",
+                    weightText: nil
+                )
+            )
+        }
+
+        return lines.filter { $0.valueText != "+0" && $0.valueText != "0" }
+    }
+
+    private func heartDefinitionLines(
+        heartRecovery: HeartRecoverySignal
+    ) -> [SQDashboardBodyBatteryRowViewModel.DefinitionLine] {
+        var lines = [SQDashboardBodyBatteryRowViewModel.DefinitionLine]()
+
+        if let todaysAverage = heartRecovery.todaysAverage {
+            let sourceText = heartRecovery.source?.metricName ?? "heart data"
+            lines.append(
+                .init(
+                    id: "heart-today",
+                    valueText: "\(Int(todaysAverage.rounded())) bpm",
+                    summaryText: "\(sourceText) today",
+                    weightText: nil
+                )
+            )
+        }
+
+        if let baselineAverage = heartRecovery.baselineAverage {
+            lines.append(
+                .init(
+                    id: "heart-baseline",
+                    valueText: "\(Int(baselineAverage.rounded())) bpm",
+                    summaryText: "recent baseline",
+                    weightText: nil
+                )
+            )
+        }
+
+        return lines
     }
 
     private enum BodyBatteryTextSegment {

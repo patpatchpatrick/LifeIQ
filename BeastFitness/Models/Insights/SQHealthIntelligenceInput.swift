@@ -16,6 +16,7 @@ struct SQHealthIntelligenceInput {
     let timeRange: AppTimeRange
     let metricDefinitions: [SQMetricDefinition]
     let checkIns: [SQDailyCheckInStats]
+    let sleepCheckIns: [SQDailyCheckInStats]
     let workouts: [SQWorkoutSessionable]
     let sleepData: SQSleepDashboardData?
     let restingHeartRateSummaries: [SQHeartRateDailySummary]
@@ -28,6 +29,7 @@ struct SQHealthIntelligenceInput {
         timeRange: AppTimeRange,
         metricDefinitions: [SQMetricDefinition],
         checkIns: [SQDailyCheckInStats],
+        sleepCheckIns: [SQDailyCheckInStats] = [],
         workouts: [SQWorkoutSessionable],
         sleepData: SQSleepDashboardData?,
         restingHeartRateSummaries: [SQHeartRateDailySummary] = [],
@@ -39,6 +41,7 @@ struct SQHealthIntelligenceInput {
         self.timeRange = timeRange
         self.metricDefinitions = metricDefinitions
         self.checkIns = checkIns
+        self.sleepCheckIns = sleepCheckIns
         self.workouts = workouts
         self.sleepData = sleepData
         self.restingHeartRateSummaries = restingHeartRateSummaries

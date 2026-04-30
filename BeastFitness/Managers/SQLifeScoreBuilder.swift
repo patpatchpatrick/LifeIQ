@@ -66,7 +66,12 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
 
         var components = [SQLifeScoreComponent]()
 
-        if let sleepComponent = lifeScoreSleepComponent(from: intelligenceInput.sleepData) {
+        if let sleepComponent = lifeScoreSleepComponent(
+            checkIns: intelligenceInput.checkIns,
+            sleepCheckIns: intelligenceInput.sleepCheckIns,
+            referenceDate: intelligenceInput.referenceDate,
+            sleepData: intelligenceInput.sleepData
+        ) {
             components.append(sleepComponent)
         }
 
@@ -109,6 +114,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         let previousScore = estimatedPreviousDayLifeScore(
             referenceDate: intelligenceInput.referenceDate,
             checkIns: intelligenceInput.checkIns,
+            sleepCheckIns: intelligenceInput.sleepCheckIns,
             workouts: intelligenceInput.workouts,
             metricDefinitions: intelligenceInput.metricDefinitions,
             sleepData: intelligenceInput.sleepData,
@@ -304,6 +310,7 @@ private extension SQLifeScoreBuilder {
     func estimatedPreviousDayLifeScore(
         referenceDate: Date,
         checkIns: [SQDailyCheckInStats],
+        sleepCheckIns: [SQDailyCheckInStats],
         workouts: [SQWorkoutSessionable],
         metricDefinitions: [SQMetricDefinition],
         sleepData: SQSleepDashboardData?,
@@ -317,7 +324,12 @@ private extension SQLifeScoreBuilder {
 
         var components = [SQLifeScoreComponent]()
 
-        if let sleepComponent = previousLifeScoreSleepComponent(from: sleepData) {
+        if let sleepComponent = previousLifeScoreSleepComponent(
+            checkIns: checkIns,
+            sleepCheckIns: sleepCheckIns,
+            referenceDate: referenceDate,
+            sleepData: sleepData
+        ) {
             components.append(sleepComponent)
         }
 
@@ -392,42 +404,137 @@ private extension SQLifeScoreBuilder {
         }
     }
 
-    func lifeScoreSleepComponent(from sleepData: SQSleepDashboardData?) -> SQLifeScoreComponent? {
-        let sleepScore: Double?
-        let sleepDurationHours: Double?
-        if let latestNight = sleepData?.latestNight {
-            sleepScore = sleepAggregationService.score(for: latestNight).totalScore
-            sleepDurationHours = latestNight.totalSleepDuration / 3600.0
-        } else {
-            sleepScore = sleepData?.averageScore?.totalScore
-            if let averageDuration = sleepData?.currentNights.map(\.totalSleepDuration).average {
-                sleepDurationHours = averageDuration / 3600.0
-            } else {
-                sleepDurationHours = nil
-            }
+    func lifeScoreSleepComponent(
+        checkIns: [SQDailyCheckInStats],
+        sleepCheckIns: [SQDailyCheckInStats] = [],
+        referenceDate: Date,
+        sleepData: SQSleepDashboardData?
+    ) -> SQLifeScoreComponent? {
+        guard let sleepInput = sleepComponentInput(
+            checkIns: resolvedSleepCheckIns(from: checkIns, explicitSleepCheckIns: sleepCheckIns),
+            targetDay: referenceDate,
+            sleepData: sleepData,
+            usePreviousHealthNight: false
+        ) else {
+            return nil
         }
 
-        return lifeScoreSleepComponent(for: sleepScore, durationHours: sleepDurationHours)
+        return lifeScoreSleepComponent(
+            for: sleepInput.score,
+            durationHours: sleepInput.durationHours
+        )
     }
 
-    func previousLifeScoreSleepComponent(from sleepData: SQSleepDashboardData?) -> SQLifeScoreComponent? {
-        let sleepScore: Double?
-        let sleepDurationHours: Double?
-        if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
-            sleepScore = sleepAggregationService.score(for: priorNight).totalScore
-            sleepDurationHours = priorNight.totalSleepDuration / 3600.0
-        } else {
-            sleepScore = sleepData?.priorNights
-                .map { sleepAggregationService.score(for: $0).totalScore }
-                .average
-            if let averageDuration = sleepData?.priorNights.map(\.totalSleepDuration).average {
-                sleepDurationHours = averageDuration / 3600.0
-            } else {
-                sleepDurationHours = nil
-            }
+    func previousLifeScoreSleepComponent(
+        checkIns: [SQDailyCheckInStats],
+        sleepCheckIns: [SQDailyCheckInStats] = [],
+        referenceDate: Date,
+        sleepData: SQSleepDashboardData?
+    ) -> SQLifeScoreComponent? {
+        let calendar = Calendar.current
+        let targetDay = calendar.date(byAdding: .day, value: -1, to: referenceDate) ?? referenceDate
+        guard let sleepInput = sleepComponentInput(
+            checkIns: resolvedSleepCheckIns(from: checkIns, explicitSleepCheckIns: sleepCheckIns),
+            targetDay: targetDay,
+            sleepData: sleepData,
+            usePreviousHealthNight: true
+        ) else {
+            return nil
         }
 
-        return lifeScoreSleepComponent(for: sleepScore, durationHours: sleepDurationHours)
+        return lifeScoreSleepComponent(
+            for: sleepInput.score,
+            durationHours: sleepInput.durationHours
+        )
+    }
+
+    struct LifeScoreSleepInput {
+        let score: Double
+        let durationHours: Double?
+    }
+
+    func sleepComponentInput(
+        checkIns: [SQDailyCheckInStats],
+        targetDay: Date,
+        sleepData: SQSleepDashboardData?,
+        usePreviousHealthNight: Bool
+    ) -> LifeScoreSleepInput? {
+        let calendar = Calendar.current
+        let targetCheckIn = checkIns
+            .filter { calendar.isDate($0.date, inSameDayAs: targetDay) }
+            .sorted { $0.date < $1.date }
+            .last
+
+        let sleepQuality = targetCheckIn?.values[SQMetricId.sleepQuality].map { clamp(Double($0), min: 0, max: 10) }
+        let sleepHours = targetCheckIn?.values[SQMetricId.sleepHours].map { clamp(Double($0), min: 0, max: 24) }
+
+        if let sleepQuality {
+            let qualityScore = sleepQuality * 10
+            if let sleepHours {
+                let durationScore = sleepDurationScore(hours: sleepHours)
+                return .init(
+                    score: (qualityScore * 0.75) + (durationScore * 0.25),
+                    durationHours: sleepHours
+                )
+            }
+
+            return .init(score: qualityScore, durationHours: sleepHours)
+        }
+
+        if let sleepHours {
+            return .init(
+                score: sleepDurationScore(hours: sleepHours),
+                durationHours: sleepHours
+            )
+        }
+
+        if usePreviousHealthNight {
+            if let priorNight = sleepData?.priorNights.sorted(by: { $0.wakeDay < $1.wakeDay }).last {
+                return .init(
+                    score: sleepAggregationService.score(for: priorNight).totalScore,
+                    durationHours: priorNight.totalSleepDuration / 3600.0
+                )
+            }
+
+            if let averageScore = sleepData?.priorNights
+                .map({ sleepAggregationService.score(for: $0).totalScore })
+                .average {
+                let averageDuration = sleepData?.priorNights.map(\.totalSleepDuration).average.map { $0 / 3600.0 }
+                return .init(score: averageScore, durationHours: averageDuration)
+            }
+
+            return nil
+        }
+
+        if let latestNight = sleepData?.latestNight {
+            return .init(
+                score: sleepAggregationService.score(for: latestNight).totalScore,
+                durationHours: latestNight.totalSleepDuration / 3600.0
+            )
+        }
+
+        if let averageScore = sleepData?.averageScore?.totalScore {
+            let averageDuration = sleepData?.currentNights.map(\.totalSleepDuration).average.map { $0 / 3600.0 }
+            return .init(score: averageScore, durationHours: averageDuration)
+        }
+
+        return nil
+    }
+
+    func resolvedSleepCheckIns(
+        from checkIns: [SQDailyCheckInStats],
+        explicitSleepCheckIns: [SQDailyCheckInStats]
+    ) -> [SQDailyCheckInStats] {
+        if !explicitSleepCheckIns.isEmpty {
+            return explicitSleepCheckIns
+        }
+
+        let morningCheckIns = checkIns.filter { $0.period == .morning }
+        if !morningCheckIns.isEmpty {
+            return morningCheckIns
+        }
+
+        return checkIns
     }
 
     func lifeScoreSleepComponent(for sleepScore: Double?, durationHours: Double?) -> SQLifeScoreComponent? {
@@ -485,6 +592,18 @@ private extension SQLifeScoreBuilder {
         }
 
         return Int(clamp(adjustedScore, min: 20, max: 98).rounded())
+    }
+
+    func sleepDurationScore(hours: Double) -> Double {
+        if hours >= 7, hours <= 9 {
+            return 100
+        }
+
+        if hours < 7 {
+            return clamp(100 - ((7 - hours) * 18), min: 0, max: 100)
+        }
+
+        return clamp(100 - ((hours - 9) * 12), min: 0, max: 100)
     }
 
     func lifeScoreHeartComponent(

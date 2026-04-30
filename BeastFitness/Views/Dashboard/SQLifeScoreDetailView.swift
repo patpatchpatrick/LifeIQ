@@ -479,10 +479,14 @@ struct SQRecoveryScoreDetailView: View {
                         .sqFont(.bodySmallSemiBold)
                         .sqForegroundColor(.textPrimary)
 
-                    Text(driver.detailText)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if driver.definitionLines.isEmpty {
+                        Text(driver.detailText)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        SQScoreDefinitionLinesView(lines: driver.definitionLines)
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -544,5 +548,34 @@ struct SQRecoveryScoreDetailView: View {
         }
 
         return "Recovery Score starts from a neutral baseline, then adjusts for sleep, strain, check-ins, and heart data."
+    }
+}
+
+private struct SQScoreDefinitionLinesView: View {
+    let lines: [SQDashboardBodyBatteryRowViewModel.DefinitionLine]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.xs) {
+            ForEach(lines) { line in
+                HStack(alignment: .firstTextBaseline, spacing: .SQSpace.xs) {
+                    Text(line.valueText)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textSecondary)
+
+                    Text(line.summaryText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+
+                    if let weightText = line.weightText {
+                        Text(weightText)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textTertiary)
+                    }
+                }
+            }
+        }
     }
 }
