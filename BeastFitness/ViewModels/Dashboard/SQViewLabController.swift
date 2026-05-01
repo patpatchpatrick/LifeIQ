@@ -226,6 +226,18 @@ import UIKit
         hub.toastEvents.send(.present(.init(title: title, style: .success)))
     }
 
+    func calibrationSimulationMarkdown(for reports: [SQViewLabSimulationReport]) -> String {
+        simulationMarkdown(for: reports)
+    }
+
+    static func calibrationSimulationPersonas() -> [SQViewLabSimulationPersona] {
+        defaultSimulationPersonas()
+    }
+
+    static func calibrationMetricDefinitions(for persona: SQViewLabSimulationPersona) -> [SQMetricDefinition] {
+        defaultMetricDefinitions(for: persona)
+    }
+
     private func auditMarkdown(for scenarios: [Scenario]) -> String {
         var lines = [String]()
         lines.append("# View Lab Scenario Audit")
@@ -1342,6 +1354,88 @@ private extension SQViewLabController {
                     .init(activityType: .pickleball, weight: 0.28)
                 ],
                 includesCustomPerformerMetric: true
+            ),
+            .init(
+                id: "healthy-consistent",
+                title: "Healthy Consistent Logger",
+                subtitle: "A very healthy, consistent user with strong habits, regular training, and low vice load.",
+                notes: [
+                    "Use this to ensure V2 still rewards genuinely strong behavior and readiness.",
+                    "This persona should trend in the 90s, with dips mainly from poor sleep, strain, or unusually bad days."
+                ],
+                morningCompletionProbability: 0.98,
+                eveningCompletionProbability: 0.96,
+                restingHeartRateAvailability: 0.98,
+                workoutProbability: 0.72,
+                hardWorkoutProbability: 0.28,
+                weekendViceMultiplier: 1.05,
+                stressSpikeProbability: 0.06,
+                sleepHoursRange: 7.4...8.7,
+                sleepQualityRange: 8.0...9.4,
+                energyRange: 7.5...9.2,
+                moodRange: 7.4...9.1,
+                mentalClarityRange: 7.5...9.3,
+                motivationRange: 7.4...9.2,
+                stressRange: 0.8...2.9,
+                anxietyRange: 0.6...2.5,
+                sorenessRange: 1.0...4.0,
+                alcoholProbability: 0.04,
+                alcoholRange: 0.5...1.2,
+                caffeineProbability: 0.55,
+                caffeineRange: 55...145,
+                weedProbability: 0.01,
+                weedRange: 0.5...1.0,
+                nicotineProbability: 0.0,
+                nicotineRange: 0.0...0.0,
+                restingHeartRateBaselineRange: 47...55,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.44),
+                    .init(activityType: .cycling, weight: 0.28),
+                    .init(activityType: .walking, weight: 0.12),
+                    .init(activityType: .pickleball, weight: 0.16)
+                ],
+                includesCustomPerformerMetric: false
+            ),
+            .init(
+                id: "healthy-sparse",
+                title: "Healthy Sparse Logger",
+                subtitle: "A healthy, fit user with strong underlying signals but sparse check-in behavior.",
+                notes: [
+                    "Use this to ensure sparse logging lowers confidence without falsely making a healthy user look unhealthy.",
+                    "The score should remain generally good, with more caveats and low-data guidance than the consistent healthy persona."
+                ],
+                morningCompletionProbability: 0.48,
+                eveningCompletionProbability: 0.38,
+                restingHeartRateAvailability: 0.58,
+                workoutProbability: 0.68,
+                hardWorkoutProbability: 0.24,
+                weekendViceMultiplier: 1.05,
+                stressSpikeProbability: 0.07,
+                sleepHoursRange: 7.3...8.6,
+                sleepQualityRange: 7.8...9.2,
+                energyRange: 7.3...9.0,
+                moodRange: 7.2...8.9,
+                mentalClarityRange: 7.3...9.1,
+                motivationRange: 7.2...9.0,
+                stressRange: 0.9...3.0,
+                anxietyRange: 0.7...2.6,
+                sorenessRange: 1.0...4.4,
+                alcoholProbability: 0.04,
+                alcoholRange: 0.5...1.2,
+                caffeineProbability: 0.52,
+                caffeineRange: 55...145,
+                weedProbability: 0.01,
+                weedRange: 0.5...1.0,
+                nicotineProbability: 0.0,
+                nicotineRange: 0.0...0.0,
+                restingHeartRateBaselineRange: 47...55,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.42),
+                    .init(activityType: .cycling, weight: 0.28),
+                    .init(activityType: .walking, weight: 0.14),
+                    .init(activityType: .pickleball, weight: 0.16)
+                ],
+                includesCustomPerformerMetric: false
             ),
             .init(
                 id: "vice-heavy",

@@ -3150,32 +3150,60 @@ private extension SQViewLabScenarioRunner {
             return "logCoreSignals"
         }
 
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("stress")
-            || drivers.contains(where: { isStressPressureSignalId($0.signalId) && $0.direction == .drag }) {
+        let primaryDriver = drivers.first
+        if let primaryDriver, primaryDriver.direction == .drag {
+            if isSleepSignalId(primaryDriver.signalId) {
+                return "protectSleep"
+            }
+
+            if isTrainingSignalId(primaryDriver.signalId) || primaryDriver.signalId == SQMetricId.soreness {
+                return "moderateStrain"
+            }
+
+            if isStressPressureSignalId(primaryDriver.signalId) {
+                if isStableStateTitle(stateTitle),
+                   !isStrongActionPressureDriver(primaryDriver) {
+                    return "keepConsistent"
+                }
+
+                return "simplify"
+            }
+
+            if isHabitSignalId(primaryDriver.signalId) {
+                if primaryDriver.signalId == SQMetricId.alcohol
+                    || primaryDriver.signalId == SQMetricId.weed
+                    || primaryDriver.signalId == SQMetricId.nicotine
+                    || primaryDriver.signalId == SQMetricId.porn {
+                    return "reduce"
+                }
+
+                return primaryDriver.signalId == SQMetricId.caffeine ? "shiftEarlier" : "protectSleep"
+            }
+        }
+
+        if isStableStateTitle(stateTitle) {
+            return "keepConsistent"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("stress") {
             return "simplify"
         }
 
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain")
-            || drivers.contains(where: { (isTrainingSignalId($0.signalId) || $0.signalId == SQMetricId.soreness) && $0.direction == .drag }) {
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain") {
             return "moderateStrain"
         }
 
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("sleep")
-            || drivers.contains(where: { isSleepSignalId($0.signalId) && $0.direction == .drag }) {
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("sleep") {
             return "protectSleep"
         }
 
         if heroSubfamilyKey.localizedCaseInsensitiveContains("habit")
-            || drivers.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .drag })
             || changes.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .worsened }) {
-            let hasAlcoholOrVice = drivers.contains {
-                [SQMetricId.alcohol, SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains($0.signalId)
-            } || changes.contains {
+            let hasAlcoholOrVice = changes.contains {
                 [SQMetricId.alcohol, SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains($0.signalId)
             }
             let hasCaffeineOnly = !hasAlcoholOrVice && (
-                drivers.contains(where: { $0.signalId == SQMetricId.caffeine })
-                || changes.contains(where: { $0.signalId == SQMetricId.caffeine })
+                changes.contains(where: { $0.signalId == SQMetricId.caffeine })
             )
 
             if hasAlcoholOrVice {
@@ -3189,11 +3217,25 @@ private extension SQViewLabScenarioRunner {
             return "protectSleep"
         }
 
-        if stateTitle == "Strong" || stateTitle == "Primed" || stateTitle == "Balanced" {
-            return "keepConsistent"
-        }
-
         return beforeFamily
+    }
+
+    func isStableStateTitle(_ stateTitle: String) -> Bool {
+        stateTitle == "Strong" || stateTitle == "Primed" || stateTitle == "Balanced"
+    }
+
+    func isStrongActionPressureDriver(_ driver: SQInsightDriver) -> Bool {
+        switch driver.signalId {
+        case SQMetricId.stress, SQMetricId.anxiety:
+            return driver.recentAverage >= 6.4 || driver.effectMagnitude >= 1.5
+        case SQMetricId.energy,
+             SQMetricId.mood,
+             SQMetricId.mentalClarity,
+             SQMetricId.motivation:
+            return driver.recentAverage <= 5.5 || driver.effectMagnitude >= 1.5
+        default:
+            return true
+        }
     }
 
     func actionRoutingReason(
@@ -3213,13 +3255,29 @@ private extension SQViewLabScenarioRunner {
             return "\(beforeFamily ?? "none") -> \(afterFamily): low-data subfamily"
         }
 
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("stress")
-            || drivers.contains(where: { isStressPressureSignalId($0.signalId) }) {
+        if let primaryDriver = drivers.first {
+            if isSleepSignalId(primaryDriver.signalId) {
+                return "\(beforeFamily ?? "none") -> \(afterFamily): primary sleep driver"
+            }
+
+            if isTrainingSignalId(primaryDriver.signalId) {
+                return "\(beforeFamily ?? "none") -> \(afterFamily): primary training/recovery driver"
+            }
+
+            if isStressPressureSignalId(primaryDriver.signalId) {
+                return "\(beforeFamily ?? "none") -> \(afterFamily): primary stress/mind driver"
+            }
+
+            if isHabitSignalId(primaryDriver.signalId) {
+                return "\(beforeFamily ?? "none") -> \(afterFamily): primary habit driver"
+            }
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("stress") {
             return "\(beforeFamily ?? "none") -> \(afterFamily): stress-pressure routing"
         }
 
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain")
-            || drivers.contains(where: { isTrainingSignalId($0.signalId) }) {
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain") {
             return "\(beforeFamily ?? "none") -> \(afterFamily): training/recovery routing"
         }
 
@@ -3228,7 +3286,6 @@ private extension SQViewLabScenarioRunner {
         }
 
         if heroSubfamilyKey.localizedCaseInsensitiveContains("habit")
-            || drivers.contains(where: { isHabitSignalId($0.signalId) })
             || changes.contains(where: { isHabitSignalId($0.signalId) }) {
             return "\(beforeFamily ?? "none") -> \(afterFamily): habit-pressure routing"
         }

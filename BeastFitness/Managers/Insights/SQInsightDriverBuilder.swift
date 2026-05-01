@@ -112,12 +112,16 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
 
         let delta = recentAverage - baselineAverage
         let effectMagnitude = abs(delta)
-        let minimumEffectMagnitude = effectiveMinimumEffectMagnitude(
+        let scoringEffectMagnitude = scoringEffectMagnitude(
+            for: definition.signalId,
+            rawEffectMagnitude: effectMagnitude
+        )
+        let minimumEffectMagnitude = effectiveMinimumScoringEffectMagnitude(
             for: definition.signalId,
             base: definition.minimumEffectMagnitude,
             surfaceIntent: surfaceIntent
         )
-        guard effectMagnitude >= minimumEffectMagnitude else {
+        guard scoringEffectMagnitude >= minimumEffectMagnitude else {
             return nil
         }
 
@@ -134,13 +138,14 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         }
 
         let sampleCount = recentValues.count + baselineValues.count
+        let confidence = SQInsightScoring.confidence(
+            sampleCount: sampleCount,
+            effectMagnitude: scoringEffectMagnitude
+        )
         let rankingScore = SQInsightScoring.rankingScore(
             sampleCount: sampleCount,
-            effectMagnitude: effectMagnitude,
-            confidence: SQInsightScoring.confidence(
-                sampleCount: sampleCount,
-                effectMagnitude: effectMagnitude
-            )
+            effectMagnitude: scoringEffectMagnitude,
+            confidence: confidence
         )
 
         return .init(
@@ -320,20 +325,44 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         return min(base, 2)
     }
 
-    private func effectiveMinimumEffectMagnitude(
+    private func effectiveMinimumScoringEffectMagnitude(
         for signalId: String,
         base: Double,
         surfaceIntent: SQInsightSurfaceIntent
     ) -> Double {
+        let normalizedBase = max(
+            0.35,
+            scoringEffectMagnitude(
+                for: signalId,
+                rawEffectMagnitude: base
+            )
+        )
+
         guard surfaceIntent == .today, Self.todayPreferredSignalIds.contains(signalId) else {
-            return base
+            return normalizedBase
         }
 
         if signalId == SQInsightAnalysisMetricId.restingHeartRate {
-            return base
+            return normalizedBase
         }
 
-        return min(base, 0.35)
+        return min(normalizedBase, 0.45)
+    }
+
+    private func scoringEffectMagnitude(
+        for signalId: String,
+        rawEffectMagnitude: Double
+    ) -> Double {
+        switch signalId {
+        case SQMetricId.caffeine:
+            return rawEffectMagnitude / 85
+        case SQInsightAnalysisMetricId.restingHeartRate:
+            return rawEffectMagnitude / 4
+        case SQMetricId.sleepHours:
+            return rawEffectMagnitude / 0.75
+        default:
+            return rawEffectMagnitude
+        }
     }
 
     private static let todayPreferredSignalIds: Set<String> = [

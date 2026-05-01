@@ -1653,12 +1653,14 @@ final class SQInsightsService: SQInsightsServicing {
 
         return pressureContext.isPressured
             || dragScore >= supportiveScore + 4
+            || (dragScore > 0 && supportiveScore < dragScore + 8)
             || (dragDrivers.count >= 2 && dragScore >= supportiveScore)
             || (worseningStateChangeCount >= 2 && dragScore >= supportiveScore - 2)
     }
 
     private struct CurrentPressureContext {
         let isPressured: Bool
+        let isLowDataContext: Bool
         let negativeSignalCount: Int
         let supportiveSignalCount: Int
         let strongestSupportiveSignalIds: Set<String>
@@ -1675,6 +1677,7 @@ final class SQInsightsService: SQInsightsServicing {
             .max(by: { $0.date < $1.date }) else {
             return .init(
                 isPressured: false,
+                isLowDataContext: false,
                 negativeSignalCount: 0,
                 supportiveSignalCount: 0,
                 strongestSupportiveSignalIds: []
@@ -1737,16 +1740,39 @@ final class SQInsightsService: SQInsightsServicing {
             negativeSignals.insert(SQInsightAnalysisMetricId.workoutPerformance)
         }
 
+        let observedCoreSignalCount = Self.pressureContextCoreSignalIds.reduce(into: 0) { partialResult, signalId in
+            if snapshot.rawSignalValue(for: signalId) != nil {
+                partialResult += 1
+            }
+        }
+        let isLowDataContext = observedCoreSignalCount < 3
         let isPressured = negativeSignals.count >= 2
             || (negativeSignals.count >= 1 && negativeSignals.count > supportiveSignals.count)
+            || isLowDataContext
 
         return .init(
             isPressured: isPressured,
+            isLowDataContext: isLowDataContext,
             negativeSignalCount: negativeSignals.count,
             supportiveSignalCount: supportiveSignals.count,
             strongestSupportiveSignalIds: supportiveSignals
         )
     }
+
+    private static let pressureContextCoreSignalIds: Set<String> = [
+        SQMetricId.sleepHours,
+        SQMetricId.sleepQuality,
+        SQInsightAnalysisMetricId.restingHeartRate,
+        SQMetricId.energy,
+        SQMetricId.mood,
+        SQMetricId.mentalClarity,
+        SQMetricId.motivation,
+        SQMetricId.stress,
+        SQMetricId.anxiety,
+        SQMetricId.soreness,
+        SQInsightAnalysisMetricId.workoutDifficulty,
+        SQInsightAnalysisMetricId.workoutPerformance
+    ]
 
     private func isPositiveCurrentStateInsight(_ insight: SQInsight) -> Bool {
         guard insight.insightClass == .opportunity,
@@ -1783,6 +1809,7 @@ final class SQInsightsService: SQInsightsServicing {
         let supportiveDrivers = drivers.filter { $0.direction == .supportive }
         let dragDrivers = drivers.filter { $0.direction == .drag }
         guard let strongestSupportiveDriver = supportiveDrivers.first else { return false }
+        guard !pressureContext.isLowDataContext else { return false }
 
         let signalIds = Set([insight.inputSignalId, insight.outputSignalId].compactMap { $0 })
         guard signalIds.contains(strongestSupportiveDriver.signalId) else {
@@ -2559,7 +2586,7 @@ final class SQInsightsService: SQInsightsServicing {
             }
 
             if isTrainingSignalId(driver.signalId) || driver.signalId == SQMetricId.soreness {
-                score += 21
+                score += recoveryTrainingDriverBoost(driver)
             }
 
             if isSleepSignalId(driver.signalId) {
@@ -2594,6 +2621,29 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return score
+    }
+
+    private func recoveryTrainingDriverBoost(_ driver: SQInsightDriver) -> Double {
+        switch driver.signalId {
+        case SQMetricId.soreness, SQInsightAnalysisMetricId.workoutDifficulty:
+            if driver.recentAverage >= 6.5 {
+                return 21
+            }
+
+            if driver.recentAverage >= 5.4 || driver.effectMagnitude >= 1.4 {
+                return 10
+            }
+
+            return -4
+        case SQInsightAnalysisMetricId.workoutPerformance:
+            if driver.direction == .drag {
+                return driver.recentAverage <= 5.8 || driver.effectMagnitude >= 1.2 ? 12 : 4
+            }
+
+            return driver.recentAverage >= 7.3 ? 5 : 0
+        default:
+            return 0
+        }
     }
 
     private func todayDriverMeetsRoleGate(
