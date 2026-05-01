@@ -102,6 +102,13 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let heroAction: String
     let heroFamilyKey: String
     let surfacedInsightTitles: [String]
+    let scoreDelta: Int?
+    let componentScores: [String: Int]
+    let topDriverTitles: [String]
+    let topChangeTitles: [String]
+    let actionRecommendationFamilies: [String]
+    let surfacedCustomMetric: Bool
+    let healthKitFallbackMetricIds: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -135,6 +142,14 @@ struct SQViewLabSimulationReport {
     let heroActionDistribution: [SQViewLabSimulationDistributionRow]
     let heroFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let scoreDeltaDistribution: [SQViewLabSimulationDistributionRow]
+    let componentScoreDistribution: [SQViewLabSimulationDistributionRow]
+    let topDriverDistribution: [SQViewLabSimulationDistributionRow]
+    let topChangeDistribution: [SQViewLabSimulationDistributionRow]
+    let actionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let customMetricSurfacePercentage: Double
+    let healthKitFallbackUsageByMetric: [SQViewLabSimulationDistributionRow]
+    let lifeScoreComponentAvailability: [SQViewLabSimulationDistributionRow]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -198,6 +213,7 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         )
 
         var outputs = [SQViewLabSimulationDayOutput]()
+        let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         for index in generatedDays.indices {
             let currentDay = generatedDays[index]
@@ -230,6 +246,9 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                     insightsResult: insightsResult
                 )
             )
+            let surfacedSignalIds = insightsResult.insights.flatMap { insight in
+                [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+            }
 
             outputs.append(
                 .init(
@@ -246,6 +265,17 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                     ),
                     heroFamilyKey: "lifeScore.state.\(lifeScoreViewModel.state.title)",
                     surfacedInsightTitles: insightsResult.insights.map(\.title),
+                    scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
+                    componentScores: Dictionary(
+                        uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
+                    ),
+                    topDriverTitles: lifeScoreViewModel.drivers.prefix(3).map(\.title),
+                    topChangeTitles: lifeScoreViewModel.changes.prefix(3).map(\.title),
+                    actionRecommendationFamilies: insightsResult.insights.compactMap { insight in
+                        insight.recommendationFamily.map { String(describing: $0) }
+                    },
+                    surfacedCustomMetric: surfacedSignalIds.contains { customMetricIds.contains($0) },
+                    healthKitFallbackMetricIds: healthKitFallbackMetricIds(for: currentDay),
                     morningValues: currentDay.morningValues,
                     eveningValues: currentDay.eveningValues,
                     restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -300,6 +330,31 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             heroActionDistribution: distributionRows(for: outputs.map(\.heroAction)),
             heroFamilyDistribution: distributionRows(for: outputs.map(\.heroFamilyKey)),
             surfacedInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedInsightTitles)),
+            scoreDeltaDistribution: distributionRows(for: outputs.map { scoreDeltaBucket($0.scoreDelta) }),
+            componentScoreDistribution: distributionRows(
+                for: outputs.flatMap { output in
+                    output.componentScores.map { title, score in
+                        "\(title): \(scoreBand(for: score))"
+                    }
+                }
+            ),
+            topDriverDistribution: distributionRows(for: outputs.map { $0.topDriverTitles.first ?? "None" }),
+            topChangeDistribution: distributionRows(for: outputs.map { $0.topChangeTitles.first ?? "None" }),
+            actionRecommendationFamilyDistribution: distributionRows(
+                for: outputs.map { $0.actionRecommendationFamilies.first ?? "None" }
+            ),
+            customMetricSurfacePercentage: percentage(
+                matchingCount: outputs.filter(\.surfacedCustomMetric).count,
+                total: outputs.count
+            ),
+            healthKitFallbackUsageByMetric: distributionRows(
+                for: Dictionary(grouping: outputs.flatMap(\.healthKitFallbackMetricIds), by: { $0 }).mapValues(\.count),
+                total: outputs.count
+            ),
+            lifeScoreComponentAvailability: distributionRows(
+                for: Dictionary(grouping: outputs.flatMap { Array($0.componentScores.keys) }, by: { $0 }).mapValues(\.count),
+                total: outputs.count
+            ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
             longestHeroFamilyRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroFamilyKey)),
@@ -801,16 +856,76 @@ private extension SQViewLabScenarioRunner {
         valueSets.compactMap { $0[metricId].map(Double.init) }.average
     }
 
+    func healthKitFallbackMetricIds(for day: GeneratedSimulationDay) -> [String] {
+        guard day.sleepData != nil else { return [] }
+
+        var metricIds = [String]()
+        if !day.completedMorningCheckIn || day.morningValues[SQMetricId.sleepQuality] == nil {
+            metricIds.append(SQMetricId.sleepQuality)
+        }
+        if !day.completedMorningCheckIn || day.morningValues[SQMetricId.sleepHours] == nil {
+            metricIds.append(SQMetricId.sleepHours)
+        }
+        return metricIds
+    }
+
+    func scoreDeltaBucket(_ delta: Int?) -> String {
+        guard let delta else { return "No prior score" }
+
+        if delta <= -10 {
+            return "Large drop (<= -10)"
+        } else if delta <= -5 {
+            return "Moderate drop (-5 to -9)"
+        } else if delta <= -1 {
+            return "Small drop (-1 to -4)"
+        } else if delta == 0 {
+            return "No change"
+        } else if delta <= 4 {
+            return "Small lift (+1 to +4)"
+        } else if delta <= 9 {
+            return "Moderate lift (+5 to +9)"
+        } else {
+            return "Large lift (>= +10)"
+        }
+    }
+
+    func scoreBand(for score: Int) -> String {
+        switch score {
+        case ..<40:
+            return "<40"
+        case 40..<50:
+            return "40-49"
+        case 50..<60:
+            return "50-59"
+        case 60..<70:
+            return "60-69"
+        case 70..<80:
+            return "70-79"
+        case 80..<90:
+            return "80-89"
+        default:
+            return "90+"
+        }
+    }
+
     func distributionRows(for values: [String]) -> [SQViewLabSimulationDistributionRow] {
         let total = max(values.count, 1)
         let counts = Dictionary(grouping: values, by: { $0 }).mapValues(\.count)
 
+        return distributionRows(for: counts, total: total)
+    }
+
+    func distributionRows(
+        for counts: [String: Int],
+        total: Int
+    ) -> [SQViewLabSimulationDistributionRow] {
+        let resolvedTotal = max(total, 1)
         return counts
             .map { key, count in
                 SQViewLabSimulationDistributionRow(
                     label: key,
                     count: count,
-                    percentage: (Double(count) / Double(total)) * 100
+                    percentage: (Double(count) / Double(resolvedTotal)) * 100
                 )
             }
             .sorted {

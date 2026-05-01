@@ -43,6 +43,10 @@ extension SQLocalPersistenceSchemaV1 {
         var targetRangeMaxValue: Float?
         /// Stored as raw value for forward-compatible enum decoding.
         var bodyBatteryEffectRaw: String = SQMetricBodyBatteryEffect.none.rawValue
+        var signalRoleRaw: String = SQMetricSignalRole.automatic.rawValue
+        var lifeScoreImpactRaw: String = SQMetricLifeScoreImpact.none.rawValue
+        var insightModeRaw: String = SQMetricInsightMode.exploratoryRelationships.rawValue
+        var sensitivityRaw: String = SQMetricSensitivity.normal.rawValue
         var scaleQuantityUnitRaw: String?
         var scaleQuantityMaxValue: Float?
         var scaleQuantityLabelOverride: String?
@@ -75,6 +79,10 @@ extension SQLocalPersistenceSchemaV1 {
             targetRangeMin: Float? = nil,
             targetRangeMax: Float? = nil,
             bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
+            signalRole: SQMetricSignalRole = .automatic,
+            lifeScoreImpact: SQMetricLifeScoreImpact = .none,
+            insightMode: SQMetricInsightMode = .exploratoryRelationships,
+            sensitivity: SQMetricSensitivity = .normal,
             scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
             healthKitType: SQMetricHealthKitType = .none,
             healthKitReadEnabled: Bool = false,
@@ -103,6 +111,10 @@ extension SQLocalPersistenceSchemaV1 {
             self.targetRangeMinValue = targetRangeMin
             self.targetRangeMaxValue = targetRangeMax
             self.bodyBatteryEffectRaw = bodyBatteryEffect.rawValue
+            self.signalRoleRaw = signalRole.rawValue
+            self.lifeScoreImpactRaw = lifeScoreImpact.rawValue
+            self.insightModeRaw = insightMode.rawValue
+            self.sensitivityRaw = sensitivity.rawValue
             self.scaleQuantityUnitRaw = scaleQuantityMapping?.quantityUnit.rawValue
             self.scaleQuantityMaxValue = scaleQuantityMapping?.maxQuantityValue
             self.scaleQuantityLabelOverride = scaleQuantityMapping?.quantityLabelOverride
@@ -126,6 +138,10 @@ extension SQMetricDefinitionEntity {
     var unit: SQMetricUnit { SQMetricUnit(unfrozenRawValue: unitRaw) }
     var goalStyle: SQMetricGoalStyle { SQMetricGoalStyle(unfrozenRawValue: goalStyleRaw) }
     var bodyBatteryEffect: SQMetricBodyBatteryEffect { SQMetricBodyBatteryEffect(unfrozenRawValue: bodyBatteryEffectRaw) }
+    var signalRole: SQMetricSignalRole { SQMetricSignalRole(unfrozenRawValue: signalRoleRaw) }
+    var lifeScoreImpact: SQMetricLifeScoreImpact { SQMetricLifeScoreImpact(unfrozenRawValue: lifeScoreImpactRaw) }
+    var insightMode: SQMetricInsightMode { SQMetricInsightMode(unfrozenRawValue: insightModeRaw) }
+    var sensitivity: SQMetricSensitivity { SQMetricSensitivity(unfrozenRawValue: sensitivityRaw) }
     var healthKitType: SQMetricHealthKitType { SQMetricHealthKitType(unfrozenRawValue: healthKitTypeRaw) }
     var scaleQuantityMapping: SQMetricScaleQuantityMapping? {
         guard
@@ -192,6 +208,10 @@ extension SQMetricDefinitionEntity {
             targetRangeMin: targetRangeMinValue,
             targetRangeMax: targetRangeMaxValue,
             bodyBatteryEffect: bodyBatteryEffect,
+            signalRole: signalRole,
+            lifeScoreImpact: lifeScoreImpact,
+            insightMode: insightMode,
+            sensitivity: sensitivity,
             scaleQuantityMapping: scaleQuantityMapping,
             healthKitType: healthKitType,
             healthKitReadEnabled: healthKitReadEnabled,
@@ -222,6 +242,10 @@ extension SQMetricDefinitionEntity {
         targetRangeMinValue = def.targetRangeMin
         targetRangeMaxValue = def.targetRangeMax
         bodyBatteryEffectRaw = def.bodyBatteryEffect.rawValue
+        signalRoleRaw = def.signalRole.rawValue
+        lifeScoreImpactRaw = def.lifeScoreImpact.rawValue
+        insightModeRaw = def.insightMode.rawValue
+        sensitivityRaw = def.sensitivity.rawValue
         scaleQuantityUnitRaw = def.scaleQuantityMapping?.quantityUnit.rawValue
         scaleQuantityMaxValue = def.scaleQuantityMapping?.maxQuantityValue
         scaleQuantityLabelOverride = def.scaleQuantityMapping?.quantityLabelOverride

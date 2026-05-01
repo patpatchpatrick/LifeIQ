@@ -269,6 +269,7 @@ import UIKit
         lines.append("- Avg alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")")
+        lines.append("- Custom metric surfaced: \(formattedPercent(report.customMetricSurfacePercentage))")
         lines.append("- Longest repeated hero summary streak: \(report.longestHeroSummaryRepeatStreak) days")
         lines.append("- Longest repeated hero action streak: \(report.longestHeroActionRepeatStreak) days")
         lines.append("- Longest repeated hero family streak: \(report.longestHeroFamilyRepeatStreak) days")
@@ -289,13 +290,41 @@ import UIKit
         lines.append("## Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedInsightDistribution))
         lines.append("")
+        lines.append("## Score Delta Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.scoreDeltaDistribution))
+        lines.append("")
+        lines.append("## Component Score Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.componentScoreDistribution))
+        lines.append("")
+        lines.append("## Top Driver Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.topDriverDistribution))
+        lines.append("")
+        lines.append("## Top Change Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.topChangeDistribution))
+        lines.append("")
+        lines.append("## Action Recommendation Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.actionRecommendationFamilyDistribution))
+        lines.append("")
+        lines.append("## HealthKit Fallback Usage")
+        lines.append(contentsOf: simulationDistributionLines(report.healthKitFallbackUsageByMetric))
+        lines.append("")
+        lines.append("## Life Score Component Availability")
+        lines.append(contentsOf: simulationDistributionLines(report.lifeScoreComponentAvailability))
+        lines.append("")
 
         lines.append("## Daily Log")
         for day in report.days {
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
+            lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
+            lines.append("  - component scores: \(componentScoreText(day.componentScores))")
+            lines.append("  - top drivers: \(day.topDriverTitles.isEmpty ? "none" : day.topDriverTitles.joined(separator: " | "))")
+            lines.append("  - top changes: \(day.topChangeTitles.isEmpty ? "none" : day.topChangeTitles.joined(separator: " | "))")
+            lines.append("  - recommendation families: \(day.actionRecommendationFamilies.isEmpty ? "none" : day.actionRecommendationFamilies.joined(separator: " | "))")
+            lines.append("  - custom metric surfaced: \(day.surfacedCustomMetric ? "yes" : "no")")
+            lines.append("  - HealthKit fallback metrics: \(day.healthKitFallbackMetricIds.isEmpty ? "none" : day.healthKitFallbackMetricIds.joined(separator: ", "))")
             lines.append("  - morning check-in complete: \(day.completedMorningCheckIn ? "yes" : "no")")
             lines.append("  - evening check-in complete: \(day.completedEveningCheckIn ? "yes" : "no")")
             lines.append("  - morning values: \(metricDictionaryText(day.morningValues))")
@@ -555,6 +584,16 @@ import UIKit
             guard let value = values[metricId] else { return nil }
             let title = definitionsById[metricId] ?? metricId
             return "\(title) \(formattedFloat(value))"
+        }
+        .joined(separator: " • ")
+    }
+
+    private func componentScoreText(_ values: [String: Int]) -> String {
+        guard !values.isEmpty else { return "none" }
+
+        return values.keys.sorted().compactMap { title in
+            guard let score = values[title] else { return nil }
+            return "\(title) \(score)"
         }
         .joined(separator: " • ")
     }

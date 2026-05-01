@@ -603,6 +603,7 @@ struct SQViewLabView: View {
                     "Avg Alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")",
                     "Avg Caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")",
                     "Avg Resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")",
+                    "Custom Metric Surfaced: \(formattedPercent(report.customMetricSurfacePercentage))",
                     "Longest Hero Summary Streak: \(report.longestHeroSummaryRepeatStreak) days",
                     "Longest Hero Action Streak: \(report.longestHeroActionRepeatStreak) days",
                     "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days"
@@ -638,6 +639,34 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Surfaced Insights",
                 values: report.surfacedInsightDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Score Deltas",
+                values: report.scoreDeltaDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Component Scores",
+                values: report.componentScoreDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Drivers",
+                values: report.topDriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Changes",
+                values: report.topChangeDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Action Families",
+                values: report.actionRecommendationFamilyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "HealthKit Fallback",
+                values: report.healthKitFallbackUsageByMetric.map(distributionText)
+            )
+            outputGroup(
+                title: "Component Availability",
+                values: report.lifeScoreComponentAvailability.map(distributionText)
             )
         }
         .padding(.SQSpace.l)

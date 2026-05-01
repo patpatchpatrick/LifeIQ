@@ -87,6 +87,10 @@ The Life Score detail flow now also consumes shared recent `changes`, so the exp
 
 The Life Score detail flow now also consumes shared `actions`, so the explanation layer can recommend one concrete next move without inventing separate score-only advice logic.
 
+Phase 1 metric semantics are now part of `SQMetricDefinition`: `signalRole`, `lifeScoreImpact`, `insightMode`, and `sensitivity`. Current Life Score behavior should not directly depend on these fields yet; future contributor-based scoring should route through a resolver so stored `.automatic` values resolve consistently and custom metrics stay capped.
+
+View Lab simulation reports are the calibration harness for score tuning. Before changing score behavior, capture baseline distributions for score deltas, component scores, top drivers/changes, action families, HealthKit fallback usage, and component availability.
+
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 
 `Under Pressure` should be reserved for stacked or severe negatives. A single mild drag should usually become `Slightly Off` or `Dipping`, especially for balanced personas with otherwise good sleep, training, and habit patterns. Scores at or above 88 should not become `Under Pressure` unless there is an unusually severe stacked condition.

@@ -95,6 +95,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMin: def.targetRangeMin,
                         targetRangeMax: def.targetRangeMax,
                         bodyBatteryEffect: def.bodyBatteryEffect,
+                        signalRole: def.signalRole,
+                        lifeScoreImpact: def.lifeScoreImpact,
+                        insightMode: def.insightMode,
+                        sensitivity: def.sensitivity,
                         scaleQuantityMapping: def.scaleQuantityMapping,
                         healthKitType: def.healthKitType,
                         healthKitReadEnabled: def.healthKitReadEnabled,
@@ -237,6 +241,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 targetRangeMin: definition.targetRangeMin,
                 targetRangeMax: definition.targetRangeMax,
                 bodyBatteryEffect: definition.bodyBatteryEffect,
+                signalRole: definition.signalRole,
+                lifeScoreImpact: definition.lifeScoreImpact,
+                insightMode: definition.insightMode,
+                sensitivity: definition.sensitivity,
                 scaleQuantityMapping: definition.scaleQuantityMapping,
                 healthKitType: definition.healthKitType,
                 healthKitReadEnabled: definition.healthKitReadEnabled,
@@ -330,7 +338,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         }
 
         let userId = currentLocalUserId()
-        let key = "metric-definitions-bootstrap-v5-healthkit-metrics-\(userId)"
+        let key = "metric-definitions-bootstrap-v6-metric-semantics-\(userId)"
         let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
             predicate: #Predicate { $0.id == key }
         )
@@ -423,6 +431,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     targetRangeMin: def.targetRangeMin,
                     targetRangeMax: def.targetRangeMax,
                     bodyBatteryEffect: def.bodyBatteryEffect,
+                    signalRole: def.signalRole,
+                    lifeScoreImpact: def.lifeScoreImpact,
+                    insightMode: def.insightMode,
+                    sensitivity: def.sensitivity,
                     scaleQuantityMapping: def.scaleQuantityMapping,
                     healthKitType: def.healthKitType,
                     healthKitReadEnabled: def.healthKitReadEnabled,
@@ -506,7 +518,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
     /// Migrates the preset catalog:
     /// 1. Inserts any new preset metrics that don't exist in the database.
-    /// 2. For existing preset entities, applies period, isDefault, and binary→scale conversion.
+    /// 2. For existing preset entities, applies period, isDefault, semantic defaults, and binary→scale conversion.
     private func migrateNewPresets(context: ModelContext) throws {
         let allPresets = Self.presetMetrics()
         let existingIds = Set(metrics.map { $0.id })
@@ -541,6 +553,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         targetRangeMin: preset.targetRangeMin,
                         targetRangeMax: preset.targetRangeMax,
                         bodyBatteryEffect: preset.bodyBatteryEffect,
+                        signalRole: preset.signalRole,
+                        lifeScoreImpact: preset.lifeScoreImpact,
+                        insightMode: preset.insightMode,
+                        sensitivity: preset.sensitivity,
                         scaleQuantityMapping: preset.scaleQuantityMapping,
                         healthKitType: preset.healthKitType,
                         healthKitReadEnabled: preset.healthKitReadEnabled,
@@ -608,6 +624,22 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 }
                 if entity.bodyBatteryEffectRaw != preset.bodyBatteryEffect.rawValue {
                     entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
+                    didChange = true
+                }
+                if entity.signalRoleRaw != preset.signalRole.rawValue {
+                    entity.signalRoleRaw = preset.signalRole.rawValue
+                    didChange = true
+                }
+                if entity.lifeScoreImpactRaw != preset.lifeScoreImpact.rawValue {
+                    entity.lifeScoreImpactRaw = preset.lifeScoreImpact.rawValue
+                    didChange = true
+                }
+                if entity.insightModeRaw != preset.insightMode.rawValue {
+                    entity.insightModeRaw = preset.insightMode.rawValue
+                    didChange = true
+                }
+                if entity.sensitivityRaw != preset.sensitivity.rawValue {
+                    entity.sensitivityRaw = preset.sensitivity.rawValue
                     didChange = true
                 }
                 if entity.scaleQuantityUnitRaw == nil,

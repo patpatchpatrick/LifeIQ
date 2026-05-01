@@ -155,6 +155,158 @@ enum SQMetricBodyBatteryEffect: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
+// MARK: - SQMetric Algorithm Semantics
+
+enum SQMetricSignalRole: String, Codable, CaseIterable, UnfrozenEnum {
+    case automatic
+    case behavior
+    case outcome
+    case symptom
+    case bodyStat
+    case context
+    case unknown
+}
+
+enum SQMetricLifeScoreImpact: String, Codable, CaseIterable, UnfrozenEnum {
+    case automatic
+    case none
+    case light
+    case standard
+    case unknown
+}
+
+enum SQMetricInsightMode: String, Codable, CaseIterable, UnfrozenEnum {
+    case automatic
+    case off
+    case trendsOnly
+    case exploratoryRelationships
+    case curatedRelationships
+    case unknown
+}
+
+enum SQMetricSensitivity: String, Codable, CaseIterable, UnfrozenEnum {
+    case normal
+    case sensitive
+    case medicationLike
+    case unknown
+}
+
+struct SQMetricSemanticResolver {
+    func signalRole(for definition: SQMetricDefinition) -> SQMetricSignalRole {
+        if definition.signalRole != .automatic && definition.signalRole != .unknown {
+            return definition.signalRole
+        }
+        return SQMetricSemanticDefaults.signalRole(forMetricId: definition.id, isPreset: definition.isPreset)
+    }
+
+    func lifeScoreImpact(for definition: SQMetricDefinition) -> SQMetricLifeScoreImpact {
+        if definition.lifeScoreImpact != .automatic && definition.lifeScoreImpact != .unknown {
+            return definition.lifeScoreImpact
+        }
+        return SQMetricSemanticDefaults.lifeScoreImpact(forMetricId: definition.id, isPreset: definition.isPreset)
+    }
+
+    func insightMode(for definition: SQMetricDefinition) -> SQMetricInsightMode {
+        if definition.insightMode != .automatic && definition.insightMode != .unknown {
+            return definition.insightMode
+        }
+        return SQMetricSemanticDefaults.insightMode(forMetricId: definition.id, isPreset: definition.isPreset)
+    }
+
+    func sensitivity(for definition: SQMetricDefinition) -> SQMetricSensitivity {
+        if definition.sensitivity != .unknown {
+            return definition.sensitivity
+        }
+        return SQMetricSemanticDefaults.sensitivity(forMetricId: definition.id, isPreset: definition.isPreset)
+    }
+}
+
+enum SQMetricSemanticDefaults {
+    static func signalRole(forMetricId metricId: String, isPreset: Bool) -> SQMetricSignalRole {
+        guard isPreset else { return .automatic }
+
+        switch metricId {
+        case SQMetricId.weight,
+             SQMetricId.sleepQuality,
+             SQMetricId.sleepHours:
+            return .bodyStat
+        case SQMetricId.stress,
+             SQMetricId.anxiety,
+             SQMetricId.sickness,
+             SQMetricId.pain,
+             SQMetricId.cravings,
+             SQMetricId.digestion,
+             SQMetricId.soreness:
+            return .symptom
+        case SQMetricId.mood,
+             SQMetricId.energy,
+             SQMetricId.mentalClarity,
+             SQMetricId.motivation,
+             SQMetricId.productivity,
+             SQMetricId.socialConnection:
+            return .outcome
+        case SQMetricId.nutrition,
+             SQMetricId.hydration,
+             SQMetricId.meditation,
+             SQMetricId.alcohol,
+             SQMetricId.caffeine,
+             SQMetricId.weed,
+             SQMetricId.porn,
+             SQMetricId.nicotine,
+             SQMetricId.gambling,
+             SQMetricId.gaming,
+             SQMetricId.screenTime:
+            return .behavior
+        default:
+            return .automatic
+        }
+    }
+
+    static func lifeScoreImpact(forMetricId metricId: String, isPreset: Bool) -> SQMetricLifeScoreImpact {
+        guard isPreset else { return .none }
+
+        switch metricId {
+        case SQMetricId.weight,
+             SQMetricId.weed,
+             SQMetricId.porn,
+             SQMetricId.nicotine,
+             SQMetricId.gambling,
+             SQMetricId.gaming,
+             SQMetricId.screenTime:
+            return .none
+        default:
+            return .automatic
+        }
+    }
+
+    static func insightMode(forMetricId metricId: String, isPreset: Bool) -> SQMetricInsightMode {
+        guard isPreset else { return .exploratoryRelationships }
+
+        switch metricId {
+        case SQMetricId.weight:
+            return .trendsOnly
+        default:
+            return .curatedRelationships
+        }
+    }
+
+    static func sensitivity(forMetricId metricId: String, isPreset: Bool) -> SQMetricSensitivity {
+        guard isPreset else { return .normal }
+
+        switch metricId {
+        case SQMetricId.weight,
+             SQMetricId.alcohol,
+             SQMetricId.weed,
+             SQMetricId.porn,
+             SQMetricId.nicotine,
+             SQMetricId.gambling:
+            return .sensitive
+        default:
+            return .normal
+        }
+    }
+}
+
 // MARK: - SQMetricPeriod
 
 /// Determines which check-in screen a metric appears on.
@@ -215,6 +367,14 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
     /// Optional custom contribution to Body Battery. This is aggressively capped
     /// inside the scoring service so many custom metrics cannot overwhelm the score.
     var bodyBatteryEffect: SQMetricBodyBatteryEffect
+    /// Algorithm-facing semantic role used by future Life Score and Insights logic.
+    var signalRole: SQMetricSignalRole
+    /// Whether this metric should affect Life Score once contributor-based scoring is enabled.
+    var lifeScoreImpact: SQMetricLifeScoreImpact
+    /// How this metric should participate in insight generation.
+    var insightMode: SQMetricInsightMode
+    /// Safety classification for copy, surfacing, and future action recommendations.
+    var sensitivity: SQMetricSensitivity
     /// Optional linear mapping between the metric's scale range and a real quantity.
     /// This allows a metric to be entered as either a scale or a number while preserving
     /// canonical quantity units for import/export and downstream analysis.
@@ -250,6 +410,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMin: Float? = nil,
         targetRangeMax: Float? = nil,
         bodyBatteryEffect: SQMetricBodyBatteryEffect = .none,
+        signalRole: SQMetricSignalRole? = nil,
+        lifeScoreImpact: SQMetricLifeScoreImpact? = nil,
+        insightMode: SQMetricInsightMode? = nil,
+        sensitivity: SQMetricSensitivity? = nil,
         scaleQuantityMapping: SQMetricScaleQuantityMapping? = nil,
         healthKitType: SQMetricHealthKitType = .none,
         healthKitReadEnabled: Bool = false,
@@ -277,6 +441,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         self.targetRangeMin = targetRangeMin
         self.targetRangeMax = targetRangeMax
         self.bodyBatteryEffect = bodyBatteryEffect
+        self.signalRole = signalRole ?? SQMetricSemanticDefaults.signalRole(forMetricId: id, isPreset: isPreset)
+        self.lifeScoreImpact = lifeScoreImpact ?? SQMetricSemanticDefaults.lifeScoreImpact(forMetricId: id, isPreset: isPreset)
+        self.insightMode = insightMode ?? SQMetricSemanticDefaults.insightMode(forMetricId: id, isPreset: isPreset)
+        self.sensitivity = sensitivity ?? SQMetricSemanticDefaults.sensitivity(forMetricId: id, isPreset: isPreset)
         self.scaleQuantityMapping = scaleQuantityMapping
         self.healthKitType = healthKitType
         self.healthKitReadEnabled = healthKitReadEnabled
@@ -307,6 +475,14 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         targetRangeMin    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMin)
         targetRangeMax    = try  c.decodeIfPresent(Float.self,     forKey: .targetRangeMax)
         bodyBatteryEffect = (try c.decodeIfPresent(SQMetricBodyBatteryEffect.self, forKey: .bodyBatteryEffect)) ?? .none
+        signalRole = (try c.decodeIfPresent(SQMetricSignalRole.self, forKey: .signalRole))
+            ?? SQMetricSemanticDefaults.signalRole(forMetricId: id, isPreset: isPreset)
+        lifeScoreImpact = (try c.decodeIfPresent(SQMetricLifeScoreImpact.self, forKey: .lifeScoreImpact))
+            ?? SQMetricSemanticDefaults.lifeScoreImpact(forMetricId: id, isPreset: isPreset)
+        insightMode = (try c.decodeIfPresent(SQMetricInsightMode.self, forKey: .insightMode))
+            ?? SQMetricSemanticDefaults.insightMode(forMetricId: id, isPreset: isPreset)
+        sensitivity = (try c.decodeIfPresent(SQMetricSensitivity.self, forKey: .sensitivity))
+            ?? SQMetricSemanticDefaults.sensitivity(forMetricId: id, isPreset: isPreset)
         scaleQuantityMapping = try c.decodeIfPresent(SQMetricScaleQuantityMapping.self, forKey: .scaleQuantityMapping)
         healthKitType = (try c.decodeIfPresent(SQMetricHealthKitType.self, forKey: .healthKitType)) ?? .none
         healthKitReadEnabled = (try c.decodeIfPresent(Bool.self, forKey: .healthKitReadEnabled)) ?? false
@@ -347,6 +523,10 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         try c.encodeIfPresent(targetRangeMin, forKey: .targetRangeMin)
         try c.encodeIfPresent(targetRangeMax, forKey: .targetRangeMax)
         try c.encode(bodyBatteryEffect, forKey: .bodyBatteryEffect)
+        try c.encode(signalRole, forKey: .signalRole)
+        try c.encode(lifeScoreImpact, forKey: .lifeScoreImpact)
+        try c.encode(insightMode, forKey: .insightMode)
+        try c.encode(sensitivity, forKey: .sensitivity)
         try c.encodeIfPresent(scaleQuantityMapping, forKey: .scaleQuantityMapping)
         try c.encode(healthKitType, forKey: .healthKitType)
         try c.encode(healthKitReadEnabled, forKey: .healthKitReadEnabled)
@@ -363,6 +543,7 @@ struct SQMetricDefinition: Identifiable, Codable, Hashable {
         case isSingleDailyValue
         case goalStyle, targetValue, targetRangeMin, targetRangeMax
         case bodyBatteryEffect
+        case signalRole, lifeScoreImpact, insightMode, sensitivity
         case scaleQuantityMapping
         case healthKitType, healthKitReadEnabled, healthKitWriteEnabled
         case periods   // new format: array (encode + decode)

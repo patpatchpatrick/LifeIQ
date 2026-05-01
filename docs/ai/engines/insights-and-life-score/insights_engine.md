@@ -94,6 +94,8 @@ The current-state analyzer is allowed to evaluate either:
 
 `SQInsightsResult` also now carries curated `actions`, which are intended to back the lightweight `What To Do` surface in the eventual `Today` dashboard and any orb/detail explanation surfaces that need one recommended next move.
 
+Metric definitions now carry Phase 1 algorithm semantics (`signalRole`, `lifeScoreImpact`, `insightMode`, `sensitivity`). The current insight engine should remain behavior-compatible until later phases enrich feature snapshots and dynamic builders; future custom-metric surfacing should use these fields through a semantic resolver instead of title/group heuristics.
+
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
 
 `Today` actions should be concrete decisions, not generic advice. Positive training-readiness actions can rotate across a small stable library, while caution actions should say whether to moderate effort, recover, or adjust a specific habit.
