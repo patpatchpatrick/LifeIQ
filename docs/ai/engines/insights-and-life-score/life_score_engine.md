@@ -87,7 +87,7 @@ The Life Score detail flow now also consumes shared recent `changes`, so the exp
 
 The Life Score detail flow now also consumes shared `actions`, so the explanation layer can recommend one concrete next move without inventing separate score-only advice logic.
 
-Phase 1 metric semantics are now part of `SQMetricDefinition`: `signalRole`, `lifeScoreImpact`, `insightMode`, and `sensitivity`. Current Life Score behavior should not directly depend on these fields yet; future contributor-based scoring should route through a resolver so stored `.automatic` values resolve consistently and custom metrics stay capped.
+Metric semantics are now part of `SQMetricDefinition`: `signalRole`, `lifeScoreImpact`, `insightMode`, and `sensitivity`. Custom metric create/edit settings expose these as simple user-facing controls: what kind of metric it is, whether insights are enabled, whether it should affect Life Score (`none`, `light`, or `standard`), and sensitivity. Custom metrics should default safe: insights on, Life Score impact off, no numeric weights exposed, and medication-like metrics observe-only by default.
 
 View Lab simulation reports are the calibration harness for score tuning. Before changing score behavior, capture baseline distributions for score deltas, component scores, top drivers/changes, action families, HealthKit fallback usage, and component availability.
 

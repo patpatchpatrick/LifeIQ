@@ -69,7 +69,7 @@ import UIKit
     var selectedSimulationPersonaId: String
     var selectedSimulationDayCount: SQViewLabSimulationDayCount = .thirty
     var selectedSimulationSeed: Int = 41
-    var selectedSimulationReferenceDate: Date = Calendar.current.startOfDay(for: .now)
+    var selectedSimulationReferenceDate: Date = .now
 
     let scenarios: [Scenario]
     let simulationPersonas: [SQViewLabSimulationPersona]
@@ -257,7 +257,7 @@ import UIKit
         lines.append("- Persona Count: \(reports.count)")
         lines.append("- Simulated Days: \(reports.first?.dayCount ?? 0)")
         lines.append("- Seed: \(reports.first?.seed ?? selectedSimulationSeed)")
-        lines.append("- Reference Date: \(reports.first?.referenceDate.formattedString(with: .medium) ?? selectedSimulationReferenceDate.formattedString(with: .medium))")
+        lines.append("- Reference Date: \(formattedReferenceDate(reports.first?.referenceDate ?? selectedSimulationReferenceDate))")
         lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
         lines.append("## Cross-Persona Calibration Summary")
@@ -339,6 +339,10 @@ import UIKit
             flags.append("hero family streak >10d")
         }
 
+        for flag in report.repeatedInsightFamilyWarningFlags where flag != "None" {
+            flags.append(flag)
+        }
+
         return flags.isEmpty ? ["None"] : flags
     }
 
@@ -350,7 +354,7 @@ import UIKit
         lines.append("- Subtitle: \(report.persona.subtitle)")
         lines.append("- Simulated Days: \(report.dayCount)")
         lines.append("- Seed: \(report.seed)")
-        lines.append("- Reference Date: \(report.referenceDate.formattedString(with: .medium))")
+        lines.append("- Reference Date: \(formattedReferenceDate(report.referenceDate))")
         lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
 
@@ -401,6 +405,8 @@ import UIKit
         lines.append("- Custom metric logged days: \(report.customMetricLoggedDays)")
         lines.append("- Avg custom metric value: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")")
         lines.append("- Custom metric surfaced: \(formattedPercent(report.customMetricSurfacePercentage))")
+        lines.append("- Custom relationship surfaced with flag on: \(formattedPercent(report.customRelationshipFlagOnSurfacePercentage))")
+        lines.append("- Custom metric surfaced with relationship flag on: \(formattedPercent(report.customRelationshipFlagOnCustomMetricSurfacePercentage))")
         lines.append("- Avg personalized adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg personalized score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg diagnostic contribution total: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))")
@@ -411,6 +417,7 @@ import UIKit
         lines.append("- Longest repeated hero summary streak: \(report.longestHeroSummaryRepeatStreak) days")
         lines.append("- Longest repeated hero action streak: \(report.longestHeroActionRepeatStreak) days")
         lines.append("- Longest repeated hero family streak: \(report.longestHeroFamilyRepeatStreak) days")
+        lines.append("- Longest repeated hero subfamily streak: \(report.longestHeroSubfamilyRepeatStreak) days")
         lines.append("")
 
         lines.append("## State Distribution")
@@ -425,8 +432,28 @@ import UIKit
         lines.append("## Hero Family Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.heroFamilyDistribution))
         lines.append("")
+        lines.append("## Hero Subfamily Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.heroSubfamilyDistribution))
+        lines.append("")
         lines.append("## Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedInsightDistribution))
+        lines.append("")
+        lines.append("## Positive Current-State Cards Before Gating")
+        lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateBeforeGatingDistribution))
+        lines.append("")
+        lines.append("## Positive Current-State Cards After Gating")
+        lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateAfterGatingDistribution))
+        lines.append("")
+        lines.append("## Relationship Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.relationshipFamilyDistribution))
+        lines.append("")
+        lines.append("## Relationship Family Suppression Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.relationshipFamilySuppressionReasonDistribution))
+        lines.append("")
+        lines.append("## Repeated Insight Family Warning Flags")
+        for flag in report.repeatedInsightFamilyWarningFlags {
+            lines.append("- \(flag)")
+        }
         lines.append("")
         lines.append("## Custom Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomInsightDistribution))
@@ -530,6 +557,11 @@ import UIKit
         lines.append("## Actually Surfaced Custom Relationship Insights")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomRelationshipDistribution))
         lines.append("")
+        lines.append("## Custom Relationship Insights ON Summary")
+        lines.append("- Surfaced custom relationship days: \(formattedPercent(report.customRelationshipFlagOnSurfacePercentage))")
+        lines.append("- Custom metric surfaced with flag on: \(formattedPercent(report.customRelationshipFlagOnCustomMetricSurfacePercentage))")
+        lines.append(contentsOf: simulationDistributionLines(report.customRelationshipFlagOnSurfacedDistribution))
+        lines.append("")
         lines.append("## Rejected Relationship Surfacing Reasons")
         lines.append(contentsOf: simulationDistributionLines(report.rejectedRelationshipSurfacingReasonDistribution))
         lines.append("")
@@ -574,11 +606,16 @@ import UIKit
             lines.append("  - would-surface custom relationships: \(day.wouldSurfaceCustomRelationshipTitles.isEmpty ? "none" : day.wouldSurfaceCustomRelationshipTitles.joined(separator: " | "))")
             lines.append("  - actually surfaced custom relationships: \(day.surfacedCustomRelationshipTitles.isEmpty ? "none" : day.surfacedCustomRelationshipTitles.joined(separator: " | "))")
             lines.append("  - rejected relationship surfacing reasons: \(day.rejectedRelationshipSurfacingReasons.isEmpty ? "none" : day.rejectedRelationshipSurfacingReasons.joined(separator: " | "))")
+            lines.append("  - positive current-state before gating: \(day.positiveCurrentStateBeforeGatingTitles.isEmpty ? "none" : day.positiveCurrentStateBeforeGatingTitles.joined(separator: " | "))")
+            lines.append("  - positive current-state after gating: \(day.positiveCurrentStateAfterGatingTitles.isEmpty ? "none" : day.positiveCurrentStateAfterGatingTitles.joined(separator: " | "))")
             lines.append("  - positive current-state suppressions: \(day.positiveCurrentStateSuppressionReasons.isEmpty ? "none" : day.positiveCurrentStateSuppressionReasons.joined(separator: " | "))")
             lines.append("  - bright spot reframes: \(day.brightSpotReframeTitles.isEmpty ? "none" : day.brightSpotReframeTitles.joined(separator: " | "))")
+            lines.append("  - relationship families: \(day.relationshipFamilyLabels.isEmpty ? "none" : day.relationshipFamilyLabels.joined(separator: " | "))")
+            lines.append("  - relationship family suppressions: \(day.relationshipFamilySuppressionReasons.isEmpty ? "none" : day.relationshipFamilySuppressionReasons.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
+            lines.append("  - hero subfamily: \(day.heroSubfamilyKey)")
             lines.append("  - component scores: \(componentScoreText(day.componentScores))")
             lines.append("  - top drivers: \(day.topDriverTitles.isEmpty ? "none" : day.topDriverTitles.joined(separator: " | "))")
             lines.append("  - top changes: \(day.topChangeTitles.isEmpty ? "none" : day.topChangeTitles.joined(separator: " | "))")
@@ -830,6 +867,10 @@ import UIKit
 
     private func formattedPercent(_ value: Double) -> String {
         String(format: "%.1f%%", value)
+    }
+
+    private func formattedReferenceDate(_ date: Date) -> String {
+        date.formattedString(with: .fullWithoutDayName)
     }
 
     private func tableCell(_ value: String) -> String {

@@ -524,7 +524,7 @@ struct SQViewLabView: View {
                 }
             }
 
-            Text("Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .medium))")
+            Text("Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .fullWithoutDayName))")
                 .sqFont(SQFont.FontType.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
 
@@ -621,7 +621,7 @@ struct SQViewLabView: View {
                     "Personas: \(controller.simulationPersonas.count)",
                     "Duration: \(controller.selectedSimulationDayCount.title)",
                     "Seed: \(controller.selectedSimulationSeed)",
-                    "Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .medium))",
+                    "Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .fullWithoutDayName))",
                     "Use Preview All or Copy All to generate the grouped text report."
                 ]
             )
@@ -652,6 +652,7 @@ struct SQViewLabView: View {
                     "Custom Metric Logged Days: \(report.customMetricLoggedDays)",
                     "Avg Custom Metric: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")",
                     "Custom Metric Surfaced: \(formattedPercent(report.customMetricSurfacePercentage))",
+                    "Custom Relationship Flag-On Surfaced: \(formattedPercent(report.customRelationshipFlagOnSurfacePercentage))",
                     "Avg Personalized Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
                     "Avg Personalized Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
                     "Avg Diagnostic Contribution: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))",
@@ -659,7 +660,8 @@ struct SQViewLabView: View {
                     "Avg Custom Incremental Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
                     "Longest Hero Summary Streak: \(report.longestHeroSummaryRepeatStreak) days",
                     "Longest Hero Action Streak: \(report.longestHeroActionRepeatStreak) days",
-                    "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days"
+                    "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days",
+                    "Longest Hero Subfamily Streak: \(report.longestHeroSubfamilyRepeatStreak) days"
                 ]
             )
         }
@@ -690,8 +692,28 @@ struct SQViewLabView: View {
                 values: report.heroFamilyDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Hero Subfamilies",
+                values: report.heroSubfamilyDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Surfaced Insights",
                 values: report.surfacedInsightDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Positive Current-State Before Gating",
+                values: report.positiveCurrentStateBeforeGatingDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Positive Current-State After Gating",
+                values: report.positiveCurrentStateAfterGatingDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Relationship Families",
+                values: report.relationshipFamilyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Relationship Family Suppressions",
+                values: report.relationshipFamilySuppressionReasonDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Custom Surfaced Insights",
@@ -824,6 +846,10 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Surfaced Custom Relationships",
                 values: report.surfacedCustomRelationshipDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Relationships Flag On",
+                values: report.customRelationshipFlagOnSurfacedDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Would Surface Relationship Details",

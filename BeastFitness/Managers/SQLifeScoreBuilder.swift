@@ -163,12 +163,16 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             components: components,
             previousComponents: previousComponents,
             totalWeight: totalWeight,
+            drivers: input.insightsResult.drivers,
+            changes: input.insightsResult.changes,
             referenceDate: intelligenceInput.referenceDate
         )
         let heroAction = lifeScoreHeroAction(
             fallbackActions: alignedActions,
             state: state,
             components: components,
+            drivers: input.insightsResult.drivers,
+            changes: input.insightsResult.changes,
             referenceDate: intelligenceInput.referenceDate
         )
         let refinementPromptText = lifeScoreRefinementPromptText(for: intelligenceInput)
@@ -298,15 +302,29 @@ private extension SQLifeScoreBuilder {
         components: [SQLifeScoreComponent],
         previousComponents: [SQLifeScoreComponent],
         totalWeight: Double,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
         referenceDate: Date
     ) -> String? {
         guard totalWeight > 0 else {
-            return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+            return stateHeroSummaryText(
+                for: state,
+                components: components,
+                drivers: drivers,
+                changes: changes,
+                referenceDate: referenceDate
+            )
         }
 
         let previousTotalWeight = previousComponents.reduce(0) { $0 + $1.weight }
         guard previousTotalWeight > 0 else {
-            return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+            return stateHeroSummaryText(
+                for: state,
+                components: components,
+                drivers: drivers,
+                changes: changes,
+                referenceDate: referenceDate
+            )
         }
 
         let previousComponentsById = Dictionary(uniqueKeysWithValues: previousComponents.map { ($0.id, $0) })
@@ -337,7 +355,13 @@ private extension SQLifeScoreBuilder {
             )
         }
 
-        return stateHeroSummaryText(for: state, referenceDate: referenceDate)
+        return stateHeroSummaryText(
+            for: state,
+            components: components,
+            drivers: drivers,
+            changes: changes,
+            referenceDate: referenceDate
+        )
     }
 
     func shouldSurfaceLiftHeadline(for state: SQLifeScoreState) -> Bool {
@@ -411,7 +435,211 @@ private extension SQLifeScoreBuilder {
         }
     }
 
+    enum HeroPressureSubfamily {
+        case sleep
+        case habits
+        case recoveryStrain
+        case stress
+        case lowData
+    }
+
+    func pressureSubfamilyHeroSummary(
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
+        referenceDate: Date
+    ) -> String? {
+        guard let subfamily = pressureSubfamily(
+            state: state,
+            components: components,
+            drivers: drivers,
+            changes: changes
+        ) else {
+            return nil
+        }
+
+        let options: [String]
+        switch (state, subfamily) {
+        case (_, .lowData):
+            options = [
+                "Missing logs are making today's read less complete.",
+                "LifeIQ has enough to flag pressure, but not a clean full read.",
+                "Inconsistent logging is part of today's pressure."
+            ]
+        case (_, .habits):
+            options = [
+                "Recent habits are adding most of the pressure today.",
+                "Habit load is making the day harder to recover from.",
+                "Alcohol, caffeine, or other habits are weighing on the day."
+            ]
+        case (_, .recoveryStrain):
+            options = [
+                "Recent strain is making today harder to absorb.",
+                "Training and recovery are not lining up cleanly today.",
+                "Your body is carrying more strain than usual."
+            ]
+        case (_, .stress):
+            options = [
+                "Stress signals are making the day feel heavier.",
+                "Mental load is a bigger part of today's pressure.",
+                "Stress and energy are pulling the day down."
+            ]
+        case (_, .sleep):
+            options = [
+                "Sleep pressure is weighing on the day.",
+                "Sleep is not giving you much margin today.",
+                "A weaker sleep base is dragging the day down."
+            ]
+        }
+
+        return deterministicOption(
+            from: options,
+            referenceDate: referenceDate,
+            salt: pressureSubfamilyVariationSalt(subfamily)
+        )
+    }
+
+    func pressureSubfamilyHeroAction(
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
+        referenceDate: Date
+    ) -> String? {
+        guard let subfamily = pressureSubfamily(
+            state: state,
+            components: components,
+            drivers: drivers,
+            changes: changes
+        ) else {
+            return nil
+        }
+
+        let options: [String]
+        switch subfamily {
+        case .lowData:
+            options = [
+                "Log the basics before reading too much into the score.",
+                "Complete a check-in so LifeIQ can separate missing data from real pressure.",
+                "Fill in today's core signals to make the read cleaner."
+            ]
+        case .habits:
+            options = [
+                "Keep vice load lower today and protect tonight's sleep.",
+                "Avoid adding more habit drag today.",
+                "Make the next healthy choice obvious and keep the evening clean."
+            ]
+        case .recoveryStrain:
+            options = [
+                "Pull back on intensity and let recent training absorb.",
+                "Make today more about recovery than output.",
+                "Choose easier work over another hard push."
+            ]
+        case .stress:
+            options = [
+                "Lower the friction on the day and avoid stacking stress.",
+                "Protect energy by keeping the next few choices simple.",
+                "Keep effort contained until stress signals settle."
+            ]
+        case .sleep:
+            options = [
+                "Prioritize sleep tonight and keep workouts lighter today.",
+                "Make sleep the priority tonight; keep training easy today.",
+                "Protect recovery today so sleep can rebound tonight."
+            ]
+        }
+
+        return deterministicOption(
+            from: options,
+            referenceDate: referenceDate,
+            salt: pressureSubfamilyVariationSalt(subfamily) + 41
+        )
+    }
+
+    func pressureSubfamily(
+        state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> HeroPressureSubfamily? {
+        switch state {
+        case .slightlyOff, .dipping, .underPressure:
+            break
+        case .strong, .primed, .balanced, .rebounding, .calibrating:
+            return nil
+        }
+
+        let componentScores = Dictionary(uniqueKeysWithValues: components.map { ($0.id, $0.score) })
+        let signalIds = Set(drivers.map(\.signalId) + changes.map(\.signalId))
+
+        if (componentScores["consistency"] ?? 100) < 50 {
+            return .lowData
+        }
+
+        if signalIds.contains(where: isHabitPressureSignalId) || (componentScores["habits"] ?? 100) < 60 {
+            return .habits
+        }
+
+        if signalIds.contains(where: isTrainingPressureSignalId)
+            || (componentScores["workouts"] ?? 100) < 62
+            || (componentScores["heart"] ?? 100) < 58 {
+            return .recoveryStrain
+        }
+
+        if signalIds.contains(where: isStressPressureSignalId) {
+            return .stress
+        }
+
+        if signalIds.contains(where: isSleepPressureSignalId) || (componentScores["sleep"] ?? 100) < 72 {
+            return .sleep
+        }
+
+        return nil
+    }
+
+    func pressureSubfamilyVariationSalt(_ subfamily: HeroPressureSubfamily) -> Int {
+        switch subfamily {
+        case .sleep:
+            return 311
+        case .habits:
+            return 337
+        case .recoveryStrain:
+            return 359
+        case .stress:
+            return 383
+        case .lowData:
+            return 401
+        }
+    }
+
     func stateHeroSummaryText(for state: SQLifeScoreState, referenceDate: Date) -> String {
+        stateHeroSummaryText(
+            for: state,
+            components: [],
+            drivers: [],
+            changes: [],
+            referenceDate: referenceDate
+        )
+    }
+
+    func stateHeroSummaryText(
+        for state: SQLifeScoreState,
+        components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
+        referenceDate: Date
+    ) -> String {
+        if let pressureSummary = pressureSubfamilyHeroSummary(
+            state: state,
+            components: components,
+            drivers: drivers,
+            changes: changes,
+            referenceDate: referenceDate
+        ) {
+            return pressureSummary
+        }
+
         let options: [String]
         switch state {
         case .strong:
@@ -489,6 +717,8 @@ private extension SQLifeScoreBuilder {
         fallbackActions: [SQInsightAction],
         state: SQLifeScoreState,
         components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
         referenceDate: Date
     ) -> SQInsightAction? {
         guard state != .calibrating else { return fallbackActions.first }
@@ -496,6 +726,8 @@ private extension SQLifeScoreBuilder {
         let summary = contextualLifeScoreActionSummary(
             state: state,
             components: components,
+            drivers: drivers,
+            changes: changes,
             referenceDate: referenceDate
         ) ?? stateHeroActionSummary(for: state, referenceDate: referenceDate)
         let tone = lifeScoreActionTone(for: state)
@@ -513,6 +745,8 @@ private extension SQLifeScoreBuilder {
     func contextualLifeScoreActionSummary(
         state: SQLifeScoreState,
         components: [SQLifeScoreComponent],
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange],
         referenceDate: Date
     ) -> String? {
         switch state {
@@ -520,6 +754,16 @@ private extension SQLifeScoreBuilder {
             break
         case .strong, .primed, .balanced, .rebounding, .calibrating:
             return nil
+        }
+
+        if let pressureAction = pressureSubfamilyHeroAction(
+            state: state,
+            components: components,
+            drivers: drivers,
+            changes: changes,
+            referenceDate: referenceDate
+        ) {
+            return pressureAction
         }
 
         let lowComponents = components
@@ -1238,6 +1482,33 @@ private extension SQLifeScoreBuilder {
         readinessLiftSignalIds.contains(signalId)
             || mentalPressureSignalIds.contains(signalId)
             || trainingPressureSignalIds.contains(signalId)
+    }
+
+    func isHabitPressureSignalId(_ signalId: String) -> Bool {
+        [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn
+        ].contains(signalId)
+    }
+
+    func isStressPressureSignalId(_ signalId: String) -> Bool {
+        mentalPressureSignalIds.contains(signalId)
+    }
+
+    func isSleepPressureSignalId(_ signalId: String) -> Bool {
+        [
+            SQMetricId.sleepHours,
+            SQMetricId.sleepQuality
+        ].contains(signalId)
+    }
+
+    func isTrainingPressureSignalId(_ signalId: String) -> Bool {
+        trainingPressureSignalIds.contains(signalId)
+            || signalId == SQMetricId.soreness
+            || signalId == SQInsightAnalysisMetricId.restingHeartRate
     }
 
     var readinessLiftSignalIds: Set<String> {

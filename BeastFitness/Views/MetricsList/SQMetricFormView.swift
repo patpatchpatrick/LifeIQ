@@ -379,6 +379,32 @@ struct SQMetricFormView: View {
     }
 
     @ViewBuilder
+    private var algorithmRows: some View {
+        labeledRow(label: "What kind of thing is this?") {
+            SQDropDownMenu(menuViewModel: viewModel.signalRoleMenuViewModel, isDisabled: false)
+        }
+
+        Toggle(isOn: $viewModel.isInsightsEnabled) {
+            Text("Use for insights")
+                .sqFont(.body)
+                .sqForegroundColor(.textPrimary)
+        }
+        .tint(SQColor.dashboardGlowBlue.color)
+
+        labeledRow(label: "Affect Life Score?") {
+            SQDropDownMenu(menuViewModel: viewModel.lifeScoreImpactMenuViewModel, isDisabled: false)
+        }
+
+        labeledRow(label: "Sensitivity") {
+            SQDropDownMenu(menuViewModel: viewModel.sensitivityMenuViewModel, isDisabled: false)
+        }
+
+        Text(viewModel.algorithmSettingsHelperText)
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textSecondary)
+    }
+
+    @ViewBuilder
     private var healthKitRows: some View {
         if viewModel.canEditHealthKitType {
             labeledRow(label: "Linked Type") {
@@ -502,6 +528,12 @@ struct SQMetricFormView: View {
                 if viewModel.showsBodyBatteryControls {
                     formSection(title: "Recovery Score", subtitle: "Optional: let this metric nudge the daily score.") {
                         bodyBatteryRows
+                    }
+                }
+
+                if viewModel.showsAlgorithmSettings {
+                    formSection(title: "How should LifeIQ use this?", subtitle: "Insight behavior and optional Life Score impact.") {
+                        algorithmRows
                     }
                 }
             }

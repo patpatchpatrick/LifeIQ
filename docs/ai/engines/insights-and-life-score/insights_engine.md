@@ -102,15 +102,17 @@ Simulator comparisons should keep seed and reference date fixed. The copied repo
 
 Dynamic custom metric driver/change detection starts with low-risk trend/baseline insights. Custom metrics may surface as Today cards only when enabled, not archived, insight mode is on, enough recent logged values exist, variance is sufficient, and the detected shift is strong. Keep custom metric surfacing capped so a custom metric can appear without taking over the dashboard.
 
-Today surfacing gives custom trend/baseline insights one protected supporting-card slot, but custom metric insights should not become the hero yet. If a custom candidate is generated but not surfaced, View Lab should report whether it lost to preset insight ranking, missed protected-slot strength, or was suppressed by the one-custom-card cap.
+Today surfacing gives custom trend/baseline insights one protected supporting-card slot, but custom metric insights should not become the hero yet. If a custom candidate is generated but not surfaced, View Lab should report whether it lost to preset insight ranking, missed protected-slot strength, or was suppressed by the one-custom-card cap or cooldown.
 
-Generated exploratory custom relationships remain report-only until their diagnostics are trustworthy. Curated preset relationships remain the user-visible source of truth until custom candidates show enough sample size, variance, recency, effect size, and clear near-miss/rejection reasons in simulator reports.
+Generated exploratory custom relationships remain off by default until their diagnostics are trustworthy. Curated preset relationships remain the user-visible source of truth unless `SQAdminConfig.enableCustomRelationshipInsights` is enabled for internal testing. With that flag on, only high-confidence actionable custom driver candidates may surface, with non-causal copy, one custom relationship card per dashboard result, and cooldown by input/output pair.
 
 Custom relationship diagnostics should classify candidates before surfacing: `actionableDriverCandidate`, `coMovementCandidate`, `timingAmbiguousCandidate`, or `rejectedNearMiss`. Same-day outcome/outcome pairs and non-recovery symptom/outcome pairs are co-movement by default. Evening behavior -> evening custom outcome same-day pairs are timing-ambiguous; next-day behavior relationships are preferred for surfacing.
 
 The custom relationship would-surface report is still diagnostic-only. A candidate should only qualify there if it is actionable, medium/high confidence, has enough samples in both buckets, clears effect-size thresholds, has plausible timing, and passes sensitivity rules.
 
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
+
+Positive `Today` current-state cards must respect the overall score context. In `Under Pressure` or `Dipping` contexts, generic positive cards such as "You're well recovered today" should be suppressed or reframed as bright spots unless the supportive signal is clearly dominant.
 
 `Today` actions should be concrete decisions, not generic advice. Positive training-readiness actions can rotate across a small stable library, while caution actions should say whether to moderate effort, recover, or adjust a specific habit.
 
@@ -122,9 +124,12 @@ Habit trends, especially caffeine, should almost never become the hero when a no
 
 `Today` surfacing now also has a first-pass novelty layer in the surfacing step:
 - novelty is applied in surfacing, not in the core analyzers
-- the current implementation only tracks the primary visible `Today` insight family
+- the current implementation tracks the primary visible `Today` insight family, surfaced custom metric families, and surfaced relationship input/output families
 - repeated families get a soft ranking penalty on following days
+- repeated relationship families can be suppressed over a rolling 7-day window unless the card is high-severity and negative
 - same-day dashboard reloads should not keep decaying novelty again
+
+Persistent Life Score states should keep the main state truthful while rotating hero subfamilies by the dominant pressure source, such as sleep pressure, habit pressure, recovery strain, stress pressure, or low data / inconsistent logging.
 
 Weekly/yearly insight freshness now has a separate first-pass memory layer:
 - `Past 7 Days` and `Past Year` still use the same core insights engine

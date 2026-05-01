@@ -882,8 +882,21 @@ final class SQInsightsService: SQInsightsServicing {
             referenceDate: input.referenceDate,
             surfaceIntent: surfaceIntent
         )
-        let contextAdjustedInsights = contextAdjustedCurrentStateInsights(
+        let relationshipAdjustedInsights = relationshipFamilyAdjustedInsights(
             from: noveltyAdjustedInsights,
+            snapshots: snapshots,
+            referenceDate: input.referenceDate,
+            surfaceIntent: surfaceIntent,
+            drivers: drivers,
+            changes: changes
+        )
+        let currentPressureContext = pressureContext(
+            snapshots: snapshots,
+            referenceDate: input.referenceDate
+        )
+        let contextAdjustedInsights = contextAdjustedCurrentStateInsights(
+            from: relationshipAdjustedInsights,
+            pressureContext: currentPressureContext,
             drivers: drivers,
             changes: changes,
             surfaceIntent: surfaceIntent
@@ -894,6 +907,7 @@ final class SQInsightsService: SQInsightsServicing {
             surfaceIntent: surfaceIntent,
             drivers: drivers,
             changes: changes,
+            pressureContext: currentPressureContext,
             customMetricIds: customMetricIds
         )
         let insights = freshnessAdjustedInsights(
@@ -1281,6 +1295,7 @@ final class SQInsightsService: SQInsightsServicing {
         surfaceIntent: SQInsightSurfaceIntent,
         drivers: [SQInsightDriver],
         changes: [SQInsightChange],
+        pressureContext: CurrentPressureContext,
         customMetricIds: Set<String>
     ) -> [SQInsight] {
         switch surfaceIntent {
@@ -1290,6 +1305,7 @@ final class SQInsightsService: SQInsightsServicing {
                 referenceDate: referenceDate,
                 drivers: drivers,
                 changes: changes,
+                pressureContext: pressureContext,
                 customMetricIds: customMetricIds
             )
         case .pastWeek:
@@ -1306,6 +1322,7 @@ final class SQInsightsService: SQInsightsServicing {
         referenceDate: Date,
         drivers: [SQInsightDriver],
         changes: [SQInsightChange],
+        pressureContext: CurrentPressureContext,
         customMetricIds: Set<String>
     ) -> [SQInsight] {
         let nonCustomInsights = deduplicatedInsights.filter {
@@ -1314,7 +1331,8 @@ final class SQInsightsService: SQInsightsServicing {
         let heroInsight = todayHeroInsight(
             from: nonCustomInsights,
             drivers: drivers,
-            changes: changes
+            changes: changes,
+            pressureContext: pressureContext
         )
 
         let remainingInsights = deduplicatedInsights.filter { $0.id != heroInsight?.id }
@@ -1455,12 +1473,17 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func contextAdjustedCurrentStateInsights(
         from insights: [SQInsight],
+        pressureContext: CurrentPressureContext,
         drivers: [SQInsightDriver],
         changes: [SQInsightChange],
         surfaceIntent: SQInsightSurfaceIntent
     ) -> [SQInsight] {
         guard surfaceIntent == .today else { return insights }
-        guard isUnderPressureContext(drivers: drivers, changes: changes) else {
+        guard isUnderPressureContext(
+            drivers: drivers,
+            changes: changes,
+            pressureContext: pressureContext
+        ) else {
             return insights
         }
 
@@ -1469,7 +1492,11 @@ final class SQInsightsService: SQInsightsServicing {
                 return insight
             }
 
-            if isDominantBrightSpot(insight, drivers: drivers) {
+            if isDominantBrightSpot(
+                insight,
+                drivers: drivers,
+                pressureContext: pressureContext
+            ) {
                 return brightSpotInsight(from: insight)
             }
 
@@ -1479,7 +1506,8 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func isUnderPressureContext(
         drivers: [SQInsightDriver],
-        changes: [SQInsightChange]
+        changes: [SQInsightChange],
+        pressureContext: CurrentPressureContext
     ) -> Bool {
         let supportiveDrivers = drivers.filter { $0.direction == .supportive }
         let dragDrivers = drivers.filter { $0.direction == .drag }
@@ -1490,9 +1518,101 @@ final class SQInsightsService: SQInsightsServicing {
         }
         .count
 
-        return dragScore >= supportiveScore + 4
+        return pressureContext.isPressured
+            || dragScore >= supportiveScore + 4
             || (dragDrivers.count >= 2 && dragScore >= supportiveScore)
             || (worseningStateChangeCount >= 2 && dragScore >= supportiveScore - 2)
+    }
+
+    private struct CurrentPressureContext {
+        let isPressured: Bool
+        let negativeSignalCount: Int
+        let supportiveSignalCount: Int
+        let strongestSupportiveSignalIds: Set<String>
+    }
+
+    private func pressureContext(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> CurrentPressureContext {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        guard let snapshot = snapshots
+            .filter({ $0.date <= referenceDate || calendar.isDate($0.date, inSameDayAs: referenceDay) })
+            .max(by: { $0.date < $1.date }) else {
+            return .init(
+                isPressured: false,
+                negativeSignalCount: 0,
+                supportiveSignalCount: 0,
+                strongestSupportiveSignalIds: []
+            )
+        }
+
+        var negativeSignals = Set<String>()
+        var supportiveSignals = Set<String>()
+
+        for feature in snapshot.signalFeatures.values {
+            if let utilityScore = feature.goalUtilityScore {
+                if utilityScore <= 58 {
+                    negativeSignals.insert(feature.signalId)
+                } else if utilityScore >= 80 {
+                    supportiveSignals.insert(feature.signalId)
+                }
+                continue
+            }
+
+            let rawValue = feature.rawValue
+            switch feature.signalId {
+            case SQMetricId.sleepHours:
+                if rawValue < 6.25 || rawValue > 9.25 {
+                    negativeSignals.insert(feature.signalId)
+                } else if rawValue >= 7.0 && rawValue <= 8.6 {
+                    supportiveSignals.insert(feature.signalId)
+                }
+            case SQMetricId.sleepQuality,
+                 SQMetricId.energy,
+                 SQMetricId.mood,
+                 SQMetricId.mentalClarity,
+                 SQMetricId.motivation,
+                 SQInsightAnalysisMetricId.workoutPerformance:
+                if rawValue <= 5.5 {
+                    negativeSignals.insert(feature.signalId)
+                } else if rawValue >= 7.3 {
+                    supportiveSignals.insert(feature.signalId)
+                }
+            case SQMetricId.stress,
+                 SQMetricId.anxiety,
+                 SQMetricId.soreness,
+                 SQInsightAnalysisMetricId.workoutDifficulty:
+                if rawValue >= 6.5 {
+                    negativeSignals.insert(feature.signalId)
+                } else if rawValue <= 3.2 {
+                    supportiveSignals.insert(feature.signalId)
+                }
+            default:
+                break
+            }
+        }
+
+        if snapshot.averageWorkoutDifficulty.map({ $0 >= 7.5 }) == true {
+            negativeSignals.insert(SQInsightAnalysisMetricId.workoutDifficulty)
+        }
+
+        if snapshot.averageWorkoutPerformance.map({ $0 >= 7.4 }) == true {
+            supportiveSignals.insert(SQInsightAnalysisMetricId.workoutPerformance)
+        } else if snapshot.averageWorkoutPerformance.map({ $0 <= 5.5 }) == true {
+            negativeSignals.insert(SQInsightAnalysisMetricId.workoutPerformance)
+        }
+
+        let isPressured = negativeSignals.count >= 2
+            || (negativeSignals.count >= 1 && negativeSignals.count > supportiveSignals.count)
+
+        return .init(
+            isPressured: isPressured,
+            negativeSignalCount: negativeSignals.count,
+            supportiveSignalCount: supportiveSignals.count,
+            strongestSupportiveSignalIds: supportiveSignals
+        )
     }
 
     private func isPositiveCurrentStateInsight(_ insight: SQInsight) -> Bool {
@@ -1517,7 +1637,8 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func isDominantBrightSpot(
         _ insight: SQInsight,
-        drivers: [SQInsightDriver]
+        drivers: [SQInsightDriver],
+        pressureContext: CurrentPressureContext
     ) -> Bool {
         let supportiveDrivers = drivers.filter { $0.direction == .supportive }
         let dragDrivers = drivers.filter { $0.direction == .drag }
@@ -1530,7 +1651,13 @@ final class SQInsightsService: SQInsightsServicing {
 
         let supportiveScore = supportiveDrivers.prefix(2).map(\.rankingScore).reduce(0, +)
         let dragScore = dragDrivers.prefix(2).map(\.rankingScore).reduce(0, +)
-        return strongestSupportiveDriver.rankingScore >= 10 && supportiveScore >= dragScore * 0.65
+        let snapshotSupportsInsight = pressureContext.strongestSupportiveSignalIds.isEmpty
+            || !signalIds.isDisjoint(with: pressureContext.strongestSupportiveSignalIds)
+
+        return snapshotSupportsInsight
+            && strongestSupportiveDriver.rankingScore >= 13
+            && supportiveScore >= max(12, dragScore * 0.9)
+            && pressureContext.supportiveSignalCount >= max(1, pressureContext.negativeSignalCount)
     }
 
     private func brightSpotInsight(from insight: SQInsight) -> SQInsight {
@@ -1564,12 +1691,14 @@ final class SQInsightsService: SQInsightsServicing {
     private func todayHeroInsight(
         from insights: [SQInsight],
         drivers: [SQInsightDriver],
-        changes: [SQInsightChange]
+        changes: [SQInsightChange],
+        pressureContext: CurrentPressureContext
     ) -> SQInsight? {
         if let stateHeroInsight = stateDrivenTodayHeroInsight(
             from: drivers,
             changes: changes,
-            insights: insights
+            insights: insights,
+            pressureContext: pressureContext
         ) {
             return stateHeroInsight
         }
@@ -1612,7 +1741,8 @@ final class SQInsightsService: SQInsightsServicing {
     private func stateDrivenTodayHeroInsight(
         from drivers: [SQInsightDriver],
         changes: [SQInsightChange],
-        insights: [SQInsight]
+        insights: [SQInsight],
+        pressureContext: CurrentPressureContext
     ) -> SQInsight? {
         let stateDrivers = drivers
             .filter { isStateSignalId($0.signalId) }
@@ -1655,7 +1785,12 @@ final class SQInsightsService: SQInsightsServicing {
 
         let primaryTheme = stateTheme(for: primaryDriver.signalId)
         let secondaryTheme = selectedDrivers.dropFirst().first.map { stateTheme(for: $0.signalId) }
-        let title = selectedDirection == .supportive && dragScore > 0 && dragScore >= supportiveScore * 0.5
+        let shouldUseBrightSpotFraming = selectedDirection == .supportive
+            && (
+                pressureContext.isPressured
+                || (dragScore > 0 && dragScore >= supportiveScore * 0.5)
+            )
+        let title = shouldUseBrightSpotFraming
             ? stateBrightSpotTitle(primaryTheme: primaryTheme)
             : stateHeroTitle(
                 direction: selectedDirection,
@@ -1666,6 +1801,9 @@ final class SQInsightsService: SQInsightsServicing {
             title: title,
             drivers: selectedDrivers
         )
+        let actionText = shouldUseBrightSpotFraming
+            ? "Use the supportive signal, but keep the rest of the day low-friction."
+            : (selectedDirection == .supportive ? "Use this window for a strong workout." : "Make recovery the priority today.")
 
         let syntheticHeroInsight = SQInsight(
             id: "today-state-\(selectedDirection == .supportive ? "supportive" : "drag")-\(primaryTheme.key)-\(secondaryTheme?.key ?? "solo")",
@@ -1681,7 +1819,7 @@ final class SQInsightsService: SQInsightsServicing {
             title: title,
             summary: summary,
             evidenceText: selectedDrivers.map(\.summary).joined(separator: " "),
-            actionText: selectedDirection == .supportive ? "Use this window for a strong workout." : "Make recovery the priority today.",
+            actionText: actionText,
             driverText: primaryTheme.displayTitle,
             outcomeText: "today",
             deltaText: primaryDriver.deltaText,
@@ -1901,6 +2039,17 @@ final class SQInsightsService: SQInsightsServicing {
             SQMetricId.soreness,
             SQInsightAnalysisMetricId.workoutDifficulty,
             SQInsightAnalysisMetricId.workoutPerformance
+        ].contains(signalId)
+    }
+
+    private func isStressOrMoodPressureSignalId(_ signalId: String) -> Bool {
+        [
+            SQMetricId.stress,
+            SQMetricId.anxiety,
+            SQMetricId.energy,
+            SQMetricId.mood,
+            SQMetricId.mentalClarity,
+            SQMetricId.motivation
         ].contains(signalId)
     }
 
@@ -2273,6 +2422,285 @@ final class SQInsightsService: SQInsightsServicing {
             .sorted(by: { sortInsightsForDisplay($0, $1) })
     }
 
+    private func relationshipFamilyAdjustedInsights(
+        from insights: [SQInsight],
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> [SQInsight] {
+        guard surfaceIntent == .today else { return insights }
+
+        return insights
+            .compactMap { insight -> SQInsight? in
+                guard let familyKey = relationshipFamilyNoveltyKey(for: insight) else {
+                    return insight
+                }
+
+                let noveltyState = surfacingMemoryStore.noveltyState(
+                    for: familyKey,
+                    referenceDate: referenceDate,
+                    scopeKey: noveltyScopeKey,
+                    surfaceIntent: surfaceIntent
+                )
+
+                if shouldSuppressRepeatedRelationshipFamily(
+                    insight,
+                    noveltyState: noveltyState
+                ) {
+                    if SQAdminConfig.verboseLoggingEnabled {
+                        SQLogger.shared.log(
+                            "Suppressed repeated relationship family [\(insight.title)] family=\(familyKey) streak=\(noveltyState.currentStreak) last7=\(noveltyState.shownCountLast7)",
+                            .debug,
+                            context: .dashboard
+                        )
+                    }
+                    return nil
+                }
+
+                let penalty = relationshipFamilyPenalty(
+                    for: insight,
+                    noveltyState: noveltyState
+                )
+                let boost = relationshipContextRelevanceBoost(
+                    for: insight,
+                    snapshots: snapshots,
+                    referenceDate: referenceDate,
+                    drivers: drivers,
+                    changes: changes
+                )
+                let adjustedScore = insight.rankingScore - penalty + boost
+
+                if SQAdminConfig.verboseLoggingEnabled, penalty > 0 || boost > 0 {
+                    SQLogger.shared.log(
+                        "Adjusted relationship family [\(insight.title)] family=\(familyKey) penalty=\(String(format: "%.1f", penalty)) boost=\(String(format: "%.1f", boost)) adjustedScore=\(String(format: "%.1f", adjustedScore))",
+                        .debug,
+                        context: .dashboard
+                    )
+                }
+
+                return insight.withRankingScore(adjustedScore)
+            }
+            .sorted(by: { sortInsightsForDisplay($0, $1) })
+    }
+
+    private func shouldSuppressRepeatedRelationshipFamily(
+        _ insight: SQInsight,
+        noveltyState: SQInsightSurfacingNoveltyState
+    ) -> Bool {
+        guard insight.insightClass == .relationship else { return false }
+        guard !isHighSeverityNegativeRelationship(insight) else { return false }
+
+        if noveltyState.currentStreak >= 1 && noveltyState.shownCountLast7 >= 2 {
+            return true
+        }
+
+        if let daysSinceLastShown = noveltyState.daysSinceLastShown,
+           daysSinceLastShown <= 2,
+           noveltyState.shownCountLast7 >= 1 {
+            return true
+        }
+
+        return false
+    }
+
+    private func relationshipFamilyPenalty(
+        for insight: SQInsight,
+        noveltyState: SQInsightSurfacingNoveltyState
+    ) -> Double {
+        guard insight.insightClass == .relationship else { return 0 }
+        guard !isHighSeverityNegativeRelationship(insight) else {
+            return Double(noveltyState.currentStreak) * 3
+        }
+
+        var penalty = (Double(noveltyState.currentStreak) * 12)
+            + (Double(max(0, noveltyState.shownCountLast7 - 1)) * 10)
+
+        if let daysSinceLastShown = noveltyState.daysSinceLastShown {
+            if daysSinceLastShown <= 3 {
+                penalty += 12
+            } else if daysSinceLastShown <= 6 {
+                penalty += 5
+            }
+        }
+
+        if insight.effect == .positive {
+            penalty *= 1.12
+        }
+
+        if insight.confidence == .high {
+            penalty *= 0.75
+        }
+
+        return penalty
+    }
+
+    private func relationshipContextRelevanceBoost(
+        for insight: SQInsight,
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Double {
+        let signalIds = Set([insight.inputSignalId, insight.outputSignalId].compactMap { $0 })
+        guard !signalIds.isEmpty else { return 0 }
+
+        let driverIds = Set(drivers.map(\.signalId))
+        let changeIds = Set(changes.map(\.signalId))
+        let latestSnapshot = latestSnapshot(
+            from: snapshots,
+            referenceDate: referenceDate
+        )
+
+        var boost: Double = 0
+
+        if !signalIds.isDisjoint(with: driverIds) {
+            boost += 5
+        }
+
+        if !signalIds.isDisjoint(with: changeIds) {
+            boost += 3
+        }
+
+        if hasHabitPressure(in: latestSnapshot, drivers: drivers, changes: changes),
+           signalIds.contains(where: isHabitSignalId) {
+            boost += 7
+        }
+
+        if hasTrainingPressure(in: latestSnapshot, drivers: drivers, changes: changes),
+           signalIds.contains(where: isTrainingSignalId) || signalIds.contains(SQMetricId.soreness) {
+            boost += 7
+        }
+
+        if hasStressPressure(in: latestSnapshot, drivers: drivers, changes: changes),
+           signalIds.contains(where: isStressOrMoodPressureSignalId) {
+            boost += 6
+        }
+
+        if hasSleepPressure(in: latestSnapshot, drivers: drivers, changes: changes),
+           signalIds.contains(where: isSleepSignalId) {
+            boost += 4
+        }
+
+        return boost
+    }
+
+    private func isHighSeverityNegativeRelationship(_ insight: SQInsight) -> Bool {
+        insight.insightClass == .relationship
+            && insight.effect == .negative
+            && (insight.confidence == .high || insight.rankingScore >= 40)
+    }
+
+    private func latestSnapshot(
+        from snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> SQInsightFeatureSnapshot? {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        return snapshots
+            .filter { $0.date <= referenceDate || calendar.isDate($0.date, inSameDayAs: referenceDay) }
+            .max { $0.date < $1.date }
+    }
+
+    private func hasHabitPressure(
+        in snapshot: SQInsightFeatureSnapshot?,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Bool {
+        let habitIds: Set<String> = [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn
+        ]
+
+        if drivers.contains(where: { habitIds.contains($0.signalId) && $0.direction == .drag }) {
+            return true
+        }
+
+        if changes.contains(where: { habitIds.contains($0.signalId) && $0.direction == .worsened }) {
+            return true
+        }
+
+        guard let snapshot else { return false }
+        let alcohol = snapshot.rawSignalValue(for: SQMetricId.alcohol) ?? 0
+        let caffeine = snapshot.rawSignalValue(for: SQMetricId.caffeine) ?? 0
+        let weed = snapshot.rawSignalValue(for: SQMetricId.weed) ?? 0
+        let nicotine = snapshot.rawSignalValue(for: SQMetricId.nicotine) ?? 0
+
+        return alcohol >= 2
+            || caffeine >= 240
+            || weed >= 2
+            || nicotine >= 2
+    }
+
+    private func hasTrainingPressure(
+        in snapshot: SQInsightFeatureSnapshot?,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Bool {
+        if drivers.contains(where: { (isTrainingSignalId($0.signalId) || $0.signalId == SQMetricId.soreness) && $0.direction == .drag }) {
+            return true
+        }
+
+        if changes.contains(where: { (isTrainingSignalId($0.signalId) || $0.signalId == SQMetricId.soreness) && $0.direction == .worsened }) {
+            return true
+        }
+
+        guard let snapshot else { return false }
+        let soreness = snapshot.rawSignalValue(for: SQMetricId.soreness) ?? 0
+        let difficulty = snapshot.averageWorkoutDifficulty ?? 0
+        return soreness >= 6.2 || difficulty >= 7.2
+    }
+
+    private func hasStressPressure(
+        in snapshot: SQInsightFeatureSnapshot?,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Bool {
+        if drivers.contains(where: { isStressOrMoodPressureSignalId($0.signalId) && $0.direction == .drag }) {
+            return true
+        }
+
+        if changes.contains(where: { isStressOrMoodPressureSignalId($0.signalId) && $0.direction == .worsened }) {
+            return true
+        }
+
+        guard let snapshot else { return false }
+        let stress = snapshot.rawSignalValue(for: SQMetricId.stress) ?? 0
+        let anxiety = snapshot.rawSignalValue(for: SQMetricId.anxiety) ?? 0
+        let energy = snapshot.rawSignalValue(for: SQMetricId.energy) ?? 10
+        let mood = snapshot.rawSignalValue(for: SQMetricId.mood) ?? 10
+        let mentalClarity = snapshot.rawSignalValue(for: SQMetricId.mentalClarity) ?? 10
+
+        return stress >= 6.2
+            || anxiety >= 6.0
+            || energy <= 5.0
+            || mood <= 5.0
+            || mentalClarity <= 5.0
+    }
+
+    private func hasSleepPressure(
+        in snapshot: SQInsightFeatureSnapshot?,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> Bool {
+        if drivers.contains(where: { isSleepSignalId($0.signalId) && $0.direction == .drag }) {
+            return true
+        }
+
+        if changes.contains(where: { isSleepSignalId($0.signalId) && $0.direction == .worsened }) {
+            return true
+        }
+
+        guard let snapshot else { return false }
+        let sleepHours = snapshot.rawSignalValue(for: SQMetricId.sleepHours) ?? 8
+        let sleepQuality = snapshot.rawSignalValue(for: SQMetricId.sleepQuality) ?? 8
+        return sleepHours < 6.4 || sleepQuality < 5.8
+    }
+
     private func freshnessAdjustedInsights(
         from insights: [SQInsight],
         referenceDate: Date,
@@ -2319,6 +2747,10 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         familyKeys.append(
+            contentsOf: insights.compactMap(relationshipFamilyNoveltyKey)
+        )
+
+        familyKeys.append(
             contentsOf: insights
                 .filter { $0.familyKey.hasPrefix("customMetric.") || $0.familyKey.hasPrefix("customRelationship.") }
                 .map(\.familyKey)
@@ -2355,6 +2787,16 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func customMetricAggregateNoveltyKey(for metricId: String) -> String {
         "customMetric.\(metricId).any"
+    }
+
+    private func relationshipFamilyNoveltyKey(for insight: SQInsight) -> String? {
+        guard insight.insightClass == .relationship,
+              let inputSignalId = insight.inputSignalId,
+              let outputSignalId = insight.outputSignalId else {
+            return nil
+        }
+
+        return "relationshipFamily.\(inputSignalId)->\(outputSignalId)"
     }
 
     private var noveltyScopeKey: String {
