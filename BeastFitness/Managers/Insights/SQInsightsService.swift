@@ -892,7 +892,8 @@ final class SQInsightsService: SQInsightsServicing {
         )
         let currentPressureContext = pressureContext(
             snapshots: snapshots,
-            referenceDate: input.referenceDate
+            referenceDate: input.referenceDate,
+            scoreContext: input.scoreContext
         )
         let contextAdjustedInsights = contextAdjustedCurrentStateInsights(
             from: relationshipAdjustedInsights,
@@ -1650,10 +1651,19 @@ final class SQInsightsService: SQInsightsServicing {
             isStateSignalId($0.signalId) && $0.direction == .worsened
         }
         .count
+        let worseningPressureChangeCount = changes.filter {
+            $0.direction == .worsened && isPressureRelevantSignalId($0.signalId)
+        }
+        .count
+        let hasActiveDrag = !dragDrivers.isEmpty
+            || worseningStateChangeCount > 0
+            || worseningPressureChangeCount > 0
+        let supportiveDominates = supportiveScore >= max(18, dragScore + 14)
 
         return pressureContext.isPressured
             || dragScore >= supportiveScore + 4
             || (dragScore > 0 && supportiveScore < dragScore + 8)
+            || (hasActiveDrag && !supportiveDominates)
             || (dragDrivers.count >= 2 && dragScore >= supportiveScore)
             || (worseningStateChangeCount >= 2 && dragScore >= supportiveScore - 2)
     }
@@ -1668,7 +1678,8 @@ final class SQInsightsService: SQInsightsServicing {
 
     private func pressureContext(
         snapshots: [SQInsightFeatureSnapshot],
-        referenceDate: Date
+        referenceDate: Date,
+        scoreContext: SQHealthIntelligenceScoreContext?
     ) -> CurrentPressureContext {
         let calendar = Calendar.current
         let referenceDay = calendar.startOfDay(for: referenceDate)
@@ -1676,7 +1687,7 @@ final class SQInsightsService: SQInsightsServicing {
             .filter({ $0.date <= referenceDate || calendar.isDate($0.date, inSameDayAs: referenceDay) })
             .max(by: { $0.date < $1.date }) else {
             return .init(
-                isPressured: false,
+                isPressured: scoreContext?.isPressureState == true,
                 isLowDataContext: false,
                 negativeSignalCount: 0,
                 supportiveSignalCount: 0,
@@ -1745,8 +1756,15 @@ final class SQInsightsService: SQInsightsServicing {
                 partialResult += 1
             }
         }
+        let userLoggedCoreSignalCount = Self.pressureContextCoreSignalIds.reduce(into: 0) { partialResult, signalId in
+            if snapshot.signalFeatures[signalId]?.source == .userLogged {
+                partialResult += 1
+            }
+        }
         let isLowDataContext = observedCoreSignalCount < 3
-        let isPressured = negativeSignals.count >= 2
+            || (userLoggedCoreSignalCount < 3 && observedCoreSignalCount < 6)
+        let isPressured = scoreContext?.isPressureState == true
+            || negativeSignals.count >= 2
             || (negativeSignals.count >= 1 && negativeSignals.count > supportiveSignals.count)
             || isLowDataContext
 
@@ -1773,6 +1791,17 @@ final class SQInsightsService: SQInsightsServicing {
         SQInsightAnalysisMetricId.workoutDifficulty,
         SQInsightAnalysisMetricId.workoutPerformance
     ]
+
+    private func isPressureRelevantSignalId(_ signalId: String) -> Bool {
+        Self.pressureContextCoreSignalIds.contains(signalId)
+            || [
+                SQMetricId.alcohol,
+                SQMetricId.caffeine,
+                SQMetricId.weed,
+                SQMetricId.nicotine,
+                SQMetricId.porn
+            ].contains(signalId)
+    }
 
     private func isPositiveCurrentStateInsight(_ insight: SQInsight) -> Bool {
         guard insight.insightClass == .opportunity,

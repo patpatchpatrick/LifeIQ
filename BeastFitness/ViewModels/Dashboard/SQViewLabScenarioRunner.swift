@@ -426,11 +426,20 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
     func runtime(for scenario: SQViewLabController.Scenario) -> SQViewLabScenarioRuntime {
         switch scenario.content {
         case .lifeScoreInsights(let input):
-            let insightsResult = insightsService.dashboardInsights(input: input)
-
-            let lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+            let preliminaryInsightsResult = insightsService.dashboardInsights(input: input)
+            let preliminaryLifeScoreViewModel = lifeScoreBuilder.buildViewModel(
                 input: .init(
                     intelligenceInput: input,
+                    insightsResult: preliminaryInsightsResult
+                )
+            )
+            let contextualInput = input.withScoreContext(
+                scoreContext(from: preliminaryLifeScoreViewModel)
+            )
+            let insightsResult = insightsService.dashboardInsights(input: contextualInput)
+            let lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                input: .init(
+                    intelligenceInput: contextualInput,
                     insightsResult: insightsResult
                 )
             )
@@ -439,14 +448,22 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 scenarioId: scenario.id,
                 content: .lifeScoreInsights(
                     .init(
-                        input: input,
-                        timeRange: input.timeRange,
+                        input: contextualInput,
+                        timeRange: contextualInput.timeRange,
                         insightsResult: insightsResult,
                         lifeScoreViewModel: lifeScoreViewModel
                     )
                 )
             )
         }
+    }
+
+    private func scoreContext(from lifeScoreViewModel: SQLifeScoreViewModel) -> SQHealthIntelligenceScoreContext {
+        .init(
+            score: lifeScoreViewModel.score,
+            stateTitle: lifeScoreViewModel.state.title,
+            scoreDeltaFromPreviousDay: lifeScoreViewModel.scoreDeltaFromPreviousDay
+        )
     }
 
     func simulationReport(for request: SQViewLabSimulationRequest) -> SQViewLabSimulationReport {
@@ -507,10 +524,20 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 isLoggedIn: true
             )
 
-            let insightsResult = simulationInsightsService.dashboardInsights(input: input)
-            let lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+            let preliminaryInsightsResult = simulationInsightsService.dashboardInsights(input: input)
+            let preliminaryLifeScoreViewModel = lifeScoreBuilder.buildViewModel(
                 input: .init(
                     intelligenceInput: input,
+                    insightsResult: preliminaryInsightsResult
+                )
+            )
+            let contextualInput = input.withScoreContext(
+                scoreContext(from: preliminaryLifeScoreViewModel)
+            )
+            let insightsResult = simulationInsightsService.dashboardInsights(input: contextualInput)
+            let lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                input: .init(
+                    intelligenceInput: contextualInput,
                     insightsResult: insightsResult
                 )
             )
@@ -2356,7 +2383,18 @@ private extension SQViewLabScenarioRunner {
                 hasCompletedCurrentPromptCheckIn: currentDay.completedMorningCheckIn,
                 isLoggedIn: true
             )
-            let insightsResult = flagOnInsightsService.dashboardInsights(input: input)
+            let preliminaryInsightsResult = flagOnInsightsService.dashboardInsights(input: input)
+            let preliminaryLifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                input: .init(
+                    intelligenceInput: input,
+                    insightsResult: preliminaryInsightsResult
+                )
+            )
+            let insightsResult = flagOnInsightsService.dashboardInsights(
+                input: input.withScoreContext(
+                    scoreContext(from: preliminaryLifeScoreViewModel)
+                )
+            )
             let dayCustomRelationshipTitles = insightsResult.insights
                 .filter { $0.familyKey.hasPrefix("customRelationship.") }
                 .map(\.title)

@@ -678,11 +678,33 @@ final class SQDashboardController: SQDashboardInterface {
                 )
             }
 
-            let healthIntelligenceInput = buildHealthIntelligenceInput(for: state.selectedTimeRange)
+            var healthIntelligenceInput = buildHealthIntelligenceInput(for: state.selectedTimeRange)
 
-            let insightsResult = buildDashboardInsightsResult(
+            var insightsResult = buildDashboardInsightsResult(
                 input: healthIntelligenceInput
             )
+            lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                input: .init(
+                    intelligenceInput: healthIntelligenceInput,
+                    insightsResult: insightsResult
+                )
+            )
+
+            if state.selectedTimeRange.insightSurfaceIntent == .today,
+               let currentLifeScoreViewModel = lifeScoreViewModel {
+                healthIntelligenceInput = healthIntelligenceInput.withScoreContext(
+                    scoreContext(from: currentLifeScoreViewModel)
+                )
+                insightsResult = buildDashboardInsightsResult(
+                    input: healthIntelligenceInput
+                )
+                lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
+                    input: .init(
+                        intelligenceInput: healthIntelligenceInput,
+                        insightsResult: insightsResult
+                    )
+                )
+            }
 
             for timeRange in [AppTimeRange.pastSevenDays, .pastYear] where timeRange != state.selectedTimeRange {
                 _ = buildDashboardInsightsResult(
@@ -699,13 +721,6 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             updateTimeRangeMenuBadges(selectedTimeRange: state.selectedTimeRange)
-
-            lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
-                input: .init(
-                    intelligenceInput: healthIntelligenceInput,
-                    insightsResult: insightsResult
-                )
-            )
 
             let sectionGroups = try await buildSectionGroups(
                 checkIns: currentCheckIns,
@@ -2301,6 +2316,14 @@ final class SQDashboardController: SQDashboardInterface {
         input: SQHealthIntelligenceInput
     ) -> SQInsightsResult {
         insightsService.dashboardInsights(input: input)
+    }
+
+    private func scoreContext(from lifeScoreViewModel: SQLifeScoreViewModel) -> SQHealthIntelligenceScoreContext {
+        .init(
+            score: lifeScoreViewModel.score,
+            stateTitle: lifeScoreViewModel.state.title,
+            scoreDeltaFromPreviousDay: lifeScoreViewModel.scoreDeltaFromPreviousDay
+        )
     }
 
     private func buildInsightsSubsection(
