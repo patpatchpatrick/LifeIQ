@@ -549,3 +549,33 @@ When designing or implementing new insights work:
 - prefer a system that can eventually compare almost any tracked input with almost any outcome
 - but only activate curated, believable, product-approved relationships
 - and keep one obvious registry as the place where those active relationships are defined
+
+## Phase 9 Surfacing Calibration
+
+The Today surface should behave like a compact briefing rather than a flat ranked feed. The implementation should preserve explicit slots:
+- current-state / Life Score explanation
+- recent change or trend
+- relationship / lever
+- custom metric
+- custom relationship when the internal flag is enabled
+
+Slot policy should keep cards trustworthy and specific:
+- max one current-state card
+- max one relationship card
+- max one custom metric card
+- max one custom relationship card
+- include low-data or follow-up guidance when it is the most relevant explanation
+
+Positive current-state cards require hard pressure gating. In `Under Pressure` or `Dipping` contexts, generic positive readiness cards should not surface as normal cards. If a positive signal is real, it should be reframed as a bright spot that acknowledges the drag.
+
+Driver ranking should consider severity, recency, confidence, actionability, component relevance, and redundancy. Resting HR should become supporting evidence when sleep, stress, recovery, or training strain already explains the same issue.
+
+Recommendation routing should follow the pressure source:
+- habit pressure -> reduce / shift earlier
+- stress pressure -> keep consistent / simplify the day
+- recovery strain -> moderate strain
+- sleep pressure -> protect recovery
+- low data -> observe and compare / log core signals
+- balanced or primed -> keep consistent
+
+The all-persona report should include core calibration diagnostics for current score vs shadow v2 score, top driver before/after calibration, insight slot distribution, relationship family before/after slot policy, positive-current-state hard suppressions, and primary action family before/after routing.

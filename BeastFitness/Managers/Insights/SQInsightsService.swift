@@ -1336,8 +1336,13 @@ final class SQInsightsService: SQInsightsServicing {
         )
 
         let remainingInsights = deduplicatedInsights.filter { $0.id != heroInsight?.id }
-        let customInsight = protectedCustomMetricSupportingInsight(
+        let customRelationshipInsight = protectedCustomRelationshipSupportingInsight(
             from: remainingInsights,
+            referenceDate: referenceDate,
+            surfaceIntent: .today
+        )
+        let customInsight = protectedCustomMetricSupportingInsight(
+            from: remainingInsights.filter { $0.id != customRelationshipInsight?.id },
             customMetricIds: customMetricIds,
             referenceDate: referenceDate,
             surfaceIntent: .today
@@ -1345,29 +1350,94 @@ final class SQInsightsService: SQInsightsServicing {
         let nonCustomRemainingInsights = remainingInsights.filter {
             !isCustomMetricInsight($0, customMetricIds: customMetricIds)
         }
-        let maximumSupportingCount = heroInsight == nil ? 4 : 3
-        let nonCustomSupportingLimit = customInsight == nil
-            ? maximumSupportingCount
-            : max(0, maximumSupportingCount - 1)
-        let supportingInsights = curateInsights(
+
+        var selected = [SQInsight]()
+        var usedIds = Set<String>()
+
+        func appendIfAvailable(_ insight: SQInsight?) {
+            guard let insight, !usedIds.contains(insight.id), selected.count < 4 else { return }
+            selected.append(insight)
+            usedIds.insert(insight.id)
+        }
+
+        appendIfAvailable(heroInsight)
+        appendIfAvailable(todaySlotInsight(
             from: nonCustomRemainingInsights,
-            preferredBuckets: [
-                [.risk, .opportunity],
-                [.followUp, .trend, .baselineChange],
-                [.relationship]
-            ],
-            maximumCount: nonCustomSupportingLimit
-        )
-        var supportingWithCustom = supportingInsights
+            usedIds: usedIds,
+            slot: .recentChange
+        ))
+        appendIfAvailable(todaySlotInsight(
+            from: nonCustomRemainingInsights,
+            usedIds: usedIds,
+            slot: .relationship
+        ))
         if let customInsight {
-            supportingWithCustom.append(customInsight)
+            appendIfAvailable(customInsight)
+        }
+        if let customRelationshipInsight {
+            appendIfAvailable(customRelationshipInsight)
         }
 
-        if let heroInsight {
-            return [heroInsight] + supportingWithCustom
+        if selected.count < 4 {
+            for candidate in nonCustomRemainingInsights where !usedIds.contains(candidate.id) {
+                guard selected.count < 4 else { break }
+                selected.append(candidate)
+                usedIds.insert(candidate.id)
+            }
         }
 
-        return supportingWithCustom
+        return hardGatedTodayInsights(
+            from: selected,
+            pressureContext: pressureContext,
+            drivers: drivers,
+            changes: changes
+        )
+    }
+
+    private enum TodayInsightSlot {
+        case recentChange
+        case relationship
+    }
+
+    private func todaySlotInsight(
+        from insights: [SQInsight],
+        usedIds: Set<String>,
+        slot: TodayInsightSlot
+    ) -> SQInsight? {
+        insights.first { insight in
+            guard !usedIds.contains(insight.id) else { return false }
+
+            switch slot {
+            case .recentChange:
+                switch insight.insightClass {
+                case .followUp, .trend, .baselineChange:
+                    return true
+                case .risk, .opportunity, .relationship, .populationBenchmark, .cohort:
+                    return false
+                }
+            case .relationship:
+                return insight.insightClass == .relationship
+            }
+        }
+    }
+
+    private func protectedCustomRelationshipSupportingInsight(
+        from insights: [SQInsight],
+        referenceDate: Date,
+        surfaceIntent: SQInsightSurfaceIntent
+    ) -> SQInsight? {
+        insights
+            .filter(isCustomRelationshipInsight)
+            .filter {
+                customInsightCooldownAllows(
+                    $0,
+                    referenceDate: referenceDate,
+                    surfaceIntent: surfaceIntent
+                )
+            }
+            .filter { $0.confidence == .medium || $0.confidence == .high }
+            .sorted(by: { sortInsightsForDisplay($0, $1) })
+            .first
     }
 
     private func protectedCustomMetricSupportingInsight(
@@ -1378,6 +1448,7 @@ final class SQInsightsService: SQInsightsServicing {
     ) -> SQInsight? {
         insights
             .filter { isCustomMetricInsight($0, customMetricIds: customMetricIds) }
+            .filter { !isCustomRelationshipInsight($0) }
             .filter {
                 customInsightCooldownAllows(
                     $0,
@@ -1388,6 +1459,37 @@ final class SQInsightsService: SQInsightsServicing {
             .filter { $0.rankingScore >= 24 || $0.confidence == .medium || $0.confidence == .high }
             .sorted(by: { sortInsightsForDisplay($0, $1) })
             .first
+    }
+
+    private func hardGatedTodayInsights(
+        from insights: [SQInsight],
+        pressureContext: CurrentPressureContext,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> [SQInsight] {
+        guard isUnderPressureContext(
+            drivers: drivers,
+            changes: changes,
+            pressureContext: pressureContext
+        ) else {
+            return insights
+        }
+
+        return insights.compactMap { insight in
+            guard isPositiveCurrentStateInsight(insight) else {
+                return insight
+            }
+
+            if isDominantBrightSpot(
+                insight,
+                drivers: drivers,
+                pressureContext: pressureContext
+            ) {
+                return brightSpotInsight(from: insight)
+            }
+
+            return nil
+        }
     }
 
     private func customInsightCooldownAllows(
@@ -1630,6 +1732,7 @@ final class SQInsightsService: SQInsightsServicing {
             "You're well recovered today",
             "Your body looks ready to handle more",
             "You're in a good position to train today",
+            "You're in a good position today",
             "Things are lining up for a solid day",
             "The day should feel relatively smooth"
         ].contains(insight.title)
@@ -2181,7 +2284,7 @@ final class SQInsightsService: SQInsightsServicing {
         case "strain", "soreness", "performance":
             return .moderateStrain
         case "stress", "anxiety", "mentalClarity", "mood", "motivation":
-            return direction == .supportive ? .keepConsistent : .protectRecovery
+            return .keepConsistent
         default:
             return direction == .supportive ? .keepConsistent : .observeAndCompare
         }
@@ -2281,12 +2384,92 @@ final class SQInsightsService: SQInsightsServicing {
             SQMetricId.stress,
             SQMetricId.anxiety,
             SQMetricId.soreness,
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine,
+            SQMetricId.porn,
             SQInsightAnalysisMetricId.workoutPerformance,
             SQInsightAnalysisMetricId.workoutDifficulty
         ]
 
         let preferredDrivers = drivers.filter { preferredSignalIds.contains($0.signalId) }
-        return Array(preferredDrivers.prefix(3))
+        let sortedDrivers = preferredDrivers.sorted { lhs, rhs in
+            let lhsScore = calibratedTodayDriverScore(lhs, allDrivers: preferredDrivers)
+            let rhsScore = calibratedTodayDriverScore(rhs, allDrivers: preferredDrivers)
+
+            if lhsScore != rhsScore {
+                return lhsScore > rhsScore
+            }
+
+            return lhs.rankingScore > rhs.rankingScore
+        }
+
+        return Array(sortedDrivers.prefix(3))
+    }
+
+    private func calibratedTodayDriverScore(
+        _ driver: SQInsightDriver,
+        allDrivers: [SQInsightDriver]
+    ) -> Double {
+        var score = driver.rankingScore
+        let hasCompetingDrag = allDrivers.contains { candidate in
+            candidate.signalId != driver.signalId
+                && candidate.direction == .drag
+                && (
+                    isSleepSignalId(candidate.signalId)
+                    || isTrainingSignalId(candidate.signalId)
+                    || isStressOrMoodPressureSignalId(candidate.signalId)
+                    || isHabitSignalId(candidate.signalId)
+                )
+        }
+
+        if driver.signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            if hasCompetingDrag {
+                score -= 16
+            }
+
+            if driver.effectMagnitude < 4 {
+                score -= 8
+            }
+
+            if driver.direction == .supportive,
+               allDrivers.contains(where: { $0.direction == .drag }) {
+                score -= 6
+            }
+        }
+
+        if driver.direction == .drag {
+            if isStressOrMoodPressureSignalId(driver.signalId) {
+                score += 13
+            }
+
+            if isTrainingSignalId(driver.signalId) || driver.signalId == SQMetricId.soreness {
+                score += 12
+            }
+
+            if isSleepSignalId(driver.signalId) {
+                score += 9
+            }
+
+            if driver.signalId == SQMetricId.alcohol {
+                score += 13
+            } else if [SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains(driver.signalId) {
+                score += 10
+            } else if driver.signalId == SQMetricId.caffeine {
+                score += 4
+            }
+        }
+
+        if driver.direction == .supportive {
+            if isStressOrMoodPressureSignalId(driver.signalId)
+                || isTrainingSignalId(driver.signalId)
+                || isSleepSignalId(driver.signalId) {
+                score += 3
+            }
+        }
+
+        return score
     }
 
     private func curatedStandardDrivers(

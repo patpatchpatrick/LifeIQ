@@ -196,3 +196,25 @@ The intended hierarchy is:
 - insights = ranked context and follow-through
 
 Shared insight drivers should not call a signal supportive only because it improved versus baseline. Readiness signals also need a reasonable absolute value before they can produce "helping today" language. Life Score can still apply a final action guard so low sleep/recovery, negative momentum, `Dipping`, or `Under Pressure` states do not become "push harder" training advice.
+
+## Shadow Life Score V2 Calibration
+
+Phase 9 adds a shadow-only `SQLifeScoreV2Builder`. It does not replace the visible score yet.
+
+The v2 model is intended to compare the current weighted score against a more state/readiness-oriented score built from shared feature snapshots:
+- Sleep
+- Recovery / Readiness
+- Mind / Energy
+- Training Load / Performance
+- Habits / Behaviors
+- Data Confidence / Consistency
+- Personalized Metrics
+
+V2 calibration rules:
+- Life Score should be wellbeing/readiness first and habit compliance second.
+- Resting HR is useful supporting evidence, but it should not dominate when sleep, stress, soreness, or training strain already explain the same pressure.
+- Habit effects are capped so alcohol/caffeine/nicotine/weed can explain the day without turning the score into a generic compliance grade.
+- Custom metrics remain a capped personalization layer.
+- Sparse or inconsistent logging should lower confidence and appear as a diagnostic, not silently masquerade as precision.
+
+The simulator now reports current score vs shadow v2 score, v2 component contribution distribution, top v2 driver distribution, and v2 calibration warnings. Promotion from shadow to visible score should wait until all-persona calibration shows better driver/story alignment without destabilizing score ranges.

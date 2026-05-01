@@ -260,6 +260,9 @@ import UIKit
         lines.append("- Reference Date: \(formattedReferenceDate(reports.first?.referenceDate ?? selectedSimulationReferenceDate))")
         lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
+        lines.append("## Core Algorithm Calibration Summary")
+        lines.append(contentsOf: coreAlgorithmCalibrationSummaryLines(for: reports))
+        lines.append("")
         lines.append("## Cross-Persona Calibration Summary")
         lines.append(contentsOf: crossPersonaCalibrationSummaryLines(for: reports))
         lines.append("")
@@ -297,12 +300,62 @@ import UIKit
                 + " | \(tableCell(report.stateDistribution.first?.label ?? "None"))"
                 + " | \(formattedPercent(report.customMetricSurfacePercentage))"
                 + " | \(report.averageShadowScoreDelta.map(formattedSignedDouble) ?? "n/a")"
-                + " | \(tableCell(report.topDriverDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.topDriverAfterCalibrationDistribution.first?.label ?? report.topDriverDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(report.topChangeDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(report.surfacedInsightDistribution.first?.label ?? "None"))"
-                + " | \(tableCell(report.primaryActionRecommendationFamilyDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.primaryActionFamilyAfterRoutingDistribution.first?.label ?? report.primaryActionRecommendationFamilyDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(warningFlags(for: report).joined(separator: "; "))) |"
             )
+        }
+
+        return lines
+    }
+
+    private func coreAlgorithmCalibrationSummaryLines(for reports: [SQViewLabSimulationReport]) -> [String] {
+        var lines = [String]()
+        lines.append("| Persona | Current Avg | V2 Shadow Avg | Current Range | V2 Range | Dominant State | Top Current Driver | Top V2 Driver | Top Insight | Top Recommendation | Custom Surfaced | Personalized Delta | Positive Leakage | Warning Flags |")
+        lines.append("| --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |")
+
+        for report in reports {
+            let currentRange: String
+            if let minimumScore = report.minimumScore, let maximumScore = report.maximumScore {
+                currentRange = "\(minimumScore)-\(maximumScore)"
+            } else {
+                currentRange = "n/a"
+            }
+
+            let v2Range: String
+            if let minimumScore = report.minimumShadowV2Score, let maximumScore = report.maximumShadowV2Score {
+                v2Range = "\(minimumScore)-\(maximumScore)"
+            } else {
+                v2Range = "n/a"
+            }
+
+            lines.append(
+                "| \(tableCell(report.persona.title))"
+                + " | \(report.averageScore.map(formattedDouble) ?? "n/a")"
+                + " | \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")"
+                + " | \(currentRange)"
+                + " | \(v2Range)"
+                + " | \(tableCell(report.stateDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.topDriverAfterCalibrationDistribution.first?.label ?? report.topDriverDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.topV2DriverDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.surfacedInsightDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.primaryActionFamilyAfterRoutingDistribution.first?.label ?? report.primaryActionRecommendationFamilyDistribution.first?.label ?? "None"))"
+                + " | \(formattedPercent(report.customMetricSurfacePercentage))"
+                + " | \(report.averageShadowScoreDelta.map(formattedSignedDouble) ?? "n/a")"
+                + " | \(report.pressureStatePositiveLeakageCount)"
+                + " | \(tableCell(coreWarningFlags(for: report).joined(separator: "; "))) |"
+            )
+        }
+
+        let crossFlags = crossPersonaCoreWarningFlags(for: reports)
+        if !crossFlags.isEmpty {
+            lines.append("")
+            lines.append("Warnings:")
+            for flag in crossFlags {
+                lines.append("- \(flag)")
+            }
         }
 
         return lines
@@ -339,11 +392,74 @@ import UIKit
             flags.append("hero family streak >10d")
         }
 
+        if report.pressureStatePositiveLeakageCount > max(1, Int(Double(report.dayCount) * 0.05)) {
+            flags.append("pressure positive leakage >5%")
+        }
+
+        if let averageV2Delta = report.averageShadowV2ScoreDelta,
+           abs(averageV2Delta) > 10 {
+            flags.append("shadow v2 avg delta >10")
+        }
+
         for flag in report.repeatedInsightFamilyWarningFlags where flag != "None" {
             flags.append(flag)
         }
 
         return flags.isEmpty ? ["None"] : flags
+    }
+
+    private func coreWarningFlags(for report: SQViewLabSimulationReport) -> [String] {
+        var flags = [String]()
+
+        if report.pressureStatePositiveLeakageCount > max(1, Int(Double(report.dayCount) * 0.05)) {
+            flags.append("pressure positive leakage >5%")
+        }
+
+        if let topRelationship = report.relationshipFamilyAfterSlotPolicyDistribution.first,
+           topRelationship.label != "None",
+           topRelationship.percentage > 20 {
+            flags.append("relationship family >20%")
+        }
+
+        if report.persona.includesCustomPerformerMetric,
+           !(5.0...15.0).contains(report.customMetricSurfacePercentage) {
+            flags.append("custom surfaced outside 5-15%")
+        }
+
+        if let averageV2Delta = report.averageShadowV2ScoreDelta,
+           abs(averageV2Delta) > 10 {
+            flags.append("shadow v2 avg delta >10")
+        }
+
+        for warning in report.shadowV2WarningDistribution.map(\.label) where warning != "None" {
+            flags.append(warning)
+        }
+
+        return flags.isEmpty ? ["None"] : flags
+    }
+
+    private func crossPersonaCoreWarningFlags(for reports: [SQViewLabSimulationReport]) -> [String] {
+        var flags = [String]()
+        let topDriverCounts = Dictionary(
+            grouping: reports.compactMap { $0.topDriverAfterCalibrationDistribution.first?.label }.filter { $0 != "None" },
+            by: { $0 }
+        )
+        .mapValues(\.count)
+        let topRecommendationCounts = Dictionary(
+            grouping: reports.compactMap { $0.primaryActionFamilyAfterRoutingDistribution.first?.label }.filter { $0 != "None" },
+            by: { $0 }
+        )
+        .mapValues(\.count)
+
+        if let sharedDriver = topDriverCounts.first(where: { $0.value >= 4 }) {
+            flags.append("same top driver across 4+ personas: \(sharedDriver.key)")
+        }
+
+        if let sharedRecommendation = topRecommendationCounts.first(where: { $0.value >= 4 }) {
+            flags.append("same top recommendation across 4+ personas: \(sharedRecommendation.key)")
+        }
+
+        return flags.sorted()
     }
 
     private func simulationMarkdownLines(for report: SQViewLabSimulationReport) -> [String] {
@@ -409,6 +525,12 @@ import UIKit
         lines.append("- Custom metric surfaced with relationship flag on: \(formattedPercent(report.customRelationshipFlagOnCustomMetricSurfacePercentage))")
         lines.append("- Avg personalized adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg personalized score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg shadow v2 Life Score: \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")")
+        if let minimumScore = report.minimumShadowV2Score, let maximumScore = report.maximumShadowV2Score {
+            lines.append("- Shadow v2 score range: \(minimumScore)-\(maximumScore)")
+        }
+        lines.append("- Avg shadow v2 score delta: \(report.averageShadowV2ScoreDelta.map(formattedSignedDouble) ?? "n/a")")
+        lines.append("- Pressure-state positive leakage count: \(report.pressureStatePositiveLeakageCount)")
         lines.append("- Avg diagnostic contribution total: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))")
         lines.append("- Avg incremental contribution total: \(formattedDouble(report.averageShadowIncrementalContributionTotal))")
         lines.append("- Avg custom incremental contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))")
@@ -476,8 +598,29 @@ import UIKit
         lines.append("## Component Score Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.componentScoreDistribution))
         lines.append("")
+        lines.append("## Shadow V2 Score Delta Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.shadowV2ScoreDeltaDistribution))
+        lines.append("")
+        lines.append("## V2 Component Contribution Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.shadowV2ComponentContributionDistribution))
+        lines.append("")
+        lines.append("## Top V2 Driver Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.topV2DriverDistribution))
+        lines.append("")
+        lines.append("## V2 Calibration Warnings")
+        lines.append(contentsOf: simulationDistributionLines(report.shadowV2WarningDistribution))
+        lines.append("")
         lines.append("## Top Driver Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.topDriverDistribution))
+        lines.append("")
+        lines.append("## Top Driver Before Calibration")
+        lines.append(contentsOf: simulationDistributionLines(report.topDriverBeforeCalibrationDistribution))
+        lines.append("")
+        lines.append("## Top Driver After Calibration")
+        lines.append(contentsOf: simulationDistributionLines(report.topDriverAfterCalibrationDistribution))
+        lines.append("")
+        lines.append("## Driver Dampening Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.driverDampeningReasonDistribution))
         lines.append("")
         lines.append("## Top Change Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.topChangeDistribution))
@@ -494,8 +637,26 @@ import UIKit
         lines.append("## Primary Action Recommendation Family Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.primaryActionRecommendationFamilyDistribution))
         lines.append("")
+        lines.append("## Primary Action Family Before Routing")
+        lines.append(contentsOf: simulationDistributionLines(report.primaryActionFamilyBeforeRoutingDistribution))
+        lines.append("")
+        lines.append("## Primary Action Family After Routing")
+        lines.append(contentsOf: simulationDistributionLines(report.primaryActionFamilyAfterRoutingDistribution))
+        lines.append("")
         lines.append("## All Action Recommendation Family Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.allActionRecommendationFamilyDistribution))
+        lines.append("")
+        lines.append("## Insight Slot Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.insightSlotDistribution))
+        lines.append("")
+        lines.append("## Slot Rejection Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.slotRejectionReasonDistribution))
+        lines.append("")
+        lines.append("## Relationship Family Before Slot Policy")
+        lines.append(contentsOf: simulationDistributionLines(report.relationshipFamilyBeforeSlotPolicyDistribution))
+        lines.append("")
+        lines.append("## Relationship Family After Slot Policy")
+        lines.append(contentsOf: simulationDistributionLines(report.relationshipFamilyAfterSlotPolicyDistribution))
         lines.append("")
         lines.append("## Signal Source Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.signalSourceDistribution))
@@ -568,6 +729,9 @@ import UIKit
         lines.append("## Positive Current-State Suppressions")
         lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateSuppressionDistribution))
         lines.append("")
+        lines.append("## Positive Current-State Hard Suppressions")
+        lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateHardSuppressionDistribution))
+        lines.append("")
         lines.append("## Bright Spot Reframes")
         lines.append(contentsOf: simulationDistributionLines(report.brightSpotReframeDistribution))
         lines.append("")
@@ -577,6 +741,12 @@ import UIKit
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
             lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
             lines.append("  - personalized adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
+            lines.append("  - shadow v2 score: \(day.shadowV2Score.map(String.init) ?? "n/a")")
+            lines.append("  - shadow v2 score delta: \(day.shadowV2ScoreDelta.map(String.init) ?? "n/a")")
+            lines.append("  - shadow v2 components: \(day.shadowV2ComponentLabels.isEmpty ? "none" : day.shadowV2ComponentLabels.joined(separator: " | "))")
+            lines.append("  - shadow v2 component contributions: \(day.shadowV2ComponentContributionLabels.isEmpty ? "none" : day.shadowV2ComponentContributionLabels.joined(separator: " | "))")
+            lines.append("  - top v2 drivers: \(day.topV2DriverTitles.isEmpty ? "none" : day.topV2DriverTitles.joined(separator: " | "))")
+            lines.append("  - v2 calibration warnings: \(day.shadowV2WarningLabels.isEmpty ? "none" : day.shadowV2WarningLabels.joined(separator: " | "))")
             lines.append("  - diagnostic contribution total: \(formattedDouble(day.shadowDiagnosticContributionTotal))")
             lines.append("  - incremental contribution total: \(formattedDouble(day.shadowIncrementalContributionTotal))")
             lines.append("  - custom incremental contribution: \(formattedDouble(day.shadowCustomContributionTotal))")
@@ -609,17 +779,28 @@ import UIKit
             lines.append("  - positive current-state before gating: \(day.positiveCurrentStateBeforeGatingTitles.isEmpty ? "none" : day.positiveCurrentStateBeforeGatingTitles.joined(separator: " | "))")
             lines.append("  - positive current-state after gating: \(day.positiveCurrentStateAfterGatingTitles.isEmpty ? "none" : day.positiveCurrentStateAfterGatingTitles.joined(separator: " | "))")
             lines.append("  - positive current-state suppressions: \(day.positiveCurrentStateSuppressionReasons.isEmpty ? "none" : day.positiveCurrentStateSuppressionReasons.joined(separator: " | "))")
+            lines.append("  - positive current-state hard suppressions: \(day.positiveCurrentStateHardSuppressionTitles.isEmpty ? "none" : day.positiveCurrentStateHardSuppressionTitles.joined(separator: " | "))")
+            lines.append("  - pressure positive leakage count: \(day.pressureStatePositiveLeakageCount)")
             lines.append("  - bright spot reframes: \(day.brightSpotReframeTitles.isEmpty ? "none" : day.brightSpotReframeTitles.joined(separator: " | "))")
             lines.append("  - relationship families: \(day.relationshipFamilyLabels.isEmpty ? "none" : day.relationshipFamilyLabels.joined(separator: " | "))")
             lines.append("  - relationship family suppressions: \(day.relationshipFamilySuppressionReasons.isEmpty ? "none" : day.relationshipFamilySuppressionReasons.joined(separator: " | "))")
+            lines.append("  - relationship families before slot policy: \(day.relationshipFamilyBeforeSlotPolicyLabels.isEmpty ? "none" : day.relationshipFamilyBeforeSlotPolicyLabels.joined(separator: " | "))")
+            lines.append("  - relationship families after slot policy: \(day.relationshipFamilyAfterSlotPolicyLabels.isEmpty ? "none" : day.relationshipFamilyAfterSlotPolicyLabels.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
             lines.append("  - hero subfamily: \(day.heroSubfamilyKey)")
             lines.append("  - component scores: \(componentScoreText(day.componentScores))")
+            lines.append("  - top drivers before calibration: \(day.topDriverBeforeCalibrationTitles.isEmpty ? "none" : day.topDriverBeforeCalibrationTitles.joined(separator: " | "))")
+            lines.append("  - top drivers after calibration: \(day.topDriverAfterCalibrationTitles.isEmpty ? "none" : day.topDriverAfterCalibrationTitles.joined(separator: " | "))")
+            lines.append("  - driver dampening reasons: \(day.driverDampeningReasons.isEmpty ? "none" : day.driverDampeningReasons.joined(separator: " | "))")
             lines.append("  - top drivers: \(day.topDriverTitles.isEmpty ? "none" : day.topDriverTitles.joined(separator: " | "))")
             lines.append("  - top changes: \(day.topChangeTitles.isEmpty ? "none" : day.topChangeTitles.joined(separator: " | "))")
             lines.append("  - recommendation families: \(day.actionRecommendationFamilies.isEmpty ? "none" : day.actionRecommendationFamilies.joined(separator: " | "))")
+            lines.append("  - primary action family before routing: \(day.primaryActionFamilyBeforeRouting ?? "none")")
+            lines.append("  - primary action family after routing: \(day.primaryActionFamilyAfterRouting ?? "none")")
+            lines.append("  - insight slots: \(day.insightSlotLabels.isEmpty ? "none" : day.insightSlotLabels.joined(separator: " | "))")
+            lines.append("  - slot rejection reasons: \(day.slotRejectionReasons.isEmpty ? "none" : day.slotRejectionReasons.joined(separator: " | "))")
             lines.append("  - signal sources: \(day.signalSourceLabels.isEmpty ? "none" : day.signalSourceLabels.joined(separator: " | "))")
             lines.append("  - semantic roles: \(day.semanticRoleLabels.isEmpty ? "none" : day.semanticRoleLabels.joined(separator: " | "))")
             lines.append("  - custom metric surfaced: \(day.surfacedCustomMetric ? "yes" : "no")")

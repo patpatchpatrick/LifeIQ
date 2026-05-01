@@ -347,6 +347,11 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         SQMetricId.stress,
         SQMetricId.anxiety,
         SQMetricId.soreness,
+        SQMetricId.alcohol,
+        SQMetricId.caffeine,
+        SQMetricId.weed,
+        SQMetricId.nicotine,
+        SQMetricId.porn,
         SQInsightAnalysisMetricId.workoutPerformance,
         SQInsightAnalysisMetricId.workoutDifficulty
     ]
@@ -451,6 +456,22 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         .init(
             signalId: SQMetricId.weed,
             title: "Weed",
+            category: .habits,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.nicotine,
+            title: "Nicotine",
+            category: .habits,
+            expectedEffect: .negative,
+            minimumSampleCount: 3,
+            minimumEffectMagnitude: 0.75
+        ),
+        .init(
+            signalId: SQMetricId.porn,
+            title: "Porn",
             category: .habits,
             expectedEffect: .negative,
             minimumSampleCount: 3,

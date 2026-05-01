@@ -13,9 +13,746 @@ struct SQLifeScoreBuildInput {
     let insightsResult: SQInsightsResult
 }
 
+struct SQLifeScoreV2Component: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let score: Int
+    let weight: Double
+    let contribution: Double
+    let positiveDrivers: [String]
+    let negativeDrivers: [String]
+    let confidence: Double
+}
+
+struct SQLifeScoreV2Driver: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let signalId: String
+    let componentId: String
+    let effect: SQLifeScoreSignalEffect
+    let scoreImpact: Double
+    let summary: String
+}
+
+struct SQLifeScoreV2Result: Hashable {
+    let score: Int?
+    let components: [SQLifeScoreV2Component]
+    let topDrivers: [SQLifeScoreV2Driver]
+    let calibrationWarnings: [String]
+}
+
 @MainActor
 protocol SQLifeScoreBuilding {
     func buildViewModel(input: SQLifeScoreBuildInput) -> SQLifeScoreViewModel
+}
+
+struct SQLifeScoreV2Builder {
+    private struct RawComponent {
+        let id: String
+        let title: String
+        let score: Double
+        let weight: Double
+        let positiveDrivers: [String]
+        let negativeDrivers: [String]
+        let confidence: Double
+    }
+
+    private struct ScoredSignal {
+        let signalId: String
+        let title: String
+        let score: Double
+        let neutralScore: Double
+        let confidence: Double
+        let impactCap: Double
+
+        var driverImpact: Double {
+            SQLifeScoreV2Builder.clampStatic(score - neutralScore, min: -impactCap, max: impactCap)
+        }
+    }
+
+    func build(
+        input: SQHealthIntelligenceInput,
+        currentScore: Int?
+    ) -> SQLifeScoreV2Result {
+        let snapshots = SQInsightFeatureBuilder().makeFeatureSnapshots(
+            checkIns: input.checkIns,
+            workouts: input.workouts,
+            metricDefinitions: input.metricDefinitions,
+            sleepData: input.sleepData,
+            restingHeartRateSummaries: input.restingHeartRateSummaries
+        )
+        let snapshot = latestSnapshot(
+            from: snapshots,
+            referenceDate: input.referenceDate
+        )
+        let personalizedResult = SQLifeScoreMetricContributorBuilder().buildContributors(
+            from: snapshot,
+            metricDefinitions: input.metricDefinitions
+        )
+
+        var rawComponents = [
+            sleepComponent(snapshot: snapshot),
+            recoveryComponent(snapshot: snapshot, snapshots: snapshots),
+            mindEnergyComponent(snapshot: snapshot),
+            trainingComponent(snapshot: snapshot),
+            habitsComponent(snapshot: snapshot),
+            dataConfidenceComponent(
+                snapshot: snapshot,
+                input: input,
+                snapshots: snapshots
+            )
+        ]
+        .compactMap { $0 }
+
+        if let personalizedComponent = personalizedMetricsComponent(
+            from: personalizedResult
+        ) {
+            rawComponents.append(personalizedComponent)
+        }
+
+        let totalWeight = rawComponents.reduce(0) { $0 + $1.weight }
+        guard totalWeight > 0 else {
+            return .init(
+                score: nil,
+                components: [],
+                topDrivers: [],
+                calibrationWarnings: ["v2: no usable inputs"]
+            )
+        }
+
+        let weightedScore = rawComponents.reduce(0) { partialResult, component in
+            partialResult + component.score * component.weight
+        } / totalWeight
+        let score = Int(clamp(weightedScore, min: 0, max: 100).rounded())
+        let components = rawComponents.map { component in
+            SQLifeScoreV2Component(
+                id: component.id,
+                title: component.title,
+                score: Int(clamp(component.score, min: 0, max: 100).rounded()),
+                weight: component.weight,
+                contribution: component.score * component.weight / totalWeight,
+                positiveDrivers: component.positiveDrivers,
+                negativeDrivers: component.negativeDrivers,
+                confidence: component.confidence
+            )
+        }
+        .sorted { $0.weight > $1.weight }
+
+        let drivers = v2Drivers(
+            components: components,
+            snapshot: snapshot,
+            snapshots: snapshots,
+            personalizedResult: personalizedResult
+        )
+        let warnings = calibrationWarnings(
+            score: score,
+            currentScore: currentScore,
+            components: components,
+            drivers: drivers
+        )
+
+        return .init(
+            score: score,
+            components: components,
+            topDrivers: Array(drivers.prefix(5)),
+            calibrationWarnings: warnings
+        )
+    }
+
+    private func sleepComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+        var signals = [ScoredSignal]()
+
+        if let sleepHours = snapshot?.rawSignalValue(for: SQMetricId.sleepHours) {
+            signals.append(
+                .init(
+                    signalId: SQMetricId.sleepHours,
+                    title: "Sleep Duration",
+                    score: sleepDurationScore(hours: sleepHours),
+                    neutralScore: 74,
+                    confidence: 0.9,
+                    impactCap: 22
+                )
+            )
+        }
+
+        if let qualityScore = utilityScore(
+            for: SQMetricId.sleepQuality,
+            in: snapshot,
+            fallback: { clamp(($0 / 10) * 100, min: 0, max: 100) }
+        ) {
+            signals.append(
+                .init(
+                    signalId: SQMetricId.sleepQuality,
+                    title: "Sleep Quality",
+                    score: qualityScore,
+                    neutralScore: 74,
+                    confidence: 0.9,
+                    impactCap: 26
+                )
+            )
+        }
+
+        return component(
+            id: "sleep",
+            title: "Sleep",
+            signals: signals,
+            weight: 25,
+            fallbackScore: nil
+        )
+    }
+
+    private func recoveryComponent(
+        snapshot: SQInsightFeatureSnapshot?,
+        snapshots: [SQInsightFeatureSnapshot]
+    ) -> RawComponent? {
+        var signals = [ScoredSignal]()
+
+        if let sorenessScore = utilityScore(
+            for: SQMetricId.soreness,
+            in: snapshot,
+            fallback: { clamp(100 - ($0 / 10 * 100), min: 0, max: 100) }
+        ) {
+            signals.append(
+                .init(
+                    signalId: SQMetricId.soreness,
+                    title: "Soreness",
+                    score: sorenessScore,
+                    neutralScore: 72,
+                    confidence: 0.85,
+                    impactCap: 24
+                )
+            )
+        }
+
+        if let restingHRScore = restingHeartRateRecoveryScore(
+            snapshot: snapshot,
+            snapshots: snapshots
+        ) {
+            signals.append(
+                .init(
+                    signalId: SQInsightAnalysisMetricId.restingHeartRate,
+                    title: "Resting HR",
+                    score: restingHRScore,
+                    neutralScore: 76,
+                    confidence: 0.75,
+                    impactCap: 13
+                )
+            )
+        }
+
+        if let sleepQuality = utilityScore(
+            for: SQMetricId.sleepQuality,
+            in: snapshot,
+            fallback: { clamp(($0 / 10) * 100, min: 0, max: 100) }
+        ) {
+            signals.append(
+                .init(
+                    signalId: SQMetricId.sleepQuality,
+                    title: "Sleep Carryover",
+                    score: sleepQuality,
+                    neutralScore: 74,
+                    confidence: 0.65,
+                    impactCap: 10
+                )
+            )
+        }
+
+        return component(
+            id: "recoveryReadiness",
+            title: "Recovery / Readiness",
+            signals: signals,
+            weight: 20,
+            fallbackScore: nil
+        )
+    }
+
+    private func mindEnergyComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+        let signalSpecs: [(String, String, Double)] = [
+            (SQMetricId.energy, "Energy", 20),
+            (SQMetricId.mood, "Mood", 17),
+            (SQMetricId.mentalClarity, "Mental Clarity", 17),
+            (SQMetricId.motivation, "Motivation", 13),
+            (SQMetricId.stress, "Stress", 22),
+            (SQMetricId.anxiety, "Anxiety", 19)
+        ]
+
+        let signals = signalSpecs.compactMap { signalId, title, cap -> ScoredSignal? in
+            guard let score = utilityScore(
+                for: signalId,
+                in: snapshot,
+                fallback: { rawValue in
+                    switch signalId {
+                    case SQMetricId.stress, SQMetricId.anxiety:
+                        return clamp(100 - (rawValue / 10 * 100), min: 0, max: 100)
+                    default:
+                        return clamp((rawValue / 10) * 100, min: 0, max: 100)
+                    }
+                }
+            ) else {
+                return nil
+            }
+
+            return .init(
+                signalId: signalId,
+                title: title,
+                score: score,
+                neutralScore: 72,
+                confidence: 0.85,
+                impactCap: cap
+            )
+        }
+
+        return component(
+            id: "mindEnergy",
+            title: "Mind / Energy",
+            signals: signals,
+            weight: 20,
+            fallbackScore: nil
+        )
+    }
+
+    private func trainingComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+        var signals = [ScoredSignal]()
+
+        if let performance = snapshot?.averageWorkoutPerformance {
+            signals.append(
+                .init(
+                    signalId: SQInsightAnalysisMetricId.workoutPerformance,
+                    title: "Workout Performance",
+                    score: clamp((performance / 10) * 100, min: 0, max: 100),
+                    neutralScore: 72,
+                    confidence: 0.8,
+                    impactCap: 18
+                )
+            )
+        }
+
+        if let difficulty = snapshot?.averageWorkoutDifficulty {
+            signals.append(
+                .init(
+                    signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+                    title: "Workout Difficulty",
+                    score: clamp(112 - (difficulty * 8.5), min: 20, max: 96),
+                    neutralScore: 72,
+                    confidence: 0.8,
+                    impactCap: 18
+                )
+            )
+        }
+
+        let fallback = snapshot?.hasWorkout == true ? nil : 78.0
+        return component(
+            id: "trainingPerformance",
+            title: "Training Load / Performance",
+            signals: signals,
+            weight: snapshot?.hasWorkout == true ? 15 : 8,
+            fallbackScore: fallback,
+            fallbackConfidence: snapshot?.hasWorkout == true ? 0.8 : 0.35
+        )
+    }
+
+    private func habitsComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+        let signals: [ScoredSignal] = [
+            behaviorSignal(
+                signalId: SQMetricId.alcohol,
+                title: "Alcohol",
+                rawValue: snapshot?.rawSignalValue(for: SQMetricId.alcohol),
+                score: { clamp(96 - ($0 * 15), min: 25, max: 96) },
+                cap: 22
+            ),
+            behaviorSignal(
+                signalId: SQMetricId.caffeine,
+                title: "Caffeine",
+                rawValue: snapshot?.rawSignalValue(for: SQMetricId.caffeine),
+                score: { value in
+                    if value <= 180 { return 88 }
+                    return clamp(88 - ((value - 180) / 4.8), min: 35, max: 88)
+                },
+                cap: 12
+            ),
+            behaviorSignal(
+                signalId: SQMetricId.weed,
+                title: "Weed",
+                rawValue: snapshot?.rawSignalValue(for: SQMetricId.weed),
+                score: { clamp(94 - ($0 * 12), min: 30, max: 94) },
+                cap: 16
+            ),
+            behaviorSignal(
+                signalId: SQMetricId.nicotine,
+                title: "Nicotine",
+                rawValue: snapshot?.rawSignalValue(for: SQMetricId.nicotine),
+                score: { clamp(94 - ($0 * 12), min: 30, max: 94) },
+                cap: 16
+            )
+        ]
+        .compactMap { $0 }
+
+        return component(
+            id: "habitsBehaviors",
+            title: "Habits / Behaviors",
+            signals: signals,
+            weight: 10,
+            fallbackScore: nil
+        )
+    }
+
+    private func dataConfidenceComponent(
+        snapshot: SQInsightFeatureSnapshot?,
+        input: SQHealthIntelligenceInput,
+        snapshots: [SQInsightFeatureSnapshot]
+    ) -> RawComponent? {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: input.referenceDate)
+        let sevenDayStart = calendar.date(byAdding: .day, value: -6, to: referenceDay) ?? referenceDay
+        let recentCheckInDays = Set(
+            input.checkIns.compactMap { checkIn -> String? in
+                let day = calendar.startOfDay(for: checkIn.date)
+                guard day >= sevenDayStart && day <= referenceDay else { return nil }
+                return day.firebaseDailyDateKey
+            }
+        ).count
+        let currentSignalCount = snapshot?.rawSignalValues.count ?? 0
+        let activeSnapshotCount = snapshots.suffix(14).filter {
+            !$0.rawSignalValues.isEmpty || $0.hasWorkout
+        }.count
+        let checkInScore = clamp((Double(recentCheckInDays) / 5.0) * 100, min: 0, max: 100)
+        let currentScore = clamp((Double(currentSignalCount) / 8.0) * 100, min: 0, max: 100)
+        let historyScore = clamp((Double(activeSnapshotCount) / 10.0) * 100, min: 0, max: 100)
+        let promptBonus = input.hasCompletedCurrentPromptCheckIn ? 6.0 : -8.0
+        let score = clamp((checkInScore * 0.42) + (currentScore * 0.34) + (historyScore * 0.24) + promptBonus, min: 0, max: 100)
+
+        return .init(
+            id: "dataConfidence",
+            title: "Data Confidence / Consistency",
+            score: score,
+            weight: 5,
+            positiveDrivers: score >= 75 ? ["Recent logging"] : [],
+            negativeDrivers: score < 70 ? ["Missing or inconsistent logs"] : [],
+            confidence: min(1, max(0.2, score / 100))
+        )
+    }
+
+    private func personalizedMetricsComponent(
+        from contributionResult: SQLifeScoreMetricContributionResult
+    ) -> RawComponent? {
+        let customContributors = contributionResult.incrementalContributors.filter(\.isCustom)
+        guard !customContributors.isEmpty else { return nil }
+
+        let customTotal = clamp(
+            customContributors.reduce(0) { $0 + $1.contributionPoints },
+            min: -5,
+            max: 5
+        )
+        let score = clamp(78 + (customTotal * 4.5), min: 50, max: 96)
+
+        return .init(
+            id: "personalizedMetrics",
+            title: "Personalized Metrics",
+            score: score,
+            weight: 5,
+            positiveDrivers: customContributors
+                .filter { $0.contributionPoints > 0.05 }
+                .prefix(3)
+                .map(\.title),
+            negativeDrivers: customContributors
+                .filter { $0.contributionPoints < -0.05 }
+                .prefix(3)
+                .map(\.title),
+            confidence: 0.65
+        )
+    }
+
+    private func component(
+        id: String,
+        title: String,
+        signals: [ScoredSignal],
+        weight: Double,
+        fallbackScore: Double?,
+        fallbackConfidence: Double = 0.3
+    ) -> RawComponent? {
+        if signals.isEmpty {
+            guard let fallbackScore else { return nil }
+            return .init(
+                id: id,
+                title: title,
+                score: fallbackScore,
+                weight: weight,
+                positiveDrivers: [],
+                negativeDrivers: ["No recent \(title.lowercased()) signal"],
+                confidence: fallbackConfidence
+            )
+        }
+
+        let weightedSignals = signals.map { signal -> (signal: ScoredSignal, weight: Double) in
+            let weight = signal.confidence * max(4, abs(signal.driverImpact))
+            return (signal, weight)
+        }
+        let totalWeight = weightedSignals.reduce(0) { $0 + $1.weight }
+        let score = totalWeight > 0
+            ? weightedSignals.reduce(0) { $0 + ($1.signal.score * $1.weight) } / totalWeight
+            : signals.map(\.score).reduce(0, +) / Double(signals.count)
+        let positives = signals
+            .filter { $0.driverImpact >= 5 }
+            .sorted { $0.driverImpact > $1.driverImpact }
+            .prefix(3)
+            .map(\.title)
+        let negatives = signals
+            .filter { $0.driverImpact <= -5 }
+            .sorted { $0.driverImpact < $1.driverImpact }
+            .prefix(3)
+            .map(\.title)
+        let confidence = clamp(
+            signals.map(\.confidence).reduce(0, +) / Double(signals.count),
+            min: 0,
+            max: 1
+        )
+
+        return .init(
+            id: id,
+            title: title,
+            score: score,
+            weight: weight * confidenceMultiplier(confidence),
+            positiveDrivers: Array(positives),
+            negativeDrivers: Array(negatives),
+            confidence: confidence
+        )
+    }
+
+    private func v2Drivers(
+        components: [SQLifeScoreV2Component],
+        snapshot: SQInsightFeatureSnapshot?,
+        snapshots: [SQInsightFeatureSnapshot],
+        personalizedResult: SQLifeScoreMetricContributionResult
+    ) -> [SQLifeScoreV2Driver] {
+        var drivers = [SQLifeScoreV2Driver]()
+
+        for component in components {
+            for title in component.negativeDrivers {
+                drivers.append(
+                    .init(
+                        id: "v2.\(component.id).negative.\(title)",
+                        title: title,
+                        signalId: signalId(forDriverTitle: title),
+                        componentId: component.id,
+                        effect: .negative,
+                        scoreImpact: Double(component.score) - 74,
+                        summary: "\(title) is pulling down \(component.title)."
+                    )
+                )
+            }
+
+            for title in component.positiveDrivers {
+                drivers.append(
+                    .init(
+                        id: "v2.\(component.id).positive.\(title)",
+                        title: title,
+                        signalId: signalId(forDriverTitle: title),
+                        componentId: component.id,
+                        effect: .positive,
+                        scoreImpact: Double(component.score) - 74,
+                        summary: "\(title) is supporting \(component.title)."
+                    )
+                )
+            }
+        }
+
+        let lowDataComponent = components.first { $0.id == "dataConfidence" }
+        if let lowDataComponent, lowDataComponent.score < 65 {
+            drivers.append(
+                .init(
+                    id: "v2.dataConfidence.lowData",
+                    title: "Low Data Confidence",
+                    signalId: "insight.dataConfidence",
+                    componentId: "dataConfidence",
+                    effect: .negative,
+                    scoreImpact: Double(lowDataComponent.score) - 74,
+                    summary: "Missing or inconsistent logs are lowering confidence in the score."
+                )
+            )
+        }
+
+        if abs(personalizedResult.customMetricContributionTotal) >= 0.5,
+           let contributor = personalizedResult.incrementalContributors
+            .filter(\.isCustom)
+            .sorted(by: { abs($0.contributionPoints) > abs($1.contributionPoints) })
+            .first {
+            drivers.append(
+                .init(
+                    id: "v2.personalized.\(contributor.metricId)",
+                    title: contributor.title,
+                    signalId: contributor.metricId,
+                    componentId: "personalizedMetrics",
+                    effect: contributor.contributionPoints >= 0 ? .positive : .negative,
+                    scoreImpact: contributor.contributionPoints,
+                    summary: "\(contributor.title) is a capped personalization signal."
+                )
+            )
+        }
+
+        return drivers.sorted {
+            if abs($0.scoreImpact) != abs($1.scoreImpact) {
+                return abs($0.scoreImpact) > abs($1.scoreImpact)
+            }
+
+            return $0.title < $1.title
+        }
+    }
+
+    private func calibrationWarnings(
+        score: Int,
+        currentScore: Int?,
+        components: [SQLifeScoreV2Component],
+        drivers: [SQLifeScoreV2Driver]
+    ) -> [String] {
+        var warnings = [String]()
+
+        if let currentScore, abs(score - currentScore) > 10 {
+            warnings.append("shadow v2 delta >10 from current score")
+        }
+
+        if components.first(where: { $0.id == "dataConfidence" })?.score ?? 100 < 55 {
+            warnings.append("low data confidence")
+        }
+
+        if drivers.first?.signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            warnings.append("resting HR is top v2 driver")
+        }
+
+        return warnings.isEmpty ? ["None"] : warnings
+    }
+
+    private func latestSnapshot(
+        from snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> SQInsightFeatureSnapshot? {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        return snapshots
+            .filter { $0.date <= referenceDate || calendar.isDate($0.date, inSameDayAs: referenceDay) }
+            .max { $0.date < $1.date }
+    }
+
+    private func utilityScore(
+        for signalId: String,
+        in snapshot: SQInsightFeatureSnapshot?,
+        fallback: (Double) -> Double
+    ) -> Double? {
+        guard let feature = snapshot?.signalFeatures[signalId] else { return nil }
+        return feature.goalUtilityScore ?? fallback(feature.rawValue)
+    }
+
+    private func restingHeartRateRecoveryScore(
+        snapshot: SQInsightFeatureSnapshot?,
+        snapshots: [SQInsightFeatureSnapshot]
+    ) -> Double? {
+        guard let latest = snapshot?.rawSignalValue(for: SQInsightAnalysisMetricId.restingHeartRate) else {
+            return nil
+        }
+
+        let history = snapshots
+            .dropLast()
+            .suffix(21)
+            .compactMap { $0.rawSignalValue(for: SQInsightAnalysisMetricId.restingHeartRate) }
+        let baseline = history.isEmpty
+            ? 60
+            : history.reduce(0, +) / Double(history.count)
+        let delta = latest - baseline
+        let score = delta >= 0
+            ? 82 - (delta * 4.5)
+            : 82 + abs(delta * 2.0)
+
+        return clamp(score, min: 35, max: 96)
+    }
+
+    private func sleepDurationScore(hours: Double) -> Double {
+        switch hours {
+        case 7.25...8.6:
+            return 94
+        case 6.75..<7.25:
+            return 84
+        case 8.6...9.2:
+            return 84
+        case 6.0..<6.75:
+            return 68
+        case 9.2...:
+            return 66
+        case 5.0..<6.0:
+            return 48
+        default:
+            return 36
+        }
+    }
+
+    private func behaviorSignal(
+        signalId: String,
+        title: String,
+        rawValue: Double?,
+        score: (Double) -> Double,
+        cap: Double
+    ) -> ScoredSignal? {
+        guard let rawValue else { return nil }
+        return .init(
+            signalId: signalId,
+            title: title,
+            score: score(rawValue),
+            neutralScore: 78,
+            confidence: 0.8,
+            impactCap: cap
+        )
+    }
+
+    private func signalId(forDriverTitle title: String) -> String {
+        switch title {
+        case "Sleep Duration":
+            return SQMetricId.sleepHours
+        case "Sleep Quality", "Sleep Carryover":
+            return SQMetricId.sleepQuality
+        case "Soreness":
+            return SQMetricId.soreness
+        case "Resting HR":
+            return SQInsightAnalysisMetricId.restingHeartRate
+        case "Energy":
+            return SQMetricId.energy
+        case "Mood":
+            return SQMetricId.mood
+        case "Mental Clarity":
+            return SQMetricId.mentalClarity
+        case "Motivation":
+            return SQMetricId.motivation
+        case "Stress":
+            return SQMetricId.stress
+        case "Anxiety":
+            return SQMetricId.anxiety
+        case "Workout Performance":
+            return SQInsightAnalysisMetricId.workoutPerformance
+        case "Workout Difficulty":
+            return SQInsightAnalysisMetricId.workoutDifficulty
+        case "Alcohol":
+            return SQMetricId.alcohol
+        case "Caffeine":
+            return SQMetricId.caffeine
+        case "Weed":
+            return SQMetricId.weed
+        case "Nicotine":
+            return SQMetricId.nicotine
+        case "Missing or inconsistent logs", "Recent logging":
+            return "insight.dataConfidence"
+        default:
+            return title
+        }
+    }
+
+    private func confidenceMultiplier(_ confidence: Double) -> Double {
+        clamp(0.65 + (confidence * 0.35), min: 0.65, max: 1)
+    }
+
+    private func clamp(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Self.clampStatic(value, min: minimum, max: maximum)
+    }
+
+    private static func clampStatic(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Swift.max(minimum, Swift.min(maximum, value))
+    }
 }
 
 @MainActor

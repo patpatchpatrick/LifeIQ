@@ -655,6 +655,10 @@ struct SQViewLabView: View {
                     "Custom Relationship Flag-On Surfaced: \(formattedPercent(report.customRelationshipFlagOnSurfacePercentage))",
                     "Avg Personalized Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
                     "Avg Personalized Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
+                    "Avg Shadow V2 Score: \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")",
+                    "Shadow V2 Score Range: \(report.minimumShadowV2Score.map(String.init) ?? "n/a")-\(report.maximumShadowV2Score.map(String.init) ?? "n/a")",
+                    "Avg Shadow V2 Delta: \(report.averageShadowV2ScoreDelta.map(formattedSignedDouble) ?? "n/a")",
+                    "Pressure Positive Leakage Count: \(report.pressureStatePositiveLeakageCount)",
                     "Avg Diagnostic Contribution: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))",
                     "Avg Incremental Contribution: \(formattedDouble(report.averageShadowIncrementalContributionTotal))",
                     "Avg Custom Incremental Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
@@ -744,8 +748,36 @@ struct SQViewLabView: View {
                 values: report.componentScoreDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Shadow V2 Score Deltas",
+                values: report.shadowV2ScoreDeltaDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Component Contributions",
+                values: report.shadowV2ComponentContributionDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top V2 Drivers",
+                values: report.topV2DriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Warnings",
+                values: report.shadowV2WarningDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Top Drivers",
                 values: report.topDriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Drivers Before Calibration",
+                values: report.topDriverBeforeCalibrationDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Drivers After Calibration",
+                values: report.topDriverAfterCalibrationDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Driver Dampening",
+                values: report.driverDampeningReasonDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Top Changes",
@@ -768,8 +800,32 @@ struct SQViewLabView: View {
                 values: report.primaryActionRecommendationFamilyDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Action Families Before Routing",
+                values: report.primaryActionFamilyBeforeRoutingDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Action Families After Routing",
+                values: report.primaryActionFamilyAfterRoutingDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "All Action Families",
                 values: report.allActionRecommendationFamilyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Insight Slots",
+                values: report.insightSlotDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Slot Rejections",
+                values: report.slotRejectionReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Relationship Families Before Slot Policy",
+                values: report.relationshipFamilyBeforeSlotPolicyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Relationship Families After Slot Policy",
+                values: report.relationshipFamilyAfterSlotPolicyDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Signal Sources",
@@ -864,6 +920,10 @@ struct SQViewLabView: View {
                 values: report.positiveCurrentStateSuppressionDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Positive Current-State Hard Suppressions",
+                values: report.positiveCurrentStateHardSuppressionDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Bright Spot Reframes",
                 values: report.brightSpotReframeDistribution.map(distributionText)
             )
@@ -894,7 +954,7 @@ struct SQViewLabView: View {
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Personalized \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • incremental \(formattedDouble(day.shadowIncrementalContributionTotal))")
+                    Text("Personalized \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • V2 \(day.shadowV2Score.map(String.init) ?? "n/a") • incremental \(formattedDouble(day.shadowIncrementalContributionTotal))")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                 }
