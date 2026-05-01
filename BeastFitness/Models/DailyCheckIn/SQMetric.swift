@@ -157,7 +157,7 @@ enum SQMetricBodyBatteryEffect: String, Codable, CaseIterable, UnfrozenEnum {
 
 // MARK: - SQMetric Algorithm Semantics
 
-enum SQMetricSignalRole: String, Codable, CaseIterable, UnfrozenEnum {
+enum SQMetricSignalRole: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
     case automatic
     case behavior
     case outcome
@@ -167,7 +167,7 @@ enum SQMetricSignalRole: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
-enum SQMetricLifeScoreImpact: String, Codable, CaseIterable, UnfrozenEnum {
+enum SQMetricLifeScoreImpact: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
     case automatic
     case none
     case light
@@ -175,7 +175,7 @@ enum SQMetricLifeScoreImpact: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
-enum SQMetricInsightMode: String, Codable, CaseIterable, UnfrozenEnum {
+enum SQMetricInsightMode: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
     case automatic
     case off
     case trendsOnly
@@ -184,7 +184,7 @@ enum SQMetricInsightMode: String, Codable, CaseIterable, UnfrozenEnum {
     case unknown
 }
 
-enum SQMetricSensitivity: String, Codable, CaseIterable, UnfrozenEnum {
+enum SQMetricSensitivity: String, Codable, CaseIterable, Hashable, UnfrozenEnum {
     case normal
     case sensitive
     case medicationLike
@@ -304,6 +304,241 @@ enum SQMetricSemanticDefaults {
         default:
             return .normal
         }
+    }
+}
+
+// MARK: - SQMetricGoalEvaluator
+
+struct SQMetricGoalEvaluation: Hashable {
+    let metricId: String
+    let rawValue: Double
+    /// Normalized against the metric's configured min/max as 0...1 when bounds are valid.
+    let normalizedValue: Double?
+    /// 0...100 where 100 means best for the metric's configured goal style.
+    let goalUtilityScore: Double?
+    let effect: SQLifeScoreSignalEffect?
+    let reason: String
+}
+
+struct SQMetricGoalEvaluator {
+    func evaluate(
+        value: Double,
+        definition: SQMetricDefinition
+    ) -> SQMetricGoalEvaluation? {
+        let normalizedValue = normalizedMetricValue(value, definition: definition)
+
+        switch definition.goalStyle {
+        case .justTrack:
+            return .init(
+                metricId: definition.id,
+                rawValue: value,
+                normalizedValue: normalizedValue,
+                goalUtilityScore: nil,
+                effect: nil,
+                reason: "justTrack"
+            )
+
+        case .buildUp:
+            let utilityScore: Double?
+            let reason: String
+            if let target = definition.targetValue, target > 0 {
+                utilityScore = clamp((value / Double(target)) * 100, min: 0, max: 100)
+                reason = "buildUpTarget"
+            } else {
+                utilityScore = normalizedValue.map { $0 * 100 }
+                reason = "buildUpNormalized"
+            }
+
+            return makeEvaluation(
+                value: value,
+                definition: definition,
+                normalizedValue: normalizedValue,
+                utilityScore: utilityScore,
+                reason: reason,
+                positiveThreshold: 85,
+                negativeThreshold: 50
+            )
+
+        case .keepLow:
+            let utilityScore: Double?
+            let reason: String
+            if let target = definition.targetValue {
+                utilityScore = inverseScore(
+                    value: value,
+                    target: Double(target),
+                    upperBound: keepLowUpperBound(for: definition, target: Double(target))
+                )
+                reason = "keepLowTarget"
+            } else {
+                utilityScore = normalizedValue.map { (1 - $0) * 100 }
+                reason = "keepLowNormalized"
+            }
+
+            let targetMet = definition.targetValue.map { value <= Double($0) } ?? false
+            return makeEvaluation(
+                value: value,
+                definition: definition,
+                normalizedValue: normalizedValue,
+                utilityScore: utilityScore,
+                reason: reason,
+                forcedEffect: targetMet ? .positive : nil,
+                positiveThreshold: 85,
+                negativeThreshold: 50
+            )
+
+        case .avoidIt:
+            if value <= 0 {
+                return .init(
+                    metricId: definition.id,
+                    rawValue: value,
+                    normalizedValue: normalizedValue,
+                    goalUtilityScore: 100,
+                    effect: .neutral,
+                    reason: "avoidItAbsent"
+                )
+            }
+
+            let upperBound = max(Double(definition.max ?? 0), 1)
+            let utilityScore = clamp((1 - (value / upperBound)) * 100, min: 0, max: 100)
+            return makeEvaluation(
+                value: value,
+                definition: definition,
+                normalizedValue: normalizedValue,
+                utilityScore: utilityScore,
+                reason: "avoidItPresent",
+                positiveThreshold: 95,
+                negativeThreshold: 65
+            )
+
+        case .stayInRange:
+            guard
+                let rangeMin = definition.targetRangeMin.map(Double.init),
+                let rangeMax = definition.targetRangeMax.map(Double.init),
+                rangeMax >= rangeMin
+            else {
+                return .init(
+                    metricId: definition.id,
+                    rawValue: value,
+                    normalizedValue: normalizedValue,
+                    goalUtilityScore: nil,
+                    effect: nil,
+                    reason: "stayInRangeMissingTarget"
+                )
+            }
+
+            if value >= rangeMin && value <= rangeMax {
+                return .init(
+                    metricId: definition.id,
+                    rawValue: value,
+                    normalizedValue: normalizedValue,
+                    goalUtilityScore: 100,
+                    effect: .positive,
+                    reason: "stayInRangeWithinTarget"
+                )
+            }
+
+            let distance: Double
+            let toleranceSpan: Double
+            if value < rangeMin {
+                distance = rangeMin - value
+                toleranceSpan = max(rangeMin - Double(definition.min ?? 0), rangeMax - rangeMin, 1)
+            } else {
+                distance = value - rangeMax
+                toleranceSpan = max(Double(definition.max ?? Float(rangeMax)) - rangeMax, rangeMax - rangeMin, 1)
+            }
+
+            let utilityScore = clamp((1 - (distance / toleranceSpan)) * 100, min: 0, max: 100)
+            return makeEvaluation(
+                value: value,
+                definition: definition,
+                normalizedValue: normalizedValue,
+                utilityScore: utilityScore,
+                reason: "stayInRangeOutsideTarget",
+                positiveThreshold: 90,
+                negativeThreshold: 60
+            )
+
+        case .unknown:
+            return .init(
+                metricId: definition.id,
+                rawValue: value,
+                normalizedValue: normalizedValue,
+                goalUtilityScore: nil,
+                effect: nil,
+                reason: "unknownGoal"
+            )
+        }
+    }
+
+    private func makeEvaluation(
+        value: Double,
+        definition: SQMetricDefinition,
+        normalizedValue: Double?,
+        utilityScore: Double?,
+        reason: String,
+        forcedEffect: SQLifeScoreSignalEffect? = nil,
+        positiveThreshold: Double,
+        negativeThreshold: Double
+    ) -> SQMetricGoalEvaluation {
+        .init(
+            metricId: definition.id,
+            rawValue: value,
+            normalizedValue: normalizedValue,
+            goalUtilityScore: utilityScore,
+            effect: forcedEffect ?? effect(for: utilityScore, positiveThreshold: positiveThreshold, negativeThreshold: negativeThreshold),
+            reason: reason
+        )
+    }
+
+    private func effect(
+        for utilityScore: Double?,
+        positiveThreshold: Double,
+        negativeThreshold: Double
+    ) -> SQLifeScoreSignalEffect? {
+        guard let utilityScore else { return nil }
+
+        if utilityScore >= positiveThreshold {
+            return .positive
+        }
+
+        if utilityScore < negativeThreshold {
+            return .negative
+        }
+
+        return .neutral
+    }
+
+    private func inverseScore(value: Double, target: Double, upperBound: Double) -> Double {
+        guard upperBound > target else {
+            return value <= target ? 100 : 0
+        }
+
+        if value <= target {
+            return 100
+        }
+
+        return clamp((1 - ((value - target) / (upperBound - target))) * 100, min: 0, max: 100)
+    }
+
+    private func normalizedMetricValue(_ value: Double, definition: SQMetricDefinition) -> Double? {
+        guard
+            let min = definition.min.map(Double.init),
+            let max = definition.max.map(Double.init),
+            max > min
+        else {
+            return nil
+        }
+
+        return clamp((value - min) / (max - min), min: 0, max: 1)
+    }
+
+    private func keepLowUpperBound(for definition: SQMetricDefinition, target: Double) -> Double {
+        let maxValue = Double(definition.max ?? Float(target + 1))
+        return max(maxValue, target + 1)
+    }
+
+    private func clamp(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Swift.max(minimum, Swift.min(maximum, value))
     }
 }
 

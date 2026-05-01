@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum SQLifeScoreSignalEffect {
+enum SQLifeScoreSignalEffect: Hashable {
     case positive
     case negative
     case neutral
@@ -37,6 +37,234 @@ struct SQLifeScoreComponent: Identifiable {
     let summary: String
     let weight: Double
     let detailItems: [SQLifeScoreDetailItem]
+}
+
+struct SQLifeScoreMetricContributor: Identifiable, Hashable {
+    let metricId: String
+    let title: String
+    let role: SQMetricSignalRole
+    let impact: SQMetricLifeScoreImpact
+    let source: SQInsightSignalSource
+    let utilityScore: Double?
+    let contributionPoints: Double
+    let effect: SQLifeScoreSignalEffect
+    let componentId: String
+    let isCustom: Bool
+    let sensitivity: SQMetricSensitivity
+
+    var id: String { metricId }
+}
+
+struct SQLifeScoreShadowMetricContributionResult: Hashable {
+    let contributors: [SQLifeScoreMetricContributor]
+    let customMetricContributionTotal: Double
+    let sensitiveMetricContributionTotal: Double
+    let behaviorMetricContributionTotal: Double
+
+    var totalContributionPoints: Double {
+        contributors.reduce(0) { $0 + $1.contributionPoints }
+    }
+}
+
+struct SQLifeScoreShadowMetricContributorBuilder {
+    private let semanticResolver = SQMetricSemanticResolver()
+
+    func buildContributors(
+        from snapshot: SQInsightFeatureSnapshot?,
+        metricDefinitions: [SQMetricDefinition]
+    ) -> SQLifeScoreShadowMetricContributionResult {
+        guard let snapshot else {
+            return .init(
+                contributors: [],
+                customMetricContributionTotal: 0,
+                sensitiveMetricContributionTotal: 0,
+                behaviorMetricContributionTotal: 0
+            )
+        }
+
+        let definitionsById = Dictionary(uniqueKeysWithValues: metricDefinitions.map { ($0.id, $0) })
+        let rawContributors = snapshot.signalFeatures.values.compactMap { feature -> SQLifeScoreMetricContributor? in
+            guard let definition = definitionsById[feature.signalId],
+                  let utilityScore = feature.goalUtilityScore else {
+                return nil
+            }
+
+            let impact = effectiveImpact(for: definition)
+            guard impact != .none else { return nil }
+
+            let maxPoints = maxContributionPoints(
+                impact: impact,
+                isCustom: !definition.isPreset
+            )
+            let contribution = rawContributionPoints(
+                utilityScore: utilityScore,
+                maxPoints: maxPoints,
+                goalStyle: definition.goalStyle
+            )
+
+            guard abs(contribution) >= 0.05 else { return nil }
+
+            return .init(
+                metricId: feature.signalId,
+                title: feature.title,
+                role: feature.signalRole,
+                impact: impact,
+                source: feature.source,
+                utilityScore: utilityScore,
+                contributionPoints: contribution,
+                effect: effect(for: contribution),
+                componentId: componentId(for: feature.signalRole),
+                isCustom: !definition.isPreset,
+                sensitivity: feature.sensitivity
+            )
+        }
+
+        let singleCustomCapped = rawContributors.map { contributor in
+            guard contributor.isCustom else { return contributor }
+            return contributor.replacingContribution(
+                clamp(contributor.contributionPoints, min: -3, max: 3)
+            )
+        }
+
+        let customCapped = capTotalContribution(
+            singleCustomCapped,
+            cap: 10,
+            matching: { $0.isCustom }
+        )
+        let sensitiveCapped = capTotalContribution(
+            customCapped,
+            cap: 6,
+            matching: { $0.sensitivity == .sensitive || $0.sensitivity == .medicationLike }
+        )
+
+        return .init(
+            contributors: sensitiveCapped.sorted { abs($0.contributionPoints) > abs($1.contributionPoints) },
+            customMetricContributionTotal: sensitiveCapped.filter(\.isCustom).reduce(0) { $0 + $1.contributionPoints },
+            sensitiveMetricContributionTotal: sensitiveCapped
+                .filter { $0.sensitivity == .sensitive || $0.sensitivity == .medicationLike }
+                .reduce(0) { $0 + $1.contributionPoints },
+            behaviorMetricContributionTotal: sensitiveCapped
+                .filter { $0.role == .behavior }
+                .reduce(0) { $0 + $1.contributionPoints }
+        )
+    }
+
+    private func effectiveImpact(for definition: SQMetricDefinition) -> SQMetricLifeScoreImpact {
+        let resolvedImpact = semanticResolver.lifeScoreImpact(for: definition)
+        guard resolvedImpact == .automatic || resolvedImpact == .unknown else {
+            return resolvedImpact
+        }
+
+        guard definition.isPreset else { return .none }
+
+        switch semanticResolver.signalRole(for: definition) {
+        case .behavior:
+            return .light
+        case .outcome, .symptom, .bodyStat:
+            return .standard
+        case .context, .automatic, .unknown:
+            return .none
+        }
+    }
+
+    private func maxContributionPoints(
+        impact: SQMetricLifeScoreImpact,
+        isCustom: Bool
+    ) -> Double {
+        switch impact {
+        case .light:
+            return 2
+        case .standard:
+            return isCustom ? 3 : 2.5
+        case .automatic:
+            return isCustom ? 0 : 2
+        case .none, .unknown:
+            return 0
+        }
+    }
+
+    private func rawContributionPoints(
+        utilityScore: Double,
+        maxPoints: Double,
+        goalStyle: SQMetricGoalStyle
+    ) -> Double {
+        let neutralUtility = 70.0
+        let bonusCap = goalStyle == .avoidIt ? maxPoints * 0.25 : maxPoints
+        let dragCap = goalStyle == .avoidIt ? maxPoints * 1.2 : maxPoints
+
+        if utilityScore >= neutralUtility {
+            return ((utilityScore - neutralUtility) / (100 - neutralUtility)) * bonusCap
+        }
+
+        return -((neutralUtility - utilityScore) / neutralUtility) * dragCap
+    }
+
+    private func componentId(for role: SQMetricSignalRole) -> String {
+        switch role {
+        case .behavior:
+            return "habits"
+        case .outcome:
+            return "personalState"
+        case .symptom, .bodyStat:
+            return "recovery"
+        case .context:
+            return "context"
+        case .automatic, .unknown:
+            return "metrics"
+        }
+    }
+
+    private func effect(for contribution: Double) -> SQLifeScoreSignalEffect {
+        if contribution > 0.2 {
+            return .positive
+        }
+
+        if contribution < -0.2 {
+            return .negative
+        }
+
+        return .neutral
+    }
+
+    private func capTotalContribution(
+        _ contributors: [SQLifeScoreMetricContributor],
+        cap: Double,
+        matching isIncluded: (SQLifeScoreMetricContributor) -> Bool
+    ) -> [SQLifeScoreMetricContributor] {
+        let includedTotal = contributors
+            .filter(isIncluded)
+            .reduce(0) { $0 + $1.contributionPoints }
+        let magnitude = abs(includedTotal)
+        guard magnitude > cap, magnitude > 0 else { return contributors }
+
+        let scale = cap / magnitude
+        return contributors.map { contributor in
+            guard isIncluded(contributor) else { return contributor }
+            return contributor.replacingContribution(contributor.contributionPoints * scale)
+        }
+    }
+
+    private func clamp(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Swift.max(minimum, Swift.min(maximum, value))
+    }
+}
+
+private extension SQLifeScoreMetricContributor {
+    func replacingContribution(_ contributionPoints: Double) -> SQLifeScoreMetricContributor {
+        .init(
+            metricId: metricId,
+            title: title,
+            role: role,
+            impact: impact,
+            source: source,
+            utilityScore: utilityScore,
+            contributionPoints: contributionPoints,
+            effect: contributionPoints > 0.2 ? .positive : (contributionPoints < -0.2 ? .negative : .neutral),
+            componentId: componentId,
+            isCustom: isCustom,
+            sensitivity: sensitivity
+        )
+    }
 }
 
 enum SQLifeScoreState {

@@ -20,6 +20,8 @@ protocol SQInsightFeatureBuilding {
 
 final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
     private let sleepAggregationService: SQSleepAggregationService
+    private let goalEvaluator = SQMetricGoalEvaluator()
+    private let semanticResolver = SQMetricSemanticResolver()
 
     init(
         sleepAggregationService: SQSleepAggregationService = .init()
@@ -40,12 +42,14 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
         var rawValuesByDay = [String: [String: Double]]()
         var normalizedValuesByDay = [String: [String: Double]]()
+        var signalFeaturesByDay = [String: [String: SQInsightSignalFeature]]()
         var healthKitSleepMetricIdsByDay = [String: Set<String>]()
 
         for checkIn in checkIns {
             let dayKey = checkIn.uniqueDateKey
             var rawMap = rawValuesByDay[dayKey, default: [:]]
             var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
+            var featureMap = signalFeaturesByDay[dayKey, default: [:]]
 
             for metricId in Set(checkIn.values.keys).union(checkIn.metricValues.keys) {
                 guard let definition = definitionsById[metricId] else { continue }
@@ -56,7 +60,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
                 guard let analysisRawValue else { continue }
 
-                rawMap[metricId] = Double(analysisRawValue)
+                let rawValue = Double(analysisRawValue)
+                rawMap[metricId] = rawValue
                 normalizedMap[metricId] = Double(
                     SQMetricEntry.normalizedScore(
                         scaleValue: scaleValue,
@@ -64,6 +69,12 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                         rawValue: analysisRawValue,
                         definition: definition
                     )
+                )
+                featureMap[metricId] = metricSignalFeature(
+                    metricId: metricId,
+                    rawValue: rawValue,
+                    definition: definition,
+                    source: checkIn.healthKitMetricIds.contains(metricId) ? .healthKitFallback : .userLogged
                 )
 
                 if Self.sleepSignalIds.contains(metricId),
@@ -74,6 +85,7 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
             rawValuesByDay[dayKey] = rawMap
             normalizedValuesByDay[dayKey] = normalizedMap
+            signalFeaturesByDay[dayKey] = featureMap
         }
 
         for summary in restingHeartRateSummaries {
@@ -82,12 +94,23 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
             let dayKey = summary.date.anchorDayKey()
             var rawMap = rawValuesByDay[dayKey, default: [:]]
             var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
+            var featureMap = signalFeaturesByDay[dayKey, default: [:]]
 
             rawMap[SQInsightAnalysisMetricId.restingHeartRate] = averageRestingHeartRate
             normalizedMap[SQInsightAnalysisMetricId.restingHeartRate] = averageRestingHeartRate
+            featureMap[SQInsightAnalysisMetricId.restingHeartRate] = derivedSignalFeature(
+                signalId: SQInsightAnalysisMetricId.restingHeartRate,
+                title: "Resting Heart Rate",
+                rawValue: averageRestingHeartRate,
+                normalizedValue: nil,
+                goalUtilityScore: nil,
+                signalRole: .bodyStat,
+                source: .healthKitDerived
+            )
 
             rawValuesByDay[dayKey] = rawMap
             normalizedValuesByDay[dayKey] = normalizedMap
+            signalFeaturesByDay[dayKey] = featureMap
         }
 
         mergeHealthKitSleepValues(
@@ -95,7 +118,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
             definitionsById: definitionsById,
             healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
             rawValuesByDay: &rawValuesByDay,
-            normalizedValuesByDay: &normalizedValuesByDay
+            normalizedValuesByDay: &normalizedValuesByDay,
+            signalFeaturesByDay: &signalFeaturesByDay
         )
 
         let workoutsByDay = Dictionary(grouping: workouts) { workout in
@@ -104,6 +128,7 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
         let dayKeys = Set(rawValuesByDay.keys)
             .union(normalizedValuesByDay.keys)
+            .union(signalFeaturesByDay.keys)
             .union(workoutsByDay.keys)
             .sorted()
 
@@ -121,12 +146,36 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                 workouts: dayWorkouts,
                 value: { $0.ratingDifficulty.map(Double.init) }
             )
+            var signalFeatures = signalFeaturesByDay[dayKey, default: [:]]
+            if let performanceSignal {
+                signalFeatures[SQInsightAnalysisMetricId.workoutPerformance] = derivedSignalFeature(
+                    signalId: SQInsightAnalysisMetricId.workoutPerformance,
+                    title: "Workout Performance",
+                    rawValue: performanceSignal.averageValue,
+                    normalizedValue: normalizedScaleValue(performanceSignal.averageValue, min: 0, max: 10),
+                    goalUtilityScore: performanceSignal.averageValue * 10,
+                    signalRole: .outcome,
+                    source: .workoutDerived
+                )
+            }
+            if let difficultySignal {
+                signalFeatures[SQInsightAnalysisMetricId.workoutDifficulty] = derivedSignalFeature(
+                    signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+                    title: "Workout Difficulty",
+                    rawValue: difficultySignal.averageValue,
+                    normalizedValue: normalizedScaleValue(difficultySignal.averageValue, min: 0, max: 10),
+                    goalUtilityScore: nil,
+                    signalRole: .behavior,
+                    source: .workoutDerived
+                )
+            }
 
             return SQInsightFeatureSnapshot(
                 date: date,
                 anchorDayKey: dayKey,
                 rawSignalValues: rawValuesByDay[dayKey, default: [:]],
                 normalizedSignalValues: normalizedValuesByDay[dayKey, default: [:]],
+                signalFeatures: signalFeatures,
                 workoutCount: dayWorkouts.count,
                 averageWorkoutPerformance: performanceSignal?.averageValue,
                 workoutPerformanceActivityTypeRaw: performanceSignal?.activityType.rawValue,
@@ -165,12 +214,67 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
         return values.reduce(0, +) / Double(values.count)
     }
 
+    private func metricSignalFeature(
+        metricId: String,
+        rawValue: Double,
+        definition: SQMetricDefinition,
+        source: SQInsightSignalSource
+    ) -> SQInsightSignalFeature {
+        let evaluation = goalEvaluator.evaluate(value: rawValue, definition: definition)
+
+        return .init(
+            signalId: metricId,
+            title: definition.title,
+            rawValue: rawValue,
+            normalizedValue: evaluation?.normalizedValue,
+            goalUtilityScore: evaluation?.goalUtilityScore,
+            signalRole: semanticResolver.signalRole(for: definition),
+            lifeScoreImpact: semanticResolver.lifeScoreImpact(for: definition),
+            insightMode: semanticResolver.insightMode(for: definition),
+            sensitivity: semanticResolver.sensitivity(for: definition),
+            source: source
+        )
+    }
+
+    private func derivedSignalFeature(
+        signalId: String,
+        title: String,
+        rawValue: Double,
+        normalizedValue: Double?,
+        goalUtilityScore: Double?,
+        signalRole: SQMetricSignalRole,
+        source: SQInsightSignalSource
+    ) -> SQInsightSignalFeature {
+        .init(
+            signalId: signalId,
+            title: title,
+            rawValue: rawValue,
+            normalizedValue: normalizedValue,
+            goalUtilityScore: goalUtilityScore,
+            signalRole: signalRole,
+            lifeScoreImpact: .automatic,
+            insightMode: .curatedRelationships,
+            sensitivity: .normal,
+            source: source
+        )
+    }
+
+    private func normalizedScaleValue(
+        _ value: Double,
+        min minimum: Double,
+        max maximum: Double
+    ) -> Double? {
+        guard maximum > minimum else { return nil }
+        return Swift.max(0, Swift.min(1, (value - minimum) / (maximum - minimum)))
+    }
+
     private func mergeHealthKitSleepValues(
         from sleepData: SQSleepDashboardData?,
         definitionsById: [String: SQMetricDefinition],
         healthKitSleepMetricIdsByDay: [String: Set<String>],
         rawValuesByDay: inout [String: [String: Double]],
-        normalizedValuesByDay: inout [String: [String: Double]]
+        normalizedValuesByDay: inout [String: [String: Double]],
+        signalFeaturesByDay: inout [String: [String: SQInsightSignalFeature]]
     ) {
         let nights = ((sleepData?.priorNights ?? []) + (sleepData?.currentNights ?? []))
             .sorted { $0.wakeDay < $1.wakeDay }
@@ -186,7 +290,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                 definitionsById: definitionsById,
                 healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
                 rawValuesByDay: &rawValuesByDay,
-                normalizedValuesByDay: &normalizedValuesByDay
+                normalizedValuesByDay: &normalizedValuesByDay,
+                signalFeaturesByDay: &signalFeaturesByDay
             )
 
             writeHealthKitSleepValue(
@@ -196,7 +301,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                 definitionsById: definitionsById,
                 healthKitSleepMetricIdsByDay: healthKitSleepMetricIdsByDay,
                 rawValuesByDay: &rawValuesByDay,
-                normalizedValuesByDay: &normalizedValuesByDay
+                normalizedValuesByDay: &normalizedValuesByDay,
+                signalFeaturesByDay: &signalFeaturesByDay
             )
         }
     }
@@ -208,7 +314,8 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
         definitionsById: [String: SQMetricDefinition],
         healthKitSleepMetricIdsByDay: [String: Set<String>],
         rawValuesByDay: inout [String: [String: Double]],
-        normalizedValuesByDay: inout [String: [String: Double]]
+        normalizedValuesByDay: inout [String: [String: Double]],
+        signalFeaturesByDay: inout [String: [String: SQInsightSignalFeature]]
     ) {
         let existingWasHealthKitPrefill = healthKitSleepMetricIdsByDay[dayKey]?.contains(metricId) == true
         guard rawValuesByDay[dayKey]?[metricId] == nil || existingWasHealthKitPrefill else {
@@ -217,6 +324,7 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
 
         var rawMap = rawValuesByDay[dayKey, default: [:]]
         var normalizedMap = normalizedValuesByDay[dayKey, default: [:]]
+        var featureMap = signalFeaturesByDay[dayKey, default: [:]]
 
         rawMap[metricId] = value
 
@@ -225,12 +333,28 @@ final class SQInsightFeatureBuilder: SQInsightFeatureBuilding {
                 for: Float(value),
                 definition: definition
             ))
+            featureMap[metricId] = metricSignalFeature(
+                metricId: metricId,
+                rawValue: value,
+                definition: definition,
+                source: .healthKitFallback
+            )
         } else {
             normalizedMap[metricId] = value
+            featureMap[metricId] = derivedSignalFeature(
+                signalId: metricId,
+                title: metricId,
+                rawValue: value,
+                normalizedValue: nil,
+                goalUtilityScore: nil,
+                signalRole: .bodyStat,
+                source: .healthKitFallback
+            )
         }
 
         rawValuesByDay[dayKey] = rawMap
         normalizedValuesByDay[dayKey] = normalizedMap
+        signalFeaturesByDay[dayKey] = featureMap
     }
 
     private static let sleepSignalIds: Set<String> = [

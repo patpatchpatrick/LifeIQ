@@ -518,10 +518,13 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
     /// Migrates the preset catalog:
     /// 1. Inserts any new preset metrics that don't exist in the database.
-    /// 2. For existing preset entities, applies period, isDefault, semantic defaults, and binary→scale conversion.
+    /// 2. For existing preset entities, applies period, isDefault, HealthKit, and binary→scale conversion.
+    /// 3. Backfills semantic defaults once per user without repeatedly clobbering future user choices.
     private func migrateNewPresets(context: ModelContext) throws {
         let allPresets = Self.presetMetrics()
         let existingIds = Set(metrics.map { $0.id })
+        let semanticDefaultsMigrationKey = presetSemanticDefaultsMigrationMetadataId()
+        let shouldBackfillPresetSemantics = !syncMetadataExists(id: semanticDefaultsMigrationKey, context: context)
 
         var added = 0
         var updated = 0
@@ -566,7 +569,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 )
                 added += 1
             } else if let entity = try? fetchEntity(id: preset.id, using: context) {
-                // Existing preset — apply period, isDefault, and binary→scale upgrade
+                // Existing preset — reconcile shipped defaults without clobbering semantic choices after migration.
                 var didChange = false
 
                 if entity.title != preset.title {
@@ -626,21 +629,23 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
                     didChange = true
                 }
-                if entity.signalRoleRaw != preset.signalRole.rawValue {
-                    entity.signalRoleRaw = preset.signalRole.rawValue
-                    didChange = true
-                }
-                if entity.lifeScoreImpactRaw != preset.lifeScoreImpact.rawValue {
-                    entity.lifeScoreImpactRaw = preset.lifeScoreImpact.rawValue
-                    didChange = true
-                }
-                if entity.insightModeRaw != preset.insightMode.rawValue {
-                    entity.insightModeRaw = preset.insightMode.rawValue
-                    didChange = true
-                }
-                if entity.sensitivityRaw != preset.sensitivity.rawValue {
-                    entity.sensitivityRaw = preset.sensitivity.rawValue
-                    didChange = true
+                if shouldBackfillPresetSemantics {
+                    if entity.signalRoleRaw != preset.signalRole.rawValue {
+                        entity.signalRoleRaw = preset.signalRole.rawValue
+                        didChange = true
+                    }
+                    if entity.lifeScoreImpactRaw != preset.lifeScoreImpact.rawValue {
+                        entity.lifeScoreImpactRaw = preset.lifeScoreImpact.rawValue
+                        didChange = true
+                    }
+                    if entity.insightModeRaw != preset.insightMode.rawValue {
+                        entity.insightModeRaw = preset.insightMode.rawValue
+                        didChange = true
+                    }
+                    if entity.sensitivityRaw != preset.sensitivity.rawValue {
+                        entity.sensitivityRaw = preset.sensitivity.rawValue
+                        didChange = true
+                    }
                 }
                 if entity.scaleQuantityUnitRaw == nil,
                    entity.scaleQuantityUnitRaw != preset.scaleQuantityMapping?.quantityUnit.rawValue {
@@ -700,8 +705,17 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
             }
         }
 
-        if added > 0 || updated > 0 {
+        if shouldBackfillPresetSemantics {
+            let metadata = SQSyncMetadataEntity(id: semanticDefaultsMigrationKey)
+            metadata.lastSyncDate = .now
+            context.insert(metadata)
+        }
+
+        if added > 0 || updated > 0 || shouldBackfillPresetSemantics {
             try saveContextAndNotify(context)
+        }
+
+        if added > 0 || updated > 0 {
             let changedDefinitions = metrics.filter { changedPresetIds.contains($0.id) }
             changedDefinitions.forEach { pushMetricToFirestore($0) }
             SQLogger.shared.log(
@@ -717,6 +731,17 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
 
     private func metricSyncMetadataId() -> String {
         "metric-definitions-sync-\(currentLocalUserId())"
+    }
+
+    private func presetSemanticDefaultsMigrationMetadataId() -> String {
+        "metric-definitions-preset-semantic-defaults-v1-\(currentLocalUserId())"
+    }
+
+    private func syncMetadataExists(id: String, context: ModelContext) -> Bool {
+        let descriptor = FetchDescriptor<SQSyncMetadataEntity>(
+            predicate: #Predicate { $0.id == id }
+        )
+        return ((try? context.fetch(descriptor))?.first) != nil
     }
 
     // MARK: - Presets

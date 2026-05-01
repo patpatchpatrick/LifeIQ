@@ -14,11 +14,34 @@ enum SQInsightAnalysisMetricId {
     static let restingHeartRate = "insight.restingHeartRate"
 }
 
+enum SQInsightSignalSource: String, Hashable, Codable {
+    case userLogged
+    case healthKitFallback
+    case healthKitDerived
+    case workoutDerived
+}
+
+struct SQInsightSignalFeature: Hashable {
+    let signalId: String
+    let title: String
+    let rawValue: Double
+    /// Normalized against metric min/max as 0...1 when available.
+    let normalizedValue: Double?
+    /// Goal-aware utility from 0...100 where 100 is best for that metric.
+    let goalUtilityScore: Double?
+    let signalRole: SQMetricSignalRole
+    let lifeScoreImpact: SQMetricLifeScoreImpact
+    let insightMode: SQMetricInsightMode
+    let sensitivity: SQMetricSensitivity
+    let source: SQInsightSignalSource
+}
+
 struct SQInsightFeatureSnapshot: Identifiable {
     let date: Date
     let anchorDayKey: String
     let rawSignalValues: [String: Double]
     let normalizedSignalValues: [String: Double]
+    let signalFeatures: [String: SQInsightSignalFeature]
     let workoutCount: Int
     let averageWorkoutPerformance: Double?
     let workoutPerformanceActivityTypeRaw: UInt?

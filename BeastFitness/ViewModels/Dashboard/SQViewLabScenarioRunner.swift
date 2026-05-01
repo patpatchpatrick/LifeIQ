@@ -45,6 +45,10 @@ struct SQViewLabSimulationActivityWeight: Identifiable {
     }
 }
 
+enum SQViewLabCustomMetricId {
+    static let violinPerformance = "custom.violinPerformance"
+}
+
 struct SQViewLabSimulationPersona: Identifiable {
     let id: String
     let title: String
@@ -76,6 +80,7 @@ struct SQViewLabSimulationPersona: Identifiable {
     let nicotineRange: ClosedRange<Float>
     let restingHeartRateBaselineRange: ClosedRange<Double>
     let activityMix: [SQViewLabSimulationActivityWeight]
+    let includesCustomPerformerMetric: Bool
 }
 
 struct SQViewLabSimulationRequest {
@@ -107,8 +112,17 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let topDriverTitles: [String]
     let topChangeTitles: [String]
     let actionRecommendationFamilies: [String]
+    let signalSourceLabels: [String]
+    let semanticRoleLabels: [String]
     let surfacedCustomMetric: Bool
+    let customMetricValues: [String: Double]
     let healthKitFallbackMetricIds: [String]
+    let shadowAdjustedScore: Int?
+    let shadowCustomContributionTotal: Double
+    let shadowSensitiveContributionTotal: Double
+    let shadowBehaviorContributionTotal: Double
+    let topShadowContributorTexts: [String]
+    let topShadowCustomContributorTexts: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -146,10 +160,22 @@ struct SQViewLabSimulationReport {
     let componentScoreDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverDistribution: [SQViewLabSimulationDistributionRow]
     let topChangeDistribution: [SQViewLabSimulationDistributionRow]
-    let actionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let primaryActionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let allActionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let signalSourceDistribution: [SQViewLabSimulationDistributionRow]
+    let semanticRoleDistribution: [SQViewLabSimulationDistributionRow]
+    let customMetricLoggedDays: Int
+    let averageCustomMetricValue: Double?
     let customMetricSurfacePercentage: Double
     let healthKitFallbackUsageByMetric: [SQViewLabSimulationDistributionRow]
     let lifeScoreComponentAvailability: [SQViewLabSimulationDistributionRow]
+    let averageShadowAdjustedScore: Double?
+    let averageShadowScoreDelta: Double?
+    let averageShadowCustomContributionTotal: Double
+    let averageShadowSensitiveContributionTotal: Double
+    let averageShadowBehaviorContributionTotal: Double
+    let topShadowContributorDistribution: [SQViewLabSimulationDistributionRow]
+    let topShadowCustomContributorDistribution: [SQViewLabSimulationDistributionRow]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -211,6 +237,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         let simulationInsightsService = SQInsightsService(
             surfacingMemoryStore: surfacingMemoryStore
         )
+        let featureBuilder = SQInsightFeatureBuilder()
+        let shadowContributorBuilder = SQLifeScoreShadowMetricContributorBuilder()
 
         var outputs = [SQViewLabSimulationDayOutput]()
         let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
@@ -246,8 +274,29 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                     insightsResult: insightsResult
                 )
             )
+            let featureSnapshots = featureBuilder.makeFeatureSnapshots(
+                checkIns: checkIns,
+                workouts: workouts,
+                metricDefinitions: request.metricDefinitions,
+                sleepData: currentDay.sleepData,
+                restingHeartRateSummaries: restingHeartRateSummaries
+            )
+            let currentSnapshot = featureSnapshots.first { $0.anchorDayKey == currentDay.date.firebaseDailyDateKey }
+            let signalFeatures = currentSnapshot?.signalFeatures ?? [:]
+            let shadowResult = shadowContributorBuilder.buildContributors(
+                from: currentSnapshot,
+                metricDefinitions: request.metricDefinitions
+            )
+            let shadowAdjustedScore = shadowAdjustedScore(
+                baseScore: lifeScoreViewModel.score,
+                contributionTotal: shadowResult.totalContributionPoints
+            )
             let surfacedSignalIds = insightsResult.insights.flatMap { insight in
                 [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+            }
+            let customMetricValues = signalFeatures.reduce(into: [String: Double]()) { partialResult, pair in
+                guard customMetricIds.contains(pair.key) else { return }
+                partialResult[pair.key] = pair.value.rawValue
             }
 
             outputs.append(
@@ -274,8 +323,17 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                     actionRecommendationFamilies: insightsResult.insights.compactMap { insight in
                         insight.recommendationFamily.map { String(describing: $0) }
                     },
+                    signalSourceLabels: signalFeatures.values.map { String(describing: $0.source) },
+                    semanticRoleLabels: signalFeatures.values.map { String(describing: $0.signalRole) },
                     surfacedCustomMetric: surfacedSignalIds.contains { customMetricIds.contains($0) },
+                    customMetricValues: customMetricValues,
                     healthKitFallbackMetricIds: healthKitFallbackMetricIds(for: currentDay),
+                    shadowAdjustedScore: shadowAdjustedScore,
+                    shadowCustomContributionTotal: shadowResult.customMetricContributionTotal,
+                    shadowSensitiveContributionTotal: shadowResult.sensitiveMetricContributionTotal,
+                    shadowBehaviorContributionTotal: shadowResult.behaviorMetricContributionTotal,
+                    topShadowContributorTexts: shadowResult.contributors.prefix(5).map(shadowContributorText),
+                    topShadowCustomContributorTexts: shadowResult.contributors.filter(\.isCustom).prefix(5).map(shadowContributorText),
                     morningValues: currentDay.morningValues,
                     eveningValues: currentDay.eveningValues,
                     restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -340,9 +398,18 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             topDriverDistribution: distributionRows(for: outputs.map { $0.topDriverTitles.first ?? "None" }),
             topChangeDistribution: distributionRows(for: outputs.map { $0.topChangeTitles.first ?? "None" }),
-            actionRecommendationFamilyDistribution: distributionRows(
+            primaryActionRecommendationFamilyDistribution: distributionRows(
                 for: outputs.map { $0.actionRecommendationFamilies.first ?? "None" }
             ),
+            allActionRecommendationFamilyDistribution: distributionRows(
+                for: outputs.flatMap(\.actionRecommendationFamilies)
+            ),
+            signalSourceDistribution: distributionRows(for: outputs.flatMap(\.signalSourceLabels)),
+            semanticRoleDistribution: distributionRows(for: outputs.flatMap(\.semanticRoleLabels)),
+            customMetricLoggedDays: outputs.filter { !$0.customMetricValues.isEmpty }.count,
+            averageCustomMetricValue: outputs
+                .flatMap { $0.customMetricValues.values }
+                .average,
             customMetricSurfacePercentage: percentage(
                 matchingCount: outputs.filter(\.surfacedCustomMetric).count,
                 total: outputs.count
@@ -354,6 +421,20 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             lifeScoreComponentAvailability: distributionRows(
                 for: Dictionary(grouping: outputs.flatMap { Array($0.componentScores.keys) }, by: { $0 }).mapValues(\.count),
                 total: outputs.count
+            ),
+            averageShadowAdjustedScore: outputs.compactMap(\.shadowAdjustedScore).map(Double.init).average,
+            averageShadowScoreDelta: outputs.compactMap { output in
+                guard let score = output.score, let shadowAdjustedScore = output.shadowAdjustedScore else { return nil }
+                return Double(shadowAdjustedScore - score)
+            }.average,
+            averageShadowCustomContributionTotal: outputs.map(\.shadowCustomContributionTotal).average ?? 0,
+            averageShadowSensitiveContributionTotal: outputs.map(\.shadowSensitiveContributionTotal).average ?? 0,
+            averageShadowBehaviorContributionTotal: outputs.map(\.shadowBehaviorContributionTotal).average ?? 0,
+            topShadowContributorDistribution: distributionRows(
+                for: outputs.flatMap(\.topShadowContributorTexts)
+            ),
+            topShadowCustomContributorDistribution: distributionRows(
+                for: outputs.flatMap(\.topShadowCustomContributorTexts)
             ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
@@ -631,12 +712,28 @@ private extension SQViewLabScenarioRunner {
                 SQMetricId.anxiety: Float(anxiety),
                 SQMetricId.soreness: Float(soreness)
             ]
-            let eveningValues: [String: Float] = [
+            var eveningValues: [String: Float] = [
                 SQMetricId.alcohol: alcohol,
                 SQMetricId.caffeine: caffeine,
                 SQMetricId.weed: weed,
                 SQMetricId.nicotine: nicotine
             ]
+
+            if persona.includesCustomPerformerMetric,
+               definitionsById[SQViewLabCustomMetricId.violinPerformance] != nil {
+                let violinPerformance = clamp(
+                    7.2
+                    + (sleepQuality - 7.0) * 0.34
+                    + (sleepHours - 7.0) * 0.18
+                    - stress * 0.16
+                    - Double(alcohol) * 0.24
+                    - viceCarry * 0.10
+                    + rng.double(in: -0.65...0.65),
+                    min: 1.0,
+                    max: 10.0
+                )
+                eveningValues[SQViewLabCustomMetricId.violinPerformance] = Float(violinPerformance)
+            }
 
             let completedMorningCheckIn = rng.bool(probability: persona.morningCompletionProbability)
             let completedEveningCheckIn = rng.bool(probability: persona.eveningCompletionProbability)
@@ -867,6 +964,23 @@ private extension SQViewLabScenarioRunner {
             metricIds.append(SQMetricId.sleepHours)
         }
         return metricIds
+    }
+
+    func shadowAdjustedScore(
+        baseScore: Int?,
+        contributionTotal: Double
+    ) -> Int? {
+        guard let baseScore else { return nil }
+        return Int(clamp(Double(baseScore) + contributionTotal, min: 0, max: 100).rounded())
+    }
+
+    func shadowContributorText(_ contributor: SQLifeScoreMetricContributor) -> String {
+        "\(contributor.title): \(signedDecimal(contributor.contributionPoints))"
+    }
+
+    func signedDecimal(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + String(format: "%.1f", value)
     }
 
     func scoreDeltaBucket(_ delta: Int?) -> String {

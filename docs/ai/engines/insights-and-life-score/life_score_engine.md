@@ -91,6 +91,10 @@ Phase 1 metric semantics are now part of `SQMetricDefinition`: `signalRole`, `li
 
 View Lab simulation reports are the calibration harness for score tuning. Before changing score behavior, capture baseline distributions for score deltas, component scores, top drivers/changes, action families, HealthKit fallback usage, and component availability.
 
+Preset semantic defaults should be non-clobbering after their one-time backfill. Future user edits to preset metric semantics must not be reset by normal preset migration.
+
+Contributor-based metric scoring should be developed in shadow mode first. The shadow model can read rich insight signal features and report custom/sensitive/behavior contribution totals, but the visible Life Score should not switch to contributor scoring until simulator reports are reviewed.
+
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 
 `Under Pressure` should be reserved for stacked or severe negatives. A single mild drag should usually become `Slightly Off` or `Dipping`, especially for balanced personas with otherwise good sleep, training, and habit patterns. Scores at or above 88 should not become `Under Pressure` unless there is an unusually severe stacked condition.

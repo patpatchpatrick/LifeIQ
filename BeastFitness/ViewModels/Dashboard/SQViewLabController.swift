@@ -66,7 +66,8 @@ import UIKit
     var selectedScenarioId: String
     var selectedSimulationPersonaId: String
     var selectedSimulationDayCount: SQViewLabSimulationDayCount = .thirty
-    var selectedSimulationSeed: Int = 42
+    var selectedSimulationSeed: Int = 41
+    var selectedSimulationReferenceDate: Date = Calendar.current.startOfDay(for: .now)
 
     let scenarios: [Scenario]
     let simulationPersonas: [SQViewLabSimulationPersona]
@@ -112,8 +113,8 @@ import UIKit
             persona: selectedSimulationPersona,
             dayCount: selectedSimulationDayCount,
             seed: selectedSimulationSeed,
-            referenceDate: Calendar.current.startOfDay(for: .now),
-            metricDefinitions: Self.defaultMetricDefinitions()
+            referenceDate: selectedSimulationReferenceDate,
+            metricDefinitions: Self.defaultMetricDefinitions(for: selectedSimulationPersona)
         )
     }
 
@@ -137,7 +138,8 @@ import UIKit
     }
 
     func simulationReport(for request: SQViewLabSimulationRequest) -> SQViewLabSimulationReport {
-        let cacheKey = "\(request.persona.id)-\(request.dayCount.rawValue)-\(request.seed)"
+        let metricKey = request.metricDefinitions.map(\.id).joined(separator: ",")
+        let cacheKey = "\(request.persona.id)-\(request.dayCount.rawValue)-\(request.seed)-\(request.referenceDate.firebaseDailyDateKey)-\(metricKey)"
         if let cachedReport = simulationCache[cacheKey] {
             return cachedReport
         }
@@ -224,6 +226,7 @@ import UIKit
         lines.append("- Simulated Days: \(report.dayCount)")
         lines.append("- Seed: \(report.seed)")
         lines.append("- Reference Date: \(report.referenceDate.formattedString(with: .medium))")
+        lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
 
         if !report.persona.notes.isEmpty {
@@ -239,6 +242,7 @@ import UIKit
         lines.append("- Evening check-in completion: \(formattedPercent(report.persona.eveningCompletionProbability * 100))")
         lines.append("- Workout probability: \(formattedPercent(report.persona.workoutProbability * 100))")
         lines.append("- Hard workout probability: \(formattedPercent(report.persona.hardWorkoutProbability * 100))")
+        lines.append("- Includes custom performer metric: \(report.persona.includesCustomPerformerMetric ? "yes" : "no")")
         lines.append("- Stress spike probability: \(formattedPercent(report.persona.stressSpikeProbability * 100))")
         lines.append("- Weekend vice multiplier: \(formattedDouble(report.persona.weekendViceMultiplier))x")
         lines.append("- Baseline sleep hours range: \(formattedFloat(report.persona.sleepHoursRange.lowerBound))-\(formattedFloat(report.persona.sleepHoursRange.upperBound))")
@@ -269,7 +273,14 @@ import UIKit
         lines.append("- Avg alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")")
+        lines.append("- Custom metric logged days: \(report.customMetricLoggedDays)")
+        lines.append("- Avg custom metric value: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")")
         lines.append("- Custom metric surfaced: \(formattedPercent(report.customMetricSurfacePercentage))")
+        lines.append("- Avg shadow-adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg shadow score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg shadow custom contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))")
+        lines.append("- Avg shadow sensitive contribution: \(formattedDouble(report.averageShadowSensitiveContributionTotal))")
+        lines.append("- Avg shadow behavior contribution: \(formattedDouble(report.averageShadowBehaviorContributionTotal))")
         lines.append("- Longest repeated hero summary streak: \(report.longestHeroSummaryRepeatStreak) days")
         lines.append("- Longest repeated hero action streak: \(report.longestHeroActionRepeatStreak) days")
         lines.append("- Longest repeated hero family streak: \(report.longestHeroFamilyRepeatStreak) days")
@@ -302,8 +313,17 @@ import UIKit
         lines.append("## Top Change Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.topChangeDistribution))
         lines.append("")
-        lines.append("## Action Recommendation Family Distribution")
-        lines.append(contentsOf: simulationDistributionLines(report.actionRecommendationFamilyDistribution))
+        lines.append("## Primary Action Recommendation Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.primaryActionRecommendationFamilyDistribution))
+        lines.append("")
+        lines.append("## All Action Recommendation Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.allActionRecommendationFamilyDistribution))
+        lines.append("")
+        lines.append("## Signal Source Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.signalSourceDistribution))
+        lines.append("")
+        lines.append("## Semantic Role Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.semanticRoleDistribution))
         lines.append("")
         lines.append("## HealthKit Fallback Usage")
         lines.append(contentsOf: simulationDistributionLines(report.healthKitFallbackUsageByMetric))
@@ -311,11 +331,23 @@ import UIKit
         lines.append("## Life Score Component Availability")
         lines.append(contentsOf: simulationDistributionLines(report.lifeScoreComponentAvailability))
         lines.append("")
+        lines.append("## Top Shadow Contributor Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.topShadowContributorDistribution))
+        lines.append("")
+        lines.append("## Top Shadow Custom Contributor Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.topShadowCustomContributorDistribution))
+        lines.append("")
 
         lines.append("## Daily Log")
         for day in report.days {
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
             lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
+            lines.append("  - shadow adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
+            lines.append("  - shadow custom contribution: \(formattedDouble(day.shadowCustomContributionTotal))")
+            lines.append("  - shadow sensitive contribution: \(formattedDouble(day.shadowSensitiveContributionTotal))")
+            lines.append("  - shadow behavior contribution: \(formattedDouble(day.shadowBehaviorContributionTotal))")
+            lines.append("  - top shadow contributors: \(day.topShadowContributorTexts.isEmpty ? "none" : day.topShadowContributorTexts.joined(separator: " | "))")
+            lines.append("  - top shadow custom contributors: \(day.topShadowCustomContributorTexts.isEmpty ? "none" : day.topShadowCustomContributorTexts.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
@@ -323,7 +355,10 @@ import UIKit
             lines.append("  - top drivers: \(day.topDriverTitles.isEmpty ? "none" : day.topDriverTitles.joined(separator: " | "))")
             lines.append("  - top changes: \(day.topChangeTitles.isEmpty ? "none" : day.topChangeTitles.joined(separator: " | "))")
             lines.append("  - recommendation families: \(day.actionRecommendationFamilies.isEmpty ? "none" : day.actionRecommendationFamilies.joined(separator: " | "))")
+            lines.append("  - signal sources: \(day.signalSourceLabels.isEmpty ? "none" : day.signalSourceLabels.joined(separator: " | "))")
+            lines.append("  - semantic roles: \(day.semanticRoleLabels.isEmpty ? "none" : day.semanticRoleLabels.joined(separator: " | "))")
             lines.append("  - custom metric surfaced: \(day.surfacedCustomMetric ? "yes" : "no")")
+            lines.append("  - custom metric values: \(doubleDictionaryText(day.customMetricValues))")
             lines.append("  - HealthKit fallback metrics: \(day.healthKitFallbackMetricIds.isEmpty ? "none" : day.healthKitFallbackMetricIds.joined(separator: ", "))")
             lines.append("  - morning check-in complete: \(day.completedMorningCheckIn ? "yes" : "no")")
             lines.append("  - evening check-in complete: \(day.completedEveningCheckIn ? "yes" : "no")")
@@ -577,13 +612,30 @@ import UIKit
         guard !values.isEmpty else { return "none" }
 
         let definitionsById = Dictionary(
-            uniqueKeysWithValues: Self.defaultMetricDefinitions().map { ($0.id, $0.title) }
+            uniqueKeysWithValues: (Self.defaultMetricDefinitions() + [Self.customViolinPerformanceMetricDefinition(sortOrder: 999)])
+                .map { ($0.id, $0.title) }
         )
 
         return values.keys.sorted().compactMap { metricId in
             guard let value = values[metricId] else { return nil }
             let title = definitionsById[metricId] ?? metricId
             return "\(title) \(formattedFloat(value))"
+        }
+        .joined(separator: " • ")
+    }
+
+    private func doubleDictionaryText(_ values: [String: Double]) -> String {
+        guard !values.isEmpty else { return "none" }
+
+        let definitionsById = Dictionary(
+            uniqueKeysWithValues: (Self.defaultMetricDefinitions() + [Self.customViolinPerformanceMetricDefinition(sortOrder: 999)])
+                .map { ($0.id, $0.title) }
+        )
+
+        return values.keys.sorted().compactMap { metricId in
+            guard let value = values[metricId] else { return nil }
+            let title = definitionsById[metricId] ?? metricId
+            return "\(title) \(formattedDouble(value))"
         }
         .joined(separator: " • ")
     }
@@ -656,7 +708,49 @@ private extension SQViewLabController {
                     .init(activityType: .cycling, weight: 0.22),
                     .init(activityType: .walking, weight: 0.12),
                     .init(activityType: .pickleball, weight: 0.18)
-                ]
+                ],
+                includesCustomPerformerMetric: false
+            ),
+            .init(
+                id: "custom-performer",
+                title: "Custom Performer",
+                subtitle: "A consistent user tracking Violin Performance as a custom outcome metric.",
+                notes: [
+                    "Use this to verify custom metric values flow through check-ins, feature snapshots, and shadow contributors.",
+                    "Violin Performance should be affected by sleep, stress, and alcohol in the generated data, without enabling custom relationships yet."
+                ],
+                morningCompletionProbability: 0.96,
+                eveningCompletionProbability: 0.92,
+                restingHeartRateAvailability: 0.95,
+                workoutProbability: 0.48,
+                hardWorkoutProbability: 0.26,
+                weekendViceMultiplier: 1.22,
+                stressSpikeProbability: 0.14,
+                sleepHoursRange: 6.8...8.3,
+                sleepQualityRange: 6.7...8.5,
+                energyRange: 6.1...8.1,
+                moodRange: 6.0...8.0,
+                mentalClarityRange: 6.0...8.3,
+                motivationRange: 6.1...8.4,
+                stressRange: 2.2...5.0,
+                anxietyRange: 1.8...4.4,
+                sorenessRange: 1.8...5.4,
+                alcoholProbability: 0.18,
+                alcoholRange: 0.8...2.8,
+                caffeineProbability: 0.76,
+                caffeineRange: 80...175,
+                weedProbability: 0.04,
+                weedRange: 0.5...1.4,
+                nicotineProbability: 0.01,
+                nicotineRange: 0.5...1.0,
+                restingHeartRateBaselineRange: 53...60,
+                activityMix: [
+                    .init(activityType: .running, weight: 0.36),
+                    .init(activityType: .cycling, weight: 0.18),
+                    .init(activityType: .walking, weight: 0.18),
+                    .init(activityType: .pickleball, weight: 0.28)
+                ],
+                includesCustomPerformerMetric: true
             ),
             .init(
                 id: "vice-heavy",
@@ -696,7 +790,8 @@ private extension SQViewLabController {
                     .init(activityType: .cycling, weight: 0.18),
                     .init(activityType: .walking, weight: 0.24),
                     .init(activityType: .pickleball, weight: 0.28)
-                ]
+                ],
+                includesCustomPerformerMetric: false
             ),
             .init(
                 id: "training-block",
@@ -736,7 +831,8 @@ private extension SQViewLabController {
                     .init(activityType: .cycling, weight: 0.22),
                     .init(activityType: .walking, weight: 0.05),
                     .init(activityType: .pickleball, weight: 0.15)
-                ]
+                ],
+                includesCustomPerformerMetric: false
             ),
             .init(
                 id: "stressed-inconsistent",
@@ -776,7 +872,8 @@ private extension SQViewLabController {
                     .init(activityType: .cycling, weight: 0.16),
                     .init(activityType: .walking, weight: 0.36),
                     .init(activityType: .pickleball, weight: 0.24)
-                ]
+                ],
+                includesCustomPerformerMetric: false
             ),
             .init(
                 id: "sparse-noisy",
@@ -816,7 +913,8 @@ private extension SQViewLabController {
                     .init(activityType: .cycling, weight: 0.22),
                     .init(activityType: .walking, weight: 0.21),
                     .init(activityType: .pickleball, weight: 0.32)
-                ]
+                ],
+                includesCustomPerformerMetric: false
             )
         ]
     }
@@ -1511,6 +1609,15 @@ private extension SQViewLabController {
         .sorted { $0.date < $1.date }
     }
 
+    static func defaultMetricDefinitions(for persona: SQViewLabSimulationPersona) -> [SQMetricDefinition] {
+        var definitions = defaultMetricDefinitions()
+        if persona.includesCustomPerformerMetric,
+           !definitions.contains(where: { $0.id == SQViewLabCustomMetricId.violinPerformance }) {
+            definitions.append(customViolinPerformanceMetricDefinition(sortOrder: definitions.count))
+        }
+        return definitions
+    }
+
     static func defaultMetricDefinitions() -> [SQMetricDefinition] {
         [
             .init(
@@ -1748,6 +1855,30 @@ private extension SQViewLabController {
                 bodyBatteryEffect: .drainsWhenHigh
             )
         ]
+    }
+
+    static func customViolinPerformanceMetricDefinition(sortOrder: Int) -> SQMetricDefinition {
+        .init(
+            id: SQViewLabCustomMetricId.violinPerformance,
+            title: "Violin Performance",
+            kind: .scale,
+            unit: .none,
+            group: "Performance",
+            min: 0,
+            max: 10,
+            step: 1,
+            isPreset: false,
+            isEnabled: true,
+            isDefault: false,
+            sortOrder: sortOrder,
+            periods: [.evening],
+            goalStyle: .buildUp,
+            targetValue: 8,
+            signalRole: .outcome,
+            lifeScoreImpact: .light,
+            insightMode: .exploratoryRelationships,
+            sensitivity: .normal
+        )
     }
 
     static func makeCheckIns(

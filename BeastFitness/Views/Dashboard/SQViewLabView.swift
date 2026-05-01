@@ -521,6 +521,10 @@ struct SQViewLabView: View {
                 }
             }
 
+            Text("Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .medium))")
+                .sqFont(SQFont.FontType.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+
             HStack(spacing: .SQSpace.s) {
                 Button {
                     controller.previewSimulationReport()
@@ -603,7 +607,12 @@ struct SQViewLabView: View {
                     "Avg Alcohol: \(report.averageAlcohol.map(formattedDouble) ?? "n/a")",
                     "Avg Caffeine: \(report.averageCaffeine.map(formattedDouble) ?? "n/a")",
                     "Avg Resting HR: \(report.averageRestingHeartRate.map(formattedDouble) ?? "n/a")",
+                    "Custom Metric Logged Days: \(report.customMetricLoggedDays)",
+                    "Avg Custom Metric: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")",
                     "Custom Metric Surfaced: \(formattedPercent(report.customMetricSurfacePercentage))",
+                    "Avg Shadow Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
+                    "Avg Shadow Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
+                    "Avg Shadow Custom Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
                     "Longest Hero Summary Streak: \(report.longestHeroSummaryRepeatStreak) days",
                     "Longest Hero Action Streak: \(report.longestHeroActionRepeatStreak) days",
                     "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days"
@@ -657,8 +666,20 @@ struct SQViewLabView: View {
                 values: report.topChangeDistribution.map(distributionText)
             )
             outputGroup(
-                title: "Action Families",
-                values: report.actionRecommendationFamilyDistribution.map(distributionText)
+                title: "Primary Action Families",
+                values: report.primaryActionRecommendationFamilyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "All Action Families",
+                values: report.allActionRecommendationFamilyDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Signal Sources",
+                values: report.signalSourceDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Semantic Roles",
+                values: report.semanticRoleDistribution.map(distributionText)
             )
             outputGroup(
                 title: "HealthKit Fallback",
@@ -667,6 +688,14 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Component Availability",
                 values: report.lifeScoreComponentAvailability.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Shadow Contributors",
+                values: report.topShadowContributorDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Shadow Custom Contributors",
+                values: report.topShadowCustomContributorDistribution.map(distributionText)
             )
         }
         .padding(.SQSpace.l)
@@ -694,6 +723,10 @@ struct SQViewLabView: View {
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Text("Shadow \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • custom \(formattedDouble(day.shadowCustomContributionTotal))")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
                 }
                 .padding(.vertical, .SQSpace.xs)
             }

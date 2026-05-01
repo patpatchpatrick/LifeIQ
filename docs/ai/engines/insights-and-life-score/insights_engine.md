@@ -96,6 +96,10 @@ The current-state analyzer is allowed to evaluate either:
 
 Metric definitions now carry Phase 1 algorithm semantics (`signalRole`, `lifeScoreImpact`, `insightMode`, `sensitivity`). The current insight engine should remain behavior-compatible until later phases enrich feature snapshots and dynamic builders; future custom-metric surfacing should use these fields through a semantic resolver instead of title/group heuristics.
 
+Insight feature snapshots now have a compatibility layer and a richer signal feature map. Keep `rawSignalValues` and `normalizedSignalValues` stable for existing analyzers while newer builders use `signalFeatures` for title, source, semantic role, Life Score impact, insight mode, sensitivity, and goal utility.
+
+Simulator comparisons should keep seed and reference date fixed. The copied report should be treated as calibration evidence only when those inputs match before/after runs.
+
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
 
 `Today` actions should be concrete decisions, not generic advice. Positive training-readiness actions can rotate across a small stable library, while caution actions should say whether to moderate effort, recover, or adjust a specific habit.
