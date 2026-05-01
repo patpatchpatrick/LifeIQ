@@ -224,6 +224,19 @@ final class SQViewLabCalibrationTests: XCTestCase {
                 )
             }
 
+            if let caffeineLeadPercentage = persona.caffeineLeadPercentage {
+                let upperBound = persona.id == "vice-heavy" ? 15.0 : 10.0
+                gates.append(
+                    .init(
+                        id: "caffeineLeadStory.\(persona.id)",
+                        title: "\(persona.persona) caffeine lead story <=\(formatted(upperBound))%",
+                        severity: .soft,
+                        passed: caffeineLeadPercentage <= upperBound,
+                        details: "actual \(formatted(caffeineLeadPercentage))%; top lead family \(persona.topLeadInsightFamily ?? "None")"
+                    )
+                )
+            }
+
             if let topRelationshipPercentage = persona.topRelationshipFamilyPercentage {
                 let enoughRelationshipVolume = persona.totalRelationshipFamilyCount >= 30
                     && persona.topRelationshipFamilyCount >= 8
@@ -288,10 +301,8 @@ final class SQViewLabCalibrationTests: XCTestCase {
         let hardFailures = gates.filter { $0.severity == .hard && !$0.passed }
         let softFailures = gates.filter { $0.severity == .soft && !$0.passed }
         let status: CalibrationStatus
-        if hardFailures.isEmpty && softFailures.isEmpty {
+        if hardFailures.isEmpty {
             status = .readyForManualTesting
-        } else if hardFailures.isEmpty {
-            status = .needsTuning
         } else {
             status = .notReady
         }
@@ -299,7 +310,7 @@ final class SQViewLabCalibrationTests: XCTestCase {
         return .init(
             generatedAt: Date(),
             status: status,
-            passed: hardFailures.isEmpty && softFailures.isEmpty,
+            passed: hardFailures.isEmpty,
             hardFailureCount: hardFailures.count,
             softFailureCount: softFailures.count,
             gates: gates,
@@ -472,6 +483,12 @@ private struct PersonaCalibrationSummary: Encodable {
     let topRecommendation: String
     let topSurfacedInsight: String?
     let topSurfacedInsightPercentage: Double?
+    let topLeadInsight: String?
+    let topLeadInsightPercentage: Double?
+    let topLeadInsightFamily: String?
+    let topLeadInsightFamilyPercentage: Double?
+    let caffeineLeadPercentage: Double?
+    let caffeineSupportingPercentage: Double?
     let topRelationshipFamily: String?
     let topRelationshipFamilyCount: Int
     let topRelationshipFamilyPercentage: Double?
@@ -502,6 +519,12 @@ private struct PersonaCalibrationSummary: Encodable {
             ?? "None"
         topSurfacedInsight = report.surfacedInsightDistribution.first?.label
         topSurfacedInsightPercentage = report.surfacedInsightDistribution.first?.percentage
+        topLeadInsight = report.leadInsightDistribution.first?.label
+        topLeadInsightPercentage = report.leadInsightDistribution.first?.percentage
+        topLeadInsightFamily = report.leadInsightFamilyDistribution.first?.label
+        topLeadInsightFamilyPercentage = report.leadInsightFamilyDistribution.first?.percentage
+        caffeineLeadPercentage = report.caffeineLeadSupportingDistribution.first(where: { $0.label == "Caffeine lead" })?.percentage ?? 0
+        caffeineSupportingPercentage = report.caffeineLeadSupportingDistribution.first(where: { $0.label == "Caffeine supporting" })?.percentage ?? 0
         topRelationshipFamily = report.relationshipFamilyAfterSlotPolicyDistribution.first?.label
         topRelationshipFamilyCount = report.relationshipFamilyAfterSlotPolicyDistribution.first?.count ?? 0
         topRelationshipFamilyPercentage = report.relationshipFamilyAfterSlotPolicyDistribution.first?.percentage

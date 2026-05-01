@@ -197,9 +197,9 @@ The intended hierarchy is:
 
 Shared insight drivers should not call a signal supportive only because it improved versus baseline. Readiness signals also need a reasonable absolute value before they can produce "helping today" language. Life Score can still apply a final action guard so low sleep/recovery, negative momentum, `Dipping`, or `Under Pressure` states do not become "push harder" training advice.
 
-## Shadow Life Score V2 Calibration
+## Life Score V2 Calibration
 
-Phase 9 adds a shadow-only `SQLifeScoreV2Builder`. It does not replace the visible score yet.
+`SQLifeScoreV2Builder` is now the visible Life Score baseline. The old weighted V1 score path should not be used for product behavior going forward; any remaining diagnostics should compare the visible V2 output against V2 diagnostic/contributor output rather than treating V1 as the canonical score.
 
 The v2 model is intended to compare the current weighted score against a more state/readiness-oriented score built from shared feature snapshots:
 - Sleep
@@ -212,12 +212,13 @@ The v2 model is intended to compare the current weighted score against a more st
 
 V2 calibration rules:
 - Life Score should be wellbeing/readiness first and habit compliance second.
-- Resting HR is useful supporting evidence, but it should not dominate when sleep, stress, soreness, or training strain already explain the same pressure.
+- Resting HR is useful supporting evidence, but it should not dominate when sleep, stress, recovery/readiness, or training strain already explain the same pressure.
+- The preset Recovery metric is stored under the legacy `metric.soreness` id, but product semantics are higher-is-better recovery/readiness.
 - Habit effects are capped so alcohol/caffeine/nicotine/weed can explain the day without turning the score into a generic compliance grade.
 - Custom metrics remain a capped personalization layer.
 - Sparse or inconsistent logging should lower confidence and appear as a diagnostic, not silently masquerade as precision.
 
-The simulator now reports current score vs shadow v2 score, v2 component contribution distribution, top v2 driver distribution, and v2 calibration warnings. Promotion from shadow to visible score should wait until all-persona calibration shows better driver/story alignment without destabilizing score ranges.
+The simulator now reports visible V2 score, diagnostic V2 score, V2 component contribution distribution, top V2 driver distribution, and V2 calibration warnings. Readiness is judged by hard regression gates first, then soft explanatory-polish warnings.
 
 Phase 9G-H calibration tightened this further:
 - V2 driver reporting separates health/state, behavior, data-confidence, and personalized drivers.
@@ -226,7 +227,7 @@ Phase 9G-H calibration tightened this further:
 - Habit-positive and data-confidence-positive contributions are capped so pressure personas do not drift into inflated scores.
 - V2 warnings now reference the specific driver source so the report does not mix data-confidence signals with health/state drivers.
 
-Phase 9M-N calibration keeps V2 shadow-only and focuses on report consistency plus score range:
+Phase 9M-N calibration promoted V2 as the baseline and keeps report consistency plus score range as ongoing calibration checks:
 - Summary warning flags should use the same V2 driver/contributor source as the table columns.
 - Latest-day warnings, aggregate driver-frequency warnings, and average score-delta warnings should be labeled separately.
 - Data confidence should behave mostly as confidence/caveat and small drag when low, not as a meaningful positive booster.

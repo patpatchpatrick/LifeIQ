@@ -66,9 +66,9 @@ enum SQInsightSupportiveReadinessGate {
             return .minimum(6.75)
         case SQMetricId.sleepQuality:
             return .minimum(7.2)
-        case SQMetricId.energy, SQMetricId.mood, SQMetricId.mentalClarity, SQMetricId.motivation:
+        case SQMetricId.energy, SQMetricId.mood, SQMetricId.mentalClarity, SQMetricId.motivation, SQMetricId.soreness:
             return .minimum(6)
-        case SQMetricId.stress, SQMetricId.anxiety, SQMetricId.soreness:
+        case SQMetricId.stress, SQMetricId.anxiety:
             return .maximum(4.5)
         default:
             return nil

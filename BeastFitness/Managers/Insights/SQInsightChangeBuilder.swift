@@ -335,9 +335,9 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
         ),
         .init(
             signalId: SQMetricId.soreness,
-            title: "Soreness",
+            title: "Recovery",
             category: .recovery,
-            expectedEffect: .negative,
+            expectedEffect: .positive,
             minimumSampleCount: 2,
             minimumEffectMagnitude: 0.75
         ),

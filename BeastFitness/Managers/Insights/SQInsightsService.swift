@@ -1379,9 +1379,18 @@ final class SQInsightsService: SQInsightsServicing {
             appendIfAvailable(customRelationshipInsight)
         }
 
+        let hasNonCaffeineFallbackCandidate = nonCustomRemainingInsights.contains { candidate in
+            !usedIds.contains(candidate.id) && !isCaffeineInsight(candidate)
+        }
+
         if selected.count < 4 {
             for candidate in nonCustomRemainingInsights where !usedIds.contains(candidate.id) {
                 guard selected.count < 4 else { break }
+                if isCaffeineInsight(candidate),
+                   hasNonCaffeineFallbackCandidate,
+                   !isHighPriorityCaffeineInsight(candidate) {
+                    continue
+                }
                 selected.append(candidate)
                 usedIds.insert(candidate.id)
             }
@@ -1405,19 +1414,18 @@ final class SQInsightsService: SQInsightsServicing {
         usedIds: Set<String>,
         slot: TodayInsightSlot
     ) -> SQInsight? {
-        let hasNonCaffeineRecentChangeCandidate = insights.contains { insight in
+        let hasNonCaffeineSlotCandidate = insights.contains { insight in
             !usedIds.contains(insight.id)
                 && !isCaffeineInsight(insight)
-                && todaySlotMatches(insight, slot: .recentChange)
+                && todaySlotMatches(insight, slot: slot)
         }
 
         return insights.first { insight in
             guard !usedIds.contains(insight.id) else { return false }
             guard todaySlotMatches(insight, slot: slot) else { return false }
 
-            if slot == .recentChange,
-               isCaffeineInsight(insight),
-               hasNonCaffeineRecentChangeCandidate,
+            if isCaffeineInsight(insight),
+               hasNonCaffeineSlotCandidate,
                !isHighPriorityCaffeineInsight(insight) {
                 return false
             }
@@ -1602,7 +1610,8 @@ final class SQInsightsService: SQInsightsServicing {
     private func isHighPriorityCaffeineInsight(_ insight: SQInsight) -> Bool {
         guard isCaffeineInsight(insight) else { return false }
         return insight.effect == .negative
-            && (insight.confidence == .high || insight.rankingScore >= 42)
+            && insight.confidence == .high
+            && insight.rankingScore >= 52
     }
 
     private func contextAdjustedCurrentStateInsights(
@@ -1824,7 +1833,7 @@ final class SQInsightsService: SQInsightsServicing {
             "ready to handle more",
             "good position to train",
             "good position today",
-            "lining up",
+            "things are lining up",
             "solid day",
             "relatively smooth"
         ].contains { normalizedTitle.contains($0) }
@@ -2302,7 +2311,7 @@ final class SQInsightsService: SQInsightsServicing {
         case SQMetricId.anxiety:
             return .init(key: "anxiety", displayTitle: "Anxiety", preferredSignalId: SQMetricId.anxiety)
         case SQMetricId.soreness:
-            return .init(key: "soreness", displayTitle: "Soreness", preferredSignalId: SQMetricId.soreness)
+            return .init(key: "recovery", displayTitle: "Recovery", preferredSignalId: SQMetricId.soreness)
         case SQInsightAnalysisMetricId.workoutDifficulty:
             return .init(key: "strain", displayTitle: "Training load", preferredSignalId: SQInsightAnalysisMetricId.workoutDifficulty)
         case SQInsightAnalysisMetricId.workoutPerformance:
@@ -3113,9 +3122,9 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         guard let snapshot else { return false }
-        let soreness = snapshot.rawSignalValue(for: SQMetricId.soreness) ?? 0
+        let recovery = snapshot.rawSignalValue(for: SQMetricId.soreness) ?? 10
         let difficulty = snapshot.averageWorkoutDifficulty ?? 0
-        return soreness >= 6.2 || difficulty >= 7.2
+        return recovery <= 3.8 || difficulty >= 7.2
     }
 
     private func hasStressPressure(

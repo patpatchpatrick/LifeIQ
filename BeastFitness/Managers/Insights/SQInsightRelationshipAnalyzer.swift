@@ -485,11 +485,11 @@ struct SQInsightRelationshipAnalyzer {
     ) -> String {
         switch relationship.expectedEffect {
         case .negative:
-            return "\(relationship.driverText) may be slightly lowering \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
+            return "\(relationship.driverText) has been lining up with lower \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
         case .positive:
-            return "\(relationship.driverText) may be slightly improving \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
+            return "\(relationship.driverText) has been lining up with better \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
         case .neutral:
-            return "\(relationship.driverText) may be slightly shifting \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
+            return "\(relationship.driverText) has been lining up with shifts in \(timingAdjustedOutcomeTitle(for: relationship, variant: variant))"
         }
     }
 

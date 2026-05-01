@@ -80,4 +80,21 @@ struct SQHealthIntelligenceInput {
             scoreContext: scoreContext
         )
     }
+
+    func withReferenceDate(_ referenceDate: Date) -> SQHealthIntelligenceInput {
+        .init(
+            referenceDate: referenceDate,
+            timeRange: timeRange,
+            metricDefinitions: metricDefinitions,
+            checkIns: checkIns,
+            sleepCheckIns: sleepCheckIns,
+            workouts: workouts,
+            sleepData: sleepData,
+            restingHeartRateSummaries: restingHeartRateSummaries,
+            currentCheckInPromptPeriod: currentCheckInPromptPeriod,
+            hasCompletedCurrentPromptCheckIn: hasCompletedCurrentPromptCheckIn,
+            isLoggedIn: isLoggedIn,
+            scoreContext: nil
+        )
+    }
 }

@@ -149,7 +149,7 @@ The current relationship registry is also broader than the original vice-only se
   - motivation
   - stress
   - anxiety
-  - soreness
+  - recovery (stored under the legacy `metric.soreness` id; higher is better)
 
 The internal engine-backed `View Lab` is expected to exercise both:
 - normal / desirable states
@@ -578,11 +578,11 @@ Recommendation routing should follow the pressure source:
 - low data -> observe and compare / log core signals
 - balanced or primed -> keep consistent
 
-The all-persona report should include core calibration diagnostics for current score vs shadow v2 score, top driver before/after calibration, insight slot distribution, relationship family before/after slot policy, positive-current-state hard suppressions, and primary action family before/after routing.
+The all-persona report should include core calibration diagnostics for visible V2 score vs diagnostic V2 score, top driver before/after calibration, lead/supporting insight family distribution, insight slot distribution, relationship family before/after slot policy, positive-current-state hard suppressions, and primary action family before/after routing.
 
 Phase 9I-K calibration notes:
 - Current driver selection should diversify by component and role before selecting Today drivers.
-- Caffeine should require stronger current relevance before it can outrank sleep, stress, soreness, alcohol, or training strain.
+- Caffeine should require stronger current relevance before it can outrank sleep, stress, recovery/readiness, alcohol, or training strain.
 - Relationship/recent-change slots can suppress low-priority caffeine cards when a stronger non-caffeine briefing card exists.
 - Habit pressure routing should prefer `reduce` for alcohol/weed/nicotine/porn and reserve `shiftEarlier` for caffeine-dominant cases.
 - Stress pressure should route toward simplify/low-friction actions; sparse data should route toward logging or observe-first guidance.

@@ -270,6 +270,7 @@ import UIKit
         lines.append("- Simulated Days: \(reports.first?.dayCount ?? 0)")
         lines.append("- Seed: \(reports.first?.seed ?? selectedSimulationSeed)")
         lines.append("- Reference Date: \(formattedReferenceDate(reports.first?.referenceDate ?? selectedSimulationReferenceDate))")
+        lines.append("- Life Score Version: V2 visible baseline")
         lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
         lines.append("## Core Algorithm Calibration Summary")
@@ -325,7 +326,7 @@ import UIKit
 
     private func coreAlgorithmCalibrationSummaryLines(for reports: [SQViewLabSimulationReport]) -> [String] {
         var lines = [String]()
-        lines.append("| Persona | Current Avg | V2 Shadow Avg | Current Range | V2 Range | Dominant State | Top Current Driver | Top V2 Health Driver | Top V2 Behavior | V2 Data Signal | Top Insight | Top Recommendation | Custom Surfaced | Personalized Delta | Positive Leakage | Warning Flags |")
+        lines.append("| Persona | Visible V2 Avg | Diagnostic V2 Avg | Visible V2 Range | Diagnostic V2 Range | Dominant State | Top Current Driver | Top V2 Health Driver | Top V2 Behavior | V2 Data Signal | Lead Insight | Top Recommendation | Custom Surfaced | Personalized Delta | Positive Leakage | Warning Flags |")
         lines.append("| --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |")
 
         for report in reports {
@@ -354,7 +355,7 @@ import UIKit
                 + " | \(tableCell(report.topV2HealthDriverDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(report.topV2BehaviorDriverDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(report.topV2DataConfidenceSignalDistribution.first?.label ?? "None"))"
-                + " | \(tableCell(report.surfacedInsightDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.leadInsightDistribution.first?.label ?? "None"))"
                 + " | \(tableCell(report.primaryActionFamilyAfterRoutingDistribution.first?.label ?? report.primaryActionRecommendationFamilyDistribution.first?.label ?? "None"))"
                 + " | \(formattedPercent(report.customMetricSurfacePercentage))"
                 + " | \(report.averageShadowScoreDelta.map(formattedSignedDouble) ?? "n/a")"
@@ -412,7 +413,7 @@ import UIKit
 
         if let averageV2Delta = report.averageShadowV2ScoreDelta,
            abs(averageV2Delta) > 10 {
-            flags.append("shadow v2 avg delta >10")
+            flags.append("visible/diagnostic v2 avg delta >10")
         }
 
         for flag in report.repeatedInsightFamilyWarningFlags where flag != "None" {
@@ -446,7 +447,7 @@ import UIKit
 
         if let averageV2Delta = report.averageShadowV2ScoreDelta,
            abs(averageV2Delta) > 10 {
-            flags.append("shadow v2 avg delta >10")
+            flags.append("visible/diagnostic v2 avg delta >10")
         }
 
         flags.append(contentsOf: v2AggregateWarningFlags(for: report))
@@ -490,11 +491,28 @@ import UIKit
             flags.append("same top driver across 4+ personas after calibration: \(sharedDriver.key)")
         }
 
-        if let sharedRecommendation = topRecommendationCounts.first(where: { $0.value >= 4 }) {
+        if let sharedRecommendation = topRecommendationCounts.first(where: { $0.value >= 4 }),
+           !sharedRecommendationIsContextAcceptable(sharedRecommendation.key, reports: reports) {
             flags.append("same top recommendation across 4+ personas after routing: \(sharedRecommendation.key)")
         }
 
         return flags.sorted()
+    }
+
+    private func sharedRecommendationIsContextAcceptable(
+        _ recommendation: String,
+        reports: [SQViewLabSimulationReport]
+    ) -> Bool {
+        guard recommendation == "keepConsistent" else { return false }
+
+        let matchingReports = reports.filter {
+            ($0.primaryActionFamilyAfterRoutingDistribution.first?.label
+                ?? $0.primaryActionRecommendationFamilyDistribution.first?.label) == recommendation
+        }
+        let matchingStates = Set(matchingReports.compactMap(\.stateDistribution.first?.label))
+        let stableStates: Set<String> = ["Strong", "Primed", "Balanced", "Rebounding"]
+
+        return !matchingReports.isEmpty && matchingStates.isSubset(of: stableStates)
     }
 
     private func simulationMarkdownLines(for report: SQViewLabSimulationReport) -> [String] {
@@ -560,11 +578,11 @@ import UIKit
         lines.append("- Custom metric surfaced with relationship flag on: \(formattedPercent(report.customRelationshipFlagOnCustomMetricSurfacePercentage))")
         lines.append("- Avg personalized adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg personalized score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
-        lines.append("- Avg shadow v2 Life Score: \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg diagnostic V2 Life Score: \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")")
         if let minimumScore = report.minimumShadowV2Score, let maximumScore = report.maximumShadowV2Score {
-            lines.append("- Shadow v2 score range: \(minimumScore)-\(maximumScore)")
+            lines.append("- Diagnostic V2 score range: \(minimumScore)-\(maximumScore)")
         }
-        lines.append("- Avg shadow v2 score delta: \(report.averageShadowV2ScoreDelta.map(formattedSignedDouble) ?? "n/a")")
+        lines.append("- Avg visible/diagnostic V2 score delta: \(report.averageShadowV2ScoreDelta.map(formattedSignedDouble) ?? "n/a")")
         lines.append("- Pressure-state positive leakage count: \(report.pressureStatePositiveLeakageCount)")
         lines.append("- Avg diagnostic contribution total: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))")
         lines.append("- Avg incremental contribution total: \(formattedDouble(report.averageShadowIncrementalContributionTotal))")
@@ -594,6 +612,21 @@ import UIKit
         lines.append("")
         lines.append("## Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedInsightDistribution))
+        lines.append("")
+        lines.append("## Lead Insight Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.leadInsightDistribution))
+        lines.append("")
+        lines.append("## Supporting Insight Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.supportingInsightDistribution))
+        lines.append("")
+        lines.append("## Lead Insight Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.leadInsightFamilyDistribution))
+        lines.append("")
+        lines.append("## Supporting Insight Family Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.supportingInsightFamilyDistribution))
+        lines.append("")
+        lines.append("## Caffeine Lead vs Supporting Count")
+        lines.append(contentsOf: simulationDistributionLines(report.caffeineLeadSupportingDistribution))
         lines.append("")
         lines.append("## Positive Current-State Cards Before Gating")
         lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateBeforeGatingDistribution))
@@ -638,7 +671,7 @@ import UIKit
         lines.append("## Component Score Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.componentScoreDistribution))
         lines.append("")
-        lines.append("## Shadow V2 Score Delta Distribution")
+        lines.append("## Visible vs Diagnostic V2 Score Delta Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.shadowV2ScoreDeltaDistribution))
         lines.append("")
         lines.append("## V2 Component Contribution Distribution")
@@ -829,10 +862,10 @@ import UIKit
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
             lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
             lines.append("  - personalized adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
-            lines.append("  - shadow v2 score: \(day.shadowV2Score.map(String.init) ?? "n/a")")
-            lines.append("  - shadow v2 score delta: \(day.shadowV2ScoreDelta.map(String.init) ?? "n/a")")
-            lines.append("  - shadow v2 components: \(day.shadowV2ComponentLabels.isEmpty ? "none" : day.shadowV2ComponentLabels.joined(separator: " | "))")
-            lines.append("  - shadow v2 component contributions: \(day.shadowV2ComponentContributionLabels.isEmpty ? "none" : day.shadowV2ComponentContributionLabels.joined(separator: " | "))")
+            lines.append("  - diagnostic v2 score: \(day.shadowV2Score.map(String.init) ?? "n/a")")
+            lines.append("  - visible/diagnostic v2 score delta: \(day.shadowV2ScoreDelta.map(String.init) ?? "n/a")")
+            lines.append("  - diagnostic v2 components: \(day.shadowV2ComponentLabels.isEmpty ? "none" : day.shadowV2ComponentLabels.joined(separator: " | "))")
+            lines.append("  - diagnostic v2 component contributions: \(day.shadowV2ComponentContributionLabels.isEmpty ? "none" : day.shadowV2ComponentContributionLabels.joined(separator: " | "))")
             lines.append("  - top v2 drivers: \(day.topV2DriverTitles.isEmpty ? "none" : day.topV2DriverTitles.joined(separator: " | "))")
             lines.append("  - top v2 health driver: \(day.topV2HealthDriverTitle ?? "none")")
             lines.append("  - top v2 behavior driver: \(day.topV2BehaviorDriverTitle ?? "none")")
@@ -1172,7 +1205,7 @@ import UIKit
             "ready to handle more",
             "good position to train",
             "good position today",
-            "lining up",
+            "things are lining up",
             "solid day",
             "relatively smooth"
         ].contains { normalizedTitle.contains($0) }

@@ -187,6 +187,11 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let heroFamilyKey: String
     let heroSubfamilyKey: String
     let surfacedInsightTitles: [String]
+    let leadInsightTitle: String
+    let supportingInsightTitles: [String]
+    let leadInsightFamilyLabel: String
+    let supportingInsightFamilyLabels: [String]
+    let caffeineLeadSupportingLabels: [String]
     let surfacedCustomInsightTitles: [String]
     let surfacedCustomMetricInsightTitles: [String]
     let surfacedCustomRelationshipTitles: [String]
@@ -302,6 +307,11 @@ struct SQViewLabSimulationReport {
     let heroFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let heroSubfamilyDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let leadInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let supportingInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let leadInsightFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let supportingInsightFamilyDistribution: [SQViewLabSimulationDistributionRow]
+    let caffeineLeadSupportingDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedCustomInsightDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedCustomMetricInsightCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedCustomRelationshipDistribution: [SQViewLabSimulationDistributionRow]
@@ -655,6 +665,11 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             let heroFamilyKey = "lifeScore.state.\(stateTitle).\(heroSubfamilyKey)"
             let surfacedInsightTitles = insightsResult.insights.map(\.title)
+            let leadInsightTitle = insightsResult.insights.first?.title ?? "None"
+            let supportingInsightTitles = insightsResult.insights.dropFirst().map(\.title)
+            let leadInsightFamilyLabel = insightsResult.insights.first.map(insightSurfaceFamilyLabel) ?? "None"
+            let supportingInsightFamilyLabels = insightsResult.insights.dropFirst().map(insightSurfaceFamilyLabel)
+            let caffeineLeadSupportingLabels = caffeineLeadSupportingLabels(for: insightsResult.insights)
             let surfacedCustomInsightTitles = insightsResult.insights.compactMap { insight -> String? in
                 let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
                 guard signalIds.contains(where: { customMetricIds.contains($0) }) else { return nil }
@@ -869,6 +884,11 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 heroFamilyKey: heroFamilyKey,
                 heroSubfamilyKey: heroSubfamilyKey,
                 surfacedInsightTitles: surfacedInsightTitles,
+                leadInsightTitle: leadInsightTitle,
+                supportingInsightTitles: supportingInsightTitles,
+                leadInsightFamilyLabel: leadInsightFamilyLabel,
+                supportingInsightFamilyLabels: supportingInsightFamilyLabels,
+                caffeineLeadSupportingLabels: caffeineLeadSupportingLabels,
                 surfacedCustomInsightTitles: surfacedCustomInsightTitles,
                 surfacedCustomMetricInsightTitles: surfacedCustomMetricInsightTitles,
                 surfacedCustomRelationshipTitles: surfacedCustomRelationshipTitles,
@@ -1040,6 +1060,11 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             heroFamilyDistribution: distributionRows(for: outputs.map(\.heroFamilyKey)),
             heroSubfamilyDistribution: distributionRows(for: outputs.map(\.heroSubfamilyKey)),
             surfacedInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedInsightTitles)),
+            leadInsightDistribution: distributionRows(for: outputs.map(\.leadInsightTitle)),
+            supportingInsightDistribution: distributionRows(for: outputs.flatMap(\.supportingInsightTitles)),
+            leadInsightFamilyDistribution: distributionRows(for: outputs.map(\.leadInsightFamilyLabel)),
+            supportingInsightFamilyDistribution: distributionRows(for: outputs.flatMap(\.supportingInsightFamilyLabels)),
+            caffeineLeadSupportingDistribution: distributionRows(for: outputs.flatMap(\.caffeineLeadSupportingLabels)),
             surfacedCustomInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedCustomInsightTitles)),
             surfacedCustomMetricInsightCandidateDistribution: distributionRows(
                 for: outputs.flatMap(\.surfacedCustomMetricInsightTitles)
@@ -1897,6 +1922,7 @@ private extension SQViewLabScenarioRunner {
                 min: 0.5,
                 max: 9.8
             )
+            let recovery = clamp(10.0 - soreness, min: 0.2, max: 9.5)
             let stress = clamp(
                 Double(rng.float(in: persona.stressRange)) + stressSpikePenalty + viceCarry * 0.08 + max(0, 6.0 - sleepQuality) * 0.12,
                 min: 0.5,
@@ -2063,7 +2089,7 @@ private extension SQViewLabScenarioRunner {
                 SQMetricId.motivation: Float(motivation),
                 SQMetricId.stress: Float(stress),
                 SQMetricId.anxiety: Float(anxiety),
-                SQMetricId.soreness: Float(soreness)
+                SQMetricId.soreness: Float(recovery)
             ]
             var eveningValues: [String: Float] = [
                 SQMetricId.alcohol: alcohol,
@@ -2497,6 +2523,88 @@ private extension SQViewLabScenarioRunner {
         }
 
         return "\(signalTitle(for: inputSignalId, metricDefinitions: metricDefinitions)) -> \(signalTitle(for: outputSignalId, metricDefinitions: metricDefinitions))"
+    }
+
+    func insightSurfaceFamilyLabel(for insight: SQInsight) -> String {
+        if insight.familyKey.hasPrefix("customRelationship.") {
+            return "Custom Relationship"
+        }
+
+        if insight.familyKey.hasPrefix("customMetric.") {
+            return "Custom Metric"
+        }
+
+        let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+
+        if signalIds.contains(SQMetricId.caffeine) {
+            return "Caffeine"
+        }
+
+        if signalIds.contains(SQMetricId.alcohol) {
+            return "Alcohol"
+        }
+
+        if signalIds.contains(where: { [SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains($0) }) {
+            return "Vices"
+        }
+
+        if signalIds.contains(where: isSleepSignalId) {
+            return "Sleep"
+        }
+
+        if signalIds.contains(where: {
+            [
+                SQMetricId.stress,
+                SQMetricId.anxiety,
+                SQMetricId.energy,
+                SQMetricId.mood,
+                SQMetricId.mentalClarity,
+                SQMetricId.motivation
+            ].contains($0)
+        }) {
+            return "Mind / Energy"
+        }
+
+        if signalIds.contains(where: {
+            [
+                SQMetricId.soreness,
+                SQInsightAnalysisMetricId.restingHeartRate,
+                SQInsightAnalysisMetricId.workoutDifficulty,
+                SQInsightAnalysisMetricId.workoutPerformance
+            ].contains($0)
+        }) {
+            return "Recovery / Training"
+        }
+
+        switch insight.insightClass {
+        case .risk, .opportunity:
+            return "Current State"
+        case .trend, .baselineChange, .followUp:
+            return "Recent Change"
+        case .relationship:
+            return "Relationship"
+        case .populationBenchmark, .cohort:
+            return "Benchmark"
+        }
+    }
+
+    func caffeineLeadSupportingLabels(for insights: [SQInsight]) -> [String] {
+        var labels = [String]()
+
+        if let leadInsight = insights.first,
+           isCaffeineInsight(leadInsight) {
+            labels.append("Caffeine lead")
+        }
+
+        if insights.dropFirst().contains(where: isCaffeineInsight) {
+            labels.append("Caffeine supporting")
+        }
+
+        if labels.isEmpty {
+            labels.append("No caffeine surfaced")
+        }
+
+        return labels
     }
 
     func relationshipFamilySuppressionReasons(

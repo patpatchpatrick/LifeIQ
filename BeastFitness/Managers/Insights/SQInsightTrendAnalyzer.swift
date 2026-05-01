@@ -204,10 +204,10 @@ struct SQInsightTrendAnalyzer {
         case .positive:
             return delta >= 0
                 ? "\(inputTitle) is trending in a better direction"
-                : "\(inputTitle) is easing back toward a better range"
+                : "\(inputTitle) is settling closer to your baseline"
         case .negative:
             return delta >= 0
-                ? "\(inputTitle) has been moving the wrong way recently"
+                ? "\(inputTitle) is running higher than your recent baseline"
                 : "\(inputTitle) is slipping recently"
         case .neutral:
             return "\(inputTitle) has been shifting recently"
