@@ -100,6 +100,8 @@ Insight feature snapshots now have a compatibility layer and a richer signal fea
 
 Simulator comparisons should keep seed and reference date fixed. The copied report should be treated as calibration evidence only when those inputs match before/after runs.
 
+Dynamic custom metric driver/change detection and generated exploratory relationships should be validated in View Lab/report-only mode before surfacing. Curated preset relationships remain the user-visible source of truth until custom candidates show enough sample size, variance, recency, and effect size in simulator reports.
+
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
 
 `Today` actions should be concrete decisions, not generic advice. Positive training-readiness actions can rotate across a small stable library, while caution actions should say whether to moderate effort, recover, or adjust a specific habit.

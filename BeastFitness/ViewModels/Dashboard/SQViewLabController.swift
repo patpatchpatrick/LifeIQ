@@ -278,9 +278,11 @@ import UIKit
         lines.append("- Custom metric surfaced: \(formattedPercent(report.customMetricSurfacePercentage))")
         lines.append("- Avg shadow-adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg shadow score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
-        lines.append("- Avg shadow custom contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))")
-        lines.append("- Avg shadow sensitive contribution: \(formattedDouble(report.averageShadowSensitiveContributionTotal))")
-        lines.append("- Avg shadow behavior contribution: \(formattedDouble(report.averageShadowBehaviorContributionTotal))")
+        lines.append("- Avg diagnostic contribution total: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))")
+        lines.append("- Avg incremental contribution total: \(formattedDouble(report.averageShadowIncrementalContributionTotal))")
+        lines.append("- Avg custom incremental contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))")
+        lines.append("- Avg sensitive incremental contribution: \(formattedDouble(report.averageShadowSensitiveContributionTotal))")
+        lines.append("- Avg behavior incremental contribution: \(formattedDouble(report.averageShadowBehaviorContributionTotal))")
         lines.append("- Longest repeated hero summary streak: \(report.longestHeroSummaryRepeatStreak) days")
         lines.append("- Longest repeated hero action streak: \(report.longestHeroActionRepeatStreak) days")
         lines.append("- Longest repeated hero family streak: \(report.longestHeroFamilyRepeatStreak) days")
@@ -331,11 +333,32 @@ import UIKit
         lines.append("## Life Score Component Availability")
         lines.append(contentsOf: simulationDistributionLines(report.lifeScoreComponentAvailability))
         lines.append("")
-        lines.append("## Top Shadow Contributor Distribution")
-        lines.append(contentsOf: simulationDistributionLines(report.topShadowContributorDistribution))
+        lines.append("## Diagnostic Shadow Contributors")
+        lines.append(contentsOf: shadowContributorAggregateLines(report.diagnosticShadowContributorAggregates))
         lines.append("")
-        lines.append("## Top Shadow Custom Contributor Distribution")
-        lines.append(contentsOf: simulationDistributionLines(report.topShadowCustomContributorDistribution))
+        lines.append("## Incremental Shadow Contributors")
+        lines.append(contentsOf: shadowContributorAggregateLines(report.incrementalShadowContributorAggregates))
+        lines.append("")
+        lines.append("## Custom Incremental Shadow Contributors")
+        lines.append(contentsOf: shadowContributorAggregateLines(report.customIncrementalShadowContributorAggregates))
+        lines.append("")
+        lines.append("## Dynamic Metric Driver Candidate Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.dynamicMetricDriverCandidateDistribution))
+        lines.append("")
+        lines.append("## Dynamic Metric Change Candidate Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.dynamicMetricChangeCandidateDistribution))
+        lines.append("")
+        lines.append("## Custom Metric Driver/Change Candidate Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.customMetricDriverChangeCandidateDistribution))
+        lines.append("")
+        lines.append("## Exploratory Relationship Candidate Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.exploratoryRelationshipCandidateDistribution))
+        lines.append("")
+        lines.append("## Custom Output Relationship Candidate Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.customOutputRelationshipCandidateDistribution))
+        lines.append("")
+        lines.append("## Top Custom Relationship Candidates")
+        lines.append(contentsOf: customRelationshipCandidateLines(report.topCustomRelationshipCandidates))
         lines.append("")
 
         lines.append("## Daily Log")
@@ -343,11 +366,20 @@ import UIKit
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
             lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
             lines.append("  - shadow adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
-            lines.append("  - shadow custom contribution: \(formattedDouble(day.shadowCustomContributionTotal))")
-            lines.append("  - shadow sensitive contribution: \(formattedDouble(day.shadowSensitiveContributionTotal))")
-            lines.append("  - shadow behavior contribution: \(formattedDouble(day.shadowBehaviorContributionTotal))")
-            lines.append("  - top shadow contributors: \(day.topShadowContributorTexts.isEmpty ? "none" : day.topShadowContributorTexts.joined(separator: " | "))")
-            lines.append("  - top shadow custom contributors: \(day.topShadowCustomContributorTexts.isEmpty ? "none" : day.topShadowCustomContributorTexts.joined(separator: " | "))")
+            lines.append("  - diagnostic contribution total: \(formattedDouble(day.shadowDiagnosticContributionTotal))")
+            lines.append("  - incremental contribution total: \(formattedDouble(day.shadowIncrementalContributionTotal))")
+            lines.append("  - custom incremental contribution: \(formattedDouble(day.shadowCustomContributionTotal))")
+            lines.append("  - sensitive incremental contribution: \(formattedDouble(day.shadowSensitiveContributionTotal))")
+            lines.append("  - behavior incremental contribution: \(formattedDouble(day.shadowBehaviorContributionTotal))")
+            lines.append("  - top diagnostic contributors: \(day.topDiagnosticShadowContributorTexts.isEmpty ? "none" : day.topDiagnosticShadowContributorTexts.joined(separator: " | "))")
+            lines.append("  - top incremental contributors: \(day.topIncrementalShadowContributorTexts.isEmpty ? "none" : day.topIncrementalShadowContributorTexts.joined(separator: " | "))")
+            lines.append("  - top custom incremental contributors: \(day.topCustomIncrementalShadowContributorTexts.isEmpty ? "none" : day.topCustomIncrementalShadowContributorTexts.joined(separator: " | "))")
+            lines.append("  - dynamic driver candidates: \(day.dynamicMetricDriverCandidateLabels.isEmpty ? "none" : day.dynamicMetricDriverCandidateLabels.joined(separator: " | "))")
+            lines.append("  - dynamic change candidates: \(day.dynamicMetricChangeCandidateLabels.isEmpty ? "none" : day.dynamicMetricChangeCandidateLabels.joined(separator: " | "))")
+            lines.append("  - custom metric candidates: \(day.customMetricCandidateLabels.isEmpty ? "none" : day.customMetricCandidateLabels.joined(separator: " | "))")
+            lines.append("  - exploratory relationship candidates: \(day.exploratoryRelationshipCandidateLabels.isEmpty ? "none" : day.exploratoryRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - custom output relationship candidates: \(day.customOutputRelationshipCandidateLabels.isEmpty ? "none" : day.customOutputRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - top custom relationship details: \(day.topCustomRelationshipCandidateTexts.isEmpty ? "none" : day.topCustomRelationshipCandidateTexts.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
@@ -577,6 +609,11 @@ import UIKit
         return String(format: "%.1f", value)
     }
 
+    private func formattedSignedDouble(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + formattedDouble(value)
+    }
+
     private func formattedDuration(_ duration: Double?) -> String {
         guard let duration else { return "n/a" }
         let minutes = Int((duration / 60).rounded())
@@ -605,6 +642,26 @@ import UIKit
 
         return rows.map { row in
             "- \(row.label) — \(row.count) days (\(formattedPercent(row.percentage)))"
+        }
+    }
+
+    private func shadowContributorAggregateLines(
+        _ rows: [SQViewLabShadowContributorAggregateRow]
+    ) -> [String] {
+        guard !rows.isEmpty else { return ["- None"] }
+
+        return rows.map { row in
+            "- \(row.title) — \(row.daysAppeared) days, avg \(formattedSignedDouble(row.averageContribution)), avg abs \(formattedDouble(row.averageAbsoluteContribution)), positive \(row.positiveDays), negative \(row.negativeDays)"
+        }
+    }
+
+    private func customRelationshipCandidateLines(
+        _ candidates: [SQViewLabExploratoryRelationshipCandidate]
+    ) -> [String] {
+        guard !candidates.isEmpty else { return ["- None"] }
+
+        return candidates.map { candidate in
+            "- \(candidate.inputTitle) -> \(candidate.outputTitle) (\(candidate.timing)) — effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), confidence=\(candidate.confidence)"
         }
     }
 

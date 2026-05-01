@@ -56,13 +56,18 @@ struct SQLifeScoreMetricContributor: Identifiable, Hashable {
 }
 
 struct SQLifeScoreShadowMetricContributionResult: Hashable {
-    let contributors: [SQLifeScoreMetricContributor]
+    let diagnosticContributors: [SQLifeScoreMetricContributor]
+    let incrementalContributors: [SQLifeScoreMetricContributor]
     let customMetricContributionTotal: Double
     let sensitiveMetricContributionTotal: Double
     let behaviorMetricContributionTotal: Double
 
-    var totalContributionPoints: Double {
-        contributors.reduce(0) { $0 + $1.contributionPoints }
+    var diagnosticContributionTotal: Double {
+        diagnosticContributors.reduce(0) { $0 + $1.contributionPoints }
+    }
+
+    var incrementalContributionTotal: Double {
+        incrementalContributors.reduce(0) { $0 + $1.contributionPoints }
     }
 }
 
@@ -75,7 +80,8 @@ struct SQLifeScoreShadowMetricContributorBuilder {
     ) -> SQLifeScoreShadowMetricContributionResult {
         guard let snapshot else {
             return .init(
-                contributors: [],
+                diagnosticContributors: [],
+                incrementalContributors: [],
                 customMetricContributionTotal: 0,
                 sensitiveMetricContributionTotal: 0,
                 behaviorMetricContributionTotal: 0
@@ -83,7 +89,7 @@ struct SQLifeScoreShadowMetricContributorBuilder {
         }
 
         let definitionsById = Dictionary(uniqueKeysWithValues: metricDefinitions.map { ($0.id, $0) })
-        let rawContributors = snapshot.signalFeatures.values.compactMap { feature -> SQLifeScoreMetricContributor? in
+        let diagnosticContributors = snapshot.signalFeatures.values.compactMap { feature -> SQLifeScoreMetricContributor? in
             guard let definition = definitionsById[feature.signalId],
                   let utilityScore = feature.goalUtilityScore else {
                 return nil
@@ -119,7 +125,21 @@ struct SQLifeScoreShadowMetricContributorBuilder {
             )
         }
 
-        let singleCustomCapped = rawContributors.map { contributor in
+        let rawIncrementalContributors = diagnosticContributors.compactMap { contributor -> SQLifeScoreMetricContributor? in
+            guard let definition = definitionsById[contributor.metricId],
+                  isIncrementalScoreEligible(definition: definition, contributor: contributor) else {
+                return nil
+            }
+
+            let incrementalContribution = incrementalContributionPoints(
+                contribution: contributor.contributionPoints,
+                definition: definition
+            )
+            guard abs(incrementalContribution) >= 0.05 else { return nil }
+            return contributor.replacingContribution(incrementalContribution)
+        }
+
+        let singleCustomCapped = rawIncrementalContributors.map { contributor in
             guard contributor.isCustom else { return contributor }
             return contributor.replacingContribution(
                 clamp(contributor.contributionPoints, min: -3, max: 3)
@@ -138,7 +158,8 @@ struct SQLifeScoreShadowMetricContributorBuilder {
         )
 
         return .init(
-            contributors: sensitiveCapped.sorted { abs($0.contributionPoints) > abs($1.contributionPoints) },
+            diagnosticContributors: diagnosticContributors.sorted { abs($0.contributionPoints) > abs($1.contributionPoints) },
+            incrementalContributors: sensitiveCapped.sorted { abs($0.contributionPoints) > abs($1.contributionPoints) },
             customMetricContributionTotal: sensitiveCapped.filter(\.isCustom).reduce(0) { $0 + $1.contributionPoints },
             sensitiveMetricContributionTotal: sensitiveCapped
                 .filter { $0.sensitivity == .sensitive || $0.sensitivity == .medicationLike }
@@ -165,6 +186,28 @@ struct SQLifeScoreShadowMetricContributorBuilder {
         case .context, .automatic, .unknown:
             return .none
         }
+    }
+
+    private func isIncrementalScoreEligible(
+        definition: SQMetricDefinition,
+        contributor: SQLifeScoreMetricContributor
+    ) -> Bool {
+        if !definition.isPreset {
+            return contributor.impact == .light || contributor.impact == .standard
+        }
+
+        // Automatic preset metrics are already represented by the current Life Score components.
+        return definition.lifeScoreImpact == .light || definition.lifeScoreImpact == .standard
+    }
+
+    private func incrementalContributionPoints(
+        contribution: Double,
+        definition: SQMetricDefinition
+    ) -> Double {
+        guard definition.goalStyle == .avoidIt else { return contribution }
+
+        // Avoid metrics should drag when present, but absence should not stack repeated bonuses.
+        return min(0, contribution)
     }
 
     private func maxContributionPoints(

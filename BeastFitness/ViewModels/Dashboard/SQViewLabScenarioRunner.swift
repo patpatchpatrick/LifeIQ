@@ -99,6 +99,46 @@ struct SQViewLabSimulationDistributionRow: Identifiable {
     var id: String { label }
 }
 
+struct SQViewLabShadowContributorAggregateRow: Identifiable {
+    let metricId: String
+    let title: String
+    let daysAppeared: Int
+    let averageContribution: Double
+    let averageAbsoluteContribution: Double
+    let positiveDays: Int
+    let negativeDays: Int
+
+    var id: String { metricId }
+}
+
+struct SQViewLabDynamicMetricCandidate: Identifiable, Hashable {
+    let id: String
+    let metricId: String
+    let title: String
+    let label: String
+    let isCustom: Bool
+    let effect: SQLifeScoreSignalEffect
+    let sampleCount: Int
+    let strength: Double
+}
+
+struct SQViewLabExploratoryRelationshipCandidate: Identifiable, Hashable {
+    let id: String
+    let inputSignalId: String
+    let inputTitle: String
+    let outputSignalId: String
+    let outputTitle: String
+    let timing: String
+    let effectSize: Double
+    let sampleCount: Int
+    let confidence: String
+    let isCustomOutput: Bool
+
+    var label: String {
+        "\(inputTitle) -> \(outputTitle) (\(timing))"
+    }
+}
+
 struct SQViewLabSimulationDayOutput: Identifiable {
     let date: Date
     let score: Int?
@@ -118,11 +158,22 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let customMetricValues: [String: Double]
     let healthKitFallbackMetricIds: [String]
     let shadowAdjustedScore: Int?
+    let shadowDiagnosticContributionTotal: Double
+    let shadowIncrementalContributionTotal: Double
     let shadowCustomContributionTotal: Double
     let shadowSensitiveContributionTotal: Double
     let shadowBehaviorContributionTotal: Double
-    let topShadowContributorTexts: [String]
-    let topShadowCustomContributorTexts: [String]
+    let diagnosticShadowContributors: [SQLifeScoreMetricContributor]
+    let incrementalShadowContributors: [SQLifeScoreMetricContributor]
+    let topDiagnosticShadowContributorTexts: [String]
+    let topIncrementalShadowContributorTexts: [String]
+    let topCustomIncrementalShadowContributorTexts: [String]
+    let dynamicMetricDriverCandidateLabels: [String]
+    let dynamicMetricChangeCandidateLabels: [String]
+    let customMetricCandidateLabels: [String]
+    let exploratoryRelationshipCandidateLabels: [String]
+    let customOutputRelationshipCandidateLabels: [String]
+    let topCustomRelationshipCandidateTexts: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -171,11 +222,20 @@ struct SQViewLabSimulationReport {
     let lifeScoreComponentAvailability: [SQViewLabSimulationDistributionRow]
     let averageShadowAdjustedScore: Double?
     let averageShadowScoreDelta: Double?
+    let averageShadowDiagnosticContributionTotal: Double
+    let averageShadowIncrementalContributionTotal: Double
     let averageShadowCustomContributionTotal: Double
     let averageShadowSensitiveContributionTotal: Double
     let averageShadowBehaviorContributionTotal: Double
-    let topShadowContributorDistribution: [SQViewLabSimulationDistributionRow]
-    let topShadowCustomContributorDistribution: [SQViewLabSimulationDistributionRow]
+    let diagnosticShadowContributorAggregates: [SQViewLabShadowContributorAggregateRow]
+    let incrementalShadowContributorAggregates: [SQViewLabShadowContributorAggregateRow]
+    let customIncrementalShadowContributorAggregates: [SQViewLabShadowContributorAggregateRow]
+    let dynamicMetricDriverCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let dynamicMetricChangeCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let customMetricDriverChangeCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let exploratoryRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let customOutputRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let topCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -239,8 +299,11 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         )
         let featureBuilder = SQInsightFeatureBuilder()
         let shadowContributorBuilder = SQLifeScoreShadowMetricContributorBuilder()
+        let dynamicMetricCandidateBuilder = DynamicMetricCandidateBuilder()
+        let relationshipCandidateBuilder = ExploratoryRelationshipCandidateBuilder()
 
         var outputs = [SQViewLabSimulationDayOutput]()
+        var latestCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         for index in generatedDays.indices {
@@ -289,8 +352,17 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             let shadowAdjustedScore = shadowAdjustedScore(
                 baseScore: lifeScoreViewModel.score,
-                contributionTotal: shadowResult.totalContributionPoints
+                contributionTotal: shadowResult.incrementalContributionTotal
             )
+            let dynamicCandidates = dynamicMetricCandidateBuilder.candidates(
+                from: featureSnapshots,
+                metricDefinitions: request.metricDefinitions
+            )
+            let relationshipCandidates = relationshipCandidateBuilder.candidates(
+                from: featureSnapshots,
+                metricDefinitions: request.metricDefinitions
+            )
+            latestCustomRelationshipCandidates = Array(relationshipCandidates.filter(\.isCustomOutput).prefix(8))
             let surfacedSignalIds = insightsResult.insights.flatMap { insight in
                 [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
             }
@@ -299,51 +371,104 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 partialResult[pair.key] = pair.value.rawValue
             }
 
-            outputs.append(
-                .init(
-                    date: currentDay.date,
-                    score: lifeScoreViewModel.score,
-                    stateTitle: lifeScoreViewModel.state.title,
-                    heroSummary: punctuatedSentence(
-                        lifeScoreViewModel.headlineText
-                            ?? lifeScoreViewModel.primaryInsight?.title
-                            ?? lifeScoreViewModel.state.summary
-                    ),
-                    heroAction: punctuatedSentence(
-                        lifeScoreViewModel.actions.first?.summary ?? "No action."
-                    ),
-                    heroFamilyKey: "lifeScore.state.\(lifeScoreViewModel.state.title)",
-                    surfacedInsightTitles: insightsResult.insights.map(\.title),
-                    scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
-                    componentScores: Dictionary(
-                        uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
-                    ),
-                    topDriverTitles: lifeScoreViewModel.drivers.prefix(3).map(\.title),
-                    topChangeTitles: lifeScoreViewModel.changes.prefix(3).map(\.title),
-                    actionRecommendationFamilies: insightsResult.insights.compactMap { insight in
-                        insight.recommendationFamily.map { String(describing: $0) }
-                    },
-                    signalSourceLabels: signalFeatures.values.map { String(describing: $0.source) },
-                    semanticRoleLabels: signalFeatures.values.map { String(describing: $0.signalRole) },
-                    surfacedCustomMetric: surfacedSignalIds.contains { customMetricIds.contains($0) },
-                    customMetricValues: customMetricValues,
-                    healthKitFallbackMetricIds: healthKitFallbackMetricIds(for: currentDay),
-                    shadowAdjustedScore: shadowAdjustedScore,
-                    shadowCustomContributionTotal: shadowResult.customMetricContributionTotal,
-                    shadowSensitiveContributionTotal: shadowResult.sensitiveMetricContributionTotal,
-                    shadowBehaviorContributionTotal: shadowResult.behaviorMetricContributionTotal,
-                    topShadowContributorTexts: shadowResult.contributors.prefix(5).map(shadowContributorText),
-                    topShadowCustomContributorTexts: shadowResult.contributors.filter(\.isCustom).prefix(5).map(shadowContributorText),
-                    morningValues: currentDay.morningValues,
-                    eveningValues: currentDay.eveningValues,
-                    restingHeartRate: currentDay.restingHeartRateSummary?.average,
-                    workoutDescriptions: currentDay.workouts.map {
-                        "\($0.activityType.name) • perf \(formattedOptionalFloat($0.ratingUserPerformance)) • diff \(formattedOptionalFloat($0.ratingDifficulty))"
-                    },
-                    completedMorningCheckIn: currentDay.completedMorningCheckIn,
-                    completedEveningCheckIn: currentDay.completedEveningCheckIn
-                )
+            let stateTitle = lifeScoreViewModel.state.title
+            let heroSummary = punctuatedSentence(
+                lifeScoreViewModel.headlineText
+                    ?? lifeScoreViewModel.primaryInsight?.title
+                    ?? lifeScoreViewModel.state.summary
             )
+            let heroAction = punctuatedSentence(
+                lifeScoreViewModel.actions.first?.summary ?? "No action."
+            )
+            let heroFamilyKey = "lifeScore.state.\(stateTitle)"
+            let surfacedInsightTitles = insightsResult.insights.map(\.title)
+            let componentScores = Dictionary(
+                uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
+            )
+            let topDriverTitles = lifeScoreViewModel.drivers.prefix(3).map(\.title)
+            let topChangeTitles = lifeScoreViewModel.changes.prefix(3).map(\.title)
+            let actionRecommendationFamilies = insightsResult.insights.compactMap { insight in
+                insight.recommendationFamily.map { String(describing: $0) }
+            }
+            let signalSourceLabels = signalFeatures.values.map { String(describing: $0.source) }
+            let semanticRoleLabels = signalFeatures.values.map { String(describing: $0.signalRole) }
+            let surfacedCustomMetric = surfacedSignalIds.contains { customMetricIds.contains($0) }
+            let healthKitFallbackMetricIds = signalFeatures.values
+                .filter { $0.source == .healthKitFallback }
+                .map(\.signalId)
+                .sorted()
+            let topDiagnosticShadowContributorTexts = shadowResult.diagnosticContributors
+                .prefix(5)
+                .map(shadowContributorText)
+            let topIncrementalShadowContributorTexts = shadowResult.incrementalContributors
+                .prefix(5)
+                .map(shadowContributorText)
+            let topCustomIncrementalShadowContributorTexts = shadowResult.incrementalContributors
+                .filter(\.isCustom)
+                .prefix(5)
+                .map(shadowContributorText)
+            let dynamicMetricDriverCandidateLabels = dynamicCandidates.drivers.prefix(5).map(\.label)
+            let dynamicMetricChangeCandidateLabels = dynamicCandidates.changes.prefix(5).map(\.label)
+            let customMetricCandidateLabels = (dynamicCandidates.drivers + dynamicCandidates.changes)
+                .filter(\.isCustom)
+                .prefix(8)
+                .map(\.label)
+            let exploratoryRelationshipCandidateLabels = relationshipCandidates.prefix(8).map(\.label)
+            let customOutputRelationshipCandidateLabels = relationshipCandidates
+                .filter(\.isCustomOutput)
+                .prefix(8)
+                .map(\.label)
+            let topCustomRelationshipCandidateTexts = relationshipCandidates
+                .filter(\.isCustomOutput)
+                .prefix(5)
+                .map(relationshipCandidateText)
+            let workoutDescriptions = currentDay.workouts.map {
+                "\($0.activityType.name) • perf \(formattedOptionalFloat($0.ratingUserPerformance)) • diff \(formattedOptionalFloat($0.ratingDifficulty))"
+            }
+
+            let output = SQViewLabSimulationDayOutput(
+                date: currentDay.date,
+                score: lifeScoreViewModel.score,
+                stateTitle: stateTitle,
+                heroSummary: heroSummary,
+                heroAction: heroAction,
+                heroFamilyKey: heroFamilyKey,
+                surfacedInsightTitles: surfacedInsightTitles,
+                scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
+                componentScores: componentScores,
+                topDriverTitles: topDriverTitles,
+                topChangeTitles: topChangeTitles,
+                actionRecommendationFamilies: actionRecommendationFamilies,
+                signalSourceLabels: signalSourceLabels,
+                semanticRoleLabels: semanticRoleLabels,
+                surfacedCustomMetric: surfacedCustomMetric,
+                customMetricValues: customMetricValues,
+                healthKitFallbackMetricIds: healthKitFallbackMetricIds,
+                shadowAdjustedScore: shadowAdjustedScore,
+                shadowDiagnosticContributionTotal: shadowResult.diagnosticContributionTotal,
+                shadowIncrementalContributionTotal: shadowResult.incrementalContributionTotal,
+                shadowCustomContributionTotal: shadowResult.customMetricContributionTotal,
+                shadowSensitiveContributionTotal: shadowResult.sensitiveMetricContributionTotal,
+                shadowBehaviorContributionTotal: shadowResult.behaviorMetricContributionTotal,
+                diagnosticShadowContributors: shadowResult.diagnosticContributors,
+                incrementalShadowContributors: shadowResult.incrementalContributors,
+                topDiagnosticShadowContributorTexts: topDiagnosticShadowContributorTexts,
+                topIncrementalShadowContributorTexts: topIncrementalShadowContributorTexts,
+                topCustomIncrementalShadowContributorTexts: topCustomIncrementalShadowContributorTexts,
+                dynamicMetricDriverCandidateLabels: dynamicMetricDriverCandidateLabels,
+                dynamicMetricChangeCandidateLabels: dynamicMetricChangeCandidateLabels,
+                customMetricCandidateLabels: customMetricCandidateLabels,
+                exploratoryRelationshipCandidateLabels: exploratoryRelationshipCandidateLabels,
+                customOutputRelationshipCandidateLabels: customOutputRelationshipCandidateLabels,
+                topCustomRelationshipCandidateTexts: topCustomRelationshipCandidateTexts,
+                morningValues: currentDay.morningValues,
+                eveningValues: currentDay.eveningValues,
+                restingHeartRate: currentDay.restingHeartRateSummary?.average,
+                workoutDescriptions: workoutDescriptions,
+                completedMorningCheckIn: currentDay.completedMorningCheckIn,
+                completedEveningCheckIn: currentDay.completedEveningCheckIn
+            )
+            outputs.append(output)
         }
 
         return .init(
@@ -427,15 +552,36 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 guard let score = output.score, let shadowAdjustedScore = output.shadowAdjustedScore else { return nil }
                 return Double(shadowAdjustedScore - score)
             }.average,
+            averageShadowDiagnosticContributionTotal: outputs.map(\.shadowDiagnosticContributionTotal).average ?? 0,
+            averageShadowIncrementalContributionTotal: outputs.map(\.shadowIncrementalContributionTotal).average ?? 0,
             averageShadowCustomContributionTotal: outputs.map(\.shadowCustomContributionTotal).average ?? 0,
             averageShadowSensitiveContributionTotal: outputs.map(\.shadowSensitiveContributionTotal).average ?? 0,
             averageShadowBehaviorContributionTotal: outputs.map(\.shadowBehaviorContributionTotal).average ?? 0,
-            topShadowContributorDistribution: distributionRows(
-                for: outputs.flatMap(\.topShadowContributorTexts)
+            diagnosticShadowContributorAggregates: shadowContributorAggregateRows(
+                for: outputs.flatMap(\.diagnosticShadowContributors)
             ),
-            topShadowCustomContributorDistribution: distributionRows(
-                for: outputs.flatMap(\.topShadowCustomContributorTexts)
+            incrementalShadowContributorAggregates: shadowContributorAggregateRows(
+                for: outputs.flatMap(\.incrementalShadowContributors)
             ),
+            customIncrementalShadowContributorAggregates: shadowContributorAggregateRows(
+                for: outputs.flatMap(\.incrementalShadowContributors).filter(\.isCustom)
+            ),
+            dynamicMetricDriverCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.dynamicMetricDriverCandidateLabels)
+            ),
+            dynamicMetricChangeCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.dynamicMetricChangeCandidateLabels)
+            ),
+            customMetricDriverChangeCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.customMetricCandidateLabels)
+            ),
+            exploratoryRelationshipCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.exploratoryRelationshipCandidateLabels)
+            ),
+            customOutputRelationshipCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.customOutputRelationshipCandidateLabels)
+            ),
+            topCustomRelationshipCandidates: latestCustomRelationshipCandidates,
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
             longestHeroFamilyRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroFamilyKey)),
@@ -496,6 +642,306 @@ private extension SQViewLabScenarioRunner {
             }
 
             return weights.last?.activityType ?? .running
+        }
+    }
+
+    struct DynamicMetricCandidateBuilder {
+        private let semanticResolver = SQMetricSemanticResolver()
+
+        func candidates(
+            from snapshots: [SQInsightFeatureSnapshot],
+            metricDefinitions: [SQMetricDefinition]
+        ) -> (drivers: [SQViewLabDynamicMetricCandidate], changes: [SQViewLabDynamicMetricCandidate]) {
+            var drivers = [SQViewLabDynamicMetricCandidate]()
+            var changes = [SQViewLabDynamicMetricCandidate]()
+
+            for definition in metricDefinitions where definition.isEnabled && !definition.isArchived {
+                guard definition.insightMode != .off else { continue }
+                let role = semanticResolver.signalRole(for: definition)
+                guard isCandidateEligible(role: role) else { continue }
+
+                let points = signalPoints(metricId: definition.id, snapshots: snapshots)
+                guard points.count >= 14, hasEnoughVariance(points.map(\.value)) else { continue }
+
+                if let driver = driverCandidate(
+                    definition: definition,
+                    points: points,
+                    isCustom: !definition.isPreset
+                ) {
+                    drivers.append(driver)
+                }
+
+                if let change = changeCandidate(
+                    definition: definition,
+                    points: points,
+                    isCustom: !definition.isPreset
+                ) {
+                    changes.append(change)
+                }
+            }
+
+            return (
+                drivers: drivers.sorted { $0.strength > $1.strength },
+                changes: changes.sorted { $0.strength > $1.strength }
+            )
+        }
+
+        private func signalPoints(
+            metricId: String,
+            snapshots: [SQInsightFeatureSnapshot]
+        ) -> [(date: Date, value: Double)] {
+            snapshots.compactMap { snapshot in
+                guard let feature = snapshot.signalFeatures[metricId],
+                      let value = feature.goalUtilityScore ?? feature.normalizedValue.map({ $0 * 100 }) else {
+                    return nil
+                }
+                return (snapshot.date, value)
+            }
+            .sorted { $0.date < $1.date }
+        }
+
+        private func driverCandidate(
+            definition: SQMetricDefinition,
+            points: [(date: Date, value: Double)],
+            isCustom: Bool
+        ) -> SQViewLabDynamicMetricCandidate? {
+            guard let latest = points.last else { return nil }
+            let baseline = points.dropLast().suffix(21).map(\.value)
+            guard baseline.count >= 10 else { return nil }
+
+            let baselineAverage = baseline.reduce(0, +) / Double(baseline.count)
+            let delta = latest.value - baselineAverage
+            guard abs(delta) >= 8 else { return nil }
+
+            let directionText = delta >= 0 ? "above baseline" : "below baseline"
+            return .init(
+                id: "driver-\(definition.id)-\(directionText)",
+                metricId: definition.id,
+                title: definition.title,
+                label: "\(definition.title) \(directionText)",
+                isCustom: isCustom,
+                effect: delta >= 0 ? .positive : .negative,
+                sampleCount: points.count,
+                strength: abs(delta)
+            )
+        }
+
+        private func changeCandidate(
+            definition: SQMetricDefinition,
+            points: [(date: Date, value: Double)],
+            isCustom: Bool
+        ) -> SQViewLabDynamicMetricCandidate? {
+            let recent = points.suffix(7).map(\.value)
+            let prior = points.dropLast(recent.count).suffix(14).map(\.value)
+            guard recent.count >= 4, prior.count >= 8 else { return nil }
+
+            let recentAverage = recent.reduce(0, +) / Double(recent.count)
+            let priorAverage = prior.reduce(0, +) / Double(prior.count)
+            let delta = recentAverage - priorAverage
+            guard abs(delta) >= 6 else { return nil }
+
+            let directionText = delta >= 0 ? "trending better" : "trending worse"
+            return .init(
+                id: "change-\(definition.id)-\(directionText)",
+                metricId: definition.id,
+                title: definition.title,
+                label: "\(definition.title) \(directionText)",
+                isCustom: isCustom,
+                effect: delta >= 0 ? .positive : .negative,
+                sampleCount: recent.count + prior.count,
+                strength: abs(delta)
+            )
+        }
+
+        private func isCandidateEligible(role: SQMetricSignalRole) -> Bool {
+            switch role {
+            case .outcome, .symptom, .bodyStat, .behavior:
+                return true
+            case .context, .automatic, .unknown:
+                return false
+            }
+        }
+
+        private func hasEnoughVariance(_ values: [Double]) -> Bool {
+            guard let min = values.min(), let max = values.max() else { return false }
+            return max - min >= 5
+        }
+    }
+
+    struct ExploratoryRelationshipCandidateBuilder {
+        private let semanticResolver = SQMetricSemanticResolver()
+
+        func candidates(
+            from snapshots: [SQInsightFeatureSnapshot],
+            metricDefinitions: [SQMetricDefinition]
+        ) -> [SQViewLabExploratoryRelationshipCandidate] {
+            let customOutputDefinitions = metricDefinitions.filter {
+                $0.isEnabled
+                    && !$0.isArchived
+                    && !$0.isPreset
+                    && isOutputEligible(definition: $0)
+            }
+            guard !customOutputDefinitions.isEmpty else { return [] }
+
+            var candidates = [SQViewLabExploratoryRelationshipCandidate]()
+
+            for outputDefinition in customOutputDefinitions {
+                for inputDefinition in metricDefinitions where inputDefinition.id != outputDefinition.id {
+                    guard inputDefinition.isEnabled,
+                          !inputDefinition.isArchived,
+                          isInputEligible(definition: inputDefinition) else {
+                        continue
+                    }
+
+                    if let sameDayCandidate = relationshipCandidate(
+                        inputDefinition: inputDefinition,
+                        outputDefinition: outputDefinition,
+                        snapshots: snapshots,
+                        timing: "same day",
+                        dayShift: 0
+                    ) {
+                        candidates.append(sameDayCandidate)
+                    }
+
+                    if semanticResolver.signalRole(for: inputDefinition) == .behavior,
+                       let nextDayCandidate = relationshipCandidate(
+                        inputDefinition: inputDefinition,
+                        outputDefinition: outputDefinition,
+                        snapshots: snapshots,
+                        timing: "next day",
+                        dayShift: 1
+                       ) {
+                        candidates.append(nextDayCandidate)
+                    }
+                }
+            }
+
+            return candidates.sorted {
+                if abs($0.effectSize) != abs($1.effectSize) {
+                    return abs($0.effectSize) > abs($1.effectSize)
+                }
+                return $0.sampleCount > $1.sampleCount
+            }
+        }
+
+        private func relationshipCandidate(
+            inputDefinition: SQMetricDefinition,
+            outputDefinition: SQMetricDefinition,
+            snapshots: [SQInsightFeatureSnapshot],
+            timing: String,
+            dayShift: Int
+        ) -> SQViewLabExploratoryRelationshipCandidate? {
+            let snapshotsByDay = Dictionary(uniqueKeysWithValues: snapshots.map { ($0.anchorDayKey, $0) })
+            let calendar = Calendar.current
+
+            let samples = snapshots.compactMap { inputSnapshot -> (input: Double, output: Double)? in
+                let outputDate = calendar.date(byAdding: .day, value: dayShift, to: inputSnapshot.date) ?? inputSnapshot.date
+                let outputDayKey = outputDate.firebaseDailyDateKey
+                guard let inputFeature = inputSnapshot.signalFeatures[inputDefinition.id],
+                      let outputFeature = snapshotsByDay[outputDayKey]?.signalFeatures[outputDefinition.id],
+                      let outputValue = outputFeature.goalUtilityScore ?? outputFeature.normalizedValue.map({ $0 * 100 }) else {
+                    return nil
+                }
+
+                let inputValue = inputFeature.normalizedValue.map { $0 * 100 } ?? inputFeature.rawValue
+                return (inputValue, outputValue)
+            }
+
+            guard samples.count >= 14 else { return nil }
+            let outputValues = samples.map(\.output)
+            guard hasEnoughVariance(outputValues) else { return nil }
+
+            let lowHigh = bucketedSamples(
+                samples,
+                inputDefinition: inputDefinition
+            )
+            guard lowHigh.low.count >= 4, lowHigh.high.count >= 4 else { return nil }
+
+            let lowAverage = lowHigh.low.reduce(0, +) / Double(lowHigh.low.count)
+            let highAverage = lowHigh.high.reduce(0, +) / Double(lowHigh.high.count)
+            let effectSize = highAverage - lowAverage
+            guard abs(effectSize) >= 5 else { return nil }
+
+            return .init(
+                id: "\(inputDefinition.id)->\(outputDefinition.id)-\(timing)",
+                inputSignalId: inputDefinition.id,
+                inputTitle: inputDefinition.title,
+                outputSignalId: outputDefinition.id,
+                outputTitle: outputDefinition.title,
+                timing: timing,
+                effectSize: effectSize,
+                sampleCount: samples.count,
+                confidence: confidence(sampleCount: samples.count, effectSize: effectSize),
+                isCustomOutput: !outputDefinition.isPreset
+            )
+        }
+
+        private func bucketedSamples(
+            _ samples: [(input: Double, output: Double)],
+            inputDefinition: SQMetricDefinition
+        ) -> (low: [Double], high: [Double]) {
+            if inputDefinition.goalStyle == .avoidIt {
+                return (
+                    low: samples.filter { $0.input <= 0.01 }.map(\.output),
+                    high: samples.filter { $0.input > 0.01 }.map(\.output)
+                )
+            }
+
+            let sortedInputs = samples.map(\.input).sorted()
+            let median = sortedInputs[sortedInputs.count / 2]
+            return (
+                low: samples.filter { $0.input <= median }.map(\.output),
+                high: samples.filter { $0.input > median }.map(\.output)
+            )
+        }
+
+        private func isInputEligible(definition: SQMetricDefinition) -> Bool {
+            switch semanticResolver.signalRole(for: definition) {
+            case .behavior, .bodyStat, .context:
+                return true
+            case .symptom:
+                return [
+                    SQMetricId.stress,
+                    SQMetricId.anxiety,
+                    SQMetricId.soreness
+                ].contains(definition.id)
+            case .outcome:
+                return [
+                    SQMetricId.sleepQuality,
+                    SQMetricId.sleepHours,
+                    SQMetricId.energy,
+                    SQMetricId.mentalClarity,
+                    SQMetricId.mood
+                ].contains(definition.id)
+            case .automatic, .unknown:
+                return false
+            }
+        }
+
+        private func isOutputEligible(definition: SQMetricDefinition) -> Bool {
+            switch semanticResolver.signalRole(for: definition) {
+            case .outcome, .symptom:
+                return true
+            case .behavior, .bodyStat, .context, .automatic, .unknown:
+                return false
+            }
+        }
+
+        private func hasEnoughVariance(_ values: [Double]) -> Bool {
+            guard let min = values.min(), let max = values.max() else { return false }
+            return max - min >= 5
+        }
+
+        private func confidence(sampleCount: Int, effectSize: Double) -> String {
+            if sampleCount >= 28 && abs(effectSize) >= 9 {
+                return "high"
+            }
+
+            if sampleCount >= 21 && abs(effectSize) >= 7 {
+                return "medium"
+            }
+
+            return "low"
         }
     }
 
@@ -767,6 +1213,8 @@ private extension SQViewLabScenarioRunner {
                         .init(date: date, average: $0, minimum: nil, maximum: nil)
                     },
                     sleepData: makeSleepDashboardData(
+                        wakeDay: date,
+                        sleepHours: sleepHours,
                         score: derivedSleepScore(
                             sleepHours: sleepHours,
                             sleepQuality: sleepQuality
@@ -911,7 +1359,28 @@ private extension SQViewLabScenarioRunner {
         }
     }
 
-    func makeSleepDashboardData(score: Double) -> SQSleepDashboardData {
+    func makeSleepDashboardData(
+        wakeDay: Date,
+        sleepHours: Double,
+        score: Double
+    ) -> SQSleepDashboardData {
+        let calendar = Calendar.current
+        let wakeDayStart = calendar.startOfDay(for: wakeDay)
+        let wakeDate = calendar.date(byAdding: .hour, value: 7, to: wakeDayStart) ?? wakeDayStart
+        let sleepStartDate = wakeDate.addingTimeInterval(-(sleepHours + 0.25) * 3600)
+        let deepEndDate = sleepStartDate.addingTimeInterval(sleepHours * 3600 * 0.20)
+        let coreEndDate = deepEndDate.addingTimeInterval(sleepHours * 3600 * 0.55)
+        let remEndDate = coreEndDate.addingTimeInterval(sleepHours * 3600 * 0.25)
+        let night = SQSleepNight(
+            wakeDay: wakeDayStart,
+            sleepStartDate: sleepStartDate,
+            wakeDate: wakeDate,
+            segments: [
+                .init(phase: .deep, startDate: sleepStartDate, endDate: deepEndDate),
+                .init(phase: .core, startDate: deepEndDate, endDate: coreEndDate),
+                .init(phase: .rem, startDate: coreEndDate, endDate: remEndDate)
+            ]
+        )
         let clampedScore = clamp(score, min: 0, max: 100)
         let breakdown = SQSleepScoreBreakdown(
             durationScore: min(clampedScore * 0.40, SQSleepScoreBreakdown.maxDurationScore),
@@ -921,9 +1390,9 @@ private extension SQViewLabScenarioRunner {
         )
 
         return .init(
-            currentNights: [],
+            currentNights: [night],
             priorNights: [],
-            latestNight: nil,
+            latestNight: night,
             averageScore: breakdown,
             phaseAggregates: []
         )
@@ -976,6 +1445,10 @@ private extension SQViewLabScenarioRunner {
 
     func shadowContributorText(_ contributor: SQLifeScoreMetricContributor) -> String {
         "\(contributor.title): \(signedDecimal(contributor.contributionPoints))"
+    }
+
+    func relationshipCandidateText(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> String {
+        "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing) • effect \(signedDecimal(candidate.effectSize)) • n=\(candidate.sampleCount) • \(candidate.confidence)"
     }
 
     func signedDecimal(_ value: Double) -> String {
@@ -1047,6 +1520,35 @@ private extension SQViewLabScenarioRunner {
                     return $0.count > $1.count
                 }
                 return $0.label < $1.label
+            }
+    }
+
+    func shadowContributorAggregateRows(
+        for contributors: [SQLifeScoreMetricContributor]
+    ) -> [SQViewLabShadowContributorAggregateRow] {
+        Dictionary(grouping: contributors, by: \.metricId)
+            .compactMap { metricId, contributors -> SQViewLabShadowContributorAggregateRow? in
+                guard let first = contributors.first else { return nil }
+                let contributions = contributors.map(\.contributionPoints)
+                let daysAppeared = contributors.count
+                let averageContribution = contributions.reduce(0, +) / Double(daysAppeared)
+                let averageAbsoluteContribution = contributions.map(abs).reduce(0, +) / Double(daysAppeared)
+
+                return .init(
+                    metricId: metricId,
+                    title: first.title,
+                    daysAppeared: daysAppeared,
+                    averageContribution: averageContribution,
+                    averageAbsoluteContribution: averageAbsoluteContribution,
+                    positiveDays: contributions.filter { $0 > 0.05 }.count,
+                    negativeDays: contributions.filter { $0 < -0.05 }.count
+                )
+            }
+            .sorted {
+                if $0.daysAppeared != $1.daysAppeared {
+                    return $0.daysAppeared > $1.daysAppeared
+                }
+                return $0.averageAbsoluteContribution > $1.averageAbsoluteContribution
             }
     }
 

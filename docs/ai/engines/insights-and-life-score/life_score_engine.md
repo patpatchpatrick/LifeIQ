@@ -93,7 +93,9 @@ View Lab simulation reports are the calibration harness for score tuning. Before
 
 Preset semantic defaults should be non-clobbering after their one-time backfill. Future user edits to preset metric semantics must not be reset by normal preset migration.
 
-Contributor-based metric scoring should be developed in shadow mode first. The shadow model can read rich insight signal features and report custom/sensitive/behavior contribution totals, but the visible Life Score should not switch to contributor scoring until simulator reports are reviewed.
+Contributor-based metric scoring should be developed in shadow mode first. The shadow model can read rich insight signal features and report diagnostic custom/sensitive/behavior contribution totals, but the visible Life Score should not switch to contributor scoring until simulator reports are reviewed.
+
+Shadow scoring should distinguish diagnostic contributors from incremental contributors. Diagnostic contributors can include core preset signals for explanation, but only incremental contributors should be added to the current score in report-only shadow-adjusted outputs. Automatic core presets are already represented by existing components and should not double-count.
 
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 

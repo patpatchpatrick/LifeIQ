@@ -612,7 +612,9 @@ struct SQViewLabView: View {
                     "Custom Metric Surfaced: \(formattedPercent(report.customMetricSurfacePercentage))",
                     "Avg Shadow Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
                     "Avg Shadow Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
-                    "Avg Shadow Custom Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
+                    "Avg Diagnostic Contribution: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))",
+                    "Avg Incremental Contribution: \(formattedDouble(report.averageShadowIncrementalContributionTotal))",
+                    "Avg Custom Incremental Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
                     "Longest Hero Summary Streak: \(report.longestHeroSummaryRepeatStreak) days",
                     "Longest Hero Action Streak: \(report.longestHeroActionRepeatStreak) days",
                     "Longest Hero Family Streak: \(report.longestHeroFamilyRepeatStreak) days"
@@ -690,12 +692,36 @@ struct SQViewLabView: View {
                 values: report.lifeScoreComponentAvailability.map(distributionText)
             )
             outputGroup(
-                title: "Top Shadow Contributors",
-                values: report.topShadowContributorDistribution.map(distributionText)
+                title: "Diagnostic Shadow Contributors",
+                values: report.diagnosticShadowContributorAggregates.map(contributorAggregateText)
             )
             outputGroup(
-                title: "Top Shadow Custom Contributors",
-                values: report.topShadowCustomContributorDistribution.map(distributionText)
+                title: "Incremental Shadow Contributors",
+                values: report.incrementalShadowContributorAggregates.map(contributorAggregateText)
+            )
+            outputGroup(
+                title: "Custom Incremental Contributors",
+                values: report.customIncrementalShadowContributorAggregates.map(contributorAggregateText)
+            )
+            outputGroup(
+                title: "Dynamic Metric Drivers",
+                values: report.dynamicMetricDriverCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Dynamic Metric Changes",
+                values: report.dynamicMetricChangeCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Metric Candidates",
+                values: report.customMetricDriverChangeCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Exploratory Relationships",
+                values: report.exploratoryRelationshipCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Output Relationships",
+                values: report.customOutputRelationshipCandidateDistribution.map(distributionText)
             )
         }
         .padding(.SQSpace.l)
@@ -724,7 +750,7 @@ struct SQViewLabView: View {
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Shadow \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • custom \(formattedDouble(day.shadowCustomContributionTotal))")
+                    Text("Shadow \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • incremental \(formattedDouble(day.shadowIncrementalContributionTotal))")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                 }
@@ -737,6 +763,15 @@ struct SQViewLabView: View {
 
     private func distributionText(_ row: SQViewLabSimulationDistributionRow) -> String {
         "\(row.label) — \(row.count) days (\(formattedPercent(row.percentage)))"
+    }
+
+    private func contributorAggregateText(_ row: SQViewLabShadowContributorAggregateRow) -> String {
+        "\(row.title) — \(row.daysAppeared) days, avg \(formattedSignedDouble(row.averageContribution)), avg abs \(formattedDouble(row.averageAbsoluteContribution)), +\(row.positiveDays) / -\(row.negativeDays)"
+    }
+
+    private func formattedSignedDouble(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + formattedDouble(value)
     }
 
     private func formattedPercent(_ value: Double) -> String {
