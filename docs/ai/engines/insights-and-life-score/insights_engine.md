@@ -102,7 +102,13 @@ Simulator comparisons should keep seed and reference date fixed. The copied repo
 
 Dynamic custom metric driver/change detection starts with low-risk trend/baseline insights. Custom metrics may surface as Today cards only when enabled, not archived, insight mode is on, enough recent logged values exist, variance is sufficient, and the detected shift is strong. Keep custom metric surfacing capped so a custom metric can appear without taking over the dashboard.
 
+Today surfacing gives custom trend/baseline insights one protected supporting-card slot, but custom metric insights should not become the hero yet. If a custom candidate is generated but not surfaced, View Lab should report whether it lost to preset insight ranking, missed protected-slot strength, or was suppressed by the one-custom-card cap.
+
 Generated exploratory custom relationships remain report-only until their diagnostics are trustworthy. Curated preset relationships remain the user-visible source of truth until custom candidates show enough sample size, variance, recency, effect size, and clear near-miss/rejection reasons in simulator reports.
+
+Custom relationship diagnostics should classify candidates before surfacing: `actionableDriverCandidate`, `coMovementCandidate`, `timingAmbiguousCandidate`, or `rejectedNearMiss`. Same-day outcome/outcome pairs and non-recovery symptom/outcome pairs are co-movement by default. Evening behavior -> evening custom outcome same-day pairs are timing-ambiguous; next-day behavior relationships are preferred for surfacing.
+
+The custom relationship would-surface report is still diagnostic-only. A candidate should only qualify there if it is actionable, medium/high confidence, has enough samples in both buckets, clears effect-size thresholds, has plausible timing, and passes sensitivity rules.
 
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
 

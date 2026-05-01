@@ -819,6 +819,7 @@ final class SQInsightsService: SQInsightsServicing {
             sleepData: input.sleepData,
             restingHeartRateSummaries: input.restingHeartRateSummaries
         )
+        let customMetricIds = Set(input.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         let analyzedDayCount = snapshots.filter { snapshot in
             !snapshot.rawSignalValues.isEmpty || snapshot.hasWorkout
@@ -875,7 +876,8 @@ final class SQInsightsService: SQInsightsServicing {
             from: noveltyAdjustedInsights,
             surfaceIntent: input.timeRange.insightSurfaceIntent,
             drivers: drivers,
-            changes: changes
+            changes: changes,
+            customMetricIds: customMetricIds
         )
         let insights = freshnessAdjustedInsights(
             from: curatedInsights,
@@ -1150,14 +1152,16 @@ final class SQInsightsService: SQInsightsServicing {
         from deduplicatedInsights: [SQInsight],
         surfaceIntent: SQInsightSurfaceIntent,
         drivers: [SQInsightDriver],
-        changes: [SQInsightChange]
+        changes: [SQInsightChange],
+        customMetricIds: Set<String>
     ) -> [SQInsight] {
         switch surfaceIntent {
         case .today:
             return curatedTodayInsights(
                 from: deduplicatedInsights,
                 drivers: drivers,
-                changes: changes
+                changes: changes,
+                customMetricIds: customMetricIds
             )
         case .pastWeek:
             return curatedWeeklyInsights(from: deduplicatedInsights)
@@ -1171,30 +1175,73 @@ final class SQInsightsService: SQInsightsServicing {
     private func curatedTodayInsights(
         from deduplicatedInsights: [SQInsight],
         drivers: [SQInsightDriver],
-        changes: [SQInsightChange]
+        changes: [SQInsightChange],
+        customMetricIds: Set<String>
     ) -> [SQInsight] {
+        let nonCustomInsights = deduplicatedInsights.filter {
+            !isCustomMetricInsight($0, customMetricIds: customMetricIds)
+        }
         let heroInsight = todayHeroInsight(
-            from: deduplicatedInsights,
+            from: nonCustomInsights,
             drivers: drivers,
             changes: changes
         )
 
         let remainingInsights = deduplicatedInsights.filter { $0.id != heroInsight?.id }
-        let supportingInsights = curateInsights(
+        let customInsight = protectedCustomMetricSupportingInsight(
             from: remainingInsights,
+            customMetricIds: customMetricIds
+        )
+        let nonCustomRemainingInsights = remainingInsights.filter {
+            !isCustomMetricInsight($0, customMetricIds: customMetricIds)
+        }
+        let maximumSupportingCount = heroInsight == nil ? 4 : 3
+        let nonCustomSupportingLimit = customInsight == nil
+            ? maximumSupportingCount
+            : max(0, maximumSupportingCount - 1)
+        let supportingInsights = curateInsights(
+            from: nonCustomRemainingInsights,
             preferredBuckets: [
                 [.risk, .opportunity],
                 [.followUp, .trend, .baselineChange],
                 [.relationship]
             ],
-            maximumCount: heroInsight == nil ? 4 : 3
+            maximumCount: nonCustomSupportingLimit
         )
-
-        if let heroInsight {
-            return [heroInsight] + supportingInsights
+        var supportingWithCustom = supportingInsights
+        if let customInsight {
+            supportingWithCustom.append(customInsight)
         }
 
-        return supportingInsights
+        if let heroInsight {
+            return [heroInsight] + supportingWithCustom
+        }
+
+        return supportingWithCustom
+    }
+
+    private func protectedCustomMetricSupportingInsight(
+        from insights: [SQInsight],
+        customMetricIds: Set<String>
+    ) -> SQInsight? {
+        insights
+            .filter { isCustomMetricInsight($0, customMetricIds: customMetricIds) }
+            .filter { $0.rankingScore >= 24 || $0.confidence == .medium || $0.confidence == .high }
+            .sorted(by: { sortInsightsForDisplay($0, $1) })
+            .first
+    }
+
+    private func isCustomMetricInsight(
+        _ insight: SQInsight,
+        customMetricIds: Set<String>
+    ) -> Bool {
+        guard !customMetricIds.isEmpty else { return false }
+        if insight.familyKey.hasPrefix("customMetric.") {
+            return true
+        }
+
+        let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+        return signalIds.contains { customMetricIds.contains($0) }
     }
 
     private func todayHeroInsight(

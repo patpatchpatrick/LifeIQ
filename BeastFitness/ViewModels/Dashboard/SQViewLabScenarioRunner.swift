@@ -122,6 +122,26 @@ struct SQViewLabDynamicMetricCandidate: Identifiable, Hashable {
     let strength: Double
 }
 
+enum SQViewLabCustomRelationshipCandidateType: String, Hashable {
+    case actionableDriverCandidate
+    case coMovementCandidate
+    case timingAmbiguousCandidate
+    case rejectedNearMiss
+
+    var title: String {
+        switch self {
+        case .actionableDriverCandidate:
+            return "actionableDriverCandidate"
+        case .coMovementCandidate:
+            return "coMovementCandidate"
+        case .timingAmbiguousCandidate:
+            return "timingAmbiguousCandidate"
+        case .rejectedNearMiss:
+            return "rejectedNearMiss"
+        }
+    }
+}
+
 struct SQViewLabExploratoryRelationshipCandidate: Identifiable, Hashable {
     let id: String
     let inputSignalId: String
@@ -136,7 +156,11 @@ struct SQViewLabExploratoryRelationshipCandidate: Identifiable, Hashable {
     let lowBucketAverage: Double?
     let highBucketAverage: Double?
     let confidence: String
+    let confidenceExplanation: String
     let isCustomOutput: Bool
+    let inputSensitivity: SQMetricSensitivity
+    let outputSensitivity: SQMetricSensitivity
+    let candidateType: SQViewLabCustomRelationshipCandidateType
     let rejectionReason: String?
 
     var label: String {
@@ -157,6 +181,8 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let heroFamilyKey: String
     let surfacedInsightTitles: [String]
     let surfacedCustomInsightTitles: [String]
+    let generatedCustomMetricInsightCandidateTitles: [String]
+    let customMetricInsightRejectionReasons: [String]
     let scoreDelta: Int?
     let componentScores: [String: Int]
     let topDriverTitles: [String]
@@ -184,8 +210,13 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let exploratoryRelationshipCandidateLabels: [String]
     let customOutputRelationshipCandidateLabels: [String]
     let topCustomRelationshipCandidateTexts: [String]
+    let actionableCustomRelationshipCandidateLabels: [String]
+    let coMovementCustomRelationshipCandidateLabels: [String]
+    let timingAmbiguousCustomRelationshipCandidateLabels: [String]
     let nearMissCustomRelationshipCandidateLabels: [String]
     let nearMissCustomRelationshipCandidateTexts: [String]
+    let wouldSurfaceCustomRelationshipTitles: [String]
+    let rejectedRelationshipSurfacingReasons: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -220,6 +251,8 @@ struct SQViewLabSimulationReport {
     let heroFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedInsightDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedCustomInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let generatedCustomMetricInsightCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let customMetricInsightRejectionReasonDistribution: [SQViewLabSimulationDistributionRow]
     let scoreDeltaDistribution: [SQViewLabSimulationDistributionRow]
     let componentScoreDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverDistribution: [SQViewLabSimulationDistributionRow]
@@ -248,8 +281,14 @@ struct SQViewLabSimulationReport {
     let customMetricDriverChangeCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let exploratoryRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let customOutputRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let actionableCustomRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let coMovementCustomRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let timingAmbiguousCustomRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let topCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
     let nearMissCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
+    let wouldSurfaceCustomRelationshipDistribution: [SQViewLabSimulationDistributionRow]
+    let rejectedRelationshipSurfacingReasonDistribution: [SQViewLabSimulationDistributionRow]
+    let wouldSurfaceCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -314,11 +353,13 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         let featureBuilder = SQInsightFeatureBuilder()
         let shadowContributorBuilder = SQLifeScoreMetricContributorBuilder()
         let dynamicMetricCandidateBuilder = DynamicMetricCandidateBuilder()
+        let dynamicMetricInsightBuilder = SQDynamicMetricInsightBuilder()
         let relationshipCandidateBuilder = ExploratoryRelationshipCandidateBuilder()
 
         var outputs = [SQViewLabSimulationDayOutput]()
         var allCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         var allNearMissCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
+        var allWouldSurfaceCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         for index in generatedDays.indices {
@@ -373,6 +414,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 from: featureSnapshots,
                 metricDefinitions: request.metricDefinitions
             )
+            let generatedCustomMetricInsights = dynamicMetricInsightBuilder.buildInsights(
+                from: featureSnapshots,
+                metricDefinitions: request.metricDefinitions,
+                surfaceIntent: .today,
+                referenceDate: currentDay.date
+            )
             let relationshipDiagnostics = relationshipCandidateBuilder.candidates(
                 from: featureSnapshots,
                 metricDefinitions: request.metricDefinitions
@@ -384,6 +431,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             allNearMissCustomRelationshipCandidates.append(
                 contentsOf: nearMissRelationshipCandidates.filter(\.isCustomOutput)
+            )
+            let wouldSurfaceRelationshipCandidates = wouldSurfaceCustomRelationshipCandidates(
+                from: relationshipCandidates
+            )
+            allWouldSurfaceCustomRelationshipCandidates.append(
+                contentsOf: wouldSurfaceRelationshipCandidates
             )
             let surfacedSignalIds = insightsResult.insights.flatMap { insight in
                 [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
@@ -409,6 +462,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 guard signalIds.contains(where: { customMetricIds.contains($0) }) else { return nil }
                 return insight.title
             }
+            let generatedCustomMetricInsightCandidateTitles = generatedCustomMetricInsights.map(\.title)
+            let customInsightRejectionReasons = customMetricInsightRejectionReasons(
+                generatedInsights: generatedCustomMetricInsights,
+                surfacedInsights: insightsResult.insights,
+                customMetricIds: customMetricIds
+            )
             let componentScores = Dictionary(
                 uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
             )
@@ -445,6 +504,19 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 .filter(\.isCustomOutput)
                 .prefix(8)
                 .map(\.label)
+            let relationshipDiagnosticsForTypes = relationshipCandidates + nearMissRelationshipCandidates
+            let actionableCustomRelationshipCandidateLabels = relationshipCandidates
+                .filter { $0.isCustomOutput && $0.candidateType == .actionableDriverCandidate }
+                .prefix(8)
+                .map(\.label)
+            let coMovementCustomRelationshipCandidateLabels = relationshipDiagnosticsForTypes
+                .filter { $0.isCustomOutput && $0.candidateType == .coMovementCandidate }
+                .prefix(8)
+                .map(\.label)
+            let timingAmbiguousCustomRelationshipCandidateLabels = relationshipDiagnosticsForTypes
+                .filter { $0.isCustomOutput && $0.candidateType == .timingAmbiguousCandidate }
+                .prefix(8)
+                .map(\.label)
             let topCustomRelationshipCandidateTexts = relationshipCandidates
                 .filter(\.isCustomOutput)
                 .prefix(5)
@@ -457,6 +529,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 .filter(\.isCustomOutput)
                 .prefix(5)
                 .map(relationshipCandidateText)
+            let wouldSurfaceCustomRelationshipTitles = wouldSurfaceRelationshipCandidates
+                .prefix(5)
+                .map(wouldSurfaceRelationshipTitle)
+            let relationshipSurfacingRejectionReasons = rejectedRelationshipSurfacingReasons(
+                for: relationshipCandidates.filter(\.isCustomOutput)
+            )
             let workoutDescriptions = currentDay.workouts.map {
                 "\($0.activityType.name) • perf \(formattedOptionalFloat($0.ratingUserPerformance)) • diff \(formattedOptionalFloat($0.ratingDifficulty))"
             }
@@ -470,6 +548,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 heroFamilyKey: heroFamilyKey,
                 surfacedInsightTitles: surfacedInsightTitles,
                 surfacedCustomInsightTitles: surfacedCustomInsightTitles,
+                generatedCustomMetricInsightCandidateTitles: generatedCustomMetricInsightCandidateTitles,
+                customMetricInsightRejectionReasons: customInsightRejectionReasons,
                 scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
                 componentScores: componentScores,
                 topDriverTitles: topDriverTitles,
@@ -497,8 +577,13 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 exploratoryRelationshipCandidateLabels: exploratoryRelationshipCandidateLabels,
                 customOutputRelationshipCandidateLabels: customOutputRelationshipCandidateLabels,
                 topCustomRelationshipCandidateTexts: topCustomRelationshipCandidateTexts,
+                actionableCustomRelationshipCandidateLabels: actionableCustomRelationshipCandidateLabels,
+                coMovementCustomRelationshipCandidateLabels: coMovementCustomRelationshipCandidateLabels,
+                timingAmbiguousCustomRelationshipCandidateLabels: timingAmbiguousCustomRelationshipCandidateLabels,
                 nearMissCustomRelationshipCandidateLabels: nearMissCustomRelationshipCandidateLabels,
                 nearMissCustomRelationshipCandidateTexts: nearMissCustomRelationshipCandidateTexts,
+                wouldSurfaceCustomRelationshipTitles: wouldSurfaceCustomRelationshipTitles,
+                rejectedRelationshipSurfacingReasons: relationshipSurfacingRejectionReasons,
                 morningValues: currentDay.morningValues,
                 eveningValues: currentDay.eveningValues,
                 restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -552,6 +637,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             heroFamilyDistribution: distributionRows(for: outputs.map(\.heroFamilyKey)),
             surfacedInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedInsightTitles)),
             surfacedCustomInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedCustomInsightTitles)),
+            generatedCustomMetricInsightCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.generatedCustomMetricInsightCandidateTitles)
+            ),
+            customMetricInsightRejectionReasonDistribution: distributionRows(
+                for: outputs.flatMap(\.customMetricInsightRejectionReasons)
+            ),
             scoreDeltaDistribution: distributionRows(for: outputs.map { scoreDeltaBucket($0.scoreDelta) }),
             componentScoreDistribution: distributionRows(
                 for: outputs.flatMap { output in
@@ -620,12 +711,30 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             customOutputRelationshipCandidateDistribution: distributionRows(
                 for: outputs.flatMap(\.customOutputRelationshipCandidateLabels)
             ),
+            actionableCustomRelationshipCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.actionableCustomRelationshipCandidateLabels)
+            ),
+            coMovementCustomRelationshipCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.coMovementCustomRelationshipCandidateLabels)
+            ),
+            timingAmbiguousCustomRelationshipCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.timingAmbiguousCustomRelationshipCandidateLabels)
+            ),
             topCustomRelationshipCandidates: topRelationshipCandidates(
                 from: allCustomRelationshipCandidates
             ),
             nearMissCustomRelationshipCandidates: topRelationshipCandidates(
                 from: allNearMissCustomRelationshipCandidates,
                 excludingIds: Set(allCustomRelationshipCandidates.map(\.id))
+            ),
+            wouldSurfaceCustomRelationshipDistribution: distributionRows(
+                for: outputs.flatMap(\.wouldSurfaceCustomRelationshipTitles)
+            ),
+            rejectedRelationshipSurfacingReasonDistribution: distributionRows(
+                for: outputs.flatMap(\.rejectedRelationshipSurfacingReasons)
+            ),
+            wouldSurfaceCustomRelationshipCandidates: topRelationshipCandidates(
+                from: allWouldSurfaceCustomRelationshipCandidates
             ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
@@ -974,6 +1083,19 @@ private extension SQViewLabScenarioRunner {
             let rejectionReason = rejectionReasons.isEmpty
                 ? nil
                 : rejectionReasons.joined(separator: "; ")
+            let confidenceValue = confidence(sampleCount: samples.count, effectSize: effectSize)
+            let candidateType = customRelationshipCandidateType(
+                inputDefinition: inputDefinition,
+                outputDefinition: outputDefinition,
+                timing: timing,
+                rejectionReason: rejectionReason
+            )
+            let confidenceExplanation = confidenceExplanation(
+                sampleCount: samples.count,
+                effectSize: effectSize,
+                lowBucketCount: lowHigh.low.count,
+                highBucketCount: lowHigh.high.count
+            )
 
             return .init(
                 id: "\(inputDefinition.id)->\(outputDefinition.id)-\(timing)",
@@ -988,8 +1110,12 @@ private extension SQViewLabScenarioRunner {
                 highBucketCount: lowHigh.high.count,
                 lowBucketAverage: lowAverage,
                 highBucketAverage: highAverage,
-                confidence: confidence(sampleCount: samples.count, effectSize: effectSize),
+                confidence: confidenceValue,
+                confidenceExplanation: confidenceExplanation,
                 isCustomOutput: !outputDefinition.isPreset,
+                inputSensitivity: semanticResolver.sensitivity(for: inputDefinition),
+                outputSensitivity: semanticResolver.sensitivity(for: outputDefinition),
+                candidateType: candidateType,
                 rejectionReason: rejectionReason
             )
         }
@@ -1043,6 +1169,59 @@ private extension SQViewLabScenarioRunner {
             case .behavior, .bodyStat, .context, .automatic, .unknown:
                 return false
             }
+        }
+
+        private func customRelationshipCandidateType(
+            inputDefinition: SQMetricDefinition,
+            outputDefinition: SQMetricDefinition,
+            timing: String,
+            rejectionReason: String?
+        ) -> SQViewLabCustomRelationshipCandidateType {
+            let inputRole = semanticResolver.signalRole(for: inputDefinition)
+            let outputRole = semanticResolver.signalRole(for: outputDefinition)
+
+            if inputRole == .outcome && outputRole == .outcome && timing == "same day" {
+                return .coMovementCandidate
+            }
+
+            if inputRole == .symptom,
+               outputRole == .outcome,
+               timing == "same day",
+               !isSleepRecoveryStateSignal(inputDefinition.id) {
+                return .coMovementCandidate
+            }
+
+            if inputRole == .behavior,
+               timing == "same day",
+               isSameDayBehaviorTimingAmbiguous(
+                inputDefinition: inputDefinition,
+                outputDefinition: outputDefinition
+               ) {
+                return .timingAmbiguousCandidate
+            }
+
+            if rejectionReason != nil {
+                return .rejectedNearMiss
+            }
+
+            return .actionableDriverCandidate
+        }
+
+        private func isSameDayBehaviorTimingAmbiguous(
+            inputDefinition: SQMetricDefinition,
+            outputDefinition: SQMetricDefinition
+        ) -> Bool {
+            inputDefinition.periods.contains(.evening)
+                && outputDefinition.periods.contains(.evening)
+                && inputDefinition.periods != Set([SQMetricPeriod.morning])
+        }
+
+        private func isSleepRecoveryStateSignal(_ signalId: String) -> Bool {
+            [
+                SQMetricId.sleepQuality,
+                SQMetricId.sleepHours,
+                SQMetricId.soreness
+            ].contains(signalId)
         }
 
         private func hasEnoughVariance(_ values: [Double]) -> Bool {
@@ -1103,6 +1282,35 @@ private extension SQViewLabScenarioRunner {
             }
 
             return "low"
+        }
+
+        private func confidenceExplanation(
+            sampleCount: Int,
+            effectSize: Double,
+            lowBucketCount: Int,
+            highBucketCount: Int
+        ) -> String {
+            if sampleCount >= 28 && abs(effectSize) >= 9 {
+                return "high: at least 28 paired samples and a 9+ point effect."
+            }
+
+            if sampleCount >= 21 && abs(effectSize) >= 7 {
+                return "medium: at least 21 paired samples and a 7+ point effect."
+            }
+
+            if sampleCount < 21 {
+                return "low: needs at least 21 paired samples for medium confidence."
+            }
+
+            if lowBucketCount < 6 || highBucketCount < 6 {
+                return "low: one bucket has fewer than 6 samples."
+            }
+
+            if abs(effectSize) < 7 {
+                return "low: effect is below the 7-point medium-confidence threshold."
+            }
+
+            return "low: candidate needs stronger evidence before surfacing."
         }
     }
 
@@ -1612,7 +1820,114 @@ private extension SQViewLabScenarioRunner {
         let lowAverage = candidate.lowBucketAverage.map(formattedDecimal) ?? "n/a"
         let highAverage = candidate.highBucketAverage.map(formattedDecimal) ?? "n/a"
         let rejectionText = candidate.rejectionReason.map { " • rejected: \($0)" } ?? ""
-        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing) • effect \(signedDecimal(candidate.effectSize)) • n=\(candidate.sampleCount) • low \(candidate.lowBucketCount) avg \(lowAverage) • high \(candidate.highBucketCount) avg \(highAverage) • \(candidate.confidence)\(rejectionText)"
+        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing) • \(candidate.candidateType.title) • effect \(signedDecimal(candidate.effectSize)) • n=\(candidate.sampleCount) • low \(candidate.lowBucketCount) avg \(lowAverage) • high \(candidate.highBucketCount) avg \(highAverage) • \(candidate.confidence) (\(candidate.confidenceExplanation))\(rejectionText)"
+    }
+
+    func wouldSurfaceCustomRelationshipCandidates(
+        from candidates: [SQViewLabExploratoryRelationshipCandidate]
+    ) -> [SQViewLabExploratoryRelationshipCandidate] {
+        candidates
+            .filter { candidate in
+                candidate.isCustomOutput
+                    && candidate.isAccepted
+                    && candidate.candidateType == .actionableDriverCandidate
+                    && candidate.confidence != "low"
+                    && candidate.sampleCount >= 21
+                    && candidate.lowBucketCount >= 6
+                    && candidate.highBucketCount >= 6
+                    && abs(candidate.effectSize) >= 7
+                    && candidate.inputSensitivity != .medicationLike
+            }
+            .sorted {
+                if $0.confidence != $1.confidence {
+                    return $0.confidence == "high"
+                }
+
+                return abs($0.effectSize) > abs($1.effectSize)
+            }
+    }
+
+    func rejectedRelationshipSurfacingReasons(
+        for candidates: [SQViewLabExploratoryRelationshipCandidate]
+    ) -> [String] {
+        candidates.compactMap { candidate in
+            guard candidate.isAccepted else { return nil }
+
+            if candidate.candidateType == .coMovementCandidate {
+                return "\(candidate.label): co-movement only"
+            }
+
+            if candidate.candidateType == .timingAmbiguousCandidate {
+                return "\(candidate.label): timing ambiguous"
+            }
+
+            if candidate.inputSensitivity == .medicationLike {
+                return "\(candidate.label): medication-like input"
+            }
+
+            if candidate.confidence == "low" {
+                return "\(candidate.label): low confidence"
+            }
+
+            if candidate.lowBucketCount < 6 || candidate.highBucketCount < 6 {
+                return "\(candidate.label): bucket too small for surfacing"
+            }
+
+            if abs(candidate.effectSize) < 7 {
+                return "\(candidate.label): effect below surfacing threshold"
+            }
+
+            return nil
+        }
+    }
+
+    func wouldSurfaceRelationshipTitle(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> String {
+        let directionText = candidate.effectSize >= 0 ? "better" : "lower"
+        if candidate.timing == "next day" {
+            return "\(candidate.inputTitle) has lined up with \(directionText) next-day \(candidate.outputTitle)"
+        }
+
+        return "\(candidate.inputTitle) has lined up with \(directionText) \(candidate.outputTitle)"
+    }
+
+    func customMetricInsightRejectionReasons(
+        generatedInsights: [SQInsight],
+        surfacedInsights: [SQInsight],
+        customMetricIds: Set<String>
+    ) -> [String] {
+        guard !generatedInsights.isEmpty else { return [] }
+
+        let surfacedIds = Set(surfacedInsights.map(\.id))
+        let surfacedCustomInsightCount = surfacedInsights.filter { insight in
+            isCustomMetricInsight(insight, customMetricIds: customMetricIds)
+        }
+        .count
+
+        return generatedInsights.compactMap { insight -> String? in
+            guard !surfacedIds.contains(insight.id) else { return nil }
+
+            if insight.rankingScore < 24 && insight.confidence == .low {
+                return "\(insight.title): insufficient protected-slot strength"
+            }
+
+            if surfacedCustomInsightCount > 0 {
+                return "\(insight.title): suppressed by custom insight cap"
+            }
+
+            return "\(insight.title): lost to higher-ranked preset insight"
+        }
+    }
+
+    func isCustomMetricInsight(
+        _ insight: SQInsight,
+        customMetricIds: Set<String>
+    ) -> Bool {
+        if insight.familyKey.hasPrefix("customMetric.") {
+            return true
+        }
+
+        let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+        return signalIds.contains { customMetricIds.contains($0) }
     }
 
     func topRelationshipCandidates(

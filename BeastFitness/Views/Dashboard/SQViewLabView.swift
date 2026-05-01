@@ -181,7 +181,9 @@ struct SQViewLabView: View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             simulationControls
 
-            if let report = controller.selectedSimulationReport {
+            if controller.isAllSimulationPersonasSelected {
+                allPersonasSimulationSummary
+            } else if let report = controller.selectedSimulationReport {
                 simulationSummary(report)
                 simulationDistributions(report)
                 simulationDayPreview(report)
@@ -479,6 +481,7 @@ struct SQViewLabView: View {
                     .sqForegroundColor(.textSecondary)
 
                 Picker("Persona", selection: $controller.selectedSimulationPersonaId) {
+                    Text("All Personas").tag(SQViewLabController.allSimulationPersonasId)
                     ForEach(controller.simulationPersonas) { persona in
                         Text(persona.title).tag(persona.id)
                     }
@@ -529,7 +532,7 @@ struct SQViewLabView: View {
                 Button {
                     controller.previewSimulationReport()
                 } label: {
-                    Text("Preview Report")
+                    Text(controller.isAllSimulationPersonasSelected ? "Preview All" : "Preview Report")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.dashboardGlowBlue)
                         .frame(maxWidth: .infinity)
@@ -544,7 +547,7 @@ struct SQViewLabView: View {
                 Button {
                     controller.copySimulationReport()
                 } label: {
-                    Text("Copy Report")
+                    Text(controller.isAllSimulationPersonasSelected ? "Copy All" : "Copy Report")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.dashboardGlowBlue)
                         .frame(maxWidth: .infinity)
@@ -557,7 +560,25 @@ struct SQViewLabView: View {
                 }
             }
 
-            if let persona = controller.selectedSimulationPersona {
+            if controller.isAllSimulationPersonasSelected {
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    Text("All Personas")
+                        .sqFont(SQFont.FontType.title4)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("Preview or copy runs every simulator persona with the selected duration, seed, and reference date, then groups the markdown output by persona.")
+                        .sqFont(SQFont.FontType.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    outputGroup(
+                        title: "Included",
+                        values: controller.simulationPersonas.map(\.title)
+                    )
+                }
+                .padding(.SQSpace.l)
+                .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+            } else if let persona = controller.selectedSimulationPersona {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
                     Text(persona.title)
                         .sqFont(SQFont.FontType.title4)
@@ -586,6 +607,27 @@ struct SQViewLabView: View {
                 .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
             }
         }
+    }
+
+    private var allPersonasSimulationSummary: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Combined Simulation Report")
+                .sqFont(SQFont.FontType.title4)
+                .sqForegroundColor(.textPrimary)
+
+            outputGroup(
+                title: "Output",
+                values: [
+                    "Personas: \(controller.simulationPersonas.count)",
+                    "Duration: \(controller.selectedSimulationDayCount.title)",
+                    "Seed: \(controller.selectedSimulationSeed)",
+                    "Reference Date: \(controller.selectedSimulationReferenceDate.formattedString(with: .medium))",
+                    "Use Preview All or Copy All to generate the grouped text report."
+                ]
+            )
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private func simulationSummary(_ report: SQViewLabSimulationReport) -> some View {
@@ -654,6 +696,14 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Custom Surfaced Insights",
                 values: report.surfacedCustomInsightDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Generated Custom Metric Insights",
+                values: report.generatedCustomMetricInsightCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Insight Rejections",
+                values: report.customMetricInsightRejectionReasonDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Score Deltas",
@@ -728,12 +778,36 @@ struct SQViewLabView: View {
                 values: report.customOutputRelationshipCandidateDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Actionable Relationships",
+                values: report.actionableCustomRelationshipCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Co-Movement Relationships",
+                values: report.coMovementCustomRelationshipCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Timing-Ambiguous Relationships",
+                values: report.timingAmbiguousCustomRelationshipCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Top Custom Relationships",
                 values: report.topCustomRelationshipCandidates.map(relationshipCandidateText)
             )
             outputGroup(
                 title: "Near-Miss Custom Relationships",
                 values: report.nearMissCustomRelationshipCandidates.map(relationshipCandidateText)
+            )
+            outputGroup(
+                title: "Would Surface Relationships",
+                values: report.wouldSurfaceCustomRelationshipDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Would Surface Relationship Details",
+                values: report.wouldSurfaceCustomRelationshipCandidates.map(relationshipCandidateText)
+            )
+            outputGroup(
+                title: "Rejected Relationship Surfacing",
+                values: report.rejectedRelationshipSurfacingReasonDistribution.map(distributionText)
             )
         }
         .padding(.SQSpace.l)
@@ -785,7 +859,7 @@ struct SQViewLabView: View {
         let lowAverage = candidate.lowBucketAverage.map(formattedDouble) ?? "n/a"
         let highAverage = candidate.highBucketAverage.map(formattedDouble) ?? "n/a"
         let rejectionText = candidate.rejectionReason.map { " rejected: \($0)" } ?? ""
-        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing), effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), \(candidate.confidence)\(rejectionText)"
+        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing), \(candidate.candidateType.title), effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), \(candidate.confidence)\(rejectionText)"
     }
 
     private func formattedSignedDouble(_ value: Double) -> String {

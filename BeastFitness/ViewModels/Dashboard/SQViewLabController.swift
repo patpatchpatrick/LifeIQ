@@ -47,6 +47,8 @@ import UIKit
     }
 
     let id = UUID().uuidString
+    static let allSimulationPersonasId = "__all_simulation_personas__"
+
     private let hub: EventHub
     private let scenarioRunner: SQViewLabScenarioRunning
     @ObservationIgnored private var runtimeCache = [String: SQViewLabScenarioRuntime]()
@@ -103,24 +105,34 @@ import UIKit
     }
 
     var selectedSimulationPersona: SQViewLabSimulationPersona? {
-        simulationPersonas.first(where: { $0.id == selectedSimulationPersonaId }) ?? simulationPersonas.first
+        guard selectedSimulationPersonaId != Self.allSimulationPersonasId else { return nil }
+        return simulationPersonas.first(where: { $0.id == selectedSimulationPersonaId }) ?? simulationPersonas.first
+    }
+
+    var isAllSimulationPersonasSelected: Bool {
+        selectedSimulationPersonaId == Self.allSimulationPersonasId
     }
 
     var selectedSimulationRequest: SQViewLabSimulationRequest? {
         guard let selectedSimulationPersona else { return nil }
 
-        return .init(
-            persona: selectedSimulationPersona,
-            dayCount: selectedSimulationDayCount,
-            seed: selectedSimulationSeed,
-            referenceDate: selectedSimulationReferenceDate,
-            metricDefinitions: Self.defaultMetricDefinitions(for: selectedSimulationPersona)
-        )
+        return simulationRequest(for: selectedSimulationPersona)
     }
 
     var selectedSimulationReport: SQViewLabSimulationReport? {
         guard let selectedSimulationRequest else { return nil }
         return simulationReport(for: selectedSimulationRequest)
+    }
+
+    var selectedSimulationReports: [SQViewLabSimulationReport] {
+        if isAllSimulationPersonasSelected {
+            return simulationPersonas.map { persona in
+                let request = simulationRequest(for: persona)
+                return simulationReport(for: request)
+            }
+        }
+
+        return selectedSimulationReport.map { [$0] } ?? []
     }
 
     func scenarios(for domain: Domain) -> [Scenario] {
@@ -149,6 +161,16 @@ import UIKit
         return report
     }
 
+    func simulationRequest(for persona: SQViewLabSimulationPersona) -> SQViewLabSimulationRequest {
+        .init(
+            persona: persona,
+            dayCount: selectedSimulationDayCount,
+            seed: selectedSimulationSeed,
+            referenceDate: selectedSimulationReferenceDate,
+            metricDefinitions: Self.defaultMetricDefinitions(for: persona)
+        )
+    }
+
     func focus(on scenario: Scenario) {
         selectedDomain = scenario.domain
         selectedScenarioId = scenario.id
@@ -174,9 +196,10 @@ import UIKit
     }
 
     func previewSimulationReport() {
-        guard let selectedSimulationReport else { return }
-        previewTitle = "Simulation Report"
-        previewMarkdown = simulationMarkdown(for: selectedSimulationReport)
+        let reports = selectedSimulationReports
+        guard !reports.isEmpty else { return }
+        previewTitle = isAllSimulationPersonasSelected ? "All Persona Simulation Reports" : "Simulation Report"
+        previewMarkdown = simulationMarkdown(for: reports)
     }
 
     func clearAuditPreview() {
@@ -196,9 +219,11 @@ import UIKit
     }
 
     func copySimulationReport() {
-        guard let selectedSimulationReport else { return }
-        UIPasteboard.general.string = simulationMarkdown(for: selectedSimulationReport)
-        hub.toastEvents.send(.present(.init(title: "Simulation report copied", style: .success)))
+        let reports = selectedSimulationReports
+        guard !reports.isEmpty else { return }
+        UIPasteboard.general.string = simulationMarkdown(for: reports)
+        let title = isAllSimulationPersonasSelected ? "All persona reports copied" : "Simulation report copied"
+        hub.toastEvents.send(.present(.init(title: title, style: .success)))
     }
 
     private func auditMarkdown(for scenarios: [Scenario]) -> String {
@@ -218,6 +243,38 @@ import UIKit
     }
 
     private func simulationMarkdown(for report: SQViewLabSimulationReport) -> String {
+        simulationMarkdownLines(for: report).joined(separator: "\n")
+    }
+
+    private func simulationMarkdown(for reports: [SQViewLabSimulationReport]) -> String {
+        guard reports.count > 1 else {
+            return reports.first.map { simulationMarkdown(for: $0) } ?? ""
+        }
+
+        var lines = [String]()
+        lines.append("# View Lab Simulation Reports")
+        lines.append("")
+        lines.append("- Persona Count: \(reports.count)")
+        lines.append("- Simulated Days: \(reports.first?.dayCount ?? 0)")
+        lines.append("- Seed: \(reports.first?.seed ?? selectedSimulationSeed)")
+        lines.append("- Reference Date: \(reports.first?.referenceDate.formattedString(with: .medium) ?? selectedSimulationReferenceDate.formattedString(with: .medium))")
+        lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
+        lines.append("")
+
+        for report in reports {
+            lines.append("---")
+            lines.append("")
+            lines.append("## \(report.persona.title)")
+            lines.append("")
+            let reportLines = simulationMarkdownLines(for: report)
+            lines.append(contentsOf: reportLines.dropFirst(2))
+            lines.append("")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func simulationMarkdownLines(for report: SQViewLabSimulationReport) -> [String] {
         var lines = [String]()
         lines.append("# View Lab Simulation Report")
         lines.append("")
@@ -306,6 +363,12 @@ import UIKit
         lines.append("## Custom Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomInsightDistribution))
         lines.append("")
+        lines.append("## Generated Custom Metric Insight Candidates")
+        lines.append(contentsOf: simulationDistributionLines(report.generatedCustomMetricInsightCandidateDistribution))
+        lines.append("")
+        lines.append("## Custom Metric Insight Rejection Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.customMetricInsightRejectionReasonDistribution))
+        lines.append("")
         lines.append("## Score Delta Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.scoreDeltaDistribution))
         lines.append("")
@@ -360,11 +423,29 @@ import UIKit
         lines.append("## Custom Output Relationship Candidate Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.customOutputRelationshipCandidateDistribution))
         lines.append("")
+        lines.append("## Actionable Custom Relationship Candidates")
+        lines.append(contentsOf: simulationDistributionLines(report.actionableCustomRelationshipCandidateDistribution))
+        lines.append("")
+        lines.append("## Co-Movement Custom Relationship Candidates")
+        lines.append(contentsOf: simulationDistributionLines(report.coMovementCustomRelationshipCandidateDistribution))
+        lines.append("")
+        lines.append("## Timing-Ambiguous Custom Relationship Candidates")
+        lines.append(contentsOf: simulationDistributionLines(report.timingAmbiguousCustomRelationshipCandidateDistribution))
+        lines.append("")
         lines.append("## Top Custom Relationship Candidates")
         lines.append(contentsOf: customRelationshipCandidateLines(report.topCustomRelationshipCandidates))
         lines.append("")
         lines.append("## Near-Miss Custom Relationship Candidates")
         lines.append(contentsOf: customRelationshipCandidateLines(report.nearMissCustomRelationshipCandidates))
+        lines.append("")
+        lines.append("## Would Surface Custom Relationship Insights")
+        lines.append(contentsOf: simulationDistributionLines(report.wouldSurfaceCustomRelationshipDistribution))
+        lines.append("")
+        lines.append("## Would Surface Custom Relationship Details")
+        lines.append(contentsOf: customRelationshipCandidateLines(report.wouldSurfaceCustomRelationshipCandidates))
+        lines.append("")
+        lines.append("## Rejected Relationship Surfacing Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.rejectedRelationshipSurfacingReasonDistribution))
         lines.append("")
 
         lines.append("## Daily Log")
@@ -383,11 +464,18 @@ import UIKit
             lines.append("  - dynamic driver candidates: \(day.dynamicMetricDriverCandidateLabels.isEmpty ? "none" : day.dynamicMetricDriverCandidateLabels.joined(separator: " | "))")
             lines.append("  - dynamic change candidates: \(day.dynamicMetricChangeCandidateLabels.isEmpty ? "none" : day.dynamicMetricChangeCandidateLabels.joined(separator: " | "))")
             lines.append("  - custom metric candidates: \(day.customMetricCandidateLabels.isEmpty ? "none" : day.customMetricCandidateLabels.joined(separator: " | "))")
+            lines.append("  - generated custom metric insights: \(day.generatedCustomMetricInsightCandidateTitles.isEmpty ? "none" : day.generatedCustomMetricInsightCandidateTitles.joined(separator: " | "))")
+            lines.append("  - custom metric insight rejections: \(day.customMetricInsightRejectionReasons.isEmpty ? "none" : day.customMetricInsightRejectionReasons.joined(separator: " | "))")
             lines.append("  - exploratory relationship candidates: \(day.exploratoryRelationshipCandidateLabels.isEmpty ? "none" : day.exploratoryRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - custom output relationship candidates: \(day.customOutputRelationshipCandidateLabels.isEmpty ? "none" : day.customOutputRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - actionable custom relationships: \(day.actionableCustomRelationshipCandidateLabels.isEmpty ? "none" : day.actionableCustomRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - co-movement custom relationships: \(day.coMovementCustomRelationshipCandidateLabels.isEmpty ? "none" : day.coMovementCustomRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - timing-ambiguous custom relationships: \(day.timingAmbiguousCustomRelationshipCandidateLabels.isEmpty ? "none" : day.timingAmbiguousCustomRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - top custom relationship details: \(day.topCustomRelationshipCandidateTexts.isEmpty ? "none" : day.topCustomRelationshipCandidateTexts.joined(separator: " | "))")
             lines.append("  - near-miss custom relationships: \(day.nearMissCustomRelationshipCandidateLabels.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - near-miss custom relationship details: \(day.nearMissCustomRelationshipCandidateTexts.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateTexts.joined(separator: " | "))")
+            lines.append("  - would-surface custom relationships: \(day.wouldSurfaceCustomRelationshipTitles.isEmpty ? "none" : day.wouldSurfaceCustomRelationshipTitles.joined(separator: " | "))")
+            lines.append("  - rejected relationship surfacing reasons: \(day.rejectedRelationshipSurfacingReasons.isEmpty ? "none" : day.rejectedRelationshipSurfacingReasons.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
@@ -410,7 +498,7 @@ import UIKit
             lines.append("  - custom surfaced insights: \(day.surfacedCustomInsightTitles.isEmpty ? "none" : day.surfacedCustomInsightTitles.joined(separator: " | "))")
         }
 
-        return lines.joined(separator: "\n")
+        return lines
     }
 
     private func auditMarkdownLines(for scenario: Scenario) -> [String] {
@@ -673,7 +761,7 @@ import UIKit
             let lowAverage = candidate.lowBucketAverage.map(formattedDouble) ?? "n/a"
             let highAverage = candidate.highBucketAverage.map(formattedDouble) ?? "n/a"
             let rejectionText = candidate.rejectionReason.map { ", rejected=\($0)" } ?? ""
-            return "- \(candidate.inputTitle) -> \(candidate.outputTitle) (\(candidate.timing)) — effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), confidence=\(candidate.confidence)\(rejectionText)"
+            return "- \(candidate.inputTitle) -> \(candidate.outputTitle) (\(candidate.timing)) — \(candidate.candidateType.title), effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), confidence=\(candidate.confidence), confidenceReason=\(candidate.confidenceExplanation)\(rejectionText)"
         }
     }
 
