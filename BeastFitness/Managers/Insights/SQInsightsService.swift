@@ -788,6 +788,7 @@ final class SQInsightsService: SQInsightsServicing {
     private let analysisEngine: SQInsightAnalyzing
     private let relationshipRegistry: SQInsightRelationshipRegistry
     private let surfacingMemoryStore: SQInsightSurfacingMemoryStoring
+    private let dynamicMetricInsightBuilder = SQDynamicMetricInsightBuilder()
     private let minimumAnalyzedDayCount = 10
     private let relevantMetricIds: Set<String>
 
@@ -852,8 +853,14 @@ final class SQInsightsService: SQInsightsServicing {
             surfaceIntent: input.timeRange.insightSurfaceIntent,
             selectedDrivers: drivers
         )
+        let dynamicMetricInsights = dynamicMetricInsightBuilder.buildInsights(
+            from: snapshots,
+            metricDefinitions: input.metricDefinitions,
+            surfaceIntent: input.timeRange.insightSurfaceIntent,
+            referenceDate: input.referenceDate
+        )
         let generatedInsights = todayRelevantInsights(
-            from: analysisOutput.generatedInsights,
+            from: analysisOutput.generatedInsights + dynamicMetricInsights,
             snapshots: snapshots,
             referenceDate: input.referenceDate,
             surfaceIntent: input.timeRange.insightSurfaceIntent

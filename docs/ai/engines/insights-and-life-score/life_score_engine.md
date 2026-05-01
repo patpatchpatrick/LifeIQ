@@ -97,6 +97,8 @@ Contributor-based metric scoring should be developed in shadow mode first. The s
 
 Shadow scoring should distinguish diagnostic contributors from incremental contributors. Diagnostic contributors can include core preset signals for explanation, but only incremental contributors should be added to the current score in report-only shadow-adjusted outputs. Automatic core presets are already represented by existing components and should not double-count.
 
+Personalized metric score adjustments can be wired into the real Life Score path only behind `SQAdminConfig.personalizedLifeScoreAdjustmentsEnabled`. The current production default is off. When enabled, only incremental contributors adjust the final score; automatic core presets still remain diagnostic-only to avoid double-counting.
+
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 
 `Under Pressure` should be reserved for stacked or severe negatives. A single mild drag should usually become `Slightly Off` or `Dipping`, especially for balanced personas with otherwise good sleep, training, and habit patterns. Scores at or above 88 should not become `Under Pressure` unless there is an unusually severe stacked condition.

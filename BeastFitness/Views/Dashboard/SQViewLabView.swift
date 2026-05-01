@@ -610,8 +610,8 @@ struct SQViewLabView: View {
                     "Custom Metric Logged Days: \(report.customMetricLoggedDays)",
                     "Avg Custom Metric: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")",
                     "Custom Metric Surfaced: \(formattedPercent(report.customMetricSurfacePercentage))",
-                    "Avg Shadow Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
-                    "Avg Shadow Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
+                    "Avg Personalized Adjusted Score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")",
+                    "Avg Personalized Score Delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")",
                     "Avg Diagnostic Contribution: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))",
                     "Avg Incremental Contribution: \(formattedDouble(report.averageShadowIncrementalContributionTotal))",
                     "Avg Custom Incremental Contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))",
@@ -650,6 +650,10 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Surfaced Insights",
                 values: report.surfacedInsightDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Surfaced Insights",
+                values: report.surfacedCustomInsightDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Score Deltas",
@@ -723,6 +727,14 @@ struct SQViewLabView: View {
                 title: "Custom Output Relationships",
                 values: report.customOutputRelationshipCandidateDistribution.map(distributionText)
             )
+            outputGroup(
+                title: "Top Custom Relationships",
+                values: report.topCustomRelationshipCandidates.map(relationshipCandidateText)
+            )
+            outputGroup(
+                title: "Near-Miss Custom Relationships",
+                values: report.nearMissCustomRelationshipCandidates.map(relationshipCandidateText)
+            )
         }
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
@@ -750,7 +762,7 @@ struct SQViewLabView: View {
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Shadow \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • incremental \(formattedDouble(day.shadowIncrementalContributionTotal))")
+                    Text("Personalized \(day.shadowAdjustedScore.map(String.init) ?? "n/a") • incremental \(formattedDouble(day.shadowIncrementalContributionTotal))")
                         .sqFont(SQFont.FontType.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                 }
@@ -767,6 +779,13 @@ struct SQViewLabView: View {
 
     private func contributorAggregateText(_ row: SQViewLabShadowContributorAggregateRow) -> String {
         "\(row.title) — \(row.daysAppeared) days, avg \(formattedSignedDouble(row.averageContribution)), avg abs \(formattedDouble(row.averageAbsoluteContribution)), +\(row.positiveDays) / -\(row.negativeDays)"
+    }
+
+    private func relationshipCandidateText(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> String {
+        let lowAverage = candidate.lowBucketAverage.map(formattedDouble) ?? "n/a"
+        let highAverage = candidate.highBucketAverage.map(formattedDouble) ?? "n/a"
+        let rejectionText = candidate.rejectionReason.map { " rejected: \($0)" } ?? ""
+        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing), effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), \(candidate.confidence)\(rejectionText)"
     }
 
     private func formattedSignedDouble(_ value: Double) -> String {

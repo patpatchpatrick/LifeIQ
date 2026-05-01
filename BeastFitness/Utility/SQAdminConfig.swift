@@ -29,6 +29,10 @@ enum SQAdminConfig {
     /// Forces weekly/yearly insight freshness UI for on-device testing without waiting for
     /// the real surfacing-memory conditions and cooldowns to line up.
     static var forceInsightFreshnessBadges = false
+
+    /// Keeps personalized metric score adjustments off until custom metric scoring has
+    /// been validated in View Lab and the metric setup UX can explain the setting.
+    static var personalizedLifeScoreAdjustmentsEnabled = false
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
@@ -37,5 +41,6 @@ enum SQAdminConfig {
     static let verboseLoggingEnabled = false
     static let viewLabEnabled = false
     static let forceInsightFreshnessBadges = false
+    static let personalizedLifeScoreAdjustmentsEnabled = false
     #endif
 }

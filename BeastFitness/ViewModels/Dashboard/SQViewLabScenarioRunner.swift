@@ -131,11 +131,20 @@ struct SQViewLabExploratoryRelationshipCandidate: Identifiable, Hashable {
     let timing: String
     let effectSize: Double
     let sampleCount: Int
+    let lowBucketCount: Int
+    let highBucketCount: Int
+    let lowBucketAverage: Double?
+    let highBucketAverage: Double?
     let confidence: String
     let isCustomOutput: Bool
+    let rejectionReason: String?
 
     var label: String {
         "\(inputTitle) -> \(outputTitle) (\(timing))"
+    }
+
+    var isAccepted: Bool {
+        rejectionReason == nil
     }
 }
 
@@ -147,6 +156,7 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let heroAction: String
     let heroFamilyKey: String
     let surfacedInsightTitles: [String]
+    let surfacedCustomInsightTitles: [String]
     let scoreDelta: Int?
     let componentScores: [String: Int]
     let topDriverTitles: [String]
@@ -174,6 +184,8 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let exploratoryRelationshipCandidateLabels: [String]
     let customOutputRelationshipCandidateLabels: [String]
     let topCustomRelationshipCandidateTexts: [String]
+    let nearMissCustomRelationshipCandidateLabels: [String]
+    let nearMissCustomRelationshipCandidateTexts: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -207,6 +219,7 @@ struct SQViewLabSimulationReport {
     let heroActionDistribution: [SQViewLabSimulationDistributionRow]
     let heroFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let surfacedCustomInsightDistribution: [SQViewLabSimulationDistributionRow]
     let scoreDeltaDistribution: [SQViewLabSimulationDistributionRow]
     let componentScoreDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverDistribution: [SQViewLabSimulationDistributionRow]
@@ -236,6 +249,7 @@ struct SQViewLabSimulationReport {
     let exploratoryRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let customOutputRelationshipCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let topCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
+    let nearMissCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -298,12 +312,13 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             surfacingMemoryStore: surfacingMemoryStore
         )
         let featureBuilder = SQInsightFeatureBuilder()
-        let shadowContributorBuilder = SQLifeScoreShadowMetricContributorBuilder()
+        let shadowContributorBuilder = SQLifeScoreMetricContributorBuilder()
         let dynamicMetricCandidateBuilder = DynamicMetricCandidateBuilder()
         let relationshipCandidateBuilder = ExploratoryRelationshipCandidateBuilder()
 
         var outputs = [SQViewLabSimulationDayOutput]()
-        var latestCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
+        var allCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
+        var allNearMissCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         for index in generatedDays.indices {
@@ -358,11 +373,18 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 from: featureSnapshots,
                 metricDefinitions: request.metricDefinitions
             )
-            let relationshipCandidates = relationshipCandidateBuilder.candidates(
+            let relationshipDiagnostics = relationshipCandidateBuilder.candidates(
                 from: featureSnapshots,
                 metricDefinitions: request.metricDefinitions
             )
-            latestCustomRelationshipCandidates = Array(relationshipCandidates.filter(\.isCustomOutput).prefix(8))
+            let relationshipCandidates = relationshipDiagnostics.accepted
+            let nearMissRelationshipCandidates = relationshipDiagnostics.nearMisses
+            allCustomRelationshipCandidates.append(
+                contentsOf: relationshipCandidates.filter(\.isCustomOutput)
+            )
+            allNearMissCustomRelationshipCandidates.append(
+                contentsOf: nearMissRelationshipCandidates.filter(\.isCustomOutput)
+            )
             let surfacedSignalIds = insightsResult.insights.flatMap { insight in
                 [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
             }
@@ -382,6 +404,11 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             let heroFamilyKey = "lifeScore.state.\(stateTitle)"
             let surfacedInsightTitles = insightsResult.insights.map(\.title)
+            let surfacedCustomInsightTitles = insightsResult.insights.compactMap { insight -> String? in
+                let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+                guard signalIds.contains(where: { customMetricIds.contains($0) }) else { return nil }
+                return insight.title
+            }
             let componentScores = Dictionary(
                 uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
             )
@@ -422,6 +449,14 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 .filter(\.isCustomOutput)
                 .prefix(5)
                 .map(relationshipCandidateText)
+            let nearMissCustomRelationshipCandidateLabels = nearMissRelationshipCandidates
+                .filter(\.isCustomOutput)
+                .prefix(8)
+                .map(\.label)
+            let nearMissCustomRelationshipCandidateTexts = nearMissRelationshipCandidates
+                .filter(\.isCustomOutput)
+                .prefix(5)
+                .map(relationshipCandidateText)
             let workoutDescriptions = currentDay.workouts.map {
                 "\($0.activityType.name) • perf \(formattedOptionalFloat($0.ratingUserPerformance)) • diff \(formattedOptionalFloat($0.ratingDifficulty))"
             }
@@ -434,6 +469,7 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 heroAction: heroAction,
                 heroFamilyKey: heroFamilyKey,
                 surfacedInsightTitles: surfacedInsightTitles,
+                surfacedCustomInsightTitles: surfacedCustomInsightTitles,
                 scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
                 componentScores: componentScores,
                 topDriverTitles: topDriverTitles,
@@ -461,6 +497,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 exploratoryRelationshipCandidateLabels: exploratoryRelationshipCandidateLabels,
                 customOutputRelationshipCandidateLabels: customOutputRelationshipCandidateLabels,
                 topCustomRelationshipCandidateTexts: topCustomRelationshipCandidateTexts,
+                nearMissCustomRelationshipCandidateLabels: nearMissCustomRelationshipCandidateLabels,
+                nearMissCustomRelationshipCandidateTexts: nearMissCustomRelationshipCandidateTexts,
                 morningValues: currentDay.morningValues,
                 eveningValues: currentDay.eveningValues,
                 restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -513,6 +551,7 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             heroActionDistribution: distributionRows(for: outputs.map(\.heroAction)),
             heroFamilyDistribution: distributionRows(for: outputs.map(\.heroFamilyKey)),
             surfacedInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedInsightTitles)),
+            surfacedCustomInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedCustomInsightTitles)),
             scoreDeltaDistribution: distributionRows(for: outputs.map { scoreDeltaBucket($0.scoreDelta) }),
             componentScoreDistribution: distributionRows(
                 for: outputs.flatMap { output in
@@ -581,7 +620,13 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             customOutputRelationshipCandidateDistribution: distributionRows(
                 for: outputs.flatMap(\.customOutputRelationshipCandidateLabels)
             ),
-            topCustomRelationshipCandidates: latestCustomRelationshipCandidates,
+            topCustomRelationshipCandidates: topRelationshipCandidates(
+                from: allCustomRelationshipCandidates
+            ),
+            nearMissCustomRelationshipCandidates: topRelationshipCandidates(
+                from: allNearMissCustomRelationshipCandidates,
+                excludingIds: Set(allCustomRelationshipCandidates.map(\.id))
+            ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
             longestHeroFamilyRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroFamilyKey)),
@@ -771,19 +816,27 @@ private extension SQViewLabScenarioRunner {
     struct ExploratoryRelationshipCandidateBuilder {
         private let semanticResolver = SQMetricSemanticResolver()
 
+        struct Diagnostics {
+            let accepted: [SQViewLabExploratoryRelationshipCandidate]
+            let nearMisses: [SQViewLabExploratoryRelationshipCandidate]
+        }
+
         func candidates(
             from snapshots: [SQInsightFeatureSnapshot],
             metricDefinitions: [SQMetricDefinition]
-        ) -> [SQViewLabExploratoryRelationshipCandidate] {
+        ) -> Diagnostics {
             let customOutputDefinitions = metricDefinitions.filter {
                 $0.isEnabled
                     && !$0.isArchived
                     && !$0.isPreset
                     && isOutputEligible(definition: $0)
             }
-            guard !customOutputDefinitions.isEmpty else { return [] }
+            guard !customOutputDefinitions.isEmpty else {
+                return .init(accepted: [], nearMisses: [])
+            }
 
-            var candidates = [SQViewLabExploratoryRelationshipCandidate]()
+            var accepted = [SQViewLabExploratoryRelationshipCandidate]()
+            var nearMisses = [SQViewLabExploratoryRelationshipCandidate]()
 
             for outputDefinition in customOutputDefinitions {
                 for inputDefinition in metricDefinitions where inputDefinition.id != outputDefinition.id {
@@ -793,34 +846,66 @@ private extension SQViewLabScenarioRunner {
                         continue
                     }
 
-                    if let sameDayCandidate = relationshipCandidate(
+                    let sameDayCandidate = relationshipCandidate(
                         inputDefinition: inputDefinition,
                         outputDefinition: outputDefinition,
                         snapshots: snapshots,
                         timing: "same day",
                         dayShift: 0
-                    ) {
-                        candidates.append(sameDayCandidate)
-                    }
+                    )
+                    collect(
+                        sameDayCandidate,
+                        accepted: &accepted,
+                        nearMisses: &nearMisses
+                    )
 
-                    if semanticResolver.signalRole(for: inputDefinition) == .behavior,
-                       let nextDayCandidate = relationshipCandidate(
-                        inputDefinition: inputDefinition,
-                        outputDefinition: outputDefinition,
-                        snapshots: snapshots,
-                        timing: "next day",
-                        dayShift: 1
-                       ) {
-                        candidates.append(nextDayCandidate)
+                    if semanticResolver.signalRole(for: inputDefinition) == .behavior {
+                        let nextDayCandidate = relationshipCandidate(
+                            inputDefinition: inputDefinition,
+                            outputDefinition: outputDefinition,
+                            snapshots: snapshots,
+                            timing: "next day",
+                            dayShift: 1
+                        )
+                        collect(
+                            nextDayCandidate,
+                            accepted: &accepted,
+                            nearMisses: &nearMisses
+                        )
                     }
                 }
             }
 
-            return candidates.sorted {
+            let sortedAccepted = accepted.sorted {
                 if abs($0.effectSize) != abs($1.effectSize) {
                     return abs($0.effectSize) > abs($1.effectSize)
                 }
                 return $0.sampleCount > $1.sampleCount
+            }
+            let sortedNearMisses = nearMisses.sorted {
+                if $0.sampleCount != $1.sampleCount {
+                    return $0.sampleCount > $1.sampleCount
+                }
+                return abs($0.effectSize) > abs($1.effectSize)
+            }
+
+            return .init(
+                accepted: sortedAccepted,
+                nearMisses: sortedNearMisses
+            )
+        }
+
+        private func collect(
+            _ candidate: SQViewLabExploratoryRelationshipCandidate?,
+            accepted: inout [SQViewLabExploratoryRelationshipCandidate],
+            nearMisses: inout [SQViewLabExploratoryRelationshipCandidate]
+        ) {
+            guard let candidate else { return }
+
+            if candidate.isAccepted {
+                accepted.append(candidate)
+            } else if shouldKeepNearMiss(candidate) {
+                nearMisses.append(candidate)
             }
         }
 
@@ -834,7 +919,7 @@ private extension SQViewLabScenarioRunner {
             let snapshotsByDay = Dictionary(uniqueKeysWithValues: snapshots.map { ($0.anchorDayKey, $0) })
             let calendar = Calendar.current
 
-            let samples = snapshots.compactMap { inputSnapshot -> (input: Double, output: Double)? in
+            let samples = snapshots.compactMap { inputSnapshot -> (date: Date, input: Double, output: Double)? in
                 let outputDate = calendar.date(byAdding: .day, value: dayShift, to: inputSnapshot.date) ?? inputSnapshot.date
                 let outputDayKey = outputDate.firebaseDailyDateKey
                 guard let inputFeature = inputSnapshot.signalFeatures[inputDefinition.id],
@@ -844,23 +929,51 @@ private extension SQViewLabScenarioRunner {
                 }
 
                 let inputValue = inputFeature.normalizedValue.map { $0 * 100 } ?? inputFeature.rawValue
-                return (inputValue, outputValue)
+                return (inputSnapshot.date, inputValue, outputValue)
             }
 
-            guard samples.count >= 14 else { return nil }
+            guard !samples.isEmpty else { return nil }
+
+            var rejectionReasons = [String]()
+            if samples.count < 14 {
+                rejectionReasons.append("not enough paired samples")
+            }
+
             let outputValues = samples.map(\.output)
-            guard hasEnoughVariance(outputValues) else { return nil }
+            if !hasEnoughVariance(outputValues) {
+                rejectionReasons.append("insufficient output variance")
+            }
 
             let lowHigh = bucketedSamples(
                 samples,
                 inputDefinition: inputDefinition
             )
-            guard lowHigh.low.count >= 4, lowHigh.high.count >= 4 else { return nil }
+            if lowHigh.low.count < 4 {
+                rejectionReasons.append("low bucket too small")
+            }
+            if lowHigh.high.count < 4 {
+                rejectionReasons.append("high bucket too small")
+            }
 
-            let lowAverage = lowHigh.low.reduce(0, +) / Double(lowHigh.low.count)
-            let highAverage = lowHigh.high.reduce(0, +) / Double(lowHigh.high.count)
-            let effectSize = highAverage - lowAverage
-            guard abs(effectSize) >= 5 else { return nil }
+            let lowAverage = lowHigh.low.average
+            let highAverage = lowHigh.high.average
+            let effectSize: Double
+            if let lowAverage, let highAverage {
+                effectSize = highAverage - lowAverage
+            } else {
+                effectSize = 0
+            }
+            if abs(effectSize) < 5 {
+                rejectionReasons.append("effect below threshold")
+            }
+
+            if !hasRecentSample(samples, calendar: calendar, referenceDate: snapshots.last?.date) {
+                rejectionReasons.append("no recent samples")
+            }
+
+            let rejectionReason = rejectionReasons.isEmpty
+                ? nil
+                : rejectionReasons.joined(separator: "; ")
 
             return .init(
                 id: "\(inputDefinition.id)->\(outputDefinition.id)-\(timing)",
@@ -871,13 +984,18 @@ private extension SQViewLabScenarioRunner {
                 timing: timing,
                 effectSize: effectSize,
                 sampleCount: samples.count,
+                lowBucketCount: lowHigh.low.count,
+                highBucketCount: lowHigh.high.count,
+                lowBucketAverage: lowAverage,
+                highBucketAverage: highAverage,
                 confidence: confidence(sampleCount: samples.count, effectSize: effectSize),
-                isCustomOutput: !outputDefinition.isPreset
+                isCustomOutput: !outputDefinition.isPreset,
+                rejectionReason: rejectionReason
             )
         }
 
         private func bucketedSamples(
-            _ samples: [(input: Double, output: Double)],
+            _ samples: [(date: Date, input: Double, output: Double)],
             inputDefinition: SQMetricDefinition
         ) -> (low: [Double], high: [Double]) {
             if inputDefinition.goalStyle == .avoidIt {
@@ -930,6 +1048,49 @@ private extension SQViewLabScenarioRunner {
         private func hasEnoughVariance(_ values: [Double]) -> Bool {
             guard let min = values.min(), let max = values.max() else { return false }
             return max - min >= 5
+        }
+
+        private func hasRecentSample(
+            _ samples: [(date: Date, input: Double, output: Double)],
+            calendar: Calendar,
+            referenceDate: Date?
+        ) -> Bool {
+            guard let latestSampleDate = samples.map(\.date).max(),
+                  let referenceDate else {
+                return false
+            }
+
+            let latestDay = calendar.startOfDay(for: latestSampleDate)
+            let referenceDay = calendar.startOfDay(for: referenceDate)
+            let dayDelta = calendar.dateComponents([.day], from: latestDay, to: referenceDay).day ?? Int.max
+            return dayDelta <= 14
+        }
+
+        private func shouldKeepNearMiss(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> Bool {
+            guard !candidate.isAccepted, candidate.isCustomOutput else { return false }
+
+            if isExpectedViolinDiagnostic(candidate) {
+                return true
+            }
+
+            let failureCount = candidate.rejectionReason?
+                .split(separator: ";")
+                .count ?? 0
+            return failureCount <= 1 && candidate.sampleCount >= 10
+        }
+
+        private func isExpectedViolinDiagnostic(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> Bool {
+            guard candidate.outputSignalId == SQViewLabCustomMetricId.violinPerformance else { return false }
+
+            let expectedInputIds: Set<String> = [
+                SQMetricId.sleepQuality,
+                SQMetricId.sleepHours,
+                SQMetricId.stress,
+                SQMetricId.alcohol,
+                SQMetricId.caffeine,
+                SQMetricId.mentalClarity
+            ]
+            return expectedInputIds.contains(candidate.inputSignalId)
         }
 
         private func confidence(sampleCount: Int, effectSize: Double) -> String {
@@ -1448,12 +1609,53 @@ private extension SQViewLabScenarioRunner {
     }
 
     func relationshipCandidateText(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> String {
-        "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing) • effect \(signedDecimal(candidate.effectSize)) • n=\(candidate.sampleCount) • \(candidate.confidence)"
+        let lowAverage = candidate.lowBucketAverage.map(formattedDecimal) ?? "n/a"
+        let highAverage = candidate.highBucketAverage.map(formattedDecimal) ?? "n/a"
+        let rejectionText = candidate.rejectionReason.map { " • rejected: \($0)" } ?? ""
+        return "\(candidate.inputTitle) -> \(candidate.outputTitle) \(candidate.timing) • effect \(signedDecimal(candidate.effectSize)) • n=\(candidate.sampleCount) • low \(candidate.lowBucketCount) avg \(lowAverage) • high \(candidate.highBucketCount) avg \(highAverage) • \(candidate.confidence)\(rejectionText)"
+    }
+
+    func topRelationshipCandidates(
+        from candidates: [SQViewLabExploratoryRelationshipCandidate],
+        excludingIds: Set<String> = []
+    ) -> [SQViewLabExploratoryRelationshipCandidate] {
+        Dictionary(grouping: candidates.filter { !excludingIds.contains($0.id) }, by: \.id)
+            .compactMap { _, candidates -> SQViewLabExploratoryRelationshipCandidate? in
+                candidates.sorted {
+                    if $0.sampleCount != $1.sampleCount {
+                        return $0.sampleCount > $1.sampleCount
+                    }
+
+                    return abs($0.effectSize) > abs($1.effectSize)
+                }
+                .first
+            }
+            .sorted {
+                if $0.isAccepted != $1.isAccepted {
+                    return $0.isAccepted
+                }
+
+                if $0.sampleCount != $1.sampleCount {
+                    return $0.sampleCount > $1.sampleCount
+                }
+
+                return abs($0.effectSize) > abs($1.effectSize)
+            }
+            .prefix(8)
+            .map { $0 }
     }
 
     func signedDecimal(_ value: Double) -> String {
         let prefix = value >= 0 ? "+" : ""
         return prefix + String(format: "%.1f", value)
+    }
+
+    func formattedDecimal(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+
+        return String(format: "%.1f", value)
     }
 
     func scoreDeltaBucket(_ delta: Int?) -> String {

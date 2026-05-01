@@ -276,8 +276,8 @@ import UIKit
         lines.append("- Custom metric logged days: \(report.customMetricLoggedDays)")
         lines.append("- Avg custom metric value: \(report.averageCustomMetricValue.map(formattedDouble) ?? "n/a")")
         lines.append("- Custom metric surfaced: \(formattedPercent(report.customMetricSurfacePercentage))")
-        lines.append("- Avg shadow-adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
-        lines.append("- Avg shadow score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg personalized adjusted score: \(report.averageShadowAdjustedScore.map(formattedDouble) ?? "n/a")")
+        lines.append("- Avg personalized score delta: \(report.averageShadowScoreDelta.map(formattedDouble) ?? "n/a")")
         lines.append("- Avg diagnostic contribution total: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))")
         lines.append("- Avg incremental contribution total: \(formattedDouble(report.averageShadowIncrementalContributionTotal))")
         lines.append("- Avg custom incremental contribution: \(formattedDouble(report.averageShadowCustomContributionTotal))")
@@ -302,6 +302,9 @@ import UIKit
         lines.append("")
         lines.append("## Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedInsightDistribution))
+        lines.append("")
+        lines.append("## Custom Surfaced Insight Distribution")
+        lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomInsightDistribution))
         lines.append("")
         lines.append("## Score Delta Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.scoreDeltaDistribution))
@@ -360,12 +363,15 @@ import UIKit
         lines.append("## Top Custom Relationship Candidates")
         lines.append(contentsOf: customRelationshipCandidateLines(report.topCustomRelationshipCandidates))
         lines.append("")
+        lines.append("## Near-Miss Custom Relationship Candidates")
+        lines.append(contentsOf: customRelationshipCandidateLines(report.nearMissCustomRelationshipCandidates))
+        lines.append("")
 
         lines.append("## Daily Log")
         for day in report.days {
             lines.append("- \(day.date.formattedString(with: .medium)) | score \(day.score.map(String.init) ?? "n/a") | state \(day.stateTitle)")
             lines.append("  - score delta: \(day.scoreDelta.map(String.init) ?? "n/a")")
-            lines.append("  - shadow adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
+            lines.append("  - personalized adjusted score: \(day.shadowAdjustedScore.map(String.init) ?? "n/a")")
             lines.append("  - diagnostic contribution total: \(formattedDouble(day.shadowDiagnosticContributionTotal))")
             lines.append("  - incremental contribution total: \(formattedDouble(day.shadowIncrementalContributionTotal))")
             lines.append("  - custom incremental contribution: \(formattedDouble(day.shadowCustomContributionTotal))")
@@ -380,6 +386,8 @@ import UIKit
             lines.append("  - exploratory relationship candidates: \(day.exploratoryRelationshipCandidateLabels.isEmpty ? "none" : day.exploratoryRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - custom output relationship candidates: \(day.customOutputRelationshipCandidateLabels.isEmpty ? "none" : day.customOutputRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - top custom relationship details: \(day.topCustomRelationshipCandidateTexts.isEmpty ? "none" : day.topCustomRelationshipCandidateTexts.joined(separator: " | "))")
+            lines.append("  - near-miss custom relationships: \(day.nearMissCustomRelationshipCandidateLabels.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateLabels.joined(separator: " | "))")
+            lines.append("  - near-miss custom relationship details: \(day.nearMissCustomRelationshipCandidateTexts.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateTexts.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
@@ -399,6 +407,7 @@ import UIKit
             lines.append("  - resting HR: \(day.restingHeartRate.map(formattedDouble) ?? "n/a")")
             lines.append("  - workouts: \(day.workoutDescriptions.isEmpty ? "none" : day.workoutDescriptions.joined(separator: " | "))")
             lines.append("  - surfaced insights: \(day.surfacedInsightTitles.isEmpty ? "none" : day.surfacedInsightTitles.joined(separator: " | "))")
+            lines.append("  - custom surfaced insights: \(day.surfacedCustomInsightTitles.isEmpty ? "none" : day.surfacedCustomInsightTitles.joined(separator: " | "))")
         }
 
         return lines.joined(separator: "\n")
@@ -661,7 +670,10 @@ import UIKit
         guard !candidates.isEmpty else { return ["- None"] }
 
         return candidates.map { candidate in
-            "- \(candidate.inputTitle) -> \(candidate.outputTitle) (\(candidate.timing)) — effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), confidence=\(candidate.confidence)"
+            let lowAverage = candidate.lowBucketAverage.map(formattedDouble) ?? "n/a"
+            let highAverage = candidate.highBucketAverage.map(formattedDouble) ?? "n/a"
+            let rejectionText = candidate.rejectionReason.map { ", rejected=\($0)" } ?? ""
+            return "- \(candidate.inputTitle) -> \(candidate.outputTitle) (\(candidate.timing)) — effect \(formattedSignedDouble(candidate.effectSize)), n=\(candidate.sampleCount), low \(candidate.lowBucketCount) avg \(lowAverage), high \(candidate.highBucketCount) avg \(highAverage), confidence=\(candidate.confidence)\(rejectionText)"
         }
     }
 

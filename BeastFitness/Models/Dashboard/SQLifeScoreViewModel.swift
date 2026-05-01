@@ -55,7 +55,7 @@ struct SQLifeScoreMetricContributor: Identifiable, Hashable {
     var id: String { metricId }
 }
 
-struct SQLifeScoreShadowMetricContributionResult: Hashable {
+struct SQLifeScoreMetricContributionResult: Hashable {
     let diagnosticContributors: [SQLifeScoreMetricContributor]
     let incrementalContributors: [SQLifeScoreMetricContributor]
     let customMetricContributionTotal: Double
@@ -71,13 +71,13 @@ struct SQLifeScoreShadowMetricContributionResult: Hashable {
     }
 }
 
-struct SQLifeScoreShadowMetricContributorBuilder {
+struct SQLifeScoreMetricContributorBuilder {
     private let semanticResolver = SQMetricSemanticResolver()
 
     func buildContributors(
         from snapshot: SQInsightFeatureSnapshot?,
         metricDefinitions: [SQMetricDefinition]
-    ) -> SQLifeScoreShadowMetricContributionResult {
+    ) -> SQLifeScoreMetricContributionResult {
         guard let snapshot else {
             return .init(
                 diagnosticContributors: [],

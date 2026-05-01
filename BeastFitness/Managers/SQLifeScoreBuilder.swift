@@ -111,6 +111,14 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             : nil
 
         let preliminaryScore = weightedScore.map { Int($0.rounded()) }
+        let metricContributionResult = personalizedMetricContributionResult(
+            input: intelligenceInput,
+            referenceDate: intelligenceInput.referenceDate
+        )
+        let adjustedPreliminaryScore = personalizedLifeScore(
+            baseScore: preliminaryScore,
+            contributionResult: metricContributionResult
+        )
         let previousComponents = previousDayLifeScoreComponents(
             referenceDate: intelligenceInput.referenceDate,
             checkIns: intelligenceInput.checkIns,
@@ -122,19 +130,27 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             isLoggedIn: intelligenceInput.isLoggedIn
         )
         let previousScore = lifeScore(from: previousComponents)
+        let previousContributionResult = personalizedMetricContributionResult(
+            input: intelligenceInput,
+            referenceDate: startOfYesterday
+        )
+        let adjustedPreviousScore = personalizedLifeScore(
+            baseScore: previousScore,
+            contributionResult: previousContributionResult
+        )
         let scoreDeltaFromPreviousDay: Int? = {
-            guard let preliminaryScore, let previousScore else { return nil }
-            return preliminaryScore - previousScore
+            guard let adjustedPreliminaryScore, let adjustedPreviousScore else { return nil }
+            return adjustedPreliminaryScore - adjustedPreviousScore
         }()
         let state = lifeScoreState(
-            score: preliminaryScore,
+            score: adjustedPreliminaryScore,
             availableWeight: totalWeight,
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             components: components,
             drivers: input.insightsResult.drivers,
             primaryInsight: primaryInsight
         )
-        let roundedScore = state == .calibrating ? nil : preliminaryScore
+        let roundedScore = state == .calibrating ? nil : adjustedPreliminaryScore
         let alignedActions = lifeScoreAlignedActions(
             input.insightsResult.actions,
             state: state,
@@ -168,13 +184,18 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             subtitle = "A lightweight read on how your recovery, heart, habits, and training are lining up right now."
         }
 
+        let presentationComponents = componentsWithPersonalizedMetricDebug(
+            components: components,
+            contributionResult: metricContributionResult
+        )
+
         return .init(
             score: roundedScore,
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
             state: state,
             subtitle: subtitle,
             refinementPromptText: refinementPromptText,
-            components: components.sorted { $0.weight > $1.weight },
+            components: presentationComponents.sorted { $0.weight > $1.weight },
             headlineText: headlineText,
             primaryInsight: primaryInsight,
             drivers: alignedHeroDrivers(
@@ -189,6 +210,89 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
 }
 
 private extension SQLifeScoreBuilder {
+    func personalizedMetricContributionResult(
+        input: SQHealthIntelligenceInput,
+        referenceDate: Date
+    ) -> SQLifeScoreMetricContributionResult? {
+        guard SQAdminConfig.personalizedLifeScoreAdjustmentsEnabled else { return nil }
+
+        let snapshots = SQInsightFeatureBuilder().makeFeatureSnapshots(
+            checkIns: input.checkIns,
+            workouts: input.workouts,
+            metricDefinitions: input.metricDefinitions,
+            sleepData: input.sleepData,
+            restingHeartRateSummaries: input.restingHeartRateSummaries
+        )
+        let dayKey = referenceDate.firebaseDailyDateKey
+        let snapshot = snapshots.first { $0.anchorDayKey == dayKey }
+
+        return SQLifeScoreMetricContributorBuilder().buildContributors(
+            from: snapshot,
+            metricDefinitions: input.metricDefinitions
+        )
+    }
+
+    func personalizedLifeScore(
+        baseScore: Int?,
+        contributionResult: SQLifeScoreMetricContributionResult?
+    ) -> Int? {
+        guard let baseScore else { return nil }
+        guard let contributionResult else { return baseScore }
+
+        return Int(
+            clamp(
+                Double(baseScore) + contributionResult.incrementalContributionTotal,
+                min: 0,
+                max: 100
+            ).rounded()
+        )
+    }
+
+    func componentsWithPersonalizedMetricDebug(
+        components: [SQLifeScoreComponent],
+        contributionResult: SQLifeScoreMetricContributionResult?
+    ) -> [SQLifeScoreComponent] {
+        guard
+            SQAdminConfig.personalizedLifeScoreAdjustmentsEnabled,
+            let contributionResult,
+            !contributionResult.incrementalContributors.isEmpty
+        else {
+            return components
+        }
+
+        let totalContribution = contributionResult.incrementalContributionTotal
+        let detailItems = contributionResult.incrementalContributors.map { contributor in
+            let metricType = contributor.isCustom ? "custom metric" : "preset metric"
+            let sourceText = String(describing: contributor.source)
+            return SQLifeScoreDetailItem(
+                id: "personalized-\(contributor.metricId)",
+                title: contributor.title,
+                valueText: "\(signedDecimal(total: contributor.contributionPoints)) pts",
+                summary: "\(metricType), source: \(sourceText).",
+                effect: contributor.effect
+            )
+        }
+
+        let score = Int(clamp(70 + (totalContribution * 6), min: 0, max: 100).rounded())
+        let summary = "Personalized metrics adjusted the score by \(signedDecimal(total: totalContribution)) point(s)."
+
+        return components + [
+            .init(
+                id: "personalizedMetrics",
+                title: "Personalized Metrics",
+                score: score,
+                summary: summary,
+                weight: 0,
+                detailItems: detailItems
+            )
+        ]
+    }
+
+    func signedDecimal(total value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + formattedDecimal(value)
+    }
+
     func lifeScoreHeroSummaryText(
         state: SQLifeScoreState,
         components: [SQLifeScoreComponent],
