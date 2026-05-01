@@ -702,8 +702,16 @@ struct SQViewLabView: View {
                 values: report.generatedCustomMetricInsightCandidateDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Surfaced Custom Metric Insights",
+                values: report.surfacedCustomMetricInsightCandidateDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Custom Insight Rejections",
                 values: report.customMetricInsightRejectionReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Custom Metric Cooldowns",
+                values: report.customMetricCooldownHitDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Score Deltas",
@@ -720,6 +728,18 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Top Changes",
                 values: report.topChangeDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Change Before Diversity",
+                values: report.changeCandidateBeforeDiversityDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Change After Diversity",
+                values: report.changeCandidateAfterDiversityDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Change Suppressions",
+                values: report.changeSuppressionReasonDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Primary Action Families",
@@ -802,12 +822,24 @@ struct SQViewLabView: View {
                 values: report.wouldSurfaceCustomRelationshipDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Surfaced Custom Relationships",
+                values: report.surfacedCustomRelationshipDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Would Surface Relationship Details",
                 values: report.wouldSurfaceCustomRelationshipCandidates.map(relationshipCandidateText)
             )
             outputGroup(
                 title: "Rejected Relationship Surfacing",
                 values: report.rejectedRelationshipSurfacingReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Positive Current-State Suppressions",
+                values: report.positiveCurrentStateSuppressionDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Bright Spot Reframes",
+                values: report.brightSpotReframeDistribution.map(distributionText)
             )
         }
         .padding(.SQSpace.l)

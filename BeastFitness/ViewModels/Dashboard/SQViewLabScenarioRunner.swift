@@ -181,12 +181,18 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let heroFamilyKey: String
     let surfacedInsightTitles: [String]
     let surfacedCustomInsightTitles: [String]
+    let surfacedCustomMetricInsightTitles: [String]
+    let surfacedCustomRelationshipTitles: [String]
     let generatedCustomMetricInsightCandidateTitles: [String]
     let customMetricInsightRejectionReasons: [String]
+    let customMetricCooldownHitTitles: [String]
     let scoreDelta: Int?
     let componentScores: [String: Int]
     let topDriverTitles: [String]
     let topChangeTitles: [String]
+    let changeCandidateBeforeDiversityTitles: [String]
+    let changeCandidateAfterDiversityTitles: [String]
+    let changeSuppressionReasons: [String]
     let actionRecommendationFamilies: [String]
     let signalSourceLabels: [String]
     let semanticRoleLabels: [String]
@@ -217,6 +223,8 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let nearMissCustomRelationshipCandidateTexts: [String]
     let wouldSurfaceCustomRelationshipTitles: [String]
     let rejectedRelationshipSurfacingReasons: [String]
+    let positiveCurrentStateSuppressionReasons: [String]
+    let brightSpotReframeTitles: [String]
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -251,12 +259,18 @@ struct SQViewLabSimulationReport {
     let heroFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedInsightDistribution: [SQViewLabSimulationDistributionRow]
     let surfacedCustomInsightDistribution: [SQViewLabSimulationDistributionRow]
+    let surfacedCustomMetricInsightCandidateDistribution: [SQViewLabSimulationDistributionRow]
+    let surfacedCustomRelationshipDistribution: [SQViewLabSimulationDistributionRow]
     let generatedCustomMetricInsightCandidateDistribution: [SQViewLabSimulationDistributionRow]
     let customMetricInsightRejectionReasonDistribution: [SQViewLabSimulationDistributionRow]
+    let customMetricCooldownHitDistribution: [SQViewLabSimulationDistributionRow]
     let scoreDeltaDistribution: [SQViewLabSimulationDistributionRow]
     let componentScoreDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverDistribution: [SQViewLabSimulationDistributionRow]
     let topChangeDistribution: [SQViewLabSimulationDistributionRow]
+    let changeCandidateBeforeDiversityDistribution: [SQViewLabSimulationDistributionRow]
+    let changeCandidateAfterDiversityDistribution: [SQViewLabSimulationDistributionRow]
+    let changeSuppressionReasonDistribution: [SQViewLabSimulationDistributionRow]
     let primaryActionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let allActionRecommendationFamilyDistribution: [SQViewLabSimulationDistributionRow]
     let signalSourceDistribution: [SQViewLabSimulationDistributionRow]
@@ -289,6 +303,8 @@ struct SQViewLabSimulationReport {
     let wouldSurfaceCustomRelationshipDistribution: [SQViewLabSimulationDistributionRow]
     let rejectedRelationshipSurfacingReasonDistribution: [SQViewLabSimulationDistributionRow]
     let wouldSurfaceCustomRelationshipCandidates: [SQViewLabExploratoryRelationshipCandidate]
+    let positiveCurrentStateSuppressionDistribution: [SQViewLabSimulationDistributionRow]
+    let brightSpotReframeDistribution: [SQViewLabSimulationDistributionRow]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -352,6 +368,9 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         )
         let featureBuilder = SQInsightFeatureBuilder()
         let shadowContributorBuilder = SQLifeScoreMetricContributorBuilder()
+        let changeBuilder = SQInsightChangeBuilder()
+        let analysisEngine = SQInsightAnalysisEngine()
+        let relationshipRegistry = SQInsightRelationshipRegistry()
         let dynamicMetricCandidateBuilder = DynamicMetricCandidateBuilder()
         let dynamicMetricInsightBuilder = SQDynamicMetricInsightBuilder()
         let relationshipCandidateBuilder = ExploratoryRelationshipCandidateBuilder()
@@ -360,6 +379,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         var allCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         var allNearMissCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
         var allWouldSurfaceCustomRelationshipCandidates = [SQViewLabExploratoryRelationshipCandidate]()
+        var lastCustomMetricSurfaceDateByTitle = [String: Date]()
+        var lastCustomMetricSurfaceDate: Date?
         let customMetricIds = Set(request.metricDefinitions.filter { !$0.isPreset }.map(\.id))
 
         for index in generatedDays.indices {
@@ -400,6 +421,16 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 sleepData: currentDay.sleepData,
                 restingHeartRateSummaries: restingHeartRateSummaries
             )
+            let changeCandidatesBeforeDiversity = changeBuilder.buildChanges(
+                from: featureSnapshots,
+                surfaceIntent: .today
+            )
+            let generatedRelationshipAnalysis = analysisEngine.analyze(
+                snapshots: featureSnapshots,
+                relationships: relationshipRegistry.activeRelationships,
+                surfaceIntent: .today,
+                referenceDate: currentDay.date
+            )
             let currentSnapshot = featureSnapshots.first { $0.anchorDayKey == currentDay.date.firebaseDailyDateKey }
             let signalFeatures = currentSnapshot?.signalFeatures ?? [:]
             let shadowResult = shadowContributorBuilder.buildContributors(
@@ -438,9 +469,6 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             allWouldSurfaceCustomRelationshipCandidates.append(
                 contentsOf: wouldSurfaceRelationshipCandidates
             )
-            let surfacedSignalIds = insightsResult.insights.flatMap { insight in
-                [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
-            }
             let customMetricValues = signalFeatures.reduce(into: [String: Double]()) { partialResult, pair in
                 guard customMetricIds.contains(pair.key) else { return }
                 partialResult[pair.key] = pair.value.rawValue
@@ -462,23 +490,51 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 guard signalIds.contains(where: { customMetricIds.contains($0) }) else { return nil }
                 return insight.title
             }
+            let surfacedCustomMetricInsightTitles = insightsResult.insights
+                .filter { $0.familyKey.hasPrefix("customMetric.") }
+                .map(\.title)
+            let surfacedCustomRelationshipTitles = insightsResult.insights
+                .filter { $0.familyKey.hasPrefix("customRelationship.") }
+                .map(\.title)
             let generatedCustomMetricInsightCandidateTitles = generatedCustomMetricInsights.map(\.title)
             let customInsightRejectionReasons = customMetricInsightRejectionReasons(
                 generatedInsights: generatedCustomMetricInsights,
                 surfacedInsights: insightsResult.insights,
                 customMetricIds: customMetricIds
             )
+            let customMetricCooldownHits = customMetricCooldownHitTitles(
+                generatedInsights: generatedCustomMetricInsights,
+                surfacedInsights: insightsResult.insights,
+                lastSurfaceDateByTitle: lastCustomMetricSurfaceDateByTitle,
+                lastSurfaceDate: lastCustomMetricSurfaceDate,
+                referenceDate: currentDay.date
+            )
             let componentScores = Dictionary(
                 uniqueKeysWithValues: lifeScoreViewModel.components.map { ($0.title, $0.score) }
             )
             let topDriverTitles = lifeScoreViewModel.drivers.prefix(3).map(\.title)
             let topChangeTitles = lifeScoreViewModel.changes.prefix(3).map(\.title)
+            let changeCandidateBeforeDiversityTitles = changeCandidatesBeforeDiversity.prefix(5).map(\.title)
+            let changeCandidateAfterDiversityTitles = insightsResult.changes.prefix(5).map(\.title)
+            let changeSuppressionReasons = changeSuppressionReasons(
+                beforeDiversity: changeCandidatesBeforeDiversity,
+                afterDiversity: insightsResult.changes
+            )
+            let positiveCurrentStateSuppressions = positiveCurrentStateSuppressionReasons(
+                generatedInsights: generatedRelationshipAnalysis.generatedInsights,
+                surfacedInsights: insightsResult.insights,
+                stateTitle: lifeScoreViewModel.state.title,
+                drivers: insightsResult.drivers
+            )
+            let brightSpotReframeTitles = insightsResult.insights
+                .filter(isBrightSpotReframe)
+                .map(\.title)
             let actionRecommendationFamilies = insightsResult.insights.compactMap { insight in
                 insight.recommendationFamily.map { String(describing: $0) }
             }
             let signalSourceLabels = signalFeatures.values.map { String(describing: $0.source) }
             let semanticRoleLabels = signalFeatures.values.map { String(describing: $0.signalRole) }
-            let surfacedCustomMetric = surfacedSignalIds.contains { customMetricIds.contains($0) }
+            let surfacedCustomMetric = !surfacedCustomMetricInsightTitles.isEmpty
             let healthKitFallbackMetricIds = signalFeatures.values
                 .filter { $0.source == .healthKitFallback }
                 .map(\.signalId)
@@ -548,12 +604,18 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 heroFamilyKey: heroFamilyKey,
                 surfacedInsightTitles: surfacedInsightTitles,
                 surfacedCustomInsightTitles: surfacedCustomInsightTitles,
+                surfacedCustomMetricInsightTitles: surfacedCustomMetricInsightTitles,
+                surfacedCustomRelationshipTitles: surfacedCustomRelationshipTitles,
                 generatedCustomMetricInsightCandidateTitles: generatedCustomMetricInsightCandidateTitles,
                 customMetricInsightRejectionReasons: customInsightRejectionReasons,
+                customMetricCooldownHitTitles: customMetricCooldownHits,
                 scoreDelta: lifeScoreViewModel.scoreDeltaFromPreviousDay,
                 componentScores: componentScores,
                 topDriverTitles: topDriverTitles,
                 topChangeTitles: topChangeTitles,
+                changeCandidateBeforeDiversityTitles: changeCandidateBeforeDiversityTitles,
+                changeCandidateAfterDiversityTitles: changeCandidateAfterDiversityTitles,
+                changeSuppressionReasons: changeSuppressionReasons,
                 actionRecommendationFamilies: actionRecommendationFamilies,
                 signalSourceLabels: signalSourceLabels,
                 semanticRoleLabels: semanticRoleLabels,
@@ -584,6 +646,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 nearMissCustomRelationshipCandidateTexts: nearMissCustomRelationshipCandidateTexts,
                 wouldSurfaceCustomRelationshipTitles: wouldSurfaceCustomRelationshipTitles,
                 rejectedRelationshipSurfacingReasons: relationshipSurfacingRejectionReasons,
+                positiveCurrentStateSuppressionReasons: positiveCurrentStateSuppressions,
+                brightSpotReframeTitles: brightSpotReframeTitles,
                 morningValues: currentDay.morningValues,
                 eveningValues: currentDay.eveningValues,
                 restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -592,6 +656,13 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 completedEveningCheckIn: currentDay.completedEveningCheckIn
             )
             outputs.append(output)
+
+            for title in surfacedCustomMetricInsightTitles {
+                lastCustomMetricSurfaceDateByTitle[title] = currentDay.date
+            }
+            if !surfacedCustomMetricInsightTitles.isEmpty {
+                lastCustomMetricSurfaceDate = currentDay.date
+            }
         }
 
         return .init(
@@ -637,11 +708,20 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             heroFamilyDistribution: distributionRows(for: outputs.map(\.heroFamilyKey)),
             surfacedInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedInsightTitles)),
             surfacedCustomInsightDistribution: distributionRows(for: outputs.flatMap(\.surfacedCustomInsightTitles)),
+            surfacedCustomMetricInsightCandidateDistribution: distributionRows(
+                for: outputs.flatMap(\.surfacedCustomMetricInsightTitles)
+            ),
+            surfacedCustomRelationshipDistribution: distributionRows(
+                for: outputs.flatMap(\.surfacedCustomRelationshipTitles)
+            ),
             generatedCustomMetricInsightCandidateDistribution: distributionRows(
                 for: outputs.flatMap(\.generatedCustomMetricInsightCandidateTitles)
             ),
             customMetricInsightRejectionReasonDistribution: distributionRows(
                 for: outputs.flatMap(\.customMetricInsightRejectionReasons)
+            ),
+            customMetricCooldownHitDistribution: distributionRows(
+                for: outputs.flatMap(\.customMetricCooldownHitTitles)
             ),
             scoreDeltaDistribution: distributionRows(for: outputs.map { scoreDeltaBucket($0.scoreDelta) }),
             componentScoreDistribution: distributionRows(
@@ -653,6 +733,15 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             topDriverDistribution: distributionRows(for: outputs.map { $0.topDriverTitles.first ?? "None" }),
             topChangeDistribution: distributionRows(for: outputs.map { $0.topChangeTitles.first ?? "None" }),
+            changeCandidateBeforeDiversityDistribution: distributionRows(
+                for: outputs.map { $0.changeCandidateBeforeDiversityTitles.first ?? "None" }
+            ),
+            changeCandidateAfterDiversityDistribution: distributionRows(
+                for: outputs.map { $0.changeCandidateAfterDiversityTitles.first ?? "None" }
+            ),
+            changeSuppressionReasonDistribution: distributionRows(
+                for: outputs.flatMap(\.changeSuppressionReasons)
+            ),
             primaryActionRecommendationFamilyDistribution: distributionRows(
                 for: outputs.map { $0.actionRecommendationFamilies.first ?? "None" }
             ),
@@ -735,6 +824,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             wouldSurfaceCustomRelationshipCandidates: topRelationshipCandidates(
                 from: allWouldSurfaceCustomRelationshipCandidates
+            ),
+            positiveCurrentStateSuppressionDistribution: distributionRows(
+                for: outputs.flatMap(\.positiveCurrentStateSuppressionReasons)
+            ),
+            brightSpotReframeDistribution: distributionRows(
+                for: outputs.flatMap(\.brightSpotReframeTitles)
             ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
@@ -1836,7 +1931,6 @@ private extension SQViewLabScenarioRunner {
                     && candidate.lowBucketCount >= 6
                     && candidate.highBucketCount >= 6
                     && abs(candidate.effectSize) >= 7
-                    && candidate.inputSensitivity != .medicationLike
             }
             .sorted {
                 if $0.confidence != $1.confidence {
@@ -1859,10 +1953,6 @@ private extension SQViewLabScenarioRunner {
 
             if candidate.candidateType == .timingAmbiguousCandidate {
                 return "\(candidate.label): timing ambiguous"
-            }
-
-            if candidate.inputSensitivity == .medicationLike {
-                return "\(candidate.label): medication-like input"
             }
 
             if candidate.confidence == "low" {
@@ -1898,10 +1988,9 @@ private extension SQViewLabScenarioRunner {
         guard !generatedInsights.isEmpty else { return [] }
 
         let surfacedIds = Set(surfacedInsights.map(\.id))
-        let surfacedCustomInsightCount = surfacedInsights.filter { insight in
-            isCustomMetricInsight(insight, customMetricIds: customMetricIds)
-        }
-        .count
+        let surfacedCustomInsightCount = surfacedInsights
+            .filter { $0.familyKey.hasPrefix("customMetric.") }
+            .count
 
         return generatedInsights.compactMap { insight -> String? in
             guard !surfacedIds.contains(insight.id) else { return nil }
@@ -1916,6 +2005,115 @@ private extension SQViewLabScenarioRunner {
 
             return "\(insight.title): lost to higher-ranked preset insight"
         }
+    }
+
+    func customMetricCooldownHitTitles(
+        generatedInsights: [SQInsight],
+        surfacedInsights: [SQInsight],
+        lastSurfaceDateByTitle: [String: Date],
+        lastSurfaceDate: Date?,
+        referenceDate: Date
+    ) -> [String] {
+        let surfacedIds = Set(surfacedInsights.map(\.id))
+        let calendar = Calendar.current
+
+        return generatedInsights.compactMap { insight -> String? in
+            guard insight.familyKey.hasPrefix("customMetric."),
+                  !surfacedIds.contains(insight.id) else {
+                return nil
+            }
+
+            let matchedTitleCooldown = lastSurfaceDateByTitle[insight.title]
+            let resolvedLastSurfaceDate = matchedTitleCooldown ?? lastSurfaceDate
+            guard let resolvedLastSurfaceDate else { return nil }
+
+            let lastDay = calendar.startOfDay(for: resolvedLastSurfaceDate)
+            let referenceDay = calendar.startOfDay(for: referenceDate)
+            let dayDelta = calendar.dateComponents([.day], from: lastDay, to: referenceDay).day ?? Int.max
+            guard dayDelta > 0 && dayDelta < 6 else { return nil }
+            guard insight.confidence != .high && !(insight.effect == .negative && insight.rankingScore >= 34) else {
+                return nil
+            }
+
+            let scope = matchedTitleCooldown == nil ? "metric" : "title"
+            return "\(insight.title): \(scope) cooldown hit (\(dayDelta)d)"
+        }
+    }
+
+    func changeSuppressionReasons(
+        beforeDiversity: [SQInsightChange],
+        afterDiversity: [SQInsightChange]
+    ) -> [String] {
+        let afterIds = Set(afterDiversity.map(\.id))
+        return beforeDiversity.prefix(5).compactMap { change in
+            guard !afterIds.contains(change.id) else { return nil }
+
+            if change.signalId == SQMetricId.caffeine {
+                return "\(change.title): suppressed by caffeine diversity/relevance gate"
+            }
+
+            if isHighFrequencyBehaviorSignalId(change.signalId) {
+                return "\(change.title): suppressed by behavior-signal cooldown"
+            }
+
+            return "\(change.title): lost after diversity ranking"
+        }
+    }
+
+    func positiveCurrentStateSuppressionReasons(
+        generatedInsights: [SQInsight],
+        surfacedInsights: [SQInsight],
+        stateTitle: String,
+        drivers: [SQInsightDriver]
+    ) -> [String] {
+        guard isPressureStateTitle(stateTitle) || drivers.filter({ $0.direction == .drag }).count >= 2 else {
+            return []
+        }
+
+        let surfacedIds = Set(surfacedInsights.map(\.id))
+        let surfacedTitles = Set(surfacedInsights.map(\.title))
+        return generatedInsights.compactMap { insight in
+            guard isGenericPositiveCurrentStateInsight(insight),
+                  !surfacedIds.contains(insight.id),
+                  !surfacedTitles.contains(insight.title) else {
+                return nil
+            }
+
+            return "\(insight.title): suppressed in \(stateTitle) context"
+        }
+    }
+
+    func isBrightSpotReframe(_ insight: SQInsight) -> Bool {
+        insight.title.localizedCaseInsensitiveContains("bright spot")
+            || insight.title.localizedCaseInsensitiveContains("still dragging")
+    }
+
+    func isGenericPositiveCurrentStateInsight(_ insight: SQInsight) -> Bool {
+        guard insight.insightClass == .opportunity,
+              insight.effect == .positive else {
+            return false
+        }
+
+        return [
+            "You're well recovered today",
+            "Your body looks ready to handle more",
+            "You're in a good position to train today",
+            "Things are lining up for a solid day",
+            "The day should feel relatively smooth"
+        ].contains(insight.title)
+    }
+
+    func isPressureStateTitle(_ title: String) -> Bool {
+        title == "Under Pressure" || title == "Dipping"
+    }
+
+    func isHighFrequencyBehaviorSignalId(_ signalId: String) -> Bool {
+        [
+            SQMetricId.caffeine,
+            SQMetricId.nicotine,
+            SQMetricId.weed,
+            SQMetricId.porn
+        ].contains(signalId)
     }
 
     func isCustomMetricInsight(

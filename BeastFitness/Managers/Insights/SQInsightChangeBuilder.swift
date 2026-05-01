@@ -27,6 +27,7 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
 
     private struct SignalObservation {
         let value: Double
+        let rankingValue: Double
         let activityType: HKWorkoutActivityType?
     }
 
@@ -61,6 +62,11 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
             return .init(
                 value: value,
+                rankingValue: rankingValue(
+                    for: definition.signalId,
+                    rawValue: value,
+                    snapshot: snapshot
+                ),
                 activityType: snapshot.workoutActivityType(for: definition.signalId)
             )
         }
@@ -84,13 +90,15 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
         guard recentValues.count >= minimumRequired,
               priorValues.count >= minimumRequired,
               let recentAverage = average(of: recentValues.map(\.value)),
-              let priorAverage = average(of: priorValues.map(\.value)) else {
+              let priorAverage = average(of: priorValues.map(\.value)),
+              let recentRankingAverage = average(of: recentValues.map(\.rankingValue)),
+              let priorRankingAverage = average(of: priorValues.map(\.rankingValue)) else {
             return nil
         }
 
         let delta = recentAverage - priorAverage
-        let effectMagnitude = abs(delta)
-        guard effectMagnitude >= definition.minimumEffectMagnitude else {
+        let effectMagnitude = abs(recentRankingAverage - priorRankingAverage)
+        guard effectMagnitude >= effectiveMinimumEffectMagnitude(for: definition) else {
             return nil
         }
 
@@ -188,6 +196,50 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             }
             return lhs.value < rhs.value
         })?.key
+    }
+
+    private func rankingValue(
+        for signalId: String,
+        rawValue: Double,
+        snapshot: SQInsightFeatureSnapshot
+    ) -> Double {
+        switch signalId {
+        case SQInsightAnalysisMetricId.workoutPerformance,
+             SQInsightAnalysisMetricId.workoutDifficulty,
+             SQInsightAnalysisMetricId.restingHeartRate:
+            return rawValue
+        default:
+            break
+        }
+
+        guard let feature = snapshot.signalFeatures[signalId] else {
+            return rawValue
+        }
+
+        if let goalUtilityScore = feature.goalUtilityScore {
+            return goalUtilityScore / 10
+        }
+
+        if abs(rawValue) > 10,
+           let normalizedValue = feature.normalizedValue {
+            return normalizedValue * 10
+        }
+
+        return rawValue
+    }
+
+    private func effectiveMinimumEffectMagnitude(for definition: ChangeDefinition) -> Double {
+        switch definition.signalId {
+        case SQMetricId.caffeine:
+            return max(definition.minimumEffectMagnitude, 1.1)
+        case SQMetricId.alcohol,
+             SQMetricId.weed,
+             SQMetricId.nicotine,
+             SQMetricId.porn:
+            return max(definition.minimumEffectMagnitude, 0.9)
+        default:
+            return definition.minimumEffectMagnitude
+        }
     }
 
     private func average(of values: [Double]) -> Double? {

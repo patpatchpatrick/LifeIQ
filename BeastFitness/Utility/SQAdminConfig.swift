@@ -33,6 +33,10 @@ enum SQAdminConfig {
     /// Keeps personalized metric score adjustments off until custom metric scoring has
     /// been validated in View Lab and the metric setup UX can explain the setting.
     static var personalizedLifeScoreAdjustmentsEnabled = false
+
+    /// Debug-only gate for exploratory custom relationship cards. Keep off until
+    /// simulator output has been reviewed for noisy or causal-sounding patterns.
+    static var enableCustomRelationshipInsights = false
     #else
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
@@ -42,5 +46,6 @@ enum SQAdminConfig {
     static let viewLabEnabled = false
     static let forceInsightFreshnessBadges = false
     static let personalizedLifeScoreAdjustmentsEnabled = false
+    static let enableCustomRelationshipInsights = false
     #endif
 }

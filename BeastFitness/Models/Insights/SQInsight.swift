@@ -111,6 +111,35 @@ struct SQInsight: Identifiable, Hashable {
         )
     }
 
+    func withPresentation(
+        title updatedTitle: String,
+        summary updatedSummary: String,
+        actionText updatedActionText: String? = nil
+    ) -> SQInsight {
+        .init(
+            id: id,
+            familyKey: familyKey,
+            insightClass: insightClass,
+            variantPriority: variantPriority,
+            inputSignalId: inputSignalId,
+            outputSignalId: outputSignalId,
+            recommendationFamily: recommendationFamily,
+            title: updatedTitle,
+            summary: updatedSummary,
+            evidenceText: evidenceText,
+            actionText: updatedActionText ?? actionText,
+            driverText: driverText,
+            outcomeText: outcomeText,
+            deltaText: deltaText,
+            category: category,
+            confidence: confidence,
+            effect: effect,
+            sampleCount: sampleCount,
+            rankingScore: rankingScore,
+            isNew: isNew
+        )
+    }
+
     func withIsNew(_ updatedIsNew: Bool) -> SQInsight {
         .init(
             id: id,

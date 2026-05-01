@@ -25,4 +25,21 @@ struct SQInsightChange: Identifiable, Hashable {
     let deltaText: String
     let effectMagnitude: Double
     let rankingScore: Double
+
+    func withRankingScore(_ updatedRankingScore: Double) -> SQInsightChange {
+        .init(
+            id: id,
+            signalId: signalId,
+            title: title,
+            summary: summary,
+            timeframeText: timeframeText,
+            category: category,
+            direction: direction,
+            recentAverage: recentAverage,
+            priorAverage: priorAverage,
+            deltaText: deltaText,
+            effectMagnitude: effectMagnitude,
+            rankingScore: updatedRankingScore
+        )
+    }
 }

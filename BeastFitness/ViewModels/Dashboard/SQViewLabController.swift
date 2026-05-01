@@ -260,6 +260,9 @@ import UIKit
         lines.append("- Reference Date: \(reports.first?.referenceDate.formattedString(with: .medium) ?? selectedSimulationReferenceDate.formattedString(with: .medium))")
         lines.append("- Note: Use the same seed and reference date for before/after algorithm comparisons.")
         lines.append("")
+        lines.append("## Cross-Persona Calibration Summary")
+        lines.append(contentsOf: crossPersonaCalibrationSummaryLines(for: reports))
+        lines.append("")
 
         for report in reports {
             lines.append("---")
@@ -272,6 +275,71 @@ import UIKit
         }
 
         return lines.joined(separator: "\n")
+    }
+
+    private func crossPersonaCalibrationSummaryLines(for reports: [SQViewLabSimulationReport]) -> [String] {
+        var lines = [String]()
+        lines.append("| Persona | Avg Life Score | Score Range | Dominant State | Custom Metric Surfaced | Personalized Delta | Top Driver | Top Change | Top Surfaced Insight | Top Recommendation | Warning Flags |")
+        lines.append("| --- | ---: | --- | --- | ---: | ---: | --- | --- | --- | --- | --- |")
+
+        for report in reports {
+            let scoreRange: String
+            if let minimumScore = report.minimumScore, let maximumScore = report.maximumScore {
+                scoreRange = "\(minimumScore)-\(maximumScore)"
+            } else {
+                scoreRange = "n/a"
+            }
+
+            lines.append(
+                "| \(tableCell(report.persona.title))"
+                + " | \(report.averageScore.map(formattedDouble) ?? "n/a")"
+                + " | \(scoreRange)"
+                + " | \(tableCell(report.stateDistribution.first?.label ?? "None"))"
+                + " | \(formattedPercent(report.customMetricSurfacePercentage))"
+                + " | \(report.averageShadowScoreDelta.map(formattedSignedDouble) ?? "n/a")"
+                + " | \(tableCell(report.topDriverDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.topChangeDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.surfacedInsightDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(report.primaryActionRecommendationFamilyDistribution.first?.label ?? "None"))"
+                + " | \(tableCell(warningFlags(for: report).joined(separator: "; "))) |"
+            )
+        }
+
+        return lines
+    }
+
+    private func warningFlags(for report: SQViewLabSimulationReport) -> [String] {
+        var flags = [String]()
+
+        if let topChange = report.topChangeDistribution.first,
+           topChange.label != "None",
+           topChange.percentage > 60 {
+            flags.append("top change >60%: \(topChange.label)")
+        }
+
+        if let topInsight = report.surfacedInsightDistribution.first,
+           topInsight.label != "None",
+           topInsight.percentage > 20 {
+            flags.append("one insight >20%: \(topInsight.label)")
+        }
+
+        if report.customMetricLoggedDays > 60,
+           report.customMetricSurfacePercentage == 0 {
+            flags.append("custom metric logged >60d but surfaced 0%")
+        }
+
+        if let topState = report.stateDistribution.first,
+           isPressureStateTitle(topState.label),
+           let topInsight = report.surfacedInsightDistribution.first,
+           isGenericPositiveCurrentStateTitle(topInsight.label) {
+            flags.append("positive current-state card dominates pressure persona")
+        }
+
+        if report.longestHeroFamilyRepeatStreak > 10 {
+            flags.append("hero family streak >10d")
+        }
+
+        return flags.isEmpty ? ["None"] : flags
     }
 
     private func simulationMarkdownLines(for report: SQViewLabSimulationReport) -> [String] {
@@ -363,11 +431,17 @@ import UIKit
         lines.append("## Custom Surfaced Insight Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomInsightDistribution))
         lines.append("")
-        lines.append("## Generated Custom Metric Insight Candidates")
+        lines.append("## Eligible Custom Metric Insight Candidates")
         lines.append(contentsOf: simulationDistributionLines(report.generatedCustomMetricInsightCandidateDistribution))
         lines.append("")
-        lines.append("## Custom Metric Insight Rejection Reasons")
+        lines.append("## Surfaced Custom Metric Insight Candidates")
+        lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomMetricInsightCandidateDistribution))
+        lines.append("")
+        lines.append("## Custom Metric Insight Suppression Reasons")
         lines.append(contentsOf: simulationDistributionLines(report.customMetricInsightRejectionReasonDistribution))
+        lines.append("")
+        lines.append("## Custom Metric Cooldown Hits")
+        lines.append(contentsOf: simulationDistributionLines(report.customMetricCooldownHitDistribution))
         lines.append("")
         lines.append("## Score Delta Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.scoreDeltaDistribution))
@@ -380,6 +454,15 @@ import UIKit
         lines.append("")
         lines.append("## Top Change Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.topChangeDistribution))
+        lines.append("")
+        lines.append("## Change Candidate Distribution Before Diversity")
+        lines.append(contentsOf: simulationDistributionLines(report.changeCandidateBeforeDiversityDistribution))
+        lines.append("")
+        lines.append("## Change Candidate Distribution After Diversity")
+        lines.append(contentsOf: simulationDistributionLines(report.changeCandidateAfterDiversityDistribution))
+        lines.append("")
+        lines.append("## Change Suppression Reasons")
+        lines.append(contentsOf: simulationDistributionLines(report.changeSuppressionReasonDistribution))
         lines.append("")
         lines.append("## Primary Action Recommendation Family Distribution")
         lines.append(contentsOf: simulationDistributionLines(report.primaryActionRecommendationFamilyDistribution))
@@ -444,8 +527,17 @@ import UIKit
         lines.append("## Would Surface Custom Relationship Details")
         lines.append(contentsOf: customRelationshipCandidateLines(report.wouldSurfaceCustomRelationshipCandidates))
         lines.append("")
+        lines.append("## Actually Surfaced Custom Relationship Insights")
+        lines.append(contentsOf: simulationDistributionLines(report.surfacedCustomRelationshipDistribution))
+        lines.append("")
         lines.append("## Rejected Relationship Surfacing Reasons")
         lines.append(contentsOf: simulationDistributionLines(report.rejectedRelationshipSurfacingReasonDistribution))
+        lines.append("")
+        lines.append("## Positive Current-State Suppressions")
+        lines.append(contentsOf: simulationDistributionLines(report.positiveCurrentStateSuppressionDistribution))
+        lines.append("")
+        lines.append("## Bright Spot Reframes")
+        lines.append(contentsOf: simulationDistributionLines(report.brightSpotReframeDistribution))
         lines.append("")
 
         lines.append("## Daily Log")
@@ -464,8 +556,13 @@ import UIKit
             lines.append("  - dynamic driver candidates: \(day.dynamicMetricDriverCandidateLabels.isEmpty ? "none" : day.dynamicMetricDriverCandidateLabels.joined(separator: " | "))")
             lines.append("  - dynamic change candidates: \(day.dynamicMetricChangeCandidateLabels.isEmpty ? "none" : day.dynamicMetricChangeCandidateLabels.joined(separator: " | "))")
             lines.append("  - custom metric candidates: \(day.customMetricCandidateLabels.isEmpty ? "none" : day.customMetricCandidateLabels.joined(separator: " | "))")
-            lines.append("  - generated custom metric insights: \(day.generatedCustomMetricInsightCandidateTitles.isEmpty ? "none" : day.generatedCustomMetricInsightCandidateTitles.joined(separator: " | "))")
-            lines.append("  - custom metric insight rejections: \(day.customMetricInsightRejectionReasons.isEmpty ? "none" : day.customMetricInsightRejectionReasons.joined(separator: " | "))")
+            lines.append("  - eligible custom metric insights: \(day.generatedCustomMetricInsightCandidateTitles.isEmpty ? "none" : day.generatedCustomMetricInsightCandidateTitles.joined(separator: " | "))")
+            lines.append("  - surfaced custom metric insights: \(day.surfacedCustomMetricInsightTitles.isEmpty ? "none" : day.surfacedCustomMetricInsightTitles.joined(separator: " | "))")
+            lines.append("  - custom metric insight suppressions: \(day.customMetricInsightRejectionReasons.isEmpty ? "none" : day.customMetricInsightRejectionReasons.joined(separator: " | "))")
+            lines.append("  - custom metric cooldown hits: \(day.customMetricCooldownHitTitles.isEmpty ? "none" : day.customMetricCooldownHitTitles.joined(separator: " | "))")
+            lines.append("  - change candidates before diversity: \(day.changeCandidateBeforeDiversityTitles.isEmpty ? "none" : day.changeCandidateBeforeDiversityTitles.joined(separator: " | "))")
+            lines.append("  - change candidates after diversity: \(day.changeCandidateAfterDiversityTitles.isEmpty ? "none" : day.changeCandidateAfterDiversityTitles.joined(separator: " | "))")
+            lines.append("  - change suppressions: \(day.changeSuppressionReasons.isEmpty ? "none" : day.changeSuppressionReasons.joined(separator: " | "))")
             lines.append("  - exploratory relationship candidates: \(day.exploratoryRelationshipCandidateLabels.isEmpty ? "none" : day.exploratoryRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - custom output relationship candidates: \(day.customOutputRelationshipCandidateLabels.isEmpty ? "none" : day.customOutputRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - actionable custom relationships: \(day.actionableCustomRelationshipCandidateLabels.isEmpty ? "none" : day.actionableCustomRelationshipCandidateLabels.joined(separator: " | "))")
@@ -475,7 +572,10 @@ import UIKit
             lines.append("  - near-miss custom relationships: \(day.nearMissCustomRelationshipCandidateLabels.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateLabels.joined(separator: " | "))")
             lines.append("  - near-miss custom relationship details: \(day.nearMissCustomRelationshipCandidateTexts.isEmpty ? "none" : day.nearMissCustomRelationshipCandidateTexts.joined(separator: " | "))")
             lines.append("  - would-surface custom relationships: \(day.wouldSurfaceCustomRelationshipTitles.isEmpty ? "none" : day.wouldSurfaceCustomRelationshipTitles.joined(separator: " | "))")
+            lines.append("  - actually surfaced custom relationships: \(day.surfacedCustomRelationshipTitles.isEmpty ? "none" : day.surfacedCustomRelationshipTitles.joined(separator: " | "))")
             lines.append("  - rejected relationship surfacing reasons: \(day.rejectedRelationshipSurfacingReasons.isEmpty ? "none" : day.rejectedRelationshipSurfacingReasons.joined(separator: " | "))")
+            lines.append("  - positive current-state suppressions: \(day.positiveCurrentStateSuppressionReasons.isEmpty ? "none" : day.positiveCurrentStateSuppressionReasons.joined(separator: " | "))")
+            lines.append("  - bright spot reframes: \(day.brightSpotReframeTitles.isEmpty ? "none" : day.brightSpotReframeTitles.joined(separator: " | "))")
             lines.append("  - hero summary: \(day.heroSummary)")
             lines.append("  - hero action: \(day.heroAction)")
             lines.append("  - hero family: \(day.heroFamilyKey)")
@@ -730,6 +830,24 @@ import UIKit
 
     private func formattedPercent(_ value: Double) -> String {
         String(format: "%.1f%%", value)
+    }
+
+    private func tableCell(_ value: String) -> String {
+        value.replacingOccurrences(of: "|", with: "\\|")
+    }
+
+    private func isPressureStateTitle(_ title: String) -> Bool {
+        title == "Under Pressure" || title == "Dipping"
+    }
+
+    private func isGenericPositiveCurrentStateTitle(_ title: String) -> Bool {
+        [
+            "You're well recovered today",
+            "Your body looks ready to handle more",
+            "You're in a good position to train today",
+            "Things are lining up for a solid day",
+            "The day should feel relatively smooth"
+        ].contains(title)
     }
 
     private func simulationDistributionLines(
