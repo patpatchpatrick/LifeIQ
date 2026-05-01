@@ -21,7 +21,15 @@ struct SQLifeScoreV2Component: Identifiable, Hashable {
     let contribution: Double
     let positiveDrivers: [String]
     let negativeDrivers: [String]
+    let positiveCapHits: [String]
     let confidence: Double
+}
+
+enum SQLifeScoreV2DriverKind: Hashable {
+    case healthState
+    case behavior
+    case dataConfidence
+    case personalized
 }
 
 struct SQLifeScoreV2Driver: Identifiable, Hashable {
@@ -29,6 +37,7 @@ struct SQLifeScoreV2Driver: Identifiable, Hashable {
     let title: String
     let signalId: String
     let componentId: String
+    let kind: SQLifeScoreV2DriverKind
     let effect: SQLifeScoreSignalEffect
     let scoreImpact: Double
     let summary: String
@@ -39,6 +48,7 @@ struct SQLifeScoreV2Result: Hashable {
     let components: [SQLifeScoreV2Component]
     let topDrivers: [SQLifeScoreV2Driver]
     let calibrationWarnings: [String]
+    let positiveContributionCapHits: [String]
 }
 
 @MainActor
@@ -54,6 +64,7 @@ struct SQLifeScoreV2Builder {
         let weight: Double
         let positiveDrivers: [String]
         let negativeDrivers: [String]
+        let positiveCapHits: [String]
         let confidence: Double
     }
 
@@ -116,14 +127,16 @@ struct SQLifeScoreV2Builder {
                 score: nil,
                 components: [],
                 topDrivers: [],
-                calibrationWarnings: ["v2: no usable inputs"]
+                calibrationWarnings: ["v2: no usable inputs"],
+                positiveContributionCapHits: []
             )
         }
 
         let weightedScore = rawComponents.reduce(0) { partialResult, component in
             partialResult + component.score * component.weight
         } / totalWeight
-        let score = Int(clamp(weightedScore, min: 0, max: 100).rounded())
+        let lowComponentPenalty = v2LowComponentPenalty(rawComponents)
+        let score = Int(clamp(weightedScore - lowComponentPenalty, min: 0, max: 100).rounded())
         let components = rawComponents.map { component in
             SQLifeScoreV2Component(
                 id: component.id,
@@ -133,6 +146,7 @@ struct SQLifeScoreV2Builder {
                 contribution: component.score * component.weight / totalWeight,
                 positiveDrivers: component.positiveDrivers,
                 negativeDrivers: component.negativeDrivers,
+                positiveCapHits: component.positiveCapHits,
                 confidence: component.confidence
             )
         }
@@ -154,8 +168,9 @@ struct SQLifeScoreV2Builder {
         return .init(
             score: score,
             components: components,
-            topDrivers: Array(drivers.prefix(5)),
-            calibrationWarnings: warnings
+            topDrivers: Array(drivers.prefix(8)),
+            calibrationWarnings: warnings,
+            positiveContributionCapHits: rawComponents.flatMap(\.positiveCapHits)
         )
     }
 
@@ -197,7 +212,8 @@ struct SQLifeScoreV2Builder {
             title: "Sleep",
             signals: signals,
             weight: 25,
-            fallbackScore: nil
+            fallbackScore: nil,
+            positiveScoreCap: 93
         )
     }
 
@@ -262,7 +278,8 @@ struct SQLifeScoreV2Builder {
             title: "Recovery / Readiness",
             signals: signals,
             weight: 20,
-            fallbackScore: nil
+            fallbackScore: nil,
+            positiveScoreCap: 90
         )
     }
 
@@ -307,7 +324,8 @@ struct SQLifeScoreV2Builder {
             title: "Mind / Energy",
             signals: signals,
             weight: 20,
-            fallbackScore: nil
+            fallbackScore: nil,
+            positiveScoreCap: 90
         )
     }
 
@@ -340,14 +358,15 @@ struct SQLifeScoreV2Builder {
             )
         }
 
-        let fallback = snapshot?.hasWorkout == true ? nil : 78.0
+        let fallback = snapshot?.hasWorkout == true ? nil : 72.0
         return component(
             id: "trainingPerformance",
             title: "Training Load / Performance",
             signals: signals,
-            weight: snapshot?.hasWorkout == true ? 15 : 8,
+            weight: snapshot?.hasWorkout == true ? 15 : 4,
             fallbackScore: fallback,
-            fallbackConfidence: snapshot?.hasWorkout == true ? 0.8 : 0.35
+            fallbackConfidence: snapshot?.hasWorkout == true ? 0.8 : 0.35,
+            positiveScoreCap: 88
         )
     }
 
@@ -357,32 +376,36 @@ struct SQLifeScoreV2Builder {
                 signalId: SQMetricId.alcohol,
                 title: "Alcohol",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.alcohol),
-                score: { clamp(96 - ($0 * 15), min: 25, max: 96) },
-                cap: 22
+                neutralThrough: 0.05,
+                score: { clamp(76 - ($0 * 13), min: 25, max: 76) },
+                cap: 24
             ),
             behaviorSignal(
                 signalId: SQMetricId.caffeine,
                 title: "Caffeine",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.caffeine),
+                neutralThrough: 175,
                 score: { value in
-                    if value <= 180 { return 88 }
-                    return clamp(88 - ((value - 180) / 4.8), min: 35, max: 88)
+                    if value <= 175 { return 76 }
+                    return clamp(76 - ((value - 175) / 5.2), min: 32, max: 76)
                 },
-                cap: 12
+                cap: 13
             ),
             behaviorSignal(
                 signalId: SQMetricId.weed,
                 title: "Weed",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.weed),
-                score: { clamp(94 - ($0 * 12), min: 30, max: 94) },
-                cap: 16
+                neutralThrough: 0.05,
+                score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
+                cap: 18
             ),
             behaviorSignal(
                 signalId: SQMetricId.nicotine,
                 title: "Nicotine",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.nicotine),
-                score: { clamp(94 - ($0 * 12), min: 30, max: 94) },
-                cap: 16
+                neutralThrough: 0.05,
+                score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
+                cap: 18
             )
         ]
         .compactMap { $0 }
@@ -392,7 +415,8 @@ struct SQLifeScoreV2Builder {
             title: "Habits / Behaviors",
             signals: signals,
             weight: 10,
-            fallbackScore: nil
+            fallbackScore: 74,
+            positiveScoreCap: 78
         )
     }
 
@@ -418,17 +442,20 @@ struct SQLifeScoreV2Builder {
         let checkInScore = clamp((Double(recentCheckInDays) / 5.0) * 100, min: 0, max: 100)
         let currentScore = clamp((Double(currentSignalCount) / 8.0) * 100, min: 0, max: 100)
         let historyScore = clamp((Double(activeSnapshotCount) / 10.0) * 100, min: 0, max: 100)
-        let promptBonus = input.hasCompletedCurrentPromptCheckIn ? 6.0 : -8.0
-        let score = clamp((checkInScore * 0.42) + (currentScore * 0.34) + (historyScore * 0.24) + promptBonus, min: 0, max: 100)
+        let promptPenalty = input.hasCompletedCurrentPromptCheckIn ? 0.0 : 10.0
+        let rawScore = (checkInScore * 0.44) + (currentScore * 0.30) + (historyScore * 0.26) - promptPenalty
+        let score = clamp(rawScore, min: 25, max: 74)
+        let isLowConfidence = score < 64
 
         return .init(
             id: "dataConfidence",
             title: "Data Confidence / Consistency",
             score: score,
-            weight: 5,
-            positiveDrivers: score >= 75 ? ["Recent logging"] : [],
-            negativeDrivers: score < 70 ? ["Missing or inconsistent logs"] : [],
-            confidence: min(1, max(0.2, score / 100))
+            weight: isLowConfidence ? 6 : 1,
+            positiveDrivers: [],
+            negativeDrivers: isLowConfidence ? ["Missing or inconsistent logs"] : [],
+            positiveCapHits: [],
+            confidence: min(1, max(0.2, rawScore / 100))
         )
     }
 
@@ -458,6 +485,7 @@ struct SQLifeScoreV2Builder {
                 .filter { $0.contributionPoints < -0.05 }
                 .prefix(3)
                 .map(\.title),
+            positiveCapHits: abs(customTotal) >= 4.9 ? ["Personalized Metrics"] : [],
             confidence: 0.65
         )
     }
@@ -468,31 +496,37 @@ struct SQLifeScoreV2Builder {
         signals: [ScoredSignal],
         weight: Double,
         fallbackScore: Double?,
-        fallbackConfidence: Double = 0.3
+        fallbackConfidence: Double = 0.3,
+        positiveScoreCap: Double
     ) -> RawComponent? {
         if signals.isEmpty {
             guard let fallbackScore else { return nil }
+            let cappedScore = min(fallbackScore, positiveScoreCap)
             return .init(
                 id: id,
                 title: title,
-                score: fallbackScore,
+                score: cappedScore,
                 weight: weight,
                 positiveDrivers: [],
                 negativeDrivers: ["No recent \(title.lowercased()) signal"],
+                positiveCapHits: fallbackScore > positiveScoreCap ? [title] : [],
                 confidence: fallbackConfidence
             )
         }
 
         let weightedSignals = signals.map { signal -> (signal: ScoredSignal, weight: Double) in
-            let weight = signal.confidence * max(4, abs(signal.driverImpact))
+            let positiveImpact = max(0, signal.driverImpact) * 0.60
+            let negativeImpact = abs(min(0, signal.driverImpact)) * 1.25
+            let weight = signal.confidence * max(4, positiveImpact + negativeImpact)
             return (signal, weight)
         }
         let totalWeight = weightedSignals.reduce(0) { $0 + $1.weight }
-        let score = totalWeight > 0
+        let uncappedScore = totalWeight > 0
             ? weightedSignals.reduce(0) { $0 + ($1.signal.score * $1.weight) } / totalWeight
             : signals.map(\.score).reduce(0, +) / Double(signals.count)
+        let score = min(uncappedScore, positiveScoreCap)
         let positives = signals
-            .filter { $0.driverImpact >= 5 }
+            .filter { $0.driverImpact >= 7 && $0.score > 74 }
             .sorted { $0.driverImpact > $1.driverImpact }
             .prefix(3)
             .map(\.title)
@@ -514,6 +548,7 @@ struct SQLifeScoreV2Builder {
             weight: weight * confidenceMultiplier(confidence),
             positiveDrivers: Array(positives),
             negativeDrivers: Array(negatives),
+            positiveCapHits: uncappedScore > positiveScoreCap ? [title] : [],
             confidence: confidence
         )
     }
@@ -534,13 +569,15 @@ struct SQLifeScoreV2Builder {
                         title: title,
                         signalId: signalId(forDriverTitle: title),
                         componentId: component.id,
+                        kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .negative,
-                        scoreImpact: Double(component.score) - 74,
+                        scoreImpact: Double(component.score) - neutralScore(for: component.id),
                         summary: "\(title) is pulling down \(component.title)."
                     )
                 )
             }
 
+            guard component.id != "dataConfidence" else { continue }
             for title in component.positiveDrivers {
                 drivers.append(
                     .init(
@@ -548,8 +585,9 @@ struct SQLifeScoreV2Builder {
                         title: title,
                         signalId: signalId(forDriverTitle: title),
                         componentId: component.id,
+                        kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .positive,
-                        scoreImpact: Double(component.score) - 74,
+                        scoreImpact: (Double(component.score) - neutralScore(for: component.id)) * 0.6,
                         summary: "\(title) is supporting \(component.title)."
                     )
                 )
@@ -564,8 +602,9 @@ struct SQLifeScoreV2Builder {
                     title: "Low Data Confidence",
                     signalId: "insight.dataConfidence",
                     componentId: "dataConfidence",
+                    kind: .dataConfidence,
                     effect: .negative,
-                    scoreImpact: Double(lowDataComponent.score) - 74,
+                    scoreImpact: Double(lowDataComponent.score) - neutralScore(for: "dataConfidence"),
                     summary: "Missing or inconsistent logs are lowering confidence in the score."
                 )
             )
@@ -582,6 +621,7 @@ struct SQLifeScoreV2Builder {
                     title: contributor.title,
                     signalId: contributor.metricId,
                     componentId: "personalizedMetrics",
+                    kind: .personalized,
                     effect: contributor.contributionPoints >= 0 ? .positive : .negative,
                     scoreImpact: contributor.contributionPoints,
                     summary: "\(contributor.title) is a capped personalization signal."
@@ -607,18 +647,39 @@ struct SQLifeScoreV2Builder {
         var warnings = [String]()
 
         if let currentScore, abs(score - currentScore) > 10 {
-            warnings.append("shadow v2 delta >10 from current score")
+            warnings.append("latest-day shadow v2 delta >10 from current score")
         }
 
         if components.first(where: { $0.id == "dataConfidence" })?.score ?? 100 < 55 {
-            warnings.append("low data confidence")
+            warnings.append("latest-day low data confidence")
         }
 
-        if drivers.first?.signalId == SQInsightAnalysisMetricId.restingHeartRate {
-            warnings.append("resting HR is top v2 driver")
+        let topHealthDriver = drivers.first {
+            $0.kind == .healthState
+        }
+
+        if topHealthDriver?.signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            warnings.append("latest-day resting HR is top v2 health driver")
         }
 
         return warnings.isEmpty ? ["None"] : warnings
+    }
+
+    private func v2LowComponentPenalty(_ components: [RawComponent]) -> Double {
+        components.reduce(0) { partialResult, component in
+            switch component.id {
+            case "dataConfidence":
+                return partialResult + max(0, 60 - component.score) * 0.12
+            case "habitsBehaviors":
+                return partialResult + max(0, 62 - component.score) * 0.07
+            case "sleep", "recoveryReadiness", "mindEnergy":
+                return partialResult + max(0, 66 - component.score) * 0.06
+            case "trainingPerformance":
+                return partialResult + max(0, 60 - component.score) * 0.04
+            default:
+                return partialResult
+            }
+        }
     }
 
     private func latestSnapshot(
@@ -687,18 +748,52 @@ struct SQLifeScoreV2Builder {
         signalId: String,
         title: String,
         rawValue: Double?,
+        neutralThrough: Double,
         score: (Double) -> Double,
         cap: Double
     ) -> ScoredSignal? {
         guard let rawValue else { return nil }
+        let resolvedScore = rawValue <= neutralThrough ? 76 : score(rawValue)
         return .init(
             signalId: signalId,
             title: title,
-            score: score(rawValue),
-            neutralScore: 78,
+            score: resolvedScore,
+            neutralScore: 74,
             confidence: 0.8,
             impactCap: cap
         )
+    }
+
+    private func neutralScore(for componentId: String) -> Double {
+        switch componentId {
+        case "dataConfidence":
+            return 72
+        case "habitsBehaviors":
+            return 74
+        case "trainingPerformance":
+            return 72
+        default:
+            return 74
+        }
+    }
+
+    private func driverKind(
+        componentId: String,
+        signalId: String
+    ) -> SQLifeScoreV2DriverKind {
+        switch componentId {
+        case "dataConfidence":
+            return .dataConfidence
+        case "personalizedMetrics":
+            return .personalized
+        case "habitsBehaviors":
+            return .behavior
+        default:
+            if [SQMetricId.alcohol, SQMetricId.caffeine, SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains(signalId) {
+                return .behavior
+            }
+            return .healthState
+        }
     }
 
     private func signalId(forDriverTitle title: String) -> String {

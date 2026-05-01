@@ -1394,7 +1394,7 @@ final class SQInsightsService: SQInsightsServicing {
         )
     }
 
-    private enum TodayInsightSlot {
+    private enum TodayInsightSlot: Equatable {
         case recentChange
         case relationship
     }
@@ -1404,20 +1404,41 @@ final class SQInsightsService: SQInsightsServicing {
         usedIds: Set<String>,
         slot: TodayInsightSlot
     ) -> SQInsight? {
-        insights.first { insight in
-            guard !usedIds.contains(insight.id) else { return false }
+        let hasNonCaffeineRecentChangeCandidate = insights.contains { insight in
+            !usedIds.contains(insight.id)
+                && !isCaffeineInsight(insight)
+                && todaySlotMatches(insight, slot: .recentChange)
+        }
 
-            switch slot {
-            case .recentChange:
-                switch insight.insightClass {
-                case .followUp, .trend, .baselineChange:
-                    return true
-                case .risk, .opportunity, .relationship, .populationBenchmark, .cohort:
-                    return false
-                }
-            case .relationship:
-                return insight.insightClass == .relationship
+        return insights.first { insight in
+            guard !usedIds.contains(insight.id) else { return false }
+            guard todaySlotMatches(insight, slot: slot) else { return false }
+
+            if slot == .recentChange,
+               isCaffeineInsight(insight),
+               hasNonCaffeineRecentChangeCandidate,
+               !isHighPriorityCaffeineInsight(insight) {
+                return false
             }
+
+            return true
+        }
+    }
+
+    private func todaySlotMatches(
+        _ insight: SQInsight,
+        slot: TodayInsightSlot
+    ) -> Bool {
+        switch slot {
+        case .recentChange:
+            switch insight.insightClass {
+            case .followUp, .trend, .baselineChange:
+                return true
+            case .risk, .opportunity, .relationship, .populationBenchmark, .cohort:
+                return false
+            }
+        case .relationship:
+            return insight.insightClass == .relationship
         }
     }
 
@@ -1573,6 +1594,16 @@ final class SQInsightsService: SQInsightsServicing {
         insight.familyKey.hasPrefix("customRelationship.")
     }
 
+    private func isCaffeineInsight(_ insight: SQInsight) -> Bool {
+        insight.inputSignalId == SQMetricId.caffeine || insight.outputSignalId == SQMetricId.caffeine
+    }
+
+    private func isHighPriorityCaffeineInsight(_ insight: SQInsight) -> Bool {
+        guard isCaffeineInsight(insight) else { return false }
+        return insight.effect == .negative
+            && (insight.confidence == .high || insight.rankingScore >= 42)
+    }
+
     private func contextAdjustedCurrentStateInsights(
         from insights: [SQInsight],
         pressureContext: CurrentPressureContext,
@@ -1723,19 +1754,25 @@ final class SQInsightsService: SQInsightsServicing {
             return false
         }
 
-        let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
-        guard signalIds.contains(where: isStateSignalId) else {
+        guard isGenericPositiveCurrentStateTitle(insight.title) else {
             return false
         }
 
+        let signalIds = [insight.inputSignalId, insight.outputSignalId].compactMap { $0 }
+        return signalIds.isEmpty || signalIds.contains(where: isStateSignalId)
+    }
+
+    private func isGenericPositiveCurrentStateTitle(_ title: String) -> Bool {
+        let normalizedTitle = title.lowercased()
         return [
-            "You're well recovered today",
-            "Your body looks ready to handle more",
-            "You're in a good position to train today",
-            "You're in a good position today",
-            "Things are lining up for a solid day",
-            "The day should feel relatively smooth"
-        ].contains(insight.title)
+            "well recovered",
+            "ready to handle more",
+            "good position to train",
+            "good position today",
+            "lining up",
+            "solid day",
+            "relatively smooth"
+        ].contains { normalizedTitle.contains($0) }
     }
 
     private func isDominantBrightSpot(
@@ -2074,7 +2111,16 @@ final class SQInsightsService: SQInsightsServicing {
 
             return allowedClass
         }
-        .sorted(by: { sortInsightsForDisplay($0, $1) })
+        .sorted { lhs, rhs in
+            let lhsScore = explanatoryHabitHeroScore(lhs)
+            let rhsScore = explanatoryHabitHeroScore(rhs)
+
+            if lhsScore != rhsScore {
+                return lhsScore > rhsScore
+            }
+
+            return sortInsightsForDisplay(lhs, rhs)
+        }
 
         guard let bestCandidate = candidates.first else { return nil }
 
@@ -2088,6 +2134,25 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return nil
+    }
+
+    private func explanatoryHabitHeroScore(_ insight: SQInsight) -> Double {
+        var score = insight.rankingScore
+
+        if isCaffeineInsight(insight), !isHighPriorityCaffeineInsight(insight) {
+            score -= 18
+        }
+
+        if insight.inputSignalId == SQMetricId.alcohol || insight.outputSignalId == SQMetricId.alcohol {
+            score += 8
+        }
+
+        if [SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains(insight.inputSignalId ?? "")
+            || [SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains(insight.outputSignalId ?? "") {
+            score += 4
+        }
+
+        return score
     }
 
     private func isStateSignalId(_ signalId: String) -> Bool {
@@ -2405,7 +2470,56 @@ final class SQInsightsService: SQInsightsServicing {
             return lhs.rankingScore > rhs.rankingScore
         }
 
-        return Array(sortedDrivers.prefix(3))
+        return diversifiedTodayDrivers(from: sortedDrivers)
+    }
+
+    private func diversifiedTodayDrivers(
+        from sortedDrivers: [SQInsightDriver]
+    ) -> [SQInsightDriver] {
+        var selected = [SQInsightDriver]()
+        var selectedComponents = Set<String>()
+        var selectedBehaviorCount = 0
+
+        for driver in sortedDrivers {
+            guard selected.count < 3 else { break }
+            guard todayDriverMeetsRoleGate(driver, selectedDrivers: selected, allDrivers: sortedDrivers) else {
+                continue
+            }
+
+            let component = driverComponentKey(for: driver.signalId)
+            let hasUnrepresentedAlternative = sortedDrivers.contains { candidate in
+                !selected.contains(candidate)
+                    && !selectedComponents.contains(driverComponentKey(for: candidate.signalId))
+                    && todayDriverMeetsRoleGate(candidate, selectedDrivers: selected, allDrivers: sortedDrivers)
+            }
+
+            if selectedComponents.contains(component), hasUnrepresentedAlternative {
+                continue
+            }
+
+            if isHabitSignalId(driver.signalId) {
+                if selectedBehaviorCount >= 1,
+                   sortedDrivers.contains(where: { !isHabitSignalId($0.signalId) && !selected.contains($0) }) {
+                    continue
+                }
+                selectedBehaviorCount += 1
+            }
+
+            selected.append(driver)
+            selectedComponents.insert(component)
+        }
+
+        if selected.count < 3 {
+            for driver in sortedDrivers where !selected.contains(driver) {
+                guard selected.count < 3 else { break }
+                guard todayDriverMeetsRoleGate(driver, selectedDrivers: selected, allDrivers: sortedDrivers) else {
+                    continue
+                }
+                selected.append(driver)
+            }
+        }
+
+        return selected
     }
 
     private func calibratedTodayDriverScore(
@@ -2441,23 +2555,33 @@ final class SQInsightsService: SQInsightsServicing {
 
         if driver.direction == .drag {
             if isStressOrMoodPressureSignalId(driver.signalId) {
-                score += 13
+                score += 22
             }
 
             if isTrainingSignalId(driver.signalId) || driver.signalId == SQMetricId.soreness {
-                score += 12
+                score += 21
             }
 
             if isSleepSignalId(driver.signalId) {
-                score += 9
+                score += 16
             }
 
             if driver.signalId == SQMetricId.alcohol {
-                score += 13
+                score += driver.recentAverage >= 1.0 ? 20 : 10
             } else if [SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains(driver.signalId) {
-                score += 10
+                score += driver.recentAverage >= 1.0 ? 15 : 6
             } else if driver.signalId == SQMetricId.caffeine {
-                score += 4
+                if driver.recentAverage >= 275 || driver.effectMagnitude >= 2.0 {
+                    score += 3
+                } else if driver.recentAverage >= 240 || driver.effectMagnitude >= 1.5 {
+                    score -= 4
+                } else {
+                    score -= 24
+                }
+
+                if hasCompetingDrag {
+                    score -= 18
+                }
             }
         }
 
@@ -2470,6 +2594,83 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         return score
+    }
+
+    private func todayDriverMeetsRoleGate(
+        _ driver: SQInsightDriver,
+        selectedDrivers: [SQInsightDriver],
+        allDrivers: [SQInsightDriver]
+    ) -> Bool {
+        if driver.signalId == SQMetricId.caffeine {
+            let hasOnlyWeakCaffeineSignal = driver.recentAverage < 240 && driver.effectMagnitude < 1.5
+            let hasModerateCaffeineSignal = driver.recentAverage < 275 && driver.effectMagnitude < 2.0
+            let hasSpecificPressure = allDrivers.contains { candidate in
+                candidate.signalId != SQMetricId.caffeine
+                    && candidate.direction == .drag
+                    && (
+                        isSleepSignalId(candidate.signalId)
+                        || isStressOrMoodPressureSignalId(candidate.signalId)
+                        || isTrainingSignalId(candidate.signalId)
+                        || candidate.signalId == SQMetricId.alcohol
+                        || candidate.signalId == SQMetricId.weed
+                        || candidate.signalId == SQMetricId.nicotine
+                        || candidate.signalId == SQMetricId.porn
+                    )
+            }
+
+            if hasOnlyWeakCaffeineSignal && hasSpecificPressure {
+                return false
+            }
+
+            let calibratedCaffeineScore = calibratedTodayDriverScore(driver, allDrivers: allDrivers)
+            let strongerNonCaffeinePressures = allDrivers.filter { candidate in
+                candidate.signalId != SQMetricId.caffeine
+                    && candidate.direction == .drag
+                    && calibratedTodayDriverScore(candidate, allDrivers: allDrivers) >= calibratedCaffeineScore - 4
+                    && (
+                        isSleepSignalId(candidate.signalId)
+                        || isStressOrMoodPressureSignalId(candidate.signalId)
+                        || isTrainingSignalId(candidate.signalId)
+                        || candidate.signalId == SQMetricId.soreness
+                        || candidate.signalId == SQMetricId.alcohol
+                        || candidate.signalId == SQMetricId.weed
+                        || candidate.signalId == SQMetricId.nicotine
+                        || candidate.signalId == SQMetricId.porn
+                    )
+            }
+
+            if hasModerateCaffeineSignal && strongerNonCaffeinePressures.count >= 2 {
+                return false
+            }
+        }
+
+        if isHabitSignalId(driver.signalId),
+           selectedDrivers.contains(where: { isHabitSignalId($0.signalId) }),
+           allDrivers.contains(where: { !isHabitSignalId($0.signalId) }) {
+            return false
+        }
+
+        return true
+    }
+
+    private func driverComponentKey(for signalId: String) -> String {
+        if isSleepSignalId(signalId) {
+            return "sleep"
+        }
+
+        if isStressOrMoodPressureSignalId(signalId) {
+            return "mindEnergy"
+        }
+
+        if isTrainingSignalId(signalId) || signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            return "recoveryTraining"
+        }
+
+        if isHabitSignalId(signalId) {
+            return "habits"
+        }
+
+        return "other"
     }
 
     private func curatedStandardDrivers(

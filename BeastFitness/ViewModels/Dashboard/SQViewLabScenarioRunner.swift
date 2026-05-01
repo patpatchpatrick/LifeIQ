@@ -216,6 +216,14 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let shadowV2ComponentLabels: [String]
     let shadowV2ComponentContributionLabels: [String]
     let topV2DriverTitles: [String]
+    let topV2HealthDriverTitle: String?
+    let topV2BehaviorDriverTitle: String?
+    let topV2DataConfidenceSignalTitle: String?
+    let topV2PersonalizedDriverTitle: String?
+    let shadowV2ComponentDragLabels: [String]
+    let shadowV2PositiveCapHitLabels: [String]
+    let shadowV2DataConfidenceContributionLabel: String?
+    let shadowV2DriverWarningSourceLabels: [String]
     let shadowV2WarningLabels: [String]
     let shadowDiagnosticContributionTotal: Double
     let shadowIncrementalContributionTotal: Double
@@ -246,13 +254,20 @@ struct SQViewLabSimulationDayOutput: Identifiable {
     let brightSpotReframeTitles: [String]
     let topDriverBeforeCalibrationTitles: [String]
     let topDriverAfterCalibrationTitles: [String]
+    let driverCandidateScoreLabels: [String]
+    let driverSuppressionReasons: [String]
+    let driverRedundancyDampeningLabels: [String]
+    let topDriverByComponentLabels: [String]
     let driverDampeningReasons: [String]
     let insightSlotLabels: [String]
     let slotRejectionReasons: [String]
+    let topInsightBySlotLabels: [String]
+    let caffeineInsightSuppressionReasons: [String]
     let relationshipFamilyBeforeSlotPolicyLabels: [String]
     let relationshipFamilyAfterSlotPolicyLabels: [String]
     let primaryActionFamilyBeforeRouting: String?
     let primaryActionFamilyAfterRouting: String?
+    let actionRoutingReason: String?
     let morningValues: [String: Float]
     let eveningValues: [String: Float]
     let restingHeartRate: Double?
@@ -315,6 +330,7 @@ struct SQViewLabSimulationReport {
     let customMetricLoggedDays: Int
     let averageCustomMetricValue: Double?
     let customMetricSurfacePercentage: Double
+    let customMetricRegressionGuardFlags: [String]
     let healthKitFallbackUsageByMetric: [SQViewLabSimulationDistributionRow]
     let lifeScoreComponentAvailability: [SQViewLabSimulationDistributionRow]
     let averageShadowAdjustedScore: Double?
@@ -325,7 +341,16 @@ struct SQViewLabSimulationReport {
     let averageShadowV2ScoreDelta: Double?
     let shadowV2ScoreDeltaDistribution: [SQViewLabSimulationDistributionRow]
     let shadowV2ComponentContributionDistribution: [SQViewLabSimulationDistributionRow]
+    let shadowV2ComponentAverageDistribution: [SQViewLabSimulationDistributionRow]
+    let shadowV2ComponentDragDistribution: [SQViewLabSimulationDistributionRow]
+    let shadowV2PositiveCapHitDistribution: [SQViewLabSimulationDistributionRow]
+    let shadowV2DataConfidenceContributionDistribution: [SQViewLabSimulationDistributionRow]
     let topV2DriverDistribution: [SQViewLabSimulationDistributionRow]
+    let topV2HealthDriverDistribution: [SQViewLabSimulationDistributionRow]
+    let topV2BehaviorDriverDistribution: [SQViewLabSimulationDistributionRow]
+    let topV2DataConfidenceSignalDistribution: [SQViewLabSimulationDistributionRow]
+    let topV2PersonalizedDriverDistribution: [SQViewLabSimulationDistributionRow]
+    let shadowV2DriverWarningSourceDistribution: [SQViewLabSimulationDistributionRow]
     let shadowV2WarningDistribution: [SQViewLabSimulationDistributionRow]
     let averageShadowDiagnosticContributionTotal: Double
     let averageShadowIncrementalContributionTotal: Double
@@ -354,13 +379,20 @@ struct SQViewLabSimulationReport {
     let brightSpotReframeDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverBeforeCalibrationDistribution: [SQViewLabSimulationDistributionRow]
     let topDriverAfterCalibrationDistribution: [SQViewLabSimulationDistributionRow]
+    let driverCandidateScoreDistribution: [SQViewLabSimulationDistributionRow]
+    let driverSuppressionReasonDistribution: [SQViewLabSimulationDistributionRow]
+    let driverRedundancyDampeningDistribution: [SQViewLabSimulationDistributionRow]
+    let topDriverByComponentDistribution: [SQViewLabSimulationDistributionRow]
     let driverDampeningReasonDistribution: [SQViewLabSimulationDistributionRow]
     let insightSlotDistribution: [SQViewLabSimulationDistributionRow]
     let slotRejectionReasonDistribution: [SQViewLabSimulationDistributionRow]
+    let topInsightBySlotDistribution: [SQViewLabSimulationDistributionRow]
+    let caffeineInsightSuppressionReasonDistribution: [SQViewLabSimulationDistributionRow]
     let relationshipFamilyBeforeSlotPolicyDistribution: [SQViewLabSimulationDistributionRow]
     let relationshipFamilyAfterSlotPolicyDistribution: [SQViewLabSimulationDistributionRow]
     let primaryActionFamilyBeforeRoutingDistribution: [SQViewLabSimulationDistributionRow]
     let primaryActionFamilyAfterRoutingDistribution: [SQViewLabSimulationDistributionRow]
+    let actionRoutingReasonDistribution: [SQViewLabSimulationDistributionRow]
     let longestHeroSummaryRepeatStreak: Int
     let longestHeroActionRepeatStreak: Int
     let longestHeroFamilyRepeatStreak: Int
@@ -517,6 +549,25 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 guard let currentScore = lifeScoreViewModel.score else { return nil }
                 return shadowScore - currentScore
             }
+            let topV2HealthDriver = topV2Driver(
+                in: shadowV2Result,
+                kind: .healthState
+            )
+            let topV2BehaviorDriver = topV2Driver(
+                in: shadowV2Result,
+                kind: .behavior
+            )
+            let topV2DataConfidenceDriver = topV2Driver(
+                in: shadowV2Result,
+                kind: .dataConfidence
+            )
+            let topV2PersonalizedDriver = topV2Driver(
+                in: shadowV2Result,
+                kind: .personalized
+            )
+            let shadowV2DataConfidenceContributionLabel = shadowV2Result.components
+                .first { $0.id == "dataConfidence" }
+                .map(shadowV2ComponentContributionText)
             let rawDriverCandidates = driverBuilder.buildDrivers(
                 from: featureSnapshots,
                 surfaceIntent: .today,
@@ -636,6 +687,21 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             let topDriverBeforeCalibrationTitles = rawDriverCandidates.prefix(3).map(\.title)
             let topDriverAfterCalibrationTitles = insightsResult.drivers.prefix(3).map(\.title)
+            let driverCandidateScoreLabels = driverCandidateScoreLabels(
+                candidates: rawDriverCandidates,
+                surfacedDrivers: insightsResult.drivers
+            )
+            let driverSuppressionReasons = driverSuppressionReasons(
+                candidates: rawDriverCandidates,
+                surfacedDrivers: insightsResult.drivers
+            )
+            let driverRedundancyDampeningLabels = driverRedundancyDampeningLabels(
+                candidates: rawDriverCandidates,
+                surfacedDrivers: insightsResult.drivers
+            )
+            let topDriverByComponentLabels = topDriverByComponentLabels(
+                drivers: insightsResult.drivers
+            )
             let driverDampeningReasons = driverDampeningReasons(
                 beforeCalibration: rawDriverCandidates,
                 afterCalibration: insightsResult.drivers
@@ -683,11 +749,26 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 primaryAfter: primaryActionFamilyAfterRouting
             )
             let insightSlotLabels = insightsResult.insights.map { insightSlotLabel(for: $0, customMetricIds: customMetricIds) }
+            let topInsightBySlotLabels = topInsightBySlotLabels(
+                insights: insightsResult.insights,
+                customMetricIds: customMetricIds
+            )
             let slotRejectionReasons = slotRejectionReasons(
                 generatedInsights: generatedRelationshipAnalysis.generatedInsights + generatedCustomMetricInsights,
                 surfacedInsights: insightsResult.insights,
                 customMetricIds: customMetricIds,
                 stateTitle: stateTitle
+            )
+            let caffeineInsightSuppressionReasons = caffeineInsightSuppressionReasons(
+                generatedInsights: generatedRelationshipAnalysis.generatedInsights,
+                surfacedInsights: insightsResult.insights
+            )
+            let actionRoutingReason = actionRoutingReason(
+                beforeFamily: primaryActionFamilyBeforeRouting,
+                afterFamily: primaryActionFamilyAfterRouting,
+                heroSubfamilyKey: heroSubfamilyKey,
+                drivers: insightsResult.drivers,
+                changes: insightsResult.changes
             )
             let signalSourceLabels = signalFeatures.values.map { String(describing: $0.source) }
             let semanticRoleLabels = signalFeatures.values.map { String(describing: $0.signalRole) }
@@ -790,6 +871,18 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 shadowV2ComponentLabels: shadowV2Result.components.map(shadowV2ComponentText),
                 shadowV2ComponentContributionLabels: shadowV2Result.components.map(shadowV2ComponentContributionText),
                 topV2DriverTitles: shadowV2Result.topDrivers.prefix(3).map(\.title),
+                topV2HealthDriverTitle: topV2HealthDriver?.title,
+                topV2BehaviorDriverTitle: topV2BehaviorDriver?.title,
+                topV2DataConfidenceSignalTitle: topV2DataConfidenceDriver?.title,
+                topV2PersonalizedDriverTitle: topV2PersonalizedDriver?.title,
+                shadowV2ComponentDragLabels: shadowV2Result.components.flatMap(shadowV2ComponentDragLabels),
+                shadowV2PositiveCapHitLabels: shadowV2Result.positiveContributionCapHits,
+                shadowV2DataConfidenceContributionLabel: shadowV2DataConfidenceContributionLabel,
+                shadowV2DriverWarningSourceLabels: shadowV2DriverWarningSourceLabels(
+                    result: shadowV2Result,
+                    topHealthDriver: topV2HealthDriver,
+                    topDataConfidenceDriver: topV2DataConfidenceDriver
+                ),
                 shadowV2WarningLabels: shadowV2Result.calibrationWarnings,
                 shadowDiagnosticContributionTotal: shadowResult.diagnosticContributionTotal,
                 shadowIncrementalContributionTotal: shadowResult.incrementalContributionTotal,
@@ -820,13 +913,20 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 brightSpotReframeTitles: brightSpotReframeTitles,
                 topDriverBeforeCalibrationTitles: topDriverBeforeCalibrationTitles,
                 topDriverAfterCalibrationTitles: topDriverAfterCalibrationTitles,
+                driverCandidateScoreLabels: driverCandidateScoreLabels,
+                driverSuppressionReasons: driverSuppressionReasons,
+                driverRedundancyDampeningLabels: driverRedundancyDampeningLabels,
+                topDriverByComponentLabels: topDriverByComponentLabels,
                 driverDampeningReasons: driverDampeningReasons,
                 insightSlotLabels: insightSlotLabels,
                 slotRejectionReasons: slotRejectionReasons,
+                topInsightBySlotLabels: topInsightBySlotLabels,
+                caffeineInsightSuppressionReasons: caffeineInsightSuppressionReasons,
                 relationshipFamilyBeforeSlotPolicyLabels: relationshipFamilyBeforeSlotPolicyLabels,
                 relationshipFamilyAfterSlotPolicyLabels: relationshipFamilyAfterSlotPolicyLabels,
                 primaryActionFamilyBeforeRouting: primaryActionFamilyBeforeRouting,
                 primaryActionFamilyAfterRouting: primaryActionFamilyAfterRouting,
+                actionRoutingReason: actionRoutingReason,
                 morningValues: currentDay.morningValues,
                 eveningValues: currentDay.eveningValues,
                 restingHeartRate: currentDay.restingHeartRateSummary?.average,
@@ -851,6 +951,23 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
         let customRelationshipFlagOnSummary = customRelationshipFlagOnSummary(
             generatedDays: generatedDays,
             request: request
+        )
+        let customMetricLoggedDays = outputs.filter { !$0.customMetricValues.isEmpty }.count
+        let customMetricSurfacePercentage = percentage(
+            matchingCount: outputs.filter(\.surfacedCustomMetric).count,
+            total: outputs.count
+        )
+        let averagePersonalizedDelta = outputs.compactMap { output in
+            guard let score = output.score, let shadowAdjustedScore = output.shadowAdjustedScore else { return nil }
+            return Double(shadowAdjustedScore - score)
+        }.average
+        let customMetricRegressionGuardFlags = customMetricRegressionGuardFlags(
+            persona: request.persona,
+            outputs: outputs,
+            customMetricLoggedDays: customMetricLoggedDays,
+            customMetricSurfacePercentage: customMetricSurfacePercentage,
+            averagePersonalizedDelta: averagePersonalizedDelta,
+            customRelationshipFlagOnSurfacePercentage: customRelationshipFlagOnSummary.surfacedCustomRelationshipPercentage
         )
 
         return .init(
@@ -958,14 +1075,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             signalSourceDistribution: distributionRows(for: outputs.flatMap(\.signalSourceLabels)),
             semanticRoleDistribution: distributionRows(for: outputs.flatMap(\.semanticRoleLabels)),
-            customMetricLoggedDays: outputs.filter { !$0.customMetricValues.isEmpty }.count,
+            customMetricLoggedDays: customMetricLoggedDays,
             averageCustomMetricValue: outputs
                 .flatMap { $0.customMetricValues.values }
                 .average,
-            customMetricSurfacePercentage: percentage(
-                matchingCount: outputs.filter(\.surfacedCustomMetric).count,
-                total: outputs.count
-            ),
+            customMetricSurfacePercentage: customMetricSurfacePercentage,
+            customMetricRegressionGuardFlags: customMetricRegressionGuardFlags,
             healthKitFallbackUsageByMetric: distributionRows(
                 for: Dictionary(grouping: outputs.flatMap(\.healthKitFallbackMetricIds), by: { $0 }).mapValues(\.count),
                 total: outputs.count
@@ -975,10 +1090,7 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
                 total: outputs.count
             ),
             averageShadowAdjustedScore: outputs.compactMap(\.shadowAdjustedScore).map(Double.init).average,
-            averageShadowScoreDelta: outputs.compactMap { output in
-                guard let score = output.score, let shadowAdjustedScore = output.shadowAdjustedScore else { return nil }
-                return Double(shadowAdjustedScore - score)
-            }.average,
+            averageShadowScoreDelta: averagePersonalizedDelta,
             averageShadowV2Score: outputs.compactMap(\.shadowV2Score).map(Double.init).average,
             minimumShadowV2Score: outputs.compactMap(\.shadowV2Score).min(),
             maximumShadowV2Score: outputs.compactMap(\.shadowV2Score).max(),
@@ -989,8 +1101,35 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             shadowV2ComponentContributionDistribution: distributionRows(
                 for: outputs.flatMap(\.shadowV2ComponentContributionLabels)
             ),
+            shadowV2ComponentAverageDistribution: distributionRows(
+                for: outputs.flatMap(\.shadowV2ComponentLabels)
+            ),
+            shadowV2ComponentDragDistribution: distributionRows(
+                for: outputs.flatMap(\.shadowV2ComponentDragLabels)
+            ),
+            shadowV2PositiveCapHitDistribution: distributionRows(
+                for: outputs.flatMap(\.shadowV2PositiveCapHitLabels)
+            ),
+            shadowV2DataConfidenceContributionDistribution: distributionRows(
+                for: outputs.compactMap(\.shadowV2DataConfidenceContributionLabel)
+            ),
             topV2DriverDistribution: distributionRows(
                 for: outputs.map { $0.topV2DriverTitles.first ?? "None" }
+            ),
+            topV2HealthDriverDistribution: distributionRows(
+                for: outputs.map { $0.topV2HealthDriverTitle ?? "None" }
+            ),
+            topV2BehaviorDriverDistribution: distributionRows(
+                for: outputs.map { $0.topV2BehaviorDriverTitle ?? "None" }
+            ),
+            topV2DataConfidenceSignalDistribution: distributionRows(
+                for: outputs.map { $0.topV2DataConfidenceSignalTitle ?? "None" }
+            ),
+            topV2PersonalizedDriverDistribution: distributionRows(
+                for: outputs.map { $0.topV2PersonalizedDriverTitle ?? "None" }
+            ),
+            shadowV2DriverWarningSourceDistribution: distributionRows(
+                for: outputs.flatMap(\.shadowV2DriverWarningSourceLabels)
             ),
             shadowV2WarningDistribution: distributionRows(
                 for: outputs.flatMap(\.shadowV2WarningLabels)
@@ -1065,6 +1204,18 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             topDriverAfterCalibrationDistribution: distributionRows(
                 for: outputs.map { $0.topDriverAfterCalibrationTitles.first ?? "None" }
             ),
+            driverCandidateScoreDistribution: distributionRows(
+                for: outputs.flatMap(\.driverCandidateScoreLabels)
+            ),
+            driverSuppressionReasonDistribution: distributionRows(
+                for: outputs.flatMap(\.driverSuppressionReasons)
+            ),
+            driverRedundancyDampeningDistribution: distributionRows(
+                for: outputs.flatMap(\.driverRedundancyDampeningLabels)
+            ),
+            topDriverByComponentDistribution: distributionRows(
+                for: outputs.flatMap(\.topDriverByComponentLabels)
+            ),
             driverDampeningReasonDistribution: distributionRows(
                 for: outputs.flatMap(\.driverDampeningReasons)
             ),
@@ -1073,6 +1224,12 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             slotRejectionReasonDistribution: distributionRows(
                 for: outputs.flatMap(\.slotRejectionReasons)
+            ),
+            topInsightBySlotDistribution: distributionRows(
+                for: outputs.flatMap(\.topInsightBySlotLabels)
+            ),
+            caffeineInsightSuppressionReasonDistribution: distributionRows(
+                for: outputs.flatMap(\.caffeineInsightSuppressionReasons)
             ),
             relationshipFamilyBeforeSlotPolicyDistribution: distributionRows(
                 for: outputs.flatMap(\.relationshipFamilyBeforeSlotPolicyLabels)
@@ -1085,6 +1242,9 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             ),
             primaryActionFamilyAfterRoutingDistribution: distributionRows(
                 for: outputs.map { $0.primaryActionFamilyAfterRouting ?? "None" }
+            ),
+            actionRoutingReasonDistribution: distributionRows(
+                for: outputs.compactMap(\.actionRoutingReason)
             ),
             longestHeroSummaryRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroSummary)),
             longestHeroActionRepeatStreak: longestRepeatStreak(for: outputs.map(\.heroAction)),
@@ -2376,6 +2536,55 @@ private extension SQViewLabScenarioRunner {
         return flags.isEmpty ? ["None"] : flags
     }
 
+    func customMetricRegressionGuardFlags(
+        persona: SQViewLabSimulationPersona,
+        outputs: [SQViewLabSimulationDayOutput],
+        customMetricLoggedDays: Int,
+        customMetricSurfacePercentage: Double,
+        averagePersonalizedDelta: Double?,
+        customRelationshipFlagOnSurfacePercentage: Double
+    ) -> [String] {
+        var flags = [String]()
+        let personalizedDelta = averagePersonalizedDelta ?? 0
+        let topCustomHeroDriverDays = outputs.filter { output in
+            guard let topDriverTitle = output.topDriverTitles.first else { return false }
+            return output.customMetricValues.keys.contains { metricId in
+                topDriverTitle.localizedCaseInsensitiveContains(metricId)
+                    || topDriverTitle.localizedCaseInsensitiveContains("Violin Performance")
+            }
+        }
+        .count
+
+        if persona.includesCustomPerformerMetric {
+            if customMetricLoggedDays > 60,
+               !(5.0...15.0).contains(customMetricSurfacePercentage) {
+                flags.append("Custom Performer custom surfaced outside 5-15%")
+            }
+
+            if personalizedDelta < 0.5 || personalizedDelta > 2.0 {
+                flags.append("Custom Performer personalized delta outside 0.5-2.0")
+            }
+
+            if customRelationshipFlagOnSurfacePercentage > 5 {
+                flags.append("Custom relationship flag-on surfaced >5%")
+            }
+
+            if topCustomHeroDriverDays > 0 {
+                flags.append("Custom metric became top hero driver on \(topCustomHeroDriverDays)d")
+            }
+        } else {
+            if customMetricSurfacePercentage > 0 {
+                flags.append("Non-custom persona surfaced custom metric")
+            }
+
+            if abs(personalizedDelta) > 0.1 {
+                flags.append("Non-custom persona personalized delta drifted")
+            }
+        }
+
+        return flags.isEmpty ? ["None"] : flags
+    }
+
     func signalTitle(
         for signalId: String,
         metricDefinitions: [SQMetricDefinition]
@@ -2442,6 +2651,133 @@ private extension SQViewLabScenarioRunner {
 
     func shadowContributorText(_ contributor: SQLifeScoreMetricContributor) -> String {
         "\(contributor.title): \(signedDecimal(contributor.contributionPoints))"
+    }
+
+    func topV2Driver(
+        in result: SQLifeScoreV2Result,
+        kind: SQLifeScoreV2DriverKind
+    ) -> SQLifeScoreV2Driver? {
+        result.topDrivers.first { $0.kind == kind }
+    }
+
+    func shadowV2ComponentDragLabels(_ component: SQLifeScoreV2Component) -> [String] {
+        component.negativeDrivers.map { driver in
+            "\(component.title): \(driver)"
+        }
+    }
+
+    func shadowV2DriverWarningSourceLabels(
+        result: SQLifeScoreV2Result,
+        topHealthDriver: SQLifeScoreV2Driver?,
+        topDataConfidenceDriver: SQLifeScoreV2Driver?
+    ) -> [String] {
+        var labels = [String]()
+
+        if let topHealthDriver {
+            labels.append("latest-day health driver: \(topHealthDriver.title)")
+        }
+
+        if let topDataConfidenceDriver {
+            labels.append("latest-day data signal: \(topDataConfidenceDriver.title)")
+        }
+
+        if result.calibrationWarnings.contains(where: { $0.localizedCaseInsensitiveContains("resting HR") }),
+           let topHealthDriver {
+            labels.append("latest-day warning source: \(topHealthDriver.title)")
+        }
+
+        return labels
+    }
+
+    func driverCandidateScoreLabels(
+        candidates: [SQInsightDriver],
+        surfacedDrivers: [SQInsightDriver]
+    ) -> [String] {
+        let surfacedSignalIds = Set(surfacedDrivers.map(\.signalId))
+        return candidates.prefix(8).map { driver in
+            let status = surfacedSignalIds.contains(driver.signalId) ? "surfaced" : "suppressed"
+            return "\(driver.title): \(formattedDecimal(driver.rankingScore)) raw, \(status)"
+        }
+    }
+
+    func driverSuppressionReasons(
+        candidates: [SQInsightDriver],
+        surfacedDrivers: [SQInsightDriver]
+    ) -> [String] {
+        let surfacedSignalIds = Set(surfacedDrivers.map(\.signalId))
+        let surfacedComponents = Set(surfacedDrivers.map { driverComponentKey(for: $0.signalId) })
+
+        return candidates.prefix(8).compactMap { driver in
+            guard !surfacedSignalIds.contains(driver.signalId) else { return nil }
+
+            if driver.signalId == SQMetricId.caffeine {
+                return "\(driver.title): caffeine requires stronger current relevance"
+            }
+
+            if driver.signalId == SQInsightAnalysisMetricId.restingHeartRate {
+                return "\(driver.title): redundant with stronger state/recovery signals"
+            }
+
+            let component = driverComponentKey(for: driver.signalId)
+            if surfacedComponents.contains(component) {
+                return "\(driver.title): component already represented"
+            }
+
+            return "\(driver.title): lost to stronger calibrated driver"
+        }
+    }
+
+    func driverRedundancyDampeningLabels(
+        candidates: [SQInsightDriver],
+        surfacedDrivers: [SQInsightDriver]
+    ) -> [String] {
+        let surfacedSignalIds = Set(surfacedDrivers.map(\.signalId))
+        var labels = [String]()
+
+        if candidates.prefix(5).contains(where: { $0.signalId == SQInsightAnalysisMetricId.restingHeartRate })
+            && !surfacedSignalIds.contains(SQInsightAnalysisMetricId.restingHeartRate) {
+            labels.append("Resting HR dampened behind sleep/stress/recovery context")
+        }
+
+        if candidates.prefix(5).contains(where: { $0.signalId == SQMetricId.caffeine })
+            && !surfacedSignalIds.contains(SQMetricId.caffeine) {
+            labels.append("Caffeine dampened behind more specific state or habit pressure")
+        }
+
+        return labels
+    }
+
+    func topDriverByComponentLabels(
+        drivers: [SQInsightDriver]
+    ) -> [String] {
+        Dictionary(grouping: drivers, by: { driverComponentKey(for: $0.signalId) })
+            .compactMap { component, drivers -> String? in
+                guard let topDriver = drivers.sorted(by: { $0.rankingScore > $1.rankingScore }).first else {
+                    return nil
+                }
+                return "\(component): \(topDriver.title)"
+            }
+            .sorted()
+    }
+
+    func driverComponentKey(for signalId: String) -> String {
+        if isSleepSignalId(signalId) {
+            return "Sleep"
+        }
+
+        if isStressPressureSignalId(signalId) {
+            return "Mind / Energy"
+        }
+
+        if isTrainingSignalId(signalId) || signalId == SQInsightAnalysisMetricId.restingHeartRate {
+            return "Recovery / Training"
+        }
+
+        if isHabitSignalId(signalId) {
+            return "Habits"
+        }
+
+        return "Other"
     }
 
     func relationshipCandidateText(_ candidate: SQViewLabExploratoryRelationshipCandidate) -> String {
@@ -2675,14 +3011,20 @@ private extension SQViewLabScenarioRunner {
             return false
         }
 
+        return isGenericPositiveCurrentStateTitle(insight.title)
+    }
+
+    func isGenericPositiveCurrentStateTitle(_ title: String) -> Bool {
+        let normalizedTitle = title.lowercased()
         return [
-            "You're well recovered today",
-            "Your body looks ready to handle more",
-            "You're in a good position to train today",
-            "You're in a good position today",
-            "Things are lining up for a solid day",
-            "The day should feel relatively smooth"
-        ].contains(insight.title)
+            "well recovered",
+            "ready to handle more",
+            "good position to train",
+            "good position today",
+            "lining up",
+            "solid day",
+            "relatively smooth"
+        ].contains { normalizedTitle.contains($0) }
     }
 
     func insightSlotLabel(
@@ -2756,6 +3098,45 @@ private extension SQViewLabScenarioRunner {
         }
     }
 
+    func topInsightBySlotLabels(
+        insights: [SQInsight],
+        customMetricIds: Set<String>
+    ) -> [String] {
+        var seenSlots = Set<String>()
+        var labels = [String]()
+
+        for insight in insights {
+            let slot = insightSlotLabel(for: insight, customMetricIds: customMetricIds)
+            guard !seenSlots.contains(slot) else { continue }
+            seenSlots.insert(slot)
+            labels.append("\(slot): \(insight.title)")
+        }
+
+        return labels
+    }
+
+    func caffeineInsightSuppressionReasons(
+        generatedInsights: [SQInsight],
+        surfacedInsights: [SQInsight]
+    ) -> [String] {
+        let surfacedIds = Set(surfacedInsights.map(\.id))
+        let surfacedTitles = Set(surfacedInsights.map(\.title))
+
+        return generatedInsights.prefix(12).compactMap { insight in
+            guard isCaffeineInsight(insight),
+                  !surfacedIds.contains(insight.id),
+                  !surfacedTitles.contains(insight.title) else {
+                return nil
+            }
+
+            return "\(insight.title): caffeine card lost to slot policy or relevance"
+        }
+    }
+
+    func isCaffeineInsight(_ insight: SQInsight) -> Bool {
+        insight.inputSignalId == SQMetricId.caffeine || insight.outputSignalId == SQMetricId.caffeine
+    }
+
     func routedPrimaryActionFamily(
         beforeFamily: String?,
         stateTitle: String,
@@ -2764,24 +3145,14 @@ private extension SQViewLabScenarioRunner {
         changes: [SQInsightChange],
         componentScores: [String: Int]
     ) -> String? {
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("habit")
-            || drivers.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .drag })
-            || changes.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .worsened }) {
-            if drivers.contains(where: { $0.signalId == SQMetricId.caffeine })
-                || changes.contains(where: { $0.signalId == SQMetricId.caffeine }) {
-                return "shiftEarlier"
-            }
-            return "reduce"
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("lowData")
+            || (componentScores["Consistency"] ?? 100) < 55 {
+            return "logCoreSignals"
         }
 
         if heroSubfamilyKey.localizedCaseInsensitiveContains("stress")
             || drivers.contains(where: { isStressPressureSignalId($0.signalId) && $0.direction == .drag }) {
-            return "keepConsistent"
-        }
-
-        if heroSubfamilyKey.localizedCaseInsensitiveContains("lowData")
-            || (componentScores["Consistency"] ?? 100) < 55 {
-            return "observeAndCompare"
+            return "simplify"
         }
 
         if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain")
@@ -2791,7 +3162,31 @@ private extension SQViewLabScenarioRunner {
 
         if heroSubfamilyKey.localizedCaseInsensitiveContains("sleep")
             || drivers.contains(where: { isSleepSignalId($0.signalId) && $0.direction == .drag }) {
-            return "protectRecovery"
+            return "protectSleep"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("habit")
+            || drivers.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .drag })
+            || changes.contains(where: { isHabitSignalId($0.signalId) && $0.direction == .worsened }) {
+            let hasAlcoholOrVice = drivers.contains {
+                [SQMetricId.alcohol, SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains($0.signalId)
+            } || changes.contains {
+                [SQMetricId.alcohol, SQMetricId.weed, SQMetricId.nicotine, SQMetricId.porn].contains($0.signalId)
+            }
+            let hasCaffeineOnly = !hasAlcoholOrVice && (
+                drivers.contains(where: { $0.signalId == SQMetricId.caffeine })
+                || changes.contains(where: { $0.signalId == SQMetricId.caffeine })
+            )
+
+            if hasAlcoholOrVice {
+                return "reduce"
+            }
+
+            if hasCaffeineOnly {
+                return "shiftEarlier"
+            }
+
+            return "protectSleep"
         }
 
         if stateTitle == "Strong" || stateTitle == "Primed" || stateTitle == "Balanced" {
@@ -2799,6 +3194,46 @@ private extension SQViewLabScenarioRunner {
         }
 
         return beforeFamily
+    }
+
+    func actionRoutingReason(
+        beforeFamily: String?,
+        afterFamily: String?,
+        heroSubfamilyKey: String,
+        drivers: [SQInsightDriver],
+        changes: [SQInsightChange]
+    ) -> String? {
+        guard let afterFamily else { return nil }
+
+        if beforeFamily == afterFamily {
+            return "kept \(afterFamily): already aligned"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("lowData") {
+            return "\(beforeFamily ?? "none") -> \(afterFamily): low-data subfamily"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("stress")
+            || drivers.contains(where: { isStressPressureSignalId($0.signalId) }) {
+            return "\(beforeFamily ?? "none") -> \(afterFamily): stress-pressure routing"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("recoveryStrain")
+            || drivers.contains(where: { isTrainingSignalId($0.signalId) }) {
+            return "\(beforeFamily ?? "none") -> \(afterFamily): training/recovery routing"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("sleep") {
+            return "\(beforeFamily ?? "none") -> \(afterFamily): sleep-pressure routing"
+        }
+
+        if heroSubfamilyKey.localizedCaseInsensitiveContains("habit")
+            || drivers.contains(where: { isHabitSignalId($0.signalId) })
+            || changes.contains(where: { isHabitSignalId($0.signalId) }) {
+            return "\(beforeFamily ?? "none") -> \(afterFamily): habit-pressure routing"
+        }
+
+        return "\(beforeFamily ?? "none") -> \(afterFamily): state routing"
     }
 
     func routedActionRecommendationFamilies(

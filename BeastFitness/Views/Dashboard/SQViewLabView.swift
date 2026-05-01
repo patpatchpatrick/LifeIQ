@@ -658,6 +658,8 @@ struct SQViewLabView: View {
                     "Avg Shadow V2 Score: \(report.averageShadowV2Score.map(formattedDouble) ?? "n/a")",
                     "Shadow V2 Score Range: \(report.minimumShadowV2Score.map(String.init) ?? "n/a")-\(report.maximumShadowV2Score.map(String.init) ?? "n/a")",
                     "Avg Shadow V2 Delta: \(report.averageShadowV2ScoreDelta.map(formattedSignedDouble) ?? "n/a")",
+                    "Top V2 Health Driver: \(report.topV2HealthDriverDistribution.first?.label ?? "n/a")",
+                    "Top V2 Behavior Driver: \(report.topV2BehaviorDriverDistribution.first?.label ?? "n/a")",
                     "Pressure Positive Leakage Count: \(report.pressureStatePositiveLeakageCount)",
                     "Avg Diagnostic Contribution: \(formattedDouble(report.averageShadowDiagnosticContributionTotal))",
                     "Avg Incremental Contribution: \(formattedDouble(report.averageShadowIncrementalContributionTotal))",
@@ -740,6 +742,10 @@ struct SQViewLabView: View {
                 values: report.customMetricCooldownHitDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Custom Metric Regression Guard",
+                values: report.customMetricRegressionGuardFlags
+            )
+            outputGroup(
                 title: "Score Deltas",
                 values: report.scoreDeltaDistribution.map(distributionText)
             )
@@ -756,8 +762,44 @@ struct SQViewLabView: View {
                 values: report.shadowV2ComponentContributionDistribution.map(distributionText)
             )
             outputGroup(
+                title: "V2 Component Averages",
+                values: report.shadowV2ComponentAverageDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Component Drags",
+                values: report.shadowV2ComponentDragDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Positive Cap Hits",
+                values: report.shadowV2PositiveCapHitDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Data Confidence Contribution",
+                values: report.shadowV2DataConfidenceContributionDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "Top V2 Drivers",
                 values: report.topV2DriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Top Health Driver Frequency",
+                values: report.topV2HealthDriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Top Behavior Driver Frequency",
+                values: report.topV2BehaviorDriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Top Data Confidence Driver Frequency",
+                values: report.topV2DataConfidenceSignalDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top V2 Personalized Drivers",
+                values: report.topV2PersonalizedDriverDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "V2 Driver Warning Source",
+                values: report.shadowV2DriverWarningSourceDistribution.map(distributionText)
             )
             outputGroup(
                 title: "V2 Warnings",
@@ -778,6 +820,22 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Driver Dampening",
                 values: report.driverDampeningReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Driver Candidate Scores",
+                values: report.driverCandidateScoreDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Driver Suppressions",
+                values: report.driverSuppressionReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Driver Redundancy",
+                values: report.driverRedundancyDampeningDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Driver By Component",
+                values: report.topDriverByComponentDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Top Changes",
@@ -808,6 +866,10 @@ struct SQViewLabView: View {
                 values: report.primaryActionFamilyAfterRoutingDistribution.map(distributionText)
             )
             outputGroup(
+                title: "Action Routing Reasons",
+                values: report.actionRoutingReasonDistribution.map(distributionText)
+            )
+            outputGroup(
                 title: "All Action Families",
                 values: report.allActionRecommendationFamilyDistribution.map(distributionText)
             )
@@ -818,6 +880,14 @@ struct SQViewLabView: View {
             outputGroup(
                 title: "Slot Rejections",
                 values: report.slotRejectionReasonDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Top Insight By Slot",
+                values: report.topInsightBySlotDistribution.map(distributionText)
+            )
+            outputGroup(
+                title: "Caffeine Insight Suppressions",
+                values: report.caffeineInsightSuppressionReasonDistribution.map(distributionText)
             )
             outputGroup(
                 title: "Relationship Families Before Slot Policy",

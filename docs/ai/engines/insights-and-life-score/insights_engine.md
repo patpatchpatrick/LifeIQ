@@ -579,3 +579,17 @@ Recommendation routing should follow the pressure source:
 - balanced or primed -> keep consistent
 
 The all-persona report should include core calibration diagnostics for current score vs shadow v2 score, top driver before/after calibration, insight slot distribution, relationship family before/after slot policy, positive-current-state hard suppressions, and primary action family before/after routing.
+
+Phase 9I-K calibration notes:
+- Current driver selection should diversify by component and role before selecting Today drivers.
+- Caffeine should require stronger current relevance before it can outrank sleep, stress, soreness, alcohol, or training strain.
+- Relationship/recent-change slots can suppress low-priority caffeine cards when a stronger non-caffeine briefing card exists.
+- Habit pressure routing should prefer `reduce` for alcohol/weed/nicotine/porn and reserve `shiftEarlier` for caffeine-dominant cases.
+- Stress pressure should route toward simplify/low-friction actions; sparse data should route toward logging or observe-first guidance.
+- Reports should include driver candidate scores, driver suppression reasons, redundancy dampening, top driver by component, caffeine insight suppressions, and action routing reasons.
+
+Phase 9O-Q calibration tightens the user-facing surfacing rules without adding new UX:
+- Caffeine can still explain a day, but it needs stronger current relevance when other pressure signals are present.
+- Low-data, stress, training/recovery, and sleep pressure route actions before generic habit pressure so `shiftEarlier` does not become the universal fallback.
+- Generic positive current-state titles are hard-gated in `Under Pressure` and `Dipping`; real positives should appear only as bright spots that acknowledge the drag.
+- Simulator regression guards should flag if Custom Performer leaves the 5-15% custom metric surfaced target, if personalized custom impact drifts, or if custom relationship flag-on cards over-surface.

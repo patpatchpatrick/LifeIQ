@@ -218,3 +218,17 @@ V2 calibration rules:
 - Sparse or inconsistent logging should lower confidence and appear as a diagnostic, not silently masquerade as precision.
 
 The simulator now reports current score vs shadow v2 score, v2 component contribution distribution, top v2 driver distribution, and v2 calibration warnings. Promotion from shadow to visible score should wait until all-persona calibration shows better driver/story alignment without destabilizing score ranges.
+
+Phase 9G-H calibration tightened this further:
+- V2 driver reporting separates health/state, behavior, data-confidence, and personalized drivers.
+- Data confidence is no longer allowed to be a broad positive score bonus. Good logging improves confidence; missing or inconsistent logging can drag.
+- Absence of negative habits is mostly neutral rather than a large upside.
+- Habit-positive and data-confidence-positive contributions are capped so pressure personas do not drift into inflated scores.
+- V2 warnings now reference the specific driver source so the report does not mix data-confidence signals with health/state drivers.
+
+Phase 9M-N calibration keeps V2 shadow-only and focuses on report consistency plus score range:
+- Summary warning flags should use the same V2 driver/contributor source as the table columns.
+- Latest-day warnings, aggregate driver-frequency warnings, and average score-delta warnings should be labeled separately.
+- Data confidence should behave mostly as confidence/caveat and small drag when low, not as a meaningful positive booster.
+- Good sleep, recovery, mind/energy, and training days should be able to reach the high 80s without inflating vice-heavy, stressed, or sparse personas.
+- Custom metrics remain capped and protected by simulator regression flags while core V2 tuning continues.
