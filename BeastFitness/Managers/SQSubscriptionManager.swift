@@ -56,6 +56,8 @@ enum SQSubscriptionManager {
 
     @MainActor
     static func displaySubscriptionScreen(source: String, feature: String? = nil) {
+        SQAnalyticsManager.shared.track(.subscriptionScreenRequested(source: source, feature: feature))
+
         let featureText = feature.map { " feature=\($0)" } ?? ""
         SQLogger.shared.log(
             "PTD Display subscription screen source=\(source)\(featureText)",
@@ -63,6 +65,30 @@ enum SQSubscriptionManager {
             context: .dashboard,
             isPriority: true
         )
+    }
+
+    @MainActor
+    static func isCustomMetricLocked(_ metric: SQMetricDefinition, in metrics: [SQMetricDefinition]) -> Bool {
+        guard !metric.isPreset else { return false }
+        guard !hasPremiumAccess else { return false }
+
+        return !unlockedCustomMetricIds(in: metrics).contains(metric.id)
+    }
+
+    @MainActor
+    static func availableMetricDefinitions(_ metrics: [SQMetricDefinition]) -> [SQMetricDefinition] {
+        guard !hasPremiumAccess else { return metrics }
+        let unlockedIds = unlockedCustomMetricIds(in: metrics)
+        return metrics.filter { metric in
+            metric.isPreset || unlockedIds.contains(metric.id)
+        }
+    }
+
+    @MainActor
+    static func canCreateCustomMetric(existingMetrics: [SQMetricDefinition]) -> Bool {
+        guard !hasPremiumAccess else { return true }
+        let customMetricCount = existingMetrics.filter { !$0.isPreset && !$0.isArchived }.count
+        return customMetricCount < SQAdminConfig.freeCustomMetricLimit
     }
 
     @MainActor
@@ -148,5 +174,34 @@ enum SQSubscriptionManager {
 
     private static func workoutScorePreviewKey(for userId: String) -> String {
         "\(workoutScorePreviewKeyPrefix).\(userId)"
+    }
+
+    @MainActor
+    private static var hasPremiumAccess: Bool {
+        SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+    }
+
+    @MainActor
+    private static func unlockedCustomMetricIds(in metrics: [SQMetricDefinition]) -> Set<String> {
+        let limit = max(0, SQAdminConfig.freeCustomMetricLimit)
+        guard limit > 0 else { return [] }
+
+        let activeCustomMetrics = metrics
+            .filter { !$0.isPreset && !$0.isArchived && $0.isEnabled }
+            .sorted(by: metricEntitlementSort)
+
+        let inactiveCustomMetrics = metrics
+            .filter { !$0.isPreset && !$0.isArchived && !$0.isEnabled }
+            .sorted(by: metricEntitlementSort)
+
+        return Set((activeCustomMetrics + inactiveCustomMetrics).prefix(limit).map(\.id))
+    }
+
+    private static func metricEntitlementSort(_ lhs: SQMetricDefinition, _ rhs: SQMetricDefinition) -> Bool {
+        if lhs.sortOrder == rhs.sortOrder {
+            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+        }
+
+        return lhs.sortOrder < rhs.sortOrder
     }
 }

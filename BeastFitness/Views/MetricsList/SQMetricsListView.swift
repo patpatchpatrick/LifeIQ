@@ -27,29 +27,29 @@ struct SQMetricsListView: View {
     }
 
     @ViewBuilder
-    func trackingButton(isTracked: Bool) -> some View {
+    func trackingButton(row: SQMetricsListItemViewModel) -> some View {
         HStack(spacing: .SQSpace.xs) {
             SQImageView(
                 image: .init(
-                    symbol: isTracked ? .checkmark : .plus,
+                    symbol: row.isLocked ? .lockFill : (row.isTracked ? .checkmark : .plus),
                     symbolStyle: .colorWithFont(
-                        isTracked ? .dashboardGlowBlueForeground : .textSecondary,
+                        row.isTracked && !row.isLocked ? .dashboardGlowBlueForeground : .textSecondary,
                         font: .headerSmall
                     )
                 )
             )
             .frame(width: 10, height: 10)
 
-            Text(isTracked ? "Tracked" : "Add")
+            Text(row.isLocked ? "Locked" : (row.isTracked ? "Tracked" : "Add"))
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(isTracked ? .dashboardGlowBlueForeground : .textSecondary)
+                .sqForegroundColor(row.isTracked && !row.isLocked ? .dashboardGlowBlueForeground : .textSecondary)
         }
         .padding(.vertical, 7)
         .padding(.horizontal, .SQSpace.s)
         .background(
             Capsule(style: .continuous)
                 .fill(
-                    isTracked
+                    row.isTracked && !row.isLocked
                         ? SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.24 : 0.16)
                         : SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.78 : 0.96)
                 )
@@ -57,7 +57,7 @@ struct SQMetricsListView: View {
         .overlay(
             Capsule(style: .continuous)
                 .stroke(
-                    isTracked
+                    row.isTracked && !row.isLocked
                         ? SQColor.dashboardGlowBlue.color.opacity(0.44)
                         : SQColor.glassStroke.color,
                     lineWidth: 1
@@ -76,7 +76,7 @@ struct SQMetricsListView: View {
             Button {
                 controller.metricTapped(row, using: modelContext)
             } label: {
-                trackingButton(isTracked: row.isTracked)
+                trackingButton(row: row)
             }
             .buttonStyle(.plain)
             .padding(.trailing, .SQSpace.l)

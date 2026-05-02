@@ -14,16 +14,20 @@ struct SQMetricsListItemViewModel: Identifiable, Hashable {
     let groupTitle: String
     let metricId: String
     let isTracked: Bool
+    let isLocked: Bool
+    let isCustom: Bool
     let emoji: String?
     let sortOrder: Int
 
-    init(metric: SQMetricDefinition, isTracked: Bool) {
+    init(metric: SQMetricDefinition, isTracked: Bool, isLocked: Bool = false) {
         self.id = metric.id
         self.metricId = metric.id
         self.title = metric.title
         self.subtitle = Self.buildSubtitle(for: metric)
         self.groupTitle = metric.group
         self.isTracked = isTracked
+        self.isLocked = isLocked
+        self.isCustom = !metric.isPreset
         self.emoji = metric.emoji
         self.sortOrder = metric.sortOrder
     }

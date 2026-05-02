@@ -68,6 +68,7 @@ enum SQAnalyticsEvent {
         sourceScreen: String,
         insightCategory: String?
     )
+    case subscriptionScreenRequested(source: String, feature: String?)
 
     var name: String {
         switch self {
@@ -123,6 +124,8 @@ enum SQAnalyticsEvent {
             return "metric_detail_viewed"
         case .insightOpened:
             return "insight_opened"
+        case .subscriptionScreenRequested:
+            return "subscription_screen_requested"
         }
     }
 
@@ -231,6 +234,12 @@ enum SQAnalyticsEvent {
                 "insight_type": insightType,
                 "source_screen": sourceScreen,
                 "insight_category": insightCategory
+            ])
+
+        case .subscriptionScreenRequested(let source, let feature):
+            return dictionary([
+                "source": source,
+                "feature": feature
             ])
         }
     }

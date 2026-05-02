@@ -56,9 +56,39 @@ struct SQMetricsListItem: View {
     @ViewBuilder
     var titleAndSubtitle: some View {
         VStack(alignment: .leading, spacing: .SQSpace.xs) {
-            Text(viewModel.title)
-                .sqFont(.bodySemiBold)
-                .sqForegroundColor(.textPrimary)
+            HStack(spacing: .SQSpace.s) {
+                Text(viewModel.title)
+                    .sqFont(.bodySemiBold)
+                    .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                if viewModel.isLocked {
+                    HStack(spacing: 4) {
+                        SQImageView(
+                            image: .init(
+                                symbol: .lockFill,
+                                symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 8, height: 8)
+
+                        Text("Locked")
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(.textSecondary)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, .SQSpace.s)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                    )
+                }
+            }
 
             Text(viewModel.subtitle)
                 .sqFont(.bodyExtraSmall)

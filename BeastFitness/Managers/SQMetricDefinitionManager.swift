@@ -128,13 +128,13 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     // MARK: - Public Accessors
 
     func dailyCheckInMetrics() -> [SQMetricDefinition] {
-        metrics
+        SQSubscriptionManager.availableMetricDefinitions(metrics)
             .filter { $0.isEnabled && !$0.isArchived }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
 
     func dailyCheckInMetrics(for period: SQMetricPeriod) -> [SQMetricDefinition] {
-        metrics
+        SQSubscriptionManager.availableMetricDefinitions(metrics)
             .filter { $0.isEnabled && !$0.isArchived && $0.periods.contains(period) }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
@@ -225,6 +225,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     func createMetric(definition: SQMetricDefinition, using context: ModelContext) throws {
         try assertServerWritesEnabledIfNeeded()
         try loadIfNeeded(using: context)
+        guard SQSubscriptionManager.canCreateCustomMetric(existingMetrics: metrics) else {
+            throw SQError.standard(withDescription: "Upgrade to create more custom metrics.")
+        }
+
         let userId = currentLocalUserId()
 
         let maxOrder = dailyCheckInMetrics().map(\.sortOrder).max() ?? 0

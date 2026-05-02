@@ -142,7 +142,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
 
         let checkInAdjustment = bodyBatteryCheckInAdjustment(
             from: todaysCheckInValues,
-            metrics: metricsManager.allMetrics(includeArchived: false)
+            metrics: SQSubscriptionManager.availableMetricDefinitions(metricsManager.allMetrics(includeArchived: false))
         )
         let hasSleepSignal = sleepAdjustment != nil
         let hasStrainSignal = !todaysWorkouts.isEmpty || !yesterdaysWorkouts.isEmpty

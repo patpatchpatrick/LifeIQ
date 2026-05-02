@@ -658,7 +658,9 @@ final class SQDashboardController: SQDashboardInterface {
             )
 
             let referenceDate = dashboardReferenceDate
-            let metricDefinitions = metricsManager.allMetrics(includeArchived: true)
+            let metricDefinitions = SQSubscriptionManager.availableMetricDefinitions(
+                metricsManager.allMetrics(includeArchived: true)
+            )
 
             func buildHealthIntelligenceInput(for timeRange: AppTimeRange) -> SQHealthIntelligenceInput {
                 let scopedCheckIns: [SQDailyCheckInStats]

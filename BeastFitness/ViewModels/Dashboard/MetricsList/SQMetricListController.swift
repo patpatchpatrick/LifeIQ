@@ -115,7 +115,8 @@ final class SQMetricsListController {
             let built: [SQMetricsListItemViewModel] = allMetrics.map { metric in
                 SQMetricsListItemViewModel(
                     metric: metric,
-                    isTracked: metricsManager.isMetricTracked(id: metric.id)
+                    isTracked: metricsManager.isMetricTracked(id: metric.id),
+                    isLocked: SQSubscriptionManager.isCustomMetricLocked(metric, in: allMetrics)
                 )
             }
 
@@ -171,6 +172,15 @@ final class SQMetricsListController {
     // MARK: - Navigation
 
     func createMetricTapped() {
+        let metrics = metricsManager.allMetrics(includeArchived: false)
+        guard SQSubscriptionManager.canCreateCustomMetric(existingMetrics: metrics) else {
+            SQSubscriptionManager.displaySubscriptionScreen(
+                source: "metrics_list_create_metric_limit",
+                feature: "custom_metrics"
+            )
+            return
+        }
+
         navigationPath.append(SQMetricNavTarget.create)
     }
 
@@ -187,6 +197,14 @@ final class SQMetricsListController {
 
     /// Toggle tracking state when tapped: tracked -> untrack, untracked -> track
     func metricTapped(_ row: SQMetricsListItemViewModel, using context: ModelContext) {
+        if row.isLocked {
+            SQSubscriptionManager.displaySubscriptionScreen(
+                source: "metrics_list_locked_metric",
+                feature: "custom_metrics"
+            )
+            return
+        }
+
         do {
             try metricsManager.loadIfNeeded(using: context)
 
@@ -237,7 +255,7 @@ final class SQMetricsListController {
         var builtSections: [SQMetricsListSectionViewModel] = []
 
         let trackedRows = rows
-            .filter(\.isTracked)
+            .filter { $0.isTracked && !$0.isLocked }
             .sorted(by: sortRows)
 
         if !trackedRows.isEmpty {
@@ -252,7 +270,23 @@ final class SQMetricsListController {
             )
         }
 
-        let untrackedRows = rows.filter { !$0.isTracked }
+        let lockedRows = rows
+            .filter(\.isLocked)
+            .sorted(by: sortRows)
+
+        if !lockedRows.isEmpty {
+            builtSections.append(
+                .init(
+                    id: "locked-custom",
+                    title: "Locked Custom Metrics",
+                    subtitle: "Upgrade to use these metrics again.",
+                    rows: lockedRows,
+                    isTrackedSection: false
+                )
+            )
+        }
+
+        let untrackedRows = rows.filter { !$0.isTracked && !$0.isLocked }
         let groupedRows = Dictionary(grouping: untrackedRows, by: \.groupTitle)
         let orderedGroupTitles = groupedRows.keys.sorted(by: sortGroups)
 
