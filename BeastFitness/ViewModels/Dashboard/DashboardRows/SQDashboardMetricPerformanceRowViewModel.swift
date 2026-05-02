@@ -16,6 +16,7 @@ final class SQDashboardMetricPerformanceRowViewModel: SQDashboardRowViewModel {
     let percentileRank: Double?
     let leaderboardMode: SQLeaderboardMode?
     let isPremiumLocked: Bool
+    let premiumLockText: String
     let scoreKind: SQWorkoutScoreKind?
 
     init(
@@ -27,6 +28,7 @@ final class SQDashboardMetricPerformanceRowViewModel: SQDashboardRowViewModel {
         percentileRank: Double?,
         leaderboardMode: SQLeaderboardMode? = nil,
         isPremiumLocked: Bool = false,
+        premiumLockText: String = "",
         scoreKind: SQWorkoutScoreKind? = nil
     ) {
         self.metricId = metricId
@@ -37,6 +39,7 @@ final class SQDashboardMetricPerformanceRowViewModel: SQDashboardRowViewModel {
         self.percentileRank = percentileRank
         self.leaderboardMode = leaderboardMode
         self.isPremiumLocked = isPremiumLocked
+        self.premiumLockText = premiumLockText
         self.scoreKind = scoreKind
 
         super.init(rowId: .metricPerformance, rowType: .metricPerformance)

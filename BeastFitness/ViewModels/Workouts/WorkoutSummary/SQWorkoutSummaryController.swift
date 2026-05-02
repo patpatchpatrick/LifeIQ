@@ -274,8 +274,14 @@ final class SQWorkoutSummaryController: SQWorkoutSummaryInterface {
     }
 
     func displayLeaderboard(for rowData: SQPerformanceRowData) {
-        
-        
+        if rowData.isPremiumLocked {
+            SQSubscriptionManager.displaySubscriptionScreen(
+                source: "workout_summary_performance_row",
+                feature: rowData.scoreKind?.rawValue ?? rowData.title.analyticsKey
+            )
+            return
+        }
+
         guard let mode = rowData.leaderboardMode else {
             SQLogger.shared.log(
                 "Cannot display leaderboard: row '\(rowData.title)' does not have a leaderboard mode",
@@ -387,6 +393,13 @@ extension SQWorkoutSummaryController {
     func presentWorkoutEditingLoginFlow() {
         let controller = SQProfileController(userState: userState)
         state.hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
+    }
+
+    func displayPremiumInsightsSubscriptionScreen() {
+        SQSubscriptionManager.displaySubscriptionScreen(
+            source: "workout_summary_premium_insights",
+            feature: "workout_scores"
+        )
     }
 
     private func setupEventSubscriptions() {

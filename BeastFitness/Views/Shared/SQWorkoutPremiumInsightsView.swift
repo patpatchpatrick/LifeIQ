@@ -8,6 +8,7 @@ import SwiftUI
 struct SQWorkoutPremiumInsightsView: View {
     let model: SQWorkoutPremiumInsightsModel
     let onScoreInfoTap: ((SQWorkoutPremiumInsightScore) -> Void)?
+    let onLockedTap: (() -> Void)?
 
     private let scoreColumns = [
         GridItem(.adaptive(minimum: 150), spacing: .SQSpace.s, alignment: .leading)
@@ -15,10 +16,12 @@ struct SQWorkoutPremiumInsightsView: View {
 
     init(
         model: SQWorkoutPremiumInsightsModel,
-        onScoreInfoTap: ((SQWorkoutPremiumInsightScore) -> Void)? = nil
+        onScoreInfoTap: ((SQWorkoutPremiumInsightScore) -> Void)? = nil,
+        onLockedTap: (() -> Void)? = nil
     ) {
         self.model = model
         self.onScoreInfoTap = onScoreInfoTap
+        self.onLockedTap = onLockedTap
     }
 
     var body: some View {
@@ -145,6 +148,20 @@ struct SQWorkoutPremiumInsightsView: View {
     }
 
     private var lockOverlay: some View {
+        Group {
+            if let onLockedTap {
+                Button(action: onLockedTap) {
+                    lockOverlayContent
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(model.lockedTitle ?? "Premium insights")
+            } else {
+                lockOverlayContent
+            }
+        }
+    }
+
+    private var lockOverlayContent: some View {
         VStack(spacing: .SQSpace.s) {
             Text(model.lockedTitle ?? "Premium insights")
                 .sqFont(.bodySemiBold)

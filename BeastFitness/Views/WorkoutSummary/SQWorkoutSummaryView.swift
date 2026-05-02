@@ -356,6 +356,9 @@ struct SQWorkoutSummaryView: View {
                     model: premiumInsightsModel,
                     onScoreInfoTap: { score in
                         controller.displayPremiumInsightDetail(for: score)
+                    },
+                    onLockedTap: {
+                        controller.displayPremiumInsightsSubscriptionScreen()
                     }
                 )
             }

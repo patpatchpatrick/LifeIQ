@@ -245,12 +245,17 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         ) else {
             return nil
         }
+        let previewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
+            candidates: [workout],
+            isPremiumUnlocked: isPremiumUnlocked
+        )
+        let shouldUnlockScores = isPremiumUnlocked || previewState.unlockedWorkoutId == workout.id
 
         return buildInsightsModel(
             from: scoredWorkout,
-            isPremiumUnlocked: isPremiumUnlocked,
+            isPremiumUnlocked: shouldUnlockScores,
             lockedTitle: "Premium workout insights",
-            lockedSubtitle: "Unlock performance and difficulty scores for your workouts."
+            lockedSubtitle: previewState.lockedSubtitle
         )
     }
 
@@ -260,25 +265,32 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         isPremiumUnlocked: Bool
     ) async -> SQWorkoutPremiumInsightsModel? {
         let sortedWorkouts = workouts.sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
-
-        for workout in sortedWorkouts {
-            guard let scoredWorkout = await supportedWorkoutScores(
-                for: workout,
-                allTimeWorkouts: allTimeWorkouts,
-                footerContext: .dashboard
-            ) else {
-                continue
-            }
-
-            return buildInsightsModel(
-                from: scoredWorkout,
-                isPremiumUnlocked: isPremiumUnlocked,
-                lockedTitle: "Premium workout insights",
-                lockedSubtitle: "Unlock performance and difficulty scores for your workouts."
-            )
+        let scoredWorkouts = await loadSupportedWorkoutScores(
+            from: sortedWorkouts,
+            allTimeWorkouts: allTimeWorkouts,
+            footerContext: .dashboard
+        )
+        guard !scoredWorkouts.isEmpty else {
+            return nil
         }
 
-        return nil
+        let previewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
+            candidates: scoredWorkouts.map(\.workout),
+            isPremiumUnlocked: isPremiumUnlocked
+        )
+        let scoredWorkout = scoredWorkouts.first(where: { $0.workout.id == previewState.unlockedWorkoutId })
+            ?? scoredWorkouts.first
+        guard let scoredWorkout else {
+            return nil
+        }
+
+        let shouldUnlockScores = isPremiumUnlocked || previewState.unlockedWorkoutId == scoredWorkout.workout.id
+        return buildInsightsModel(
+            from: scoredWorkout,
+            isPremiumUnlocked: shouldUnlockScores,
+            lockedTitle: "Premium workout insights",
+            lockedSubtitle: previewState.lockedSubtitle
+        )
     }
 
     func dashboardPerformanceRows(
@@ -288,6 +300,15 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
     ) async -> [SQPerformanceRowData] {
         let workoutsByActivity = workouts.workoutsByActivityType
         var rows = [SQPerformanceRowData]()
+        let allPeriodScoredWorkouts = await loadSupportedWorkoutScores(
+            from: workouts,
+            allTimeWorkouts: allTimeWorkouts,
+            footerContext: .dashboard
+        )
+        let globalPreviewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
+            candidates: allPeriodScoredWorkouts.map(\.workout),
+            isPremiumUnlocked: isPremiumUnlocked
+        )
 
         for (activityType, activityWorkouts) in workoutsByActivity {
             let scoredWorkouts = await loadSupportedWorkoutScores(
@@ -305,8 +326,17 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
             )
 
             for kind in SQWorkoutScoreKind.allCases {
-                let currentValues = scoredWorkouts.compactMap { scoredWorkout in
-                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                let previewScore = scoredWorkouts
+                    .first(where: { $0.workout.id == globalPreviewState.unlockedWorkoutId })?
+                    .scores
+                    .first(where: { $0.kind == kind })
+                let currentValues: [Int]
+                if !isPremiumUnlocked, let previewScore {
+                    currentValues = [previewScore.value]
+                } else {
+                    currentValues = scoredWorkouts.compactMap { scoredWorkout in
+                        scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                    }
                 }
                 guard !currentValues.isEmpty else { continue }
                 let currentAverageValue = Double(currentValues.reduce(0, +)) / Double(currentValues.count)
@@ -329,7 +359,8 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                         unit: "/100",
                         percentileRank: percentileRank,
                         leaderboardMode: .workoutScore(kind, activityType),
-                        isPremiumLocked: !isPremiumUnlocked,
+                        isPremiumLocked: !(isPremiumUnlocked || previewScore != nil),
+                        premiumLockText: globalPreviewState.compactLockText,
                         scoreKind: kind
                     )
                 )
@@ -350,6 +381,15 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         isPremiumUnlocked: Bool
     ) async -> [HKWorkoutActivityType : [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]] {
         var itemsByActivity = [HKWorkoutActivityType: [SQDashboardWorkoutGroupViewModel.WorkoutStatItem]]()
+        let allScoredWorkouts = await loadSupportedWorkoutScores(
+            from: workouts,
+            allTimeWorkouts: allTimeWorkouts,
+            footerContext: .dashboard
+        )
+        let globalPreviewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
+            candidates: allScoredWorkouts.map(\.workout),
+            isPremiumUnlocked: isPremiumUnlocked
+        )
 
         for (activityType, activityWorkouts) in workouts.workoutsByActivityType {
             let scoredWorkouts = await loadSupportedWorkoutScores(
@@ -360,10 +400,19 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
             guard !scoredWorkouts.isEmpty else {
                 continue
             }
+            let previewScores = scoredWorkouts
+                .first(where: { $0.workout.id == globalPreviewState.unlockedWorkoutId })?
+                .scores ?? []
 
             itemsByActivity[activityType] = SQWorkoutScoreKind.allCases.compactMap { kind in
-                let values = scoredWorkouts.compactMap { scoredWorkout in
-                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                let previewScore = previewScores.first(where: { $0.kind == kind })
+                let values: [Int]
+                if !isPremiumUnlocked, let previewScore {
+                    values = [previewScore.value]
+                } else {
+                    values = scoredWorkouts.compactMap { scoredWorkout in
+                        scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                    }
                 }
                 guard !values.isEmpty else { return nil }
 
@@ -372,7 +421,8 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                     id: "avg-score-\(kind.rawValue)",
                     title: "Avg \(kind.title)",
                     value: attributedScoreValue(averageValue),
-                    isPremiumLocked: !isPremiumUnlocked,
+                    isPremiumLocked: !(isPremiumUnlocked || previewScore != nil),
+                    premiumLockText: globalPreviewState.compactLockText,
                     accentColor: kind.accentColor
                 )
             }
@@ -453,7 +503,7 @@ private extension SQWorkoutScoreService {
                 : scoredWorkout.scores.map { lockedPreviewScore(for: $0.kind, activityType: scoredWorkout.workout.activityType) },
             footer: isPremiumUnlocked
                 ? scoredWorkout.footer
-                : "Unlock personalized workout insights built from your output and training load.",
+                : "Free members get 1 preview score each week. Unlock personalized workout insights built from your output and training load.",
             lockedTitle: isPremiumUnlocked ? nil : lockedTitle,
             lockedSubtitle: isPremiumUnlocked ? nil : lockedSubtitle
         )

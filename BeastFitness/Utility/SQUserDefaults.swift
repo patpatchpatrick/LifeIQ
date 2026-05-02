@@ -227,6 +227,7 @@ final class SQUserDefaults {
         clearPendingOnboarding(for: userId)
         clearWorkoutReviewBaseline(for: userId)
         clearEmailVerificationResendHistory(for: userId)
+        SQSubscriptionManager.clearWeeklyWorkoutScorePreview(for: userId)
         setPreferredUnitSystem(nil)
     }
 

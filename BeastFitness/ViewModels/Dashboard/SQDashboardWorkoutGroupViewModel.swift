@@ -15,6 +15,7 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
         let title: String
         let value: AttributedString
         let isPremiumLocked: Bool
+        let premiumLockText: String
         let accentColor: SQColor?
 
         init(
@@ -22,12 +23,14 @@ final class SQDashboardWorkoutGroupViewModel: Identifiable, Hashable, Equatable 
             title: String,
             value: AttributedString,
             isPremiumLocked: Bool = false,
+            premiumLockText: String = "",
             accentColor: SQColor? = nil
         ) {
             self.id = id
             self.title = title
             self.value = value
             self.isPremiumLocked = isPremiumLocked
+            self.premiumLockText = premiumLockText
             self.accentColor = accentColor
         }
     }

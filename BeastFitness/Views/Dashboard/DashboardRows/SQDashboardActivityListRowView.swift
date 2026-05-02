@@ -109,6 +109,22 @@ struct SQDashboardWorkoutGroupView: View {
 
     @ViewBuilder
     private func workoutStatItem(_ item: SQDashboardWorkoutGroupViewModel.WorkoutStatItem) -> some View {
+        if item.isPremiumLocked {
+            Button {
+                SQSubscriptionManager.displaySubscriptionScreen(
+                    source: "dashboard_activities_locked_stat",
+                    feature: item.id
+                )
+            } label: {
+                workoutStatItemContent(item)
+            }
+            .buttonStyle(.plain)
+        } else {
+            workoutStatItemContent(item)
+        }
+    }
+
+    private func workoutStatItemContent(_ item: SQDashboardWorkoutGroupViewModel.WorkoutStatItem) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(item.title.uppercased())
                 .sqFont(.headerSmall)
@@ -121,9 +137,11 @@ struct SQDashboardWorkoutGroupView: View {
                     .blur(radius: item.isPremiumLocked ? 5 : 0)
 
                 if item.isPremiumLocked {
-                    Text("Premium")
+                    Text(item.premiumLockText.isEmpty ? SQSubscriptionManager.weeklyScorePreviewCompactText : item.premiumLockText)
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
             }
         }
@@ -161,10 +179,9 @@ struct SQDashboardWorkoutGroupView: View {
     }
     
     var body: some View {
-        Button(
-            action: viewModel.displayWorkoutsSheet,
-            label: { mainHStack })
-        .buttonStyle(.plain)
+        mainHStack
+            .contentShape(Rectangle())
+            .onTapGesture(perform: viewModel.displayWorkoutsSheet)
     }
 }
 

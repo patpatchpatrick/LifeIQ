@@ -1,0 +1,43 @@
+# LifeIQ Definitions
+
+This document is the source of truth for product-facing score and feature definitions in LifeIQ. Keep in-app explainers, alerts, docs, onboarding copy, and AI assistant guidance aligned with these definitions.
+
+## Life Score
+
+Life Score is a daily snapshot of the user's recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether the user's life is trending in a healthy direction. It is not a medical score - it is a guide to help the user notice what's supporting them and what may need attention.
+
+Life Score should read as a practical "am I on track?" signal across health, habits, recovery, training, and self-reported state. Healthy behavior and positive momentum should generally support the score. Training should become a drag only when the broader context suggests overreaching, poor recovery, repeated high-intensity strain, or too much inactivity. A normal rest day should not be treated as failure.
+
+## Insights
+
+Insights look for patterns across check-ins, sleep, workouts, and health data so users can better understand what affects their mood, energy, recovery, and performance.
+
+Users might see insights like "Low sleep may be linked to lower mood" or "Caffeine is trending higher recently."
+
+The more check-ins users complete, the more personal and accurate insights become. Early insights may be simple, but they should get stronger as LifeIQ learns the user's patterns.
+
+## Recovery Score
+
+Recovery Score estimates how ready and recovered the user appears today based on the available recovery signals.
+
+It starts from a neutral baseline and adjusts using signals such as sleep, recent workout strain, recovery-related check-ins, resting-heart-rate context, and custom metrics marked for Recovery Score. Missing signals are omitted rather than treated as bad data.
+
+Recovery Score should feel like a readiness and physical recovery signal, not a moral judgment. Lower values should indicate likely strain, poor recovery, or a need to pay attention; higher values should indicate stronger readiness and recovery support.
+
+## Sleep Score
+
+Sleep Score summarizes the quality and usefulness of the user's latest completed sleep period or selected completed-night window.
+
+It should be anchored to completed nights, use HealthKit sleep when available, and stay transparent about the source. When HealthKit sleep is missing, sleep-related check-ins may provide fallback context where appropriate.
+
+## Performance Score
+
+Performance Score is a personalized workout-output score. It describes how strongly a workout performed relative to the user's own workout history.
+
+For runs, it is centered around a VDOT-style estimate where faster sustained pace over meaningful distance improves the score. For cycling, it is centered around sustained speed over meaningful distance and duration. Higher values should mean stronger personal performance, not necessarily a harder workout.
+
+## Difficulty Score
+
+Difficulty Score estimates how taxing a workout was for the user.
+
+It is driven primarily by heart-rate load, where time in higher heart-rate zones contributes more than easy aerobic time. The score is ranked against the user's own heart-rate-tracked workout history. Higher values should mean the workout was harder to absorb, not necessarily better.

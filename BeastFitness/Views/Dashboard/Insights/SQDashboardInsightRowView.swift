@@ -198,6 +198,20 @@ struct SQDashboardInsightRowView: View {
     }
 
     private var lockOverlay: some View {
+        Group {
+            if let onLockedTap = viewModel.onLockedTap {
+                Button(action: onLockedTap) {
+                    lockOverlayContent
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Unlock more insights")
+            } else {
+                lockOverlayContent
+            }
+        }
+    }
+
+    private var lockOverlayContent: some View {
         VStack(spacing: .SQSpace.s) {
             Text("Unlock more insights")
                 .sqFont(.bodySemiBold)

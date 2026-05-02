@@ -233,6 +233,7 @@
 		F6B700012FA0000100A1B700 /* remote_config_defaults.plist in Resources */ = {isa = PBXBuildFile; fileRef = F6B700022FA0000100A1B700 /* remote_config_defaults.plist */; };
 		F6B700032FA0000100A1B700 /* SQRemoteConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */; };
 		F6B700052FA0000100A1B700 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = F6B700062FA0000100A1B700 /* FirebaseRemoteConfig */; };
+		F7F010022FB0000100AF1001 /* SQSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */; };
 		F6B710012FA1100100A1B710 /* SQAppBlockerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */; };
 		F6B710032FA1100100A1B710 /* SQAppBlockerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */; };
 		F6C2E0382F74579700A44D72 /* SQMetricDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */; };
@@ -586,6 +587,7 @@
 		F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHeartSummaryRowView.swift; sourceTree = "<group>"; };
 		F6B700022FA0000100A1B700 /* remote_config_defaults.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = remote_config_defaults.plist; sourceTree = "<group>"; };
 		F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRemoteConfigManager.swift; sourceTree = "<group>"; };
+		F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionManager.swift; sourceTree = "<group>"; };
 		F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerState.swift; sourceTree = "<group>"; };
 		F6B710042FA1100100A1B710 /* SQAppBlockerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppBlockerHost.swift; sourceTree = "<group>"; };
 		F6C2E0362F74579700A44D72 /* SQMetricDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQMetricDetailController.swift; sourceTree = "<group>"; };
@@ -1467,6 +1469,7 @@
 				F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */,
 				F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */,
 				F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */,
+				F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */,
 				F7A417142FFD310100AA4101 /* SQWebViewManager.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
@@ -2333,6 +2336,7 @@
 				F6B2B0052F92430100A1B001 /* SQBodyBatteryService.swift in Sources */,
 				F6B2B0072F92440100A1B001 /* SQHeartRateService.swift in Sources */,
 				F7D1000A2F98010100AA1001 /* SQWorkoutScoreService.swift in Sources */,
+				F7F010022FB0000100AF1001 /* SQSubscriptionManager.swift in Sources */,
 				F615921C2EF0C71F00223A63 /* SQWorkoutMetric.swift in Sources */,
 				F6A848B42CBD8DB000B09AD5 /* Array+Extensions.swift in Sources */,
 				F639B8FB2ED7A46C00199C69 /* SQTextValidationRule.swift in Sources */,

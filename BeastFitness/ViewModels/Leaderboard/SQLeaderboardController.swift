@@ -40,13 +40,17 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     private(set) var chartTitle: String?
     private(set) var chartSubtitle: String?
     var focusedEntryId: String?
+    private(set) var hasFreeWorkoutScorePreviewAccess = false
+    private(set) var premiumLockedSubtitle = SQSubscriptionManager.weeklyScorePreviewLockedSubtitle
 
     var title: String {
         mode.title
     }
 
     var isPremiumLocked: Bool {
-        mode.requiresPremium && !(SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true)
+        mode.requiresPremium
+            && !(SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true)
+            && !hasFreeWorkoutScorePreviewAccess
     }
 
     @MainActor
@@ -114,6 +118,8 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         guard !hasLoadedUI else { return }
         hasLoadedUI = true
         isLoading = true
+        hasFreeWorkoutScorePreviewAccess = false
+        premiumLockedSubtitle = SQSubscriptionManager.weeklyScorePreviewLockedSubtitle
 
         buildMockRows()
 
@@ -346,6 +352,21 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 workouts: currentWorkouts,
                 allTimeWorkouts: allTimeWorkouts
             )
+            let isPremiumUnlocked = SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+            let previewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
+                candidates: rows.compactMap(\.workout),
+                isPremiumUnlocked: isPremiumUnlocked
+            )
+            premiumLockedSubtitle = previewState.lockedSubtitle
+
+            if !isPremiumUnlocked {
+                if let unlockedWorkoutId = previewState.unlockedWorkoutId {
+                    rows = rows.filter { $0.workout?.id == unlockedWorkoutId }
+                    hasFreeWorkoutScorePreviewAccess = !rows.isEmpty
+                } else {
+                    hasFreeWorkoutScorePreviewAccess = false
+                }
+            }
 
             chartTitle = "\(activityType.name) \(kind.title)"
 
@@ -632,8 +653,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     }
 
     func premiumOverlayTapped() {
-        let controller = SQProfileController(userState: SQAppState.shared.userState)
-        hub.domainEvents.send(.pushDashboardRoute(.profile(controller: controller)))
+        SQSubscriptionManager.displaySubscriptionScreen(
+            source: "leaderboard_premium_overlay",
+            feature: mode.title.analyticsKey
+        )
     }
 
     private func focusChartPoint(with id: String) {

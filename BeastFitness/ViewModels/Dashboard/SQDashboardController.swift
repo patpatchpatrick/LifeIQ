@@ -1285,6 +1285,7 @@ final class SQDashboardController: SQDashboardInterface {
                     percentileRank: rowData.percentileRank,
                     leaderboardMode: rowData.leaderboardMode,
                     isPremiumLocked: rowData.isPremiumLocked,
+                    premiumLockText: rowData.premiumLockText,
                     scoreKind: rowData.scoreKind
                 )
             })
@@ -1465,6 +1466,11 @@ final class SQDashboardController: SQDashboardInterface {
             model: model
         ) { [weak self] score in
             self?.displayWorkoutInsightDetail(score.detailModel)
+        } onLockedTap: {
+            SQSubscriptionManager.displaySubscriptionScreen(
+                source: "dashboard_performance_insights",
+                feature: "workout_scores"
+            )
         }
         return SQDashboardSubsectionViewModel(
             id: "performance-insights",
@@ -2403,7 +2409,16 @@ final class SQDashboardController: SQDashboardInterface {
                     ))
                 }
             } else if let lockedPreview = insights.dropFirst().first {
-                rows.append(SQDashboardInsightRowViewModel(model: lockedPreview, isLocked: true))
+                rows.append(SQDashboardInsightRowViewModel(
+                    model: lockedPreview,
+                    isLocked: true,
+                    onLockedTap: {
+                        SQSubscriptionManager.displaySubscriptionScreen(
+                            source: "dashboard_insights_locked_preview",
+                            feature: "insights"
+                        )
+                    }
+                ))
             }
 
             return rows

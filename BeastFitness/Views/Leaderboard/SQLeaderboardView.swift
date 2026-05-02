@@ -182,7 +182,7 @@ struct SQLeaderboardView: View {
                                 .sqFont(.bodySemiBold)
                                 .sqForegroundColor(.textPrimary)
 
-                            Text("Unlock performance and difficulty score leaderboards for your workouts.")
+                            Text(controller.premiumLockedSubtitle)
                                 .sqFont(.bodyExtraSmall)
                                 .sqForegroundColor(.textSecondary)
                                 .multilineTextAlignment(.center)

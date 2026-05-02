@@ -94,6 +94,7 @@ struct SQDashboardSectionView: View {
                                                     percentileRank: vm.percentileRank,
                                                     leaderboardMode: vm.leaderboardMode,
                                                     isPremiumLocked: vm.isPremiumLocked,
+                                                    premiumLockText: vm.premiumLockText,
                                                     scoreKind: vm.scoreKind
                                                 )
                                             )
@@ -110,7 +111,8 @@ struct SQDashboardSectionView: View {
                                     if let vm = row as? SQDashboardWorkoutPremiumInsightRowViewModel {
                                         SQWorkoutPremiumInsightsView(
                                             model: vm.model,
-                                            onScoreInfoTap: vm.onScoreInfoTap
+                                            onScoreInfoTap: vm.onScoreInfoTap,
+                                            onLockedTap: vm.onLockedTap
                                         )
                                     }
 
@@ -225,6 +227,14 @@ struct SQDashboardSectionView: View {
         }
 
         if let performanceViewModel = viewModel as? SQDashboardMetricPerformanceRowViewModel {
+            if performanceViewModel.isPremiumLocked {
+                SQSubscriptionManager.displaySubscriptionScreen(
+                    source: "dashboard_performance_row",
+                    feature: performanceViewModel.scoreKind?.rawValue ?? performanceViewModel.title.analyticsKey
+                )
+                return
+            }
+
             guard let mode = performanceViewModel.leaderboardMode else {
                 SQLogger.shared.log(
                     "Cannot display leaderboard: metric '\(performanceViewModel.title)' does not have a leaderboard mode",

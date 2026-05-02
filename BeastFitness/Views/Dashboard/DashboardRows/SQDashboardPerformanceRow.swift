@@ -124,8 +124,10 @@ struct SQDashboardPerformanceRow: View {
                     .blur(radius: data.isPremiumLocked ? 5 : 0)
 
                 if data.isPremiumLocked {
-                    Text("Premium")
+                    Text(data.premiumLockText.isEmpty ? SQSubscriptionManager.weeklyScorePreviewCompactText : data.premiumLockText)
                         .font(.sqFont(.bodyExtraSmall))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                         .padding(.horizontal, .SQSpace.s)
                         .padding(.vertical, 4)
                         .background(
