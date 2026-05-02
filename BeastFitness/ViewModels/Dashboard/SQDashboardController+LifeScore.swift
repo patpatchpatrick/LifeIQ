@@ -14,6 +14,10 @@ extension SQDashboardController {
             sourceGroup: "daily_stats",
             score: lifeScoreViewModel.score
         ))
+        SQAnalyticsManager.shared.track(.lifeScoreDetailOpened(
+            viewModel: lifeScoreViewModel,
+            sourceScreen: "dashboard"
+        ))
         let controller = SQLifeScoreDetailController(viewModel: lifeScoreViewModel)
         state.hub.domainEvents.send(.pushDashboardRoute(.lifeScoreDetail(controller: controller)))
     }

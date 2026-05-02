@@ -37,6 +37,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Workout history and summaries
   - Self-tracked daily habits/stats (mood, alcohol, energy, etc.)
 - Product goal: clear actionable insights, understandable trends, polished UI hierarchy.
+- Life Score is a daily snapshot of the user's recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether the user's life is trending in a healthy direction. It is not a medical score - it is a guide to help the user notice what's supporting them and what may need attention.
 - Life Score should represent how on-track the user is and whether their life/health signals are headed in a positive direction. Healthy behaviors such as working out more, performing well, or having recent HealthKit activity should generally be supportive. Training should become a Life Score drag only when the broader context suggests overreaching, poor recovery, or repeated high-intensity strain. Too many days of inactivity can become a mild drag, but a normal rest day should not be treated as failure.
 
 ## Daily Check-In metric groups

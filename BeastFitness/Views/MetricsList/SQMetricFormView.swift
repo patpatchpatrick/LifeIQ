@@ -110,11 +110,22 @@ struct SQMetricFormView: View {
         SQAppState.shared.hub.alertEvents.send(.present(alert))
     }
 
+    private func presentLifeScoreInfoAlert() {
+        let alert = SQAlertViewModel(
+            title: "Life Score",
+            subtitle: "Life Score is a daily snapshot of your recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether your life is trending in a healthy direction. It is not a medical score - it is a guide to help you notice what's supporting you and what may need attention.",
+            primary: .ok,
+            canDismiss: true
+        )
+
+        SQAppState.shared.hub.alertEvents.send(.present(alert))
+    }
+
     private func presentRecoveryScoreInfoAlert() {
         let alert = SQAlertViewModel(
-            title: "Recovery Score Range",
-            subtitle: "Typical low and typical high values help LifeIQ understand what a lower day or higher day means for this metric. They are especially important when this metric is allowed to influence Recovery Score.",
-            primary: .init(title: "Got It"),
+            title: "Recovery Score",
+            subtitle: "Recovery Score focuses on readiness and physical recovery. Metrics can nudge it when they clearly represent recovery support or strain. Use No Effect to leave this metric out.",
+            primary: .ok,
             canDismiss: true
         )
 
@@ -170,14 +181,8 @@ struct SQMetricFormView: View {
             }
 
             if viewModel.selectedPeriods.count > 1 {
-                VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                    labeledRow(label: "Tracking") {
-                        SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
-                    }
-
-                    Text(viewModel.trackingHelperText)
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textSecondary)
+                labeledRow(label: "Tracking") {
+                    SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
                 }
             }
         } else {
@@ -299,109 +304,93 @@ struct SQMetricFormView: View {
 
     @ViewBuilder
     private var goalRows: some View {
-        labeledRow(label: "Goal") {
-            SQDropDownMenu(menuViewModel: viewModel.goalMenuViewModel, isDisabled: false)
-        }
-
-        Text(viewModel.goalHelperText)
-            .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textSecondary)
-
-        if viewModel.showGoalTargetField {
-            labeledRow(label: viewModel.goalTargetLabel) {
-                SQUITextField(viewModel: viewModel.goalTargetField)
-            }
-        }
-
-        if viewModel.showGoalRangeFields {
-            labeledRow(label: "Target Min") {
-                SQUITextField(viewModel: viewModel.goalRangeMinField)
+        if viewModel.canEditGoalSettings {
+            labeledRow(label: "Goal") {
+                SQDropDownMenu(menuViewModel: viewModel.goalMenuViewModel, isDisabled: false)
             }
 
-            labeledRow(label: "Target Max") {
-                SQUITextField(viewModel: viewModel.goalRangeMaxField)
-            }
-        }
-
-        if let summary = viewModel.goalSuccessSummary {
-            Text(summary)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.dashboardGlowBlue)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, .SQSpace.xs)
-        }
-    }
-
-    @ViewBuilder
-    private var bodyBatteryRows: some View {
-        labeledRow(label: "Effect") {
-            SQDropDownMenu(menuViewModel: viewModel.bodyBatteryMenuViewModel, isDisabled: false)
-        }
-
-        Text(viewModel.bodyBatteryHelperText)
-            .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textSecondary)
-
-        if let summary = viewModel.bodyBatterySummary {
-            Text(summary)
-                .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.dashboardGlowBlue)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, .SQSpace.xs)
-        }
-
-        if viewModel.showsRecoveryScoreRangeFields {
-            Button(action: presentRecoveryScoreInfoAlert) {
-                HStack(spacing: .SQSpace.xs) {
-                    SQImageView(
-                        image: .init(
-                            symbol: .infoCircle,
-                            symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
-                        )
-                    )
-                    .frame(width: 14, height: 14)
-
-                    Text("Why typical low and high matter")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.dashboardGlowBlue)
+            if viewModel.showGoalTargetField {
+                labeledRow(label: viewModel.goalTargetLabel) {
+                    SQUITextField(viewModel: viewModel.goalTargetField)
                 }
             }
-            .buttonStyle(.plain)
 
-            labeledRow(label: "Typical Low") {
-                SQUITextField(viewModel: viewModel.minField)
+            if viewModel.showGoalRangeFields {
+                labeledRow(label: "Target Min") {
+                    SQUITextField(viewModel: viewModel.goalRangeMinField)
+                }
+
+                labeledRow(label: "Target Max") {
+                    SQUITextField(viewModel: viewModel.goalRangeMaxField)
+                }
             }
 
-            labeledRow(label: "Typical High") {
-                SQUITextField(viewModel: viewModel.maxField)
+            if let summary = viewModel.goalSuccessSummary {
+                Text(summary)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.dashboardGlowBlue)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, .SQSpace.xs)
             }
+        } else {
+            staticRow(label: "Goal", value: viewModel.goalDisplayValue)
         }
     }
 
     @ViewBuilder
-    private var algorithmRows: some View {
-        labeledRow(label: "What kind of thing is this?") {
-            SQDropDownMenu(menuViewModel: viewModel.signalRoleMenuViewModel, isDisabled: false)
+    private var lifeIQUseRows: some View {
+        if viewModel.canEditMetricTypeSettings {
+            labeledRow(label: "Metric Type") {
+                SQDropDownMenu(menuViewModel: viewModel.signalRoleMenuViewModel, isDisabled: false)
+            }
+        } else {
+            staticRow(label: "Metric Type", value: viewModel.metricTypeDisplayValue)
         }
 
-        Toggle(isOn: $viewModel.isInsightsEnabled) {
-            Text("Use for insights")
-                .sqFont(.body)
-                .sqForegroundColor(.textPrimary)
-        }
-        .tint(SQColor.dashboardGlowBlue.color)
+        goalRows
 
-        labeledRow(label: "Affect Life Score?") {
-            SQDropDownMenu(menuViewModel: viewModel.lifeScoreImpactMenuViewModel, isDisabled: false)
+        if viewModel.showsLifeScoreImpactControl {
+            labeledRow(label: "Affect Life Score", infoAction: presentLifeScoreInfoAlert) {
+                SQDropDownMenu(menuViewModel: viewModel.lifeScoreImpactMenuViewModel, isDisabled: false)
+            }
         }
 
-        labeledRow(label: "Sensitivity") {
-            SQDropDownMenu(menuViewModel: viewModel.sensitivityMenuViewModel, isDisabled: false)
+        if viewModel.showsBodyBatteryControls {
+            labeledRow(label: "Affect Recovery Score", infoAction: presentRecoveryScoreInfoAlert) {
+                SQDropDownMenu(menuViewModel: viewModel.bodyBatteryMenuViewModel, isDisabled: false)
+            }
+
+            if viewModel.showsRecoveryScoreRangeFields {
+                Text(viewModel.recoveryScoreRangeHelperText)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                labeledRow(label: "Typical Low") {
+                    SQUITextField(viewModel: viewModel.minField)
+                }
+
+                labeledRow(label: "Typical High") {
+                    SQUITextField(viewModel: viewModel.maxField)
+                }
+            }
         }
 
-        Text(viewModel.algorithmSettingsHelperText)
-            .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textSecondary)
+        if viewModel.showsInsightsControl {
+            Toggle(isOn: $viewModel.isInsightsEnabled) {
+                Text("Affect Insights")
+                    .sqFont(.body)
+                    .sqForegroundColor(.textPrimary)
+            }
+            .tint(SQColor.dashboardGlowBlue.color)
+        }
+
+        if viewModel.canEditPrivacySafetySettings {
+            labeledRow(label: "Privacy & Safety") {
+                SQDropDownMenu(menuViewModel: viewModel.sensitivityMenuViewModel, isDisabled: false)
+            }
+        } else {
+            staticRow(label: "Privacy & Safety", value: viewModel.privacySafetyDisplayValue)
+        }
     }
 
     @ViewBuilder
@@ -501,18 +490,17 @@ struct SQMetricFormView: View {
             VStack(alignment: .leading, spacing: .SQSpace.l) {
                 heroCard
 
-                formSection(title: "Basics", subtitle: "Name, icon, and grouping.") {
+                formSection(title: "Basics") {
                     titleRow
                     emojiInputRow
                     groupRow
                 }
 
-                formSection(title: "Check-In", subtitle: "Where this metric shows up.") {
+                formSection(title: "Check-In") {
                     periodRow
-                    goalRows
                 }
 
-                formSection(title: "Format", subtitle: "Value type, units, and scale setup.") {
+                formSection(title: "Format") {
                     kindRow
                     unitRow
                     numericRows
@@ -525,15 +513,9 @@ struct SQMetricFormView: View {
                     }
                 }
 
-                if viewModel.showsBodyBatteryControls {
-                    formSection(title: "Recovery Score", subtitle: "Optional: let this metric nudge the daily score.") {
-                        bodyBatteryRows
-                    }
-                }
-
-                if viewModel.showsAlgorithmSettings {
-                    formSection(title: "How should LifeIQ use this?", subtitle: "Insight behavior and optional Life Score impact.") {
-                        algorithmRows
+                if viewModel.showsLifeIQUseSection {
+                    formSection(title: "LifeIQ Use") {
+                        lifeIQUseRows
                     }
                 }
             }
@@ -569,11 +551,31 @@ struct SQMetricFormView: View {
     }
 
     @ViewBuilder
-    private func labeledRow(label: String, @ViewBuilder content: () -> some View) -> some View {
+    private func labeledRow(
+        label: String,
+        infoAction: (() -> Void)? = nil,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
-            Text(label.uppercased())
-                .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
+            HStack(spacing: .SQSpace.xs) {
+                Text(label.uppercased())
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                if let infoAction {
+                    Button(action: infoAction) {
+                        SQImageView(
+                            image: .init(
+                                symbol: .infoCircle,
+                                symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 13, height: 13)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(label) info")
+                }
+            }
 
             content()
         }

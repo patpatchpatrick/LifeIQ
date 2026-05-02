@@ -13,6 +13,8 @@ The product combines:
 
 The goal is to help users understand what is helping or hurting their health, recovery, energy, mood, and performance.
 
+Life Score is a daily snapshot of the user's recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether the user's life is trending in a healthy direction. It is not a medical score - it is a guide to help the user notice what's supporting them and what may need attention.
+
 Life Score should read as a practical "am I on track?" signal: a measure of whether the user's health, habits, recovery, training, and self-reported state are generally headed in a positive direction. Healthy behaviors such as working out more, performing well, or completing meaningful activity should generally support the score. Training should only become a drag when paired with evidence of overreaching, poor recovery, or repeated high-intensity strain. Too many days of inactivity can become a mild drag, but normal rest days should not be treated as failure.
 
 ## Mission

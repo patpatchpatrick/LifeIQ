@@ -65,6 +65,8 @@ protocol SQLifeScoreBuilding {
 }
 
 struct SQLifeScoreV2Builder {
+    private let semanticResolver = SQMetricSemanticResolver()
+
     private struct RawComponent {
         let id: String
         let title: String
@@ -86,6 +88,7 @@ struct SQLifeScoreV2Builder {
         let impactCap: Double
         var rawValueText: String? = nil
         var sourceText: String? = nil
+        var sourceContextText: String? = nil
 
         var driverImpact: Double {
             SQLifeScoreV2Builder.clampStatic(score - neutralScore, min: -impactCap, max: impactCap)
@@ -112,10 +115,27 @@ struct SQLifeScoreV2Builder {
             metricDefinitions: input.metricDefinitions
         )
 
+        let metricDefinitionsById = input.metricDefinitions.reduce(into: [String: SQMetricDefinition]()) { partialResult, definition in
+            partialResult[definition.id] = definition
+        }
+
         var rawComponents = [
-            sleepComponent(snapshot: snapshot),
-            recoveryComponent(snapshot: snapshot, snapshots: snapshots),
-            mindEnergyComponent(snapshot: snapshot),
+            sleepComponent(
+                snapshot: snapshot,
+                referenceDate: input.referenceDate,
+                metricDefinitionsById: metricDefinitionsById
+            ),
+            recoveryComponent(
+                snapshot: snapshot,
+                snapshots: snapshots,
+                referenceDate: input.referenceDate,
+                metricDefinitionsById: metricDefinitionsById
+            ),
+            mindEnergyComponent(
+                snapshot: snapshot,
+                referenceDate: input.referenceDate,
+                metricDefinitionsById: metricDefinitionsById
+            ),
             trainingComponent(
                 snapshots: snapshots,
                 referenceDate: input.referenceDate
@@ -123,7 +143,8 @@ struct SQLifeScoreV2Builder {
             habitsComponent(
                 snapshot: snapshot,
                 snapshots: snapshots,
-                referenceDate: input.referenceDate
+                referenceDate: input.referenceDate,
+                metricDefinitionsById: metricDefinitionsById
             ),
             dataConfidenceComponent(
                 snapshot: snapshot,
@@ -193,16 +214,23 @@ struct SQLifeScoreV2Builder {
         )
     }
 
-    private func sleepComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+    private func sleepComponent(
+        snapshot: SQInsightFeatureSnapshot?,
+        referenceDate: Date,
+        metricDefinitionsById: [String: SQMetricDefinition]
+    ) -> RawComponent? {
         var signals = [ScoredSignal]()
+        let snapshotContextText = sourceContextText(for: snapshot?.date, referenceDate: referenceDate)
 
         if let sleepHoursSignal = scoredMetricSignal(
             signalId: SQMetricId.sleepHours,
             title: "Sleep Duration",
             in: snapshot,
+            metricDefinitionsById: metricDefinitionsById,
             neutralScore: 74,
             confidence: 0.9,
             impactCap: 22,
+            sourceContextText: snapshotContextText,
             score: { sleepDurationScore(hours: $0) }
         ) {
             signals.append(sleepHoursSignal)
@@ -212,9 +240,11 @@ struct SQLifeScoreV2Builder {
             signalId: SQMetricId.sleepQuality,
             title: "Sleep Quality",
             in: snapshot,
+            metricDefinitionsById: metricDefinitionsById,
             neutralScore: 74,
             confidence: 0.9,
             impactCap: 26,
+            sourceContextText: snapshotContextText,
             score: { clamp(($0 / 10) * 100, min: 0, max: 100) }
         ) {
             signals.append(qualitySignal)
@@ -232,17 +262,22 @@ struct SQLifeScoreV2Builder {
 
     private func recoveryComponent(
         snapshot: SQInsightFeatureSnapshot?,
-        snapshots: [SQInsightFeatureSnapshot]
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date,
+        metricDefinitionsById: [String: SQMetricDefinition]
     ) -> RawComponent? {
         var signals = [ScoredSignal]()
+        let snapshotContextText = sourceContextText(for: snapshot?.date, referenceDate: referenceDate)
 
         if let recoverySignal = scoredMetricSignal(
             signalId: SQMetricId.soreness,
             title: "Recovery",
             in: snapshot,
+            metricDefinitionsById: metricDefinitionsById,
             neutralScore: 74,
             confidence: 0.85,
             impactCap: 18,
+            sourceContextText: snapshotContextText,
             score: recoveryReadinessScore
         ) {
             signals.append(recoverySignal)
@@ -263,7 +298,8 @@ struct SQLifeScoreV2Builder {
                     rawValueText: snapshot
                         .flatMap { $0.rawSignalValue(for: SQInsightAnalysisMetricId.restingHeartRate) }
                         .map { signalValueText(signalId: SQInsightAnalysisMetricId.restingHeartRate, rawValue: $0) },
-                    sourceText: sourceText(for: .healthKitDerived)
+                    sourceText: sourceText(for: .healthKitDerived),
+                    sourceContextText: snapshotContextText
                 )
             )
         }
@@ -272,9 +308,11 @@ struct SQLifeScoreV2Builder {
             signalId: SQMetricId.sleepQuality,
             title: "Sleep Carryover",
             in: snapshot,
+            metricDefinitionsById: metricDefinitionsById,
             neutralScore: 74,
             confidence: 0.65,
             impactCap: 10,
+            sourceContextText: snapshotContextText,
             score: { clamp(($0 / 10) * 100, min: 0, max: 100) }
         ) {
             signals.append(sleepCarryover)
@@ -290,7 +328,11 @@ struct SQLifeScoreV2Builder {
         )
     }
 
-    private func mindEnergyComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
+    private func mindEnergyComponent(
+        snapshot: SQInsightFeatureSnapshot?,
+        referenceDate: Date,
+        metricDefinitionsById: [String: SQMetricDefinition]
+    ) -> RawComponent? {
         let signalSpecs: [(String, String, Double)] = [
             (SQMetricId.energy, "Energy", 20),
             (SQMetricId.mood, "Mood", 17),
@@ -299,15 +341,18 @@ struct SQLifeScoreV2Builder {
             (SQMetricId.stress, "Stress", 22),
             (SQMetricId.anxiety, "Anxiety", 19)
         ]
+        let snapshotContextText = sourceContextText(for: snapshot?.date, referenceDate: referenceDate)
 
         let signals = signalSpecs.compactMap { signalId, title, cap -> ScoredSignal? in
             guard let signal = scoredMetricSignal(
                 signalId: signalId,
                 title: title,
                 in: snapshot,
+                metricDefinitionsById: metricDefinitionsById,
                 neutralScore: 72,
                 confidence: 0.85,
                 impactCap: cap,
+                sourceContextText: snapshotContextText,
                 score: { rawValue in
                     switch signalId {
                     case SQMetricId.stress, SQMetricId.anxiety:
@@ -382,8 +427,9 @@ struct SQLifeScoreV2Builder {
                 neutralScore: 72,
                 confidence: 0.8 * max(0.45, candidate.decay),
                 impactCap: 18,
-                rawValueText: "\(signalValueText(signalId: SQInsightAnalysisMetricId.workoutPerformance, rawValue: performance)), \(workoutAgeText(candidate.age))",
-                sourceText: sourceText(for: .workoutDerived)
+                rawValueText: signalValueText(signalId: SQInsightAnalysisMetricId.workoutPerformance, rawValue: performance),
+                sourceText: sourceText(for: .workoutDerived),
+                sourceContextText: recordedAgeContextText(candidate.age)
             )
         }
 
@@ -398,8 +444,9 @@ struct SQLifeScoreV2Builder {
                 neutralScore: 72,
                 confidence: 0.8 * max(0.45, candidate.decay),
                 impactCap: 10,
-                rawValueText: "\(signalValueText(signalId: SQInsightAnalysisMetricId.workoutDifficulty, rawValue: difficulty)), \(workoutAgeText(candidate.age))",
-                sourceText: sourceText(for: .workoutDerived)
+                rawValueText: signalValueText(signalId: SQInsightAnalysisMetricId.workoutDifficulty, rawValue: difficulty),
+                sourceText: sourceText(for: .workoutDerived),
+                sourceContextText: recordedAgeContextText(candidate.age)
             )
         }
 
@@ -419,8 +466,9 @@ struct SQLifeScoreV2Builder {
                 neutralScore: 72,
                 confidence: 0.55 * max(0.45, candidate.decay),
                 impactCap: 6,
-                rawValueText: "\(workoutLabel), \(workoutAgeText(candidate.age))",
-                sourceText: sourceText(for: .workoutDerived)
+                rawValueText: workoutLabel,
+                sourceText: sourceText(for: .workoutDerived),
+                sourceContextText: recordedAgeContextText(candidate.age)
             )
         }
 
@@ -510,8 +558,9 @@ struct SQLifeScoreV2Builder {
                 neutralScore: 72,
                 confidence: 0.78,
                 impactCap: 14,
-                rawValueText: "\(highIntensityDays.count) high-intensity workout days in the last 3 days",
-                sourceText: sourceText(for: .workoutDerived)
+                rawValueText: "\(highIntensityDays.count) high-intensity workout days",
+                sourceText: sourceText(for: .workoutDerived),
+                sourceContextText: "Last 3 Days"
             )
         ]
     }
@@ -550,26 +599,29 @@ struct SQLifeScoreV2Builder {
         )
     }
 
-    private func workoutAgeText(_ age: Int) -> String {
-        switch age {
-        case 0:
-            return "today"
-        case 1:
-            return "yesterday"
-        default:
-            return "\(age) days ago"
-        }
-    }
-
     private func habitsComponent(
         snapshot: SQInsightFeatureSnapshot?,
         snapshots: [SQInsightFeatureSnapshot],
-        referenceDate: Date
+        referenceDate: Date,
+        metricDefinitionsById: [String: SQMetricDefinition]
     ) -> RawComponent? {
+        let habitMetricIds = [
+            SQMetricId.alcohol,
+            SQMetricId.caffeine,
+            SQMetricId.weed,
+            SQMetricId.nicotine
+        ]
+        guard habitMetricIds.contains(where: {
+            allowsLifeScoreMetric($0, metricDefinitionsById: metricDefinitionsById)
+        }) else {
+            return nil
+        }
+
         let signals = habitSignals(
             in: snapshot,
-            recordedText: snapshot.map {
-                recordedAgeText(
+            metricDefinitionsById: metricDefinitionsById,
+            sourceContextText: snapshot.map {
+                recordedAgeContextText(
                     dayAge(
                         from: $0.date,
                         to: referenceDate
@@ -580,7 +632,8 @@ struct SQLifeScoreV2Builder {
         let fallbackEvidence = signals.isEmpty
             ? recentHabitEvidenceItems(
                 snapshots: snapshots,
-                referenceDate: referenceDate
+                referenceDate: referenceDate,
+                metricDefinitionsById: metricDefinitionsById
             )
             : []
 
@@ -597,47 +650,52 @@ struct SQLifeScoreV2Builder {
 
     private func habitSignals(
         in snapshot: SQInsightFeatureSnapshot?,
-        recordedText: String? = nil
+        metricDefinitionsById: [String: SQMetricDefinition],
+        sourceContextText: String? = nil
     ) -> [ScoredSignal] {
         [
             behaviorSignal(
                 signalId: SQMetricId.alcohol,
                 title: "Alcohol",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.alcohol),
+                metricDefinitionsById: metricDefinitionsById,
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 13), min: 25, max: 76) },
                 cap: 24,
-                recordedText: recordedText
+                sourceContextText: sourceContextText
             ),
             behaviorSignal(
                 signalId: SQMetricId.caffeine,
                 title: "Caffeine",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.caffeine),
+                metricDefinitionsById: metricDefinitionsById,
                 neutralThrough: 175,
                 score: { value in
                     if value <= 175 { return 76 }
                     return clamp(76 - ((value - 175) / 5.2), min: 32, max: 76)
                 },
                 cap: 13,
-                recordedText: recordedText
+                sourceContextText: sourceContextText
             ),
             behaviorSignal(
                 signalId: SQMetricId.weed,
                 title: "Weed",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.weed),
+                metricDefinitionsById: metricDefinitionsById,
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
                 cap: 18,
-                recordedText: recordedText
+                sourceContextText: sourceContextText
             ),
             behaviorSignal(
                 signalId: SQMetricId.nicotine,
                 title: "Nicotine",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.nicotine),
+                metricDefinitionsById: metricDefinitionsById,
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
                 cap: 18,
-                recordedText: recordedText
+                sourceContextText: sourceContextText
             )
         ]
         .compactMap { $0 }
@@ -645,12 +703,18 @@ struct SQLifeScoreV2Builder {
 
     private func recentHabitEvidenceItems(
         snapshots: [SQInsightFeatureSnapshot],
-        referenceDate: Date
+        referenceDate: Date,
+        metricDefinitionsById: [String: SQMetricDefinition]
     ) -> [SQLifeScoreV2ComponentEvidence] {
         let candidates = snapshots.flatMap { snapshot -> [(signal: ScoredSignal, age: Int)] in
             let dayAge = dayAge(from: snapshot.date, to: referenceDate)
             guard dayAge >= 0, dayAge <= 7 else { return [] }
-            return habitSignals(in: snapshot).map { ($0, dayAge) }
+            return habitSignals(
+                in: snapshot,
+                metricDefinitionsById: metricDefinitionsById,
+                sourceContextText: recordedAgeContextText(dayAge)
+            )
+            .map { ($0, dayAge) }
         }
 
         return candidates
@@ -665,9 +729,13 @@ struct SQLifeScoreV2Builder {
             .map { index, candidate in
                 let valueText: String
                 if let rawValueText = candidate.signal.rawValueText {
-                    valueText = "\(rawValueText) from Daily Check-In, \(recordedAgeText(candidate.age))"
+                    valueText = evidenceValueText(
+                        rawValueText: rawValueText,
+                        sourceText: sourceText(for: .userLogged),
+                        sourceContextText: recordedAgeContextText(candidate.age)
+                    )
                 } else {
-                    valueText = "Recorded \(recordedAgeText(candidate.age))"
+                    valueText = "Recorded from \(sourceText(for: .userLogged)) (\(recordedAgeContextText(candidate.age)))"
                 }
 
                 return .init(
@@ -679,12 +747,12 @@ struct SQLifeScoreV2Builder {
             }
     }
 
-    private func recordedAgeText(_ age: Int) -> String {
+    private func recordedAgeContextText(_ age: Int) -> String {
         switch age {
         case 0:
-            return "today"
+            return "Today"
         case 1:
-            return "yesterday"
+            return "Yesterday"
         default:
             return "\(age) days ago"
         }
@@ -701,19 +769,15 @@ struct SQLifeScoreV2Builder {
         signalId: String,
         title: String,
         rawValue: Double?,
+        metricDefinitionsById: [String: SQMetricDefinition],
         neutralThrough: Double,
         score: (Double) -> Double,
         cap: Double,
-        recordedText: String? = nil
+        sourceContextText: String? = nil
     ) -> ScoredSignal? {
+        guard allowsLifeScoreMetric(signalId, metricDefinitionsById: metricDefinitionsById) else { return nil }
         guard let rawValue else { return nil }
         let resolvedScore = rawValue <= neutralThrough ? 76 : score(rawValue)
-        let rawValueText = [
-            signalValueText(signalId: signalId, rawValue: rawValue),
-            recordedText
-        ]
-        .compactMap { $0 }
-        .joined(separator: ", ")
         return .init(
             signalId: signalId,
             title: title,
@@ -721,8 +785,9 @@ struct SQLifeScoreV2Builder {
             neutralScore: 74,
             confidence: 0.8,
             impactCap: cap,
-            rawValueText: rawValueText,
-            sourceText: sourceText(for: .userLogged)
+            rawValueText: signalValueText(signalId: signalId, rawValue: rawValue),
+            sourceText: sourceText(for: .userLogged),
+            sourceContextText: sourceContextText
         )
     }
 
@@ -765,7 +830,7 @@ struct SQLifeScoreV2Builder {
             evidence: [
                 .init(
                     title: "Recent Logging",
-                    valueText: "\(recentCheckInDays) check-in day\(recentCheckInDays == 1 ? "" : "s") in the last 7",
+                    valueText: "\(recentCheckInDays) check-in day\(recentCheckInDays == 1 ? "" : "s") from Daily Check-In (Last 7 Days)",
                     summary: "",
                     effect: isLowConfidence ? .negative : .neutral
                 )
@@ -794,18 +859,25 @@ struct SQLifeScoreV2Builder {
             positiveDrivers: customContributors
                 .filter { $0.contributionPoints > 0.05 }
                 .prefix(3)
-                .map(\.title),
+                .map { cleanedMetricTitle($0.title) },
             negativeDrivers: customContributors
                 .filter { $0.contributionPoints < -0.05 }
                 .prefix(3)
-                .map(\.title),
+                .map { cleanedMetricTitle($0.title) },
             positiveCapHits: abs(customTotal) >= 4.9 ? ["Personalized Metrics"] : [],
             confidence: 0.65,
             evidence: customContributors.prefix(3).map { contributor in
-                .init(
-                    title: contributor.title,
-                    valueText: contributor.utilityScore.map { "\(Int($0.rounded()))/100 utility" } ?? "Used as a personalized signal",
-                    summary: "This metric is capped so personalization can help without taking over the Life Score.",
+                let rawValueText = contributor.utilityScore.map { "\(Int($0.rounded()))/100 utility" }
+                    ?? "Personalized signal"
+
+                return .init(
+                    title: cleanedMetricTitle(contributor.title),
+                    valueText: evidenceValueText(
+                        rawValueText: rawValueText,
+                        sourceText: sourceText(for: contributor.source),
+                        sourceContextText: "Today"
+                    ),
+                    summary: "",
                     effect: contributor.effect
                 )
             }
@@ -956,13 +1028,13 @@ struct SQLifeScoreV2Builder {
             drivers.append(
                 .init(
                     id: "v2.personalized.\(contributor.metricId)",
-                    title: contributor.title,
+                    title: cleanedMetricTitle(contributor.title),
                     signalId: contributor.metricId,
                     componentId: "personalizedMetrics",
                     kind: .personalized,
                     effect: contributor.contributionPoints >= 0 ? .positive : .negative,
                     scoreImpact: contributor.contributionPoints,
-                    summary: "\(contributor.title) is a capped personalization signal."
+                    summary: "\(cleanedMetricTitle(contributor.title)) is a personalized signal."
                 )
             )
         }
@@ -1070,11 +1142,14 @@ struct SQLifeScoreV2Builder {
         signalId: String,
         title: String,
         in snapshot: SQInsightFeatureSnapshot?,
+        metricDefinitionsById: [String: SQMetricDefinition],
         neutralScore: Double,
         confidence: Double,
         impactCap: Double,
+        sourceContextText: String?,
         score: (Double) -> Double
     ) -> ScoredSignal? {
+        guard allowsLifeScoreMetric(signalId, metricDefinitionsById: metricDefinitionsById) else { return nil }
         guard let feature = snapshot?.signalFeatures[signalId] else { return nil }
 
         return .init(
@@ -1085,7 +1160,8 @@ struct SQLifeScoreV2Builder {
             confidence: confidence,
             impactCap: impactCap,
             rawValueText: signalValueText(signalId: signalId, rawValue: feature.rawValue),
-            sourceText: sourceText(for: feature.source)
+            sourceText: sourceText(for: feature.source),
+            sourceContextText: sourceContextText
         )
     }
 
@@ -1155,7 +1231,11 @@ struct SQLifeScoreV2Builder {
 
                 let valueText: String
                 if let rawValueText = signal.rawValueText, let sourceText = signal.sourceText {
-                    valueText = "\(rawValueText) from \(sourceText)"
+                    valueText = evidenceValueText(
+                        rawValueText: rawValueText,
+                        sourceText: sourceText,
+                        sourceContextText: signal.sourceContextText
+                    )
                 } else if let rawValueText = signal.rawValueText {
                     valueText = rawValueText
                 } else {
@@ -1169,6 +1249,22 @@ struct SQLifeScoreV2Builder {
                     effect: effect
                 )
             }
+    }
+
+    private func evidenceValueText(
+        rawValueText: String,
+        sourceText: String,
+        sourceContextText: String?
+    ) -> String {
+        if let sourceContextText, !sourceContextText.isEmpty {
+            return "\(rawValueText) from \(sourceText) (\(sourceContextText))"
+        }
+
+        return "\(rawValueText) from \(sourceText)"
+    }
+
+    private func cleanedMetricTitle(_ title: String) -> String {
+        title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func signalValueText(signalId: String, rawValue: Double) -> String {
@@ -1209,6 +1305,19 @@ struct SQLifeScoreV2Builder {
         case .workoutDerived:
             return "Workout Log"
         }
+    }
+
+    private func sourceContextText(for date: Date?, referenceDate: Date) -> String? {
+        guard let date else { return nil }
+        return recordedAgeContextText(dayAge(from: date, to: referenceDate))
+    }
+
+    private func allowsLifeScoreMetric(
+        _ metricId: String,
+        metricDefinitionsById: [String: SQMetricDefinition]
+    ) -> Bool {
+        guard let definition = metricDefinitionsById[metricId] else { return true }
+        return semanticResolver.lifeScoreImpact(for: definition) != .none
     }
 
     private func formattedDecimal(_ value: Double) -> String {
@@ -1397,6 +1506,9 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             drivers: lifeScoreDrivers
         )
         .filter { $0.effectMagnitude >= 0.5 }
+        let displayComponents = lifeScoreDisplayComponents(
+            components.sorted { $0.weight > $1.weight }
+        )
 
         return .init(
             score: roundedScore,
@@ -1404,9 +1516,10 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             state: state,
             subtitle: subtitle,
             refinementPromptText: refinementPromptText,
-            components: components.sorted { $0.weight > $1.weight },
+            components: displayComponents,
             headlineText: headlineText,
             primaryInsight: primaryInsight,
+            driverTimeframeText: lifeScoreDriverTimeframeText(for: visibleDrivers),
             drivers: visibleDrivers,
             changes: Array(input.insightsResult.changes.prefix(2)),
             actions: heroAction.map { [$0] } ?? alignedActions,
@@ -1429,13 +1542,40 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         )
     }
 
-    private func lifeScoreComponentSummary(from component: SQLifeScoreV2Component) -> String {
-        if !component.negativeDrivers.isEmpty {
-            return "\(component.negativeDrivers.joined(separator: ", ")) \(component.negativeDrivers.count == 1 ? "is" : "are") weighing on \(component.title.lowercased())."
+    private func lifeScoreDisplayComponents(_ components: [SQLifeScoreComponent]) -> [SQLifeScoreComponent] {
+        guard !components.contains(where: { $0.id == "personalizedMetrics" }) else {
+            return components
         }
 
-        if !component.positiveDrivers.isEmpty {
-            return "\(component.positiveDrivers.joined(separator: ", ")) \(component.positiveDrivers.count == 1 ? "is" : "are") supporting \(component.title.lowercased())."
+        let personalizedPlaceholder = SQLifeScoreComponent(
+            id: "personalizedMetrics",
+            title: "Personalized Metrics",
+            score: 78,
+            summary: "No personal metrics are affecting today's score.",
+            weight: 0,
+            detailItems: [
+                .init(
+                    id: "personalizedMetrics-none",
+                    title: "No Score Impact",
+                    valueText: "No eligible custom metric was logged for today's score.",
+                    summary: "Custom metrics can still appear in insights when useful.",
+                    effect: .neutral
+                )
+            ]
+        )
+
+        return components + [personalizedPlaceholder]
+    }
+
+    private func lifeScoreComponentSummary(from component: SQLifeScoreV2Component) -> String {
+        let negativeDrivers = sanitizedDriverTitles(component.negativeDrivers)
+        if !negativeDrivers.isEmpty {
+            return "\(negativeDrivers.joined(separator: ", ")) \(negativeDrivers.count == 1 ? "is" : "are") weighing on \(component.title.lowercased())."
+        }
+
+        let positiveDrivers = sanitizedDriverTitles(component.positiveDrivers)
+        if !positiveDrivers.isEmpty {
+            return "\(positiveDrivers.joined(separator: ", ")) \(positiveDrivers.count == 1 ? "is" : "are") supporting \(component.title.lowercased())."
         }
 
         switch component.score {
@@ -1448,6 +1588,27 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         default:
             return "\(component.title) is a meaningful drag today."
         }
+    }
+
+    private func sanitizedDriverTitles(_ titles: [String]) -> [String] {
+        titles
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func lifeScoreDriverTimeframeText(for drivers: [SQInsightDriver]) -> String? {
+        guard !drivers.isEmpty else { return nil }
+
+        let categories = Set(drivers.map(\.category))
+        if drivers.contains(where: { $0.signalId == "insight.dataConfidence" }) {
+            return "Today + last 7 days"
+        }
+
+        if categories.contains(.training) {
+            return "Today + last 3 days"
+        }
+
+        return "Today"
     }
 
     private func lifeScoreComponentDetailItems(from component: SQLifeScoreV2Component) -> [SQLifeScoreDetailItem] {

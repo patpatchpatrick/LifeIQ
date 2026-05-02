@@ -72,7 +72,7 @@ struct SQLifeScoreDetailView: View {
                     .sqFont(.title4)
                     .sqForegroundColor(.textPrimary)
 
-                Text("Latest value vs previous 7-14 day avg.")
+                Text(driversSubtitleText)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -91,6 +91,14 @@ struct SQLifeScoreDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private var driversSubtitleText: String {
+        if let timeframeText = controller.viewModel.driverTimeframeText {
+            return timeframeText
+        }
+
+        return "Today"
     }
 
     private var changesCard: some View {
@@ -150,7 +158,7 @@ struct SQLifeScoreDetailView: View {
 
                 Spacer(minLength: 0)
 
-                Text(driver.deltaText)
+                Text(driverPercentText(driver))
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
@@ -172,7 +180,7 @@ struct SQLifeScoreDetailView: View {
 
                 Spacer(minLength: 0)
 
-                Text(change.deltaText)
+                Text(changePercentText(change))
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
@@ -252,6 +260,8 @@ struct SQLifeScoreDetailView: View {
             || component.id == "sleep"
             || component.id == "workouts"
             || component.id == "trainingPerformance"
+            || component.id == "habitsBehaviors"
+            || component.id == "personalizedMetrics"
     }
 
     private func componentCard(_ component: SQLifeScoreComponent) -> some View {
@@ -294,7 +304,7 @@ struct SQLifeScoreDetailView: View {
                         .sqFont(.headerSmall)
                         .sqForegroundColor(.textSecondary)
 
-                    Text("\(Int(component.weight.rounded()))%")
+                    Text(componentWeightText(component))
                         .sqFont(.title4)
                         .sqForegroundColor(.textTertiary)
                 }
@@ -379,6 +389,43 @@ struct SQLifeScoreDetailView: View {
         case .negative:
             return .colorFadedRed
         }
+    }
+
+    private func driverPercentText(_ driver: SQInsightDriver) -> String {
+        signedPercentText(
+            magnitude: driver.effectMagnitude,
+            isPositive: driver.direction == .supportive
+        )
+    }
+
+    private func changePercentText(_ change: SQInsightChange) -> String {
+        let delta = change.recentAverage - change.priorAverage
+        if abs(change.priorAverage) >= 0.1 {
+            let percent = (delta / abs(change.priorAverage)) * 100
+            return signedPercentText(value: percent)
+        }
+
+        return signedPercentText(
+            magnitude: change.effectMagnitude,
+            isPositive: change.direction == .improved
+        )
+    }
+
+    private func signedPercentText(magnitude: Double, isPositive: Bool) -> String {
+        signedPercentText(value: (isPositive ? 1 : -1) * abs(magnitude))
+    }
+
+    private func signedPercentText(value: Double) -> String {
+        let rounded = Int(value.rounded())
+        if rounded > 0 {
+            return "+\(rounded)%"
+        }
+        return "\(rounded)%"
+    }
+
+    private func componentWeightText(_ component: SQLifeScoreComponent) -> String {
+        guard component.weight > 0 else { return "Optional" }
+        return "\(Int(component.weight.rounded()))%"
     }
 }
 

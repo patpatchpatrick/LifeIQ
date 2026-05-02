@@ -9,7 +9,7 @@ struct SQDropDownMenuHost: View {
     @Bindable var menuState: SQDropDownMenuState
 
     private let horizontalInset: CGFloat = .SQSpace.xl
-    private let idealMenuWidth: CGFloat = 220
+    private let idealMenuWidth: CGFloat = 280
     private let maximumMenuHeight: CGFloat = 320
 
     private func menuWidth(for availableWidth: CGFloat) -> CGFloat {

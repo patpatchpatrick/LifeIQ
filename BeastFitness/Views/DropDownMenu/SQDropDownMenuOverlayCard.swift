@@ -52,10 +52,19 @@ struct SQDropDownMenuOverlayCard: View {
                         menu.onSelect(item.title)
                     }
                 } label: {
-                    HStack {
-                        Text(item.title)
-                            .sqFont(.body)
-                            .sqForegroundColor(.textPrimary)
+                    HStack(alignment: .center, spacing: .SQSpace.s) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.title)
+                                .sqFont(.body)
+                                .sqForegroundColor(.textPrimary)
+
+                            if let subtitle = item.subtitle, !subtitle.isEmpty {
+                                Text(subtitle)
+                                    .sqFont(.bodyExtraSmall)
+                                    .sqForegroundColor(.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
 
                         if let badgeText = item.badgeText {
                             SQDashboardNewBadge(text: badgeText)

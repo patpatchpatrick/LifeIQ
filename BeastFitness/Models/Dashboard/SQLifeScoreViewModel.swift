@@ -138,8 +138,10 @@ struct SQLifeScoreMetricContributorBuilder {
                 isCustom: !definition.isPreset
             )
             let contribution = rawContributionPoints(
+                rawValue: feature.rawValue,
                 utilityScore: utilityScore,
                 maxPoints: maxPoints,
+                definition: definition,
                 goalStyle: definition.goalStyle
             )
 
@@ -262,8 +264,10 @@ struct SQLifeScoreMetricContributorBuilder {
     }
 
     private func rawContributionPoints(
+        rawValue: Double,
         utilityScore: Double,
         maxPoints: Double,
+        definition: SQMetricDefinition,
         goalStyle: SQMetricGoalStyle
     ) -> Double {
         let neutralUtility = 70.0
@@ -271,10 +275,42 @@ struct SQLifeScoreMetricContributorBuilder {
         let dragCap = goalStyle == .avoidIt ? maxPoints * 1.2 : maxPoints
 
         if utilityScore >= neutralUtility {
-            return ((utilityScore - neutralUtility) / (100 - neutralUtility)) * bonusCap
+            let positiveContribution = ((utilityScore - neutralUtility) / (100 - neutralUtility)) * bonusCap
+            guard !isGoalMissed(rawValue: rawValue, definition: definition) else {
+                let missSeverity = max((100 - utilityScore) / 100, 0.12)
+                return -(missSeverity * dragCap)
+            }
+
+            return positiveContribution
         }
 
         return -((neutralUtility - utilityScore) / neutralUtility) * dragCap
+    }
+
+    private func isGoalMissed(
+        rawValue: Double,
+        definition: SQMetricDefinition
+    ) -> Bool {
+        switch definition.goalStyle {
+        case .buildUp:
+            guard let target = definition.targetValue else { return false }
+            return rawValue < Double(target)
+        case .keepLow:
+            guard let target = definition.targetValue else { return false }
+            return rawValue > Double(target)
+        case .avoidIt:
+            return rawValue > 0
+        case .stayInRange:
+            guard
+                let min = definition.targetRangeMin,
+                let max = definition.targetRangeMax
+            else {
+                return false
+            }
+            return rawValue < Double(min) || rawValue > Double(max)
+        case .justTrack, .unknown:
+            return false
+        }
     }
 
     private func componentId(for role: SQMetricSignalRole) -> String {
@@ -439,6 +475,7 @@ struct SQLifeScoreViewModel {
     let components: [SQLifeScoreComponent]
     let headlineText: String?
     let primaryInsight: SQInsight?
+    let driverTimeframeText: String?
     let drivers: [SQInsightDriver]
     let changes: [SQInsightChange]
     let actions: [SQInsightAction]
@@ -467,6 +504,7 @@ struct SQLifeScoreViewModel {
             sampleCount: 12,
             rankingScore: 12
         ),
+        driverTimeframeText: "Today",
         drivers: [],
         changes: [],
         actions: [],

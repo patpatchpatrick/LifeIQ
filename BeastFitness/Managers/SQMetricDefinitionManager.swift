@@ -266,13 +266,52 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: definition.id, using: context) else { return }
+        let previousDefinition = entity.toDefinition()
+        let algorithmSettingChanges = Self.algorithmSettingChanges(
+            from: previousDefinition,
+            to: definition
+        )
         entity.apply(definition)
         entity.updatedAt = .now
         try saveContextAndNotify(context)
         if let updated = metrics.first(where: { $0.id == definition.id }) {
             SQAnalyticsManager.shared.track(.metricSaved(action: .edit, definition: updated))
+            if !algorithmSettingChanges.isEmpty {
+                SQAnalyticsManager.shared.track(
+                    .metricAlgorithmSettingsChanged(
+                        definition: updated,
+                        changedFields: algorithmSettingChanges,
+                        sourceScreen: "metric_form"
+                    )
+                )
+            }
             pushMetricToFirestore(updated)
         }
+    }
+
+    private static func algorithmSettingChanges(
+        from previous: SQMetricDefinition,
+        to updated: SQMetricDefinition
+    ) -> [String] {
+        var fields: [String] = []
+
+        if previous.bodyBatteryEffect != updated.bodyBatteryEffect {
+            fields.append("recovery_score_effect")
+        }
+        if previous.signalRole != updated.signalRole {
+            fields.append("metric_role")
+        }
+        if previous.lifeScoreImpact != updated.lifeScoreImpact {
+            fields.append("life_score_impact")
+        }
+        if previous.insightMode != updated.insightMode {
+            fields.append("insight_mode")
+        }
+        if previous.sensitivity != updated.sensitivity {
+            fields.append("special_handling")
+        }
+
+        return fields
     }
 
     // MARK: - Reload (protocol requires public)
@@ -519,7 +558,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
     /// Migrates the preset catalog:
     /// 1. Inserts any new preset metrics that don't exist in the database.
     /// 2. For existing preset entities, applies period, isDefault, HealthKit, and binary→scale conversion.
-    /// 3. Backfills semantic defaults once per user without repeatedly clobbering future user choices.
+    /// 3. Backfills score/semantic defaults once per user without repeatedly clobbering future user choices.
     private func migrateNewPresets(context: ModelContext) throws {
         let allPresets = Self.presetMetrics()
         let existingIds = Set(metrics.map { $0.id })
@@ -625,7 +664,8 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                     entity.targetRangeMaxValue = preset.targetRangeMax
                     didChange = true
                 }
-                if entity.bodyBatteryEffectRaw != preset.bodyBatteryEffect.rawValue {
+                if shouldBackfillPresetSemantics,
+                   entity.bodyBatteryEffectRaw != preset.bodyBatteryEffect.rawValue {
                     entity.bodyBatteryEffectRaw = preset.bodyBatteryEffect.rawValue
                     didChange = true
                 }

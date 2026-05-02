@@ -33,6 +33,61 @@ final class BeastFitnessTests: XCTestCase {
         }
     }
 
+    func testLifeScoreContributorTreatsMissedKeepLowTargetAsNegative() throws {
+        let definition = SQMetricDefinition(
+            id: "metric.custom.keep-low-test",
+            title: "Custom Metric",
+            kind: .number,
+            unit: .count,
+            group: SQDefaultGroup.general.rawValue,
+            min: 0,
+            max: 10,
+            step: 1,
+            isPreset: false,
+            sortOrder: 0,
+            goalStyle: .keepLow,
+            targetValue: 5,
+            bodyBatteryEffect: .drainsWhenHigh,
+            signalRole: .behavior,
+            lifeScoreImpact: .light,
+            insightMode: .exploratoryRelationships,
+            sensitivity: .normal
+        )
+        let feature = SQInsightSignalFeature(
+            signalId: definition.id,
+            title: definition.title,
+            rawValue: 6,
+            normalizedValue: 0.6,
+            goalUtilityScore: 80,
+            signalRole: .behavior,
+            lifeScoreImpact: .light,
+            insightMode: .exploratoryRelationships,
+            sensitivity: .normal,
+            source: .userLogged
+        )
+        let snapshot = SQInsightFeatureSnapshot(
+            date: Date(),
+            anchorDayKey: "2026-05-01",
+            rawSignalValues: [definition.id: 6],
+            normalizedSignalValues: [definition.id: 0.6],
+            signalFeatures: [definition.id: feature],
+            workoutCount: 0,
+            averageWorkoutPerformance: nil,
+            workoutPerformanceActivityTypeRaw: nil,
+            averageWorkoutDifficulty: nil,
+            workoutDifficultyActivityTypeRaw: nil
+        )
+
+        let result = SQLifeScoreMetricContributorBuilder().buildContributors(
+            from: snapshot,
+            metricDefinitions: [definition]
+        )
+        let contributor = try XCTUnwrap(result.incrementalContributors.first)
+
+        XCTAssertLessThan(contributor.contributionPoints, 0)
+        XCTAssertEqual(contributor.effect, SQLifeScoreSignalEffect.negative)
+    }
+
 }
 
 @MainActor

@@ -522,27 +522,114 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         return String(format: "%.1f", rounded)
     }
 
-    private func bodyBatteryPresetAdjustment(from values: [String: Float]) -> Double {
-        let energyBoost = values[SQMetricId.energy].map { clamp((Double($0) - 5.5) * 1.5, min: -7, max: 7) } ?? 0
-        let recoveryBoost = values[SQMetricId.soreness].map { clamp((Double($0) - 5.0) * 1.2, min: -6, max: 6) } ?? 0
-        let nutritionBoost = values[SQMetricId.nutrition].map { clamp((Double($0) - 5.0) * 0.7, min: 0, max: 4) } ?? 0
-        let alcoholPenalty = values[SQMetricId.alcohol].map { clamp(Double($0) * 1.5, min: 0, max: 12) } ?? 0
-        let caffeinePenalty = values[SQMetricId.caffeine].map {
+    private func bodyBatteryPresetAdjustment(
+        from values: [String: Float],
+        definitionsById: [String: SQMetricDefinition]
+    ) -> Double {
+        let energyAdjustment = values[SQMetricId.energy].map {
+            signedCenteredPresetAdjustment(
+                clamp((Double($0) - 5.5) * 1.5, min: -7, max: 7),
+                metricId: SQMetricId.energy,
+                definitionsById: definitionsById
+            )
+        } ?? 0
+        let recoveryAdjustment = values[SQMetricId.soreness].map {
+            signedCenteredPresetAdjustment(
+                clamp((Double($0) - 5.0) * 1.2, min: -6, max: 6),
+                metricId: SQMetricId.soreness,
+                definitionsById: definitionsById
+            )
+        } ?? 0
+        let nutritionAdjustment = values[SQMetricId.nutrition].map {
+            signedHighValuePresetAdjustment(
+                clamp((Double($0) - 5.0) * 0.7, min: 0, max: 4),
+                metricId: SQMetricId.nutrition,
+                definitionsById: definitionsById
+            )
+        } ?? 0
+        let alcoholAdjustment = values[SQMetricId.alcohol].map {
+            signedHighValuePresetAdjustment(
+                clamp(Double($0) * 1.5, min: 0, max: 12),
+                metricId: SQMetricId.alcohol,
+                definitionsById: definitionsById
+            )
+        } ?? 0
+        let caffeineAdjustment = values[SQMetricId.caffeine].map {
             // Caffeine is now stored as mg for default metrics. Keep the penalty mild until later-day timing is modeled.
-            clamp((Double($0) - 120.0) / 45.0, min: 0, max: 6)
+            signedHighValuePresetAdjustment(
+                clamp((Double($0) - 120.0) / 45.0, min: 0, max: 6),
+                metricId: SQMetricId.caffeine,
+                definitionsById: definitionsById
+            )
         } ?? 0
 
         return clamp(
-            energyBoost + recoveryBoost + nutritionBoost - alcoholPenalty - caffeinePenalty,
+            energyAdjustment + recoveryAdjustment + nutritionAdjustment + alcoholAdjustment + caffeineAdjustment,
             min: -16,
             max: 10
         )
+    }
+
+    private func signedCenteredPresetAdjustment(
+        _ adjustment: Double,
+        metricId: String,
+        definitionsById: [String: SQMetricDefinition]
+    ) -> Double {
+        switch resolvedPresetRecoveryEffect(metricId, definitionsById: definitionsById) {
+        case .boostsWhenHigh:
+            return adjustment
+        case .drainsWhenHigh:
+            return -adjustment
+        case .none, .unknown:
+            return 0
+        }
+    }
+
+    private func signedHighValuePresetAdjustment(
+        _ magnitude: Double,
+        metricId: String,
+        definitionsById: [String: SQMetricDefinition]
+    ) -> Double {
+        switch resolvedPresetRecoveryEffect(metricId, definitionsById: definitionsById) {
+        case .boostsWhenHigh:
+            return magnitude
+        case .drainsWhenHigh:
+            return -magnitude
+        case .none, .unknown:
+            return 0
+        }
+    }
+
+    private func resolvedPresetRecoveryEffect(
+        _ metricId: String,
+        definitionsById: [String: SQMetricDefinition]
+    ) -> SQMetricBodyBatteryEffect {
+        let defaultEffect = defaultPresetRecoveryEffect(metricId)
+        let effect = definitionsById[metricId]?.bodyBatteryEffect ?? defaultEffect
+        return effect == .unknown ? defaultEffect : effect
+    }
+
+    private func defaultPresetRecoveryEffect(_ metricId: String) -> SQMetricBodyBatteryEffect {
+        switch metricId {
+        case SQMetricId.energy,
+             SQMetricId.soreness,
+             SQMetricId.nutrition:
+            return .boostsWhenHigh
+        case SQMetricId.alcohol,
+             SQMetricId.caffeine:
+            return .drainsWhenHigh
+        default:
+            return .none
+        }
     }
 
     private func bodyBatteryCheckInAdjustment(
         from values: [String: Float],
         metrics: [SQMetricDefinition]
     ) -> CheckInAdjustment {
+        let definitionsById = metrics.reduce(into: [String: SQMetricDefinition]()) { partialResult, definition in
+            partialResult[definition.id] = definition
+        }
         let presetSignalIds = [
             SQMetricId.energy,
             SQMetricId.soreness,
@@ -550,8 +637,13 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             SQMetricId.alcohol,
             SQMetricId.caffeine
         ]
-        let hasPresetSignals = presetSignalIds.contains { values[$0] != nil }
-        let presetAdjustment = bodyBatteryPresetAdjustment(from: values)
+        let hasPresetSignals = presetSignalIds.contains {
+            values[$0] != nil && resolvedPresetRecoveryEffect($0, definitionsById: definitionsById) != .none
+        }
+        let presetAdjustment = bodyBatteryPresetAdjustment(
+            from: values,
+            definitionsById: definitionsById
+        )
         let hasCustomScoringSignals = metrics.contains { metric in
             guard !metric.isPreset else { return false }
             guard metric.bodyBatteryEffect != .none, metric.bodyBatteryEffect != .unknown else { return false }

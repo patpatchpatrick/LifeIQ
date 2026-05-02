@@ -12,17 +12,20 @@ final class SQDropDownMenuViewModel: NSObject, ObservableObject {
     let id = UUID()
     struct Item {
         let title: String
+        let subtitle: String?
         let shouldUpdateTitle: Bool
         let badgeText: String?
         let showsIndicatorDot: Bool
         
         init(
             title: String,
+            subtitle: String? = nil,
             shouldUpdateTitle: Bool = true,
             badgeText: String? = nil,
             showsIndicatorDot: Bool = false
         ) {
             self.title = title
+            self.subtitle = subtitle
             self.shouldUpdateTitle = shouldUpdateTitle
             self.badgeText = badgeText
             self.showsIndicatorDot = showsIndicatorDot
@@ -78,6 +81,7 @@ final class SQDropDownMenuViewModel: NSObject, ObservableObject {
         dropDownButtons = items.map { item in
             .init(
                 title: item.title,
+                subtitle: item.subtitle,
                 badgeText: item.badgeText,
                 showsIndicatorDot: item.showsIndicatorDot
             ) { [weak self] title in
@@ -90,17 +94,20 @@ final class SQDropDownMenuViewModel: NSObject, ObservableObject {
 
 final class SQDropDownButtonViewModel: NSObject {
     let title: String
+    let subtitle: String?
     let badgeText: String?
     let showsIndicatorDot: Bool
     let selectionHandler: (String) -> Void
     
     init(
         title: String,
+        subtitle: String? = nil,
         badgeText: String? = nil,
         showsIndicatorDot: Bool = false,
         selectionHandler: @escaping (String) -> Void
     ) {
         self.title = title
+        self.subtitle = subtitle
         self.badgeText = badgeText
         self.showsIndicatorDot = showsIndicatorDot
         self.selectionHandler = selectionHandler

@@ -30,6 +30,11 @@ enum SQAnalyticsEvent {
     case profileUpdated(source: String)
     case logout
     case metricSaved(action: SQAnalyticsMetricSaveAction, definition: SQMetricDefinition)
+    case metricAlgorithmSettingsChanged(
+        definition: SQMetricDefinition,
+        changedFields: [String],
+        sourceScreen: String
+    )
     case metricTrackingChanged(isEnabled: Bool, definition: SQMetricDefinition)
     case metricArchived(definition: SQMetricDefinition)
     case dailyCheckInSubmitted(
@@ -41,6 +46,7 @@ enum SQAnalyticsEvent {
     )
     case dashboardTimeRangeChanged(timeRange: AppTimeRange)
     case dashboardItemOpened(itemType: String, itemId: String?, sourceGroup: String?, score: Int?)
+    case lifeScoreDetailOpened(viewModel: SQLifeScoreViewModel, sourceScreen: String)
     case leaderboardOpened(mode: SQLeaderboardMode, sourceScreen: String)
     case workoutSummaryViewed(workout: SQWorkoutSessionable, entryMode: String)
     case workoutReviewSubmitted(
@@ -83,6 +89,8 @@ enum SQAnalyticsEvent {
             return "logout"
         case .metricSaved:
             return "metric_saved"
+        case .metricAlgorithmSettingsChanged:
+            return "metric_algorithm_settings_changed"
         case .metricTrackingChanged:
             return "metric_tracking_changed"
         case .metricArchived:
@@ -93,6 +101,8 @@ enum SQAnalyticsEvent {
             return "dashboard_time_range_changed"
         case .dashboardItemOpened:
             return "dashboard_item_opened"
+        case .lifeScoreDetailOpened:
+            return "life_score_detail_opened"
         case .leaderboardOpened:
             return "leaderboard_opened"
         case .workoutSummaryViewed:
@@ -145,6 +155,13 @@ enum SQAnalyticsEvent {
         case .metricSaved(let action, let definition):
             return definition.analyticsProperties(more: ["action": action.rawValue])
 
+        case .metricAlgorithmSettingsChanged(let definition, let changedFields, let sourceScreen):
+            return definition.algorithmAnalyticsProperties(more: [
+                "changed_fields": changedFields.sorted().joined(separator: ","),
+                "changed_field_count": changedFields.count,
+                "source_screen": sourceScreen
+            ])
+
         case .metricTrackingChanged(let isEnabled, let definition):
             return definition.analyticsProperties(more: [
                 "action": isEnabled ? "enabled" : "disabled",
@@ -174,6 +191,9 @@ enum SQAnalyticsEvent {
                 "source_group": sourceGroup,
                 "score": score
             ])
+
+        case .lifeScoreDetailOpened(let viewModel, let sourceScreen):
+            return viewModel.analyticsProperties(more: ["source_screen": sourceScreen])
 
         case .leaderboardOpened(let mode, let sourceScreen):
             return mode.analyticsProperties(more: ["source_screen": sourceScreen])
@@ -504,6 +524,65 @@ private extension SQNavRoute.DashboardRoute {
     }
 }
 
+private extension SQLifeScoreViewModel {
+    func analyticsProperties(more: [String: Any] = [:]) -> [String: Any] {
+        let topDriver = drivers.first
+        let topAction = actions.first
+        var properties: [String: Any] = [
+            "score_version": "v2",
+            "score_band": scoreBand,
+            "score_state": state.title.analyticsKey,
+            "top_driver_component": topDriver?.category.rawValue.analyticsKey ?? "none",
+            "top_driver_direction": topDriver?.direction.analyticsValue ?? "none",
+            "top_action_tone": topAction?.tone.analyticsValue ?? "none",
+            "has_custom_metric_component": components.contains { $0.id == "personalizedMetrics" },
+            "component_count": components.count
+        ]
+
+        more.forEach { properties[$0.key] = $0.value }
+        return properties
+    }
+
+    private var scoreBand: String {
+        guard let score else { return "calibrating" }
+
+        switch score {
+        case ..<55:
+            return "low"
+        case 55..<70:
+            return "under_pressure"
+        case 70..<85:
+            return "balanced"
+        default:
+            return "strong"
+        }
+    }
+}
+
+private extension SQInsightDriverDirection {
+    var analyticsValue: String {
+        switch self {
+        case .supportive:
+            return "supportive"
+        case .drag:
+            return "drag"
+        }
+    }
+}
+
+private extension SQInsightActionTone {
+    var analyticsValue: String {
+        switch self {
+        case .maintain:
+            return "maintain"
+        case .improve:
+            return "improve"
+        case .caution:
+            return "caution"
+        }
+    }
+}
+
 private extension SQMetricDefinition {
     func analyticsProperties(more: [String: Any] = [:]) -> [String: Any] {
         var properties: [String: Any] = [
@@ -515,8 +594,29 @@ private extension SQMetricDefinition {
             "is_enabled": isEnabled,
             "goal_style": goalStyle.rawValue,
             "body_battery_effect": bodyBatteryEffect.rawValue,
+            "signal_role": signalRole.rawValue,
+            "life_score_impact": lifeScoreImpact.rawValue,
+            "insight_mode": insightMode.rawValue,
+            "sensitivity": sensitivity.rawValue,
             "periods": periods.map(\.rawValue).sorted().joined(separator: ","),
             "is_single_daily_value": isSingleDailyValue
+        ]
+
+        more.forEach { properties[$0.key] = $0.value }
+        return properties
+    }
+
+    func algorithmAnalyticsProperties(more: [String: Any] = [:]) -> [String: Any] {
+        var properties: [String: Any] = [
+            "metric_id": isPreset ? id : "custom",
+            "is_custom_metric": !isPreset,
+            "metric_kind": kind.rawValue,
+            "goal_style": goalStyle.rawValue,
+            "recovery_score_effect": bodyBatteryEffect.rawValue,
+            "metric_role": signalRole.rawValue,
+            "life_score_impact": lifeScoreImpact.rawValue,
+            "insight_mode": insightMode.rawValue,
+            "special_handling": sensitivity.rawValue
         ]
 
         more.forEach { properties[$0.key] = $0.value }

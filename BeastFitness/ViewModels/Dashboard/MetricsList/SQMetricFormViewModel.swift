@@ -108,6 +108,7 @@ final class SQMetricFormViewModel {
     var selectedLifeScoreImpact: SQMetricLifeScoreImpact = .none {
         didSet {
             updateLifeScoreImpactMenuSelection()
+            applyLifeScoreImpactDefaultsIfNeeded(from: oldValue)
             calculateValidity()
         }
     }
@@ -127,6 +128,9 @@ final class SQMetricFormViewModel {
     var isInsightsEnabled: Bool = true {
         didSet {
             guard isInsightsEnabled != oldValue else { return }
+            if hasFinishedInitialSetup {
+                hasUserChangedInsightsEnabled = true
+            }
             selectedInsightMode = isInsightsEnabled
                 ? recommendedInsightMode
                 : .off
@@ -202,6 +206,8 @@ final class SQMetricFormViewModel {
     private(set) var saveDisabledMessage: String? = nil
     private(set) var scaleQuantityHelperTextDisplay: String = ""
     private(set) var formContentRevision: Int = 0
+    private var hasFinishedInitialSetup = false
+    private var hasUserChangedInsightsEnabled = false
 
     // MARK: - Dependencies
 
@@ -469,7 +475,9 @@ final class SQMetricFormViewModel {
 
         self.lifeScoreImpactMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(for: initialSelectedLifeScoreImpact)),
-            items: Self.lifeScoreImpactDisplayItems
+            items: Self.lifeScoreImpactDisplayItems(
+                includeAutomatic: Self.allowsLifeScoreAutomaticOption(for: mode)
+            )
         ) { _ in }
 
         self.sensitivityMenuViewModel = SQDropDownMenuViewModel(
@@ -495,6 +503,7 @@ final class SQMetricFormViewModel {
         )
 
         configureAfterInit()
+        hasFinishedInitialSetup = true
     }
 
     // MARK: - Computed
@@ -527,7 +536,7 @@ final class SQMetricFormViewModel {
     }
 
     var showsRecoveryScoreRangeFields: Bool {
-        selectedKind == .number && selectedBodyBatteryEffect != .none
+        isStructurallyEditable && selectedKind == .number && selectedBodyBatteryEffect != .none
     }
 
     /// Whether unit picker should be visible
@@ -642,39 +651,62 @@ final class SQMetricFormViewModel {
     }
 
     var showsBodyBatteryControls: Bool {
-        switch mode {
-        case .create:
-            return true
-        case .edit(let def):
-            return !def.isPreset
-        }
+        true
     }
 
     var showsAlgorithmSettings: Bool {
+        true
+    }
+
+    var canEditMetricTypeSettings: Bool {
+        !isPresetEditMode
+    }
+
+    var canEditGoalSettings: Bool {
+        !isPresetEditMode
+    }
+
+    var canEditPrivacySafetySettings: Bool {
+        !isPresetEditMode
+    }
+
+    var showsLifeScoreImpactControl: Bool {
+        true
+    }
+
+    var showsInsightsControl: Bool {
+        true
+    }
+
+    private var isPresetEditMode: Bool {
         switch mode {
         case .create:
-            return true
+            return false
         case .edit(let def):
-            return !def.isPreset
+            return def.isPreset
         }
     }
 
-    var algorithmSettingsHelperText: String {
-        switch selectedSensitivity {
-        case .medicationLike:
-            return "Medication-like metrics stay observe-only by default. Life Score impact is off."
-        case .sensitive:
-            return "Sensitive metrics default to cautious insight copy and no Life Score impact unless you choose otherwise."
-        case .normal, .unknown:
-            if selectedLifeScoreImpact == .none {
-                return "Insights can look for useful trends while Life Score stays unchanged."
-            }
-            return "Life Score impact uses your goal direction or range. Numeric weights stay automatic."
-        }
+    var showsLifeIQUseSection: Bool {
+        true
     }
 
     private var recommendedInsightMode: SQMetricInsightMode {
-        selectedSensitivity == .medicationLike ? .trendsOnly : .exploratoryRelationships
+        if let existingDefinition, existingDefinition.isPreset {
+            let presetDefault = SQMetricSemanticDefaults.insightMode(
+                forMetricId: existingDefinition.id,
+                isPreset: true
+            )
+            if presetDefault != .automatic,
+               presetDefault != .unknown,
+               presetDefault != .off {
+                return presetDefault
+            }
+        }
+
+        return selectedSensitivity == .medicationLike
+            ? SQMetricInsightMode.trendsOnly
+            : SQMetricInsightMode.exploratoryRelationships
     }
 
     var currentHealthKitType: SQMetricHealthKitType {
@@ -733,59 +765,20 @@ final class SQMetricFormViewModel {
         }
     }
 
-    var goalHelperText: String {
-        switch selectedGoalStyle {
-        case .justTrack:
-            return "Shows trend and consistency data without treating any value as a success or failure."
-        case .buildUp:
-            return "A successful day counts when this metric is at or above the value below."
-        case .keepLow:
-            return "A successful day counts when this metric is at or below the value below."
-        case .avoidIt:
-            return "A successful day counts when this metric is exactly 0."
-        case .stayInRange:
-            return "A successful day counts when this metric stays inside the target range."
-        case .unknown:
-            return ""
-        }
+    var recoveryScoreRangeHelperText: String {
+        "Number metrics need a typical low and high only when they affect Recovery Score."
     }
 
-    var bodyBatteryHelperText: String {
-        switch selectedBodyBatteryEffect {
-        case .none:
-            return "Optional. Leave this off unless the metric should meaningfully nudge daily energy or recovery."
-        case .boostsWhenHigh:
-            if selectedKind == .number {
-                return "Higher values will lift Recovery Score. Add a typical low and high daily value below so LifeIQ can interpret the number correctly."
-            }
-            return "Higher values will lift Recovery Score. Scale values already provide the range LifeIQ needs."
-        case .drainsWhenHigh:
-            if selectedKind == .number {
-                return "Higher values will lower Recovery Score. Add a typical low and high daily value below so LifeIQ can interpret the number correctly."
-            }
-            return "Higher values will lower Recovery Score. Scale values already provide the range LifeIQ needs."
-        case .unknown:
-            return ""
-        }
+    var metricTypeDisplayValue: String {
+        Self.displayName(for: selectedSignalRole)
     }
 
-    var bodyBatterySummary: String? {
-        _ = formContentRevision
+    var goalDisplayValue: String {
+        Self.displayName(for: selectedGoalStyle)
+    }
 
-        let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? "This metric"
-            : titleField.text
-
-        switch selectedBodyBatteryEffect {
-        case .none:
-            return nil
-        case .boostsWhenHigh:
-            return "\(title) will help Recovery Score when you log higher values."
-        case .drainsWhenHigh:
-            return "\(title) will lower Recovery Score when you log higher values."
-        case .unknown:
-            return nil
-        }
+    var privacySafetyDisplayValue: String {
+        Self.displayName(for: selectedSensitivity)
     }
 
     var goalSuccessSummary: String? {
@@ -856,12 +849,6 @@ final class SQMetricFormViewModel {
         }
     }
 
-    var trackingHelperText: String {
-        isSingleDailyValue
-            ? "Shared means both check-ins edit the same daily value. Use this for things like weight or last night’s sleep."
-            : "Independent means morning and evening each keep their own value. Use this for signals that can change through the day."
-    }
-
     var currentKind: SQMetricKind {
         if isStructurallyEditable {
             return selectedKind
@@ -891,6 +878,14 @@ final class SQMetricFormViewModel {
     var currentStep: String {
         if case .edit(let def) = mode { return def.step.map { Self.formatFloat($0) } ?? "—" }
         return stepField.text
+    }
+
+    private var existingDefinition: SQMetricDefinition? {
+        if case .edit(let def) = mode {
+            return def
+        }
+
+        return nil
     }
 
     // MARK: - Actions
@@ -1070,7 +1065,7 @@ final class SQMetricFormViewModel {
             if !result.isValid { firstError = result.message }
         }
 
-        if firstError == nil {
+        if firstError == nil, canEditGoalSettings {
             let result = validateGoalFieldsDetailed()
             if !result.isValid { firstError = result.message }
         }
@@ -1147,7 +1142,9 @@ final class SQMetricFormViewModel {
 
         lifeScoreImpactMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(for: selectedLifeScoreImpact)),
-            items: Self.lifeScoreImpactDisplayItems
+            items: Self.lifeScoreImpactDisplayItems(
+                includeAutomatic: Self.allowsLifeScoreAutomaticOption(for: mode)
+            )
         ) { [weak self] title in
             self?.selectedLifeScoreImpact = Self.lifeScoreImpact(fromDisplayName: title)
         }
@@ -1298,6 +1295,7 @@ final class SQMetricFormViewModel {
         sortOrder: Int = 0,
         isArchived: Bool = false
     ) -> SQMetricDefinition {
+        let title = titleField.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let emoji = emojiField.text.isEmpty ? nil : emojiField.text
         let mapping = resolvedScaleQuantityMapping
         let healthKitType = currentHealthKitType
@@ -1308,7 +1306,7 @@ final class SQMetricFormViewModel {
         case .scale:
             return .init(
                 id: existingId ?? SQMetricId.custom(),
-                title: titleField.text,
+                title: title,
                 kind: .scale,
                 unit: .none,
                 group: selectedGroup,
@@ -1340,7 +1338,7 @@ final class SQMetricFormViewModel {
         case .number:
             return .init(
                 id: existingId ?? SQMetricId.custom(),
-                title: titleField.text,
+                title: title,
                 kind: .number,
                 unit: selectedUnit,
                 group: selectedGroup,
@@ -1373,7 +1371,7 @@ final class SQMetricFormViewModel {
             // .binary and .unknown should never be user-created; fall back to scale
             return .init(
                 id: existingId ?? SQMetricId.custom(),
-                title: titleField.text,
+                title: title,
                 kind: .scale,
                 unit: .none,
                 group: selectedGroup,
@@ -1530,7 +1528,7 @@ final class SQMetricFormViewModel {
         guard selectedKind == .number else { return (true, nil) }
 
         guard let min = metricLowerBound, let max = metricUpperBound else {
-            return (false, "Recovery Score needs both a typical low and typical high value for number metrics.")
+            return (false, "Add a typical low and high for number metrics that affect Recovery Score.")
         }
 
         guard max > min else {
@@ -1543,26 +1541,35 @@ final class SQMetricFormViewModel {
     private func validateAlgorithmSettingsDetailed() -> (isValid: Bool, message: String?) {
         guard showsAlgorithmSettings else { return (true, nil) }
 
-        guard selectedSignalRole != .automatic && selectedSignalRole != .unknown else {
-            return (false, "Choose what kind of metric this is.")
+        if canEditMetricTypeSettings {
+            guard selectedSignalRole != .automatic && selectedSignalRole != .unknown else {
+                return (false, "Choose what kind of metric this is.")
+            }
         }
 
-        guard selectedSensitivity != .unknown else {
-            return (false, "Choose a sensitivity level.")
+        if canEditPrivacySafetySettings {
+            guard selectedSensitivity != .unknown else {
+                return (false, "Choose a privacy and safety setting.")
+            }
         }
 
-        guard selectedLifeScoreImpact != .unknown && selectedLifeScoreImpact != .automatic else {
+        guard selectedLifeScoreImpact != .unknown else {
+            return (false, "Choose whether this affects Life Score.")
+        }
+
+        if !isPresetEditMode, selectedLifeScoreImpact == .automatic {
             return (false, "Choose whether this affects Life Score.")
         }
 
         guard selectedLifeScoreImpact != .none else { return (true, nil) }
+        guard canEditGoalSettings else { return (true, nil) }
 
         switch selectedGoalStyle {
         case .justTrack:
-            return (false, "Choose a goal direction or range before allowing Life Score impact.")
+            return (false, "Change Goal from Just Track It before allowing Life Score impact.")
         case .buildUp, .keepLow:
-            guard parsedGoalTargetValue != nil else {
-                return (false, "Add a target before allowing Life Score impact.")
+            guard parsedGoalTargetValue != nil || hasUsableMetricValueRange else {
+                return (false, "Add a goal target or usable value range before allowing Life Score impact.")
             }
         case .stayInRange:
             guard parsedGoalRangeMin != nil, parsedGoalRangeMax != nil else {
@@ -1595,7 +1602,7 @@ final class SQMetricFormViewModel {
             return "Min is required for scale."
         case .number:
             return showsRecoveryScoreRangeFields
-                ? "Enter a typical low value for Recovery Score."
+                ? "Enter a typical low value."
                 : nil
         default:
             return nil
@@ -1620,7 +1627,7 @@ final class SQMetricFormViewModel {
             return "Max is required for scale."
         case .number:
             return showsRecoveryScoreRangeFields
-                ? "Enter a typical high value for Recovery Score."
+                ? "Enter a typical high value."
                 : nil
         default:
             return nil
@@ -1726,7 +1733,7 @@ final class SQMetricFormViewModel {
     }
 
     private func applySensitivityDefaultsIfNeeded(from previousSensitivity: SQMetricSensitivity) {
-        guard showsAlgorithmSettings else { return }
+        guard canEditPrivacySafetySettings else { return }
 
         if selectedSensitivity == .medicationLike {
             selectedLifeScoreImpact = .none
@@ -1747,6 +1754,24 @@ final class SQMetricFormViewModel {
         }
     }
 
+    private func applyLifeScoreImpactDefaultsIfNeeded(from previousImpact: SQMetricLifeScoreImpact) {
+        guard hasFinishedInitialSetup, canEditGoalSettings else { return }
+        guard selectedLifeScoreImpact == .light || selectedLifeScoreImpact == .standard else { return }
+        guard previousImpact == .none || previousImpact == .automatic || previousImpact == .unknown else { return }
+        guard selectedGoalStyle == .justTrack else { return }
+
+        selectedGoalStyle = recommendedGoalStyleForLifeScoreImpact
+    }
+
+    private var recommendedGoalStyleForLifeScoreImpact: SQMetricGoalStyle {
+        switch selectedSignalRole {
+        case .symptom:
+            return .keepLow
+        case .behavior, .outcome, .bodyStat, .context, .automatic, .unknown:
+            return .buildUp
+        }
+    }
+
     private var metricLowerBound: Float? {
         if isStructurallyEditable {
             return Float(minField.text)
@@ -1761,6 +1786,11 @@ final class SQMetricFormViewModel {
         }
         if case .edit(let def) = mode { return def.max }
         return Float(maxField.text)
+    }
+
+    private var hasUsableMetricValueRange: Bool {
+        guard let min = metricLowerBound, let max = metricUpperBound else { return false }
+        return max > min
     }
 
     private var resolvedNumberStepValue: Float? {
@@ -1838,20 +1868,35 @@ final class SQMetricFormViewModel {
     }
 
     private var resolvedSignalRole: SQMetricSignalRole {
-        showsAlgorithmSettings ? selectedSignalRole : .automatic
+        if canEditMetricTypeSettings {
+            return selectedSignalRole
+        }
+
+        return existingDefinition?.signalRole ?? selectedSignalRole
     }
 
     private var resolvedLifeScoreImpact: SQMetricLifeScoreImpact {
-        showsAlgorithmSettings ? selectedLifeScoreImpact : .automatic
+        showsLifeScoreImpactControl ? selectedLifeScoreImpact : (existingDefinition?.lifeScoreImpact ?? .automatic)
     }
 
     private var resolvedInsightMode: SQMetricInsightMode {
-        guard showsAlgorithmSettings else { return .automatic }
+        guard showsInsightsControl else { return existingDefinition?.insightMode ?? .automatic }
+        if isPresetEditMode,
+           !hasUserChangedInsightsEnabled,
+           let existingMode = existingDefinition?.insightMode,
+           existingMode == .automatic || existingMode == .unknown {
+            return .automatic
+        }
+
         return isInsightsEnabled ? selectedInsightMode : .off
     }
 
     private var resolvedSensitivity: SQMetricSensitivity {
-        showsAlgorithmSettings ? selectedSensitivity : .unknown
+        if canEditPrivacySafetySettings {
+            return selectedSensitivity
+        }
+
+        return existingDefinition?.sensitivity ?? selectedSensitivity
     }
 
     private static func formatFloat(_ value: Float) -> String {
@@ -1872,45 +1917,57 @@ final class SQMetricFormViewModel {
 
     private static var goalDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
-            .init(title: displayName(for: .justTrack)),
-            .init(title: displayName(for: .buildUp)),
-            .init(title: displayName(for: .keepLow)),
-            .init(title: displayName(for: .avoidIt)),
-            .init(title: displayName(for: .stayInRange)),
+            .init(title: displayName(for: .justTrack), subtitle: menuDescription(for: .justTrack)),
+            .init(title: displayName(for: .buildUp), subtitle: menuDescription(for: .buildUp)),
+            .init(title: displayName(for: .keepLow), subtitle: menuDescription(for: .keepLow)),
+            .init(title: displayName(for: .avoidIt), subtitle: menuDescription(for: .avoidIt)),
+            .init(title: displayName(for: .stayInRange), subtitle: menuDescription(for: .stayInRange)),
         ]
     }
 
     private static var bodyBatteryDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
-            .init(title: displayName(for: SQMetricBodyBatteryEffect.none)),
-            .init(title: displayName(for: SQMetricBodyBatteryEffect.boostsWhenHigh)),
-            .init(title: displayName(for: SQMetricBodyBatteryEffect.drainsWhenHigh)),
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.none), subtitle: menuDescription(for: SQMetricBodyBatteryEffect.none)),
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.boostsWhenHigh), subtitle: menuDescription(for: SQMetricBodyBatteryEffect.boostsWhenHigh)),
+            .init(title: displayName(for: SQMetricBodyBatteryEffect.drainsWhenHigh), subtitle: menuDescription(for: SQMetricBodyBatteryEffect.drainsWhenHigh)),
         ]
     }
 
     private static var signalRoleDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
-            .init(title: displayName(for: SQMetricSignalRole.behavior)),
-            .init(title: displayName(for: SQMetricSignalRole.outcome)),
-            .init(title: displayName(for: SQMetricSignalRole.symptom)),
-            .init(title: displayName(for: SQMetricSignalRole.bodyStat)),
-            .init(title: displayName(for: SQMetricSignalRole.context)),
+            .init(title: displayName(for: SQMetricSignalRole.behavior), subtitle: menuDescription(for: .behavior)),
+            .init(title: displayName(for: SQMetricSignalRole.outcome), subtitle: menuDescription(for: .outcome)),
+            .init(title: displayName(for: SQMetricSignalRole.symptom), subtitle: menuDescription(for: .symptom)),
+            .init(title: displayName(for: SQMetricSignalRole.bodyStat), subtitle: menuDescription(for: .bodyStat)),
+            .init(title: displayName(for: SQMetricSignalRole.context), subtitle: menuDescription(for: .context)),
         ]
     }
 
-    private static var lifeScoreImpactDisplayItems: [SQDropDownMenuViewModel.Item] {
-        [
-            .init(title: displayName(for: SQMetricLifeScoreImpact.none)),
-            .init(title: displayName(for: SQMetricLifeScoreImpact.light)),
-            .init(title: displayName(for: SQMetricLifeScoreImpact.standard)),
+    private static func lifeScoreImpactDisplayItems(includeAutomatic: Bool) -> [SQDropDownMenuViewModel.Item] {
+        var items: [SQDropDownMenuViewModel.Item] = [
+            .init(title: displayName(for: SQMetricLifeScoreImpact.none), subtitle: menuDescription(for: SQMetricLifeScoreImpact.none)),
+            .init(title: displayName(for: SQMetricLifeScoreImpact.light), subtitle: menuDescription(for: SQMetricLifeScoreImpact.light)),
+            .init(title: displayName(for: SQMetricLifeScoreImpact.standard), subtitle: menuDescription(for: SQMetricLifeScoreImpact.standard)),
         ]
+
+        if includeAutomatic {
+            items.insert(
+                .init(
+                    title: displayName(for: SQMetricLifeScoreImpact.automatic),
+                    subtitle: menuDescription(for: SQMetricLifeScoreImpact.automatic)
+                ),
+                at: 0
+            )
+        }
+
+        return items
     }
 
     private static var sensitivityDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
-            .init(title: displayName(for: SQMetricSensitivity.normal)),
-            .init(title: displayName(for: SQMetricSensitivity.sensitive)),
-            .init(title: displayName(for: SQMetricSensitivity.medicationLike)),
+            .init(title: displayName(for: SQMetricSensitivity.normal), subtitle: menuDescription(for: .normal)),
+            .init(title: displayName(for: SQMetricSensitivity.sensitive), subtitle: menuDescription(for: .sensitive)),
+            .init(title: displayName(for: SQMetricSensitivity.medicationLike), subtitle: menuDescription(for: .medicationLike)),
         ]
     }
 
@@ -1926,8 +1983,8 @@ final class SQMetricFormViewModel {
 
     private static var trackingDisplayItems: [SQDropDownMenuViewModel.Item] {
         [
-            .init(title: "Independent"),
-            .init(title: "Shared")
+            .init(title: "Independent", subtitle: "Separate morning and evening values."),
+            .init(title: "Shared", subtitle: "One daily value used by both check-ins.")
         ]
     }
 
@@ -2008,7 +2065,7 @@ final class SQMetricFormViewModel {
         case .standard:
             return "Normally"
         case .automatic:
-            return "LifeIQ Automatic"
+            return "LifeIQ Default"
         case .unknown:
             return "Unknown"
         }
@@ -2017,13 +2074,88 @@ final class SQMetricFormViewModel {
     private static func displayName(for sensitivity: SQMetricSensitivity) -> String {
         switch sensitivity {
         case .normal:
-            return "Normal"
+            return "Standard"
         case .sensitive:
-            return "Sensitive"
+            return "Private / Sensitive"
         case .medicationLike:
-            return "Medication-Like"
+            return "Medication / Supplement"
         case .unknown:
             return "Unknown"
+        }
+    }
+
+    private static func menuDescription(for goalStyle: SQMetricGoalStyle) -> String {
+        switch goalStyle {
+        case .justTrack:
+            return "Track trends only."
+        case .buildUp:
+            return "Higher values are better."
+        case .keepLow:
+            return "Lower values are better."
+        case .avoidIt:
+            return "Zero is the goal."
+        case .stayInRange:
+            return "A target range is best."
+        case .unknown:
+            return ""
+        }
+    }
+
+    private static func menuDescription(for effect: SQMetricBodyBatteryEffect) -> String {
+        switch effect {
+        case .none:
+            return "Recovery Score ignores it."
+        case .boostsWhenHigh:
+            return "Higher values support recovery."
+        case .drainsWhenHigh:
+            return "Higher values lower recovery."
+        case .unknown:
+            return ""
+        }
+    }
+
+    private static func menuDescription(for role: SQMetricSignalRole) -> String {
+        switch role {
+        case .behavior:
+            return "Examples: caffeine, workouts, meditation."
+        case .outcome:
+            return "Examples: mood, energy, performance."
+        case .symptom:
+            return "Examples: pain, headache, flare-up."
+        case .bodyStat:
+            return "Examples: weight, HRV, blood pressure."
+        case .context:
+            return "Examples: travel, workday, cycle day."
+        case .automatic, .unknown:
+            return ""
+        }
+    }
+
+    private static func menuDescription(for impact: SQMetricLifeScoreImpact) -> String {
+        switch impact {
+        case .none:
+            return "No score effect."
+        case .light:
+            return "Small daily nudge."
+        case .standard:
+            return "Normal score effect."
+        case .automatic:
+            return "Use the built-in preset default."
+        case .unknown:
+            return ""
+        }
+    }
+
+    private static func menuDescription(for sensitivity: SQMetricSensitivity) -> String {
+        switch sensitivity {
+        case .normal:
+            return "Normal scoring and insights."
+        case .sensitive:
+            return "Private topic; score impact stays cautious."
+        case .medicationLike:
+            return "Track trends only; no usage advice."
+        case .unknown:
+            return ""
         }
     }
 
@@ -2075,10 +2207,19 @@ final class SQMetricFormViewModel {
 
     private static func lifeScoreImpact(fromDisplayName title: String) -> SQMetricLifeScoreImpact {
         [
-            SQMetricLifeScoreImpact.none,
+            SQMetricLifeScoreImpact.automatic,
+            .none,
             .light,
             .standard,
         ].first(where: { displayName(for: $0) == title }) ?? .none
+    }
+
+    private static func allowsLifeScoreAutomaticOption(for mode: Mode) -> Bool {
+        if case .edit(let existing) = mode {
+            return existing.isPreset
+        }
+
+        return false
     }
 
     private static func sensitivity(fromDisplayName title: String) -> SQMetricSensitivity {
