@@ -2453,6 +2453,13 @@ final class SQDashboardController: SQDashboardInterface {
             defaultPriority: 15,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
+            titleButton: .init(
+                icon: .infoCircle,
+                title: nil,
+                onTap: { [weak self] in
+                    self?.presentInsightsInfoAlert()
+                }
+            ),
             rowSpacing: .SQSpace.m,
             maxVisibleRows: 4,
             emptyState: emptyState
@@ -2463,6 +2470,17 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return sectionViewModel
+    }
+
+    private func presentInsightsInfoAlert() {
+        let alert = SQAlertViewModel(
+            title: "How Insights Work",
+            subtitle: "LifeIQ looks for patterns across your check-ins, sleep, workouts, and health data so you can better understand what affects your mood, energy, recovery, and performance.\n\nYou might see insights like \"Low sleep may be linked to lower mood\" or \"Caffeine is trending higher recently.\"\n\nThe more check-ins you complete, the more personal and accurate your insights become. Early insights may be simple, but they get stronger as LifeIQ learns your patterns.",
+            primary: .init(title: "Got it"),
+            canDismiss: true
+        )
+
+        state.hub.alertEvents.send(.present(alert))
     }
 
     private func buildInsightActionsSubsection(

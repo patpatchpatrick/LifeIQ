@@ -19,7 +19,7 @@ enum SQAdminConfig {
 
     /// Debug-only toggle for rendering canned health data without requiring
     /// a populated HealthKit store on the current simulator or device.
-    static var useMockDashboardHealthData = false
+    static var useMockDashboardHealthData = true
     static var useMockHealthData: Bool { useMockDashboardHealthData }
     static var verboseLoggingEnabled = false
 

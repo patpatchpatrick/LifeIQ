@@ -31,9 +31,42 @@ struct SQLifeScoreDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("Life Score")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    presentLifeScoreInfoAlert()
+                } label: {
+                    ZStack {
+                        Color.clear
+
+                        SQImageView(
+                            image: .init(
+                                symbol: .infoCircle,
+                                symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                            )
+                        )
+                        .frame(width: 18, height: 18)
+                    }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
         .background {
             SQSheetBackground()
         }
+    }
+
+    private func presentLifeScoreInfoAlert() {
+        let alert = SQAlertViewModel(
+            title: "Life Score",
+            subtitle: "Life Score is a daily snapshot of your recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether your life is trending in a healthy direction. It is not a medical score - it is a guide to help you notice what's supporting you and what may need attention.",
+            primary: .init(title: "Got it"),
+            canDismiss: true
+        )
+
+        SQAppState.shared.hub.alertEvents.send(.present(alert))
     }
 
     private var heroCard: some View {

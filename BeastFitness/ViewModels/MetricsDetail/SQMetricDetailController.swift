@@ -270,133 +270,89 @@ final class SQMetricDetailController: SQMetricDetailInterface {
             ]
         )
 
-        var builtSections = [overview, consistency]
-        if definition.goalStyle != .justTrack {
-            builtSections.append(
-                buildGoalSection(
-                    definition: definition,
-                    points: points,
-                    allTimePoints: allTimePoints
-                )
-            )
-        }
-        return builtSections
+        return [
+            overview,
+            consistency,
+            buildStreaksSection(points: points, allTimePoints: allTimePoints)
+        ]
     }
 
-    private func buildGoalSection(
-        definition: SQMetricDefinition,
+    private func buildStreaksSection(
         points: [DayValuePoint],
         allTimePoints: [DayValuePoint]
     ) -> Section {
-        let successPoints = points.filter { isSuccessful(value: $0.value, definition: definition) }
-        let successRate = points.isEmpty ? 0 : Double(successPoints.count) / Double(points.count)
-        let allTimeSuccessPoints = allTimePoints.filter { isSuccessful(value: $0.value, definition: definition) }
-        let allTimeFailures = allTimePoints.filter { !isSuccessful(value: $0.value, definition: definition) }
-
-        let currentStreakTitle: String
-        let bestStreakTitle: String
-        let successRateTitle: String
-        let lastFailureTitle: String
-        let currentStreakValue: String
-        let bestStreakValue: String
-        let currentStreakDetail: String?
-        let bestStreakDetail: String?
-
-        switch definition.goalStyle {
-        case .avoidIt:
-            let currentAvoidance = currentAvoidanceWindow(for: allTimePoints)
-            let bestAvoidance = bestAvoidanceWindow(for: allTimePoints)
-            let currentNonZero = currentNonZeroWindow(for: allTimePoints)
-            let bestNonZero = bestNonZeroWindow(for: allTimePoints)
-
-            return Section(
-                id: "streaks",
-                title: "Streaks",
-                items: [
-                    .init(
-                        id: "streaks-avoided-current",
-                        title: "Current Avoidance Streak",
-                        value: "\(currentAvoidance?.dayCount ?? 0) days",
-                        detail: currentAvoidance.map { "Started \($0.startDate.formattedString(with: .short))" },
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-not-avoided-current",
-                        title: "Current Non-Zero Streak",
-                        value: "\(currentNonZero?.dayCount ?? 0) days",
-                        detail: currentNonZero.map { "Started \($0.startDate.formattedString(with: .short))" },
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-avoided-best",
-                        title: "Best Avoidance Streak",
-                        value: "\(bestAvoidance?.dayCount ?? 0) days",
-                        detail: bestAvoidance.map {
-                            "\($0.startDate.formattedString(with: .short)) - \($0.endDate.formattedString(with: .short))"
-                        },
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-not-avoided-best",
-                        title: "Best Non-Zero Streak",
-                        value: "\(bestNonZero?.dayCount ?? 0) days",
-                        detail: bestNonZero.map {
-                            "\($0.startDate.formattedString(with: .short)) - \($0.endDate.formattedString(with: .short))"
-                        },
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-zero-days",
-                        title: "Zero Days",
-                        value: String(format: "%.0f%%", successRate * 100),
-                        detail: nil,
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-non-zero-days",
-                        title: "Non-Zero Days",
-                        value: String(format: "%.0f%%", (1 - successRate) * 100),
-                        detail: nil,
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-last-non-zero",
-                        title: "Last Non-Zero",
-                        value: allTimeFailures.last?.date.formattedString(with: .medium) ?? "Never",
-                        detail: selectedTimeRange == .allTime ? nil : "All time",
-                        valueColor: .textPrimary
-                    ),
-                    .init(
-                        id: "streaks-last-zero",
-                        title: "Last Zero",
-                        value: allTimeSuccessPoints.last?.date.formattedString(with: .medium) ?? "Never",
-                        detail: selectedTimeRange == .allTime ? nil : "All time",
-                        valueColor: .textPrimary
-                    )
-                ]
-            )
-        default:
-            currentStreakTitle = "Current Streak"
-            bestStreakTitle = "Best Streak"
-            successRateTitle = "Success Rate"
-            lastFailureTitle = "Last Miss"
-            currentStreakValue = "\(currentSuccessStreak(for: allTimePoints, definition: definition)) days"
-            bestStreakValue = "\(longestConsecutiveDayCount(for: allTimeSuccessPoints.map(\.date))) days"
-            currentStreakDetail = selectedTimeRange == .allTime ? nil : "All time"
-            bestStreakDetail = selectedTimeRange == .allTime ? nil : "All time"
-        }
+        let zeroPoints = points.filter { $0.value == 0 }
+        let nonZeroPoints = points.filter { $0.value != 0 }
+        let zeroRate = points.isEmpty ? 0 : Double(zeroPoints.count) / Double(points.count)
+        let nonZeroRate = points.isEmpty ? 0 : Double(nonZeroPoints.count) / Double(points.count)
+        let allTimeZeroPoints = allTimePoints.filter { $0.value == 0 }
+        let allTimeNonZeroPoints = allTimePoints.filter { $0.value != 0 }
+        let currentAvoidance = currentAvoidanceWindow(for: allTimePoints)
+        let bestAvoidance = bestAvoidanceWindow(for: allTimePoints)
+        let currentNonZero = currentNonZeroWindow(for: allTimePoints)
+        let bestNonZero = bestNonZeroWindow(for: allTimePoints)
 
         return Section(
             id: "streaks",
             title: "Streaks",
             items: [
-                .init(id: "streaks-current", title: currentStreakTitle, value: currentStreakValue, detail: currentStreakDetail, valueColor: .textPrimary),
-                .init(id: "streaks-best", title: bestStreakTitle, value: bestStreakValue, detail: bestStreakDetail, valueColor: .textPrimary),
-                .init(id: "streaks-rate", title: successRateTitle, value: String(format: "%.0f%%", successRate * 100), detail: nil, valueColor: .textPrimary),
                 .init(
-                    id: "streaks-last-failure",
-                    title: lastFailureTitle,
-                    value: allTimeFailures.last?.date.formattedString(with: .medium) ?? "Never",
+                    id: "streaks-avoided-current",
+                    title: "Current Avoidance Streak",
+                    value: "\(currentAvoidance?.dayCount ?? 0) days",
+                    detail: currentAvoidance.map { "Started \($0.startDate.formattedString(with: .short))" },
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-not-avoided-current",
+                    title: "Current Non-Zero Streak",
+                    value: "\(currentNonZero?.dayCount ?? 0) days",
+                    detail: currentNonZero.map { "Started \($0.startDate.formattedString(with: .short))" },
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-avoided-best",
+                    title: "Best Avoidance Streak",
+                    value: "\(bestAvoidance?.dayCount ?? 0) days",
+                    detail: bestAvoidance.map {
+                        "\($0.startDate.formattedString(with: .short)) - \($0.endDate.formattedString(with: .short))"
+                    },
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-not-avoided-best",
+                    title: "Best Non-Zero Streak",
+                    value: "\(bestNonZero?.dayCount ?? 0) days",
+                    detail: bestNonZero.map {
+                        "\($0.startDate.formattedString(with: .short)) - \($0.endDate.formattedString(with: .short))"
+                    },
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-zero-days",
+                    title: "Zero Days",
+                    value: String(format: "%.0f%%", zeroRate * 100),
+                    detail: nil,
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-non-zero-days",
+                    title: "Non-Zero Days",
+                    value: String(format: "%.0f%%", nonZeroRate * 100),
+                    detail: nil,
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-last-non-zero",
+                    title: "Last Non-Zero",
+                    value: allTimeNonZeroPoints.last?.date.formattedString(with: .medium) ?? "Never",
+                    detail: selectedTimeRange == .allTime ? nil : "All time",
+                    valueColor: .textPrimary
+                ),
+                .init(
+                    id: "streaks-last-zero",
+                    title: "Last Zero",
+                    value: allTimeZeroPoints.last?.date.formattedString(with: .medium) ?? "Never",
                     detail: selectedTimeRange == .allTime ? nil : "All time",
                     valueColor: .textPrimary
                 )
@@ -565,24 +521,6 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         return "\(raw) \(unitSuffix)"
     }
 
-    private func isSuccessful(value: Double, definition: SQMetricDefinition) -> Bool {
-        switch definition.goalStyle {
-        case .justTrack:
-            return true
-        case .buildUp:
-            return value >= Double(definition.targetValue ?? 0)
-        case .keepLow:
-            return value <= Double(definition.targetValue ?? 0)
-        case .avoidIt:
-            return value == 0
-        case .stayInRange:
-            guard let min = definition.targetRangeMin, let max = definition.targetRangeMax else { return false }
-            return value >= Double(min) && value <= Double(max)
-        case .unknown:
-            return false
-        }
-    }
-
     private func currentConsecutiveDayCount(for dates: [Date]) -> Int {
         let sorted = normalizedUniqueDates(dates)
         guard !sorted.isEmpty else { return 0 }
@@ -598,53 +536,6 @@ final class SQMetricDetailController: SQMetricDetailInterface {
                 break
             }
         }
-        return streak
-    }
-
-    private func longestConsecutiveDayCount(for dates: [Date]) -> Int {
-        let sorted = normalizedUniqueDates(dates)
-        guard !sorted.isEmpty else { return 0 }
-        guard sorted.count > 1 else { return 1 }
-
-        var best = 1
-        var current = 1
-
-        for index in 1..<sorted.count {
-            if Calendar.current.dateComponents([.day], from: sorted[index - 1], to: sorted[index]).day == 1 {
-                current += 1
-                best = max(best, current)
-            } else {
-                current = 1
-            }
-        }
-
-        return best
-    }
-
-    private func currentSuccessStreak(for points: [DayValuePoint], definition: SQMetricDefinition) -> Int {
-        guard let last = points.last, isSuccessful(value: last.value, definition: definition) else {
-            return 0
-        }
-
-        var streak = 1
-        guard points.count > 1 else { return streak }
-
-        for index in stride(from: points.count - 1, to: 0, by: -1) {
-            let current = Calendar.current.startOfDay(for: points[index].date)
-            let previousPoint = points[index - 1]
-            let previous = Calendar.current.startOfDay(for: previousPoint.date)
-
-            guard isSuccessful(value: previousPoint.value, definition: definition) else {
-                break
-            }
-
-            if Calendar.current.dateComponents([.day], from: previous, to: current).day == 1 {
-                streak += 1
-            } else {
-                break
-            }
-        }
-
         return streak
     }
 
@@ -735,22 +626,33 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         matching predicate: (Double) -> Bool
     ) -> AvoidanceWindow? {
         let sorted = points.sorted { $0.date < $1.date }
-        guard let first = sorted.first, let last = sorted.last else { return nil }
+        guard let last = sorted.last else { return nil }
         guard predicate(last.value) else { return nil }
 
         let calendar = Calendar.current
-        let lastDate = calendar.startOfDay(for: last.date)
+        var startDate = calendar.startOfDay(for: last.date)
+        let endDate = startDate
+        var dayCount = 1
 
-        if let lastMismatch = sorted.dropLast().last(where: { !predicate($0.value) }) {
-            let lastMismatchDate = calendar.startOfDay(for: lastMismatch.date)
-            let dayCount = calendar.dateComponents([.day], from: lastMismatchDate, to: lastDate).day ?? 0
-            let startDate = calendar.date(byAdding: .day, value: 1, to: lastMismatchDate) ?? lastDate
-            return .init(startDate: startDate, endDate: lastDate, dayCount: dayCount)
+        guard sorted.count > 1 else {
+            return .init(startDate: startDate, endDate: endDate, dayCount: dayCount)
         }
 
-        let firstDate = calendar.startOfDay(for: first.date)
-        let dayCount = (calendar.dateComponents([.day], from: firstDate, to: lastDate).day ?? 0) + 1
-        return .init(startDate: firstDate, endDate: lastDate, dayCount: dayCount)
+        for index in stride(from: sorted.count - 1, to: 0, by: -1) {
+            let currentDate = calendar.startOfDay(for: sorted[index].date)
+            let previousPoint = sorted[index - 1]
+            let previousDate = calendar.startOfDay(for: previousPoint.date)
+
+            guard predicate(previousPoint.value),
+                  calendar.dateComponents([.day], from: previousDate, to: currentDate).day == 1 else {
+                break
+            }
+
+            startDate = previousDate
+            dayCount += 1
+        }
+
+        return .init(startDate: startDate, endDate: endDate, dayCount: dayCount)
     }
 
     private func bestWindow(
@@ -758,31 +660,42 @@ final class SQMetricDetailController: SQMetricDetailInterface {
         matching predicate: (Double) -> Bool
     ) -> AvoidanceWindow? {
         let sorted = points.sorted { $0.date < $1.date }
-        guard let first = sorted.first else { return nil }
+        guard !sorted.isEmpty else { return nil }
 
         let calendar = Calendar.current
-        let firstDate = calendar.startOfDay(for: first.date)
         var bestWindow: AvoidanceWindow?
-        var lastMismatchDate: Date? = nil
+        var currentStartDate: Date?
+        var currentEndDate: Date?
+        var currentDayCount = 0
 
         for point in sorted {
             let currentDate = calendar.startOfDay(for: point.date)
-            if predicate(point.value) {
-                let window: AvoidanceWindow
-                if let lastMismatchDate {
-                    let dayCount = calendar.dateComponents([.day], from: lastMismatchDate, to: currentDate).day ?? 0
-                    let startDate = calendar.date(byAdding: .day, value: 1, to: lastMismatchDate) ?? currentDate
-                    window = .init(startDate: startDate, endDate: currentDate, dayCount: dayCount)
-                } else {
-                    let dayCount = (calendar.dateComponents([.day], from: firstDate, to: currentDate).day ?? 0) + 1
-                    window = .init(startDate: firstDate, endDate: currentDate, dayCount: dayCount)
-                }
 
-                if bestWindow == nil || window.dayCount > (bestWindow?.dayCount ?? 0) {
-                    bestWindow = window
-                }
+            guard predicate(point.value) else {
+                currentStartDate = nil
+                currentEndDate = nil
+                currentDayCount = 0
+                continue
+            }
+
+            if let currentEndDate,
+               calendar.dateComponents([.day], from: currentEndDate, to: currentDate).day == 1 {
+                currentDayCount += 1
             } else {
-                lastMismatchDate = currentDate
+                currentStartDate = currentDate
+                currentDayCount = 1
+            }
+
+            currentEndDate = currentDate
+
+            guard let currentStartDate else { continue }
+            let window = AvoidanceWindow(
+                startDate: currentStartDate,
+                endDate: currentDate,
+                dayCount: currentDayCount
+            )
+            if bestWindow == nil || window.dayCount > (bestWindow?.dayCount ?? 0) {
+                bestWindow = window
             }
         }
 
