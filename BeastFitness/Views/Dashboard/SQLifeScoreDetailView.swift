@@ -279,6 +279,12 @@ struct SQLifeScoreDetailView: View {
                             .sqFont(.bodyExtraSmall)
                             .sqForegroundColor(.textSecondary)
                     }
+
+                    if let scoreDeltaText = component.scoreDeltaText {
+                        Text(scoreDeltaText)
+                            .sqFont(.bodyExtraSmall)
+                            .sqForegroundColor(scoreDeltaColor(for: component.scoreDeltaEffect))
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -343,10 +349,12 @@ struct SQLifeScoreDetailView: View {
                     .sqForegroundColor(.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(item.summary)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !item.summary.isEmpty {
+                    Text(item.summary)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -361,6 +369,15 @@ struct SQLifeScoreDetailView: View {
             return ("Mixed", .dashboardTrendWarm)
         default:
             return ("Low", .colorErrorRed)
+        }
+    }
+
+    private func scoreDeltaColor(for effect: SQLifeScoreSignalEffect) -> SQColor {
+        switch effect {
+        case .positive, .neutral:
+            return effect.color
+        case .negative:
+            return .colorFadedRed
         }
     }
 }

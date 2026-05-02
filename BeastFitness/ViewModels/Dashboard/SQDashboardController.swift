@@ -458,24 +458,27 @@ final class SQDashboardController: SQDashboardInterface {
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
 
+            let dashboardReferenceDate = Date()
             let sleepSchedule = userState.loggedInUser?.sleepSchedule
-            let currentCheckInDate = DashboardState.currentCheckInDate(
-                for: .now,
+            let currentCheckInPromptContext = DashboardState.currentCheckInPromptContext(
+                for: dashboardReferenceDate,
                 sleepSchedule: sleepSchedule
             )
-            let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
-                for: .now,
+            let currentCheckInDate = currentCheckInPromptContext?.date ?? DashboardState.currentCheckInDate(
+                for: dashboardReferenceDate,
                 sleepSchedule: sleepSchedule
             )
-            let yesterdayReferenceDate = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-            let yesterdayCheckInDate = DashboardState.currentCheckInDate(
+            let currentCheckInPromptPeriod = currentCheckInPromptContext?.period
+            let yesterdayReferenceDate = Calendar.current.date(byAdding: .day, value: -1, to: dashboardReferenceDate) ?? dashboardReferenceDate
+            let yesterdayCheckInPromptContext = DashboardState.currentCheckInPromptContext(
                 for: yesterdayReferenceDate,
                 sleepSchedule: sleepSchedule
             )
-            let yesterdayCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
+            let yesterdayCheckInDate = yesterdayCheckInPromptContext?.date ?? DashboardState.currentCheckInDate(
                 for: yesterdayReferenceDate,
                 sleepSchedule: sleepSchedule
             )
+            let yesterdayCheckInPromptPeriod = yesterdayCheckInPromptContext?.period
             let hasCompletedCurrentCheckIn: Bool
             if let currentCheckInPromptPeriod {
                 hasCompletedCurrentCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
@@ -644,7 +647,7 @@ final class SQDashboardController: SQDashboardInterface {
                     || sleepDashboardData?.averageScore != nil
             )
 
-            let referenceDate = Date()
+            let referenceDate = dashboardReferenceDate
             let metricDefinitions = metricsManager.allMetrics(includeArchived: true)
 
             func buildHealthIntelligenceInput(for timeRange: AppTimeRange) -> SQHealthIntelligenceInput {
@@ -810,17 +813,19 @@ final class SQDashboardController: SQDashboardInterface {
 
         let sleepSchedule = userState.loggedInUser?.sleepSchedule
         let referenceDate = date ?? .now
-        let targetDate = date ?? DashboardState.currentCheckInDate(
+        let promptContext = date == nil
+            ? DashboardState.currentCheckInPromptContext(
+                for: referenceDate,
+                sleepSchedule: sleepSchedule
+            )
+            : nil
+        let targetDate = date ?? promptContext?.date ?? DashboardState.currentCheckInDate(
             for: referenceDate,
             sleepSchedule: sleepSchedule
         )
         let checkInPeriod: SQMetricPeriod = {
-            if date == nil,
-               let promptedPeriod = DashboardState.checkInPromptPeriod(
-                   for: referenceDate,
-                   sleepSchedule: sleepSchedule
-               ) {
-                return promptedPeriod
+            if let promptContext {
+                return promptContext.period
             }
 
             return DashboardState.checkInPeriod(
@@ -1119,11 +1124,11 @@ final class SQDashboardController: SQDashboardInterface {
         let metricsEmptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel = {
             let emptyStateTitle: String
             if timeRange == .today {
-                if let currentCheckInPromptPeriod = DashboardState.checkInPromptPeriod(
-                    for: .now,
+                if let currentCheckInPromptContext = DashboardState.currentCheckInPromptContext(
+                    for: Date(),
                     sleepSchedule: userState.loggedInUser?.sleepSchedule
                 ) {
-                    emptyStateTitle = "Complete your \(title(for: currentCheckInPromptPeriod)) check-in"
+                    emptyStateTitle = "Complete your \(title(for: currentCheckInPromptContext.period)) check-in"
                 } else {
                     emptyStateTitle = "Log your next daily check-in"
                 }

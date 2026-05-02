@@ -49,6 +49,11 @@ protocol DashboardStating: AnyObject {
     func displayMetricDetail(metricId: String)
 }
 
+struct SQCheckInPromptContext {
+    let date: Date
+    let period: SQMetricPeriod
+}
+
 @MainActor
 @Observable final class DashboardState: DashboardStating {
     let hub: EventHub
@@ -180,6 +185,26 @@ protocol DashboardStating: AnyObject {
         case (false, false):
             return nil
         }
+    }
+
+    static func currentCheckInPromptContext(
+        for date: Date,
+        sleepSchedule: SQSleepSchedule? = nil
+    ) -> SQCheckInPromptContext? {
+        guard let period = checkInPromptPeriod(
+            for: date,
+            sleepSchedule: sleepSchedule
+        ) else {
+            return nil
+        }
+
+        return .init(
+            date: currentCheckInDate(
+                for: date,
+                sleepSchedule: sleepSchedule
+            ),
+            period: period
+        )
     }
 
     /// Returns the calendar date that should own the user's current check-in session.

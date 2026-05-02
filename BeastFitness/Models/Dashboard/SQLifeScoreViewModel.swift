@@ -34,9 +34,44 @@ struct SQLifeScoreComponent: Identifiable {
     let id: String
     let title: String
     let score: Int
+    let scoreDeltaFromPreviousDay: Int?
     let summary: String
     let weight: Double
     let detailItems: [SQLifeScoreDetailItem]
+
+    init(
+        id: String,
+        title: String,
+        score: Int,
+        scoreDeltaFromPreviousDay: Int? = nil,
+        summary: String,
+        weight: Double,
+        detailItems: [SQLifeScoreDetailItem]
+    ) {
+        self.id = id
+        self.title = title
+        self.score = score
+        self.scoreDeltaFromPreviousDay = scoreDeltaFromPreviousDay
+        self.summary = summary
+        self.weight = weight
+        self.detailItems = detailItems
+    }
+
+    var scoreDeltaText: String? {
+        guard let scoreDeltaFromPreviousDay, scoreDeltaFromPreviousDay != 0 else { return nil }
+        let prefix = scoreDeltaFromPreviousDay > 0 ? "+" : ""
+        return "\(prefix)\(scoreDeltaFromPreviousDay) vs yesterday"
+    }
+
+    var scoreDeltaEffect: SQLifeScoreSignalEffect {
+        guard let scoreDeltaFromPreviousDay else { return .neutral }
+        if scoreDeltaFromPreviousDay > 0 {
+            return .positive
+        } else if scoreDeltaFromPreviousDay < 0 {
+            return .negative
+        }
+        return .neutral
+    }
 }
 
 struct SQLifeScoreMetricContributor: Identifiable, Hashable {

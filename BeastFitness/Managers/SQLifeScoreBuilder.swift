@@ -103,9 +103,9 @@ struct SQLifeScoreV2Builder {
             sleepData: input.sleepData,
             restingHeartRateSummaries: input.restingHeartRateSummaries
         )
-        let snapshot = latestSnapshot(
+        let snapshot = currentStateSnapshot(
             from: snapshots,
-            referenceDate: input.referenceDate
+            input: input
         )
         let personalizedResult = SQLifeScoreMetricContributorBuilder().buildContributors(
             from: snapshot,
@@ -120,7 +120,11 @@ struct SQLifeScoreV2Builder {
                 snapshots: snapshots,
                 referenceDate: input.referenceDate
             ),
-            habitsComponent(snapshot: snapshot),
+            habitsComponent(
+                snapshot: snapshot,
+                snapshots: snapshots,
+                referenceDate: input.referenceDate
+            ),
             dataConfidenceComponent(
                 snapshot: snapshot,
                 input: input,
@@ -557,15 +561,53 @@ struct SQLifeScoreV2Builder {
         }
     }
 
-    private func habitsComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
-        let signals: [ScoredSignal] = [
+    private func habitsComponent(
+        snapshot: SQInsightFeatureSnapshot?,
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> RawComponent? {
+        let signals = habitSignals(
+            in: snapshot,
+            recordedText: snapshot.map {
+                recordedAgeText(
+                    dayAge(
+                        from: $0.date,
+                        to: referenceDate
+                    )
+                )
+            }
+        )
+        let fallbackEvidence = signals.isEmpty
+            ? recentHabitEvidenceItems(
+                snapshots: snapshots,
+                referenceDate: referenceDate
+            )
+            : []
+
+        return component(
+            id: "habitsBehaviors",
+            title: "Habits / Behaviors",
+            signals: signals,
+            weight: 10,
+            fallbackScore: 74,
+            positiveScoreCap: 78,
+            fallbackEvidence: fallbackEvidence
+        )
+    }
+
+    private func habitSignals(
+        in snapshot: SQInsightFeatureSnapshot?,
+        recordedText: String? = nil
+    ) -> [ScoredSignal] {
+        [
             behaviorSignal(
                 signalId: SQMetricId.alcohol,
                 title: "Alcohol",
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.alcohol),
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 13), min: 25, max: 76) },
-                cap: 24
+                cap: 24,
+                recordedText: recordedText
             ),
             behaviorSignal(
                 signalId: SQMetricId.caffeine,
@@ -576,7 +618,8 @@ struct SQLifeScoreV2Builder {
                     if value <= 175 { return 76 }
                     return clamp(76 - ((value - 175) / 5.2), min: 32, max: 76)
                 },
-                cap: 13
+                cap: 13,
+                recordedText: recordedText
             ),
             behaviorSignal(
                 signalId: SQMetricId.weed,
@@ -584,7 +627,8 @@ struct SQLifeScoreV2Builder {
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.weed),
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
-                cap: 18
+                cap: 18,
+                recordedText: recordedText
             ),
             behaviorSignal(
                 signalId: SQMetricId.nicotine,
@@ -592,18 +636,93 @@ struct SQLifeScoreV2Builder {
                 rawValue: snapshot?.rawSignalValue(for: SQMetricId.nicotine),
                 neutralThrough: 0.05,
                 score: { clamp(76 - ($0 * 11), min: 30, max: 76) },
-                cap: 18
+                cap: 18,
+                recordedText: recordedText
             )
         ]
         .compactMap { $0 }
+    }
 
-        return component(
-            id: "habitsBehaviors",
-            title: "Habits / Behaviors",
-            signals: signals,
-            weight: 10,
-            fallbackScore: 74,
-            positiveScoreCap: 78
+    private func recentHabitEvidenceItems(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> [SQLifeScoreV2ComponentEvidence] {
+        let candidates = snapshots.flatMap { snapshot -> [(signal: ScoredSignal, age: Int)] in
+            let dayAge = dayAge(from: snapshot.date, to: referenceDate)
+            guard dayAge >= 0, dayAge <= 7 else { return [] }
+            return habitSignals(in: snapshot).map { ($0, dayAge) }
+        }
+
+        return candidates
+            .sorted {
+                if abs($0.signal.driverImpact) == abs($1.signal.driverImpact) {
+                    return $0.age < $1.age
+                }
+                return abs($0.signal.driverImpact) > abs($1.signal.driverImpact)
+            }
+            .prefix(2)
+            .enumerated()
+            .map { index, candidate in
+                let valueText: String
+                if let rawValueText = candidate.signal.rawValueText {
+                    valueText = "\(rawValueText) from Daily Check-In, \(recordedAgeText(candidate.age))"
+                } else {
+                    valueText = "Recorded \(recordedAgeText(candidate.age))"
+                }
+
+                return .init(
+                    title: candidate.signal.title,
+                    valueText: valueText,
+                    summary: "",
+                    effect: index == 0 && candidate.signal.driverImpact <= -5 ? .negative : .neutral
+                )
+            }
+    }
+
+    private func recordedAgeText(_ age: Int) -> String {
+        switch age {
+        case 0:
+            return "today"
+        case 1:
+            return "yesterday"
+        default:
+            return "\(age) days ago"
+        }
+    }
+
+    private func dayAge(from date: Date, to referenceDate: Date) -> Int {
+        let calendar = Calendar.current
+        let dateDay = calendar.startOfDay(for: date)
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        return calendar.dateComponents([.day], from: dateDay, to: referenceDay).day ?? Int.max
+    }
+
+    private func behaviorSignal(
+        signalId: String,
+        title: String,
+        rawValue: Double?,
+        neutralThrough: Double,
+        score: (Double) -> Double,
+        cap: Double,
+        recordedText: String? = nil
+    ) -> ScoredSignal? {
+        guard let rawValue else { return nil }
+        let resolvedScore = rawValue <= neutralThrough ? 76 : score(rawValue)
+        let rawValueText = [
+            signalValueText(signalId: signalId, rawValue: rawValue),
+            recordedText
+        ]
+        .compactMap { $0 }
+        .joined(separator: ", ")
+        return .init(
+            signalId: signalId,
+            title: title,
+            score: resolvedScore,
+            neutralScore: 74,
+            confidence: 0.8,
+            impactCap: cap,
+            rawValueText: rawValueText,
+            sourceText: sourceText(for: .userLogged)
         )
     }
 
@@ -647,7 +766,7 @@ struct SQLifeScoreV2Builder {
                 .init(
                     title: "Recent Logging",
                     valueText: "\(recentCheckInDays) check-in day\(recentCheckInDays == 1 ? "" : "s") in the last 7",
-                    summary: "LifeIQ uses recent check-ins and available HealthKit/workout signals to decide how complete today's score is.",
+                    summary: "",
                     effect: isLowConfidence ? .negative : .neutral
                 )
             ]
@@ -700,7 +819,8 @@ struct SQLifeScoreV2Builder {
         weight: Double,
         fallbackScore: Double?,
         fallbackConfidence: Double = 0.3,
-        positiveScoreCap: Double
+        positiveScoreCap: Double,
+        fallbackEvidence: [SQLifeScoreV2ComponentEvidence] = []
     ) -> RawComponent? {
         if signals.isEmpty {
             guard let fallbackScore else { return nil }
@@ -717,7 +837,7 @@ struct SQLifeScoreV2Builder {
                 negativeDrivers: negativeDrivers,
                 positiveCapHits: fallbackScore > positiveScoreCap ? [title] : [],
                 confidence: fallbackConfidence,
-                evidence: []
+                evidence: fallbackEvidence
             )
         }
 
@@ -911,6 +1031,32 @@ struct SQLifeScoreV2Builder {
             .max { $0.date < $1.date }
     }
 
+    private func currentStateSnapshot(
+        from snapshots: [SQInsightFeatureSnapshot],
+        input: SQHealthIntelligenceInput
+    ) -> SQInsightFeatureSnapshot? {
+        let latest = latestSnapshot(
+            from: snapshots,
+            referenceDate: input.referenceDate
+        )
+
+        guard input.timeRange == .today,
+              input.currentCheckInPromptPeriod != nil,
+              !input.hasCompletedCurrentPromptCheckIn else {
+            return latest
+        }
+
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: input.referenceDate)
+        if let latest, calendar.isDate(latest.date, inSameDayAs: referenceDay) {
+            return latest
+        }
+
+        return snapshots
+            .filter { calendar.isDate($0.date, inSameDayAs: referenceDay) }
+            .max { $0.date < $1.date }
+    }
+
     private func utilityScore(
         for signalId: String,
         in snapshot: SQInsightFeatureSnapshot?,
@@ -989,28 +1135,6 @@ struct SQLifeScoreV2Builder {
         clamp(40 + (value * 7), min: 30, max: 96)
     }
 
-    private func behaviorSignal(
-        signalId: String,
-        title: String,
-        rawValue: Double?,
-        neutralThrough: Double,
-        score: (Double) -> Double,
-        cap: Double
-    ) -> ScoredSignal? {
-        guard let rawValue else { return nil }
-        let resolvedScore = rawValue <= neutralThrough ? 76 : score(rawValue)
-        return .init(
-            signalId: signalId,
-            title: title,
-            score: resolvedScore,
-            neutralScore: 74,
-            confidence: 0.8,
-            impactCap: cap,
-            rawValueText: signalValueText(signalId: signalId, rawValue: rawValue),
-            sourceText: sourceText(for: .userLogged)
-        )
-    }
-
     private func evidenceItems(
         for signals: [ScoredSignal],
         componentTitle: String
@@ -1041,7 +1165,7 @@ struct SQLifeScoreV2Builder {
                 return .init(
                     title: signal.title,
                     valueText: valueText,
-                    summary: "\(signal.title) maps to \(signalScore)/100 for \(componentTitle.lowercased()).",
+                    summary: "",
                     effect: effect
                 )
             }
@@ -1207,8 +1331,14 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             input: intelligenceInput.withReferenceDate(startOfYesterday),
             currentScore: nil
         )
-        let components = v2Result.components.map(lifeScoreComponent)
-        let previousComponents = previousV2Result.components.map(lifeScoreComponent)
+        let previousV2ComponentsById = Dictionary(uniqueKeysWithValues: previousV2Result.components.map { ($0.id, $0) })
+        let components = v2Result.components.map { component in
+            lifeScoreComponent(
+                from: component,
+                previousComponent: previousV2ComponentsById[component.id]
+            )
+        }
+        let previousComponents = previousV2Result.components.map { lifeScoreComponent(from: $0) }
         let lifeScoreDrivers = v2Result.topDrivers.map(lifeScoreDriver)
         let totalWeight = components.reduce(0) { $0 + $1.weight }
         let scoreDeltaFromPreviousDay: Int? = {
@@ -1284,11 +1414,15 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         )
     }
 
-    private func lifeScoreComponent(from component: SQLifeScoreV2Component) -> SQLifeScoreComponent {
+    private func lifeScoreComponent(
+        from component: SQLifeScoreV2Component,
+        previousComponent: SQLifeScoreV2Component? = nil
+    ) -> SQLifeScoreComponent {
         .init(
             id: component.id,
             title: component.title,
             score: component.score,
+            scoreDeltaFromPreviousDay: previousComponent.map { component.score - $0.score },
             summary: lifeScoreComponentSummary(from: component),
             weight: component.weight,
             detailItems: lifeScoreComponentDetailItems(from: component)
@@ -1328,6 +1462,9 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         }
 
         guard evidenceItems.isEmpty else { return evidenceItems }
+        if component.id == "habitsBehaviors" {
+            return []
+        }
 
         return [
             .init(
@@ -1560,9 +1697,9 @@ private extension SQLifeScoreBuilder {
             ]
         case (_, .stress):
             options = [
-                "Stress signals are making the day feel heavier.",
-                "Mental load is a bigger part of today's pressure.",
-                "Stress and energy are pulling the day down."
+                "Mind and energy signals are a little lower today.",
+                "Energy or clarity may need more support today.",
+                "Mental load is part of today's pressure."
             ]
         case (_, .sleep):
             options = [
@@ -1649,28 +1786,35 @@ private extension SQLifeScoreBuilder {
             return nil
         }
 
-        let signalIds = Set(drivers.map(\.signalId) + changes.map(\.signalId))
+        let driverSignalIds = Set(drivers.map(\.signalId))
+        let negativeChangeSignalIds = Set(
+            changes
+                .filter { $0.direction == .worsened }
+                .map(\.signalId)
+        )
+        let pressureSignalIds = driverSignalIds.union(negativeChangeSignalIds)
 
         if (componentScore("dataConfidence", in: components) ?? 100) < 50 {
             return .lowData
         }
 
-        if signalIds.contains(where: isHabitPressureSignalId)
+        if pressureSignalIds.contains(where: isHabitPressureSignalId)
             || (componentScore("habitsBehaviors", in: components) ?? 100) < 60 {
             return .habits
         }
 
-        if signalIds.contains(where: isTrainingPressureSignalId)
+        if pressureSignalIds.contains(where: isTrainingPressureSignalId)
             || (componentScore("trainingPerformance", in: components) ?? 100) < 62
             || (componentScore("recoveryReadiness", in: components) ?? 100) < 58 {
             return .recoveryStrain
         }
 
-        if signalIds.contains(where: isStressPressureSignalId) {
+        if driverSignalIds.contains(where: isStressPressureSignalId)
+            || (componentScore("mindEnergy", in: components) ?? 100) < 66 {
             return .stress
         }
 
-        if signalIds.contains(where: isSleepPressureSignalId)
+        if pressureSignalIds.contains(where: isSleepPressureSignalId)
             || (componentScore("sleep", in: components) ?? 100) < 72 {
             return .sleep
         }
