@@ -463,11 +463,11 @@ struct SQLifeScoreViewModel {
     }
 
     var supportiveDrivers: [SQInsightDriver] {
-        drivers.filter { $0.direction == .supportive }
+        drivers.filter { $0.direction == .supportive && $0.effectMagnitude >= 0.5 }
     }
 
     var dragDrivers: [SQInsightDriver] {
-        drivers.filter { $0.direction == .drag }
+        drivers.filter { $0.direction == .drag && $0.effectMagnitude >= 0.5 }
     }
 
     var scoreDeltaText: String? {

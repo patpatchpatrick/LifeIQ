@@ -211,9 +211,12 @@ The v2 model is intended to compare the current weighted score against a more st
 - Personalized Metrics
 
 V2 calibration rules:
+- Life Score should represent whether the user is on track and headed in a positive direction across health, habits, recovery, training, and self-reported state.
 - Life Score should be wellbeing/readiness first and habit compliance second.
 - Resting HR is useful supporting evidence, but it should not dominate when sleep, stress, recovery/readiness, or training strain already explain the same pressure.
 - The preset Recovery metric is stored under the legacy `metric.soreness` id, but product semantics are higher-is-better recovery/readiness.
+- Training Load / Performance should include recent workout carryover for roughly 2-3 days with decay; today counts most, yesterday counts moderately, two days ago counts lightly, and three days ago should barely move the component unless the workout signal was unusually strong. More training, strong performance, and recent HealthKit activity are generally supportive "on-track" signals, including as low-strength activity evidence when no user-entered performance/difficulty rating exists. Training should become a Life Score drag only when the broader recent context suggests overreaching, poor recovery, repeated high-intensity strain, or too many days of inactivity. Normal rest days should not be penalized.
+- Zero-impact signals should not appear as Life Score drivers. A neutral fallback can keep a component steady, but it should not show as a red "What's Driving It" item.
 - Habit effects are capped so alcohol/caffeine/nicotine/weed can explain the day without turning the score into a generic compliance grade.
 - Custom metrics remain a capped personalization layer.
 - Sparse or inconsistent logging should lower confidence and appear as a diagnostic, not silently masquerade as precision.

@@ -251,6 +251,7 @@ struct SQLifeScoreDetailView: View {
         component.detailItems.count >= 3
             || component.id == "sleep"
             || component.id == "workouts"
+            || component.id == "trainingPerformance"
     }
 
     private func componentCard(_ component: SQLifeScoreComponent) -> some View {

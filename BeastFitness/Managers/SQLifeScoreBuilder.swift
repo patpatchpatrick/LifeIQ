@@ -116,7 +116,10 @@ struct SQLifeScoreV2Builder {
             sleepComponent(snapshot: snapshot),
             recoveryComponent(snapshot: snapshot, snapshots: snapshots),
             mindEnergyComponent(snapshot: snapshot),
-            trainingComponent(snapshot: snapshot),
+            trainingComponent(
+                snapshots: snapshots,
+                referenceDate: input.referenceDate
+            ),
             habitsComponent(snapshot: snapshot),
             dataConfidenceComponent(
                 snapshot: snapshot,
@@ -326,55 +329,232 @@ struct SQLifeScoreV2Builder {
         )
     }
 
-    private func trainingComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
-        var signals = [ScoredSignal]()
-
-        if let performance = snapshot?.averageWorkoutPerformance {
-            signals.append(
-                .init(
-                    signalId: SQInsightAnalysisMetricId.workoutPerformance,
-                    title: "Workout Performance",
-                    score: clamp((performance / 10) * 100, min: 0, max: 100),
-                    neutralScore: 72,
-                    confidence: 0.8,
-                    impactCap: 18,
-                    rawValueText: signalValueText(
-                        signalId: SQInsightAnalysisMetricId.workoutPerformance,
-                        rawValue: performance
-                    ),
-                    sourceText: sourceText(for: .workoutDerived)
-                )
-            )
-        }
-
-        if let difficulty = snapshot?.averageWorkoutDifficulty {
-            signals.append(
-                .init(
-                    signalId: SQInsightAnalysisMetricId.workoutDifficulty,
-                    title: "Workout Difficulty",
-                    score: clamp(112 - (difficulty * 8.5), min: 20, max: 96),
-                    neutralScore: 72,
-                    confidence: 0.8,
-                    impactCap: 18,
-                    rawValueText: signalValueText(
-                        signalId: SQInsightAnalysisMetricId.workoutDifficulty,
-                        rawValue: difficulty
-                    ),
-                    sourceText: sourceText(for: .workoutDerived)
-                )
-            )
-        }
-
-        let fallback = snapshot?.hasWorkout == true ? nil : 72.0
+    private func trainingComponent(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> RawComponent? {
+        let signals = recentWorkoutSignals(
+            snapshots: snapshots,
+            referenceDate: referenceDate
+        )
+        let fallback = signals.isEmpty
+            ? trainingFallbackScore(snapshots: snapshots, referenceDate: referenceDate)
+            : nil
         return component(
             id: "trainingPerformance",
             title: "Training Load / Performance",
             signals: signals,
-            weight: snapshot?.hasWorkout == true ? 15 : 4,
+            weight: signals.isEmpty ? trainingFallbackWeight(fallback) : 15,
             fallbackScore: fallback,
-            fallbackConfidence: snapshot?.hasWorkout == true ? 0.8 : 0.35,
+            fallbackConfidence: signals.isEmpty ? 0.35 : 0.8,
             positiveScoreCap: 88
         )
+    }
+
+    private func recentWorkoutSignals(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> [ScoredSignal] {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+
+        let recentWorkoutSnapshots = snapshots.compactMap { candidate -> (snapshot: SQInsightFeatureSnapshot, age: Int, decay: Double)? in
+            guard candidate.hasWorkout else { return nil }
+            let candidateDay = calendar.startOfDay(for: candidate.date)
+            let dayAge = calendar.dateComponents([.day], from: candidateDay, to: referenceDay).day ?? Int.max
+            guard dayAge >= 0, dayAge <= 3 else { return nil }
+            guard let decay = workoutCarryoverDecay(dayAge: dayAge) else { return nil }
+            return (candidate, dayAge, decay)
+        }
+
+        let performanceSignals = recentWorkoutSnapshots.compactMap { candidate -> ScoredSignal? in
+            guard let performance = candidate.snapshot.averageWorkoutPerformance else { return nil }
+            let rawScore = workoutPerformanceScore(performance)
+            let score = decayedScore(rawScore, neutralScore: 72, decay: candidate.decay)
+            return .init(
+                signalId: SQInsightAnalysisMetricId.workoutPerformance,
+                title: candidate.age == 0 ? "Workout Performance" : "Recent Workout Performance",
+                score: score,
+                neutralScore: 72,
+                confidence: 0.8 * max(0.45, candidate.decay),
+                impactCap: 18,
+                rawValueText: "\(signalValueText(signalId: SQInsightAnalysisMetricId.workoutPerformance, rawValue: performance)), \(workoutAgeText(candidate.age))",
+                sourceText: sourceText(for: .workoutDerived)
+            )
+        }
+
+        let loadSignals = recentWorkoutSnapshots.compactMap { candidate -> ScoredSignal? in
+            guard let difficulty = candidate.snapshot.averageWorkoutDifficulty else { return nil }
+            let rawScore = trainingLoadScore(difficulty)
+            let score = decayedScore(rawScore, neutralScore: 72, decay: candidate.decay)
+            return .init(
+                signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+                title: candidate.age == 0 ? "Training Load" : "Recent Training Load",
+                score: score,
+                neutralScore: 72,
+                confidence: 0.8 * max(0.45, candidate.decay),
+                impactCap: 10,
+                rawValueText: "\(signalValueText(signalId: SQInsightAnalysisMetricId.workoutDifficulty, rawValue: difficulty)), \(workoutAgeText(candidate.age))",
+                sourceText: sourceText(for: .workoutDerived)
+            )
+        }
+
+        let ratedSignals = strongestSignals(performanceSignals, limit: 1)
+            + strongestSignals(loadSignals, limit: 1)
+            + trainingStrainSignals(from: recentWorkoutSnapshots)
+        guard ratedSignals.isEmpty else { return ratedSignals }
+
+        let activitySignals = recentWorkoutSnapshots.map { candidate -> ScoredSignal in
+            let rawScore = min(78, 76 + Double(max(0, candidate.snapshot.workoutCount - 1)))
+            let score = decayedScore(rawScore, neutralScore: 72, decay: candidate.decay)
+            let workoutLabel = candidate.snapshot.workoutCount == 1 ? "1 workout" : "\(candidate.snapshot.workoutCount) workouts"
+            return .init(
+                signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+                title: candidate.age == 0 ? "Workout Activity" : "Recent Workout Activity",
+                score: score,
+                neutralScore: 72,
+                confidence: 0.55 * max(0.45, candidate.decay),
+                impactCap: 6,
+                rawValueText: "\(workoutLabel), \(workoutAgeText(candidate.age))",
+                sourceText: sourceText(for: .workoutDerived)
+            )
+        }
+
+        return strongestSignals(activitySignals, limit: 1)
+    }
+
+    private func trainingFallbackScore(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> Double {
+        guard let latestWorkoutAge = latestWorkoutDayAge(
+            snapshots: snapshots,
+            referenceDate: referenceDate
+        ) else {
+            return 70
+        }
+
+        switch latestWorkoutAge {
+        case 0...3:
+            return 72
+        case 4...5:
+            return 70
+        case 6...9:
+            return 66
+        default:
+            return 62
+        }
+    }
+
+    private func trainingFallbackWeight(_ fallbackScore: Double?) -> Double {
+        guard let fallbackScore else { return 4 }
+        return fallbackScore < 68 ? 8 : 5
+    }
+
+    private func latestWorkoutDayAge(
+        snapshots: [SQInsightFeatureSnapshot],
+        referenceDate: Date
+    ) -> Int? {
+        let calendar = Calendar.current
+        let referenceDay = calendar.startOfDay(for: referenceDate)
+        return snapshots
+            .filter(\.hasWorkout)
+            .compactMap { snapshot -> Int? in
+                let snapshotDay = calendar.startOfDay(for: snapshot.date)
+                let dayAge = calendar.dateComponents([.day], from: snapshotDay, to: referenceDay).day
+                guard let dayAge, dayAge >= 0 else { return nil }
+                return dayAge
+            }
+            .min()
+    }
+
+    private func workoutPerformanceScore(_ performance: Double) -> Double {
+        clamp(70 + ((performance - 5) * 4.8), min: 62, max: 94)
+    }
+
+    private func trainingLoadScore(_ difficulty: Double) -> Double {
+        clamp(75 + (min(difficulty, 8.5) * 0.9), min: 74, max: 83)
+    }
+
+    private func trainingStrainSignals(
+        from recentWorkoutSnapshots: [(snapshot: SQInsightFeatureSnapshot, age: Int, decay: Double)]
+    ) -> [ScoredSignal] {
+        let highIntensityDays = recentWorkoutSnapshots
+            .filter { $0.age <= 2 }
+            .compactMap { candidate -> Double? in
+                let intensity = max(
+                    candidate.snapshot.averageWorkoutDifficulty ?? 0,
+                    candidate.snapshot.averageWorkoutPerformance ?? 0
+                )
+                return intensity >= 9 ? intensity : nil
+            }
+
+        guard highIntensityDays.count >= 2 else { return [] }
+
+        let averageIntensity = highIntensityDays.reduce(0, +) / Double(highIntensityDays.count)
+        let score = clamp(
+            72 - (Double(highIntensityDays.count - 1) * 7) - (max(0, averageIntensity - 9) * 4),
+            min: 55,
+            max: 66
+        )
+
+        return [
+            .init(
+                signalId: SQInsightAnalysisMetricId.workoutDifficulty,
+                title: "Training Strain",
+                score: score,
+                neutralScore: 72,
+                confidence: 0.78,
+                impactCap: 14,
+                rawValueText: "\(highIntensityDays.count) high-intensity workout days in the last 3 days",
+                sourceText: sourceText(for: .workoutDerived)
+            )
+        ]
+    }
+
+    private func workoutCarryoverDecay(dayAge: Int) -> Double? {
+        switch dayAge {
+        case 0:
+            return 1.0
+        case 1:
+            return 0.65
+        case 2:
+            return 0.35
+        case 3:
+            return 0.15
+        default:
+            return nil
+        }
+    }
+
+    private func decayedScore(
+        _ score: Double,
+        neutralScore: Double,
+        decay: Double
+    ) -> Double {
+        neutralScore + ((score - neutralScore) * decay)
+    }
+
+    private func strongestSignals(
+        _ signals: [ScoredSignal],
+        limit: Int
+    ) -> [ScoredSignal] {
+        Array(
+            signals
+                .sorted { abs($0.driverImpact) > abs($1.driverImpact) }
+                .prefix(limit)
+        )
+    }
+
+    private func workoutAgeText(_ age: Int) -> String {
+        switch age {
+        case 0:
+            return "today"
+        case 1:
+            return "yesterday"
+        default:
+            return "\(age) days ago"
+        }
     }
 
     private func habitsComponent(snapshot: SQInsightFeatureSnapshot?) -> RawComponent? {
@@ -525,13 +705,16 @@ struct SQLifeScoreV2Builder {
         if signals.isEmpty {
             guard let fallbackScore else { return nil }
             let cappedScore = min(fallbackScore, positiveScoreCap)
+            let negativeDrivers = fallbackScore < neutralScore(for: id) - 0.5
+                ? ["No recent \(title.lowercased()) signal"]
+                : []
             return .init(
                 id: id,
                 title: title,
                 score: cappedScore,
                 weight: weight,
                 positiveDrivers: [],
-                negativeDrivers: ["No recent \(title.lowercased()) signal"],
+                negativeDrivers: negativeDrivers,
                 positiveCapHits: fallbackScore > positiveScoreCap ? [title] : [],
                 confidence: fallbackConfidence,
                 evidence: []
@@ -591,6 +774,8 @@ struct SQLifeScoreV2Builder {
 
         for component in components {
             for title in component.negativeDrivers {
+                let scoreImpact = Double(component.score) - neutralScore(for: component.id)
+                guard abs(scoreImpact) >= 0.5 else { continue }
                 drivers.append(
                     .init(
                         id: "v2.\(component.id).negative.\(title)",
@@ -599,7 +784,7 @@ struct SQLifeScoreV2Builder {
                         componentId: component.id,
                         kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .negative,
-                        scoreImpact: Double(component.score) - neutralScore(for: component.id),
+                        scoreImpact: scoreImpact,
                         summary: "\(title) is pulling down \(component.title)."
                     )
                 )
@@ -607,6 +792,8 @@ struct SQLifeScoreV2Builder {
 
             guard component.id != "dataConfidence" else { continue }
             for title in component.positiveDrivers {
+                let scoreImpact = (Double(component.score) - neutralScore(for: component.id)) * 0.6
+                guard abs(scoreImpact) >= 0.5 else { continue }
                 drivers.append(
                     .init(
                         id: "v2.\(component.id).positive.\(title)",
@@ -615,7 +802,7 @@ struct SQLifeScoreV2Builder {
                         componentId: component.id,
                         kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .positive,
-                        scoreImpact: (Double(component.score) - neutralScore(for: component.id)) * 0.6,
+                        scoreImpact: scoreImpact,
                         summary: "\(title) is supporting \(component.title)."
                     )
                 )
@@ -624,18 +811,21 @@ struct SQLifeScoreV2Builder {
 
         let lowDataComponent = components.first { $0.id == "dataConfidence" }
         if let lowDataComponent, lowDataComponent.score < 65 {
-            drivers.append(
-                .init(
-                    id: "v2.dataConfidence.lowData",
-                    title: "Low Data Confidence",
-                    signalId: "insight.dataConfidence",
-                    componentId: "dataConfidence",
-                    kind: .dataConfidence,
-                    effect: .negative,
-                    scoreImpact: Double(lowDataComponent.score) - neutralScore(for: "dataConfidence"),
-                    summary: "Missing or inconsistent logs are lowering confidence in the score."
+            let scoreImpact = Double(lowDataComponent.score) - neutralScore(for: "dataConfidence")
+            if abs(scoreImpact) >= 0.5 {
+                drivers.append(
+                    .init(
+                        id: "v2.dataConfidence.lowData",
+                        title: "Low Data Confidence",
+                        signalId: "insight.dataConfidence",
+                        componentId: "dataConfidence",
+                        kind: .dataConfidence,
+                        effect: .negative,
+                        scoreImpact: scoreImpact,
+                        summary: "Missing or inconsistent logs are lowering confidence in the score."
+                    )
                 )
-            )
+            }
         }
 
         if abs(personalizedResult.customMetricContributionTotal) >= 0.5,
@@ -959,9 +1149,9 @@ struct SQLifeScoreV2Builder {
             return SQMetricId.stress
         case "Anxiety":
             return SQMetricId.anxiety
-        case "Workout Performance":
+        case "Workout Performance", "Recent Workout Performance":
             return SQInsightAnalysisMetricId.workoutPerformance
-        case "Workout Difficulty":
+        case "Workout Difficulty", "Training Load", "Recent Training Load", "Training Strain", "Workout Activity", "Recent Workout Activity":
             return SQInsightAnalysisMetricId.workoutDifficulty
         case "Alcohol":
             return SQMetricId.alcohol
@@ -1072,6 +1262,12 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             subtitle = "A read on how your sleep, recovery, mind, habits, and training are lining up right now."
         }
 
+        let visibleDrivers = alignedHeroDrivers(
+            primaryInsight: primaryInsight,
+            drivers: lifeScoreDrivers
+        )
+        .filter { $0.effectMagnitude >= 0.5 }
+
         return .init(
             score: roundedScore,
             scoreDeltaFromPreviousDay: scoreDeltaFromPreviousDay,
@@ -1081,10 +1277,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             components: components.sorted { $0.weight > $1.weight },
             headlineText: headlineText,
             primaryInsight: primaryInsight,
-            drivers: alignedHeroDrivers(
-                primaryInsight: primaryInsight,
-                drivers: lifeScoreDrivers
-            ),
+            drivers: visibleDrivers,
             changes: Array(input.insightsResult.changes.prefix(2)),
             actions: heroAction.map { [$0] } ?? alignedActions,
             availableWeight: totalWeight
