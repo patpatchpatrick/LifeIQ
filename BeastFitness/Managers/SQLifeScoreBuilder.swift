@@ -1501,11 +1501,11 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             subtitle = "A read on how your sleep, recovery, mind, habits, and training are lining up right now."
         }
 
-        let visibleDrivers = alignedHeroDrivers(
-            primaryInsight: primaryInsight,
-            drivers: lifeScoreDrivers
+        let visibleDrivers = topLifeScoreDrivers(lifeScoreDrivers)
+        let visibleChanges = topLifeScoreChanges(
+            input: intelligenceInput,
+            fallbackChanges: input.insightsResult.changes
         )
-        .filter { $0.effectMagnitude >= 0.5 }
         let displayComponents = lifeScoreDisplayComponents(
             components.sorted { $0.weight > $1.weight }
         )
@@ -1521,7 +1521,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             primaryInsight: primaryInsight,
             driverTimeframeText: lifeScoreDriverTimeframeText(for: visibleDrivers),
             drivers: visibleDrivers,
-            changes: Array(input.insightsResult.changes.prefix(2)),
+            changes: visibleChanges,
             actions: heroAction.map { [$0] } ?? alignedActions,
             availableWeight: totalWeight
         )
@@ -1609,6 +1609,67 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         }
 
         return "Today"
+    }
+
+    private func topLifeScoreDrivers(_ drivers: [SQInsightDriver]) -> [SQInsightDriver] {
+        Array(
+            drivers
+                .filter { $0.effectMagnitude >= 0.5 }
+                .sorted(by: lifeScoreDriverImpactRanked)
+                .prefix(3)
+        )
+    }
+
+    private func topLifeScoreChanges(_ changes: [SQInsightChange]) -> [SQInsightChange] {
+        Array(
+            changes
+                .sorted(by: lifeScoreChangeImpactRanked)
+                .prefix(3)
+        )
+    }
+
+    private func topLifeScoreChanges(
+        input: SQHealthIntelligenceInput,
+        fallbackChanges: [SQInsightChange]
+    ) -> [SQInsightChange] {
+        let snapshots = SQInsightFeatureBuilder().makeFeatureSnapshots(
+            checkIns: input.checkIns,
+            workouts: input.workouts,
+            metricDefinitions: input.metricDefinitions,
+            sleepData: input.sleepData,
+            restingHeartRateSummaries: input.restingHeartRateSummaries
+        )
+        let rawChanges = SQInsightChangeBuilder().buildChanges(
+            from: snapshots,
+            surfaceIntent: input.timeRange.insightSurfaceIntent,
+            referenceDate: input.referenceDate
+        )
+
+        return topLifeScoreChanges(rawChanges.isEmpty ? fallbackChanges : rawChanges)
+    }
+
+    private func lifeScoreDriverImpactRanked(_ lhs: SQInsightDriver, _ rhs: SQInsightDriver) -> Bool {
+        if lhs.effectMagnitude != rhs.effectMagnitude {
+            return lhs.effectMagnitude > rhs.effectMagnitude
+        }
+
+        if lhs.rankingScore != rhs.rankingScore {
+            return lhs.rankingScore > rhs.rankingScore
+        }
+
+        return lhs.title < rhs.title
+    }
+
+    private func lifeScoreChangeImpactRanked(_ lhs: SQInsightChange, _ rhs: SQInsightChange) -> Bool {
+        if lhs.effectMagnitude != rhs.effectMagnitude {
+            return lhs.effectMagnitude > rhs.effectMagnitude
+        }
+
+        if lhs.rankingScore != rhs.rankingScore {
+            return lhs.rankingScore > rhs.rankingScore
+        }
+
+        return lhs.title < rhs.title
     }
 
     private func lifeScoreComponentDetailItems(from component: SQLifeScoreV2Component) -> [SQLifeScoreDetailItem] {
@@ -2503,119 +2564,6 @@ private extension SQLifeScoreBuilder {
         return "Complete your \(periodTitle) check-in to refine today's score."
     }
 
-    func alignedHeroDrivers(
-        primaryInsight: SQInsight?,
-        drivers: [SQInsightDriver]
-    ) -> [SQInsightDriver] {
-        guard let primaryInsight else { return Array(drivers.prefix(3)) }
-
-        let normalizedInsightText = normalizedHeroMatchText(
-            [
-                primaryInsight.title,
-                primaryInsight.summary,
-                primaryInsight.driverText,
-                primaryInsight.outcomeText
-            ]
-            .joined(separator: " ")
-        )
-
-        let exactMatches = drivers.filter { driver in
-            let driverTitle = normalizedHeroMatchText(driver.title)
-            return normalizedInsightText.contains(driverTitle)
-        }
-
-        let categoryMatches = drivers.filter { driver in
-            driver.category == primaryInsight.category && !exactMatches.contains(driver)
-        }
-
-        let remainingDrivers = drivers.filter { driver in
-            !exactMatches.contains(driver) && !categoryMatches.contains(driver)
-        }
-
-        var alignedDrivers = exactMatches + categoryMatches + remainingDrivers
-
-        if let synthesizedDriver = synthesizedHeroDriver(from: primaryInsight) {
-            let normalizedSynthesizedTitle = normalizedHeroMatchText(synthesizedDriver.title)
-
-            alignedDrivers.removeAll { driver in
-                normalizedHeroMatchText(driver.title) == normalizedSynthesizedTitle
-            }
-
-            alignedDrivers.insert(synthesizedDriver, at: 0)
-        }
-
-        return Array(alignedDrivers.prefix(3))
-    }
-
-    func synthesizedHeroDriver(from primaryInsight: SQInsight) -> SQInsightDriver? {
-        let normalizedText = normalizedHeroMatchText(
-            [
-                primaryInsight.title,
-                primaryInsight.summary,
-                primaryInsight.driverText,
-                primaryInsight.outcomeText
-            ]
-            .joined(separator: " ")
-        )
-
-        let synthesizedTitle: String
-        let signalId: String
-
-        if normalizedText.contains("sleep") {
-            synthesizedTitle = "Sleep"
-            signalId = SQMetricId.sleepQuality
-        } else if normalizedText.contains("resting hr") || normalizedText.contains("resting heart") {
-            synthesizedTitle = "Resting HR"
-            signalId = SQInsightAnalysisMetricId.restingHeartRate
-        } else if normalizedText.contains("energy") {
-            synthesizedTitle = "Energy"
-            signalId = SQMetricId.energy
-        } else if normalizedText.contains("mental clarity") || normalizedText.contains("clarity") {
-            synthesizedTitle = "Mental Clarity"
-            signalId = SQMetricId.mentalClarity
-        } else if normalizedText.contains("mood") {
-            synthesizedTitle = "Mood"
-            signalId = SQMetricId.mood
-        } else if normalizedText.contains("motivation") {
-            synthesizedTitle = "Motivation"
-            signalId = SQMetricId.motivation
-        } else if normalizedText.contains("stress") {
-            synthesizedTitle = "Stress"
-            signalId = SQMetricId.stress
-        } else if normalizedText.contains("anxiety") {
-            synthesizedTitle = "Anxiety"
-            signalId = SQMetricId.anxiety
-        } else if normalizedText.contains("soreness") {
-            synthesizedTitle = "Recovery"
-            signalId = SQMetricId.soreness
-        } else if normalizedText.contains("recovery") {
-            synthesizedTitle = "Recovery"
-            signalId = "hero.recovery"
-        } else if normalizedText.contains("strain") {
-            synthesizedTitle = "Strain"
-            signalId = "hero.strain"
-        } else if normalizedText.contains("performance") {
-            synthesizedTitle = "Performance"
-            signalId = SQInsightAnalysisMetricId.workoutPerformance
-        } else {
-            return nil
-        }
-
-        return .init(
-            id: "hero-synth-\(signalId)",
-            signalId: signalId,
-            title: synthesizedTitle,
-            summary: primaryInsight.summary,
-            category: primaryInsight.category,
-            direction: primaryInsight.effect == .negative ? .drag : .supportive,
-            recentAverage: 0,
-            baselineAverage: 0,
-            deltaText: primaryInsight.deltaText,
-            effectMagnitude: 0,
-            rankingScore: primaryInsight.rankingScore
-        )
-    }
-
     func normalizedHeroMatchText(_ text: String) -> String {
         text.lowercased()
             .replacingOccurrences(of: "sleep quality", with: "sleep")
@@ -2691,9 +2639,9 @@ private extension SQLifeScoreBuilder {
         let hasStackedMajorPressure = hasRecoveryDrag
             && (majorMentalPressure || majorTrainingPressure)
             && score < 78
-        let allowsUnderPressure = score < 78
-            || severeNegativeComponentCount >= 2
-            || (score < 88 && severeNegativeComponentCount >= 1 && majorPressureCount >= 2)
+        let allowsUnderPressure = score < 68
+            || (score < 72 && severeNegativeComponentCount >= 2)
+            || (score < 72 && severeNegativeComponentCount >= 1 && majorPressureCount >= 2)
 
         if positiveMomentum
             && score >= 70
@@ -2704,10 +2652,11 @@ private extension SQLifeScoreBuilder {
 
         if allowsUnderPressure && (
             score < 50
-                || (majorPressureCount >= 2 && score < 78)
-                || (severeNegativeComponentCount >= 1 && score < 78)
-                || hasStackedMajorPressure
-                || ((habitsScore ?? 100) < 40 && (sleepScore ?? 100) < 65 && score < 78)
+                || (majorPressureCount >= 2 && score < 70)
+                || (severeNegativeComponentCount >= 2 && score < 72)
+                || (severeNegativeComponentCount >= 1 && score < 64)
+                || (hasStackedMajorPressure && score < 70)
+                || ((habitsScore ?? 100) < 40 && (sleepScore ?? 100) < 65 && score < 70)
         ) {
             return .underPressure
         }

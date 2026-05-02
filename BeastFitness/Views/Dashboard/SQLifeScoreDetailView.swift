@@ -79,11 +79,7 @@ struct SQLifeScoreDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: .SQSpace.m) {
-                ForEach(controller.viewModel.supportiveDrivers) { driver in
-                    driverRow(driver)
-                }
-
-                ForEach(controller.viewModel.dragDrivers) { driver in
+                ForEach(controller.viewModel.drivers) { driver in
                     driverRow(driver)
                 }
             }

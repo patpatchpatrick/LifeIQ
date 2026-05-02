@@ -88,6 +88,46 @@ final class BeastFitnessTests: XCTestCase {
         XCTAssertEqual(contributor.effect, SQLifeScoreSignalEffect.negative)
     }
 
+    func testInsightChangesDoNotBorrowOlderMetricLogsForRecentWindow() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let startDate = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 5, day: 1)))
+
+        func snapshot(dayOffset: Int, values: [String: Double]) throws -> SQInsightFeatureSnapshot {
+            let date = try XCTUnwrap(calendar.date(byAdding: .day, value: dayOffset, to: startDate))
+            return SQInsightFeatureSnapshot(
+                date: date,
+                anchorDayKey: date.anchorDayKey(),
+                rawSignalValues: values,
+                normalizedSignalValues: values,
+                signalFeatures: [:],
+                workoutCount: 0,
+                averageWorkoutPerformance: nil,
+                workoutPerformanceActivityTypeRaw: nil,
+                averageWorkoutDifficulty: nil,
+                workoutDifficultyActivityTypeRaw: nil
+            )
+        }
+
+        let snapshots = [
+            try snapshot(dayOffset: 0, values: [SQMetricId.alcohol: 0]),
+            try snapshot(dayOffset: 1, values: [SQMetricId.alcohol: 0]),
+            try snapshot(dayOffset: 2, values: [SQMetricId.alcohol: 0]),
+            try snapshot(dayOffset: 3, values: [SQMetricId.alcohol: 2]),
+            try snapshot(dayOffset: 4, values: [SQMetricId.alcohol: 2]),
+            try snapshot(dayOffset: 5, values: [SQMetricId.mood: 6]),
+            try snapshot(dayOffset: 6, values: [SQMetricId.mood: 6])
+        ]
+        let referenceDate = try XCTUnwrap(calendar.date(byAdding: .day, value: 6, to: startDate))
+
+        let changes = SQInsightChangeBuilder().buildChanges(
+            from: snapshots,
+            surfaceIntent: .today,
+            referenceDate: referenceDate
+        )
+
+        XCTAssertFalse(changes.contains { $0.signalId == SQMetricId.alcohol })
+    }
+
 }
 
 @MainActor

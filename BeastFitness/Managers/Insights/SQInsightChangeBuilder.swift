@@ -11,7 +11,8 @@ import HealthKit
 protocol SQInsightChangeBuilding {
     func buildChanges(
         from snapshots: [SQInsightFeatureSnapshot],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date?
     ) -> [SQInsightChange]
 }
 
@@ -39,7 +40,8 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
 
     func buildChanges(
         from snapshots: [SQInsightFeatureSnapshot],
-        surfaceIntent: SQInsightSurfaceIntent
+        surfaceIntent: SQInsightSurfaceIntent,
+        referenceDate: Date?
     ) -> [SQInsightChange] {
         let window = window(for: surfaceIntent)
 
@@ -47,7 +49,8 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             buildChange(
                 definition: definition,
                 snapshots: snapshots,
-                window: window
+                window: window,
+                referenceDate: referenceDate
             )
         }
         .sorted { $0.rankingScore > $1.rankingScore }
@@ -56,28 +59,26 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
     private func buildChange(
         definition: ChangeDefinition,
         snapshots: [SQInsightFeatureSnapshot],
-        window: (recentCount: Int, priorCount: Int)
+        window: (recentCount: Int, priorCount: Int),
+        referenceDate: Date?
     ) -> SQInsightChange? {
-        let observations = snapshots.compactMap { snapshot -> SignalObservation? in
-            guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
-            return .init(
-                value: value,
-                rankingValue: rankingValue(
-                    for: definition.signalId,
-                    rawValue: value,
-                    snapshot: snapshot
-                ),
-                activityType: snapshot.workoutActivityType(for: definition.signalId)
-            )
-        }
-
         let minimumRequired = max(definition.minimumSampleCount, 2)
-        guard observations.count >= max(window.recentCount + window.priorCount, minimumRequired * 2) else {
+        guard let snapshotWindows = snapshotWindows(
+            from: snapshots,
+            window: window,
+            referenceDate: referenceDate
+        ) else {
             return nil
         }
 
-        var recentValues = Array(observations.suffix(window.recentCount))
-        var priorValues = Array(observations.dropLast(window.recentCount).suffix(window.priorCount))
+        var recentValues = observations(
+            in: snapshotWindows.recent,
+            definition: definition
+        )
+        var priorValues = observations(
+            in: snapshotWindows.prior,
+            definition: definition
+        )
 
         var title = definition.title
         if definition.signalId == SQInsightAnalysisMetricId.workoutPerformance,
@@ -146,6 +147,61 @@ struct SQInsightChangeBuilder: SQInsightChangeBuilding {
             return (recentCount: 3, priorCount: 4)
         case .pastYear:
             return (recentCount: 7, priorCount: 14)
+        }
+    }
+
+    private func snapshotWindows(
+        from snapshots: [SQInsightFeatureSnapshot],
+        window: (recentCount: Int, priorCount: Int),
+        referenceDate: Date?
+    ) -> (recent: [SQInsightFeatureSnapshot], prior: [SQInsightFeatureSnapshot])? {
+        let calendar = Calendar.current
+        let sortedSnapshots = snapshots.sorted {
+            if $0.date == $1.date {
+                return $0.anchorDayKey < $1.anchorDayKey
+            }
+
+            return $0.date < $1.date
+        }
+        guard let latestSnapshotDate = sortedSnapshots.last?.date else { return nil }
+
+        let anchorDay = calendar.startOfDay(for: referenceDate ?? latestSnapshotDate)
+        guard
+            let recentStart = calendar.date(byAdding: .day, value: -(window.recentCount - 1), to: anchorDay),
+            let priorEnd = calendar.date(byAdding: .day, value: -window.recentCount, to: anchorDay),
+            let priorStart = calendar.date(byAdding: .day, value: -(window.recentCount + window.priorCount - 1), to: anchorDay)
+        else {
+            return nil
+        }
+
+        let recentSnapshots = sortedSnapshots.filter { snapshot in
+            let snapshotDay = calendar.startOfDay(for: snapshot.date)
+            return snapshotDay >= recentStart && snapshotDay <= anchorDay
+        }
+        let priorSnapshots = sortedSnapshots.filter { snapshot in
+            let snapshotDay = calendar.startOfDay(for: snapshot.date)
+            return snapshotDay >= priorStart && snapshotDay <= priorEnd
+        }
+
+        return (recentSnapshots, priorSnapshots)
+    }
+
+    private func observations(
+        in snapshots: [SQInsightFeatureSnapshot],
+        definition: ChangeDefinition
+    ) -> [SignalObservation] {
+        snapshots.compactMap { snapshot -> SignalObservation? in
+            guard let value = snapshot.rawSignalValue(for: definition.signalId) else { return nil }
+
+            return .init(
+                value: value,
+                rankingValue: rankingValue(
+                    for: definition.signalId,
+                    rawValue: value,
+                    snapshot: snapshot
+                ),
+                activityType: snapshot.workoutActivityType(for: definition.signalId)
+            )
         }
     }
 

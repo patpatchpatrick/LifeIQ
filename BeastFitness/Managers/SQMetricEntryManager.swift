@@ -97,6 +97,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
         }
 
         SQLogger.shared.log("Saved \(entries.count) entries in \(affectedDays.count) day bucket(s)", .info, context: .dailyCheckIn)
+        hub.metricEvents.send(.metricEntriesUpdated)
     }
 
     func saveDailyCheckInStats(stats: SQDailyCheckInStats, to context: ModelContext) async throws {
@@ -253,6 +254,7 @@ final class SQMetricEntryManager: SQMetricEntryManaging {
             .info,
             context: .dailyCheckIn
         )
+        hub.metricEvents.send(.metricEntriesUpdated)
     }
 
     // MARK: - Read

@@ -27,7 +27,6 @@ final class SQDailyCheckInViewModel: Identifiable {
     private(set) var stats: SQDailyCheckInStats?
     private(set) var targetDate: Date
     let eventHub: EventHub
-    let dashboardInterface: SQDashboardInterface = SQDashboardController.default
 
     private let metricEntryManager: SQMetricEntryManaging
     private let metricsManager: SQMetricDefinitionManaging
@@ -91,6 +90,8 @@ final class SQDailyCheckInViewModel: Identifiable {
                 Task {
                     await self.refresh(for: self.targetDate, modelContext: modelContext)
                 }
+            case .metricEntriesUpdated, .lifeScoreInputsUpdated:
+                break
             }
         }.store(in: &cancellables)
     }
@@ -624,7 +625,6 @@ final class SQDailyCheckInViewModel: Identifiable {
                 hasNotes: formPayload.notes != nil,
                 isPastDateEntry: isEditingPastDate
             ))
-            await dashboardInterface.refreshUI(for: modelContext)
             onDismiss()
         } catch {
             eventHub.alertEvents.send(

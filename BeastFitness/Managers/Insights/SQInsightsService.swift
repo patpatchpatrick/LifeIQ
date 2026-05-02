@@ -849,7 +849,8 @@ final class SQInsightsService: SQInsightsServicing {
         let changes = todayRelevantChanges(
             from: changeBuilder.buildChanges(
                 from: snapshots,
-                surfaceIntent: surfaceIntent
+                surfaceIntent: surfaceIntent,
+                referenceDate: input.referenceDate
             ),
             snapshots: snapshots,
             referenceDate: input.referenceDate,

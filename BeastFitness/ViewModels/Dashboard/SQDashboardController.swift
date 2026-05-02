@@ -220,6 +220,16 @@ final class SQDashboardController: SQDashboardInterface {
             }
         }.store(in: &cancellables)
 
+        hub.metricEvents.sink { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .metricEntriesUpdated, .lifeScoreInputsUpdated:
+                self.refreshFromGlobalContext()
+            case .metricsUpdated:
+                break
+            }
+        }.store(in: &cancellables)
+
         hub.userEvents.sink { [weak self] event in
             guard let self else { return }
             self.refreshEmailVerificationRequirement()

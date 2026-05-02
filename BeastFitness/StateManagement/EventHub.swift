@@ -25,6 +25,8 @@ enum WorkoutEvent {
 
 enum MetricEvent {
     case metricsUpdated
+    case metricEntriesUpdated
+    case lifeScoreInputsUpdated
 }
 
 enum AlertEvent {

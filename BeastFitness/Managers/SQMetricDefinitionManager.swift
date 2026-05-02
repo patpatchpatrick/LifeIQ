@@ -168,6 +168,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         if let updated = metrics.first(where: { $0.id == id }) {
             SQAnalyticsManager.shared.track(.metricTrackingChanged(isEnabled: true, definition: updated))
             pushMetricToFirestore(updated)
+            if Self.canAffectLifeScore(updated) {
+                hub.metricEvents.send(.lifeScoreInputsUpdated)
+            }
         }
     }
 
@@ -176,12 +179,16 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
+        let wasLifeScoreRelevant = Self.canAffectLifeScore(entity.toDefinition())
         entity.isEnabled = false
         entity.updatedAt = .now
         try saveContextAndNotify(context)
         if let updated = metrics.first(where: { $0.id == id }) {
             SQAnalyticsManager.shared.track(.metricTrackingChanged(isEnabled: false, definition: updated))
             pushMetricToFirestore(updated)
+            if wasLifeScoreRelevant {
+                hub.metricEvents.send(.lifeScoreInputsUpdated)
+            }
         }
     }
 
@@ -190,6 +197,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         try loadIfNeeded(using: context)
 
         guard let entity = try fetchEntity(id: id, using: context) else { return }
+        let wasLifeScoreRelevant = Self.canAffectLifeScore(entity.toDefinition())
         entity.isArchived = true
         entity.isEnabled = false
         entity.updatedAt = .now
@@ -197,6 +205,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         if let updated = metrics.first(where: { $0.id == id }) {
             SQAnalyticsManager.shared.track(.metricArchived(definition: updated))
             pushMetricToFirestore(updated)
+            if wasLifeScoreRelevant {
+                hub.metricEvents.send(.lifeScoreInputsUpdated)
+            }
         }
     }
 
@@ -257,6 +268,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         if let created = metrics.first(where: { $0.id == definition.id }) {
             SQAnalyticsManager.shared.track(.metricSaved(action: .create, definition: created))
             pushMetricToFirestore(created)
+            if Self.canAffectLifeScore(created) {
+                hub.metricEvents.send(.lifeScoreInputsUpdated)
+            }
         }
         SQLogger.shared.log("Created custom metric: \(definition.id)", .debug, context: .metricsManager)
     }
@@ -286,6 +300,9 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                 )
             }
             pushMetricToFirestore(updated)
+            if Self.hasLifeScoreAffectingChange(from: previousDefinition, to: updated) {
+                hub.metricEvents.send(.lifeScoreInputsUpdated)
+            }
         }
     }
 
@@ -310,8 +327,51 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         if previous.sensitivity != updated.sensitivity {
             fields.append("special_handling")
         }
+        if previous.goalStyle != updated.goalStyle {
+            fields.append("goal_style")
+        }
+        if previous.targetValue != updated.targetValue {
+            fields.append("target_value")
+        }
+        if previous.targetRangeMin != updated.targetRangeMin || previous.targetRangeMax != updated.targetRangeMax {
+            fields.append("target_range")
+        }
+        if previous.min != updated.min || previous.max != updated.max || previous.step != updated.step {
+            fields.append("value_scale")
+        }
+        if previous.scaleQuantityMapping != updated.scaleQuantityMapping {
+            fields.append("quantity_mapping")
+        }
 
         return fields
+    }
+
+    private static func hasLifeScoreAffectingChange(
+        from previous: SQMetricDefinition,
+        to updated: SQMetricDefinition
+    ) -> Bool {
+        guard canAffectLifeScore(previous) || canAffectLifeScore(updated) else {
+            return false
+        }
+
+        return previous.isEnabled != updated.isEnabled
+            || previous.isArchived != updated.isArchived
+            || previous.goalStyle != updated.goalStyle
+            || previous.targetValue != updated.targetValue
+            || previous.targetRangeMin != updated.targetRangeMin
+            || previous.targetRangeMax != updated.targetRangeMax
+            || previous.min != updated.min
+            || previous.max != updated.max
+            || previous.step != updated.step
+            || previous.scaleQuantityMapping != updated.scaleQuantityMapping
+            || previous.signalRole != updated.signalRole
+            || previous.lifeScoreImpact != updated.lifeScoreImpact
+            || previous.sensitivity != updated.sensitivity
+    }
+
+    private static func canAffectLifeScore(_ definition: SQMetricDefinition) -> Bool {
+        guard definition.isEnabled, !definition.isArchived else { return false }
+        return SQMetricSemanticResolver().lifeScoreImpact(for: definition) != .none
     }
 
     // MARK: - Reload (protocol requires public)

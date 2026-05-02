@@ -436,7 +436,7 @@ enum SQLifeScoreState {
         case .slightlyOff:
             return .accentNeutral2
         case .dipping:
-            return .colorErrorRed
+            return .dashboardTrendWarm
         case .underPressure:
             return .dashboardTrendWarm
         case .calibrating:

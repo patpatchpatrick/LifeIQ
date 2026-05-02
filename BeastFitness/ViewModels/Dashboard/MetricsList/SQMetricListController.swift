@@ -91,6 +91,8 @@ final class SQMetricsListController {
             switch event {
             case .metricsUpdated:
                 self.reloadRows(using: context)
+            case .metricEntriesUpdated, .lifeScoreInputsUpdated:
+                break
             }
         }.store(in: &cancellables)
     }

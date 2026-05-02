@@ -24,8 +24,10 @@ struct SQLifeScoreHeroCard: View {
         guard let scoreDelta = viewModel.scoreDeltaFromPreviousDay else { return .textSecondary }
         if scoreDelta > 0 {
             return .dashboardGlowMint
-        } else if scoreDelta < 0 {
+        } else if scoreDelta <= -7 {
             return .colorErrorRed
+        } else if scoreDelta < 0 {
+            return .dashboardTrendWarm
         } else {
             return .textSecondary
         }

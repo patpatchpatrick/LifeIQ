@@ -85,6 +85,10 @@ The Life Score detail flow now also consumes shared recent `changes`, so the exp
 - what is helping / dragging
 - what has shifted recently
 
+For the Life Score detail view, `What's Driving It` and `What's Changed` should prioritize the top three highest-impact items available for that day. Do not rotate or diversify those lists away from the strongest score explanations.
+Impact should be primary, with ranking/confidence as the tie-breaker.
+`What's Changed` windows should be anchored to the displayed calendar window, not to the last non-empty observations for a metric. If a metric was not logged in the recent window, older logs must not be borrowed into "Last 2 days" style copy.
+
 The Life Score detail flow now also consumes shared `actions`, so the explanation layer can recommend one concrete next move without inventing separate score-only advice logic.
 
 Metric semantics are now part of `SQMetricDefinition`: `signalRole`, `lifeScoreImpact`, `insightMode`, and `sensitivity`. Custom metric create/edit settings expose these as simple user-facing controls: what kind of metric it is, whether insights are enabled, whether it should affect Life Score (`none`, `light`, or `standard`), and sensitivity. Preset metric edit settings expose only user participation controls: Affect Life Score, Affect Recovery Score, and Affect Insights. Core preset semantics such as metric type, goal, sensitivity, and format stay locked to LifeIQ defaults. Custom metrics should default safe: insights on, Life Score impact off, no numeric weights exposed, and medication-like metrics observe-only by default.
@@ -98,6 +102,8 @@ Contributor-based metric scoring should be developed in shadow mode first. The s
 Shadow scoring should distinguish diagnostic contributors from incremental contributors. Diagnostic contributors can include core preset signals for explanation, but only incremental contributors should be added to the current score in report-only shadow-adjusted outputs. Automatic core presets are already represented by existing components and should not double-count.
 
 Personalized metric score adjustments can be wired into the real Life Score path only behind `SQAdminConfig.personalizedLifeScoreAdjustmentsEnabled`. The current production default is off. When enabled, only incremental contributors adjust the final score; automatic core presets still remain diagnostic-only to avoid double-counting.
+
+Life Score should refresh automatically when score inputs change. Daily check-in saves and metric-definition edits that affect Life Score semantics, goal thresholds, or value scales should publish refresh events so the dashboard does not rely on a manual pull-to-refresh.
 
 Life Score hero copy should be state-first, not signal-first. The default headline comes from the current state (`Strong`, `Primed`, `Balanced`, `Slightly Off`, `Dipping`, `Under Pressure`, etc.) using a small deterministic copy library so repeated app reloads stay stable while consecutive days can vary.
 

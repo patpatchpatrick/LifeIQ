@@ -560,7 +560,8 @@ struct SQViewLabScenarioRunner: SQViewLabScenarioRunning {
             )
             let changeCandidatesBeforeDiversity = changeBuilder.buildChanges(
                 from: featureSnapshots,
-                surfaceIntent: .today
+                surfaceIntent: .today,
+                referenceDate: currentDay.date
             )
             let generatedRelationshipAnalysis = analysisEngine.analyze(
                 snapshots: featureSnapshots,
