@@ -460,9 +460,9 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
         ),
         .init(
             signalId: SQMetricId.soreness,
-            title: "Recovery",
+            title: "Soreness",
             category: .recovery,
-            expectedEffect: .positive,
+            expectedEffect: .negative,
             minimumSampleCount: 3,
             minimumEffectMagnitude: 0.75
         ),

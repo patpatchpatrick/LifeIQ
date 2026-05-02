@@ -15,7 +15,7 @@ enum SQAdminConfig {
 
     /// Temporary app-wide default while subscription plans are not wired up yet.
     /// Change this to `.free` to quickly exercise locked premium UI states.
-    static var appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
+    static var appDefaultSubscriptionLevel: SQSubscriptionLevel = .free
 
     /// Debug-only toggle for rendering canned health data without requiring
     /// a populated HealthKit store on the current simulator or device.

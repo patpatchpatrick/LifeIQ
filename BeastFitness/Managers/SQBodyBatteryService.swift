@@ -612,10 +612,10 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
     private func defaultPresetRecoveryEffect(_ metricId: String) -> SQMetricBodyBatteryEffect {
         switch metricId {
         case SQMetricId.energy,
-             SQMetricId.soreness,
              SQMetricId.nutrition:
             return .boostsWhenHigh
         case SQMetricId.alcohol,
+             SQMetricId.soreness,
              SQMetricId.caffeine:
             return .drainsWhenHigh
         default:
@@ -887,7 +887,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         totalStrain: Double?
     ) -> SQAlertViewModel {
         guard let score, let rawScore else {
-            let subtitle = "Recovery Score needs at least one scoreable signal before it can calculate. Log Sleep Quality, Sleep Hours, Energy, or Recovery in Daily Check-In, add a custom metric marked for Recovery Score, or record Health sleep, workout, and resting heart data."
+            let subtitle = "Recovery Score needs at least one scoreable signal before it can calculate. Log Sleep Quality, Sleep Hours, Energy, or Soreness in Daily Check-In, add a custom metric marked for Recovery Score, or record Health sleep, workout, and resting heart data."
             let attributedSubtitle = buildBodyBatteryText([
                 .plain("Recovery Score needs at least "),
                 .highlight("one scoreable signal"),
@@ -898,7 +898,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .plain(", "),
                 .highlight("Energy"),
                 .plain(", or "),
-                .highlight("Recovery"),
+                .highlight("Soreness"),
                 .plain(" in Daily Check-In, add a custom metric marked for Recovery Score, or record Health "),
                 .highlight("sleep"),
                 .plain(", "),
@@ -936,7 +936,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             ? "No signals were omitted."
             : "Omitted due to missing data: \(omittedSignals.joined(separator: ", "))."
         let subtitle = """
-        Recovery Score starts from a neutral baseline and then adjusts based on the signals available today. Current calculation: \(calculationText) = \(roundedRawScore). Your current score is \(score). \(sleepSourceText) \(omittedText) Check-ins use Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics marked for Recovery Score.
+        Recovery Score starts from a neutral baseline and then adjusts based on the signals available today. Current calculation: \(calculationText) = \(roundedRawScore). Your current score is \(score). \(sleepSourceText) \(omittedText) Check-ins use Energy, Soreness, Nutrition, Alcohol, Caffeine, and custom metrics marked for Recovery Score.
         """
         let attributedSubtitle = buildBodyBatteryText([
             .highlight("Recovery Score"),
@@ -955,7 +955,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
             .plain(" Check-ins use "),
             .highlight("Energy"),
             .plain(", "),
-            .highlight("Recovery"),
+            .highlight("Soreness"),
             .plain(", "),
             .highlight("Nutrition"),
             .plain(", "),
@@ -1034,7 +1034,7 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         hasHeartScoreSignal: Bool
     ) -> String? {
         guard score != nil else {
-            return "Not enough recovery data yet. Log Sleep Quality, Sleep Hours, Energy, or Recovery in Daily Check-In, or record Health sleep and resting heart data."
+            return "Not enough recovery data yet. Log Sleep Quality, Sleep Hours, Energy, or Soreness in Daily Check-In, or record Health sleep and resting heart data."
         }
 
         guard !hasSleepSignal || !hasHeartScoreSignal else { return nil }
@@ -1085,14 +1085,14 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         let attributedSubtitle: AttributedString
 
         if !checkInAdjustment.hasScoringSignals {
-            subtitle = "Check-ins are omitted from Recovery Score until you log at least one recovery-related metric. Built-in signals include Energy, Recovery, Nutrition, Alcohol, and Caffeine. Custom metrics count when they are marked for Recovery Score."
+            subtitle = "Check-ins are omitted from Recovery Score until you log at least one recovery-related metric. Built-in signals include Energy, Soreness, Nutrition, Alcohol, and Caffeine. Custom metrics count when they are marked for Recovery Score."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Check-ins are "),
                 .highlight("omitted"),
                 .plain(" from Recovery Score until you log at least one recovery-related metric. Built-in signals include "),
                 .highlight("Energy"),
                 .plain(", "),
-                .highlight("Recovery"),
+                .highlight("Soreness"),
                 .plain(", "),
                 .highlight("Nutrition"),
                 .plain(", "),
@@ -1102,12 +1102,12 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .plain(". Custom metrics count when they are marked for Recovery Score.")
             ])
         } else if let customSummary {
-            subtitle = "Check-ins adjust Recovery Score using Energy, Recovery, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s). Custom metric impact is capped so those signals stay supportive instead of dominating the score."
+            subtitle = "Check-ins adjust Recovery Score using Energy, Soreness, Nutrition, Alcohol, Caffeine, and custom metrics like \(customSummary). Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Check-ins adjust Recovery Score using "),
                 .highlight("Energy"),
                 .plain(", "),
-                .highlight("Recovery"),
+                .highlight("Soreness"),
                 .plain(", "),
                 .highlight("Nutrition"),
                 .plain(", "),
@@ -1118,17 +1118,15 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
                 .highlight(customSummary),
                 .plain(". Today those signals changed the score by "),
                 .highlight(signedValueText(for: checkInAdjustment.totalAdjustment)),
-                .plain(" point(s). Custom metric impact is "),
-                .highlight("capped"),
-                .plain(" so those signals stay supportive instead of dominating the score.")
+                .plain(" point(s).")
             ])
         } else {
-            subtitle = "Check-ins adjust Recovery Score using Energy, Recovery, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
+            subtitle = "Check-ins adjust Recovery Score using Energy, Soreness, Nutrition, Alcohol, and Caffeine. Today those signals changed the score by \(signedValueText(for: checkInAdjustment.totalAdjustment)) point(s)."
             attributedSubtitle = buildBodyBatteryText([
                 .plain("Check-ins adjust Recovery Score using "),
                 .highlight("Energy"),
                 .plain(", "),
-                .highlight("Recovery"),
+                .highlight("Soreness"),
                 .plain(", "),
                 .highlight("Nutrition"),
                 .plain(", "),
@@ -1290,14 +1288,14 @@ final class SQBodyBatteryService: SQBodyBatteryServicing {
         }
 
         if checkInAdjustment.hasCustomSignals {
-            return "Recovery + \(checkInAdjustment.customMetricTitles.count) custom"
+            return "Soreness + \(checkInAdjustment.customMetricTitles.count) custom"
         }
 
         if checkInAdjustment.totalAdjustment == 0 {
             return "No strong recovery signal"
         }
 
-        return "Energy, Recovery, habits"
+        return "Energy, Soreness, habits"
     }
 
     private func checkInsDriverDetailExplanation(checkInAdjustment: CheckInAdjustment) -> String {

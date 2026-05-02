@@ -2312,7 +2312,7 @@ final class SQInsightsService: SQInsightsServicing {
         case SQMetricId.anxiety:
             return .init(key: "anxiety", displayTitle: "Anxiety", preferredSignalId: SQMetricId.anxiety)
         case SQMetricId.soreness:
-            return .init(key: "recovery", displayTitle: "Recovery", preferredSignalId: SQMetricId.soreness)
+            return .init(key: "soreness", displayTitle: "Soreness", preferredSignalId: SQMetricId.soreness)
         case SQInsightAnalysisMetricId.workoutDifficulty:
             return .init(key: "strain", displayTitle: "Training load", preferredSignalId: SQInsightAnalysisMetricId.workoutDifficulty)
         case SQInsightAnalysisMetricId.workoutPerformance:
@@ -3123,9 +3123,9 @@ final class SQInsightsService: SQInsightsServicing {
         }
 
         guard let snapshot else { return false }
-        let recovery = snapshot.rawSignalValue(for: SQMetricId.soreness) ?? 10
+        let soreness = snapshot.rawSignalValue(for: SQMetricId.soreness) ?? 0
         let difficulty = snapshot.averageWorkoutDifficulty ?? 0
-        return recovery <= 3.8 || difficulty >= 7.2
+        return soreness >= 6.2 || difficulty >= 7.2
     }
 
     private func hasStressPressure(

@@ -271,14 +271,14 @@ struct SQLifeScoreV2Builder {
 
         if let recoverySignal = scoredMetricSignal(
             signalId: SQMetricId.soreness,
-            title: "Recovery",
+            title: "Soreness",
             in: snapshot,
             metricDefinitionsById: metricDefinitionsById,
             neutralScore: 74,
             confidence: 0.85,
             impactCap: 18,
             sourceContextText: snapshotContextText,
-            score: recoveryReadinessScore
+            score: sorenessReadinessScore
         ) {
             signals.append(recoverySignal)
         }
@@ -1207,8 +1207,8 @@ struct SQLifeScoreV2Builder {
         }
     }
 
-    private func recoveryReadinessScore(_ value: Double) -> Double {
-        clamp(40 + (value * 7), min: 30, max: 96)
+    private func sorenessReadinessScore(_ value: Double) -> Double {
+        clamp(92 - (value * 6), min: 30, max: 96)
     }
 
     private func evidenceItems(

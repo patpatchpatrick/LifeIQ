@@ -486,6 +486,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: nil)
 
         try upsertMetrics(definitions, into: context, fullSync: true)
+        try migrateNewPresets(context: context)
         updateMetricSyncDate(to: .now, context: context)
         try saveContextAndNotify(context)
         return definitions.count
@@ -496,6 +497,7 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
         let definitions = try await metricService.fetchAllMetricDefinitions(for: user, afterDate: lastSync)
 
         try upsertMetrics(definitions, into: context, fullSync: false)
+        try migrateNewPresets(context: context)
         updateMetricSyncDate(to: .now, context: context)
         try saveContextAndNotify(context)
         return definitions.count
@@ -747,6 +749,16 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                         didChange = true
                     }
                 }
+                if preset.id == SQMetricId.soreness {
+                    if entity.signalRoleRaw == SQMetricSignalRole.outcome.rawValue {
+                        entity.signalRoleRaw = SQMetricSignalRole.symptom.rawValue
+                        didChange = true
+                    }
+                    if entity.bodyBatteryEffectRaw == SQMetricBodyBatteryEffect.boostsWhenHigh.rawValue {
+                        entity.bodyBatteryEffectRaw = SQMetricBodyBatteryEffect.drainsWhenHigh.rawValue
+                        didChange = true
+                    }
+                }
                 if entity.scaleQuantityUnitRaw == nil,
                    entity.scaleQuantityUnitRaw != preset.scaleQuantityMapping?.quantityUnit.rawValue {
                     entity.scaleQuantityUnitRaw = preset.scaleQuantityMapping?.quantityUnit.rawValue
@@ -876,10 +888,10 @@ final class SQMetricDefinitionManager: SQMetricDefinitionManaging {
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
                   emoji: "⚡", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
 
-            .init(id: SQMetricId.soreness, title: "Recovery", kind: .scale, unit: .none,
+            .init(id: SQMetricId.soreness, title: "Soreness", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,
                   isPreset: true, isEnabled: true, isDefault: true, sortOrder: next(),
-                  emoji: "💪", periods: both, goalStyle: .justTrack, bodyBatteryEffect: .boostsWhenHigh),
+                  emoji: "🦵", periods: both, goalStyle: .keepLow, bodyBatteryEffect: .drainsWhenHigh),
 
             .init(id: SQMetricId.stress, title: "Stress", kind: .scale, unit: .none,
                   group: SQDefaultGroup.self_.rawValue, min: 0, max: 10, step: 1,

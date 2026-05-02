@@ -235,15 +235,15 @@ enum SQMetricSemanticDefaults {
              SQMetricId.sickness,
              SQMetricId.pain,
              SQMetricId.cravings,
-             SQMetricId.digestion:
+             SQMetricId.digestion,
+             SQMetricId.soreness:
             return .symptom
         case SQMetricId.mood,
              SQMetricId.energy,
              SQMetricId.mentalClarity,
              SQMetricId.motivation,
              SQMetricId.productivity,
-             SQMetricId.socialConnection,
-             SQMetricId.soreness:
+             SQMetricId.socialConnection:
             return .outcome
         case SQMetricId.nutrition,
              SQMetricId.hydration,
@@ -1044,7 +1044,7 @@ enum SQMetricId {
     static let mood          = "metric.mood"            // scale 0–10; morning + evening
     static let mentalClarity = "metric.mentalClarity"   // scale 0–10; morning + evening
     static let energy        = "metric.energy"          // scale 0–10; morning + evening
-    static let soreness      = "metric.soreness"        // Legacy id for Recovery; scale 0–10 where higher is better.
+    static let soreness      = "metric.soreness"        // Legacy id; now product-facing Soreness, scale 0–10 where lower is better.
     static let stress        = "metric.stress"          // scale 0–10; morning + evening
     static let motivation    = "metric.motivation"      // scale 0–10; morning + evening
     static let anxiety       = "metric.anxiety"         // scale 0–10; morning + evening

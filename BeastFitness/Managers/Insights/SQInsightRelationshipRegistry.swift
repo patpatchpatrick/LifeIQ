@@ -371,12 +371,12 @@ struct SQInsightRelationshipRegistry {
         signalBaselineChange(
             id: "insight.baseline.soreness",
             inputSignalId: SQMetricId.soreness,
-            inputTitle: "Recovery",
+            inputTitle: "Soreness",
             category: .recovery,
             recommendationFamily: .protectRecovery,
             bucketUnitName: "days",
-            expectedEffect: .positive,
-            strongActionText: "Recovery is sitting below your usual range. Favor a steadier day until it opens back up."
+            expectedEffect: .negative,
+            strongActionText: "Soreness has been running above your usual range. Favor a steadier day until it settles."
         ),
         signalBaselineChange(
             id: "insight.baseline.resting-heart-rate",
@@ -698,7 +698,7 @@ struct SQInsightRelationshipRegistry {
         currentStateRelationship(
             id: "insight.today.soreness.opportunity",
             inputSignalId: SQMetricId.soreness,
-            inputTitle: "Recovery",
+            inputTitle: "Soreness",
             insightClass: .opportunity,
             category: .training,
             recommendationFamily: .moderateStrain,
@@ -707,15 +707,15 @@ struct SQInsightRelationshipRegistry {
             minimumEffectMagnitude: 0.75,
             recentWindowDayCount: 1,
             baselineWindowDayCount: 14,
-            expectedEffect: .positive,
-            driverText: "Recovery is strong today",
+            expectedEffect: .negative,
+            driverText: "Soreness is low today",
             outcomeText: "Freer Window",
-            strongActionText: "Recovery is stronger than usual today. If energy and motivation agree, this is a good day for a quality session."
+            strongActionText: "Soreness is lower than usual today. If energy and motivation agree, this is a good day for a quality session."
         ),
         currentStateRelationship(
             id: "insight.today.soreness.risk",
             inputSignalId: SQMetricId.soreness,
-            inputTitle: "Recovery",
+            inputTitle: "Soreness",
             insightClass: .risk,
             category: .training,
             recommendationFamily: .protectRecovery,
@@ -724,10 +724,10 @@ struct SQInsightRelationshipRegistry {
             minimumEffectMagnitude: 0.75,
             recentWindowDayCount: 1,
             baselineWindowDayCount: 14,
-            expectedEffect: .positive,
-            driverText: "Recovery is low today",
+            expectedEffect: .negative,
+            driverText: "Soreness is high today",
             outcomeText: "Recovery Drag",
-            strongActionText: "Recovery is below your usual range today. Favor recovery or a lighter session over intensity."
+            strongActionText: "Soreness is above your usual range today. Favor recovery or a lighter session over intensity."
         ),
         currentStateRelationship(
             id: "insight.today.sleep-energy.opportunity",
@@ -1136,15 +1136,15 @@ struct SQInsightRelationshipRegistry {
         workoutPerformanceRelationship(
             id: "insight.soreness.workout-performance",
             inputSignalId: SQMetricId.soreness,
-            inputTitle: "Recovery",
-            driverText: "Higher recovery",
+            inputTitle: "Soreness",
+            driverText: "Higher soreness",
             lowBucketUpperBound: 4,
             highBucketLowerBound: 7,
-            expectedEffect: .positive,
+            expectedEffect: .negative,
             recommendationFamily: .moderateStrain,
-            outcomeText: "Better performance",
-            strongActionText: "When recovery is low, favor a lighter session if performance matters.",
-            subtleActionText: "Better recovery has been lining up with stronger sessions."
+            outcomeText: "Lower performance",
+            strongActionText: "When soreness is high, favor a lighter session if performance matters.",
+            subtleActionText: "Lower soreness has been lining up with stronger sessions."
         ),
         workoutPerformanceRelationship(
             id: "insight.resting-heart-rate.workout-performance",

@@ -1187,7 +1187,7 @@ final class SQDashboardController: SQDashboardInterface {
             ("mood",    "😊", "Mood",    "/10"),
             ("energy",  "⚡️", "Energy",  "/10"),
             ("sleep",   "😴", "Sleep",   "hrs"),
-            ("soreness","🦵", "Recovery","/10"),
+            ("soreness","🦵", "Soreness","/10"),
             ("clarity", "🧠", "Clarity", "/10")
         ]
         let fakeRows = presets.enumerated().map { index, preset in

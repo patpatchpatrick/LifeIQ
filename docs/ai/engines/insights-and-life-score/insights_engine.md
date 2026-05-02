@@ -149,7 +149,7 @@ The current relationship registry is also broader than the original vice-only se
   - motivation
   - stress
   - anxiety
-  - recovery (stored under the legacy `metric.soreness` id; higher is better)
+  - soreness (stored under the legacy `metric.soreness` id; lower is better)
 
 The internal engine-backed `View Lab` is expected to exercise both:
 - normal / desirable states
