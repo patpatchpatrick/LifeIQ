@@ -12,7 +12,7 @@ enum SQAdminConfig {
     #if DEBUG
     /// Debug performance kill switch for disabling every SQLogger log call at the
     /// logger boundary. Useful when attached to Xcode and investigating scroll lag.
-    static var disableSQLoggerLogs = true {
+    static var disableSQLoggerLogs = false {
         didSet {
             SQLogger.shared.isDisabled = disableSQLoggerLogs
         }
@@ -23,8 +23,12 @@ enum SQAdminConfig {
     static var enforceEmailVerificationForEmailPasswordAccounts = false
 
     /// Temporary app-wide default while subscription plans are not wired up yet.
-    /// Change this to `.free` to quickly exercise locked premium UI states.
+    /// Used for new users and legacy/fallback users without a stored subscription level.
     static var appDefaultSubscriptionLevel: SQSubscriptionLevel = .free
+
+    /// Debug-only local override for testing subscription states. When non-nil, this wins
+    /// over the user's stored Firestore subscription level without changing that record.
+    static var subscriptionLevelOverride: SQSubscriptionLevel? = .premium
     static var freeCustomMetricLimit = 1
 
     /// Debug-only toggle for rendering canned health data without requiring
@@ -60,6 +64,7 @@ enum SQAdminConfig {
     static let disableSQLoggerLogs = false
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
+    static let subscriptionLevelOverride: SQSubscriptionLevel? = nil
     static let freeCustomMetricLimit = 1
     static let useMockDashboardHealthData = false
     static let useMockHealthData = false

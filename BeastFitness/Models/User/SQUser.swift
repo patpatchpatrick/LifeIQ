@@ -82,7 +82,11 @@ struct SQUser: Codable, Equatable {
     /// Temporary default while subscription plans are not wired up yet.
     /// Legacy users without a stored value should still be able to access premium insights.
     var effectiveSubscriptionLevel: SQSubscriptionLevel {
-        subscriptionLevel ?? SQAdminConfig.appDefaultSubscriptionLevel
+        if let override = SQAdminConfig.subscriptionLevelOverride {
+            return override
+        }
+
+        return subscriptionLevel ?? SQAdminConfig.appDefaultSubscriptionLevel
     }
 
     var hasPremiumAccess: Bool {
