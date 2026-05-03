@@ -34,7 +34,11 @@ struct SQInsightInfoSheetView: View {
     }
 
     private var canExplorePattern: Bool {
-        model.inputSignalId != nil && model.outputSignalId != nil
+        explorerController != nil
+    }
+
+    private var isPremiumUnlocked: Bool {
+        SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
     }
 
     var body: some View {
@@ -77,7 +81,9 @@ struct SQInsightInfoSheetView: View {
 
                     if canExplorePattern {
                         Button {
-                            if let explorerController {
+                            guard let explorerController else { return }
+
+                            if isPremiumUnlocked {
                                 SQAppState.shared.hub.domainEvents.send(
                                     .pushDashboardRoute(.insightExplorer(controller: explorerController))
                                 )
@@ -88,7 +94,7 @@ struct SQInsightInfoSheetView: View {
                                 )
                             }
                         } label: {
-                            Text(explorerController == nil ? "Unlock Insight Explorer" : "Explore this pattern")
+                            Text(isPremiumUnlocked ? "Explore this pattern" : "Unlock Insight Explorer")
                                 .sqFont(.bodySmallSemiBold)
                                 .sqForegroundColor(.textPrimary)
                                 .frame(maxWidth: .infinity)

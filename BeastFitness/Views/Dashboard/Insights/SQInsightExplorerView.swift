@@ -5,6 +5,7 @@
 
 import SwiftUI
 import CoolCharts
+import BeastFitnessCore
 
 enum SQInsightExplorerLag: Int, CaseIterable, Identifiable {
     case sameDay = 0
@@ -378,21 +379,22 @@ final class SQInsightExplorerController {
     let id = UUID().uuidString
     private let input: SQHealthIntelligenceInput
     private let analyzer = SQInsightExplorerAnalyzer()
+    @ObservationIgnored private var suppressSelectionUpdates = false
 
     private(set) var metricOptions: [SQInsightExplorerMetricOption]
     private(set) var topRelationships: [SQInsightExplorerRelationshipResult]
     private(set) var result: SQInsightExplorerRelationshipResult?
     var selectedDriverId: String = "" {
-        didSet { updateResult() }
+        didSet { selectionDidChange() }
     }
     var selectedOutcomeId: String = "" {
-        didSet { updateResult() }
+        didSet { selectionDidChange() }
     }
     var selectedRange: SQInsightExplorerRange = .days90 {
-        didSet { updateResult() }
+        didSet { selectionDidChange() }
     }
     var selectedLag: SQInsightExplorerLag = .nextDay {
-        didSet { updateResult() }
+        didSet { selectionDidChange() }
     }
 
     init(
@@ -409,10 +411,12 @@ final class SQInsightExplorerController {
         self.input = input
         self.metricOptions = metricOptions
         self.topRelationships = topRelationships
+        self.suppressSelectionUpdates = true
         self.selectedDriverId = preselectedDriverId ?? topRelationships.first?.driverId ?? metricOptions.first?.id ?? ""
         self.selectedOutcomeId = preselectedOutcomeId ?? topRelationships.first?.outcomeId ?? metricOptions.dropFirst().first?.id ?? metricOptions.first?.id ?? ""
         self.selectedLag = preselectedLag
         self.selectedRange = initialRange
+        self.suppressSelectionUpdates = false
         updateResult()
     }
 
@@ -421,11 +425,31 @@ final class SQInsightExplorerController {
     }
 
     func applyTopRelationship(_ relationship: SQInsightExplorerRelationshipResult) {
+        SQLogger.shared.log(
+            "PTD InsightExplorer applyTopRelationship driver=\(relationship.driverId) outcome=\(relationship.outcomeId) range=\(relationship.range.rawValue) lag=\(relationship.lag.rawValue) matchedDays=\(relationship.matchedDays)",
+            .debug,
+            context: .dashboard
+        )
+        suppressSelectionUpdates = true
         selectedDriverId = relationship.driverId
         selectedOutcomeId = relationship.outcomeId
         selectedRange = relationship.range
         selectedLag = relationship.lag
+        suppressSelectionUpdates = false
         result = relationship
+    }
+
+    func logPresentationState(source: String) {
+        SQLogger.shared.log(
+            "PTD InsightExplorer presentation source=\(source) selectedDriver=\(selectedDriverId) selectedOutcome=\(selectedOutcomeId) range=\(selectedRange.rawValue) lag=\(selectedLag.rawValue) hasResult=\(result != nil) matchedDays=\(result?.matchedDays.description ?? "nil") optionCount=\(metricOptions.count) topRelationshipCount=\(topRelationships.count)",
+            .debug,
+            context: .dashboard
+        )
+    }
+
+    private func selectionDidChange() {
+        guard !suppressSelectionUpdates else { return }
+        updateResult()
     }
 
     private func updateResult() {
@@ -436,6 +460,21 @@ final class SQInsightExplorerController {
             range: selectedRange,
             lag: selectedLag
         )
+
+        if result == nil {
+            let optionIds = Set(metricOptions.map(\.id))
+            SQLogger.shared.log(
+                "PTD InsightExplorer no result selectedDriver=\(selectedDriverId) driverInOptions=\(optionIds.contains(selectedDriverId)) selectedOutcome=\(selectedOutcomeId) outcomeInOptions=\(optionIds.contains(selectedOutcomeId)) range=\(selectedRange.rawValue) lag=\(selectedLag.rawValue) optionCount=\(metricOptions.count) topRelationshipCount=\(topRelationships.count) options=\(metricOptions.prefix(12).map { "\($0.title):\($0.id)" }.joined(separator: ", "))",
+                .debug,
+                context: .dashboard
+            )
+        } else if let result {
+            SQLogger.shared.log(
+                "PTD InsightExplorer result driver=\(result.driverId) outcome=\(result.outcomeId) range=\(result.range.rawValue) lag=\(result.lag.rawValue) matchedDays=\(result.matchedDays) displayEffect=\(result.displayEffectPoints) utilityEffect=\(result.effectPoints)",
+                .debug,
+                context: .dashboard
+            )
+        }
     }
 }
 
@@ -653,6 +692,9 @@ struct SQInsightExplorerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .background {
             SQSheetBackground()
+        }
+        .onAppear {
+            controller.logPresentationState(source: "view_on_appear")
         }
     }
 

@@ -2416,10 +2416,10 @@ final class SQDashboardController: SQDashboardInterface {
                         ))
                         state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
                             model: firstInsight,
-                            explorerController: isPremiumUnlocked ? self.makeInsightExplorerController(
+                            explorerController: self.makeInsightExplorerController(
                                 input: explorerInput,
                                 insight: firstInsight
-                            ) : nil
+                            )
                         )))
                     }
                 ))
@@ -2438,10 +2438,10 @@ final class SQDashboardController: SQDashboardInterface {
                             ))
                             state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
                                 model: insight,
-                                explorerController: isPremiumUnlocked ? self.makeInsightExplorerController(
+                                explorerController: self.makeInsightExplorerController(
                                     input: explorerInput,
                                     insight: insight
-                                ) : nil
+                                )
                             )))
                         }
                     ))
@@ -2558,13 +2558,45 @@ final class SQDashboardController: SQDashboardInterface {
         input: SQHealthIntelligenceInput,
         insight: SQInsight
     ) -> SQInsightExplorerController? {
-        guard insight.inputSignalId != nil, insight.outputSignalId != nil else { return nil }
-        return SQInsightExplorerController(
+        SQLogger.shared.log(
+            "PTD InsightExplorer request insightId=\(insight.id) title=\(insight.title) class=\(insight.insightClass.rawValue) input=\(insight.inputSignalId ?? "nil") output=\(insight.outputSignalId ?? "nil") supports=\(insight.supportsInsightExplorer)",
+            .debug,
+            context: .dashboard
+        )
+
+        guard insight.supportsInsightExplorer else {
+            SQLogger.shared.log(
+                "PTD InsightExplorer skipped unsupported insightId=\(insight.id) class=\(insight.insightClass.rawValue) input=\(insight.inputSignalId ?? "nil") output=\(insight.outputSignalId ?? "nil")",
+                .debug,
+                context: .dashboard
+            )
+            return nil
+        }
+
+        let controller = SQInsightExplorerController(
             input: input,
             preselectedDriverId: insight.inputSignalId,
             preselectedOutcomeId: insight.outputSignalId,
             preselectedLag: insight.variantPriority >= 2 ? .twoDaysLater : .nextDay
         )
+
+        guard controller.result != nil else {
+            let optionIds = Set(controller.metricOptions.map(\.id))
+            SQLogger.shared.log(
+                "PTD InsightExplorer unavailable insightId=\(insight.id) input=\(insight.inputSignalId ?? "nil") inputInOptions=\(insight.inputSignalId.map { optionIds.contains($0) }?.description ?? "nil") output=\(insight.outputSignalId ?? "nil") outputInOptions=\(insight.outputSignalId.map { optionIds.contains($0) }?.description ?? "nil") selectedDriver=\(controller.selectedDriverId) selectedOutcome=\(controller.selectedOutcomeId) selectedRange=\(controller.selectedRange.rawValue) selectedLag=\(controller.selectedLag.rawValue) optionCount=\(controller.metricOptions.count) topRelationshipCount=\(controller.topRelationships.count)",
+                .debug,
+                context: .dashboard
+            )
+            return nil
+        }
+
+        SQLogger.shared.log(
+            "PTD InsightExplorer ready insightId=\(insight.id) selectedDriver=\(controller.selectedDriverId) selectedOutcome=\(controller.selectedOutcomeId) selectedRange=\(controller.selectedRange.rawValue) selectedLag=\(controller.selectedLag.rawValue)",
+            .debug,
+            context: .dashboard
+        )
+
+        return controller
     }
 
     private func presentInsightsInfoAlert() {

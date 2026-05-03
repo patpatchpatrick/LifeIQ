@@ -42,6 +42,12 @@ struct SQInsight: Identifiable, Hashable {
     let rankingScore: Double
     let isNew: Bool
 
+    var supportsInsightExplorer: Bool {
+        insightClass == .relationship
+            && inputSignalId?.isEmpty == false
+            && outputSignalId?.isEmpty == false
+    }
+
     init(
         id: String,
         familyKey: String? = nil,
