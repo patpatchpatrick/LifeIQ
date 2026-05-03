@@ -58,6 +58,21 @@ public final class SQLogger: @unchecked Sendable {
         label: "io.github.patpatchpatrick.BeastFitness.SQLogger",
         qos: .utility
     )
+    private let stateLock = NSLock()
+    private var _isDisabled = false
+
+    public var isDisabled: Bool {
+        get {
+            stateLock.lock()
+            defer { stateLock.unlock() }
+            return _isDisabled
+        }
+        set {
+            stateLock.lock()
+            _isDisabled = newValue
+            stateLock.unlock()
+        }
+    }
 
     public init() {}
 
@@ -71,7 +86,7 @@ public final class SQLogger: @unchecked Sendable {
         isPriority: Bool = false,
         shouldLog: Bool = true
     ) {
-        guard shouldLog else { return }
+        guard shouldLog, !isDisabled else { return }
 
         let finalMessage = isPriority ? priorityMessage(message) : message
         let logger = Logger.logger(for: context)
@@ -90,7 +105,7 @@ public final class SQLogger: @unchecked Sendable {
         isPriority: Bool = false,
         shouldLog: Bool = true
     ) {
-        guard shouldLog else { return }
+        guard shouldLog, !isDisabled else { return }
 
         let finalMessage = isPriority ? priorityMessage(message) : message
         let logger = Logger.logger(for: context)

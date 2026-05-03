@@ -6,9 +6,18 @@
 //
 
 import Foundation
+import BeastFitnessCore
 
 enum SQAdminConfig {
     #if DEBUG
+    /// Debug performance kill switch for disabling every SQLogger log call at the
+    /// logger boundary. Useful when attached to Xcode and investigating scroll lag.
+    static var disableSQLoggerLogs = true {
+        didSet {
+            SQLogger.shared.isDisabled = disableSQLoggerLogs
+        }
+    }
+
     /// Temporary debug-time toggle for auth experiments. This is intentionally mutable
     /// so a future dev/admin menu can flip it without reworking the call sites.
     static var enforceEmailVerificationForEmailPasswordAccounts = true
@@ -38,7 +47,12 @@ enum SQAdminConfig {
     /// Debug-only gate for exploratory custom relationship cards. Keep off until
     /// simulator output has been reviewed for noisy or causal-sounding patterns.
     static var enableCustomRelationshipInsights = false
+
+    static func applyRuntimeSettings() {
+        SQLogger.shared.isDisabled = disableSQLoggerLogs
+    }
     #else
+    static let disableSQLoggerLogs = false
     static let enforceEmailVerificationForEmailPasswordAccounts = true
     static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
     static let freeCustomMetricLimit = 1
@@ -49,5 +63,9 @@ enum SQAdminConfig {
     static let forceInsightFreshnessBadges = false
     static let personalizedLifeScoreAdjustmentsEnabled = false
     static let enableCustomRelationshipInsights = false
+
+    static func applyRuntimeSettings() {
+        SQLogger.shared.isDisabled = disableSQLoggerLogs
+    }
     #endif
 }
