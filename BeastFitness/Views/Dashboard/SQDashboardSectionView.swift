@@ -63,6 +63,11 @@ struct SQDashboardSectionView: View {
                                         SQDashboardInsightRowView(viewModel: vm)
                                     }
 
+                                case .insightExplorer:
+                                    if let vm = row as? SQDashboardInsightExplorerRowViewModel {
+                                        SQDashboardInsightExplorerRowView(viewModel: vm)
+                                    }
+
                                 case .insightChange:
                                     if let vm = row as? SQDashboardInsightChangeRowViewModel {
                                         SQDashboardInsightChangeRowView(viewModel: vm)

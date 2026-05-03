@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SQInsightInfoSheetView: View {
     let model: SQInsight
+    let explorerController: SQInsightExplorerController?
 
     private var effectTone: SQDashboardTrendTone {
         switch model.effect {
@@ -30,6 +31,10 @@ struct SQInsightInfoSheetView: View {
         case .neutral:
             return .dashboardGlowBlue
         }
+    }
+
+    private var canExplorePattern: Bool {
+        model.inputSignalId != nil && model.outputSignalId != nil
     }
 
     var body: some View {
@@ -69,6 +74,36 @@ struct SQInsightInfoSheetView: View {
 
                     infoSection(title: "What LifeIQ noticed", text: model.evidenceText)
                     infoSection(title: "Suggested takeaway", text: model.actionText)
+
+                    if canExplorePattern {
+                        Button {
+                            if let explorerController {
+                                SQAppState.shared.hub.domainEvents.send(
+                                    .pushDashboardRoute(.insightExplorer(controller: explorerController))
+                                )
+                            } else {
+                                SQSubscriptionManager.displaySubscriptionScreen(
+                                    source: "insight_detail_explore_pattern",
+                                    feature: "insight_explorer"
+                                )
+                            }
+                        } label: {
+                            Text(explorerController == nil ? "Unlock Insight Explorer" : "Explore this pattern")
+                                .sqFont(.bodySmallSemiBold)
+                                .sqForegroundColor(.textPrimary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, .SQSpace.m)
+                                .background(
+                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.22 : 0.14))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                        .stroke(accentColor.color.opacity(0.35), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .padding(.horizontal, .SQSpace.l)
                 .padding(.vertical, .SQSpace.l)

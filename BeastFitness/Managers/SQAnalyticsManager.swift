@@ -473,7 +473,7 @@ private extension SQNavRoute.DashboardRoute {
         var properties: [String: Any] = ["route": analyticsRouteName]
 
         switch self {
-        case .insightDetail(let model):
+        case .insightDetail(let model, _):
             properties["insight_id"] = model.id
             properties["insight_category"] = model.category.rawValue.analyticsKey
         case .dashboardSubsectionLayout(_, let groupId):
@@ -495,6 +495,8 @@ private extension SQNavRoute.DashboardRoute {
             return "workout_insight_detail"
         case .insightDetail:
             return "insight_detail"
+        case .insightExplorer:
+            return "insight_explorer"
         case .webContent:
             return "web_content"
         case .lifeScoreDetail:

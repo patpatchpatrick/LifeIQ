@@ -741,6 +741,7 @@ final class SQDashboardController: SQDashboardInterface {
                 checkIns: currentCheckIns,
                 priorCheckIns: priorCheckIns,
                 insightsResult: insightsResult,
+                insightExplorerInput: buildHealthIntelligenceInput(for: .pastYear),
                 vo2MaxSamples: currentVO2MaxSamples,
                 vo2MaxAllTime: vo2MaxAllTime,
                 todaysWorkouts: todaysWorkouts,
@@ -2133,6 +2134,7 @@ final class SQDashboardController: SQDashboardInterface {
         checkIns: [SQDailyCheckInStats],
         priorCheckIns: [SQDailyCheckInStats],
         insightsResult: SQInsightsResult,
+        insightExplorerInput: SQHealthIntelligenceInput,
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         todaysWorkouts: [SQWorkoutSessionable],
@@ -2186,13 +2188,17 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         if state.selectedTimeRange != .today {
-            let insightsSection = buildInsightsSubsection(result: insightsResult)
+            let insightsSection = buildInsightsSubsection(
+                result: insightsResult,
+                explorerInput: insightExplorerInput
+            )
+            let explorerSection = buildInsightExplorerSubsection(input: insightExplorerInput)
 
             let insightsGroup = SQDashboardSectionGroupViewModel(
                 id: "insights",
                 title: "Insights",
                 defaultPriority: 25,
-                sections: [insightsSection]
+                sections: [insightsSection, explorerSection]
             )
             sectionGroups.append(insightsGroup)
         }
@@ -2350,7 +2356,8 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func buildInsightsSubsection(
-        result: SQInsightsResult
+        result: SQInsightsResult,
+        explorerInput: SQHealthIntelligenceInput
     ) -> SQDashboardSubsectionViewModel {
 
         let emptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel?
@@ -2390,7 +2397,13 @@ final class SQDashboardController: SQDashboardInterface {
                             sourceScreen: "dashboard",
                             insightCategory: firstInsight.category.rawValue.analyticsKey
                         ))
-                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: firstInsight)))
+                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
+                            model: firstInsight,
+                            explorerController: isPremiumUnlocked ? self.makeInsightExplorerController(
+                                input: explorerInput,
+                                insight: firstInsight
+                            ) : nil
+                        )))
                     }
                 ))
             }
@@ -2406,7 +2419,13 @@ final class SQDashboardController: SQDashboardInterface {
                                 sourceScreen: "dashboard",
                                 insightCategory: insight.category.rawValue.analyticsKey
                             ))
-                            state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(model: insight)))
+                            state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
+                                model: insight,
+                                explorerController: isPremiumUnlocked ? self.makeInsightExplorerController(
+                                    input: explorerInput,
+                                    insight: insight
+                                ) : nil
+                            )))
                         }
                     ))
                 }
@@ -2487,6 +2506,48 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return sectionViewModel
+    }
+
+    private func buildInsightExplorerSubsection(input: SQHealthIntelligenceInput) -> SQDashboardSubsectionViewModel {
+        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
+        let controller = SQInsightExplorerController(input: input)
+        let row = SQDashboardInsightExplorerRowViewModel(
+            isLocked: !isPremiumUnlocked,
+            topRelationships: controller.topRelationships,
+            onOpenExplorer: { [weak state] in
+                state?.hub.domainEvents.send(.pushDashboardRoute(.insightExplorer(controller: controller)))
+            },
+            onLockedTap: {
+                SQSubscriptionManager.displaySubscriptionScreen(
+                    source: "dashboard_insight_explorer",
+                    feature: "insight_explorer"
+                )
+            },
+            onRelationshipTap: { [weak state] relationship in
+                controller.applyTopRelationship(relationship)
+                state?.hub.domainEvents.send(.pushDashboardRoute(.insightExplorer(controller: controller)))
+            }
+        )
+
+        return SQDashboardSubsectionViewModel(
+            id: "insight-explorer",
+            title: "Insight Explorer",
+            defaultPriority: 16,
+            rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
+        )
+    }
+
+    private func makeInsightExplorerController(
+        input: SQHealthIntelligenceInput,
+        insight: SQInsight
+    ) -> SQInsightExplorerController? {
+        guard insight.inputSignalId != nil, insight.outputSignalId != nil else { return nil }
+        return SQInsightExplorerController(
+            input: input,
+            preselectedDriverId: insight.inputSignalId,
+            preselectedOutcomeId: insight.outputSignalId,
+            preselectedLag: insight.variantPriority >= 2 ? .twoDaysLater : .nextDay
+        )
     }
 
     private func presentInsightsInfoAlert() {

@@ -306,6 +306,7 @@
 		F7E400262FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */; };
 		F7E400282FFE200100AA4001 /* SQDashboardInsightRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */; };
 		F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */; };
+		F7F030023001000100AF3001 /* SQInsightExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F030013001000100AF3001 /* SQInsightExplorerView.swift */; };
 		F7E400302FFE200100AA4001 /* SQInsightRelationshipDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E4002F2FFE200100AA4001 /* SQInsightRelationshipDefinition.swift */; };
 		F7E400342FFE200100AA4001 /* SQInsightDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400332FFE200100AA4001 /* SQInsightDriver.swift */; };
 		F7E400442FFE200100AA4001 /* SQInsightChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E400432FFE200100AA4001 /* SQInsightChange.swift */; };
@@ -660,6 +661,7 @@
 		F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightRowViewModel.swift; sourceTree = "<group>"; };
 		F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightRowView.swift; sourceTree = "<group>"; };
 		F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightInfoSheetView.swift; sourceTree = "<group>"; };
+		F7F030013001000100AF3001 /* SQInsightExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightExplorerView.swift; sourceTree = "<group>"; };
 		F7E4002F2FFE200100AA4001 /* SQInsightRelationshipDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightRelationshipDefinition.swift; sourceTree = "<group>"; };
 		F7E400332FFE200100AA4001 /* SQInsightDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightDriver.swift; sourceTree = "<group>"; };
 		F7E400432FFE200100AA4001 /* SQInsightChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightChange.swift; sourceTree = "<group>"; };
@@ -1845,6 +1847,7 @@
 			children = (
 				F8B100173000200C00AB2001 /* SQDashboardInsightActionRowView.swift */,
 				F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */,
+				F7F030013001000100AF3001 /* SQInsightExplorerView.swift */,
 				F8B1000F3000200800AB2001 /* SQDashboardInsightChangeRowView.swift */,
 				F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */,
 			);
@@ -2380,6 +2383,7 @@
 				F8B100163000200C00AB2001 /* SQDashboardInsightActionRowView.swift in Sources */,
 				F8B1000E3000200800AB2001 /* SQDashboardInsightChangeRowView.swift in Sources */,
 				F7E400282FFE200100AA4001 /* SQDashboardInsightRowView.swift in Sources */,
+				F7F030023001000100AF3001 /* SQInsightExplorerView.swift in Sources */,
 				F7D1000C2F98010100AA1001 /* SQWorkoutPremiumInsightsView.swift in Sources */,
 				F7D100052F94000100AA1001 /* SQDashboardLayoutView.swift in Sources */,
 				F6F94E0A2CABA03200C2B90B /* View+Extensions.swift in Sources */,

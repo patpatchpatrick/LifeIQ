@@ -16,6 +16,14 @@ Users might see insights like "Low sleep may be linked to lower mood" or "Caffei
 
 The more check-ins users complete, the more personal and accurate insights become. Early insights may be simple, but they should get stronger as LifeIQ learns the user's patterns.
 
+## Insight Explorer
+
+Insight Explorer is a premium exploration surface that lets users compare two tracked signals and inspect the strongest detected relationships in their own logged data.
+
+It should show associations across practical time windows and timing offsets, including top relationships, matched sample counts, confidence, and directional summaries. Copy must stay non-causal unless LifeIQ has a stronger evidence model; use wording like "may be linked to", "averages higher after", or "pattern in your logged data" rather than claiming that one metric directly causes another.
+
+Free users may see a locked preview entry point, but the relationship detail surface is premium.
+
 ## Recovery Score
 
 Recovery Score estimates how ready and recovered the user appears today based on the available recovery signals.

@@ -11,6 +11,7 @@ enum SQDashboardRowType {
     case bodyBattery
     case heartSummary
     case insight
+    case insightExplorer
     case insightChange
     case insightAction
     case metricStats
@@ -28,6 +29,7 @@ enum SQDashboardRowIdentifier {
     case bodyBattery
     case heartSummary
     case insight
+    case insightExplorer
     case insightChange
     case insightAction
     case metricStats

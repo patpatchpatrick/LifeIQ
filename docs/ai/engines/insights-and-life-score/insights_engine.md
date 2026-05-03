@@ -110,6 +110,8 @@ Custom relationship diagnostics should classify candidates before surfacing: `ac
 
 The custom relationship would-surface report is still diagnostic-only. A candidate should only qualify there if it is actionable, medium/high confidence, has enough samples in both buckets, clears effect-size thresholds, has plausible timing, and passes sensitivity rules.
 
+Insight Explorer is the premium user-facing exploration layer for relationship analysis. V1 should let users compare two tracked metrics, inspect top detected relationships, switch practical ranges/timing offsets, and see matched days, confidence, directional effect, and a simple chart. Keep the surface explicitly associative, not causal. It can use broader exploratory pair scanning than surfaced insight cards, but it should still avoid medical claims and should not imply certainty from low sample counts.
+
 `Today` insight titles should describe the day-state implication instead of simply restating the signal. Prefer "You're in a good position to train today" over "Soreness looks manageable today", and prefer "The day may feel heavier than usual" over "Stress is under pressure today".
 
 Positive `Today` current-state cards must respect the overall score context. In `Under Pressure` or `Dipping` contexts, generic positive cards such as "You're well recovered today" should be suppressed or reframed as bright spots unless the supportive signal is clearly dominant.

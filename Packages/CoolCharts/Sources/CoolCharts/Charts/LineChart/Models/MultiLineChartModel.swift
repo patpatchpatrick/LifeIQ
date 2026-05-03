@@ -322,18 +322,30 @@ struct MultiLineChartFocusedLineViewModel: Animatable, Sendable {
         self.lineStartY = lineChartModel.yCeiling
         self.lineEndY = lineChartModel.yFloor
 
-        let xTitle = focusConfig.xLabelBuilder?(focusedCoordinate.id, focusedCoordinate.originalPoint.x) ?? "\(Double(focusedCoordinate.originalPoint.x))"
-        let yTitle = focusConfig.yLabelBuilder?(focusedCoordinate.seriesID, focusedCoordinate.id, focusedCoordinate.originalPoint.y) ?? "\(Double(focusedCoordinate.originalPoint.y))"
+        let matchingCoordinates = lineChartModel.visibleCoordinates
+            .filter { abs($0.originalPoint.x - focusedCoordinate.originalPoint.x) < 0.001 }
+            .sorted { lhs, rhs in
+                if lhs.seriesID == focusedCoordinate.seriesID {
+                    return true
+                }
+                if rhs.seriesID == focusedCoordinate.seriesID {
+                    return false
+                }
+                return lhs.seriesTitle.localizedCaseInsensitiveCompare(rhs.seriesTitle) == .orderedAscending
+            }
 
-        self.captionItems = [
-            .init(
-                lineColor: focusedCoordinate.seriesColor,
-                lineTitle: focusedCoordinate.seriesTitle,
+        self.captionItems = matchingCoordinates.map { coordinate in
+            let xTitle = focusConfig.xLabelBuilder?(coordinate.id, coordinate.originalPoint.x) ?? "\(Double(coordinate.originalPoint.x))"
+            let yTitle = focusConfig.yLabelBuilder?(coordinate.seriesID, coordinate.id, coordinate.originalPoint.y) ?? "\(Double(coordinate.originalPoint.y))"
+
+            return .init(
+                lineColor: coordinate.seriesColor,
+                lineTitle: coordinate.seriesTitle,
                 xTitle: xTitle,
                 yTitle: yTitle,
                 uiConfig: lineChartModel.uiConfig
             )
-        ]
+        }
     }
 
     struct CaptionItem: Identifiable, Sendable {
