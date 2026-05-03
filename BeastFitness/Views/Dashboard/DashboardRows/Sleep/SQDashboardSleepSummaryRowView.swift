@@ -56,6 +56,8 @@ struct SQDashboardSleepDurationRowView: View {
             barCornerRadius: 4,
             minimumBarWidth: viewModel.minimumBarWidth,
             maximumBarWidth: viewModel.maximumBarWidth,
+            minimumLabelWidth: viewModel.packsBarsLeading ? 34 : 0,
+            horizontalDistribution: viewModel.packsBarsLeading ? .leading : .fill,
             labelFont: SQFont(type: .bodyExtraSmall).font,
             labelColor: SQColor.textSecondary.color,
             visualStyle: .glass,

@@ -13,6 +13,11 @@ public struct BarChartView: View {
         case glass
     }
 
+    public enum HorizontalDistribution {
+        case fill
+        case leading
+    }
+
     public struct ValueAxisLabel: Sendable {
         public let value: Double
         public let label: String
@@ -91,6 +96,8 @@ public struct BarChartView: View {
     let barCornerRadius: CGFloat
     let minimumBarWidth: CGFloat
     let maximumBarWidth: CGFloat?
+    let minimumLabelWidth: CGFloat
+    let horizontalDistribution: HorizontalDistribution
     let labelFont: Font
     let labelColor: Color
     let visualStyle: VisualStyle
@@ -107,6 +114,8 @@ public struct BarChartView: View {
         barCornerRadius: CGFloat = 3,
         minimumBarWidth: CGFloat = 12,
         maximumBarWidth: CGFloat? = nil,
+        minimumLabelWidth: CGFloat = 0,
+        horizontalDistribution: HorizontalDistribution = .fill,
         labelFont: Font = .caption,
         labelColor: Color = .secondary,
         visualStyle: VisualStyle = .standard,
@@ -120,6 +129,8 @@ public struct BarChartView: View {
         self.barCornerRadius = barCornerRadius
         self.minimumBarWidth = minimumBarWidth
         self.maximumBarWidth = maximumBarWidth
+        self.minimumLabelWidth = minimumLabelWidth
+        self.horizontalDistribution = horizontalDistribution
         self.labelFont = labelFont
         self.labelColor = labelColor
         self.visualStyle = visualStyle
@@ -146,17 +157,20 @@ public struct BarChartView: View {
 
     private func effectiveBarSpacing(totalWidth: CGFloat) -> CGFloat {
         guard dataPoints.count > 1 else { return barSpacing }
+        guard horizontalDistribution == .fill else { return barSpacing }
 
-        let width = barWidth(totalWidth: totalWidth)
+        let width = itemWidth(totalWidth: totalWidth)
         let availableWidth = max(0, totalWidth - chartLeadingInset)
-        let totalBarWidth = width * CGFloat(dataPoints.count)
-        let leftoverWidth = max(0, availableWidth - totalBarWidth)
+        let totalItemWidth = width * CGFloat(dataPoints.count)
+        let leftoverWidth = max(0, availableWidth - totalItemWidth)
         return max(barSpacing, leftoverWidth / CGFloat(dataPoints.count - 1))
     }
     
     public var body: some View {
         GeometryReader { geometry in
             let spacing = effectiveBarSpacing(totalWidth: geometry.size.width)
+            let width = barWidth(totalWidth: geometry.size.width)
+            let labelWidth = itemWidth(totalWidth: geometry.size.width)
             ZStack(alignment: .topLeading) {
                 if !valueAxisLabels.isEmpty {
                     axisLineView
@@ -175,7 +189,7 @@ public struct BarChartView: View {
                         VStack(spacing: 4) {
                             barView(for: point)
                                 .frame(
-                                    width: barWidth(totalWidth: geometry.size.width),
+                                    width: width,
                                     height: barHeight(for: point.value)
                                 )
                                 .frame(maxHeight: maxHeight, alignment: .bottom)
@@ -183,7 +197,11 @@ public struct BarChartView: View {
                             Text(point.label)
                                 .font(labelFont)
                                 .foregroundStyle(labelColor)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .frame(width: labelWidth)
                         }
+                        .frame(width: labelWidth)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             focus(point)
@@ -208,7 +226,7 @@ public struct BarChartView: View {
                 }
             }
         }
-        .frame(height: maxHeight + 20) // Add space for labels
+        .frame(height: maxHeight + 28) // Add space for labels
     }
 
     @ViewBuilder
@@ -249,6 +267,10 @@ public struct BarChartView: View {
             return min(maximumBarWidth, naturalWidth)
         }
         return naturalWidth
+    }
+
+    private func itemWidth(totalWidth: CGFloat) -> CGFloat {
+        max(barWidth(totalWidth: totalWidth), minimumLabelWidth)
     }
     
     private func barHeight(for value: Double) -> CGFloat {
@@ -405,11 +427,12 @@ public struct BarChartView: View {
         spacing: CGFloat,
         barWidth: CGFloat
     ) -> CGFloat {
+        let width = max(barWidth, minimumLabelWidth)
         guard let index = dataPoints.firstIndex(where: { $0.id == point.id }) else {
-            return chartStartX + (barWidth / 2)
+            return chartStartX + (width / 2)
         }
 
-        return chartStartX + (barWidth / 2) + (CGFloat(index) * (barWidth + spacing))
+        return chartStartX + (width / 2) + (CGFloat(index) * (width + spacing))
     }
 
     private func defaultFormattedValue(_ value: Double) -> String {

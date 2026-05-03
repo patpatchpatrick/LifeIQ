@@ -24,6 +24,7 @@ protocol DashboardStating: AnyObject {
     var selectedTimeRange: AppTimeRange { get set }
     var selectedTimeRangePublisher: AnyPublisher<AppTimeRange, Never> { get }
     var isLoading: Bool { get }
+    var loadingProgress: Double? { get }
 
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
@@ -42,6 +43,7 @@ protocol DashboardStating: AnyObject {
 
     func updateSectionGroups(to sectionGroups: [SQDashboardSectionGroupViewModel])
     func setLoading(_ isLoading: Bool)
+    func updateLoadingProgress(_ progress: Double?)
 
     func navigateToWorkoutView(with workouts: [SQWorkoutSessionable])
 
@@ -78,6 +80,7 @@ struct SQCheckInPromptContext {
     }
 
     private(set) var isLoading: Bool = false
+    private(set) var loadingProgress: Double?
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
 
     init(hub: EventHub) {
@@ -106,6 +109,20 @@ struct SQCheckInPromptContext {
 
     func setLoading(_ isLoading: Bool) {
         self.isLoading = isLoading
+        if isLoading {
+            loadingProgress = 0.05
+        } else {
+            loadingProgress = nil
+        }
+    }
+
+    func updateLoadingProgress(_ progress: Double?) {
+        guard let progress else {
+            loadingProgress = nil
+            return
+        }
+        guard isLoading else { return }
+        loadingProgress = max(0, min(1, progress))
     }
 
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool) {

@@ -38,6 +38,7 @@ final class SQDashboardSleepDurationRowViewModel: SQDashboardRowViewModel {
     let barSpacing: CGFloat
     let minimumBarWidth: CGFloat
     let maximumBarWidth: CGFloat?
+    let packsBarsLeading: Bool
 
     init(
         bars: [Bar],
@@ -45,7 +46,8 @@ final class SQDashboardSleepDurationRowViewModel: SQDashboardRowViewModel {
         averageLabel: String,
         barSpacing: CGFloat,
         minimumBarWidth: CGFloat,
-        maximumBarWidth: CGFloat?
+        maximumBarWidth: CGFloat?,
+        packsBarsLeading: Bool
     ) {
         self.bars = bars
         self.averageDurationHours = averageDurationHours
@@ -53,6 +55,7 @@ final class SQDashboardSleepDurationRowViewModel: SQDashboardRowViewModel {
         self.barSpacing = barSpacing
         self.minimumBarWidth = minimumBarWidth
         self.maximumBarWidth = maximumBarWidth
+        self.packsBarsLeading = packsBarsLeading
         super.init(rowId: .sleepDuration, rowType: .sleepDuration)
     }
 }

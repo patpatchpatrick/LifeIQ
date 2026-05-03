@@ -331,7 +331,8 @@ extension SQDashboardSectionGroupViewModel {
             averageLabel: "AVG 7h 34m",
             barSpacing: 8,
             minimumBarWidth: 8,
-            maximumBarWidth: 18
+            maximumBarWidth: 18,
+            packsBarsLeading: false
         )
 
         let durationSection = SQDashboardSubsectionViewModel(

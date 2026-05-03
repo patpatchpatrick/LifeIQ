@@ -217,6 +217,7 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         let percentileRank: Double?
         let weightedLoad: Double
         let historicalWorkoutCount: Int
+        let activityType: HKWorkoutActivityType
         let zoneSummary: SQHeartRateWorkoutZoneSummary
         let usedFallback: Bool
     }
@@ -517,7 +518,9 @@ private extension SQWorkoutScoreService {
         async let historicalPerformanceSamplesTask = makePerformanceSamples(
             from: allTimeWorkouts.filter { $0.activityType == workout.activityType }
         )
-        async let historicalDifficultySamplesTask = makeDifficultySamples(from: allTimeWorkouts)
+        async let historicalDifficultySamplesTask = makeDifficultySamples(
+            from: allTimeWorkouts.filter { $0.activityType == workout.activityType }
+        )
 
         let historicalPerformanceSamples = await historicalPerformanceSamplesTask
         let historicalDifficultySamples = await historicalDifficultySamplesTask
@@ -587,14 +590,15 @@ private extension SQWorkoutScoreService {
         allTimeWorkouts: [SQWorkoutSessionable],
         footerContext: FooterContext
     ) async -> [SupportedWorkoutScores] {
-        async let historicalDifficultySamplesTask = makeDifficultySamples(from: allTimeWorkouts)
-
-        let historicalDifficultySamples = await historicalDifficultySamplesTask
         let uniqueActivityTypes = Set(workouts.map(\.activityType))
         var historicalPerformanceSamplesByActivityType = [HKWorkoutActivityType: [PerformanceSample]]()
+        var historicalDifficultySamplesByActivityType = [HKWorkoutActivityType: [DifficultySample]]()
 
         for activityType in uniqueActivityTypes {
             historicalPerformanceSamplesByActivityType[activityType] = await makePerformanceSamples(
+                from: allTimeWorkouts.filter { $0.activityType == activityType }
+            )
+            historicalDifficultySamplesByActivityType[activityType] = await makeDifficultySamples(
                 from: allTimeWorkouts.filter { $0.activityType == activityType }
             )
         }
@@ -605,7 +609,7 @@ private extension SQWorkoutScoreService {
             if let scoredWorkout = await supportedWorkoutScores(
                 for: workout,
                 historicalPerformanceSamples: historicalPerformanceSamplesByActivityType[workout.activityType] ?? [],
-                historicalDifficultySamples: historicalDifficultySamples,
+                historicalDifficultySamples: historicalDifficultySamplesByActivityType[workout.activityType] ?? [],
                 footerContext: footerContext
             ) {
                 results.append(scoredWorkout)
@@ -887,6 +891,7 @@ private extension SQWorkoutScoreService {
             percentileRank: percentileRank,
             weightedLoad: sample.zoneSummary.weightedLoad,
             historicalWorkoutCount: historicalLoads.count,
+            activityType: sample.workout.activityType,
             zoneSummary: sample.zoneSummary,
             usedFallback: usedFallback
         )
@@ -935,7 +940,7 @@ private extension SQWorkoutScoreService {
         }
 
         let topPercent = Int(((1 - percentileRank) * 100).rounded())
-        return "\(durationText) • top \(topPercent)% HR load"
+        return "\(durationText) • top \(topPercent)% \(sample.workout.activityType.name.lowercased()) HR load"
     }
 }
 
@@ -1058,10 +1063,10 @@ private extension SQWorkoutScoreService {
     ) -> SQWorkoutPremiumInsightDetailModel {
         let percentileText: String = {
             guard let percentileRank = breakdown.percentileRank else {
-                return "Not enough HR-tracked workout history yet. Using an absolute zone-load estimate for now."
+                return "Not enough HR-tracked \(breakdown.activityType.name.lowercased()) history yet. Using an absolute zone-load estimate for now."
             }
             let topPercent = Int(((1 - percentileRank) * 100).rounded())
-            return "This workout's HR load ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) HR-tracked workout(s)."
+            return "This workout's HR load ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) HR-tracked \(breakdown.activityType.name.lowercased()) workout(s)."
         }()
 
         var components: [SQWorkoutPremiumInsightDetailModel.Component] = [
@@ -1102,7 +1107,7 @@ private extension SQWorkoutScoreService {
         return .init(
             title: "Difficulty Score",
             subtitle: "How taxing this workout was, primarily from your heart-rate load.",
-            summary: "Difficulty is driven by time in heart-rate zones. Higher zones count much more than easy aerobic time, and the final score ranks that weighted load against your other HR-tracked workouts.",
+            summary: "Difficulty is driven by time in heart-rate zones. Higher zones count much more than easy aerobic time, and the final score ranks that weighted load against your own HR-tracked \(breakdown.activityType.name.lowercased()) history.",
             scoreCards: [],
             components: components,
             examples: [
@@ -1131,7 +1136,7 @@ private extension SQWorkoutScoreService {
                     detail: "Mostly lower-zone work that should be easier to absorb."
                 )
             ],
-            footnote: "This model is intentionally personal. As your fitness improves, the same heart-rate load can move lower in your historical difficulty rankings."
+            footnote: "This model is intentionally personal and sport-relative. As your fitness improves, the same heart-rate load can move lower in your \(breakdown.activityType.name.lowercased()) difficulty rankings."
         )
     }
 
@@ -1229,10 +1234,10 @@ private extension SQWorkoutScoreService {
         .init(
             title: "Difficulty Score",
             subtitle: "How taxing a workout was for you.",
-            summary: "Difficulty is driven by time in heart-rate zones, with harder zones carrying much more load than easy aerobic time.",
+            summary: "Difficulty is driven by time in heart-rate zones, with harder zones carrying much more load than easy aerobic time. When enough history exists, it is ranked against the same workout type.",
             scoreCards: [],
             components: [
-                .init(id: "overall-difficulty", title: "Difficulty score", value: "--/100", detail: "Ranked against your own HR-tracked workout history.", accentColor: .dashboardTrendWarm),
+                .init(id: "overall-difficulty", title: "Difficulty score", value: "--/100", detail: "Ranked against your own same-sport HR-tracked workout history.", accentColor: .dashboardTrendWarm),
                 .init(id: "zone-load", title: "Weighted HR load", value: "Included", detail: "Time in higher heart-rate zones contributes more load points.", accentColor: .dashboardTrendWarm),
                 .init(id: "zone-model", title: "Zone model", value: "Included", detail: "Zones are estimated from your profile age and observed workout HR when available.", accentColor: .dashboardGlowBlue),
                 .init(id: "zone-breakdown", title: "Time in each zone", value: "Included", detail: "See exactly how much time you spent in Zone 1 through Zone 5.", accentColor: .dashboardGlowMint)

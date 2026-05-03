@@ -139,6 +139,7 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGroups))
             state.setLoading(true)
+            state.updateLoadingProgress(0.05)
         }
 
         refreshRuntimeControlCtaViewModel()
@@ -420,14 +421,17 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateAvailableLayoutGroups(availableLayoutGroups)
             state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
             state.setLoading(true)
+            state.updateLoadingProgress(0.05)
         }
 
         do {
             try metricsManager.loadIfNeeded(using: context)
+            state.updateLoadingProgress(0.12)
 
             if userState.isLoggedIn {
                 _ = try await SQMetricDefinitionManager.shared.syncMetricsIfNeeded(using: context)
             }
+            state.updateLoadingProgress(0.18)
 
             async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
             async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
@@ -435,6 +439,7 @@ final class SQDashboardController: SQDashboardInterface {
             let sleepAccessStatus = await sleepAccessStatusTask
             let heartAccessStatus = await heartAccessStatusTask
             let workoutsAccessStatus = await workoutsAccessStatusTask
+            state.updateLoadingProgress(0.26)
 
             async let restingHeartRatePast30DaysTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.past30Days)
             async let restingHeartRatePastYearTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastYear)
@@ -448,6 +453,7 @@ final class SQDashboardController: SQDashboardInterface {
             vo2MaxPast30Days = try await healthKitManager.fetchVO2MaxSamples(.past30Days)
             vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(.pastYear)
             vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+            state.updateLoadingProgress(0.34)
 
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
             
@@ -467,6 +473,7 @@ final class SQDashboardController: SQDashboardInterface {
             let lastYearWorkouts = try await workoutManager.getWorkouts(for: .pastYear, modelContext: context)
             let yearBeforeLastWorkouts = try await workoutManager.getWorkouts(for: .yearBeforeLast, modelContext: context)
             let allTimeWorkouts = try await workoutManager.getWorkouts(for: .allTime, modelContext: context)
+            state.updateLoadingProgress(0.48)
 
             let dashboardReferenceDate = Date()
             let sleepSchedule = userState.loggedInUser?.sleepSchedule
@@ -568,6 +575,7 @@ final class SQDashboardController: SQDashboardInterface {
                 to: SQTimeRange.yearBeforeLast.endDate,
                 context: context
             )
+            state.updateLoadingProgress(0.62)
 
             // Set the daily check-in CTA view model if no stats exist
             if
@@ -647,6 +655,7 @@ final class SQDashboardController: SQDashboardInterface {
             let sleepDashboardData = try await buildSleepDashboardData(for: state.selectedTimeRange)
             let restingHeartRatePast30Days = (try? await restingHeartRatePast30DaysTask) ?? []
             let restingHeartRatePastYear = (try? await restingHeartRatePastYearTask) ?? []
+            state.updateLoadingProgress(0.74)
 
             healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
                 for: context,
@@ -694,6 +703,7 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             var healthIntelligenceInput = buildHealthIntelligenceInput(for: state.selectedTimeRange)
+            state.updateLoadingProgress(0.82)
 
             var insightsResult = buildDashboardInsightsResult(
                 input: healthIntelligenceInput
@@ -736,6 +746,7 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             updateTimeRangeMenuBadges(selectedTimeRange: state.selectedTimeRange)
+            state.updateLoadingProgress(0.90)
 
             let sectionGroups = try await buildSectionGroups(
                 checkIns: currentCheckIns,
@@ -774,6 +785,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastSuccessfulLoadAt = .now
 
             if showLoadingState {
+                state.updateLoadingProgress(1)
                 state.setLoading(false)
             }
 
@@ -1782,6 +1794,9 @@ final class SQDashboardController: SQDashboardInterface {
         let defaultColor = SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.58 : 0.70)
         let highlightColor = SQColor.dashboardGlowBlue.color
 
+        let shouldPackBarsLeading = (timeRange == .pastYear || timeRange == .allTime)
+            && buckets.count <= 6
+
         return SQDashboardSleepDurationRowViewModel(
             bars: buckets.map { bucket in
                 .init(
@@ -1796,7 +1811,8 @@ final class SQDashboardController: SQDashboardInterface {
             averageLabel: "AVG \(formattedDuration(averageDurationHours * 3600))",
             barSpacing: timeRange == .past30Days ? 4 : 8,
             minimumBarWidth: timeRange == .past30Days ? 3 : 8,
-            maximumBarWidth: timeRange == .past30Days ? 8 : 18
+            maximumBarWidth: timeRange == .past30Days ? 8 : 18,
+            packsBarsLeading: shouldPackBarsLeading
         )
     }
 
@@ -1836,8 +1852,11 @@ final class SQDashboardController: SQDashboardInterface {
                 calendar.date(byAdding: .month, value: -(11 - offset), to: latestMonth)
             }
 
-            return monthStarts.map { monthStart in
-                let averageHours = grouped[monthStart]?.map { $0.totalSleepDuration / 3600 }.average ?? 0
+            return monthStarts.compactMap { monthStart in
+                guard let bucketNights = grouped[monthStart],
+                      let averageHours = bucketNights.map({ $0.totalSleepDuration / 3600 }).average else {
+                    return nil
+                }
                 return SleepDurationBucket(
                     id: monthStart.firebaseDailyDateKey,
                     label: monthLabel(for: monthStart),

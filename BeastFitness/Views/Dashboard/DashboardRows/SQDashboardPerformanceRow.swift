@@ -41,24 +41,26 @@ struct SQDashboardPerformanceRow: View {
     @ViewBuilder
     private var trailingColumns: some View {
         HStack(spacing: 12) {
-            // Column 2: Best Value + Unit (30%)
             HStack(spacing: 4) {
                 Text(data.bestValue)
                     .font(.sqFont(.bodySmallSemiBold))
                     .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
 
                 Text(data.unit)
                     .font(.sqFont(.bodyExtraSmall))
                     .sqForegroundColor(.textSecondary)
+                    .lineLimit(1)
             }
-            .frame(maxWidth: .infinity * 0.75, alignment: .trailing)
+            .frame(width: 62, alignment: .trailing)
 
-            // Column 3: Percentile Rank (30%)
             HStack(spacing: .SQSpace.xs) {
                 if data.percentileRank != nil {
                     Text("Top")
                         .font(.sqFont(.bodyExtraSmall))
                         .sqForegroundColor(.textSecondary)
+                        .lineLimit(1)
 
                     SQDashboardTrendBadge(
                         text: topPercentText,
@@ -69,9 +71,10 @@ struct SQDashboardPerformanceRow: View {
                     Text("N/A")
                         .font(.sqFont(.bodyExtraSmall))
                         .sqForegroundColor(.textTertiary)
+                        .lineLimit(1)
                 }
             }
-            .frame(maxWidth: .infinity * 0.8, alignment: .trailing)
+            .frame(width: 66, alignment: .trailing)
         }
     }
 
@@ -98,26 +101,15 @@ struct SQDashboardPerformanceRow: View {
                 Text(data.title)
                     .font(.sqFont(.body))
                     .sqForegroundColor(.textPrimary)
-
-                if isPremiumFeature {
-                    Text("Premium")
-                        .font(.sqFont(.bodyExtraSmall))
-                        .padding(.horizontal, .SQSpace.s)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill((premiumAccentColor ?? .dashboardGlowBlue).color.opacity(SQColor.isDarkMode ? 0.22 : 0.12))
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .stroke((premiumAccentColor ?? .dashboardGlowBlue).color.opacity(0.4), lineWidth: 1)
-                        )
-                        .sqForegroundColor(.textPrimary)
-                }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .truncationMode(.tail)
+                    .layoutPriority(1)
 
                 Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
             ZStack(alignment: .trailing) {
                 trailingColumns
@@ -141,6 +133,7 @@ struct SQDashboardPerformanceRow: View {
                         .sqForegroundColor(.textPrimary)
                 }
             }
+            .frame(width: 140, alignment: .trailing)
         }
         .padding(.vertical, .SQSpace.s)
     }

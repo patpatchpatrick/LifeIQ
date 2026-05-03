@@ -22,6 +22,11 @@ struct SQDashboardView: View {
         controller.lifeScoreViewModel ?? (controller.state.isLoading ? .mock : nil)
     }
 
+    private var loadingPercentText: String {
+        let progress = controller.state.loadingProgress ?? 0
+        return "\(Int((progress * 100).rounded()))%"
+    }
+
     var mainScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -148,6 +153,12 @@ struct SQDashboardView: View {
             mainScroll
                 .disabled(controller.state.isLoading || controller.emailVerificationRequirement != nil)
 
+            if controller.state.isLoading {
+                loadingProgressOverlay
+                    .zIndex(1)
+                    .unredacted()
+            }
+
             if controller.emailVerificationRequirement != nil {
                 SQEmailVerificationGateView(controller: controller.emailVerificationController)
                     .zIndex(2)
@@ -181,6 +192,43 @@ struct SQDashboardView: View {
                     SQDailyCheckInView(viewModel: dailyCheckInViewModel)
                 }
             }
+    }
+
+    private var loadingProgressOverlay: some View {
+        VStack {
+            HStack {
+                Spacer()
+
+                HStack(spacing: .SQSpace.s) {
+                    ProgressView(value: controller.state.loadingProgress ?? 0, total: 1)
+                        .progressViewStyle(.linear)
+                        .tint(SQColor.dashboardGlowBlue.color)
+                        .frame(width: 72)
+
+                    Text(loadingPercentText)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                        .monospacedDigit()
+                        .frame(width: 34, alignment: .trailing)
+                }
+                .padding(.horizontal, .SQSpace.m)
+                .padding(.vertical, .SQSpace.s)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.92 : 0.98))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(SQColor.isDarkMode ? 0.20 : 0.08), radius: 12, x: 0, y: 6)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 58)
+
+            Spacer()
+        }
+        .allowsHitTesting(false)
     }
 }
 
