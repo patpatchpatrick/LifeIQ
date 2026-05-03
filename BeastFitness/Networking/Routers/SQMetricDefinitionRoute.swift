@@ -13,6 +13,14 @@ enum SQMetricDefinitionRoute {
 }
 
 extension SQMetricDefinitionRoute: SQFirestoreRoute {
+    var firestoreSafetyOperation: String {
+        switch self {
+        case .saveMetricDefinition:
+            return "save_metric_definition"
+        case .fetchAllMetricDefinitions:
+            return "fetch_metric_definitions"
+        }
+    }
 
     var writeBody: (any Encodable)? {
         switch self {

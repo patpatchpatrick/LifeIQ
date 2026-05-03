@@ -39,6 +39,15 @@ enum SQWorkoutRoute {
 }
 
 extension SQWorkoutRoute: SQFirestoreRoute {
+    var firestoreSafetyOperation: String {
+        switch self {
+        case .saveWorkout:
+            return "save_workout_metadata"
+        case .fetchWorkouts:
+            return "fetch_workout_metadata"
+        }
+    }
+
     var writeBody: (any Encodable)? {
         switch self {
         case .saveWorkout(let workout, _):

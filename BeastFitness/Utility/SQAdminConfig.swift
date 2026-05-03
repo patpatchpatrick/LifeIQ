@@ -32,6 +32,11 @@ enum SQAdminConfig {
     static var useMockDashboardHealthData = false
     static var useMockHealthData: Bool { useMockDashboardHealthData }
     static var verboseLoggingEnabled = false
+    static var firestoreSafetyEnabled = true
+    static var firestoreMaxReadsPerMinute = 10_000
+    static var firestoreMaxWritesPerMinute = 1_000
+    static var firestoreMaxRequestsPerMinutePerOperation = 1_000
+    static var firestoreSafetyCooldownSeconds: TimeInterval = 300
 
     /// Gates the internal scenario/gallery lab used to QA dashboard and future view states.
     static var viewLabEnabled = true
@@ -59,6 +64,11 @@ enum SQAdminConfig {
     static let useMockDashboardHealthData = false
     static let useMockHealthData = false
     static let verboseLoggingEnabled = false
+    static let firestoreSafetyEnabled = true
+    static let firestoreMaxReadsPerMinute = 10_000
+    static let firestoreMaxWritesPerMinute = 1_000
+    static let firestoreMaxRequestsPerMinutePerOperation = 1_000
+    static let firestoreSafetyCooldownSeconds: TimeInterval = 300
     static let viewLabEnabled = false
     static let forceInsightFreshnessBadges = false
     static let personalizedLifeScoreAdjustmentsEnabled = false

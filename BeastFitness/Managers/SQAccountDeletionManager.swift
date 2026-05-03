@@ -51,6 +51,7 @@ protocol SQAccountDeletionManaging: AnyObject {
 final class SQAccountDeletionManager: SQAccountDeletionManaging {
     static let shared = SQAccountDeletionManager()
 
+    private static let firestoreSafetyBulkMultiplier = 10
     private let authManager: SQAuthManaging
     private let firestore: Firestore
     private let subcollections = [
@@ -121,21 +122,51 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
             try await deleteCollection(userRef.collection(subcollection), named: subcollection)
         }
 
+        try await SQFirestoreSafetyManager.shared.assertAllowed(
+            kind: .read,
+            operation: "account_deletion_fetch_user",
+            limitMultiplier: Self.firestoreSafetyBulkMultiplier
+        )
         let snapshot = try await userRef.getDocument()
+        try await SQFirestoreSafetyManager.shared.recordReads(
+            1,
+            operation: "account_deletion_fetch_user",
+            limitMultiplier: Self.firestoreSafetyBulkMultiplier
+        )
         SQFirestoreMetricsManager.shared.recordReads(1, operation: "Account deletion fetch user document")
 
         guard snapshot.exists else { return }
 
+        try await SQFirestoreSafetyManager.shared.assertAllowed(
+            kind: .write,
+            operation: "account_deletion_delete_user",
+            limitMultiplier: Self.firestoreSafetyBulkMultiplier
+        )
         let batch = firestore.batch()
         batch.deleteDocument(userRef)
         try await batch.commit()
+        try await SQFirestoreSafetyManager.shared.recordWrites(
+            1,
+            operation: "account_deletion_delete_user",
+            limitMultiplier: Self.firestoreSafetyBulkMultiplier
+        )
         SQFirestoreMetricsManager.shared.recordWrites(1, operation: "Account deletion delete user document")
     }
 
     private func deleteCollection(_ collection: CollectionReference, named name: String) async throws {
         while true {
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .read,
+                operation: "account_deletion_fetch_\(name)",
+                limitMultiplier: Self.firestoreSafetyBulkMultiplier
+            )
             let snapshot = try await collection.limit(to: 200).getDocuments()
             let documents = snapshot.documents
+            try await SQFirestoreSafetyManager.shared.recordReads(
+                max(documents.count, 1),
+                operation: "account_deletion_fetch_\(name)",
+                limitMultiplier: Self.firestoreSafetyBulkMultiplier
+            )
 
             guard !documents.isEmpty else { return }
 
@@ -149,7 +180,17 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
                 batch.deleteDocument(document.reference)
             }
 
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .write,
+                operation: "account_deletion_delete_\(name)",
+                limitMultiplier: Self.firestoreSafetyBulkMultiplier
+            )
             try await batch.commit()
+            try await SQFirestoreSafetyManager.shared.recordWrites(
+                documents.count,
+                operation: "account_deletion_delete_\(name)",
+                limitMultiplier: Self.firestoreSafetyBulkMultiplier
+            )
             SQFirestoreMetricsManager.shared.recordWrites(
                 documents.count,
                 operation: "Account deletion delete \(name)"

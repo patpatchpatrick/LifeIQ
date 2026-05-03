@@ -14,6 +14,16 @@ enum SQUserRoute {
 }
 
 extension SQUserRoute: SQFirestoreRoute {
+    var firestoreSafetyOperation: String {
+        switch self {
+        case .createUser:
+            return "create_user"
+        case .saveUser:
+            return "save_user"
+        case .fetchUser:
+            return "fetch_user"
+        }
+    }
 
     var writeBody: (any Encodable)? {
         switch self {

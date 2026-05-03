@@ -19,47 +19,74 @@ extension SQNetworkService {
     static func performRequest<T>(_ route: any SQFirestoreRoute) async throws -> T where T : Decodable, T : Encodable {
 
         let db = Firestore.firestore()
+        let operation = route.firestoreSafetyOperation
 
-           switch route.reference(in: db) {
-           case .documentRead(let ref):
-               let snap = try await ref.getDocument()
-               return try snap.data(as: T.self)
+        switch route.reference(in: db) {
+        case .documentRead(let ref):
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .read,
+                operation: operation
+            )
+            let snap = try await ref.getDocument()
+            try await SQFirestoreSafetyManager.shared.recordReads(1, operation: operation)
+            return try snap.data(as: T.self)
 
-           case .collection(let ref):
-               let snaps = try await ref.getDocuments()
-               return try decodeDocuments(snaps.documents, as: T.self)
+        case .collection(let ref):
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .read,
+                operation: operation
+            )
+            let snaps = try await ref.getDocuments()
+            try await SQFirestoreSafetyManager.shared.recordReads(
+                max(snaps.documents.count, 1),
+                operation: operation
+            )
+            return try decodeDocuments(snaps.documents, as: T.self)
 
-           case .query(let q):
-               let snaps = try await q.getDocuments()
-               return try decodeDocuments(snaps.documents, as: T.self)
+        case .query(let q):
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .read,
+                operation: operation
+            )
+            let snaps = try await q.getDocuments()
+            try await SQFirestoreSafetyManager.shared.recordReads(
+                max(snaps.documents.count, 1),
+                operation: operation
+            )
+            return try decodeDocuments(snaps.documents, as: T.self)
 
-           case .documentWrite(let ref):
-               try await SQRemoteConfigManager.shared.assertServerWritesEnabled()
+        case .documentWrite(let ref):
+            try await SQRemoteConfigManager.shared.assertServerWritesEnabled()
+            try await SQFirestoreSafetyManager.shared.assertAllowed(
+                kind: .write,
+                operation: operation
+            )
 
-               guard let body = route.writeBody else {
-                   throw SQNetworkError.invalidResponseType(
-                       expected: "body data",
-                       got: "nil"
-                   )
-               }
+            guard let body = route.writeBody else {
+                throw SQNetworkError.invalidResponseType(
+                    expected: "body data",
+                    got: "nil"
+                )
+            }
 
-               guard T.self == SQVoidWrite.self else {
-                   throw SQNetworkError.invalidResponseType(
-                       expected: "SQVoidWrite",
-                       got: String(describing: T.self)
-                   )
-               }
+            guard T.self == SQVoidWrite.self else {
+                throw SQNetworkError.invalidResponseType(
+                    expected: "SQVoidWrite",
+                    got: String(describing: T.self)
+                )
+            }
 
-               try await writeDocument(body, to: ref)
+            try await writeDocument(body, to: ref)
+            try await SQFirestoreSafetyManager.shared.recordWrites(1, operation: operation)
 
-               guard let result = SQVoidWrite() as? T else {
-                   throw SQNetworkError.invalidResponseType(
-                       expected: String(describing: T.self),
-                       got: "SQVoidWrite"
-                   )
-               }
-               return result
-           }
+            guard let result = SQVoidWrite() as? T else {
+                throw SQNetworkError.invalidResponseType(
+                    expected: String(describing: T.self),
+                    got: "SQVoidWrite"
+                )
+            }
+            return result
+        }
     }
 
     /// Decodes an array of Firestore documents into the expected return type

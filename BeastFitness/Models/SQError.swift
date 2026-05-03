@@ -46,9 +46,15 @@ extension SQUserFacingError {
 enum SQNetworkError: SQUserFacingError {
     case invalidResponseType(expected: String, got: String)
     case decodingFailed(underlying: Error)
+    case temporarilyUnavailable
 
     var userFacingTitle: String {
-        "Network Error"
+        switch self {
+        case .temporarilyUnavailable:
+            return "Error"
+        case .invalidResponseType, .decodingFailed:
+            return "Network Error"
+        }
     }
 
     var userFacingDescription: String {
@@ -57,6 +63,8 @@ enum SQNetworkError: SQUserFacingError {
             return "Invalid response type: expected \(expected), got \(got)"
         case .decodingFailed(let error):
             return "Failed to decode response: \(error.localizedDescription)"
+        case .temporarilyUnavailable:
+            return "Something went wrong. Please try again later."
         }
     }
 }

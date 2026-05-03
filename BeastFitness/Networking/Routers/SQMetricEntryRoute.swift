@@ -13,6 +13,14 @@ enum SQMetricEntryRoute {
 }
 
 extension SQMetricEntryRoute: SQFirestoreRoute {
+    var firestoreSafetyOperation: String {
+        switch self {
+        case .saveEntryBucket:
+            return "save_metric_entry_bucket"
+        case .fetchEntryBuckets:
+            return "fetch_metric_entry_buckets"
+        }
+    }
 
     var writeBody: (any Encodable)? {
         switch self {
