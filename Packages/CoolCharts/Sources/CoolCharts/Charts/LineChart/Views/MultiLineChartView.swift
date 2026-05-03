@@ -23,8 +23,8 @@ public struct MultiLineChartView: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.88),
-                                coordinateSet.color.opacity(0.95)
+                                coordinateSet.color.opacity(1.0),
+                                coordinateSet.color.opacity(0.74)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing

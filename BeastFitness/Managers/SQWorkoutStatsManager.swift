@@ -178,15 +178,9 @@ extension SQWorkoutStatsManager {
             }
             guard !periodMetrics.isEmpty, let sampleMetric = periodMetrics.first else { continue }
 
-            // Best single workout in the period — always compare per-workout values so
-            // the result is apples-to-apples with historical per-workout data.
-            // .minimum types (e.g. pace) use min(); everything else uses max().
-            let currentValue: Double
-            if quantityType.dashboardAggregationType == .minimum {
-                currentValue = periodMetrics.map { $0.value }.min() ?? 0
-            } else {
-                currentValue = periodMetrics.map { $0.value }.max() ?? 0
-            }
+            // Dashboard range rows show the average value across workouts in the selected
+            // period, then rank that average against the same metric from all-time workouts.
+            let currentValue = average(periodMetrics.map(\.value))
 
             let row = await buildPerformanceRowData(
                 quantityType: quantityType,
@@ -246,6 +240,11 @@ extension SQWorkoutStatsManager {
             percentileRank: percentile,
             leaderboardMode: .workoutQuantity(quantityType, activityType)
         )
+    }
+
+    private func average(_ values: [Double]) -> Double {
+        guard !values.isEmpty else { return 0 }
+        return values.reduce(0, +) / Double(values.count)
     }
 
     private func orderedPerformanceRows(

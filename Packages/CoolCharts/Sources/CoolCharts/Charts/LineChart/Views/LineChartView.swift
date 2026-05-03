@@ -39,8 +39,8 @@ public struct LineChartView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.92),
-                                model.lineColor
+                                model.lineColor.opacity(1.0),
+                                model.lineColor.opacity(0.76)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing

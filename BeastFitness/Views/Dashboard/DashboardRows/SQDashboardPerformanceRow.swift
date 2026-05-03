@@ -34,7 +34,8 @@ struct SQDashboardPerformanceRow: View {
         guard let rank = data.percentileRank else {
             return ""
         }
-        let topPercent = Int((1.0 - rank) * 100)
+        guard rank < 1 else { return "0%" }
+        let topPercent = max(1, Int(ceil((1.0 - rank) * 100)))
         return "\(topPercent)%"
     }
 
@@ -52,8 +53,9 @@ struct SQDashboardPerformanceRow: View {
                     .font(.sqFont(.bodyExtraSmall))
                     .sqForegroundColor(.textSecondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.78)
             }
-            .frame(width: 62, alignment: .trailing)
+            .frame(width: 82, alignment: .trailing)
 
             HStack(spacing: .SQSpace.xs) {
                 if data.percentileRank != nil {
@@ -133,14 +135,13 @@ struct SQDashboardPerformanceRow: View {
                         .sqForegroundColor(.textPrimary)
                 }
             }
-            .frame(width: 140, alignment: .trailing)
+            .frame(width: 160, alignment: .trailing)
         }
         .padding(.vertical, .SQSpace.s)
     }
 
     var body: some View {
         mainBody
-            .padding(.horizontal, isPremiumFeature ? .SQSpace.m : 0)
             .padding(.vertical, isPremiumFeature ? .SQSpace.xs : 0)
             .background {
                 if let premiumAccentColor {

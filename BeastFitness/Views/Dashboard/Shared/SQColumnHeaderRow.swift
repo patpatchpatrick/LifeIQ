@@ -29,20 +29,46 @@ struct SQColumnHeaderRow: View {
         }
     }
 
+    private var usesPerformanceColumns: Bool {
+        columns.count == 3
+            && columns[2].title.localizedCaseInsensitiveCompare("Rank") == .orderedSame
+    }
+
     var body: some View {
-        HStack(spacing: 12) { // Same spacing as SQDashboardStatRow
-            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
-                Text(column.title.isEmpty ? " " : column.title.uppercased())
-                    .sqFont(.headerSmall)
-                    .sqForegroundColor(.textDisabled)
-                    .frame(
-                        maxWidth: index == 0 ? .infinity : .infinity * 0.75,
-                        alignment: column.alignment == .leading ? .leading : .trailing
-                    )
+        Group {
+            if usesPerformanceColumns {
+                HStack(spacing: 12) {
+                    headerText(columns[0])
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    headerText(columns[1])
+                        .frame(width: 82, alignment: .trailing)
+
+                    headerText(columns[2])
+                        .frame(width: 66, alignment: .trailing)
+                }
+            } else {
+                HStack(spacing: 12) { // Same spacing as SQDashboardStatRow
+                    ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                        headerText(column)
+                            .frame(
+                                maxWidth: index == 0 ? .infinity : .infinity * 0.75,
+                                alignment: column.alignment == .leading ? .leading : .trailing
+                            )
+                    }
+                }
             }
         }
         .padding(.top, .SQSpace.s)
         .padding(.bottom, .SQSpace.l)
+    }
+
+    private func headerText(_ column: ColumnHeader) -> some View {
+        Text(column.title.isEmpty ? " " : column.title.uppercased())
+            .sqFont(.headerSmall)
+            .sqForegroundColor(.textDisabled)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
     }
 }
 

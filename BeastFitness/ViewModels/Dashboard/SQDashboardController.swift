@@ -1239,25 +1239,23 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Add VO2 Max row if we have samples
         if !vo2MaxSamples.isEmpty {
-            // Calculate best VO2 Max (highest value)
-            let bestVO2Max = vo2MaxSamples.map { $0.value }.max() ?? 0.0
+            let vo2Values = vo2MaxSamples.map(\.value)
+            let averageVO2Max = vo2Values.reduce(0, +) / Double(vo2Values.count)
 
-            // Format best value (e.g., "45.3")
-            let bestValueString = String(format: "%.1f", bestVO2Max)
+            let valueString = String(format: "%.1f", averageVO2Max)
 
-            // Calculate percentile rank
             let historicalValues = vo2MaxAllTime.map { $0.value }
             let percentileRank = SQPercentileCalculator.calculatePercentile(
-                currentBest: bestVO2Max,
+                currentBest: averageVO2Max,
                 historicalValues: historicalValues,
-                isLowerBetter: false  // Higher VO2 max is better
+                isLowerBetter: false
             )
 
             let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
                 metricId: "vo2-max",
                 icon: SQImageSymbol.heart.rawValue,
                 title: "VO₂ Max",
-                bestValue: bestValueString,
+                bestValue: valueString,
                 unit: "mL/kg/min",
                 percentileRank: percentileRank,
                 leaderboardMode: .vo2Max

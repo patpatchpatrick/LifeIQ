@@ -23,6 +23,13 @@ struct SQSleepPhaseTrendRowViewModel: Identifiable {
     let detailText: String
 }
 
+struct SQSleepPhaseTrendBucketViewModel: Identifiable {
+    let id: String
+    let title: String
+    let detailTitle: String
+    let durationTextByPhase: [SQSleepPhase: String]
+}
+
 @Observable @MainActor
 final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
     let id = UUID().uuidString
@@ -36,6 +43,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
     private(set) var selectedTimeRange: AppTimeRange
     private(set) var chartModel: MultiLineChartModel?
     private(set) var trendRows: [SQSleepPhaseTrendRowViewModel] = []
+    private(set) var trendBuckets: [SQSleepPhaseTrendBucketViewModel] = []
     private(set) var emptyMessage: String?
     private(set) var focusedPhase: SQSleepPhase?
     let timeRangeMenuViewModel: SQDropDownMenuViewModel
@@ -127,6 +135,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
             guard let data = try await buildSleepDashboardData(for: selectedTimeRange) else {
                 chartSeries = []
                 trendRows = []
+                trendBuckets = []
                 chartModel = nil
                 emptyMessage = "Track a few nights of sleep to see phase trends."
                 isLoading = false
@@ -135,6 +144,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
 
             chartSeries = buildChartSeries(from: data)
             trendRows = buildTrendRows(from: data)
+            trendBuckets = buildTrendBuckets(from: data)
             rebuildChartModelForCurrentState()
 
             if chartSeries.isEmpty {
@@ -148,6 +158,7 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
             )
             chartSeries = []
             trendRows = []
+            trendBuckets = []
             chartModel = nil
             emptyMessage = "Sleep phase trends are unavailable right now."
             hub.alertEvents.send(
@@ -221,6 +232,98 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
                 detailText: "Avg over \(selectedTimeRange.rawValue)"
             )
         }
+    }
+
+    private func buildTrendBuckets(from data: SQSleepDashboardData) -> [SQSleepPhaseTrendBucketViewModel] {
+        let calendar = Calendar.current
+        let nights = data.currentNights.sorted { $0.wakeDay < $1.wakeDay }
+        guard !nights.isEmpty else { return [] }
+
+        switch selectedTimeRange {
+        case .today:
+            return []
+
+        case .pastSevenDays:
+            return nights.map { night in
+                trendBucket(
+                    id: night.id,
+                    title: weekdayLabel(for: night.wakeDay),
+                    detailTitle: night.wakeDay.formattedString(with: .medium),
+                    nights: [night]
+                )
+            }
+
+        case .past30Days:
+            return nights.map { night in
+                trendBucket(
+                    id: night.id,
+                    title: dayLabel(for: night.wakeDay),
+                    detailTitle: night.wakeDay.formattedString(with: .medium),
+                    nights: [night]
+                )
+            }
+
+        case .pastYear:
+            let grouped = Dictionary(grouping: nights) { night in
+                calendar.date(from: calendar.dateComponents([.year, .month], from: night.wakeDay))
+                ?? calendar.startOfDay(for: night.wakeDay)
+            }
+
+            let latestMonth = nights.last.flatMap {
+                calendar.date(from: calendar.dateComponents([.year, .month], from: $0.wakeDay))
+            } ?? calendar.date(from: calendar.dateComponents([.year, .month], from: .now)) ?? .now
+
+            let monthStarts = (0..<12).compactMap { offset in
+                calendar.date(byAdding: .month, value: -(11 - offset), to: latestMonth)
+            }
+
+            return monthStarts.compactMap { monthStart in
+                guard let bucketNights = grouped[monthStart] else { return nil }
+                return trendBucket(
+                    id: monthStart.firebaseDailyDateKey,
+                    title: monthLabel(for: monthStart),
+                    detailTitle: fullMonthLabel(for: monthStart),
+                    nights: bucketNights
+                )
+            }
+
+        case .allTime:
+            let grouped = Dictionary(grouping: nights) { night in
+                let year = calendar.component(.year, from: night.wakeDay)
+                return calendar.date(from: DateComponents(year: year, month: 1, day: 1))
+                ?? calendar.startOfDay(for: night.wakeDay)
+            }
+
+            return grouped
+                .compactMap { yearStart, bucketNights -> SQSleepPhaseTrendBucketViewModel? in
+                    trendBucket(
+                        id: yearStart.firebaseDailyDateKey,
+                        title: yearLabel(for: yearStart),
+                        detailTitle: yearLabel(for: yearStart),
+                        nights: bucketNights
+                    )
+                }
+                .sorted { $0.id < $1.id }
+        }
+    }
+
+    private func trendBucket(
+        id: String,
+        title: String,
+        detailTitle: String,
+        nights: [SQSleepNight]
+    ) -> SQSleepPhaseTrendBucketViewModel {
+        let durationTextByPhase = Dictionary(uniqueKeysWithValues: phaseOrder.map { phase in
+            let phaseAverageDuration = averageDuration(for: nights.map { $0.phaseDuration(for: phase) })
+            return (phase, formattedDuration(phaseAverageDuration))
+        })
+
+        return SQSleepPhaseTrendBucketViewModel(
+            id: id,
+            title: title,
+            detailTitle: detailTitle,
+            durationTextByPhase: durationTextByPhase
+        )
     }
 
     private func rebuildChartModelForCurrentState() {
@@ -305,10 +408,15 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
         case .rem:
             return SQColor.dashboardGlowBlue.color
         case .core:
-            return Color.white.opacity(SQColor.isDarkMode ? 0.88 : 0.72)
+            return SQColor.accentNeutral3.color
         case .deep:
             return SQColor.dashboardGlowMint.color
         }
+    }
+
+    private func averageDuration(for durations: [TimeInterval]) -> TimeInterval {
+        guard !durations.isEmpty else { return 0 }
+        return durations.reduce(0, +) / Double(durations.count)
     }
 
     private func formattedDuration(_ duration: TimeInterval) -> String {
@@ -357,5 +465,37 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
         case .core:
             return SQColor.textPrimary.color
         }
+    }
+
+    private func weekdayLabel(for date: Date) -> String {
+        let weekday = Calendar.current.component(.weekday, from: date) - 1
+        let symbols = ["S", "M", "T", "W", "T", "F", "S"]
+        guard symbols.indices.contains(weekday) else { return "" }
+        return symbols[weekday]
+    }
+
+    private func dayLabel(for date: Date) -> String {
+        "\(Calendar.current.component(.day, from: date))"
+    }
+
+    private func monthLabel(for date: Date) -> String {
+        let month = Calendar.current.component(.month, from: date) - 1
+        let symbols = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+        guard symbols.indices.contains(month) else { return "" }
+        return symbols[month]
+    }
+
+    private func fullMonthLabel(for date: Date) -> String {
+        let month = Calendar.current.component(.month, from: date) - 1
+        let symbols = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+        guard symbols.indices.contains(month) else { return date.formattedString(with: .medium) }
+        return symbols[month]
+    }
+
+    private func yearLabel(for date: Date) -> String {
+        String(Calendar.current.component(.year, from: date))
     }
 }

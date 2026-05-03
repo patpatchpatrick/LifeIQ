@@ -8,6 +8,8 @@ import CoolCharts
 
 struct SQSleepPhaseTrendsView: View {
     @State var controller: SQSleepPhaseTrendsController
+    private let phaseColumnWidth: CGFloat = 88
+    private let bucketColumnWidth: CGFloat = 72
 
     private var navTitleView: some View {
         Text(controller.title)
@@ -133,6 +135,86 @@ struct SQSleepPhaseTrendsView: View {
         )
     }
 
+    private var phaseBucketSection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                Text("Sleep phase trends")
+                    .sqFont(.title3)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("Average nightly duration by \(controller.selectedTimeRange.rawValue.lowercased()) period.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 0) {
+                        tableHeaderCell("Phase", width: phaseColumnWidth, alignment: .leading)
+
+                        ForEach(controller.trendBuckets) { bucket in
+                            tableHeaderCell(
+                                bucket.title,
+                                width: bucketColumnWidth,
+                                alignment: .trailing
+                            )
+                            .accessibilityLabel(bucket.detailTitle)
+                        }
+                    }
+                    .padding(.bottom, .SQSpace.s)
+
+                    ForEach(controller.trendRows) { row in
+                        phaseBucketRow(row)
+                    }
+                }
+                .padding(.vertical, .SQSpace.s)
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func phaseBucketRow(_ row: SQSleepPhaseTrendRowViewModel) -> some View {
+        HStack(spacing: 0) {
+            HStack(spacing: .SQSpace.s) {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(row.color)
+                    .frame(width: 4, height: 18)
+
+                Text(row.title)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
+            .frame(width: phaseColumnWidth, alignment: .leading)
+
+            ForEach(controller.trendBuckets) { bucket in
+                Text(bucket.durationTextByPhase[row.phase] ?? "--")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textPrimary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .frame(width: bucketColumnWidth, alignment: .trailing)
+            }
+        }
+        .padding(.vertical, .SQSpace.s)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(SQColor.glassStroke.color.opacity(0.72))
+                .frame(height: 1)
+        }
+    }
+
+    private func tableHeaderCell(_ title: String, width: CGFloat, alignment: Alignment) -> some View {
+        Text(title.uppercased())
+            .sqFont(.headerSmall)
+            .sqForegroundColor(.textDisabled)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .frame(width: width, alignment: alignment)
+    }
+
     @ViewBuilder
     private var mainView: some View {
         if controller.chartModel == nil && !controller.isLoading {
@@ -146,6 +228,10 @@ struct SQSleepPhaseTrendsView: View {
                             .frame(height: controller.chartHeight + 120)
                     } else if let chartModel = controller.chartModel {
                         chartSection(chartModel)
+                    }
+
+                    if !controller.trendBuckets.isEmpty {
+                        phaseBucketSection
                     }
 
                     if !controller.trendRows.isEmpty {
