@@ -141,7 +141,7 @@ struct SQMetricFormView: View {
 
     @ViewBuilder
     private var titleRow: some View {
-        labeledRow(label: "Title") {
+        labeledRow(label: "Title", validationTarget: .title) {
             SQUITextField(viewModel: viewModel.titleField)
         }
     }
@@ -176,12 +176,12 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private var periodRow: some View {
         if viewModel.isStructurallyEditable {
-            labeledRow(label: "Check-In Period") {
+            labeledRow(label: "Check-In Period", validationTarget: .periods) {
                 SQMultiSelect(viewModel: viewModel.periodMultiSelectViewModel)
             }
 
             if viewModel.selectedPeriods.count > 1 {
-                labeledRow(label: "Tracking") {
+                labeledRow(label: "Tracking", validationTarget: .tracking) {
                     SQDropDownMenu(menuViewModel: viewModel.trackingMenuViewModel, isDisabled: false)
                 }
             }
@@ -193,7 +193,7 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private var kindRow: some View {
         if viewModel.isStructurallyEditable {
-            labeledRow(label: "Type") {
+            labeledRow(label: "Type", validationTarget: .kind) {
                 SQDropDownMenu(menuViewModel: viewModel.kindMenuViewModel, isDisabled: false)
             }
         } else {
@@ -205,7 +205,7 @@ struct SQMetricFormView: View {
     private var unitRow: some View {
         if viewModel.showUnit {
             if viewModel.isStructurallyEditable {
-                labeledRow(label: "Unit") {
+                labeledRow(label: "Unit", validationTarget: .unit) {
                     SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
                 }
             } else {
@@ -218,15 +218,15 @@ struct SQMetricFormView: View {
     private var numericRows: some View {
         if viewModel.showsScaleRangeFields {
             if viewModel.isStructurallyEditable {
-                labeledRow(label: "Min") {
+                labeledRow(label: "Min", validationTarget: .min) {
                     SQUITextField(viewModel: viewModel.minField)
                 }
 
-                labeledRow(label: "Max") {
+                labeledRow(label: "Max", validationTarget: .max) {
                     SQUITextField(viewModel: viewModel.maxField)
                 }
 
-                labeledRow(label: "Step") {
+                labeledRow(label: "Step", validationTarget: .step) {
                     SQUITextField(viewModel: viewModel.stepField)
                 }
             } else {
@@ -261,7 +261,7 @@ struct SQMetricFormView: View {
 
             if viewModel.showsScaleQuantityFields {
                 if viewModel.selectedKind == .scale || viewModel.selectedKind == .number {
-                    labeledRow(label: viewModel.selectedKind == .scale ? "Mapped Unit" : "Conversion Unit") {
+                    labeledRow(label: viewModel.selectedKind == .scale ? "Mapped Unit" : "Conversion Unit", validationTarget: .unit) {
                         if viewModel.canEditScaleQuantityUnit {
                             SQDropDownMenu(menuViewModel: viewModel.unitMenuViewModel, isDisabled: false)
                         } else {
@@ -283,7 +283,7 @@ struct SQMetricFormView: View {
                     }
                 }
 
-                labeledRow(label: viewModel.scaleQuantityMaxFieldLabel) {
+                labeledRow(label: viewModel.scaleQuantityMaxFieldLabel, validationTarget: .scaleQuantityMax) {
                     SQUITextField(viewModel: viewModel.scaleQuantityMaxField)
                 }
 
@@ -305,22 +305,22 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private var goalRows: some View {
         if viewModel.canEditGoalSettings {
-            labeledRow(label: "Goal") {
+            labeledRow(label: "Goal", validationTarget: .goalTarget) {
                 SQDropDownMenu(menuViewModel: viewModel.goalMenuViewModel, isDisabled: false)
             }
 
             if viewModel.showGoalTargetField {
-                labeledRow(label: viewModel.goalTargetLabel) {
+                labeledRow(label: viewModel.goalTargetLabel, validationTarget: .goalTarget) {
                     SQUITextField(viewModel: viewModel.goalTargetField)
                 }
             }
 
             if viewModel.showGoalRangeFields {
-                labeledRow(label: "Target Min") {
+                labeledRow(label: "Target Min", validationTarget: .goalRangeMin) {
                     SQUITextField(viewModel: viewModel.goalRangeMinField)
                 }
 
-                labeledRow(label: "Target Max") {
+                labeledRow(label: "Target Max", validationTarget: .goalRangeMax) {
                     SQUITextField(viewModel: viewModel.goalRangeMaxField)
                 }
             }
@@ -340,7 +340,7 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private var lifeIQUseRows: some View {
         if viewModel.canEditMetricTypeSettings {
-            labeledRow(label: "Metric Type") {
+            labeledRow(label: "Metric Type", validationTarget: .signalRole) {
                 SQDropDownMenu(menuViewModel: viewModel.signalRoleMenuViewModel, isDisabled: false)
             }
         } else {
@@ -356,7 +356,7 @@ struct SQMetricFormView: View {
         }
 
         if viewModel.showsBodyBatteryControls {
-            labeledRow(label: "Affect Recovery Score", infoAction: presentRecoveryScoreInfoAlert) {
+            labeledRow(label: "Affect Recovery Score", validationTarget: .bodyBattery, infoAction: presentRecoveryScoreInfoAlert) {
                 SQDropDownMenu(menuViewModel: viewModel.bodyBatteryMenuViewModel, isDisabled: false)
             }
 
@@ -365,11 +365,11 @@ struct SQMetricFormView: View {
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
 
-                labeledRow(label: "Typical Low") {
+                labeledRow(label: "Typical Low", validationTarget: .min) {
                     SQUITextField(viewModel: viewModel.minField)
                 }
 
-                labeledRow(label: "Typical High") {
+                labeledRow(label: "Typical High", validationTarget: .max) {
                     SQUITextField(viewModel: viewModel.maxField)
                 }
             }
@@ -396,7 +396,7 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private var healthKitRows: some View {
         if viewModel.canEditHealthKitType {
-            labeledRow(label: "Linked Type") {
+            labeledRow(label: "Linked Type", validationTarget: .healthKitType) {
                 SQDropDownMenu(menuViewModel: viewModel.healthKitMenuViewModel, isDisabled: false)
             }
         } else {
@@ -529,6 +529,7 @@ struct SQMetricFormView: View {
         .background {
             SQSheetBackground()
         }
+        .interactiveDismissDisabled(viewModel.shouldPreventInteractiveDismiss)
         .dismissKeyboardOnBackgroundTap()
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 0) {
@@ -553,6 +554,7 @@ struct SQMetricFormView: View {
     @ViewBuilder
     private func labeledRow(
         label: String,
+        validationTarget: SQMetricFormViewModel.ValidationTarget? = nil,
         infoAction: (() -> Void)? = nil,
         @ViewBuilder content: () -> some View
     ) -> some View {
@@ -560,7 +562,14 @@ struct SQMetricFormView: View {
             HStack(spacing: .SQSpace.xs) {
                 Text(label.uppercased())
                     .sqFont(.headerSmall)
-                    .sqForegroundColor(.textSecondary)
+                    .sqForegroundColor(isHighlighted(validationTarget) ? .textError : .textSecondary)
+
+                if isHighlighted(validationTarget) {
+                    Circle()
+                        .fill(SQColor.textError.color)
+                        .frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
+                }
 
                 if let infoAction {
                     Button(action: infoAction) {
@@ -579,6 +588,11 @@ struct SQMetricFormView: View {
 
             content()
         }
+    }
+
+    private func isHighlighted(_ target: SQMetricFormViewModel.ValidationTarget?) -> Bool {
+        guard let target else { return false }
+        return viewModel.shouldHighlight(target)
     }
 
     @ViewBuilder

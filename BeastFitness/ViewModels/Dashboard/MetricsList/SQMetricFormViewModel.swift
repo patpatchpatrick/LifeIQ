@@ -27,6 +27,24 @@ final class SQMetricFormViewModel {
         case edit(SQMetricDefinition)
     }
 
+    enum ValidationTarget {
+        case title
+        case periods
+        case tracking
+        case kind
+        case unit
+        case min
+        case max
+        case step
+        case scaleQuantityMax
+        case goalTarget
+        case goalRangeMin
+        case goalRangeMax
+        case bodyBattery
+        case signalRole
+        case healthKitType
+    }
+
     let mode: Mode
 
     // MARK: - Validation Row Models
@@ -204,6 +222,7 @@ final class SQMetricFormViewModel {
     var isLoading = false
     private(set) var isFormValid = false
     private(set) var saveDisabledMessage: String? = nil
+    private(set) var validationTarget: ValidationTarget? = nil
     private(set) var scaleQuantityHelperTextDisplay: String = ""
     private(set) var formContentRevision: Int = 0
     private var hasFinishedInitialSetup = false
@@ -823,6 +842,15 @@ final class SQMetricFormViewModel {
         isFormValid
     }
 
+    var shouldPreventInteractiveDismiss: Bool {
+        if case .create = mode { return true }
+        return false
+    }
+
+    func shouldHighlight(_ target: ValidationTarget) -> Bool {
+        saveDisabledMessage != nil && validationTarget == target
+    }
+
     private var metricWriteDisabledMessage: String? {
         guard SQAppState.shared.userState.isLoggedIn else {
             return "Sign in to create or edit metrics."
@@ -1031,14 +1059,17 @@ final class SQMetricFormViewModel {
         activeRows.forEach { $0.setValidity($0.validator(), notify: false) }
 
         var firstError: String? = activeRows.first(where: { !$0.isValid })?.errorMessage()
+        var firstTarget = validationTarget(for: firstError)
 
         if firstError == nil {
             firstError = metricWriteDisabledMessage
+            firstTarget = nil
         }
 
         if firstError == nil, isStructurallyEditable {
             if selectedPeriods.isEmpty {
                 firstError = "Select at least one check-in period."
+                firstTarget = .periods
             }
         }
 
@@ -1046,42 +1077,87 @@ final class SQMetricFormViewModel {
             switch selectedKind {
             case .scale:
                 let result = validateScaleFieldsDetailed()
-                if !result.isValid { firstError = result.message }
+                if !result.isValid {
+                    firstError = result.message
+                    firstTarget = validationTarget(for: result.message)
+                }
             case .number:
                 let result = validateNumberFieldsDetailed()
-                if !result.isValid { firstError = result.message }
+                if !result.isValid {
+                    firstError = result.message
+                    firstTarget = validationTarget(for: result.message)
+                }
             default:
                 firstError = "Metric type is invalid."
+                firstTarget = .kind
             }
         }
 
         if firstError == nil {
             let result = validateScaleQuantityMappingDetailed()
-            if !result.isValid { firstError = result.message }
+            if !result.isValid {
+                firstError = result.message
+                firstTarget = validationTarget(for: result.message)
+            }
         }
 
         if firstError == nil {
             let result = validateHealthKitFieldsDetailed()
-            if !result.isValid { firstError = result.message }
+            if !result.isValid {
+                firstError = result.message
+                firstTarget = validationTarget(for: result.message)
+            }
         }
 
         if firstError == nil, canEditGoalSettings {
             let result = validateGoalFieldsDetailed()
-            if !result.isValid { firstError = result.message }
+            if !result.isValid {
+                firstError = result.message
+                firstTarget = validationTarget(for: result.message)
+            }
         }
 
         if firstError == nil {
             let result = validateBodyBatteryFieldsDetailed()
-            if !result.isValid { firstError = result.message }
+            if !result.isValid {
+                firstError = result.message
+                firstTarget = validationTarget(for: result.message)
+            }
         }
 
         if firstError == nil {
             let result = validateAlgorithmSettingsDetailed()
-            if !result.isValid { firstError = result.message }
+            if !result.isValid {
+                firstError = result.message
+                firstTarget = validationTarget(for: result.message)
+            }
         }
 
         isFormValid = firstError == nil
         saveDisabledMessage = isFormValid ? nil : (firstError ?? "Please fix the errors above.")
+        validationTarget = isFormValid ? nil : firstTarget
+    }
+
+    private func validationTarget(for message: String?) -> ValidationTarget? {
+        guard let message else { return nil }
+
+        if message == "Title is required." { return .title }
+        if message == "Select at least one check-in period." { return .periods }
+        if message.contains("Shared tracking") { return .tracking }
+        if message.contains("Metric type") { return .kind }
+        if message.contains("Choose a unit") || message.contains(" uses ") { return .unit }
+        if message.contains("Min is required") || message.contains("Typical low") { return .min }
+        if message.contains("Max is required") || message.contains("Max must") || message.contains("Typical high") { return .max }
+        if message.contains("Step") { return .step }
+        if message.contains("top of the scale") || message.contains("Max quantity") || message.contains("scale-to-unit mapping") { return .scaleQuantityMax }
+        if message.contains("selected goal") || message.contains("Goal must") { return .goalTarget }
+        if message.contains("minimum value") || message.contains("Goal min") { return .goalRangeMin }
+        if message.contains("maximum value") || message.contains("Goal max") { return .goalRangeMax }
+        if message.contains("Recovery Score") { return .bodyBattery }
+        if message.contains("Metric Type") || message.contains("signal role") { return .signalRole }
+        if message.contains("HealthKit") { return .healthKitType }
+
+        return nil
     }
 
     private func configureAfterInit() {

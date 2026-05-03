@@ -10,17 +10,20 @@ public struct MultiLineChartSeries: Identifiable, Sendable {
     public let title: String
     public let color: Color
     public let inputPoints: [LineChartIdentifiablePoint]
+    public let focusLabelByPointId: [String: String]
 
     public init(
         id: String,
         title: String,
         color: Color,
-        inputPoints: [LineChartIdentifiablePoint]
+        inputPoints: [LineChartIdentifiablePoint],
+        focusLabelByPointId: [String: String] = [:]
     ) {
         self.id = id
         self.title = title
         self.color = color
         self.inputPoints = inputPoints
+        self.focusLabelByPointId = focusLabelByPointId
     }
 }
 
@@ -69,6 +72,7 @@ struct MultiLineChartCoordinate {
     let id: String
     let point: CGPoint
     let originalPoint: CGPoint
+    let focusLabel: String?
 }
 
 struct MultiLineChartCoordinateSet: Identifiable {
@@ -146,7 +150,8 @@ public final class MultiLineChartModel: ObservableObject {
                     id: series.id,
                     title: series.title,
                     color: series.color,
-                    inputPoints: series.inputPoints.sorted { $0.point.x < $1.point.x }
+                    inputPoints: series.inputPoints.sorted { $0.point.x < $1.point.x },
+                    focusLabelByPointId: series.focusLabelByPointId
                 )
             }
             .filter { $0.inputPoints.count >= 2 }
@@ -282,7 +287,8 @@ public final class MultiLineChartModel: ObservableObject {
                 seriesColor: series.color,
                 id: identifiablePoint.id,
                 point: scaledPoint,
-                originalPoint: point
+                originalPoint: point,
+                focusLabel: series.focusLabelByPointId[identifiablePoint.id]
             )
         }
         .sorted { $0.point.x < $1.point.x }
@@ -336,7 +342,9 @@ struct MultiLineChartFocusedLineViewModel: Animatable, Sendable {
 
         self.captionItems = matchingCoordinates.map { coordinate in
             let xTitle = focusConfig.xLabelBuilder?(coordinate.id, coordinate.originalPoint.x) ?? "\(Double(coordinate.originalPoint.x))"
-            let yTitle = focusConfig.yLabelBuilder?(coordinate.seriesID, coordinate.id, coordinate.originalPoint.y) ?? "\(Double(coordinate.originalPoint.y))"
+            let yTitle = coordinate.focusLabel
+                ?? focusConfig.yLabelBuilder?(coordinate.seriesID, coordinate.id, coordinate.originalPoint.y)
+                ?? "\(Double(coordinate.originalPoint.y))"
 
             return .init(
                 lineColor: coordinate.seriesColor,
@@ -370,7 +378,8 @@ struct MultiLineChartFocusedLineViewModel: Animatable, Sendable {
                 seriesColor: focusedCoordinate.seriesColor,
                 id: focusedCoordinate.id,
                 point: .init(x: newValue.first, y: newValue.second),
-                originalPoint: focusedCoordinate.originalPoint
+                originalPoint: focusedCoordinate.originalPoint,
+                focusLabel: focusedCoordinate.focusLabel
             )
         }
     }

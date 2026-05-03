@@ -42,83 +42,81 @@ struct SQInsightInfoSheetView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: .SQSpace.l) {
-                    HStack(spacing: .SQSpace.s) {
-                        SQDashboardTrendBadge(
-                            text: model.category.badgeTitle,
-                            tone: .neutral,
-                            symbol: nil
-                        )
+        ScrollView {
+            VStack(alignment: .leading, spacing: .SQSpace.l) {
+                HStack(spacing: .SQSpace.s) {
+                    SQDashboardTrendBadge(
+                        text: model.category.badgeTitle,
+                        tone: .neutral,
+                        symbol: nil
+                    )
 
-                        SQDashboardTrendBadge(
-                            text: model.confidence.badgeTitle,
-                            tone: effectTone,
-                            symbol: nil
-                        )
+                    SQDashboardTrendBadge(
+                        text: model.confidence.badgeTitle,
+                        tone: effectTone,
+                        symbol: nil
+                    )
 
-                        SQDashboardTrendBadge(
-                            text: "\(model.sampleCount) days",
-                            tone: .neutral,
-                            symbol: nil
-                        )
-                    }
+                    SQDashboardTrendBadge(
+                        text: "\(model.sampleCount) days",
+                        tone: .neutral,
+                        symbol: nil
+                    )
+                }
 
-                    VStack(alignment: .leading, spacing: .SQSpace.s) {
-                        Text(model.title)
-                            .sqFont(.title3)
-                            .sqForegroundColor(.textPrimary)
+                VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    Text(model.title)
+                        .sqFont(.title3)
+                        .sqForegroundColor(.textPrimary)
 
-                        Text(model.summary)
+                    Text(model.summary)
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                infoSection(title: "What LifeIQ noticed", text: model.evidenceText)
+                infoSection(title: "Suggested takeaway", text: model.actionText)
+
+                if canExplorePattern {
+                    Button {
+                        guard let explorerController else { return }
+
+                        if isPremiumUnlocked {
+                            SQAppState.shared.hub.domainEvents.send(
+                                .pushDashboardRoute(.insightExplorer(controller: explorerController))
+                            )
+                        } else {
+                            SQSubscriptionManager.displaySubscriptionScreen(
+                                source: "insight_detail_explore_pattern",
+                                feature: "insight_explorer"
+                            )
+                        }
+                    } label: {
+                        Text(isPremiumUnlocked ? "Explore this pattern" : "Unlock Insight Explorer")
                             .sqFont(.bodySmallSemiBold)
                             .sqForegroundColor(.textPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, .SQSpace.m)
+                            .background(
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                    .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.22 : 0.14))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                                    .stroke(accentColor.color.opacity(0.35), lineWidth: 1)
+                            )
                     }
-
-                    infoSection(title: "What LifeIQ noticed", text: model.evidenceText)
-                    infoSection(title: "Suggested takeaway", text: model.actionText)
-
-                    if canExplorePattern {
-                        Button {
-                            guard let explorerController else { return }
-
-                            if isPremiumUnlocked {
-                                SQAppState.shared.hub.domainEvents.send(
-                                    .pushDashboardRoute(.insightExplorer(controller: explorerController))
-                                )
-                            } else {
-                                SQSubscriptionManager.displaySubscriptionScreen(
-                                    source: "insight_detail_explore_pattern",
-                                    feature: "insight_explorer"
-                                )
-                            }
-                        } label: {
-                            Text(isPremiumUnlocked ? "Explore this pattern" : "Unlock Insight Explorer")
-                                .sqFont(.bodySmallSemiBold)
-                                .sqForegroundColor(.textPrimary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, .SQSpace.m)
-                                .background(
-                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.22 : 0.14))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                                        .stroke(accentColor.color.opacity(0.35), lineWidth: 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, .SQSpace.l)
-                .padding(.vertical, .SQSpace.l)
             }
-            .navigationTitle("Insight")
-            .navigationBarTitleDisplayMode(.inline)
-            .background {
-                SQSheetBackground()
-            }
+            .padding(.horizontal, .SQSpace.l)
+            .padding(.vertical, .SQSpace.l)
+        }
+        .navigationTitle("Insight")
+        .navigationBarTitleDisplayMode(.inline)
+        .background {
+            SQSheetBackground()
         }
         .tint(accentColor.color)
     }

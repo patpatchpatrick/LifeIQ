@@ -81,7 +81,10 @@ struct SQInsightExplorerChartPoint: Identifiable, Hashable {
     let id: String
     let date: Date
     let driverValue: Double
+    let driverDisplayLabel: String
     let outcomeValue: Double
+    let outcomeRawValue: Double
+    let outcomeDisplayLabel: String
     let outcomeUtilityValue: Double?
 }
 
@@ -99,7 +102,9 @@ struct SQInsightExplorerRelationshipResult: Identifiable, Hashable {
     let confidence: SQInsightConfidence
     let matchedDays: Int
     let highDriverAverageOutcome: Double
+    let highDriverAverageOutcomeRawLabel: String
     let lowDriverAverageOutcome: Double
+    let lowDriverAverageOutcomeRawLabel: String
     let rankingScore: Double
     let chartPoints: [SQInsightExplorerChartPoint]
 
@@ -141,8 +146,36 @@ struct SQInsightExplorerRelationshipResult: Identifiable, Hashable {
 }
 
 struct SQInsightExplorerAnalyzer {
+    private enum ValueFormat: Hashable {
+        case scale(max: Double)
+        case quantity(unit: String)
+        case score
+        case bpm
+        case plain
+
+        func label(for value: Double) -> String {
+            let roundedValue = value.sqStringRoundedTo(places: value.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 1)
+
+            switch self {
+            case .scale(let max):
+                return "\(roundedValue)/\(max.sqStringRoundedTo(places: 0))"
+            case .quantity(let unit):
+                return unit.isEmpty ? roundedValue : "\(roundedValue) \(unit)"
+            case .score:
+                return "\(value.sqStringRoundedTo(places: 0)) score"
+            case .bpm:
+                return "\(value.sqStringRoundedTo(places: 0)) bpm"
+            case .plain:
+                return roundedValue
+            }
+        }
+    }
+
     private struct SignalValue {
         let displayValue: Double
+        let rawValue: Double
+        let displayLabel: String
+        let valueFormat: ValueFormat
         let utilityValue: Double?
     }
 
@@ -200,7 +233,10 @@ struct SQInsightExplorerAnalyzer {
                 id: "\(driverDay.date.anchorDayKey())-\(lag.rawValue)",
                 date: driverDay.date,
                 driverValue: driverValue.displayValue,
+                driverDisplayLabel: driverValue.displayLabel,
                 outcomeValue: outcomeValue.displayValue,
+                outcomeRawValue: outcomeValue.rawValue,
+                outcomeDisplayLabel: outcomeValue.displayLabel,
                 outcomeUtilityValue: outcomeValue.utilityValue
             )
         }
@@ -214,6 +250,13 @@ struct SQInsightExplorerAnalyzer {
 
         let highOutcome = average(high.map(\.outcomeValue))
         let lowOutcome = average(low.map(\.outcomeValue))
+        let highOutcomeRaw = average(high.map(\.outcomeRawValue))
+        let lowOutcomeRaw = average(low.map(\.outcomeRawValue))
+        let outcomeValueFormat = valuesByDay
+            .values
+            .lazy
+            .compactMap { $0.values[outcomeId]?.valueFormat }
+            .first ?? .plain
         let displayEffectPoints = highOutcome - lowOutcome
         let highUtilityOutcome = average(high.map { $0.outcomeUtilityValue ?? $0.outcomeValue })
         let lowUtilityOutcome = average(low.map { $0.outcomeUtilityValue ?? $0.outcomeValue })
@@ -239,7 +282,9 @@ struct SQInsightExplorerAnalyzer {
             confidence: confidence,
             matchedDays: matchedPoints.count,
             highDriverAverageOutcome: highOutcome,
+            highDriverAverageOutcomeRawLabel: outcomeValueFormat.label(for: highOutcomeRaw),
             lowDriverAverageOutcome: lowOutcome,
+            lowDriverAverageOutcomeRawLabel: outcomeValueFormat.label(for: lowOutcomeRaw),
             rankingScore: rankingScore,
             chartPoints: matchedPoints.sorted { $0.date < $1.date }
         )
@@ -289,6 +334,7 @@ struct SQInsightExplorerAnalyzer {
             sleepData: input.sleepData,
             restingHeartRateSummaries: input.restingHeartRateSummaries
         )
+        let definitionsById = Dictionary(uniqueKeysWithValues: input.metricDefinitions.map { ($0.id, $0) })
 
         var optionMap = [String: SQInsightExplorerMetricOption]()
         let dailyValues = snapshots
@@ -298,8 +344,15 @@ struct SQInsightExplorerAnalyzer {
 
                 for feature in snapshot.signalFeatures.values where canExplore(feature) {
                     optionMap[feature.signalId] = .init(id: feature.signalId, title: feature.title)
+                    let valueFormat = rawValueFormat(
+                        feature: feature,
+                        definition: definitionsById[feature.signalId]
+                    )
                     values[feature.signalId] = .init(
                         displayValue: normalizedDisplayValue(feature: feature, snapshot: snapshot),
+                        rawValue: feature.rawValue,
+                        displayLabel: valueFormat.label(for: feature.rawValue),
+                        valueFormat: valueFormat,
                         utilityValue: normalizedUtilityValue(feature: feature)
                     )
                 }
@@ -329,6 +382,35 @@ struct SQInsightExplorerAnalyzer {
 
     private func normalizedUtilityValue(feature: SQInsightSignalFeature) -> Double? {
         feature.goalUtilityScore.map { clamp($0, min: 0, max: 100) }
+    }
+
+    private func rawValueFormat(feature: SQInsightSignalFeature, definition: SQMetricDefinition?) -> ValueFormat {
+        if let definition {
+            return rawValueFormat(for: definition)
+        }
+
+        switch feature.signalId {
+        case SQInsightAnalysisMetricId.workoutPerformance, SQInsightAnalysisMetricId.workoutDifficulty:
+            return .score
+        case SQInsightAnalysisMetricId.restingHeartRate:
+            return .bpm
+        default:
+            return .plain
+        }
+    }
+
+    private func rawValueFormat(for definition: SQMetricDefinition) -> ValueFormat {
+        switch definition.kind {
+        case .scale, .binary:
+            if definition.scaleQuantityMapping == nil {
+                return .scale(max: Double(definition.scaleMaxValue))
+            }
+            fallthrough
+        case .number:
+            return .quantity(unit: definition.quantityLabel)
+        case .unknown:
+            return .plain
+        }
     }
 
     private func clamp<T: Comparable>(_ value: T, min minimum: T, max maximum: T) -> T {
@@ -384,11 +466,25 @@ final class SQInsightExplorerController {
     private(set) var metricOptions: [SQInsightExplorerMetricOption]
     private(set) var topRelationships: [SQInsightExplorerRelationshipResult]
     private(set) var result: SQInsightExplorerRelationshipResult?
+    @ObservationIgnored private(set) var driverMenuViewModel = SQDropDownMenuViewModel(
+        defaultItem: .init(title: ""),
+        items: []
+    ) { _ in }
+    @ObservationIgnored private(set) var outcomeMenuViewModel = SQDropDownMenuViewModel(
+        defaultItem: .init(title: ""),
+        items: []
+    ) { _ in }
     var selectedDriverId: String = "" {
-        didSet { selectionDidChange() }
+        didSet {
+            updateMetricMenuSelection(driverMenuViewModel, selectedId: selectedDriverId)
+            selectionDidChange()
+        }
     }
     var selectedOutcomeId: String = "" {
-        didSet { selectionDidChange() }
+        didSet {
+            updateMetricMenuSelection(outcomeMenuViewModel, selectedId: selectedOutcomeId)
+            selectionDidChange()
+        }
     }
     var selectedRange: SQInsightExplorerRange = .days90 {
         didSet { selectionDidChange() }
@@ -416,6 +512,7 @@ final class SQInsightExplorerController {
         self.selectedOutcomeId = preselectedOutcomeId ?? topRelationships.first?.outcomeId ?? metricOptions.dropFirst().first?.id ?? metricOptions.first?.id ?? ""
         self.selectedLag = preselectedLag
         self.selectedRange = initialRange
+        self.configureMetricMenus()
         self.suppressSelectionUpdates = false
         updateResult()
     }
@@ -450,6 +547,40 @@ final class SQInsightExplorerController {
     private func selectionDidChange() {
         guard !suppressSelectionUpdates else { return }
         updateResult()
+    }
+
+    private func configureMetricMenus() {
+        let items = metricOptions.map { SQDropDownMenuViewModel.Item(title: $0.title) }
+        let driverDefault = selectedMetricOption(for: selectedDriverId) ?? metricOptions.first
+        let outcomeDefault = selectedMetricOption(for: selectedOutcomeId) ?? metricOptions.dropFirst().first ?? metricOptions.first
+
+        driverMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: driverDefault?.title ?? ""),
+            items: items,
+            itemSelectionHandler: { [weak self] title in
+                guard let self,
+                      let option = self.metricOptions.first(where: { $0.title == title }) else { return }
+                self.selectedDriverId = option.id
+            }
+        )
+        outcomeMenuViewModel = SQDropDownMenuViewModel(
+            defaultItem: .init(title: outcomeDefault?.title ?? ""),
+            items: items,
+            itemSelectionHandler: { [weak self] title in
+                guard let self,
+                      let option = self.metricOptions.first(where: { $0.title == title }) else { return }
+                self.selectedOutcomeId = option.id
+            }
+        )
+    }
+
+    private func selectedMetricOption(for id: String) -> SQInsightExplorerMetricOption? {
+        metricOptions.first { $0.id == id }
+    }
+
+    private func updateMetricMenuSelection(_ menuViewModel: SQDropDownMenuViewModel, selectedId: String) {
+        guard let option = selectedMetricOption(for: selectedId) else { return }
+        menuViewModel.mainButton.title = option.title
     }
 
     private func updateResult() {
@@ -700,8 +831,8 @@ struct SQInsightExplorerView: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            metricPicker(title: "Metric A", selection: $controller.selectedDriverId)
-            metricPicker(title: "Metric B", selection: $controller.selectedOutcomeId)
+            metricPicker(title: "Metric A", menuViewModel: controller.driverMenuViewModel)
+            metricPicker(title: "Metric B", menuViewModel: controller.outcomeMenuViewModel)
 
             Picker("Range", selection: $controller.selectedRange) {
                 ForEach(SQInsightExplorerRange.allCases) { range in
@@ -722,7 +853,7 @@ struct SQInsightExplorerView: View {
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
-    private func metricPicker(title: String, selection: Binding<String>) -> some View {
+    private func metricPicker(title: String, menuViewModel: SQDropDownMenuViewModel) -> some View {
         HStack {
             Text(title)
                 .sqFont(.bodySmallSemiBold)
@@ -730,13 +861,7 @@ struct SQInsightExplorerView: View {
 
             Spacer()
 
-            Picker(title, selection: selection) {
-                ForEach(controller.metricOptions) { option in
-                    Text(option.title).tag(option.id)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(SQColor.textPrimary.color)
+            SQDropDownMenu(menuViewModel: menuViewModel, isDisabled: false)
         }
     }
 
@@ -781,8 +906,14 @@ struct SQInsightExplorerView: View {
             evidenceRow(title: "Time range", value: result.range.rawValue)
             evidenceRow(title: "Timing", value: result.lag.title)
             evidenceRow(title: "Higher \(result.driverTitle)", value: "Above \(result.higherDriverThreshold.sqStringRoundedTo(places: 0))%")
-            evidenceRow(title: "High \(result.driverTitle)", value: "\(result.highDriverAverageOutcome.sqStringRoundedTo(places: 0))% \(result.outcomeTitle)")
-            evidenceRow(title: "Low \(result.driverTitle)", value: "\(result.lowDriverAverageOutcome.sqStringRoundedTo(places: 0))% \(result.outcomeTitle)")
+            evidenceRow(
+                title: "High \(result.driverTitle)",
+                value: "\(result.highDriverAverageOutcome.sqStringRoundedTo(places: 0))% \(result.outcomeTitle) (\(result.highDriverAverageOutcomeRawLabel))"
+            )
+            evidenceRow(
+                title: "Low \(result.driverTitle)",
+                value: "\(result.lowDriverAverageOutcome.sqStringRoundedTo(places: 0))% \(result.outcomeTitle) (\(result.lowDriverAverageOutcomeRawLabel))"
+            )
             evidenceRow(title: "Difference", value: "\(signed(result.displayEffectPoints))%")
         }
         .padding(.SQSpace.m)
@@ -820,7 +951,7 @@ struct SQInsightExplorerView: View {
                     MultiLineChartView(model: chartModel)
                         .frame(width: proxy.size.width, height: 220)
                 } else {
-                    SQSubsectionEmptyState(message: "Log more overlapping days to chart this relationship.")
+                    chartUnavailableState
                 }
             }
             .frame(height: 220)
@@ -833,6 +964,14 @@ struct SQInsightExplorerView: View {
         .padding(.SQSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private var chartUnavailableState: some View {
+        Text("Not enough overlapping points to draw this chart yet.")
+            .sqFont(.bodyExtraSmall)
+            .sqForegroundColor(.textSecondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var topRelationships: some View {
@@ -930,8 +1069,10 @@ struct SQInsightExplorerView: View {
                 point: CGPoint(x: $0.date.timeIntervalSince1970, y: $0.outcomeValue)
             )
         }
+        let driverFocusLabels = Dictionary(uniqueKeysWithValues: sortedPoints.map { ($0.id, $0.driverDisplayLabel) })
+        let outcomeFocusLabels = Dictionary(uniqueKeysWithValues: sortedPoints.map { ($0.id, $0.outcomeDisplayLabel) })
 
-        return MultiLineChartModel(
+        let chartModel = MultiLineChartModel(
             width: max(width, 1),
             height: height,
             series: [
@@ -939,13 +1080,15 @@ struct SQInsightExplorerView: View {
                     id: result.driverId,
                     title: result.driverTitle,
                     color: SQColor.dashboardGlowBlue.color,
-                    inputPoints: driverPoints
+                    inputPoints: driverPoints,
+                    focusLabelByPointId: driverFocusLabels
                 ),
                 .init(
                     id: result.outcomeId,
                     title: result.outcomeTitle,
                     color: SQColor.dashboardGlowMint.color,
-                    inputPoints: outcomePoints
+                    inputPoints: outcomePoints,
+                    focusLabelByPointId: outcomeFocusLabels
                 )
             ],
             uiConfig: relationshipChartUIConfig(),
@@ -954,6 +1097,16 @@ struct SQInsightExplorerView: View {
             ),
             focusConfig: relationshipChartFocusConfig()
         )
+
+        if chartModel == nil {
+            SQLogger.shared.log(
+                "PTD InsightExplorer chart unavailable driver=\(result.driverId) outcome=\(result.outcomeId) chartPoints=\(sortedPoints.count) driverPoints=\(driverPoints.count) outcomePoints=\(outcomePoints.count) width=\(width) height=\(height)",
+                .debug,
+                context: .dashboard
+            )
+        }
+
+        return chartModel
     }
 
     private func relationshipChartUIConfig() -> LineChartModel.UIConfig {
