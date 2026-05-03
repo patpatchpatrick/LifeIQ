@@ -34,6 +34,7 @@ struct SQDashboardSectionGroupView: View {
         } header: {
             SQDashboardSectionHeader(
                 title: sectionGroup.title,
+                titleButton: sectionGroup.titleButton,
                 isCollapsed: isCollapsed
             )
         }

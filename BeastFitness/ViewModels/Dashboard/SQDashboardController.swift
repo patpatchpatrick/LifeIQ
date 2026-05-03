@@ -1124,16 +1124,6 @@ final class SQDashboardController: SQDashboardInterface {
             itemSelectionHandler: { _ in }
         )
 
-        // Create title button for editing/logging metrics from any dashboard range.
-        let titleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel? = {
-            return .init(icon: .edit, title: "Edit") { [weak self] in
-                guard let self else { return }
-                Task { @MainActor in
-                    await self.displayDailyCheckInSheet(for: context)
-                }
-            }
-        }()
-
         let metricsEmptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel = {
             let emptyStateTitle: String
             if timeRange == .today {
@@ -1168,7 +1158,7 @@ final class SQDashboardController: SQDashboardInterface {
             defaultPriority: 10,
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
-            titleButton: titleButton,
+            titleButton: nil,
             columnHeaders: ["", "Avg Score", timeRange.dashboardChangePctHeader],
             maxVisibleRows: 4,
             emptyState: metricsEmptyState
@@ -2178,10 +2168,20 @@ final class SQDashboardController: SQDashboardInterface {
 
         // Create Daily Stats section group (only if has sections)
         if !dailyStatsSections.isEmpty {
+            let dailyStatsTitleButton: SQDashboardSubsectionViewModel.TitleButtonViewModel? = userState.isLoggedIn
+                ? .init(icon: .edit, title: "Edit Check-In") { [weak self] in
+                    guard let self else { return }
+                    Task { @MainActor in
+                        await self.displayDailyCheckInSheet(for: context)
+                    }
+                }
+                : nil
+
             let dailyStatsGroup = SQDashboardSectionGroupViewModel(
                 id: "daily-stats",
                 title: "Daily Stats",
                 defaultPriority: 20,
+                titleButton: dailyStatsTitleButton,
                 sections: dailyStatsSections
             )
             sectionGroups.append(dailyStatsGroup)
