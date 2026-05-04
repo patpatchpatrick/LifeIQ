@@ -977,7 +977,11 @@ struct SQLifeScoreV2Builder {
                         kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .negative,
                         scoreImpact: scoreImpact,
-                        summary: "\(title) is pulling down \(component.title)."
+                        summary: v2DriverSummary(
+                            title: title,
+                            component: component,
+                            effect: .negative
+                        )
                     )
                 )
             }
@@ -995,7 +999,11 @@ struct SQLifeScoreV2Builder {
                         kind: driverKind(componentId: component.id, signalId: signalId(forDriverTitle: title)),
                         effect: .positive,
                         scoreImpact: scoreImpact,
-                        summary: "\(title) is supporting \(component.title)."
+                        summary: v2DriverSummary(
+                            title: title,
+                            component: component,
+                            effect: .positive
+                        )
                     )
                 )
             }
@@ -1045,6 +1053,44 @@ struct SQLifeScoreV2Builder {
             }
 
             return $0.title < $1.title
+        }
+    }
+
+    private func v2DriverSummary(
+        title: String,
+        component: SQLifeScoreV2Component,
+        effect: SQLifeScoreSignalEffect
+    ) -> String {
+        if component.id == "trainingPerformance" {
+            switch (title, effect) {
+            case ("Training Load", .positive), ("Recent Training Load", .positive):
+                return "Training load is trending in a positive direction."
+            case ("Training Load", .negative), ("Recent Training Load", .negative):
+                return "Training load may be harder to absorb right now."
+            case ("Training Strain", .positive):
+                return "Recent training strain looks manageable."
+            case ("Training Strain", .negative):
+                return "Recent training strain may be catching up with you."
+            case ("Workout Performance", .positive), ("Recent Workout Performance", .positive):
+                return "Recent training sessions look strong."
+            case ("Workout Performance", .negative), ("Recent Workout Performance", .negative):
+                return "Recent training performance is below your usual baseline."
+            case ("Workout Activity", .positive), ("Recent Workout Activity", .positive):
+                return "Recent workout activity is adding healthy momentum."
+            case ("Workout Activity", .negative), ("Recent Workout Activity", .negative):
+                return "Recent workout activity is lighter than usual."
+            default:
+                break
+            }
+        }
+
+        switch effect {
+        case .positive:
+            return "\(title) is supporting \(component.title)."
+        case .negative:
+            return "\(title) is pulling down \(component.title)."
+        case .neutral:
+            return "\(title) is steady for \(component.title)."
         }
     }
 
@@ -1570,11 +1616,17 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
     private func lifeScoreComponentSummary(from component: SQLifeScoreV2Component) -> String {
         let negativeDrivers = sanitizedDriverTitles(component.negativeDrivers)
         if !negativeDrivers.isEmpty {
+            if component.id == "trainingPerformance" {
+                return trainingComponentSummary(driverTitles: negativeDrivers, effect: .negative)
+            }
             return "\(negativeDrivers.joined(separator: ", ")) \(negativeDrivers.count == 1 ? "is" : "are") weighing on \(component.title.lowercased())."
         }
 
         let positiveDrivers = sanitizedDriverTitles(component.positiveDrivers)
         if !positiveDrivers.isEmpty {
+            if component.id == "trainingPerformance" {
+                return trainingComponentSummary(driverTitles: positiveDrivers, effect: .positive)
+            }
             return "\(positiveDrivers.joined(separator: ", ")) \(positiveDrivers.count == 1 ? "is" : "are") supporting \(component.title.lowercased())."
         }
 
@@ -1587,6 +1639,48 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
             return "\(component.title) is a mild drag today."
         default:
             return "\(component.title) is a meaningful drag today."
+        }
+    }
+
+    private func trainingComponentSummary(
+        driverTitles: [String],
+        effect: SQLifeScoreSignalEffect
+    ) -> String {
+        let hasLoad = driverTitles.contains { ["Training Load", "Recent Training Load", "Training Strain"].contains($0) }
+        let hasPerformance = driverTitles.contains { ["Workout Performance", "Recent Workout Performance"].contains($0) }
+        let hasActivity = driverTitles.contains { ["Workout Activity", "Recent Workout Activity"].contains($0) }
+
+        switch effect {
+        case .positive:
+            if hasPerformance && hasLoad {
+                return "Recent sessions look strong and the training load looks manageable."
+            }
+            if hasPerformance {
+                return "Recent training sessions look strong."
+            }
+            if hasLoad {
+                return "Training load is trending in a positive direction."
+            }
+            if hasActivity {
+                return "Recent workout activity is adding healthy momentum."
+            }
+            return "Training is giving the day some momentum."
+        case .negative:
+            if hasPerformance && hasLoad {
+                return "Recent sessions are lower than usual and training load may be harder to absorb."
+            }
+            if hasPerformance {
+                return "Recent training performance is below your usual baseline."
+            }
+            if hasLoad {
+                return "Training load may be harder to absorb right now."
+            }
+            if hasActivity {
+                return "Recent workout activity is lighter than usual."
+            }
+            return "Training is weighing on the day."
+        case .neutral:
+            return "Training looks steady today."
         }
     }
 
