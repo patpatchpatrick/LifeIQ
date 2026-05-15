@@ -88,6 +88,20 @@ final class SQAccountDeletionManager: SQAccountDeletionManaging {
             }
         }
 
+        if authManager.currentAuthProviders().contains(.apple) {
+            do {
+                try await authManager.revokeAppleAccessIfNeeded()
+            } catch {
+                SQLogger.shared.log(
+                    "Apple token revocation failed before account deletion for \(user.id): \(error.localizedDescription)",
+                    .error,
+                    context: .network,
+                    isPriority: true
+                )
+                throw error
+            }
+        }
+
         try await deleteRemoteData(for: user)
 
         do {

@@ -129,6 +129,7 @@ enum SQImageSymbol: String {
     case wheelchairWalkPace  = "figure.roll"         // generic fallback for wheelchair
     
     /// Other
+    case appleLogo           = "apple.logo"
     case arrowDown           = "arrow.down"
     case arrowRight          = "arrow.right"
     case arrowUp             = "arrow.up"

@@ -13,6 +13,7 @@ import Foundation
 enum SQAnalyticsAuthMethod: String {
     case email
     case google
+    case apple
 }
 
 enum SQAnalyticsMetricSaveAction: String {

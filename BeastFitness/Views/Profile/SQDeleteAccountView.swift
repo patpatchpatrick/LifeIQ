@@ -129,6 +129,27 @@ struct SQDeleteAccountView: View {
         }
     }
 
+    @ViewBuilder
+    private var appleCard: some View {
+        if controller.supportsAppleConfirmation {
+            VStack(alignment: .leading, spacing: .SQSpace.m) {
+                Text("Confirm with Apple")
+                    .sqFont(.title4)
+                    .sqForegroundColor(.textPrimary)
+
+                Text("You’ll re-authenticate with Apple before the account is deleted.")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+
+                appleConfirmationButton {
+                    controller.deleteWithApple(modelContext: modelContext)
+                }
+            }
+            .padding(.SQSpace.l)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+        }
+    }
+
     private func bulletRow(_ text: String) -> some View {
         HStack(alignment: .top, spacing: .SQSpace.s) {
             Circle()
@@ -176,6 +197,36 @@ struct SQDeleteAccountView: View {
         .opacity(isLoading ? 0.65 : 1)
     }
 
+    private func appleConfirmationButton(action: @escaping () -> Void) -> some View {
+        let backgroundColor: SQColor = SQColor.isDarkMode ? .hex("#FFFFFF") : .hex("#000000")
+        let foregroundColor: SQColor = SQColor.isDarkMode ? .hex("#000000") : .hex("#FFFFFF")
+
+        return Button(action: action) {
+            HStack(spacing: .SQSpace.s) {
+                SQImageView(
+                    image: .init(
+                        symbol: .appleLogo,
+                        symbolStyle: .colorWithFont(foregroundColor, font: .bodyBold)
+                    )
+                )
+                .frame(width: 18, height: 18)
+
+                Text("Continue with Apple")
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(foregroundColor)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(
+                RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                    .fill(backgroundColor.color)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(controller.isLoading)
+        .opacity(controller.isLoading ? 0.65 : 1)
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: .SQSpace.l) {
@@ -183,6 +234,7 @@ struct SQDeleteAccountView: View {
                 impactCard
                 passwordCard
                 googleCard
+                appleCard
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)

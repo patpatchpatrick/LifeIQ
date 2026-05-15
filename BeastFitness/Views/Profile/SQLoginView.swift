@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 import GoogleSignInSwift
 
 struct SQLoginView: View {
@@ -127,6 +128,16 @@ struct SQLoginView: View {
             .buttonStyle(.plain)
             .background(Color.clear)
             .shadow(color: .clear, radius: 0)
+
+            SignInWithAppleButton(.continue) { request in
+                controller.configureAppleSignInRequest(request)
+            } onCompletion: { result in
+                controller.appleSignInCompleted(result)
+            }
+            .signInWithAppleButtonStyle(SQColor.isDarkMode ? .white : .black)
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous))
+            .disabled(controller.isLoading)
         }
         .padding(.SQSpace.l)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)

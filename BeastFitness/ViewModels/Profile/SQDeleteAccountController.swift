@@ -44,6 +44,10 @@ final class SQDeleteAccountController: SQDeleteAccountInterface, Identifiable {
         authProviders.contains(.google)
     }
 
+    var supportsAppleConfirmation: Bool {
+        authProviders.contains(.apple)
+    }
+
     init(
         hub: EventHub = SQAppState.shared.hub,
         userState: SQUserStating = SQAppState.shared.userState,
@@ -94,6 +98,15 @@ final class SQDeleteAccountController: SQDeleteAccountInterface, Identifiable {
 
         confirmDeletion(
             using: .google,
+            modelContext: modelContext
+        )
+    }
+
+    func deleteWithApple(modelContext: ModelContext) {
+        guard supportsAppleConfirmation else { return }
+
+        confirmDeletion(
+            using: .apple,
             modelContext: modelContext
         )
     }

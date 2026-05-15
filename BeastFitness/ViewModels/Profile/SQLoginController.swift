@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import AuthenticationServices
 import FirebaseAuth
 import BeastFitnessCore
 
@@ -128,6 +129,18 @@ protocol SQLoginInterface: AnyObject {
         Task { await loginOrSignUpWithGoogle() }
     }
 
+    func configureAppleSignInRequest(_ request: ASAuthorizationAppleIDRequest) {
+        do {
+            try SQAuthManager.shared.configureAppleSignInRequest(request)
+        } catch {
+            presentAuthError(error)
+        }
+    }
+
+    func appleSignInCompleted(_ result: Result<ASAuthorization, Error>) {
+        Task { await loginOrSignUpWithApple(result: result) }
+    }
+
     func openPrivacyPolicy() {
         hub.domainEvents.send(
             .pushDashboardRoute(
@@ -195,6 +208,48 @@ protocol SQLoginInterface: AnyObject {
         } catch {
             presentAuthError(error)
         }
+    }
+
+    private func loginOrSignUpWithApple(result appleResult: Result<ASAuthorization, Error>) async {
+        guard !isLoading else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let authorization: ASAuthorization
+            switch appleResult {
+            case .success(let appleAuthorization):
+                authorization = appleAuthorization
+            case .failure(let error):
+                SQAuthManager.shared.clearPendingAppleSignInRequest()
+                throw SQAuthError.fromApple(error)
+            }
+            let result = try await SQAuthManager.shared.signInWithApple(authorization: authorization)
+            try await completeAppleAuthentication(result: result)
+        } catch {
+            presentAuthError(error)
+        }
+    }
+
+    private func completeAppleAuthentication(result: AuthDataResult) async throws {
+        if result.additionalUserInfo?.isNewUser == true {
+            do {
+                try remoteConfigManager.assertSignupEnabled()
+                let resolvedEmail = result.user.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                try SQAuthManager.assertEmailAllowedForPublicSignup(resolvedEmail)
+            } catch {
+                try? await SQAuthManager.shared.deleteCurrentUser()
+                try? SQAuthManager.shared.signOut()
+                throw error
+            }
+        }
+
+        try await completeAuthentication(
+            result: result,
+            fallbackEmail: result.user.email,
+            method: .apple
+        )
     }
 
     private func inputsAreValid() -> Bool {
