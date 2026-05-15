@@ -269,20 +269,6 @@ struct SQLifeScoreV2Builder {
         var signals = [ScoredSignal]()
         let snapshotContextText = sourceContextText(for: snapshot?.date, referenceDate: referenceDate)
 
-        if let recoverySignal = scoredMetricSignal(
-            signalId: SQMetricId.soreness,
-            title: "Soreness",
-            in: snapshot,
-            metricDefinitionsById: metricDefinitionsById,
-            neutralScore: 74,
-            confidence: 0.85,
-            impactCap: 18,
-            sourceContextText: snapshotContextText,
-            score: sorenessReadinessScore
-        ) {
-            signals.append(recoverySignal)
-        }
-
         if let restingHRScore = restingHeartRateRecoveryScore(
             snapshot: snapshot,
             snapshots: snapshots
@@ -1047,13 +1033,67 @@ struct SQLifeScoreV2Builder {
             )
         }
 
-        return drivers.sorted {
+        return deduplicatedDrivers(drivers).sorted {
             if abs($0.scoreImpact) != abs($1.scoreImpact) {
                 return abs($0.scoreImpact) > abs($1.scoreImpact)
             }
 
             return $0.title < $1.title
         }
+    }
+
+    private func deduplicatedDrivers(_ drivers: [SQLifeScoreV2Driver]) -> [SQLifeScoreV2Driver] {
+        var selectedDrivers = [SQLifeScoreV2Driver]()
+        var selectedIndicesByKey = [String: Int]()
+
+        for driver in drivers {
+            let keys = deduplicationKeys(for: driver)
+            let matchingIndex = keys.compactMap { selectedIndicesByKey[$0] }.first
+
+            guard let matchingIndex else {
+                let insertionIndex = selectedDrivers.count
+                selectedDrivers.append(driver)
+                for key in keys {
+                    selectedIndicesByKey[key] = insertionIndex
+                }
+                continue
+            }
+
+            let selectedDriver = selectedDrivers[matchingIndex]
+            if shouldReplaceDriver(selectedDriver, with: driver) {
+                selectedDrivers[matchingIndex] = driver
+                for key in keys {
+                    selectedIndicesByKey[key] = matchingIndex
+                }
+            }
+        }
+
+        return selectedDrivers
+    }
+
+    private func deduplicationKeys(for driver: SQLifeScoreV2Driver) -> [String] {
+        [
+            "signal:\(driver.signalId)",
+            "title:\(driver.title.normalizedLifeScoreDriverKey)"
+        ]
+    }
+
+    private func shouldReplaceDriver(
+        _ selectedDriver: SQLifeScoreV2Driver,
+        with candidate: SQLifeScoreV2Driver
+    ) -> Bool {
+        let selectedMagnitude = abs(selectedDriver.scoreImpact)
+        let candidateMagnitude = abs(candidate.scoreImpact)
+
+        if candidateMagnitude != selectedMagnitude {
+            return candidateMagnitude > selectedMagnitude
+        }
+
+        if candidate.kind != selectedDriver.kind {
+            return candidate.kind == .personalized
+        }
+
+        return candidate.title < selectedDriver.title
     }
 
     private func v2DriverSummary(
@@ -1253,10 +1293,6 @@ struct SQLifeScoreV2Builder {
         }
     }
 
-    private func sorenessReadinessScore(_ value: Double) -> Double {
-        clamp(92 - (value * 6), min: 30, max: 96)
-    }
-
     private func evidenceItems(
         for signals: [ScoredSignal],
         componentTitle: String
@@ -1362,6 +1398,7 @@ struct SQLifeScoreV2Builder {
         _ metricId: String,
         metricDefinitionsById: [String: SQMetricDefinition]
     ) -> Bool {
+        guard metricId != SQMetricId.soreness else { return false }
         guard let definition = metricDefinitionsById[metricId] else { return true }
         return semanticResolver.lifeScoreImpact(for: definition) != .none
     }
@@ -1717,6 +1754,7 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
     private func topLifeScoreChanges(_ changes: [SQInsightChange]) -> [SQInsightChange] {
         Array(
             changes
+                .filter { !isExcludedLifeScoreSignalId($0.signalId) }
                 .sorted(by: lifeScoreChangeImpactRanked)
                 .prefix(3)
         )
@@ -1764,6 +1802,10 @@ struct SQLifeScoreBuilder: SQLifeScoreBuilding {
         }
 
         return lhs.title < rhs.title
+    }
+
+    private func isExcludedLifeScoreSignalId(_ signalId: String) -> Bool {
+        signalId == SQMetricId.soreness
     }
 
     private func lifeScoreComponentDetailItems(from component: SQLifeScoreV2Component) -> [SQLifeScoreDetailItem] {
@@ -2865,7 +2907,6 @@ private extension SQLifeScoreBuilder {
 
     func isTrainingPressureSignalId(_ signalId: String) -> Bool {
         trainingPressureSignalIds.contains(signalId)
-            || signalId == SQMetricId.soreness
             || signalId == SQInsightAnalysisMetricId.restingHeartRate
     }
 
@@ -2897,7 +2938,6 @@ private extension SQLifeScoreBuilder {
             SQMetricId.sleepHours,
             SQMetricId.sleepQuality,
             SQInsightAnalysisMetricId.restingHeartRate,
-            SQMetricId.soreness,
             SQMetricId.stress,
             SQMetricId.anxiety
         ]
@@ -2907,7 +2947,6 @@ private extension SQLifeScoreBuilder {
         [
             SQInsightAnalysisMetricId.workoutDifficulty,
             SQInsightAnalysisMetricId.workoutPerformance,
-            SQMetricId.soreness,
             SQMetricId.motivation
         ]
     }
@@ -3897,5 +3936,13 @@ private extension SQLifeScoreBuilder {
         case .neutral:
             return 2
         }
+    }
+}
+
+private extension String {
+    var normalizedLifeScoreDriverKey: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .lowercased()
     }
 }

@@ -6,7 +6,7 @@ This document is the source of truth for product-facing score and feature defini
 
 Life Score is a daily snapshot of the user's recent momentum. It looks at signals like sleep, recovery, workouts, habits, and check-ins to estimate whether the user's life is trending in a healthy direction. It is not a medical score - it is a guide to help the user notice what's supporting them and what may need attention.
 
-Life Score should read as a practical "am I on track?" signal across health, habits, recovery, training, and self-reported state. Healthy behavior and positive momentum should generally support the score. Training should become a drag only when the broader context suggests overreaching, poor recovery, repeated high-intensity strain, or too much inactivity. A normal rest day should not be treated as failure.
+Life Score should read as a practical "am I on track?" signal across health, habits, recovery, training, and self-reported state. Healthy behavior and positive momentum should generally support the score. Training should become a drag only when the broader context suggests overreaching, poor recovery, repeated high-intensity strain, or too much inactivity. A normal rest day should not be treated as failure. Soreness by itself should not meaningfully lower Life Score; it is better treated as Recovery Score/readiness context and as an insight signal unless it stacks with other strain evidence.
 
 ## Insights
 

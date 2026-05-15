@@ -267,6 +267,7 @@ enum SQMetricSemanticDefaults {
 
         switch metricId {
         case SQMetricId.weight,
+             SQMetricId.soreness,
              SQMetricId.weed,
              SQMetricId.porn,
              SQMetricId.nicotine,

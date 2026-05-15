@@ -208,6 +208,8 @@ struct SQLifeScoreMetricContributorBuilder {
     }
 
     private func effectiveImpact(for definition: SQMetricDefinition) -> SQMetricLifeScoreImpact {
+        guard definition.id != SQMetricId.soreness else { return .none }
+
         let resolvedImpact = semanticResolver.lifeScoreImpact(for: definition)
         guard resolvedImpact == .automatic || resolvedImpact == .unknown else {
             return resolvedImpact
