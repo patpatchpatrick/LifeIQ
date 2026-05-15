@@ -6,9 +6,15 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 
 - The canonical product-context doc for AI assistants in this repo is [docs/ai/product_context.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/product_context.md).
 - Use that file as the stable product brief when grounding product decisions, UX reasoning, naming, and feature intent.
+- Product vision and prioritization live in [docs/ai/product_vision.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/product_vision.md). Use it when deciding what a feature should optimize for.
 - The source of truth for score and feature definitions is [docs/ai/Definitions.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/Definitions.md). Keep Life Score, Recovery Score, Insights, Performance Score, Difficulty Score, and future score explainers aligned with that file.
 - Durable AI-facing implementation/product rules live in [docs/ai/rules.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/rules.md). Check that file before adding new UI patterns or product conventions.
 - AI-facing architecture guidance lives in [docs/ai/architecture.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/architecture.md). Check it before adding new state, controller/view model, service, manager, or long-lived listener patterns.
+- UX and content-density guidance lives in [docs/ai/ux_content.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/ux_content.md). Check it before adding prominent user-facing copy or new explanation surfaces.
+- Shared UI guidance lives in [docs/ai/shared_ui.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/shared_ui.md). Check it before adding new UI components or styles.
+- Privacy/security guidance lives in [docs/ai/privacy_security.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/privacy_security.md). Check it before touching HealthKit, check-ins, subscriptions, auth, Firestore writes, logging, or analytics.
+- HealthKit/data guidance lives in [docs/ai/healthkit_data.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/healthkit_data.md). Check it before adding or expanding HealthKit-backed functionality.
+- Observability and testing guidance live in [docs/ai/observability.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/observability.md) and [docs/ai/testing.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/testing.md). Check them when adding user-facing flows, data sync, analytics, or fragile logic.
 - Engine-planning docs for the shared `Insights` / `Life Score` direction live under [docs/ai/engines/insights-and-life-score/README.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/engines/insights-and-life-score/README.md).
 - When doing architecture or product-planning work for insights, the orb, score drivers, or relationship definitions, update the relevant docs in `docs/ai/engines/` so ChatGPT and Codex stay aligned.
 - Keep `AGENTS.md` focused on implementation guidance and repo rules; put broader product context in `docs/ai/`.

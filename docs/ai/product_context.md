@@ -4,6 +4,8 @@ This document is the stable AI-facing product brief for the LifeIQ app. It shoul
 
 Product-facing score and feature definitions live in [Definitions.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/Definitions.md). Treat that file as the source of truth for Life Score, Recovery Score, Insights, Performance Score, Difficulty Score, and future score definitions.
 
+Long-term product direction lives in [product_vision.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/product_vision.md). Use that file for prioritization and product framing.
+
 ## Product Summary
 
 LifeIQ helps people track and improve their life and health with data.
