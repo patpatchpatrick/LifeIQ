@@ -1276,7 +1276,7 @@ final class SQDashboardController: SQDashboardInterface {
                 for: activityType,
                 in: activityWorkouts,
                 allTimeWorkouts: allTimeWorkouts,
-                isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+                isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
             )
             activityRows.append(contentsOf: performanceRows.map { rowData in
                 SQDashboardMetricPerformanceRowViewModel(
@@ -1414,7 +1414,7 @@ final class SQDashboardController: SQDashboardInterface {
         let scoreItemsByActivity = await workoutScoreService.activityScoreItems(
             for: workouts,
             allTimeWorkouts: allTimeWorkouts,
-            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+            isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
         )
 
         for (activityType, workouts) in workouts.workoutsByActivityType.sorted(by: { $0.value.count > $1.value.count }) {
@@ -1460,7 +1460,7 @@ final class SQDashboardController: SQDashboardInterface {
         guard let model = await workoutScoreService.dashboardInsights(
             for: workouts,
             allTimeWorkouts: allTimeWorkouts,
-            isPremiumUnlocked: userState.loggedInUser?.hasPremiumAccess ?? true
+            isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
         ) else {
             return nil
         }
@@ -2406,7 +2406,7 @@ final class SQDashboardController: SQDashboardInterface {
             )
         }
 
-        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
+        let isPremiumUnlocked = SQSubscriptionManager.hasPremiumAccess
         func buildRows(for insights: [SQInsight]) -> [SQDashboardRowViewModel] {
             var rows = [SQDashboardRowViewModel]()
 
@@ -2532,7 +2532,7 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func buildInsightExplorerSubsection(input: SQHealthIntelligenceInput) -> SQDashboardSubsectionViewModel {
-        let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
+        let isPremiumUnlocked = SQSubscriptionManager.hasPremiumAccess
         let controller = SQInsightExplorerController(input: input)
         let topRelationships = SQAdminConfig.hideScreenshotSensitiveInsights
             ? controller.topRelationships.filter { !isScreenshotSensitiveRelationship($0) }

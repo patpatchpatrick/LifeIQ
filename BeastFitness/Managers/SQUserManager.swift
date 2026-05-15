@@ -14,6 +14,7 @@ protocol SQUserManaging: AnyObject {
     func handleAuthStateChange(firebaseUser: FirebaseAuth.User?, userState: SQUserState) async
     func createUserDocument(uid: String, email: String) async throws -> SQUser
     func saveUser(_ user: SQUser) async throws -> SQUser
+    func updateSubscriptionLevel(for user: SQUser, level: SQSubscriptionLevel) async throws -> SQUser
     func fetchUser(uid: String) async throws -> SQUser
 }
 
@@ -97,6 +98,12 @@ final class SQUserManager: SQUserManaging {
         SQUserDefaults.shared.setPreferredUnitSystem(savedUser.unitSystem)
         SQLogger.shared.log("✅ Saved user document for \(user.id)", .info, context: .network)
         return savedUser
+    }
+
+    func updateSubscriptionLevel(for user: SQUser, level: SQSubscriptionLevel) async throws -> SQUser {
+        try await SQUserService.updateSubscriptionLevel(uid: user.id, level: level)
+        SQLogger.shared.log("✅ Updated subscription level for \(user.id)", .info, context: .network)
+        return user.withSubscriptionLevel(level)
     }
 
     func fetchUser(uid: String) async throws -> SQUser {

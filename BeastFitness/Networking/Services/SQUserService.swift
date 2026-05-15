@@ -36,6 +36,10 @@ final class SQUserService: SQNetworkService {
         return user
     }
 
+    static func updateSubscriptionLevel(uid: String, level: SQSubscriptionLevel) async throws {
+        let _: SQVoidWrite = try await performRequest(SQUserRoute.updateSubscriptionLevel(uid: uid, level: level))
+    }
+
     static func fetchUser(uid: String) async throws -> SQUser {
         return try await performRequest(SQUserRoute.fetchUser(uid: uid))
     }

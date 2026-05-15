@@ -21,6 +21,7 @@ final class SQLaunchManager {
             hub: SQAppState.shared.hub,
             userState: SQAppState.shared.userState
         )
+        SQAppState.shared.subscriptionService.configure()
         SQWatchInterface.shared.configureMirroringHandler()
         SQAuthManager.shared.startListening(userState: SQAppState.shared.userState)
     }

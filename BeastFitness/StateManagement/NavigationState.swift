@@ -105,6 +105,7 @@ struct SQNavRoute {
         case launchTutorial(controller: SQLaunchTutorialController)
         case metricDetail(controller: SQMetricDetailController)
         case profile(controller: SQProfileController)
+        case subscription(controller: SQSubscriptionController)
         case login(controller: SQLoginController)
         case deleteAccount(controller: SQDeleteAccountController)
         case onboarding(controller: SQOnboardingController)
@@ -147,6 +148,8 @@ struct SQNavRoute {
                 return "metricDetail-\(controller.id)"
             case .profile(let controller):
                 return "profile-\(controller.id)"
+            case .subscription(let controller):
+                return "subscription-\(controller.id)"
             case .login(let controller):
                 return "login-\(controller.id)"
             case .deleteAccount(let controller):

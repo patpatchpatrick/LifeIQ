@@ -144,6 +144,7 @@ enum SQImageSymbol: String {
     case edit                = "square.and.pencil"
     case chartBar            = "chart.bar"
     case sliderHorizontal3   = "slider.horizontal.3"
+    case sparkles            = "sparkles"
     case clock               = "clock"
     case circleGrid2x2       = "circle.grid.2x2"
     case faceSmiling         = "face.smiling"

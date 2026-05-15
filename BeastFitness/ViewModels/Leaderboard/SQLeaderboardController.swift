@@ -49,7 +49,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
 
     var isPremiumLocked: Bool {
         mode.requiresPremium
-            && !(SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true)
+            && !SQSubscriptionManager.hasPremiumAccess
             && !hasFreeWorkoutScorePreviewAccess
     }
 
@@ -352,7 +352,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
                 workouts: currentWorkouts,
                 allTimeWorkouts: allTimeWorkouts
             )
-            let isPremiumUnlocked = SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+            let isPremiumUnlocked = SQSubscriptionManager.hasPremiumAccess
             let previewState = SQSubscriptionManager.weeklyWorkoutScorePreviewState(
                 candidates: rows.compactMap(\.workout),
                 isPremiumUnlocked: isPremiumUnlocked

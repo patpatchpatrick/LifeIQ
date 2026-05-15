@@ -48,6 +48,8 @@ struct SQRootTabView: View {
             SQMetricDetailView(controller: controller)
         case .profile(controller: let controller):
             SQProfileView(controller: controller)
+        case .subscription(controller: let controller):
+            SQSubscriptionView(controller: controller)
         case .login(controller: let controller):
             SQLoginView(controller: controller)
         case .deleteAccount(controller: let controller):

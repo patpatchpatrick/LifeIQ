@@ -79,8 +79,8 @@ struct SQUser: Codable, Equatable {
         onboardingStatus == .pending
     }
 
-    /// Temporary default while subscription plans are not wired up yet.
-    /// Legacy users without a stored value should still be able to access premium insights.
+    /// Firestore-backed subscription mirror used for admin/debug visibility.
+    /// Runtime entitlement checks should use SQSubscriptionManager so Apple remains source of truth.
     var effectiveSubscriptionLevel: SQSubscriptionLevel {
         if let override = SQAdminConfig.subscriptionLevelOverride {
             return override
@@ -115,6 +115,28 @@ struct SQUser: Codable, Equatable {
         }
 
         return name
+    }
+}
+
+extension SQUser {
+    func withSubscriptionLevel(_ updatedSubscriptionLevel: SQSubscriptionLevel?) -> SQUser {
+        SQUser(
+            id: id,
+            createdAt: createdAt,
+            name: name,
+            email: email,
+            emailVerificationBypass: emailVerificationBypass,
+            firstName: firstName,
+            lastName: lastName,
+            dateOfBirth: dateOfBirth,
+            heightCentimeters: heightCentimeters,
+            weightKilograms: weightKilograms,
+            unitSystem: unitSystem,
+            sleepSchedule: sleepSchedule,
+            subscriptionLevel: updatedSubscriptionLevel,
+            onboardingCompletedAt: onboardingCompletedAt,
+            onboardingStatus: onboardingStatus
+        )
     }
 }
 

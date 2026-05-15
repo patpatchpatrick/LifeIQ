@@ -597,7 +597,7 @@ extension SQWorkoutSummaryController {
             premiumInsightsModel = await workoutScoreService.insights(
                 for: workout,
                 allTimeWorkouts: allTimeWorkouts,
-                isPremiumUnlocked: SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+                isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
             )
         } catch {
             premiumInsightsModel = nil
@@ -646,7 +646,7 @@ extension SQWorkoutSummaryController {
     func loadPerformanceDataIfNeeded(workout: SQWorkoutSessionable) async {
         let rows = await statsManager.loadPerformanceData(
             for: workout,
-            isPremiumUnlocked: SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+            isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
         )
         if !rows.isEmpty {
             state.loadPerformanceData(rowData: rows)

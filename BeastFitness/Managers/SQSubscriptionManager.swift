@@ -41,6 +41,12 @@ struct SQWorkoutScorePreviewState: Equatable {
 }
 
 enum SQSubscriptionManager {
+    enum ProductID {
+        static let monthly = "com.lifeiq.pro.monthly"
+        static let annual = "com.lifeiq.pro.annual"
+        static let all: Set<String> = [monthly, annual]
+    }
+
     private static let workoutScorePreviewKeyPrefix = "subscription.weekly-workout-score-preview"
     private static let workoutScorePreviewCadenceDays = 7
 
@@ -65,6 +71,24 @@ enum SQSubscriptionManager {
             context: .dashboard,
             isPriority: true
         )
+
+        SQAppState.shared.hub.domainEvents.send(
+            .pushDashboardRoute(.subscription(controller: .init(source: source, feature: feature)))
+        )
+    }
+
+    @MainActor
+    static var effectiveSubscriptionLevel: SQSubscriptionLevel {
+        if let override = SQAdminConfig.subscriptionLevelOverride {
+            return override
+        }
+
+        return SQAppState.shared.subscriptionState.appleSubscriptionLevel
+    }
+
+    @MainActor
+    static var hasPremiumAccess: Bool {
+        effectiveSubscriptionLevel == .premium
     }
 
     @MainActor
@@ -174,11 +198,6 @@ enum SQSubscriptionManager {
 
     private static func workoutScorePreviewKey(for userId: String) -> String {
         "\(workoutScorePreviewKeyPrefix).\(userId)"
-    }
-
-    @MainActor
-    private static var hasPremiumAccess: Bool {
-        SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
     }
 
     @MainActor

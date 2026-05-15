@@ -20,8 +20,9 @@ extension SQNetworkService {
 
         let db = Firestore.firestore()
         let operation = route.firestoreSafetyOperation
+        let firestoreReference = route.reference(in: db)
 
-        switch route.reference(in: db) {
+        switch firestoreReference {
         case .documentRead(let ref):
             try await SQFirestoreSafetyManager.shared.assertAllowed(
                 kind: .read,
@@ -55,7 +56,7 @@ extension SQNetworkService {
             )
             return try decodeDocuments(snaps.documents, as: T.self)
 
-        case .documentWrite(let ref):
+        case .documentWrite(let ref), .documentMerge(let ref):
             try await SQRemoteConfigManager.shared.assertServerWritesEnabled()
             try await SQFirestoreSafetyManager.shared.assertAllowed(
                 kind: .write,
@@ -76,7 +77,13 @@ extension SQNetworkService {
                 )
             }
 
-            try await writeDocument(body, to: ref)
+            let shouldMerge: Bool
+            if case .documentMerge = firestoreReference {
+                shouldMerge = true
+            } else {
+                shouldMerge = false
+            }
+            try await writeDocument(body, to: ref, merge: shouldMerge)
             try await SQFirestoreSafetyManager.shared.recordWrites(1, operation: operation)
 
             guard let result = SQVoidWrite() as? T else {
@@ -228,10 +235,10 @@ extension SQNetworkService {
         )
     }
 
-    private static func writeDocument(_ body: any Encodable, to reference: DocumentReference) async throws {
+    private static func writeDocument(_ body: any Encodable, to reference: DocumentReference, merge: Bool = false) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             do {
-                try reference.setData(from: body) { error in
+                try reference.setData(from: body, merge: merge) { error in
                     if let error {
                         continuation.resume(throwing: error)
                     } else {

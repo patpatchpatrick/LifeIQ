@@ -25,6 +25,7 @@ extension SQFirestoreRoute {
 enum SQFirestoreReference {
     case documentRead(DocumentReference)
     case documentWrite(DocumentReference)
+    case documentMerge(DocumentReference)
     case collection(CollectionReference)
     case query(Query)
 }

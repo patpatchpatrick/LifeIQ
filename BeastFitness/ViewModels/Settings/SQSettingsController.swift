@@ -21,6 +21,8 @@ final class SQSettingsController: SQSettingsInterface {
     let userState: SQUserStating
     private let dashboardLayoutService: SQDashboardLayoutServicing
     private let userManager: SQUserManaging
+    private let subscriptionState: SQSubscriptionStating
+    private let subscriptionService: SQSubscriptionServicing
     var navigationPath = NavigationPath()
     private(set) var sections: [SQSettingsSectionViewModel] = []
 
@@ -32,13 +34,17 @@ final class SQSettingsController: SQSettingsInterface {
         dashboardState: DashboardStating = SQAppState.shared.dashboardState,
         userState: SQUserStating = SQAppState.shared.userState,
         dashboardLayoutService: SQDashboardLayoutServicing? = nil,
-        userManager: SQUserManaging = SQUserManager.shared
+        userManager: SQUserManaging = SQUserManager.shared,
+        subscriptionState: SQSubscriptionStating = SQAppState.shared.subscriptionState,
+        subscriptionService: SQSubscriptionServicing = SQAppState.shared.subscriptionService
     ) {
         self.state = state
         self.dashboardState = dashboardState
         self.userState = userState
         self.dashboardLayoutService = dashboardLayoutService ?? SQDashboardLayoutService()
         self.userManager = userManager
+        self.subscriptionState = subscriptionState
+        self.subscriptionService = subscriptionService
         buildSections()
     }
 
@@ -78,6 +84,57 @@ final class SQSettingsController: SQSettingsInterface {
 
         if !accountRows.isEmpty {
             builtSections.append(.init(title: "Account", rows: accountRows))
+        }
+
+        if userState.isLoggedIn {
+            var subscriptionRows: [SQSettingsRowViewModel] = [
+                .init(
+                    title: "LifeIQ Pro",
+                    subtitle: subscriptionState.statusText,
+                    icon: .sparkles,
+                    showsChevron: true
+                ) { [weak self] in
+                    guard let self else { return }
+                    SQAnalyticsManager.shared.track(.settingsActionTaken(action: "lifeiq_pro"))
+                    self.state.hub.domainEvents.send(
+                        .pushDashboardRoute(.subscription(controller: .init(source: "settings", feature: "subscription")))
+                    )
+                },
+
+                .init(
+                    title: "Restore purchases",
+                    subtitle: "Restore an active App Store subscription on this device.",
+                    icon: .arrowDown,
+                    showsChevron: false
+                ) { [weak self] in
+                    guard let self else { return }
+                    SQAnalyticsManager.shared.track(.settingsActionTaken(action: "restore_purchases"))
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        await self.subscriptionService.restorePurchases()
+                        self.buildSections()
+                    }
+                }
+            ]
+
+            if subscriptionState.hasPremiumAccess {
+                subscriptionRows.append(
+                    .init(
+                        title: "Manage subscription",
+                        subtitle: "Open Apple's subscription management sheet.",
+                        icon: .sliderHorizontal3,
+                        showsChevron: true
+                    ) { [weak self] in
+                        guard let self else { return }
+                        SQAnalyticsManager.shared.track(.settingsActionTaken(action: "manage_subscription"))
+                        Task { @MainActor [weak self] in
+                            await self?.subscriptionService.manageSubscriptions()
+                        }
+                    }
+                )
+            }
+
+            builtSections.append(.init(title: "Subscription", rows: subscriptionRows))
         }
 
         let preferenceRows: [SQSettingsRowViewModel] = [

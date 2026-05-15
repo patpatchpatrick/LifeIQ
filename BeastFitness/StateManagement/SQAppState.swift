@@ -31,6 +31,8 @@ final class SQAppState {
     let dropDownMenuState: SQDropDownMenuState
     let appBlockerState: SQAppBlockerState
     let metricEntryManager: SQMetricEntryManager
+    let subscriptionState: SQSubscriptionState
+    let subscriptionService: SQSubscriptionService
 
     init() {
         self.userState = .init(hub: hub)
@@ -45,5 +47,12 @@ final class SQAppState {
         self.dropDownMenuState = .init()
         self.appBlockerState = .init()
         self.metricEntryManager = .init(hub: hub)
+        let subscriptionState = SQSubscriptionState()
+        self.subscriptionState = subscriptionState
+        let subscriptionService = SQSubscriptionService(
+            subscriptionState: subscriptionState,
+            hub: hub
+        )
+        self.subscriptionService = subscriptionService
     }
 }

@@ -8,6 +8,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 - Use that file as the stable product brief when grounding product decisions, UX reasoning, naming, and feature intent.
 - The source of truth for score and feature definitions is [docs/ai/Definitions.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/Definitions.md). Keep Life Score, Recovery Score, Insights, Performance Score, Difficulty Score, and future score explainers aligned with that file.
 - Durable AI-facing implementation/product rules live in [docs/ai/rules.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/rules.md). Check that file before adding new UI patterns or product conventions.
+- AI-facing architecture guidance lives in [docs/ai/architecture.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/architecture.md). Check it before adding new state, controller/view model, service, manager, or long-lived listener patterns.
 - Engine-planning docs for the shared `Insights` / `Life Score` direction live under [docs/ai/engines/insights-and-life-score/README.md](/Users/patrickdoyle/Developer/mapps/BeastFitness/docs/ai/engines/insights-and-life-score/README.md).
 - When doing architecture or product-planning work for insights, the orb, score drivers, or relationship definitions, update the relevant docs in `docs/ai/engines/` so ChatGPT and Codex stay aligned.
 - Keep `AGENTS.md` focused on implementation guidance and repo rules; put broader product context in `docs/ai/`.
@@ -68,12 +69,14 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 ## App state architecture
 
 - App state is centralized in `SQAppState.shared`.
+- Follow `docs/ai/architecture.md` for boundaries between views, controllers/view models, state, services, and managers.
 - New feature state pattern:
   1. Define a `@MainActor` protocol for state interface
   2. Implement with `@Observable` state class that receives `hub`
   3. Register in `SQAppState`
   4. Access via `SQAppState.shared`
 - Prefer event-driven updates via `hub`.
+- Keep state focused on observable values and narrow mutations. Put durable side effects and app-lifetime listeners in services or established domain managers, and have controllers/view models delegate to those services.
 
 ## Routing and alerts
 

@@ -47,6 +47,10 @@
 		F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B52EF3728300223A63 /* SQSettingsController.swift */; };
 		F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */; };
 		F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B92EF3741800223A63 /* SettingsState.swift */; };
+		F8B200022FFF000100B20001 /* SQSubscriptionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200012FFF000100B20001 /* SQSubscriptionState.swift */; };
+		F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200032FFF000100B20001 /* SQSubscriptionController.swift */; };
+		F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200052FFF000100B20001 /* SQSubscriptionView.swift */; };
+		F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200092FFF000100B20001 /* SQSubscriptionService.swift */; };
 		F61593BD2EF376A700223A63 /* SQToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BC2EF376A400223A63 /* SQToastView.swift */; };
 		F61593BF2EF37A3400223A63 /* SQToastOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */; };
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
@@ -406,6 +410,10 @@
 		F61593B52EF3728300223A63 /* SQSettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsController.swift; sourceTree = "<group>"; };
 		F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsRowViewModel.swift; sourceTree = "<group>"; };
 		F61593B92EF3741800223A63 /* SettingsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsState.swift; sourceTree = "<group>"; };
+		F8B200012FFF000100B20001 /* SQSubscriptionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionState.swift; sourceTree = "<group>"; };
+		F8B200032FFF000100B20001 /* SQSubscriptionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionController.swift; sourceTree = "<group>"; };
+		F8B200052FFF000100B20001 /* SQSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionView.swift; sourceTree = "<group>"; };
+		F8B200092FFF000100B20001 /* SQSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionService.swift; sourceTree = "<group>"; };
 		F61593BC2EF376A400223A63 /* SQToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastView.swift; sourceTree = "<group>"; };
 		F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastOverlayWindow.swift; sourceTree = "<group>"; };
 		F61593C12EF37A7100223A63 /* SQToastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastViewModel.swift; sourceTree = "<group>"; };
@@ -768,6 +776,7 @@
 				F602DA292EC40EC700404878 /* EventHub.swift */,
 				F602DA272EC40EB700404878 /* SQAppState.swift */,
 				F6C5FCE42F2C3E2E00BF1022 /* SQUserState.swift */,
+				F8B200012FFF000100B20001 /* SQSubscriptionState.swift */,
 			);
 			path = StateManagement;
 			sourceTree = "<group>";
@@ -983,6 +992,22 @@
 				F61593C42EF37A8900223A63 /* SQToastState.swift */,
 			);
 			path = Toast;
+			sourceTree = "<group>";
+		};
+		F8B200072FFF000100B20001 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				F8B200032FFF000100B20001 /* SQSubscriptionController.swift */,
+			);
+			path = Subscription;
+			sourceTree = "<group>";
+		};
+		F8B200082FFF000100B20001 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				F8B200052FFF000100B20001 /* SQSubscriptionView.swift */,
+			);
+			path = Subscription;
 			sourceTree = "<group>";
 		};
 		F61593C62EF4B81400223A63 /* OverlayWindow */ = {
@@ -1456,6 +1481,7 @@
 				F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */,
 				F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */,
 				F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */,
+				F8B200092FFF000100B20001 /* SQSubscriptionService.swift */,
 				F7A417142FFD310100AA4101 /* SQWebViewManager.swift */,
 				F6A401112EF5B920002BC997 /* SQLaunchManager.swift */,
 				F61593F92EF4BEB800223A63 /* WatchInterface */,
@@ -1710,6 +1736,7 @@
 				F61593C02EF37A6D00223A63 /* Toast */,
 				F61593B42EF3727F00223A63 /* Settings */,
 				F61592322EF362F800223A63 /* Alerts */,
+				F8B200072FFF000100B20001 /* Subscription */,
 				F629CE602EE3B6560002330C /* Workouts */,
 				F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */,
 				F602DA2D2EC40F9900404878 /* Dashboard */,
@@ -1730,6 +1757,7 @@
 				F61593BB2EF3769F00223A63 /* Toasts */,
 				F61593B12EF3726A00223A63 /* Settings */,
 				F61592352EF3636800223A63 /* Alerts */,
+				F8B200082FFF000100B20001 /* Subscription */,
 				F679BDDD2EE7D53500A2F249 /* ExercisesList */,
 				F679BC4E2EE4FC1400A2F249 /* WorkoutSummary */,
 				F679BA452EE4F36500A2F249 /* WorkoutsList */,
@@ -2208,6 +2236,8 @@
 				F679BC542EE7321A00A2F249 /* SQUserIcon.swift in Sources */,
 				F639F1682F4BC668004AC701 /* SQWorkoutProcessedEntity.swift in Sources */,
 				F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */,
+				F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */,
+				F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */,
 				F6F4D41A2ED61D1100ECE0BC /* SQSegmentedControl.swift in Sources */,
 				F602DA6C2EC92BB100404878 /* SQWorkouts.swift in Sources */,
 				F6940F2D2F37B1310008A2A0 /* SQDashboardWorkoutGroupViewModel.swift in Sources */,
@@ -2294,10 +2324,12 @@
 				F6A848B62CBD8F2B00B09AD5 /* SQNavBarViewModel.swift in Sources */,
 				F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */,
 				F61593B32EF3727800223A63 /* SQSettingsView.swift in Sources */,
+				F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */,
 				F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */,
 				F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */,
 				F6A848B82CBD8FE700B09AD5 /* SQDropDownButton.swift in Sources */,
 				F6C5FCE52F2C3E2E00BF1022 /* SQUserState.swift in Sources */,
+				F8B200022FFF000100B20001 /* SQSubscriptionState.swift in Sources */,
 				F639F0CF2F3ED172004AC701 /* SQLeaderboardRowViewModel.swift in Sources */,
 				F679BA492EE4F3ED00A2F249 /* SQWorkoutsListItem.swift in Sources */,
 				F61593C52EF37A8B00223A63 /* SQToastState.swift in Sources */,

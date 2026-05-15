@@ -7,9 +7,14 @@
 
 import FirebaseFirestore
 
+private struct SQUserSubscriptionLevelPatch: Encodable {
+    let subscriptionLevel: SQSubscriptionLevel
+}
+
 enum SQUserRoute {
     case createUser(SQUser)
     case saveUser(SQUser)
+    case updateSubscriptionLevel(uid: String, level: SQSubscriptionLevel)
     case fetchUser(uid: String)
 }
 
@@ -20,6 +25,8 @@ extension SQUserRoute: SQFirestoreRoute {
             return "create_user"
         case .saveUser:
             return "save_user"
+        case .updateSubscriptionLevel:
+            return "update_user_subscription_level"
         case .fetchUser:
             return "fetch_user"
         }
@@ -31,6 +38,8 @@ extension SQUserRoute: SQFirestoreRoute {
             return user
         case .saveUser(let user):
             return user
+        case .updateSubscriptionLevel(_, let level):
+            return SQUserSubscriptionLevelPatch(subscriptionLevel: level)
         case .fetchUser:
             return nil
         }
@@ -42,6 +51,8 @@ extension SQUserRoute: SQFirestoreRoute {
             return .documentWrite(db.collection("users").document(user.id))
         case .saveUser(let user):
             return .documentWrite(db.collection("users").document(user.id))
+        case .updateSubscriptionLevel(let uid, _):
+            return .documentMerge(db.collection("users").document(uid))
         case .fetchUser(let uid):
             return .documentRead(db.collection("users").document(uid))
         }

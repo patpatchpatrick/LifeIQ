@@ -22,13 +22,13 @@ enum SQAdminConfig {
     /// so a future dev/admin menu can flip it without reworking the call sites.
     static var enforceEmailVerificationForEmailPasswordAccounts = false
 
-    /// Temporary app-wide default while subscription plans are not wired up yet.
-    /// Used for new users and legacy/fallback users without a stored subscription level.
+    /// Stored-profile fallback for new users and admin/debug mirrors. Runtime entitlement
+    /// checks should use Apple's StoreKit state through SQSubscriptionManager.
     static var appDefaultSubscriptionLevel: SQSubscriptionLevel = .free
 
     /// Debug-only local override for testing subscription states. When non-nil, this wins
     /// over the user's stored Firestore subscription level without changing that record.
-    static var subscriptionLevelOverride: SQSubscriptionLevel? = .free
+    static var subscriptionLevelOverride: SQSubscriptionLevel? = nil
     static var freeCustomMetricLimit = 1
 
     /// Debug-only toggle for rendering canned health data without requiring
@@ -67,7 +67,7 @@ enum SQAdminConfig {
     #else
     static let disableSQLoggerLogs = false
     static let enforceEmailVerificationForEmailPasswordAccounts = true
-    static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .premium
+    static let appDefaultSubscriptionLevel: SQSubscriptionLevel = .free
     static let subscriptionLevelOverride: SQSubscriptionLevel? = nil
     static let freeCustomMetricLimit = 1
     static let useMockDashboardHealthData = false

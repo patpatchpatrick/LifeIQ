@@ -339,9 +339,9 @@ final class SQAnalyticsManager: SQAnalyticsTracking {
         }
 
         identify.set(property: "has_completed_onboarding", value: user.onboardingStatus == .completed)
-        identify.set(property: "has_premium_access", value: user.hasPremiumAccess)
+        identify.set(property: "has_premium_access", value: SQSubscriptionManager.hasPremiumAccess)
         identify.set(property: "unit_system", value: user.effectiveUnitSystem.rawValue)
-        identify.set(property: "subscription_level", value: user.effectiveSubscriptionLevel.rawValue)
+        identify.set(property: "subscription_level", value: SQSubscriptionManager.effectiveSubscriptionLevel.rawValue)
 
         if let onboardingStatus = user.onboardingStatus?.rawValue {
             identify.set(property: "onboarding_status", value: onboardingStatus)
@@ -518,6 +518,8 @@ private extension SQNavRoute.DashboardRoute {
             return "metric_detail"
         case .profile:
             return "profile"
+        case .subscription:
+            return "subscription"
         case .login:
             return "login"
         case .deleteAccount:

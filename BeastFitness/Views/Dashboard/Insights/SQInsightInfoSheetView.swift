@@ -38,7 +38,7 @@ struct SQInsightInfoSheetView: View {
     }
 
     private var isPremiumUnlocked: Bool {
-        SQAppState.shared.userState.loggedInUser?.hasPremiumAccess ?? true
+        SQSubscriptionManager.hasPremiumAccess
     }
 
     var body: some View {
