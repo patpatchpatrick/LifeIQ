@@ -1775,7 +1775,10 @@ final class SQDashboardController: SQDashboardInterface {
             lanes: lanes,
             segments: segments,
             startDate: latestNight.sleepStartDate,
-            endDate: latestNight.wakeDate
+            endDate: latestNight.wakeDate,
+            onPhaseSelected: { [weak self] phase in
+                self?.displaySleepPhaseTrends(focusedPhase: phase)
+            }
         )
     }
 

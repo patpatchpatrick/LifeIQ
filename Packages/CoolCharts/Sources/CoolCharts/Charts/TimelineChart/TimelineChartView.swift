@@ -48,6 +48,8 @@ public struct TimelineChartView: View {
     private let laneSpacing: CGFloat
     private let laneHeight: CGFloat
     private let visualStyle: VisualStyle
+    private let onSegmentSelected: ((TimelineChartSegment) -> Void)?
+    private let onLaneSelected: ((TimelineChartLane) -> Void)?
 
     public init(
         lanes: [TimelineChartLane],
@@ -57,7 +59,9 @@ public struct TimelineChartView: View {
         laneLabelWidth: CGFloat = 48,
         laneSpacing: CGFloat = 10,
         laneHeight: CGFloat = 10,
-        visualStyle: VisualStyle = .standard
+        visualStyle: VisualStyle = .standard,
+        onSegmentSelected: ((TimelineChartSegment) -> Void)? = nil,
+        onLaneSelected: ((TimelineChartLane) -> Void)? = nil
     ) {
         self.lanes = lanes
         self.segments = segments
@@ -67,6 +71,8 @@ public struct TimelineChartView: View {
         self.laneSpacing = laneSpacing
         self.laneHeight = laneHeight
         self.visualStyle = visualStyle
+        self.onSegmentSelected = onSegmentSelected
+        self.onLaneSelected = onLaneSelected
     }
 
     public var body: some View {
@@ -143,20 +149,54 @@ public struct TimelineChartView: View {
                             .offset(x: 0, y: y - 2)
                     }
                 }
+                .frame(width: geometry.size.width, height: chartHeight, alignment: .topLeading)
+                .contentShape(Rectangle())
+                .onTapGesture { location in
+                    selectTimelineItem(
+                        at: location,
+                        chartWidth: chartWidth,
+                        totalSeconds: totalSeconds
+                    )
+                }
             }
             .frame(height: chartHeight)
 
-            HStack {
-                timeLabelView(Self.timeLabel(startDate))
-                Spacer()
-                timeLabelView(Self.timeLabel(endDate))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 0) {
+                    axisTick
+                    Rectangle()
+                        .fill(axisColor)
+                        .frame(height: 1)
+                    axisTick
+                }
+
+                HStack {
+                    axisEndpointLabel(Self.timeLabel(startDate))
+                    Spacer()
+                    axisEndpointLabel(Self.timeLabel(endDate))
+                }
             }
             .padding(.leading, laneLabelWidth)
+            .padding(.top, 2)
         }
     }
 
     @ViewBuilder
-    private func timeLabelView(_ label: String) -> some View {
+    private var axisTick: some View {
+        switch visualStyle {
+        case .standard:
+            Rectangle()
+                .fill(labelColor.opacity(0.38))
+                .frame(width: 1, height: 5)
+        case .glass:
+            Rectangle()
+                .fill(axisColor.opacity(1.4))
+                .frame(width: 1, height: 5)
+        }
+    }
+
+    @ViewBuilder
+    private func axisEndpointLabel(_ label: String) -> some View {
         switch visualStyle {
         case .standard:
             Text(label)
@@ -165,17 +205,8 @@ public struct TimelineChartView: View {
         case .glass:
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(Color.white.opacity(0.86))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                )
+                .fontWeight(.medium)
+                .foregroundStyle(Color.white.opacity(0.70))
         }
     }
 
@@ -185,6 +216,15 @@ public struct TimelineChartView: View {
             return .secondary
         case .glass:
             return Color.white.opacity(0.64)
+        }
+    }
+
+    private var axisColor: Color {
+        switch visualStyle {
+        case .standard:
+            return labelColor.opacity(0.24)
+        case .glass:
+            return Color.white.opacity(0.14)
         }
     }
 
@@ -217,6 +257,38 @@ public struct TimelineChartView: View {
 
     private var chartHeight: CGFloat {
         CGFloat(lanes.count) * laneHeight + CGFloat(max(0, lanes.count - 1)) * laneSpacing
+    }
+
+    private func selectTimelineItem(at location: CGPoint, chartWidth: CGFloat, totalSeconds: TimeInterval) {
+        guard onSegmentSelected != nil || onLaneSelected != nil else { return }
+        guard location.x >= 0, location.x <= laneLabelWidth + chartWidth else { return }
+        guard laneHeight > 0 else { return }
+
+        let laneStride = laneHeight + laneSpacing
+        let laneIndex = Int(location.y / laneStride)
+        guard lanes.indices.contains(laneIndex) else { return }
+
+        let laneY = location.y - CGFloat(laneIndex) * laneStride
+        guard laneY >= 0, laneY <= laneStride else { return }
+
+        let lane = lanes[laneIndex]
+        let chartX = location.x - laneLabelWidth
+        guard chartX >= 0, chartX <= chartWidth else {
+            onLaneSelected?(lane)
+            return
+        }
+
+        let selectedDate = startDate.addingTimeInterval(Double(chartX / max(1, chartWidth)) * totalSeconds)
+        if let segment = segments.first(where: { segment in
+            segment.laneId == lane.id &&
+            segment.startDate <= selectedDate &&
+            selectedDate <= segment.endDate
+        }) {
+            onSegmentSelected?(segment)
+            return
+        }
+
+        onLaneSelected?(lane)
     }
 
     private static func timeLabel(_ date: Date) -> String {
