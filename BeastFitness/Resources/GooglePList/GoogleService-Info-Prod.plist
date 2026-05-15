@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>631073317783-0ibj8u9jht6c84ipqvp647jvl416h3ee.apps.googleusercontent.com</string>
+	<string>631073317783-5nk1jjafevoq30m4g3t9egv4apu34g1m.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.631073317783-0ibj8u9jht6c84ipqvp647jvl416h3ee</string>
+	<string>com.googleusercontent.apps.631073317783-5nk1jjafevoq30m4g3t9egv4apu34g1m</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCdIehZdArLi0E65shFJW41jI-vQ0cdlCY</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.lifeiq.app</string>
+	<string>com.gurussoftware.lifeiq</string>
 	<key>PROJECT_ID</key>
 	<string>lifeiq-prod</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:631073317783:ios:fb78a0d6ff5068c4721ad2</string>
+	<string>1:631073317783:ios:c1900d610fb47009721ad2</string>
 </dict>
 </plist>
