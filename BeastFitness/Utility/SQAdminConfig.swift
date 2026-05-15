@@ -49,6 +49,10 @@ enum SQAdminConfig {
     /// the real surfacing-memory conditions and cooldowns to line up.
     static var forceInsightFreshnessBadges = false
 
+    /// Temporary App Store screenshot guard. Keeps sensitive habit insights out of the
+    /// default dashboard presentation without changing the underlying insight engine.
+    static var hideScreenshotSensitiveInsights = false
+
     /// Keeps personalized metric score adjustments off until custom metric scoring has
     /// been validated in View Lab and the metric setup UX can explain the setting.
     static var personalizedLifeScoreAdjustmentsEnabled = false
@@ -76,6 +80,7 @@ enum SQAdminConfig {
     static let firestoreSafetyCooldownSeconds: TimeInterval = 300
     static let viewLabEnabled = false
     static let forceInsightFreshnessBadges = false
+    static let hideScreenshotSensitiveInsights = false
     static let personalizedLifeScoreAdjustmentsEnabled = false
     static let enableCustomRelationshipInsights = false
 

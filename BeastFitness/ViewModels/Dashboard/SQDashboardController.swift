@@ -2376,9 +2376,15 @@ final class SQDashboardController: SQDashboardInterface {
         result: SQInsightsResult,
         explorerInput: SQHealthIntelligenceInput
     ) -> SQDashboardSubsectionViewModel {
+        let displayInsights = SQAdminConfig.hideScreenshotSensitiveInsights
+            ? result.insights.filter { !isScreenshotSensitiveInsight($0) }
+            : result.insights
+        let displayState: SQInsightDataState = displayInsights.isEmpty && result.state == .ready
+            ? .noPatterns
+            : result.state
 
         let emptyState: SQDashboardSubsectionViewModel.EmptyStateViewModel?
-        switch result.state {
+        switch displayState {
         case .ready:
             emptyState = nil
         case .notEnoughData:
@@ -2462,24 +2468,24 @@ final class SQDashboardController: SQDashboardInterface {
             return rows
         }
 
-        let rows = buildRows(for: result.insights)
+        let rows = buildRows(for: displayInsights)
 
         let categoryOrder: [SQInsightCategory] = [.recovery, .sleep, .training, .habits]
         let presentCategories = categoryOrder.filter { category in
-            result.insights.contains(where: { $0.category == category })
+            displayInsights.contains(where: { $0.category == category })
         }
 
         var rowsByFilter: [String: [SQDashboardRowViewModel]] = ["All": rows]
         for category in presentCategories {
             rowsByFilter[category.badgeTitle] = buildRows(
-                for: result.insights.filter { $0.category == category }
+                for: displayInsights.filter { $0.category == category }
             )
         }
 
         let filterItems = [SQDropDownMenuViewModel.Item(title: "All")] + presentCategories.map {
             SQDropDownMenuViewModel.Item(title: $0.badgeTitle)
         }
-        let dropDownViewModel: SQDropDownMenuViewModel? = filterItems.count > 1
+        let dropDownViewModel: SQDropDownMenuViewModel? = isPremiumUnlocked && filterItems.count > 1
             ? SQDropDownMenuViewModel(
                 defaultItem: .init(title: "All"),
                 items: filterItems,
@@ -2494,7 +2500,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         if SQAdminConfig.verboseLoggingEnabled {
             SQLogger.shared.log(
-                "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
+                "Insights surfaced on dashboard: showing \(visibleInsightTitles.count) of \(displayInsights.count) display-safe insights, \(result.insights.count) total. Visible: \(visibleInsightTitles.joined(separator: " | "))",
                 .debug,
                 context: .dashboard
             )
@@ -2528,9 +2534,12 @@ final class SQDashboardController: SQDashboardInterface {
     private func buildInsightExplorerSubsection(input: SQHealthIntelligenceInput) -> SQDashboardSubsectionViewModel {
         let isPremiumUnlocked = userState.loggedInUser?.hasPremiumAccess ?? true
         let controller = SQInsightExplorerController(input: input)
+        let topRelationships = SQAdminConfig.hideScreenshotSensitiveInsights
+            ? controller.topRelationships.filter { !isScreenshotSensitiveRelationship($0) }
+            : controller.topRelationships
         let row = SQDashboardInsightExplorerRowViewModel(
             isLocked: !isPremiumUnlocked,
-            topRelationships: controller.topRelationships,
+            topRelationships: topRelationships,
             onOpenExplorer: { [weak state] in
                 state?.hub.domainEvents.send(.pushDashboardRoute(.insightExplorer(controller: controller)))
             },
@@ -2552,6 +2561,52 @@ final class SQDashboardController: SQDashboardInterface {
             defaultPriority: 16,
             rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
         )
+    }
+
+    private func isScreenshotSensitiveInsight(_ insight: SQInsight) -> Bool {
+        if containsScreenshotSensitiveSignalId(insight.inputSignalId)
+            || containsScreenshotSensitiveSignalId(insight.outputSignalId)
+            || containsScreenshotSensitiveText(insight.id)
+            || containsScreenshotSensitiveText(insight.familyKey) {
+            return true
+        }
+
+        return [
+            insight.title,
+            insight.summary,
+            insight.evidenceText,
+            insight.actionText,
+            insight.driverText,
+            insight.outcomeText,
+            insight.deltaText
+        ].contains(where: containsScreenshotSensitiveText)
+    }
+
+    private func isScreenshotSensitiveRelationship(_ relationship: SQInsightExplorerRelationshipResult) -> Bool {
+        if containsScreenshotSensitiveSignalId(relationship.driverId)
+            || containsScreenshotSensitiveSignalId(relationship.outcomeId)
+            || containsScreenshotSensitiveText(relationship.id) {
+            return true
+        }
+
+        return [
+            relationship.driverTitle,
+            relationship.outcomeTitle,
+            relationship.effectSummary
+        ].contains(where: containsScreenshotSensitiveText)
+    }
+
+    private func containsScreenshotSensitiveSignalId(_ signalId: String?) -> Bool {
+        guard let signalId else { return false }
+        return signalId == SQMetricId.weed || signalId == SQMetricId.porn
+    }
+
+    private func containsScreenshotSensitiveText(_ text: String) -> Bool {
+        let lowercasedText = text.lowercased()
+        return lowercasedText.contains("weed")
+            || lowercasedText.contains("porn")
+            || lowercasedText.contains("cannabis")
+            || lowercasedText.contains("marijuana")
     }
 
     private func makeInsightExplorerController(
