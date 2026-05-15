@@ -128,6 +128,79 @@ final class BeastFitnessTests: XCTestCase {
         XCTAssertFalse(changes.contains { $0.signalId == SQMetricId.alcohol })
     }
 
+    func testDifficultyScoringLoadCreditsShortHighIntensityEfforts() throws {
+        let longTempo = workoutZoneSummary(minutesByZone: [.zone3: 60])
+        let shortPeak = workoutZoneSummary(minutesByZone: [.zone5: 12])
+
+        XCTAssertLessThan(shortPeak.weightedLoad, longTempo.weightedLoad)
+        XCTAssertGreaterThan(
+            SQWorkoutDifficultyLoadModel.scoringLoad(for: shortPeak),
+            SQWorkoutDifficultyLoadModel.scoringLoad(for: longTempo)
+        )
+    }
+
+    func testDifficultyScoringLoadKeepsLongThresholdEffortsAboveShortPeaks() throws {
+        let longThreshold = workoutZoneSummary(minutesByZone: [.zone4: 45])
+        let shortPeak = workoutZoneSummary(minutesByZone: [.zone5: 12])
+
+        XCTAssertGreaterThan(
+            SQWorkoutDifficultyLoadModel.scoringLoad(for: longThreshold),
+            SQWorkoutDifficultyLoadModel.scoringLoad(for: shortPeak)
+        )
+    }
+
+    func testDifficultyStandardizedScoreRaisesShortPeakEffortAboveModerate() throws {
+        let longTempo = workoutZoneSummary(minutesByZone: [.zone3: 60])
+        let shortPeak = workoutZoneSummary(minutesByZone: [.zone5: 12])
+        let score = SQWorkoutDifficultyLoadModel.standardizedScore(
+            durationSeconds: 12 * 60,
+            summary: shortPeak
+        )
+        let longTempoScore = SQWorkoutDifficultyLoadModel.standardizedScore(
+            durationSeconds: 60 * 60,
+            summary: longTempo
+        )
+
+        XCTAssertGreaterThanOrEqual(score, 70)
+        XCTAssertGreaterThan(score, longTempoScore)
+    }
+
+    private func workoutZoneSummary(minutesByZone: [SQHeartRateZone: Double]) -> SQHeartRateWorkoutZoneSummary {
+        let ranges = SQHeartRateZone.allCases.map { zone in
+            SQHeartRateZoneRange(
+                zone: zone,
+                lowerBound: 100 + (zone.rawValue * 10),
+                upperBound: zone == .zone5 ? nil : 110 + (zone.rawValue * 10)
+            )
+        }
+        let distributions = ranges.map { range in
+            let durationSeconds = (minutesByZone[range.zone] ?? 0) * 60
+            return SQHeartRateZoneDistribution(
+                zone: range.zone,
+                durationSeconds: durationSeconds,
+                contribution: (durationSeconds / 60) * range.zone.loadMultiplier,
+                range: range
+            )
+        }
+        let weightedLoad = distributions.reduce(0) { $0 + $1.contribution }
+        let recordedDurationSeconds = distributions.reduce(0) { $0 + $1.durationSeconds }
+
+        return SQHeartRateWorkoutZoneSummary(
+            profile: SQHeartRateZoneProfile(
+                estimatedMaxHeartRate: 190,
+                age: 35,
+                methodDescription: "Test zone profile",
+                zones: ranges
+            ),
+            distributions: distributions,
+            weightedLoad: weightedLoad,
+            minimumObservedHeartRate: 100,
+            averageHeartRate: 150,
+            maximumObservedHeartRate: 190,
+            recordedDurationSeconds: recordedDurationSeconds
+        )
+    }
+
 }
 
 @MainActor

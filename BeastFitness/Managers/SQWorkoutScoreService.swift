@@ -116,6 +116,43 @@ struct SQWorkoutPremiumInsightDetailModel {
     let footnote: String?
 }
 
+struct SQWorkoutDifficultyLoadModel {
+    static let intensityAdjustmentMax = 0.30
+
+    static func scoringLoad(for summary: SQHeartRateWorkoutZoneSummary) -> Double {
+        summary.weightedLoad * (1 + intensityAdjustment(for: summary))
+    }
+
+    static func loadIntensity(for summary: SQHeartRateWorkoutZoneSummary) -> Double {
+        summary.weightedLoad / max(summary.recordedDurationSeconds / 60, 1)
+    }
+
+    static func intensityAdjustment(for summary: SQHeartRateWorkoutZoneSummary) -> Double {
+        normalized(
+            value: loadIntensity(for: summary),
+            minValue: 4,
+            maxValue: 12
+        ) * intensityAdjustmentMax
+    }
+
+    static func standardizedScore(durationSeconds: Double, summary: SQHeartRateWorkoutZoneSummary) -> Int {
+        let durationMinutes = durationSeconds / 60
+        let intensity = loadIntensity(for: summary)
+        let durationComponent = normalized(value: durationMinutes, minValue: 15, maxValue: 90) * 28
+        let intensityComponent = normalized(value: intensity, minValue: 1.5, maxValue: 5.5) * 72
+        return Int(clamp((durationComponent + intensityComponent).rounded(), min: 1, max: 100))
+    }
+
+    private static func normalized(value: Double, minValue: Double, maxValue: Double) -> Double {
+        guard maxValue > minValue else { return 0 }
+        return clamp((value - minValue) / (maxValue - minValue), min: 0, max: 1)
+    }
+
+    private static func clamp(_ value: Double, min minValue: Double, max maxValue: Double) -> Double {
+        Swift.max(minValue, Swift.min(maxValue, value))
+    }
+}
+
 @MainActor
 protocol SQWorkoutScoreServicing {
     func insights(
@@ -216,10 +253,11 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
         let finalScore: Int
         let percentileRank: Double?
         let weightedLoad: Double
+        let scoringLoad: Double
+        let loadIntensity: Double
         let historicalWorkoutCount: Int
         let activityType: HKWorkoutActivityType
         let zoneSummary: SQHeartRateWorkoutZoneSummary
-        let usedFallback: Bool
     }
 
     fileprivate struct SupportedWorkoutScores {
@@ -342,14 +380,19 @@ final class SQWorkoutScoreService: SQWorkoutScoreServicing {
                 guard !currentValues.isEmpty else { continue }
                 let currentAverageValue = Double(currentValues.reduce(0, +)) / Double(currentValues.count)
 
-                let historicalValues = allTimeScoredWorkouts.compactMap { scoredWorkout in
-                    scoredWorkout.scores.first(where: { $0.kind == kind })?.value
-                }.map(Double.init)
-                let percentileRank = SQPercentileCalculator.calculatePercentile(
-                    currentBest: currentAverageValue,
-                    historicalValues: historicalValues,
-                    isLowerBetter: false
-                )
+                let percentileRank: Double?
+                if kind == .difficulty {
+                    percentileRank = nil
+                } else {
+                    let historicalValues = allTimeScoredWorkouts.compactMap { scoredWorkout in
+                        scoredWorkout.scores.first(where: { $0.kind == kind })?.value
+                    }.map(Double.init)
+                    percentileRank = SQPercentileCalculator.calculatePercentile(
+                        currentBest: currentAverageValue,
+                        historicalValues: historicalValues,
+                        isLowerBetter: false
+                    )
+                }
 
                 rows.append(
                     SQPerformanceRowData(
@@ -869,40 +912,34 @@ private extension SQWorkoutScoreService {
         for sample: DifficultySample,
         historicalSamples: [DifficultySample]
     ) -> DifficultyBreakdown {
+        let scoringLoad = SQWorkoutDifficultyLoadModel.scoringLoad(for: sample.zoneSummary)
         let historicalLoads = historicalSamples
             .filter { $0.workout.id != sample.workout.id }
-            .map { $0.zoneSummary.weightedLoad }
+            .map { SQWorkoutDifficultyLoadModel.scoringLoad(for: $0.zoneSummary) }
         let percentileRank = SQPercentileCalculator.calculatePercentile(
-            currentBest: sample.zoneSummary.weightedLoad,
+            currentBest: scoringLoad,
             historicalValues: historicalLoads,
             isLowerBetter: false
         )
-        let usedFallback = percentileRank == nil
-        let finalScore: Int
-
-        if let percentileRank {
-            finalScore = Int(clamp((percentileRank * 100).rounded(), min: 1, max: 100))
-        } else {
-            finalScore = fallbackDifficultyScore(for: sample)
-        }
+        let finalScore = standardizedDifficultyScore(for: sample)
 
         return .init(
             finalScore: finalScore,
             percentileRank: percentileRank,
             weightedLoad: sample.zoneSummary.weightedLoad,
+            scoringLoad: scoringLoad,
+            loadIntensity: SQWorkoutDifficultyLoadModel.loadIntensity(for: sample.zoneSummary),
             historicalWorkoutCount: historicalLoads.count,
             activityType: sample.workout.activityType,
-            zoneSummary: sample.zoneSummary,
-            usedFallback: usedFallback
+            zoneSummary: sample.zoneSummary
         )
     }
 
-    func fallbackDifficultyScore(for sample: DifficultySample) -> Int {
-        let durationMinutes = sample.durationSeconds / 60
-        let intensity = sample.zoneSummary.weightedLoad / max(sample.zoneSummary.recordedDurationSeconds / 60, 1)
-        let durationComponent = normalized(value: durationMinutes, minValue: 15, maxValue: 90) * 35
-        let intensityComponent = normalized(value: intensity, minValue: 1.5, maxValue: 5.5) * 65
-        return Int(clamp((durationComponent + intensityComponent).rounded(), min: 1, max: 100))
+    func standardizedDifficultyScore(for sample: DifficultySample) -> Int {
+        SQWorkoutDifficultyLoadModel.standardizedScore(
+            durationSeconds: sample.durationSeconds,
+            summary: sample.zoneSummary
+        )
     }
 
     func makeDifficultyScore(
@@ -935,12 +972,12 @@ private extension SQWorkoutScoreService {
         let durationText = sample.durationSeconds.readableTime()
         let averageHeartRateText = "\(sample.zoneSummary.averageHeartRate.sqStringRoundedTo(places: 0)) bpm avg HR"
 
-        guard let percentileRank = breakdown.percentileRank, !breakdown.usedFallback else {
-            return "\(durationText) • \(averageHeartRateText)"
+        guard let percentileRank = breakdown.percentileRank else {
+            return "\(durationText) • \(averageHeartRateText) • standardized HR-zone score"
         }
 
         let topPercent = Int(((1 - percentileRank) * 100).rounded())
-        return "\(durationText) • top \(topPercent)% \(sample.workout.activityType.name.lowercased()) HR load"
+        return "\(durationText) • \(averageHeartRateText) • HR load top \(topPercent)%"
     }
 }
 
@@ -1063,10 +1100,10 @@ private extension SQWorkoutScoreService {
     ) -> SQWorkoutPremiumInsightDetailModel {
         let percentileText: String = {
             guard let percentileRank = breakdown.percentileRank else {
-                return "Not enough HR-tracked \(breakdown.activityType.name.lowercased()) history yet. Using an absolute zone-load estimate for now."
+                return "Standardized from this workout's heart-rate zone load. More history will add same-sport context, but it will not change the score."
             }
             let topPercent = Int(((1 - percentileRank) * 100).rounded())
-            return "This workout's HR load ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) HR-tracked \(breakdown.activityType.name.lowercased()) workout(s)."
+            return "Standardized from this workout's heart-rate zone load. For context, its HR load ranks in your top \(topPercent)% of \(breakdown.historicalWorkoutCount) HR-tracked \(breakdown.activityType.name.lowercased()) workout(s)."
         }()
 
         var components: [SQWorkoutPremiumInsightDetailModel.Component] = [
@@ -1081,8 +1118,15 @@ private extension SQWorkoutScoreService {
                 id: "zone-load",
                 title: "Weighted HR load",
                 value: "\(Int(breakdown.weightedLoad.rounded())) pts",
-                detail: "Each minute spent in a higher heart-rate zone is worth more points than a minute at an easy effort.",
+                detail: "The raw time-in-zone total. Each minute spent in a higher heart-rate zone is worth more points than a minute at an easy effort.",
                 accentColor: .dashboardTrendWarm
+            ),
+            .init(
+                id: "load-intensity",
+                title: "Load intensity",
+                value: "\(breakdown.loadIntensity.sqStringRoundedTo(places: 1)) pts/min",
+                detail: "How concentrated the HR load was. This helps short, high-intensity efforts score appropriately.",
+                accentColor: .accentNeutral1
             ),
             .init(
                 id: "zone-model",
@@ -1107,7 +1151,7 @@ private extension SQWorkoutScoreService {
         return .init(
             title: "Difficulty Score",
             subtitle: "How taxing this workout was, primarily from your heart-rate load.",
-            summary: "Difficulty is driven by time in heart-rate zones. Higher zones count much more than easy aerobic time, and the final score ranks that weighted load against your own HR-tracked \(breakdown.activityType.name.lowercased()) history.",
+            summary: "Difficulty is a standardized heart-rate zone score. Higher zones count much more than easy aerobic time, while duration still matters so longer hard efforts can score higher than short bursts.",
             scoreCards: [],
             components: components,
             examples: [
@@ -1136,7 +1180,7 @@ private extension SQWorkoutScoreService {
                     detail: "Mostly lower-zone work that should be easier to absorb."
                 )
             ],
-            footnote: "This model is intentionally personal and sport-relative. As your fitness improves, the same heart-rate load can move lower in your \(breakdown.activityType.name.lowercased()) difficulty rankings."
+            footnote: "Same-sport history is shown only as context. The Difficulty Score itself is calculated from this workout's heart-rate zone load."
         )
     }
 
@@ -1234,11 +1278,12 @@ private extension SQWorkoutScoreService {
         .init(
             title: "Difficulty Score",
             subtitle: "How taxing a workout was for you.",
-            summary: "Difficulty is driven by time in heart-rate zones, with harder zones carrying much more load than easy aerobic time. When enough history exists, it is ranked against the same workout type.",
+            summary: "Difficulty is a standardized heart-rate zone score, with harder zones carrying much more load than easy aerobic time. Duration still matters, but the score is not ranked against workout history.",
             scoreCards: [],
             components: [
-                .init(id: "overall-difficulty", title: "Difficulty score", value: "--/100", detail: "Ranked against your own same-sport HR-tracked workout history.", accentColor: .dashboardTrendWarm),
+                .init(id: "overall-difficulty", title: "Difficulty score", value: "--/100", detail: "Calculated from the workout's own HR-zone load.", accentColor: .dashboardTrendWarm),
                 .init(id: "zone-load", title: "Weighted HR load", value: "Included", detail: "Time in higher heart-rate zones contributes more load points.", accentColor: .dashboardTrendWarm),
+                .init(id: "load-intensity", title: "Load intensity", value: "Included", detail: "Shorter high-intensity efforts can score hard even when they have fewer total minutes.", accentColor: .accentNeutral1),
                 .init(id: "zone-model", title: "Zone model", value: "Included", detail: "Zones are estimated from your profile age and observed workout HR when available.", accentColor: .dashboardGlowBlue),
                 .init(id: "zone-breakdown", title: "Time in each zone", value: "Included", detail: "See exactly how much time you spent in Zone 1 through Zone 5.", accentColor: .dashboardGlowMint)
             ],

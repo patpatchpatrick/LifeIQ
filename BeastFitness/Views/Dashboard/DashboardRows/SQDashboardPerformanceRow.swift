@@ -69,6 +69,11 @@ struct SQDashboardPerformanceRow: View {
                         tone: rankTone,
                         symbol: nil
                     )
+                } else if data.scoreKind == .difficulty {
+                    Text("HR load")
+                        .font(.sqFont(.bodyExtraSmall))
+                        .sqForegroundColor(.textSecondary)
+                        .lineLimit(1)
                 } else {
                     Text("N/A")
                         .font(.sqFont(.bodyExtraSmall))

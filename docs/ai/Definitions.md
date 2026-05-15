@@ -48,4 +48,4 @@ For runs, it is centered around a VDOT-style estimate where faster sustained pac
 
 Difficulty Score estimates how taxing a workout was for the user.
 
-It is driven primarily by heart-rate load, where time in higher heart-rate zones contributes more than easy aerobic time. When enough same-sport history exists, the score is ranked against the user's own heart-rate-tracked history for that workout type. Higher values should mean the workout was harder to absorb for that sport, not necessarily better.
+It is driven primarily by heart-rate load, where time in higher heart-rate zones contributes more than easy aerobic time. It should use a standardized zone-load scale rather than ranking the score against the user's workout history. Short high-intensity efforts should receive enough load-intensity credit that they are not underrated purely because they accumulated fewer total minutes than longer aerobic sessions. Same-sport history may be shown as context, but higher values should mean the workout was harder to absorb for that sport, not necessarily better.
