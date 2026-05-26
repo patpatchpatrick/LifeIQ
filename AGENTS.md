@@ -184,6 +184,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Add new symbols to `BeastFitness/UI/SQImage.swift` before use
   - Prefer `SQImageView(image: .init(symbol: ...))`
 - Reuse shared UI components for common patterns (e.g. `SQCollapsibleSectionHeader`).
+- Major screens and major dashboard sections must define empty states for no data, missing permissions, locked access, or first-run setup where applicable. Empty states should be brief, helpful, and use shared UI patterns rather than leaving a blank screen/card.
 
 ## Dashboard composition conventions
 

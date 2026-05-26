@@ -38,6 +38,7 @@ This file tracks durable implementation and product rules for AI assistants work
 - Reuse shared components for alerts, toasts, modals, dropdowns, buttons, text fields, settings rows, and dashboard sections.
 - Use `SQColor`, `SQFont`, and `SQImageSymbol` wrappers rather than hardcoded visual values or system image strings.
 - User-facing errors must use the shared alert/modal/toast systems. Do not handle visible failures with only logs, disabled controls, or silent returns.
+- Major screens and major dashboard sections should include explicit empty states for no data, missing permissions, locked access, and first-run setup where applicable.
 
 ## Dashboard Customization
 

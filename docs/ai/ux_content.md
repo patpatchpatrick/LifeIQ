@@ -60,11 +60,14 @@ Avoid:
 
 Empty states should explain what is missing and how the user can unlock value, but stay brief.
 
+Major screens and major dashboard sections should have an intentional empty state for no data, missing permissions, locked access, or first-run setup when those states are possible.
+
 Good empty states:
 
 - name the missing data or permission
 - offer one clear action when available
 - avoid walls of setup instructions
+- distinguish empty data from an error or failed load
 
 Loading states should be calm and short. Avoid fake precision.
 

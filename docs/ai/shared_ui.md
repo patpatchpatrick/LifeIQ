@@ -61,6 +61,27 @@ For new dashboard rows:
 - add mock data support when useful for simulator and performance testing
 - explicitly test complex dashboard changes on `iPhone SE (2nd generation)`
 
+## Empty States
+
+Major screens and major dashboard sections should not render as blank or broken when data is unavailable.
+
+Use empty states for:
+
+- no user-created content yet
+- missing HealthKit or app permissions
+- no data in the selected time range
+- locked premium surfaces
+- first-run setup paths
+- sync/load failures after the shared error surface is shown
+
+Empty states should:
+
+- use shared empty-state, CTA, card, or alert/modal patterns where possible
+- name what is missing in plain language
+- offer one clear action when there is a useful next step
+- stay concise and avoid setup walls on the main dashboard
+- distinguish empty data from failed data
+
 ## Forms and Inputs
 
 - Default to `SQUITextField` for single-line inputs.
