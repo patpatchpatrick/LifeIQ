@@ -68,6 +68,8 @@ final class SQUserManager: SQUserManaging {
                 unitSystem: SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale,
                 sleepSchedule: nil,
                 subscriptionLevel: nil,
+                demoDataMode: nil,
+                demoSubscriptionAccess: nil,
                 onboardingCompletedAt: nil,
                 onboardingStatus: nil
             )

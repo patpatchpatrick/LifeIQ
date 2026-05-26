@@ -45,6 +45,10 @@ final class SQSubscriptionState: SQSubscriptionStating {
             return override == .premium ? "Premium override active" : "Free override active"
         }
 
+        if SQAppState.shared.userState.loggedInUser?.demoSubscriptionLevel == .premium {
+            return "LifeIQ Pro active"
+        }
+
         guard appleSubscriptionLevel == .premium else {
             return "Free plan"
         }

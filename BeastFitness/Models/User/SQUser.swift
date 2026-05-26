@@ -72,6 +72,8 @@ struct SQUser: Codable, Equatable {
     let unitSystem: SQUnitSystem?
     let sleepSchedule: SQSleepSchedule?
     let subscriptionLevel: SQSubscriptionLevel?
+    let demoDataMode: String?
+    let demoSubscriptionAccess: String?
     let onboardingCompletedAt: Date?
     let onboardingStatus: SQOnboardingStatus?
 
@@ -86,11 +88,30 @@ struct SQUser: Codable, Equatable {
             return override
         }
 
+        if let demoSubscriptionLevel = demoSubscriptionLevel {
+            return demoSubscriptionLevel
+        }
+
         return subscriptionLevel ?? SQAdminConfig.appDefaultSubscriptionLevel
     }
 
     var hasPremiumAccess: Bool {
         effectiveSubscriptionLevel == .premium
+    }
+
+    var usesAppReviewDemoData: Bool {
+        normalizedDemoDataMode == "appreview"
+    }
+
+    var demoSubscriptionLevel: SQSubscriptionLevel? {
+        switch normalizedDemoSubscriptionAccess {
+        case SQSubscriptionLevel.premium.rawValue:
+            return .premium
+        case SQSubscriptionLevel.free.rawValue:
+            return .free
+        default:
+            return nil
+        }
     }
 
     var effectiveUnitSystem: SQUnitSystem {
@@ -116,6 +137,18 @@ struct SQUser: Codable, Equatable {
 
         return name
     }
+
+    private var normalizedDemoDataMode: String? {
+        demoDataMode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
+
+    private var normalizedDemoSubscriptionAccess: String? {
+        demoSubscriptionAccess?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
 }
 
 extension SQUser {
@@ -134,6 +167,8 @@ extension SQUser {
             unitSystem: unitSystem,
             sleepSchedule: sleepSchedule,
             subscriptionLevel: updatedSubscriptionLevel,
+            demoDataMode: demoDataMode,
+            demoSubscriptionAccess: demoSubscriptionAccess,
             onboardingCompletedAt: onboardingCompletedAt,
             onboardingStatus: onboardingStatus
         )
@@ -157,6 +192,8 @@ extension SQUser {
         unitSystem: .imperial,
         sleepSchedule: .onboardingDefault,
         subscriptionLevel: SQAdminConfig.appDefaultSubscriptionLevel,
+        demoDataMode: nil,
+        demoSubscriptionAccess: nil,
         onboardingCompletedAt: .now,
         onboardingStatus: .completed
     )

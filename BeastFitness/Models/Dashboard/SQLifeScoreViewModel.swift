@@ -553,6 +553,8 @@ struct SQLifeScoreViewModel {
             return .colorErrorRed
         case 60..<78:
             return .dashboardTrendWarm
+        case 80...:
+            return .dashboardGlowMint
         default:
             return state.primaryColor
         }
@@ -566,6 +568,8 @@ struct SQLifeScoreViewModel {
             return .dashboardTrendWarm
         case 60..<78:
             return .accentNeutral2
+        case 80...:
+            return .dashboardGlowBlue
         default:
             return state.secondaryColor
         }

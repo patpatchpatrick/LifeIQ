@@ -617,7 +617,12 @@ extension SQWorkoutSummaryController {
         state.routeLoadErrorMessage = nil
 
         do {
-            let raw = try await healthKitManager.fetchRouteLocations(for: hk.hkWorkout)
+            let raw: [CLLocation]
+            if userState.loggedInUser?.usesAppReviewDemoData == true {
+                raw = SQHealthKitManager.shared.mockHealthData.routeLocations(for: hk.hkWorkout.uuid.uuidString)
+            } else {
+                raw = try await healthKitManager.fetchRouteLocations(for: hk.hkWorkout)
+            }
             rawRouteLocationsForSplits = raw.sorted { $0.timestamp < $1.timestamp }
             let reduced = downsample(raw, maxPoints: 1500).sorted { $0.timestamp < $1.timestamp }
             state.routeLocations = reduced

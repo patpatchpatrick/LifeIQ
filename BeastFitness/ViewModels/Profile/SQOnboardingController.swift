@@ -311,6 +311,8 @@ import BeastFitnessCore
                 wakeTime: wakeTimeOfDay
             ),
             subscriptionLevel: existingUser.subscriptionLevel,
+            demoDataMode: existingUser.demoDataMode,
+            demoSubscriptionAccess: existingUser.demoSubscriptionAccess,
             onboardingCompletedAt: .now,
             onboardingStatus: .completed
         )

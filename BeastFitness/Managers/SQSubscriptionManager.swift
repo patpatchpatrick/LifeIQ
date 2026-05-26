@@ -83,6 +83,10 @@ enum SQSubscriptionManager {
             return override
         }
 
+        if let demoSubscriptionLevel = SQAppState.shared.userState.loggedInUser?.demoSubscriptionLevel {
+            return demoSubscriptionLevel
+        }
+
         return SQAppState.shared.subscriptionState.appleSubscriptionLevel
     }
 

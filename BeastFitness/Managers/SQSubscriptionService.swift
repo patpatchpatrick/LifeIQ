@@ -236,6 +236,7 @@ final class SQSubscriptionService: SQSubscriptionServicing {
         let appleSubscriptionLevel = subscriptionState.appleSubscriptionLevel
         guard SQAdminConfig.subscriptionLevelOverride == nil else { return }
         guard let user = SQAppState.shared.userState.loggedInUser else { return }
+        guard user.demoSubscriptionLevel == nil else { return }
         guard user.subscriptionLevel != appleSubscriptionLevel else { return }
 
         let updatedUser = user.withSubscriptionLevel(appleSubscriptionLevel)

@@ -60,6 +60,7 @@ final class SQMockHealthData {
     private let dailyHeartRateStore: [SQHeartRateDailySummary]
     private let dailyRestingHeartRateStore: [SQHeartRateDailySummary]
     private let vo2MaxStore: [SQVO2MaxSample]
+    private let dailyCheckInStore: [SQDailyCheckInStats]
 
     private init(referenceDate: Date) {
         workoutRecords = Self.buildWorkoutRecords(referenceDate: referenceDate)
@@ -67,6 +68,7 @@ final class SQMockHealthData {
         dailyHeartRateStore = Self.buildDailyHeartSummaries(referenceDate: referenceDate, isResting: false)
         dailyRestingHeartRateStore = Self.buildDailyHeartSummaries(referenceDate: referenceDate, isResting: true)
         vo2MaxStore = Self.buildVO2MaxSamples(referenceDate: referenceDate)
+        dailyCheckInStore = Self.buildDailyCheckIns(referenceDate: referenceDate)
     }
 
     func workouts(for timeRange: SQTimeRange) -> [HKWorkout] {
@@ -132,6 +134,22 @@ final class SQMockHealthData {
         vo2MaxStore
             .filter { $0.endDate >= timeRange.startDate && $0.endDate <= timeRange.endDate }
             .sorted { $0.startDate < $1.startDate }
+    }
+
+    func dailyCheckIns(for timeRange: SQTimeRange) -> [SQDailyCheckInStats] {
+        dailyCheckInStore
+            .filter { $0.date >= timeRange.startDate && $0.date <= timeRange.endDate }
+            .sorted { $0.date < $1.date }
+    }
+
+    func dailyCheckIn(on date: Date, period: SQMetricPeriod) -> SQDailyCheckInStats? {
+        dailyCheckInStore
+            .filter {
+                calendar.isDate($0.date, inSameDayAs: date)
+                    && $0.period == period
+            }
+            .sorted { $0.date < $1.date }
+            .last
     }
 
     func vo2MaxSamples(upTo date: Date, limit: Int) -> [SQVO2MaxSample] {
@@ -426,5 +444,48 @@ final class SQMockHealthData {
             )
         }
         .sorted { $0.startDate < $1.startDate }
+    }
+
+    private static func buildDailyCheckIns(referenceDate: Date) -> [SQDailyCheckInStats] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: referenceDate)
+
+        return (0..<40).flatMap { dayOffset -> [SQDailyCheckInStats] in
+            let day = calendar.date(byAdding: .day, value: -dayOffset, to: today) ?? today
+            let morningDate = calendar.date(byAdding: .hour, value: 8, to: day) ?? day
+            let eveningDate = calendar.date(byAdding: .hour, value: 20, to: day) ?? day
+            let lift = Float(dayOffset % 5) * 0.08
+
+            return [
+                SQDailyCheckInStats(
+                    date: morningDate,
+                    period: .morning,
+                    values: [
+                        SQMetricId.sleepHours: 7.8 - lift,
+                        SQMetricId.sleepQuality: 8.8 - lift,
+                        SQMetricId.energy: 8.7 - lift,
+                        SQMetricId.mood: 8.4 - lift,
+                        SQMetricId.mentalClarity: 8.6 - lift,
+                        SQMetricId.motivation: 8.5 - lift,
+                        SQMetricId.stress: 2.0 + lift,
+                        SQMetricId.anxiety: 1.7 + lift,
+                        SQMetricId.soreness: 3.0 + lift
+                    ],
+                    notes: nil
+                ),
+                SQDailyCheckInStats(
+                    date: eveningDate,
+                    period: .evening,
+                    values: [
+                        SQMetricId.hydration: 8.6 - lift,
+                        SQMetricId.nutrition: 8.4 - lift,
+                        SQMetricId.meditation: 8.0 - lift,
+                        SQMetricId.alcohol: 0,
+                        SQMetricId.caffeine: 110
+                    ],
+                    notes: nil
+                )
+            ]
+        }
     }
 }

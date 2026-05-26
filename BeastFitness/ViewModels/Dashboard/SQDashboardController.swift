@@ -58,6 +58,11 @@ final class SQDashboardController: SQDashboardInterface {
     var lifeScoreViewModel: SQLifeScoreViewModel?
     let emailVerificationController: SQEmailVerificationController
     private(set) var emailVerificationRequirement: SQEmailVerificationRequirement?
+
+    private var shouldUseDashboardDemoData: Bool {
+        SQAdminConfig.useMockDashboardHealthData
+            || userState.loggedInUser?.usesAppReviewDemoData == true
+    }
     
     
     @MainActor
@@ -433,26 +438,49 @@ final class SQDashboardController: SQDashboardInterface {
             }
             state.updateLoadingProgress(0.18)
 
-            async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
-            async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
-            async let workoutsAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .workouts)
-            let sleepAccessStatus = await sleepAccessStatusTask
-            let heartAccessStatus = await heartAccessStatusTask
-            let workoutsAccessStatus = await workoutsAccessStatusTask
+            let useDashboardDemoData = shouldUseDashboardDemoData
+            let sleepAccessStatus: SQHealthKitDashboardAccessStatus
+            let heartAccessStatus: SQHealthKitDashboardAccessStatus
+            let workoutsAccessStatus: SQHealthKitDashboardAccessStatus
+            if useDashboardDemoData {
+                sleepAccessStatus = .available
+                heartAccessStatus = .available
+                workoutsAccessStatus = .available
+            } else {
+                async let sleepAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .sleep)
+                async let heartAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .heart)
+                async let workoutsAccessStatusTask = healthKitManager.dashboardAccessStatus(for: .workouts)
+                sleepAccessStatus = await sleepAccessStatusTask
+                heartAccessStatus = await heartAccessStatusTask
+                workoutsAccessStatus = await workoutsAccessStatusTask
+            }
             state.updateLoadingProgress(0.26)
 
-            async let restingHeartRatePast30DaysTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.past30Days)
-            async let restingHeartRatePastYearTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastYear)
-
+            let restingHeartRatePast30Days: [SQHeartRateDailySummary]
+            let restingHeartRatePastYear: [SQHeartRateDailySummary]
             let vo2MaxPast7Days: [SQVO2MaxSample]
             let vo2MaxPast30Days: [SQVO2MaxSample]
             let vo2MaxPastYear: [SQVO2MaxSample]
             let vo2MaxAllTime: [SQVO2MaxSample]
 
-            vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(.pastWeek)
-            vo2MaxPast30Days = try await healthKitManager.fetchVO2MaxSamples(.past30Days)
-            vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(.pastYear)
-            vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+            if useDashboardDemoData {
+                restingHeartRatePast30Days = SQHealthKitManager.shared.mockHealthData.dailyRestingHeartRateSummaries(for: .past30Days)
+                restingHeartRatePastYear = SQHealthKitManager.shared.mockHealthData.dailyRestingHeartRateSummaries(for: .pastYear)
+                vo2MaxPast7Days = SQHealthKitManager.shared.mockHealthData.vo2MaxSamples(for: .pastWeek)
+                vo2MaxPast30Days = SQHealthKitManager.shared.mockHealthData.vo2MaxSamples(for: .past30Days)
+                vo2MaxPastYear = SQHealthKitManager.shared.mockHealthData.vo2MaxSamples(for: .pastYear)
+                vo2MaxAllTime = SQHealthKitManager.shared.mockHealthData.vo2MaxSamples(for: .allTime)
+            } else {
+                async let restingHeartRatePast30DaysTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.past30Days)
+                async let restingHeartRatePastYearTask = healthKitManager.fetchDailyRestingHeartRateSummaries(.pastYear)
+
+                vo2MaxPast7Days = try await healthKitManager.fetchVO2MaxSamples(.pastWeek)
+                vo2MaxPast30Days = try await healthKitManager.fetchVO2MaxSamples(.past30Days)
+                vo2MaxPastYear = try await healthKitManager.fetchVO2MaxSamples(.pastYear)
+                vo2MaxAllTime = try await healthKitManager.fetchVO2MaxSamples(.allTime)
+                restingHeartRatePast30Days = (try? await restingHeartRatePast30DaysTask) ?? []
+                restingHeartRatePastYear = (try? await restingHeartRatePastYearTask) ?? []
+            }
             state.updateLoadingProgress(0.34)
 
             let todaysWorkouts = try await workoutManager.getWorkouts(for: .today, modelContext: context)
@@ -575,12 +603,27 @@ final class SQDashboardController: SQDashboardInterface {
                 to: SQTimeRange.yearBeforeLast.endDate,
                 context: context
             )
+            let useMockDashboardData = useDashboardDemoData
+            let effectiveHasCompletedCurrentCheckIn = useMockDashboardData ? true : hasCompletedCurrentCheckIn
+            let effectiveTodaysMorningSleepCheckIn = useMockDashboardData
+                ? SQHealthKitManager.shared.mockHealthData.dailyCheckIn(on: currentCheckInDate, period: .morning)
+                : todaysMorningSleepCheckIn
+            let effectiveYesterdaysMorningSleepCheckIn = useMockDashboardData
+                ? SQHealthKitManager.shared.mockHealthData.dailyCheckIn(on: yesterdayCheckInDate, period: .morning)
+                : yesterdaysMorningSleepCheckIn
+
+            func dashboardCheckIns(_ realCheckIns: [SQDailyCheckInStats], for timeRange: SQTimeRange) -> [SQDailyCheckInStats] {
+                useMockDashboardData
+                    ? SQHealthKitManager.shared.mockHealthData.dailyCheckIns(for: timeRange)
+                    : realCheckIns
+            }
+
             state.updateLoadingProgress(0.62)
 
             // Set the daily check-in CTA view model if no stats exist
             if
                 let currentCheckInPromptPeriod,
-                !hasCompletedCurrentCheckIn,
+                !effectiveHasCompletedCurrentCheckIn,
                 userState.isLoggedIn
             {
                 state.updateDailyCheckInCtaViewModel(.dailyCheckInPrompt(
@@ -619,42 +662,40 @@ final class SQDashboardController: SQDashboardInterface {
                 currentWorkouts = todaysWorkouts
                 priorTimeRange = .yesterday
                 priorWorkouts = yesterdaysWorkouts
-                currentCheckIns = todaysCheckIns
-                priorCheckIns = past7DaysCheckIns
+                currentCheckIns = dashboardCheckIns(todaysCheckIns, for: .today)
+                priorCheckIns = dashboardCheckIns(past7DaysCheckIns, for: .pastWeek)
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .pastSevenDays:
                 currentWorkouts = lastWeekWorkouts
                 priorWorkouts = weekBeforeLastWorkouts
                 priorTimeRange = .weekBeforeLast
-                currentCheckIns = past7DaysCheckIns
-                priorCheckIns = weekBeforeLastCheckIns
+                currentCheckIns = dashboardCheckIns(past7DaysCheckIns, for: .pastWeek)
+                priorCheckIns = dashboardCheckIns(weekBeforeLastCheckIns, for: .weekBeforeLast)
                 currentVO2MaxSamples = vo2MaxPast7Days
             case .past30Days:
                 currentWorkouts = past30DaysWorkouts
                 priorWorkouts = thirtyDaysBeforeLastWorkouts
                 priorTimeRange = .thirtyDaysBeforeLast
-                currentCheckIns = past30DaysCheckIns
-                priorCheckIns = thirtyDaysBeforeLastCheckIns
+                currentCheckIns = dashboardCheckIns(past30DaysCheckIns, for: .past30Days)
+                priorCheckIns = dashboardCheckIns(thirtyDaysBeforeLastCheckIns, for: .thirtyDaysBeforeLast)
                 currentVO2MaxSamples = vo2MaxPast30Days
             case .pastYear:
                 currentWorkouts = lastYearWorkouts
                 priorWorkouts = yearBeforeLastWorkouts
                 priorTimeRange = .yearBeforeLast
-                currentCheckIns = pastYearCheckIns
-                priorCheckIns = yearBeforeLastCheckIns
+                currentCheckIns = dashboardCheckIns(pastYearCheckIns, for: .pastYear)
+                priorCheckIns = dashboardCheckIns(yearBeforeLastCheckIns, for: .yearBeforeLast)
                 currentVO2MaxSamples = vo2MaxPastYear
             case .allTime:
                 currentWorkouts = allTimeWorkouts
                 priorWorkouts = []  // No comparison for all time
                 priorTimeRange = .allTime  // No prior period for all time
-                currentCheckIns = allTimeCheckIns
+                currentCheckIns = dashboardCheckIns(allTimeCheckIns, for: .allTime)
                 priorCheckIns = []
                 currentVO2MaxSamples = vo2MaxAllTime
             }
 
             let sleepDashboardData = try await buildSleepDashboardData(for: state.selectedTimeRange)
-            let restingHeartRatePast30Days = (try? await restingHeartRatePast30DaysTask) ?? []
-            let restingHeartRatePastYear = (try? await restingHeartRatePastYearTask) ?? []
             state.updateLoadingProgress(0.74)
 
             healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
@@ -678,11 +719,11 @@ final class SQDashboardController: SQDashboardInterface {
 
                 switch timeRange {
                 case .today, .pastSevenDays, .past30Days:
-                    scopedCheckIns = past30DaysCheckIns
+                    scopedCheckIns = dashboardCheckIns(past30DaysCheckIns, for: .past30Days)
                     scopedWorkouts = past30DaysWorkouts
                     scopedRestingHeartRateSummaries = restingHeartRatePast30Days
                 case .pastYear, .allTime:
-                    scopedCheckIns = pastYearCheckIns
+                    scopedCheckIns = dashboardCheckIns(pastYearCheckIns, for: .pastYear)
                     scopedWorkouts = lastYearWorkouts
                     scopedRestingHeartRateSummaries = restingHeartRatePastYear
                 }
@@ -692,12 +733,12 @@ final class SQDashboardController: SQDashboardInterface {
                     timeRange: timeRange,
                     metricDefinitions: metricDefinitions,
                     checkIns: scopedCheckIns,
-                    sleepCheckIns: [todaysMorningSleepCheckIn, yesterdaysMorningSleepCheckIn].compactMap { $0 },
+                    sleepCheckIns: [effectiveTodaysMorningSleepCheckIn, effectiveYesterdaysMorningSleepCheckIn].compactMap { $0 },
                     workouts: scopedWorkouts,
                     sleepData: sleepDashboardData,
                     restingHeartRateSummaries: scopedRestingHeartRateSummaries,
                     currentCheckInPromptPeriod: timeRange == .today ? currentCheckInPromptPeriod : nil,
-                    hasCompletedCurrentPromptCheckIn: timeRange == .today ? hasCompletedCurrentCheckIn : false,
+                    hasCompletedCurrentPromptCheckIn: timeRange == .today ? effectiveHasCompletedCurrentCheckIn : false,
                     isLoggedIn: userState.isLoggedIn
                 )
             }
@@ -921,6 +962,8 @@ final class SQDashboardController: SQDashboardInterface {
         for context: ModelContext,
         hasAnyHealthKitSignal: Bool
     ) async -> SQCallToActionViewModel? {
+        guard !shouldUseDashboardDemoData else { return nil }
+
         let accessStatus = await healthKitManager.dashboardAccessStatus()
         guard accessStatus == .unavailable, !hasAnyHealthKitSignal else { return nil }
 
@@ -1503,7 +1546,7 @@ final class SQDashboardController: SQDashboardInterface {
             sleepSchedule: sleepSchedule
         )
 
-        var sleepSegments = try await healthKitManager.fetchSleepSegments(
+        var sleepSegments = try await fetchDashboardSleepSegments(
             from: initialWindow.fetchStartDate,
             to: initialWindow.fetchEndDate
         )
@@ -1516,7 +1559,7 @@ final class SQDashboardController: SQDashboardInterface {
 
         if resolvedWindow.fetchStartDate < initialWindow.fetchStartDate
             || resolvedWindow.fetchEndDate > initialWindow.fetchEndDate {
-            sleepSegments = try await healthKitManager.fetchSleepSegments(
+            sleepSegments = try await fetchDashboardSleepSegments(
                 from: resolvedWindow.fetchStartDate,
                 to: resolvedWindow.fetchEndDate
             )
@@ -1529,6 +1572,14 @@ final class SQDashboardController: SQDashboardInterface {
         )
 
         return dashboardData.currentNights.isEmpty ? nil : dashboardData
+    }
+
+    private func fetchDashboardSleepSegments(from startDate: Date, to endDate: Date) async throws -> [SQSleepStageSegment] {
+        if shouldUseDashboardDemoData {
+            return SQHealthKitManager.shared.mockHealthData.sleepSegments(from: startDate, to: endDate)
+        }
+
+        return try await healthKitManager.fetchSleepSegments(from: startDate, to: endDate)
     }
 
     private func buildSleepSectionGroup(with data: SQSleepDashboardData) -> SQDashboardSectionGroupViewModel? {

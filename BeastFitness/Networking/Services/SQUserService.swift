@@ -24,6 +24,8 @@ final class SQUserService: SQNetworkService {
             unitSystem: SQUserDefaults.shared.preferredUnitSystem ?? .defaultForCurrentLocale,
             sleepSchedule: nil,
             subscriptionLevel: SQAdminConfig.appDefaultSubscriptionLevel,
+            demoDataMode: nil,
+            demoSubscriptionAccess: nil,
             onboardingCompletedAt: nil,
             onboardingStatus: .pending
         )

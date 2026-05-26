@@ -96,8 +96,8 @@ struct SQLifeScoreHeroCard: View {
                 }
 
                 Text(viewModel.state.title)
-                    .sqFont(.bodySmallSemiBold)
-                    .sqForegroundColor(.textSecondary)
+                    .sqFont(.bodyBold)
+                    .sqForegroundColor(.textPrimary)
 
                 if shouldShowTodayBriefing {
                     VStack(spacing: .SQSpace.s) {
@@ -332,6 +332,10 @@ struct SQLifeScoreOrbView: View {
     private var orbSize: CGFloat { size * 0.72 }
     private var currentLineWidth: CGFloat { max(6, size * 0.055) }
     private var usesQuePalette: Bool {
+        if let score = viewModel.score, score >= 80 {
+            return true
+        }
+
         switch viewModel.state {
         case .strong:
             return true

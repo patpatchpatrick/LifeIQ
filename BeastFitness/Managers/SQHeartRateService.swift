@@ -191,12 +191,20 @@ final class SQHeartRateService: SQHeartRateServicing {
 
             switch workout.workoutSource {
             case .hkWorkout(let hkWorkout):
-                intervalSummaries = try await healthKitManager.fetchWorkoutHeartRateSummaries(for: hkWorkout.hkWorkout)
+                if userState.loggedInUser?.usesAppReviewDemoData == true {
+                    intervalSummaries = SQHealthKitManager.shared.mockHealthData.workoutHeartRateIntervals(for: hkWorkout.hkWorkout.uuid.uuidString)
+                } else {
+                    intervalSummaries = try await healthKitManager.fetchWorkoutHeartRateSummaries(for: hkWorkout.hkWorkout)
+                }
             case .stravaWorkout(_), .manual(_):
                 guard let healthKitId = workout.hkWorkoutId else {
                     return nil
                 }
-                intervalSummaries = try await healthKitManager.fetchWorkoutHeartRateSummaries(for: healthKitId)
+                if userState.loggedInUser?.usesAppReviewDemoData == true {
+                    intervalSummaries = SQHealthKitManager.shared.mockHealthData.workoutHeartRateIntervals(for: healthKitId)
+                } else {
+                    intervalSummaries = try await healthKitManager.fetchWorkoutHeartRateSummaries(for: healthKitId)
+                }
             }
 
             let validIntervals = intervalSummaries.filter { $0.durationSeconds > 0 }

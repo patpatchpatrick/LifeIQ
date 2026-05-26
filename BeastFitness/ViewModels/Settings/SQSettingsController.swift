@@ -302,6 +302,8 @@ final class SQSettingsController: SQSettingsInterface {
                 unitSystem: unitSystem,
                 sleepSchedule: user.sleepSchedule,
                 subscriptionLevel: user.subscriptionLevel,
+                demoDataMode: user.demoDataMode,
+                demoSubscriptionAccess: user.demoSubscriptionAccess,
                 onboardingCompletedAt: user.onboardingCompletedAt,
                 onboardingStatus: user.onboardingStatus
             )
