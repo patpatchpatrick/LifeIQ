@@ -340,19 +340,19 @@ struct SQLifeScoreOrbView: View {
         }
     }
     private var primaryAccent: Color {
-        usesQuePalette ? SQColor.hex("#6FCFF6").color : viewModel.state.primaryColor.color
+        usesQuePalette ? SQColor.hex("#6FCFF6").color : viewModel.scorePrimaryColor.color
     }
     private var secondaryAccent: Color {
-        usesQuePalette ? SQColor.hex("#35D9E1").color : viewModel.state.secondaryColor.color
+        usesQuePalette ? SQColor.hex("#35D9E1").color : viewModel.scoreSecondaryColor.color
     }
     private var deepAccent: Color {
-        usesQuePalette ? SQColor.hex("#2A76D9").color : viewModel.state.primaryColor.color
+        usesQuePalette ? SQColor.hex("#2A76D9").color : viewModel.scorePrimaryColor.color
     }
     private var mintAccent: Color {
-        usesQuePalette ? SQColor.hex("#8CEEBB").color : viewModel.state.secondaryColor.color
+        usesQuePalette ? SQColor.hex("#8CEEBB").color : viewModel.scoreSecondaryColor.color
     }
     private var greenAccent: Color {
-        usesQuePalette ? SQColor.hex("#B8F47D").color : viewModel.state.secondaryColor.color
+        usesQuePalette ? SQColor.hex("#B8F47D").color : viewModel.scoreSecondaryColor.color
     }
 
     var body: some View {
@@ -451,7 +451,7 @@ struct SQLifeScoreOrbView: View {
                                 colors: [
                                     Color.white.opacity(usesQuePalette ? 0.42 : 0.95),
                                     usesQuePalette ? primaryAccent.opacity(0.46) : secondaryAccent.opacity(0.55),
-                                    usesQuePalette ? mintAccent.opacity(0.46) : viewModel.state.primaryColor.color.opacity(0.88)
+                                    usesQuePalette ? mintAccent.opacity(0.46) : viewModel.scorePrimaryColor.color.opacity(0.88)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

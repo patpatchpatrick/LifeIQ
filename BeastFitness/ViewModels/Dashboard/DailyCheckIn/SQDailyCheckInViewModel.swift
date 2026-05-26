@@ -458,8 +458,9 @@ final class SQDailyCheckInViewModel: Identifiable {
     private static func numericTextField(metric: SQMetricDefinition) -> SQTextFieldViewModel {
         let maxDecimalPlaces = maxDecimalPlaces(fromStep: metric.step) ?? 0
 
-        let min: Float = metric.min ?? -Float.greatestFiniteMagnitude
-        let max: Float = metric.max ?? Float.greatestFiniteMagnitude
+        let bounds = numericInputBounds(for: metric)
+        let min: Float = bounds.min ?? -Float.greatestFiniteMagnitude
+        let max: Float = bounds.max ?? Float.greatestFiniteMagnitude
 
         let placeholder: String
         switch metric.id {
@@ -486,6 +487,14 @@ final class SQDailyCheckInViewModel: Identifiable {
                 return nil
             }
         )
+    }
+
+    private static func numericInputBounds(for metric: SQMetricDefinition) -> (min: Float?, max: Float?) {
+        guard metric.isPreset else {
+            return (nil, nil)
+        }
+
+        return (metric.min, metric.max)
     }
 
 
@@ -626,6 +635,7 @@ final class SQDailyCheckInViewModel: Identifiable {
                 isPastDateEntry: isEditingPastDate
             ))
             onDismiss()
+            eventHub.metricEvents.send(.metricEntriesUpdated)
         } catch {
             eventHub.alertEvents.send(
                 .present(.init(SQError.standard(withDescription: "Error saving check in data: \(error.localizedDescription).")))

@@ -47,10 +47,6 @@
 		F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B52EF3728300223A63 /* SQSettingsController.swift */; };
 		F61593B82EF3729100223A63 /* SQSettingsRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */; };
 		F61593BA2EF3741A00223A63 /* SettingsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593B92EF3741800223A63 /* SettingsState.swift */; };
-		F8B200022FFF000100B20001 /* SQSubscriptionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200012FFF000100B20001 /* SQSubscriptionState.swift */; };
-		F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200032FFF000100B20001 /* SQSubscriptionController.swift */; };
-		F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200052FFF000100B20001 /* SQSubscriptionView.swift */; };
-		F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200092FFF000100B20001 /* SQSubscriptionService.swift */; };
 		F61593BD2EF376A700223A63 /* SQToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BC2EF376A400223A63 /* SQToastView.swift */; };
 		F61593BF2EF37A3400223A63 /* SQToastOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */; };
 		F61593C22EF37A7400223A63 /* SQToastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61593C12EF37A7100223A63 /* SQToastViewModel.swift */; };
@@ -333,6 +329,10 @@
 		F8B100123000200A00AB2001 /* SQInsightActionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100133000200A00AB2001 /* SQInsightActionBuilder.swift */; };
 		F8B100143000200B00AB2001 /* SQDashboardInsightActionRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100153000200B00AB2001 /* SQDashboardInsightActionRowViewModel.swift */; };
 		F8B100163000200C00AB2001 /* SQDashboardInsightActionRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B100173000200C00AB2001 /* SQDashboardInsightActionRowView.swift */; };
+		F8B200022FFF000100B20001 /* SQSubscriptionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200012FFF000100B20001 /* SQSubscriptionState.swift */; };
+		F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200032FFF000100B20001 /* SQSubscriptionController.swift */; };
+		F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200052FFF000100B20001 /* SQSubscriptionView.swift */; };
+		F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200092FFF000100B20001 /* SQSubscriptionService.swift */; };
 		F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQAdminConfig.swift */; };
 		F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */; };
 		F8E100052FE5000100AB1001 /* SQEmailVerificationGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */; };
@@ -410,10 +410,6 @@
 		F61593B52EF3728300223A63 /* SQSettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsController.swift; sourceTree = "<group>"; };
 		F61593B72EF3728E00223A63 /* SQSettingsRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSettingsRowViewModel.swift; sourceTree = "<group>"; };
 		F61593B92EF3741800223A63 /* SettingsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsState.swift; sourceTree = "<group>"; };
-		F8B200012FFF000100B20001 /* SQSubscriptionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionState.swift; sourceTree = "<group>"; };
-		F8B200032FFF000100B20001 /* SQSubscriptionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionController.swift; sourceTree = "<group>"; };
-		F8B200052FFF000100B20001 /* SQSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionView.swift; sourceTree = "<group>"; };
-		F8B200092FFF000100B20001 /* SQSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionService.swift; sourceTree = "<group>"; };
 		F61593BC2EF376A400223A63 /* SQToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastView.swift; sourceTree = "<group>"; };
 		F61593BE2EF37A3000223A63 /* SQToastOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastOverlayWindow.swift; sourceTree = "<group>"; };
 		F61593C12EF37A7100223A63 /* SQToastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQToastViewModel.swift; sourceTree = "<group>"; };
@@ -692,6 +688,10 @@
 		F8B100133000200A00AB2001 /* SQInsightActionBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightActionBuilder.swift; sourceTree = "<group>"; };
 		F8B100153000200B00AB2001 /* SQDashboardInsightActionRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightActionRowViewModel.swift; sourceTree = "<group>"; };
 		F8B100173000200C00AB2001 /* SQDashboardInsightActionRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardInsightActionRowView.swift; sourceTree = "<group>"; };
+		F8B200012FFF000100B20001 /* SQSubscriptionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionState.swift; sourceTree = "<group>"; };
+		F8B200032FFF000100B20001 /* SQSubscriptionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionController.swift; sourceTree = "<group>"; };
+		F8B200052FFF000100B20001 /* SQSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionView.swift; sourceTree = "<group>"; };
+		F8B200092FFF000100B20001 /* SQSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionService.swift; sourceTree = "<group>"; };
 		F8E100002FE5000100AB1001 /* SQAdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAdminConfig.swift; sourceTree = "<group>"; };
 		F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationController.swift; sourceTree = "<group>"; };
 		F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationGateView.swift; sourceTree = "<group>"; };
@@ -992,22 +992,6 @@
 				F61593C42EF37A8900223A63 /* SQToastState.swift */,
 			);
 			path = Toast;
-			sourceTree = "<group>";
-		};
-		F8B200072FFF000100B20001 /* Subscription */ = {
-			isa = PBXGroup;
-			children = (
-				F8B200032FFF000100B20001 /* SQSubscriptionController.swift */,
-			);
-			path = Subscription;
-			sourceTree = "<group>";
-		};
-		F8B200082FFF000100B20001 /* Subscription */ = {
-			isa = PBXGroup;
-			children = (
-				F8B200052FFF000100B20001 /* SQSubscriptionView.swift */,
-			);
-			path = Subscription;
 			sourceTree = "<group>";
 		};
 		F61593C62EF4B81400223A63 /* OverlayWindow */ = {
@@ -1897,6 +1881,22 @@
 				F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */,
 			);
 			path = Launch;
+			sourceTree = "<group>";
+		};
+		F8B200072FFF000100B20001 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				F8B200032FFF000100B20001 /* SQSubscriptionController.swift */,
+			);
+			path = Subscription;
+			sourceTree = "<group>";
+		};
+		F8B200082FFF000100B20001 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				F8B200052FFF000100B20001 /* SQSubscriptionView.swift */,
+			);
+			path = Subscription;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -2856,6 +2856,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -2864,7 +2865,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2897,6 +2898,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -2905,7 +2907,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3413,6 +3415,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -3421,7 +3424,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq.internal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3455,6 +3458,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -3463,7 +3467,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq.internal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3497,6 +3501,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -3505,7 +3510,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3539,6 +3544,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -3547,7 +3553,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

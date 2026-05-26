@@ -545,6 +545,32 @@ struct SQLifeScoreViewModel {
         drivers.filter { $0.direction == .drag && $0.effectMagnitude >= 0.5 }
     }
 
+    var scorePrimaryColor: SQColor {
+        guard let score else { return state.primaryColor }
+
+        switch score {
+        case ..<60:
+            return .colorErrorRed
+        case 60..<78:
+            return .dashboardTrendWarm
+        default:
+            return state.primaryColor
+        }
+    }
+
+    var scoreSecondaryColor: SQColor {
+        guard let score else { return state.secondaryColor }
+
+        switch score {
+        case ..<60:
+            return .dashboardTrendWarm
+        case 60..<78:
+            return .accentNeutral2
+        default:
+            return state.secondaryColor
+        }
+    }
+
     var scoreDeltaText: String? {
         guard let scoreDeltaFromPreviousDay, scoreDeltaFromPreviousDay != 0 else { return nil }
         let direction = scoreDeltaFromPreviousDay > 0 ? "↑" : "↓"
