@@ -39,6 +39,8 @@ Before creating a new component, search for an existing pattern in `BeastFitness
 - Use `hub.toastEvents` for lightweight confirmation.
 - Use existing `SQAlertViewModel` and toast view models.
 - Do not build feature-specific alert/toast UI unless the shared system cannot support the need.
+- User-facing failures should never be log-only or silently swallowed. Save, sync, purchase, permission, and loading failures should present a shared alert/modal when the user needs to know or act.
+- Use modal/detail flows for complex recovery guidance; use alerts for focused blocking errors; use toasts only for non-blocking confirmations or transient status.
 
 ## Dashboard UI
 
@@ -52,6 +54,9 @@ Keep dashboard composition centralized in `SQDashboardController.buildSectionGro
 For new dashboard rows:
 
 - prefer extending existing row infrastructure first
+- include the row/section in dashboard customization if it can appear on the dashboard
+- use stable customization identifiers and ensure clone/copy behavior preserves new properties, order, and visibility
+- update available layout/customization descriptors in the same change as the dashboard surface
 - keep rows compact and scannable
 - add mock data support when useful for simulator and performance testing
 - explicitly test complex dashboard changes on `iPhone SE (2nd generation)`

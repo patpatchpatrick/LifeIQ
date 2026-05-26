@@ -88,6 +88,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
 
 - Use `hub.domainEvents.send(.pushDashboardRoute(...))` for dashboard sheet routes and handle them in `SQRootTabView`.
 - For user-facing errors, use `hub.alertEvents` with `SQAlertViewModel`, typically `hub.alertEvents.send(.present(.init(error as? SQUserFacingError ?? SQError.standard)))`.
+- All user-facing failures should resolve through the shared alert/modal/toast systems. Do not leave visible save, sync, purchase, permission, or loading failures as console-only logs or silent no-ops. Use alerts/modals for errors that require attention or a decision, and toasts only for lightweight status/confirmation.
 
 ## Onboarding/Profile Editing
 
@@ -191,6 +192,7 @@ This file translates the existing `CLAUDE.md` guidance into a Codex-friendly ope
   - Subsection card: `SQDashboardSubsectionViewModel`
 - Keep group composition logic centralized in `SQDashboardController.buildSectionGroups(...)`.
 - Prefer extending existing row infrastructure (for example `SQDashboardMetricStatsRowViewModel`) before introducing custom row types.
+- Any new dashboard section, subsection, or row that can appear on the dashboard must participate in dashboard customization. Make sure it has stable layout/customization identifiers, is included in the available customization descriptors, and preserves visibility/order through cloning.
 - Dashboard layout customization clones section/subsection view models before applying order/visibility. Keep cloning centralized on the view models themselves (`cloned()` / copy API) rather than reconstructing them field-by-field in services, so new properties cannot be silently dropped.
 - Keep dashboard subsections compositionally simple. Avoid letting a single top-level group accumulate multiple heavy/rich subsections if they can be split into separate groups instead.
 - Be especially careful with dashboard subsection complexity on `iPhone SE (2nd generation)`. Complex subsection combinations have caused hangs there even when each subsection worked fine in isolation.

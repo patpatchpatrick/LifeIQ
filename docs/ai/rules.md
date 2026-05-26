@@ -37,6 +37,12 @@ This file tracks durable implementation and product rules for AI assistants work
 - Follow `docs/ai/shared_ui.md` before creating new UI patterns.
 - Reuse shared components for alerts, toasts, modals, dropdowns, buttons, text fields, settings rows, and dashboard sections.
 - Use `SQColor`, `SQFont`, and `SQImageSymbol` wrappers rather than hardcoded visual values or system image strings.
+- User-facing errors must use the shared alert/modal/toast systems. Do not handle visible failures with only logs, disabled controls, or silent returns.
+
+## Dashboard Customization
+
+- Any new dashboard section, subsection, or row that can appear on the dashboard must be represented in dashboard customization, with stable identifiers and cloning behavior that preserves order/visibility.
+- When adding dashboard surfaces, update the customization descriptor path and available layout groups in the same change.
 
 ## Privacy and Security
 
