@@ -373,6 +373,8 @@ struct SQInsightExplorerAnalyzer {
 
         for driver in options {
             for outcome in options where outcome.id != driver.id {
+                guard shouldConsiderTopRelationship(driverId: driver.id, outcomeId: outcome.id) else { continue }
+
                 let best = SQInsightExplorerLag.allCases
                     .compactMap { lag in
                         analyze(dataset: dataset, driverId: driver.id, outcomeId: outcome.id, range: range, lag: lag)
@@ -392,6 +394,17 @@ struct SQInsightExplorerAnalyzer {
                 }
                 return lhs.rankingScore > rhs.rankingScore
             }
+    }
+
+    private func shouldConsiderTopRelationship(driverId: String, outcomeId: String) -> Bool {
+        let driverIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(driverId)
+        let outcomeIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(outcomeId)
+
+        if driverIsSleep && outcomeIsSleep {
+            return false
+        }
+
+        return true
     }
 
     func metricOptions(input: SQHealthIntelligenceInput) -> [SQInsightExplorerMetricOption] {
@@ -624,18 +637,6 @@ final class SQInsightExplorerController {
 
     var hasEnoughMetricOptions: Bool {
         metricOptions.count >= 2
-    }
-
-    var selectedSleepTimingNote: String? {
-        let driverIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(selectedDriverId)
-        let outcomeIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(selectedOutcomeId)
-        guard driverIsSleep || outcomeIsSleep else { return nil }
-
-        if outcomeIsSleep && !driverIsSleep {
-            return "Sleep metrics are anchored to wake day. Same day uses that night's sleep, Next day uses the next night's sleep, and 2 days later uses the sleep night two nights later."
-        }
-
-        return "Sleep metrics are anchored to wake day, so a sleep value is stored on the morning it ended."
     }
 
     func applyTopRelationship(_ relationship: SQInsightExplorerRelationshipResult) {
@@ -964,13 +965,6 @@ struct SQInsightExplorerView: View {
                 }
             }
             .pickerStyle(.segmented)
-
-            if let selectedSleepTimingNote = controller.selectedSleepTimingNote {
-                Text(selectedSleepTimingNote)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
         .padding(.SQSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
