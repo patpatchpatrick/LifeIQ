@@ -498,6 +498,8 @@ private extension SQNavRoute.DashboardRoute {
             return "insight_detail"
         case .insightExplorer:
             return "insight_explorer"
+        case .insightLibrary:
+            return "insight_library"
         case .webContent:
             return "web_content"
         case .lifeScoreDetail:

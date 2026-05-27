@@ -306,6 +306,8 @@
 		F7E500042FFE300100AA5001 /* SQSleepPhaseTrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E500032FFE300100AA5001 /* SQSleepPhaseTrendsView.swift */; };
 		F7F010022FB0000100AF1001 /* SQSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */; };
 		F7F030023001000100AF3001 /* SQInsightExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F030013001000100AF3001 /* SQInsightExplorerView.swift */; };
+		F7F040023001100100AF4001 /* SQInsightLibraryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F040013001100100AF4001 /* SQInsightLibraryController.swift */; };
+		F7F040043001100100AF4001 /* SQInsightLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F040033001100100AF4001 /* SQInsightLibraryView.swift */; };
 		F81A10012FFF100100AA1001 /* SQLaunchSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */; };
 		F81A10052FFF200100AA1001 /* SQLaunchTutorialController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */; };
 		F81A10072FFF200100AA1001 /* SQLaunchTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */; };
@@ -665,6 +667,8 @@
 		F7E500032FFE300100AA5001 /* SQSleepPhaseTrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSleepPhaseTrendsView.swift; sourceTree = "<group>"; };
 		F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionManager.swift; sourceTree = "<group>"; };
 		F7F030013001000100AF3001 /* SQInsightExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightExplorerView.swift; sourceTree = "<group>"; };
+		F7F040013001100100AF4001 /* SQInsightLibraryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightLibraryController.swift; sourceTree = "<group>"; };
+		F7F040033001100100AF4001 /* SQInsightLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQInsightLibraryView.swift; sourceTree = "<group>"; };
 		F81A10022FFF100100AA1001 /* SQLaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchSplashView.swift; sourceTree = "<group>"; };
 		F81A10042FFF200100AA1001 /* SQLaunchTutorialController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialController.swift; sourceTree = "<group>"; };
 		F81A10062FFF200100AA1001 /* SQLaunchTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLaunchTutorialView.swift; sourceTree = "<group>"; };
@@ -1834,6 +1838,7 @@
 				F8B100153000200B00AB2001 /* SQDashboardInsightActionRowViewModel.swift */,
 				F7E400252FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift */,
 				F8B1000D3000200700AB2001 /* SQDashboardInsightChangeRowViewModel.swift */,
+				F7F040013001100100AF4001 /* SQInsightLibraryController.swift */,
 			);
 			path = Insights;
 			sourceTree = "<group>";
@@ -1844,6 +1849,7 @@
 				F8B100173000200C00AB2001 /* SQDashboardInsightActionRowView.swift */,
 				F7E400272FFE200100AA4001 /* SQDashboardInsightRowView.swift */,
 				F7F030013001000100AF3001 /* SQInsightExplorerView.swift */,
+				F7F040033001100100AF4001 /* SQInsightLibraryView.swift */,
 				F8B1000F3000200800AB2001 /* SQDashboardInsightChangeRowView.swift */,
 				F7E4002B2FFE200100AA4001 /* SQInsightInfoSheetView.swift */,
 			);
@@ -2450,6 +2456,8 @@
 				F8B1000C3000200700AB2001 /* SQDashboardInsightChangeRowViewModel.swift in Sources */,
 				F7E400262FFE200100AA4001 /* SQDashboardInsightRowViewModel.swift in Sources */,
 				F7E4002C2FFE200100AA4001 /* SQInsightInfoSheetView.swift in Sources */,
+				F7F040023001100100AF4001 /* SQInsightLibraryController.swift in Sources */,
+				F7F040043001100100AF4001 /* SQInsightLibraryView.swift in Sources */,
 				F6C5FCEB2F2C3F2A00BF1022 /* SQSyncMetadataEntity.swift in Sources */,
 				F602DA312EC40FB800404878 /* DashboardState.swift in Sources */,
 				F6F4D50B2ED673FD00ECE0BC /* SQDailyCheckInSegmentedControlRow.swift in Sources */,

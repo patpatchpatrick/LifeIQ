@@ -2574,10 +2574,28 @@ final class SQDashboardController: SQDashboardInterface {
             rowsByFilter: rowsByFilter,
             dropDownViewModel: dropDownViewModel,
             titleButton: .init(
-                icon: .infoCircle,
-                title: nil,
+                icon: .chartBar,
+                title: "All",
                 onTap: { [weak self] in
-                    self?.presentInsightsInfoAlert()
+                    guard let self else { return }
+
+                    if isPremiumUnlocked {
+                        self.state.hub.domainEvents.send(
+                            .pushDashboardRoute(
+                                .insightLibrary(
+                                    controller: .init(
+                                        input: explorerInput,
+                                        source: "dashboard_insights"
+                                    )
+                                )
+                            )
+                        )
+                    } else {
+                        SQSubscriptionManager.displaySubscriptionScreen(
+                            source: "dashboard_insights_library",
+                            feature: "insights"
+                        )
+                    }
                 }
             ),
             rowSpacing: .SQSpace.m,
@@ -2603,6 +2621,18 @@ final class SQDashboardController: SQDashboardInterface {
             topRelationships: topRelationships,
             onOpenExplorer: { [weak state] in
                 state?.hub.domainEvents.send(.pushDashboardRoute(.insightExplorer(controller: controller)))
+            },
+            onOpenLibrary: { [weak state] in
+                state?.hub.domainEvents.send(
+                    .pushDashboardRoute(
+                        .insightLibrary(
+                            controller: .init(
+                                input: input,
+                                source: "dashboard_insight_explorer"
+                            )
+                        )
+                    )
+                )
             },
             onLockedTap: {
                 SQSubscriptionManager.displaySubscriptionScreen(

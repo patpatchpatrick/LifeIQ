@@ -654,6 +654,20 @@ final class SQInsightExplorerController {
         result = relationship
     }
 
+    func openInsightLibrary(source: String) {
+        SQAppState.shared.hub.domainEvents.send(
+            .pushDashboardRoute(
+                .insightLibrary(
+                    controller: .init(
+                        input: input,
+                        initialRange: selectedRange,
+                        source: source
+                    )
+                )
+            )
+        )
+    }
+
     func logPresentationState(source: String) {
         SQLogger.shared.log(
             "PTD InsightExplorer presentation source=\(source) selectedDriver=\(selectedDriverId) selectedOutcome=\(selectedOutcomeId) range=\(selectedRange.rawValue) lag=\(selectedLag.rawValue) hasResult=\(result != nil) matchedDays=\(result?.matchedDays.description ?? "nil") optionCount=\(metricOptions.count) topRelationshipCount=\(topRelationships.count)",
@@ -742,6 +756,7 @@ final class SQDashboardInsightExplorerRowViewModel: SQDashboardRowViewModel {
     let isLocked: Bool
     let topRelationships: [SQInsightExplorerRelationshipResult]
     let onOpenExplorer: () -> Void
+    let onOpenLibrary: () -> Void
     let onLockedTap: () -> Void
     let onRelationshipTap: (SQInsightExplorerRelationshipResult) -> Void
 
@@ -749,12 +764,14 @@ final class SQDashboardInsightExplorerRowViewModel: SQDashboardRowViewModel {
         isLocked: Bool,
         topRelationships: [SQInsightExplorerRelationshipResult],
         onOpenExplorer: @escaping () -> Void,
+        onOpenLibrary: @escaping () -> Void,
         onLockedTap: @escaping () -> Void,
         onRelationshipTap: @escaping (SQInsightExplorerRelationshipResult) -> Void
     ) {
         self.isLocked = isLocked
         self.topRelationships = topRelationships
         self.onOpenExplorer = onOpenExplorer
+        self.onOpenLibrary = onOpenLibrary
         self.onLockedTap = onLockedTap
         self.onRelationshipTap = onRelationshipTap
         super.init(rowId: .insightExplorer, rowType: .insightExplorer)
@@ -816,22 +833,10 @@ struct SQDashboardInsightExplorerRowView: View {
 
                 Spacer(minLength: .SQSpace.m)
 
-                Button(action: viewModel.onOpenExplorer) {
-                    Text("Compare")
-                        .sqFont(.bodyExtraSmall)
-                        .sqForegroundColor(.textPrimary)
-                        .padding(.vertical, 7)
-                        .padding(.horizontal, .SQSpace.s)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
-                        )
+                HStack(spacing: .SQSpace.s) {
+                    headerButton(title: "All", action: viewModel.onOpenLibrary)
+                    headerButton(title: "Compare", action: viewModel.onOpenExplorer)
                 }
-                .buttonStyle(.plain)
             }
 
             if viewModel.topRelationships.isEmpty {
@@ -860,6 +865,25 @@ struct SQDashboardInsightExplorerRowView: View {
         .padding(.SQSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(rowBackground)
+    }
+
+    private func headerButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .padding(.vertical, 7)
+                .padding(.horizontal, .SQSpace.s)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private func relationshipRow(_ relationship: SQInsightExplorerRelationshipResult) -> some View {
@@ -1101,9 +1125,32 @@ struct SQInsightExplorerView: View {
 
     private var topRelationships: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("Top Relationships")
-                .sqFont(.bodySemiBold)
-                .sqForegroundColor(.textPrimary)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Top Relationships")
+                    .sqFont(.bodySemiBold)
+                    .sqForegroundColor(.textPrimary)
+
+                Spacer(minLength: .SQSpace.m)
+
+                Button {
+                    controller.openInsightLibrary(source: "insight_explorer")
+                } label: {
+                    Text("All")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textPrimary)
+                        .padding(.vertical, 7)
+                        .padding(.horizontal, .SQSpace.s)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .stroke(SQColor.glassStroke.color, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
 
             if controller.topRelationships.isEmpty {
                 Text("Log more overlapping metrics to generate top relationships.")

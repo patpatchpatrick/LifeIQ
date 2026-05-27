@@ -28,6 +28,8 @@ struct SQRootTabView: View {
             SQInsightInfoSheetView(model: model, explorerController: explorerController)
         case .insightExplorer(controller: let controller):
             SQInsightExplorerView(controller: controller)
+        case .insightLibrary(controller: let controller):
+            SQInsightLibraryView(controller: controller)
         case .webContent(title: let title, urlString: let urlString):
             SQWebContentView(title: title, urlString: urlString)
         case .lifeScoreDetail(let controller):
