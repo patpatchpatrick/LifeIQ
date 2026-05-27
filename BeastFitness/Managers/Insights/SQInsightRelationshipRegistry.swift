@@ -1225,6 +1225,112 @@ struct SQInsightRelationshipRegistry {
             driverText: "Higher porn",
             outcomeText: "Lower performance",
             strongActionText: "If workout performance matters, keep porn use lower on training days and the night before."
+        ),
+        sleepNightRelationship(
+            id: "insight.workout-difficulty.sleep-continuity",
+            inputSignalId: SQInsightAnalysisMetricId.workoutDifficulty,
+            inputTitle: "Workout Difficulty",
+            outputSignalId: SQInsightAnalysisMetricId.sleepContinuity,
+            outputTitle: "Sleep Continuity",
+            category: .sleep,
+            recommendationFamily: .moderateStrain,
+            lowBucketUpperBound: 4,
+            highBucketLowerBound: 7,
+            expectedEffect: .negative,
+            driverText: "Higher workout difficulty",
+            outcomeText: "More awakenings",
+            strongActionText: "If harder workouts are fragmenting sleep, keep late intensity lower and watch whether awakenings settle.",
+            subtleActionText: "Harder sessions may be nudging sleep continuity down. Watch the nights after intense workouts."
+        ),
+        sleepNightRelationship(
+            id: "insight.workout-difficulty.rem-sleep",
+            inputSignalId: SQInsightAnalysisMetricId.workoutDifficulty,
+            inputTitle: "Workout Difficulty",
+            outputSignalId: SQInsightAnalysisMetricId.sleepRemMinutes,
+            outputTitle: "REM Sleep",
+            category: .sleep,
+            recommendationFamily: .moderateStrain,
+            lowBucketUpperBound: 4,
+            highBucketLowerBound: 7,
+            expectedEffect: .negative,
+            driverText: "Higher workout difficulty",
+            outcomeText: "Lower REM",
+            strongActionText: "If harder workouts are reducing REM sleep, keep intense sessions earlier or leave more room for recovery.",
+            subtleActionText: "Harder sessions may be lining up with less REM sleep afterward."
+        ),
+        sleepNightRelationship(
+            id: "insight.cardio-minutes.sleep-continuity",
+            inputSignalId: SQInsightAnalysisMetricId.cardioMinutes,
+            inputTitle: "Cardio Minutes",
+            outputSignalId: SQInsightAnalysisMetricId.sleepContinuity,
+            outputTitle: "Sleep Continuity",
+            category: .sleep,
+            recommendationFamily: .observeAndCompare,
+            lowBucketUpperBound: 20,
+            highBucketLowerBound: 45,
+            expectedEffect: .negative,
+            driverText: "More cardio",
+            outcomeText: "More awakenings",
+            strongActionText: "If longer cardio days are fragmenting sleep, compare earlier or lower-intensity sessions against late or harder ones.",
+            subtleActionText: "Cardio volume may be lining up with lighter sleep continuity afterward."
+        ),
+        sleepNightRelationship(
+            id: "insight.cardio-minutes.rem-sleep",
+            inputSignalId: SQInsightAnalysisMetricId.cardioMinutes,
+            inputTitle: "Cardio Minutes",
+            outputSignalId: SQInsightAnalysisMetricId.sleepRemMinutes,
+            outputTitle: "REM Sleep",
+            category: .sleep,
+            recommendationFamily: .observeAndCompare,
+            lowBucketUpperBound: 20,
+            highBucketLowerBound: 45,
+            expectedEffect: .negative,
+            driverText: "More cardio",
+            outcomeText: "Lower REM",
+            strongActionText: "If longer cardio days are reducing REM, compare timing and intensity before changing the habit entirely.",
+            subtleActionText: "Longer cardio days may be lining up with less REM afterward."
+        ),
+        viceRelationship(
+            idBase: "insight.nicotine.sleep-continuity",
+            inputSignalId: SQMetricId.nicotine,
+            inputTitle: "Nicotine",
+            outputSignalId: SQInsightAnalysisMetricId.sleepContinuity,
+            outputTitle: "Sleep Continuity",
+            category: .sleep,
+            lowBucketUpperBound: 2,
+            highBucketLowerBound: 3,
+            driverText: "Higher nicotine",
+            outcomeText: "More fragmented sleep",
+            strongActionText: "If sleep continuity matters, keep nicotine lower in the evening and compare the next few nights.",
+            subtleActionText: "Nicotine may be quietly reducing sleep continuity. Try lighter evenings and compare."
+        ),
+        viceRelationship(
+            idBase: "insight.nicotine.sleep-fragmentation",
+            inputSignalId: SQMetricId.nicotine,
+            inputTitle: "Nicotine",
+            outputSignalId: SQInsightAnalysisMetricId.sleepFragmentationScore,
+            outputTitle: "Fragmentation Score",
+            category: .sleep,
+            lowBucketUpperBound: 2,
+            highBucketLowerBound: 3,
+            driverText: "Higher nicotine",
+            outcomeText: "More fragmented sleep",
+            strongActionText: "If sleep fragmentation is climbing after nicotine, keep evenings lighter and compare the next few nights.",
+            subtleActionText: "Nicotine may be lining up with more fragmented sleep afterward."
+        ),
+        viceRelationship(
+            idBase: "insight.nicotine.rem-sleep",
+            inputSignalId: SQMetricId.nicotine,
+            inputTitle: "Nicotine",
+            outputSignalId: SQInsightAnalysisMetricId.sleepRemMinutes,
+            outputTitle: "REM Sleep",
+            category: .sleep,
+            lowBucketUpperBound: 2,
+            highBucketLowerBound: 3,
+            driverText: "Higher nicotine",
+            outcomeText: "Lower REM",
+            strongActionText: "If REM sleep matters, keep nicotine lower before bed and compare the next few nights.",
+            subtleActionText: "Nicotine may be lining up with less REM sleep afterward."
         )
     ]
 
@@ -1312,6 +1418,55 @@ struct SQInsightRelationshipRegistry {
             lowBucketUpperBound: lowBucketUpperBound,
             highBucketLowerBound: highBucketLowerBound,
             bucketUnitName: "workout days",
+            expectedEffect: expectedEffect,
+            driverText: driverText,
+            outcomeText: outcomeText,
+            strongActionText: strongActionText,
+            subtleActionText: subtleActionText
+        )
+    }
+
+    private static func sleepNightRelationship(
+        id: String,
+        inputSignalId: String,
+        inputTitle: String,
+        outputSignalId: String,
+        outputTitle: String,
+        category: SQInsightCategory,
+        recommendationFamily: SQInsightRecommendationFamily,
+        lowBucketUpperBound: Double,
+        highBucketLowerBound: Double,
+        expectedEffect: SQInsightEffect,
+        driverText: String,
+        outcomeText: String,
+        strongActionText: String,
+        subtleActionText: String? = nil
+    ) -> SQInsightRelationshipDefinition {
+        .init(
+            inputSignalId: inputSignalId,
+            inputTitle: inputTitle,
+            outputSignalId: outputSignalId,
+            outputTitle: outputTitle,
+            category: category,
+            recommendationFamily: recommendationFamily,
+            variants: [
+                .init(
+                    id: id,
+                    priority: 0,
+                    // Sleep outcomes are anchored to wake day, so a next-day snapshot
+                    // represents the same night's sleep after the input day.
+                    timing: .nextDay(
+                        controlMetricId: nil,
+                        controlTitle: nil,
+                        controlRequirement: nil
+                    )
+                )
+            ],
+            lowBucketUpperBound: lowBucketUpperBound,
+            highBucketLowerBound: highBucketLowerBound,
+            bucketUnitName: "days",
+            minimumBucketSampleCount: 2,
+            minimumEffectMagnitude: 0.5,
             expectedEffect: expectedEffect,
             driverText: driverText,
             outcomeText: outcomeText,

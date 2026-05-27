@@ -11,7 +11,19 @@ import HealthKit
 enum SQInsightAnalysisMetricId {
     static let workoutPerformance = "insight.workoutPerformance"
     static let workoutDifficulty = "insight.workoutDifficulty"
+    static let workoutMinutes = "insight.workoutMinutes"
+    static let cardioMinutes = "insight.cardioMinutes"
+    static let cardioDay = "insight.cardioDay"
     static let restingHeartRate = "insight.restingHeartRate"
+    static let sleepRemMinutes = "insight.sleep.remMinutes"
+    static let sleepRemPercent = "insight.sleep.remPercent"
+    static let sleepDeepMinutes = "insight.sleep.deepMinutes"
+    static let sleepCoreMinutes = "insight.sleep.coreMinutes"
+    static let sleepAwakeMinutes = "insight.sleep.awakeMinutes"
+    static let sleepAwakeningCount = "insight.sleep.awakeningCount"
+    static let sleepContinuity = "insight.sleep.continuity"
+    static let sleepFragmentationScore = "insight.sleep.fragmentationScore"
+    static let sleepEfficiency = "insight.sleep.efficiency"
 }
 
 enum SQInsightSignalSource: String, Hashable, Codable {

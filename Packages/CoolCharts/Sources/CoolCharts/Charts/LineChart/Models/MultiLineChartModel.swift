@@ -97,6 +97,7 @@ public final class MultiLineChartModel: ObservableObject {
     public let uiConfig: LineChartModel.UIConfig
     public let gridConfig: GridConfig?
     public let focusConfig: MultiLineChartFocusConfig?
+    public let navigationConfig: NavigationConfig?
 
     let coordinateSets: [MultiLineChartCoordinateSet]
     let originalCoordinatesMinX: CGFloat
@@ -142,7 +143,8 @@ public final class MultiLineChartModel: ObservableObject {
         series: [MultiLineChartSeries],
         uiConfig: LineChartModel.UIConfig,
         gridConfig: GridConfig? = nil,
-        focusConfig: MultiLineChartFocusConfig? = nil
+        focusConfig: MultiLineChartFocusConfig? = nil,
+        navigationConfig: NavigationConfig? = nil
     ) {
         let validSeries = series
             .map { series in
@@ -170,6 +172,7 @@ public final class MultiLineChartModel: ObservableObject {
         self.uiConfig = uiConfig
         self.gridConfig = gridConfig
         self.focusConfig = focusConfig
+        self.navigationConfig = navigationConfig
         self.visibleSeriesIDs = Set(validSeries.map(\.id))
         self.originalCoordinatesMinX = xDomain.lowerBound
         self.originalCoordinatesMaxX = xDomain.upperBound
@@ -235,6 +238,22 @@ public final class MultiLineChartModel: ObservableObject {
         }
     }
 
+    public func incrementXPoint() {
+        navigatePoint(axis: .x, direction: .forward)
+    }
+
+    public func decrementXPoint() {
+        navigatePoint(axis: .x, direction: .backward)
+    }
+
+    public func incrementYPoint() {
+        navigatePoint(axis: .y, direction: .forward)
+    }
+
+    public func decrementYPoint() {
+        navigatePoint(axis: .y, direction: .backward)
+    }
+
     private func coordinateFocused(_ coordinate: MultiLineChartCoordinate) {
         guard let focusConfig else { return }
 
@@ -254,6 +273,70 @@ public final class MultiLineChartModel: ObservableObject {
                 focusedCoordinate: coordinate
             )
         }
+    }
+
+    private func navigatePoint(axis: ChartAxis, direction: NavigationDirection) {
+        guard navigationConfig != nil else { return }
+
+        let sortedCoordinates: [MultiLineChartCoordinate]
+        switch axis {
+        case .x:
+            sortedCoordinates = xNavigationCoordinates()
+        case .y:
+            sortedCoordinates = visibleCoordinates.sorted {
+                $0.originalPoint.y < $1.originalPoint.y
+            }
+        }
+
+        guard !sortedCoordinates.isEmpty else { return }
+
+        let currentFocusedCoordinate = focusedLineModel?.focusedCoordinate
+        let currentIndex = currentFocusedCoordinate.flatMap { current in
+            sortedCoordinates.firstIndex { coordinate in
+                coordinate.seriesID == current.seriesID && coordinate.id == current.id
+            }
+        }
+
+        guard let currentIndex else {
+            let defaultIndex = direction == .forward ? 0 : sortedCoordinates.count - 1
+            coordinateFocused(sortedCoordinates[defaultIndex])
+            return
+        }
+
+        let nextIndex: Int
+        if direction == .forward {
+            nextIndex = currentIndex + 1 >= sortedCoordinates.count ? 0 : currentIndex + 1
+        } else {
+            nextIndex = currentIndex - 1 < 0 ? sortedCoordinates.count - 1 : currentIndex - 1
+        }
+
+        coordinateFocused(sortedCoordinates[nextIndex])
+    }
+
+    private func xNavigationCoordinates() -> [MultiLineChartCoordinate] {
+        let seriesID: String?
+        if let focusedSeriesID = focusedLineModel?.focusedCoordinate.seriesID,
+           visibleSeriesIDs.contains(focusedSeriesID) {
+            seriesID = focusedSeriesID
+        } else {
+            seriesID = visibleCoordinateSets.first?.id
+        }
+
+        return visibleCoordinateSets
+            .first(where: { $0.id == seriesID })?
+            .coordinates
+            .sorted { $0.originalPoint.x < $1.originalPoint.x }
+            ?? visibleCoordinates.sorted { $0.originalPoint.x < $1.originalPoint.x }
+    }
+
+    private enum ChartAxis {
+        case x
+        case y
+    }
+
+    private enum NavigationDirection {
+        case forward
+        case backward
     }
 
     private static func buildCoordinates(

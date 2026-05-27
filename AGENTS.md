@@ -219,6 +219,7 @@ Sleep-specific range semantics:
 - `Past 7/30/Year` => rolling completed-night windows ending with last night.
 - Sleep phase metric rows show average duration for the selected window.
 - Sleep phase timeline row should show the latest completed night.
+- When comparing a daytime/evening metric to a sleep metric, always compare against that night's sleep, not the sleep that ended that morning. Because sleep values are anchored to wake day in code, same-day input -> sleep outcome usually means input day + 1 wake-day snapshot. In Insight Explorer, `Same day` means that night's sleep, `Next day` means the next night's sleep, and `2 days later` means the sleep night two nights later.
 
 Charts convention:
 - Reusable timeline/interval charts should live in `CoolCharts` as generic components (for example `TimelineChartView`) so they can be reused by Sleep and future Heart Rate surfaces.

@@ -696,6 +696,9 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             let sleepDashboardData = try await buildSleepDashboardData(for: state.selectedTimeRange)
+            let insightExplorerSleepDashboardData = state.selectedTimeRange == .pastYear
+                ? sleepDashboardData
+                : (try? await buildSleepDashboardData(for: .pastYear)) ?? sleepDashboardData
             state.updateLoadingProgress(0.74)
 
             healthKitAccessCtaViewModel = await buildHealthKitAccessCtaViewModel(
@@ -728,6 +731,10 @@ final class SQDashboardController: SQDashboardInterface {
                     scopedRestingHeartRateSummaries = restingHeartRatePastYear
                 }
 
+                let scopedSleepData = timeRange == .pastYear || timeRange == .allTime
+                    ? insightExplorerSleepDashboardData
+                    : sleepDashboardData
+
                 return .init(
                     referenceDate: referenceDate,
                     timeRange: timeRange,
@@ -735,7 +742,7 @@ final class SQDashboardController: SQDashboardInterface {
                     checkIns: scopedCheckIns,
                     sleepCheckIns: [effectiveTodaysMorningSleepCheckIn, effectiveYesterdaysMorningSleepCheckIn].compactMap { $0 },
                     workouts: scopedWorkouts,
-                    sleepData: sleepDashboardData,
+                    sleepData: scopedSleepData,
                     restingHeartRateSummaries: scopedRestingHeartRateSummaries,
                     currentCheckInPromptPeriod: timeRange == .today ? currentCheckInPromptPeriod : nil,
                     hasCompletedCurrentPromptCheckIn: timeRange == .today ? effectiveHasCompletedCurrentCheckIn : false,

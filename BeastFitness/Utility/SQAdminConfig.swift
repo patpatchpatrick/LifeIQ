@@ -28,7 +28,7 @@ enum SQAdminConfig {
 
     /// Debug-only local override for testing subscription states. When non-nil, this wins
     /// over the user's stored Firestore subscription level without changing that record.
-    static var subscriptionLevelOverride: SQSubscriptionLevel? = nil
+    static var subscriptionLevelOverride: SQSubscriptionLevel? = .premium
     static var freeCustomMetricLimit = 1
 
     /// Debug-only toggle for rendering canned health data without requiring

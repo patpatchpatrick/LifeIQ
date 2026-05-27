@@ -135,7 +135,11 @@ The active set is also intentionally broader than the earliest sleep/vice-only s
 - vice carryover and follow-up relationships
 - sleep -> mood / clarity / workout outcomes
 - motivation / clarity / energy / stress / anxiety / soreness -> workout outcomes
+- workout difficulty / cardio volume -> same-night sleep continuity and REM sleep relationships
+- nicotine -> sleep continuity, fragmentation score, and REM sleep relationships
 - current-state mind-and-body relationships for `Today`
+
+Sleep-night outcomes are anchored to the wake day in code. Relationships from a daytime/evening input to that night's sleep should use the following wake-day snapshot because the sleep outcome is stored on the morning it ended. In user-facing comparison language, `Same day` means that night's sleep, `Next day` means the next night's sleep, and `2 days later` means the sleep night two nights later.
 
 The working rule is still:
 - keep the registry curated

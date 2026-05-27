@@ -72,6 +72,27 @@ enum SQInsightExplorerRange: String, CaseIterable, Identifiable {
     }
 }
 
+enum SQInsightExplorerSignalClassifier {
+    static func isSleepSignal(_ signalId: String) -> Bool {
+        switch signalId {
+        case SQMetricId.sleepHours,
+             SQMetricId.sleepQuality,
+             SQInsightAnalysisMetricId.sleepRemMinutes,
+             SQInsightAnalysisMetricId.sleepRemPercent,
+             SQInsightAnalysisMetricId.sleepDeepMinutes,
+             SQInsightAnalysisMetricId.sleepCoreMinutes,
+             SQInsightAnalysisMetricId.sleepAwakeMinutes,
+             SQInsightAnalysisMetricId.sleepAwakeningCount,
+             SQInsightAnalysisMetricId.sleepContinuity,
+             SQInsightAnalysisMetricId.sleepFragmentationScore,
+             SQInsightAnalysisMetricId.sleepEfficiency:
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 struct SQInsightExplorerMetricOption: Identifiable, Hashable {
     let id: String
     let title: String
@@ -132,9 +153,9 @@ struct SQInsightExplorerRelationshipResult: Identifiable, Hashable {
     var effectSummary: String {
         let magnitude = abs(displayEffectPoints).sqStringRoundedTo(places: 0)
         if displayEffectPoints > 0 {
-            return "\(outcomeTitle) averages \(magnitude)% higher \(lag.sentencePhrase) after higher \(driverTitle) days \(range.sentencePhrase)."
+            return "\(outcomeTitle) averages \(magnitude)% higher \(timingPhrase) after higher \(driverTitle) days \(range.sentencePhrase)."
         } else if displayEffectPoints < 0 {
-            return "\(outcomeTitle) averages \(magnitude)% lower \(lag.sentencePhrase) after higher \(driverTitle) days \(range.sentencePhrase)."
+            return "\(outcomeTitle) averages \(magnitude)% lower \(timingPhrase) after higher \(driverTitle) days \(range.sentencePhrase)."
         }
 
         return "\(outcomeTitle) does not move clearly after higher \(driverTitle) days."
@@ -142,6 +163,41 @@ struct SQInsightExplorerRelationshipResult: Identifiable, Hashable {
 
     var higherDriverDefinition: String {
         "Higher \(driverTitle) days means days above your median \(driverTitle) value \(range.sentencePhrase)."
+    }
+
+    var includesSleepMetric: Bool {
+        SQInsightExplorerSignalClassifier.isSleepSignal(driverId)
+            || SQInsightExplorerSignalClassifier.isSleepSignal(outcomeId)
+    }
+
+    var usesSleepOutcomeNightAlignment: Bool {
+        SQInsightExplorerSignalClassifier.isSleepSignal(outcomeId)
+            && !SQInsightExplorerSignalClassifier.isSleepSignal(driverId)
+    }
+
+    var timingPhrase: String {
+        guard usesSleepOutcomeNightAlignment else {
+            return lag.sentencePhrase
+        }
+
+        switch lag {
+        case .sameDay:
+            return "that night"
+        case .nextDay:
+            return "the next night"
+        case .twoDaysLater:
+            return "2 nights later"
+        }
+    }
+
+    var sleepTimingNote: String? {
+        guard includesSleepMetric else { return nil }
+
+        if usesSleepOutcomeNightAlignment {
+            return "Sleep metrics are anchored to wake day. Same day uses that night's sleep, Next day uses the next night's sleep, and 2 days later uses the sleep night two nights later."
+        }
+
+        return "Sleep metrics are anchored to wake day, so a sleep value is stored on the morning it ended."
     }
 }
 
@@ -227,7 +283,12 @@ struct SQInsightExplorerAnalyzer {
         let valuesByDay = Dictionary(uniqueKeysWithValues: dailyValues.map { ($0.date.anchorDayKey(), $0) })
         let matchedPoints = dailyValues.compactMap { driverDay -> SQInsightExplorerChartPoint? in
             guard let driverValue = driverDay.values[driverId] else { return nil }
-            let outcomeDate = Calendar.current.date(byAdding: .day, value: lag.rawValue, to: driverDay.date) ?? driverDay.date
+            let outcomeOffset = outcomeDayOffset(
+                driverId: driverId,
+                outcomeId: outcomeId,
+                lag: lag
+            )
+            let outcomeDate = Calendar.current.date(byAdding: .day, value: outcomeOffset, to: driverDay.date) ?? driverDay.date
             guard let outcomeValue = valuesByDay[outcomeDate.anchorDayKey()]?.values[outcomeId] else { return nil }
             return .init(
                 id: "\(driverDay.date.anchorDayKey())-\(lag.rawValue)",
@@ -288,6 +349,21 @@ struct SQInsightExplorerAnalyzer {
             rankingScore: rankingScore,
             chartPoints: matchedPoints.sorted { $0.date < $1.date }
         )
+    }
+
+    private func outcomeDayOffset(
+        driverId: String,
+        outcomeId: String,
+        lag: SQInsightExplorerLag
+    ) -> Int {
+        let outcomeIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(outcomeId)
+        let driverIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(driverId)
+
+        if outcomeIsSleep && !driverIsSleep {
+            return lag.rawValue + 1
+        }
+
+        return lag.rawValue
     }
 
     func topRelationships(input: SQHealthIntelligenceInput, range: SQInsightExplorerRange = .days90) -> [SQInsightExplorerRelationshipResult] {
@@ -361,10 +437,25 @@ struct SQInsightExplorerAnalyzer {
                 return .init(date: snapshot.date, values: values)
             }
 
-        let options = optionMap.values.sorted {
+        let options = deduplicatedOptions(Array(optionMap.values)).sorted {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
         return .init(options: options, dailyValues: dailyValues.sorted { $0.date < $1.date })
+    }
+
+    private func deduplicatedOptions(_ options: [SQInsightExplorerMetricOption]) -> [SQInsightExplorerMetricOption] {
+        var seenTitles = Set<String>()
+        return options
+            .sorted {
+                if $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedSame {
+                    return $0.id < $1.id
+                }
+
+                return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+            .filter { option in
+                seenTitles.insert(option.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()).inserted
+            }
     }
 
     private func canExplore(_ feature: SQInsightSignalFeature) -> Bool {
@@ -394,6 +485,20 @@ struct SQInsightExplorerAnalyzer {
             return .score
         case SQInsightAnalysisMetricId.restingHeartRate:
             return .bpm
+        case SQInsightAnalysisMetricId.workoutMinutes,
+             SQInsightAnalysisMetricId.cardioMinutes,
+             SQInsightAnalysisMetricId.sleepRemMinutes,
+             SQInsightAnalysisMetricId.sleepDeepMinutes,
+             SQInsightAnalysisMetricId.sleepCoreMinutes,
+             SQInsightAnalysisMetricId.sleepAwakeMinutes:
+            return .quantity(unit: "min")
+        case SQInsightAnalysisMetricId.sleepAwakeningCount:
+            return .plain
+        case SQInsightAnalysisMetricId.sleepRemPercent,
+             SQInsightAnalysisMetricId.sleepEfficiency:
+            return .quantity(unit: "%")
+        case SQInsightAnalysisMetricId.sleepFragmentationScore:
+            return .score
         default:
             return .plain
         }
@@ -519,6 +624,18 @@ final class SQInsightExplorerController {
 
     var hasEnoughMetricOptions: Bool {
         metricOptions.count >= 2
+    }
+
+    var selectedSleepTimingNote: String? {
+        let driverIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(selectedDriverId)
+        let outcomeIsSleep = SQInsightExplorerSignalClassifier.isSleepSignal(selectedOutcomeId)
+        guard driverIsSleep || outcomeIsSleep else { return nil }
+
+        if outcomeIsSleep && !driverIsSleep {
+            return "Sleep metrics are anchored to wake day. Same day uses that night's sleep, Next day uses the next night's sleep, and 2 days later uses the sleep night two nights later."
+        }
+
+        return "Sleep metrics are anchored to wake day, so a sleep value is stored on the morning it ended."
     }
 
     func applyTopRelationship(_ relationship: SQInsightExplorerRelationshipResult) {
@@ -847,6 +964,13 @@ struct SQInsightExplorerView: View {
                 }
             }
             .pickerStyle(.segmented)
+
+            if let selectedSleepTimingNote = controller.selectedSleepTimingNote {
+                Text(selectedSleepTimingNote)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(.SQSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -887,6 +1011,13 @@ struct SQInsightExplorerView: View {
                 .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if let sleepTimingNote = result.sleepTimingNote {
+                Text(sleepTimingNote)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Text("This is an association in your logged data, not a medical or causal claim.")
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textTertiary)
@@ -904,7 +1035,7 @@ struct SQInsightExplorerView: View {
                 .sqForegroundColor(.textPrimary)
 
             evidenceRow(title: "Time range", value: result.range.rawValue)
-            evidenceRow(title: "Timing", value: result.lag.title)
+            evidenceRow(title: "Timing", value: result.timingPhrase.capitalized)
             evidenceRow(title: "Higher \(result.driverTitle)", value: "Above \(result.higherDriverThreshold.sqStringRoundedTo(places: 0))%")
             evidenceRow(
                 title: "High \(result.driverTitle)",
@@ -1095,7 +1226,8 @@ struct SQInsightExplorerView: View {
             gridConfig: GridConfig(
                 lineColor: SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.9 : 0.55)
             ),
-            focusConfig: relationshipChartFocusConfig()
+            focusConfig: relationshipChartFocusConfig(),
+            navigationConfig: NavigationConfig()
         )
 
         if chartModel == nil {
