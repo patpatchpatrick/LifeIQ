@@ -100,9 +100,19 @@ struct SQInsightLibraryView: View {
 
                 Spacer(minLength: 0)
 
-                Text(relationship.range.rawValue)
-                    .sqFont(.bodyExtraSmall)
-                    .sqForegroundColor(.textSecondary)
+                HStack(spacing: .SQSpace.s) {
+                    Text(relationship.range.rawValue)
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textSecondary)
+
+                    SQImageView(
+                        image: .init(
+                            symbol: .infoCircle,
+                            symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
+                        )
+                    )
+                    .frame(width: 18, height: 18)
+                }
             }
 
             HStack(spacing: .SQSpace.s) {
