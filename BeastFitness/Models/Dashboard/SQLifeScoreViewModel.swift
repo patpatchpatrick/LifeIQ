@@ -551,8 +551,12 @@ struct SQLifeScoreViewModel {
         switch score {
         case ..<60:
             return .colorErrorRed
-        case 60..<78:
+        case 60..<65:
             return .dashboardTrendWarm
+        case 65..<70:
+            return .hex("#D6BC63")
+        case 70..<80:
+            return .hex("#B8D86B")
         case 80...:
             return .dashboardGlowMint
         default:
@@ -566,8 +570,12 @@ struct SQLifeScoreViewModel {
         switch score {
         case ..<60:
             return .dashboardTrendWarm
-        case 60..<78:
-            return .accentNeutral2
+        case 60..<65:
+            return .hex("#D8906F")
+        case 65..<70:
+            return .dashboardTrendWarm
+        case 70..<80:
+            return .dashboardGlowMint
         case 80...:
             return .dashboardGlowBlue
         default:

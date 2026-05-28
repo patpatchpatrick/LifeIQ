@@ -111,6 +111,8 @@ Life Score hero copy should be state-first, not signal-first. The default headli
 
 Positive momentum should be allowed to produce `Rebounding` before `Under Pressure` is considered. For example, a score in the mid-70s that is up meaningfully from yesterday should not be red unless there are multiple severe negatives.
 
+Life Score color should not make solid scores feel alarming. Scores in the 70s should read as steady yellow-green / lime with some recovery tint, 60s should read amber/orange, and true red should be reserved for scores below 60 or clearly severe stacked pressure. Scores 80+ should keep the green/blue LifeIQ orb palette.
+
 When an individual Life Score component changes the weighted score by about 10+ points versus yesterday, that component should be allowed to override the generic insight headline. Significant drops take priority over lifts because they usually explain the user's immediate concern best. The point impact should drive prioritization, but the surfaced headline should stay human-readable instead of saying the exact point drag.
 
 Life Score hero actions should also be state-first. Use the state to choose the decision style (`push`, `maintain`, `adjust`, `recover`) and only use component-specific actions when a low component is clearly the context.

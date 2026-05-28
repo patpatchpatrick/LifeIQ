@@ -66,7 +66,9 @@ final class SQInsightLibraryController {
     }
 
     private func rebuildRelationships() {
-        let allRelationships = analyzer.topRelationships(input: input, range: selectedRange)
+        let allRelationships = SQAdminConfig.useMockHealthData
+            ? Self.mockAppStoreRelationships(range: selectedRange)
+            : analyzer.topRelationships(input: input, range: selectedRange)
         relationships = SQAdminConfig.hideScreenshotSensitiveInsights
             ? allRelationships.filter { !Self.isScreenshotSensitiveRelationship($0) }
             : allRelationships
@@ -123,6 +125,210 @@ final class SQInsightLibraryController {
     private static func containsScreenshotSensitiveText(_ text: String) -> Bool {
         let lowercased = text.lowercased()
         return lowercased.contains("weed") || lowercased.contains("porn")
+    }
+
+    private static func mockAppStoreRelationships(range: SQInsightExplorerRange) -> [SQInsightExplorerRelationshipResult] {
+        [
+            mockRelationship(
+                id: "mock.caffeine.sleepQuality",
+                driverId: SQMetricId.caffeine,
+                outcomeId: SQMetricId.sleepQuality,
+                driverTitle: "Caffeine",
+                outcomeTitle: "Sleep Quality",
+                range: range,
+                lag: .sameDay,
+                displayEffectPoints: -16,
+                confidence: .high,
+                matchedDays: 42,
+                highOutcomeLabel: "6.7/10",
+                lowOutcomeLabel: "8.1/10",
+                highRaw: 6.7,
+                lowRaw: 8.1,
+                rankingScore: 96,
+                driverLow: 22,
+                driverHigh: 78,
+                outcomeLowDriver: 81,
+                outcomeHighDriver: 67
+            ),
+            mockRelationship(
+                id: "mock.alcohol.remSleep",
+                driverId: SQMetricId.alcohol,
+                outcomeId: SQInsightAnalysisMetricId.sleepRemMinutes,
+                driverTitle: "Alcohol",
+                outcomeTitle: "REM Sleep",
+                range: range,
+                lag: .sameDay,
+                displayEffectPoints: -14,
+                confidence: .high,
+                matchedDays: 38,
+                highOutcomeLabel: "71 min",
+                lowOutcomeLabel: "91 min",
+                highRaw: 71,
+                lowRaw: 91,
+                rankingScore: 91,
+                driverLow: 18,
+                driverHigh: 72,
+                outcomeLowDriver: 76,
+                outcomeHighDriver: 62
+            ),
+            mockRelationship(
+                id: "mock.workoutDifficulty.sleepContinuity",
+                driverId: SQInsightAnalysisMetricId.workoutDifficulty,
+                outcomeId: SQInsightAnalysisMetricId.sleepContinuity,
+                driverTitle: "Workout Difficulty",
+                outcomeTitle: "Sleep Continuity",
+                range: range,
+                lag: .sameDay,
+                displayEffectPoints: -11,
+                confidence: .medium,
+                matchedDays: 31,
+                highOutcomeLabel: "72/100",
+                lowOutcomeLabel: "83/100",
+                highRaw: 72,
+                lowRaw: 83,
+                rankingScore: 82,
+                driverLow: 34,
+                driverHigh: 82,
+                outcomeLowDriver: 83,
+                outcomeHighDriver: 72
+            ),
+            mockRelationship(
+                id: "mock.hydration.energy",
+                driverId: SQMetricId.hydration,
+                outcomeId: SQMetricId.energy,
+                driverTitle: "Hydration",
+                outcomeTitle: "Energy",
+                range: range,
+                lag: .sameDay,
+                displayEffectPoints: 13,
+                confidence: .medium,
+                matchedDays: 36,
+                highOutcomeLabel: "8.2/10",
+                lowOutcomeLabel: "6.9/10",
+                highRaw: 8.2,
+                lowRaw: 6.9,
+                rankingScore: 80,
+                driverLow: 39,
+                driverHigh: 86,
+                outcomeLowDriver: 69,
+                outcomeHighDriver: 82
+            ),
+            mockRelationship(
+                id: "mock.sleepQuality.mood",
+                driverId: SQMetricId.sleepQuality,
+                outcomeId: SQMetricId.mood,
+                driverTitle: "Sleep Quality",
+                outcomeTitle: "Mood",
+                range: range,
+                lag: .nextDay,
+                displayEffectPoints: 12,
+                confidence: .medium,
+                matchedDays: 34,
+                highOutcomeLabel: "8.0/10",
+                lowOutcomeLabel: "6.8/10",
+                highRaw: 8.0,
+                lowRaw: 6.8,
+                rankingScore: 77,
+                driverLow: 43,
+                driverHigh: 84,
+                outcomeLowDriver: 68,
+                outcomeHighDriver: 80
+            )
+        ]
+    }
+
+    private static func mockRelationship(
+        id: String,
+        driverId: String,
+        outcomeId: String,
+        driverTitle: String,
+        outcomeTitle: String,
+        range: SQInsightExplorerRange,
+        lag: SQInsightExplorerLag,
+        displayEffectPoints: Double,
+        confidence: SQInsightConfidence,
+        matchedDays: Int,
+        highOutcomeLabel: String,
+        lowOutcomeLabel: String,
+        highRaw: Double,
+        lowRaw: Double,
+        rankingScore: Double,
+        driverLow: Double,
+        driverHigh: Double,
+        outcomeLowDriver: Double,
+        outcomeHighDriver: Double
+    ) -> SQInsightExplorerRelationshipResult {
+        .init(
+            id: "\(id)-\(range.rawValue)",
+            driverId: driverId,
+            outcomeId: outcomeId,
+            driverTitle: driverTitle,
+            outcomeTitle: outcomeTitle,
+            range: range,
+            lag: lag,
+            higherDriverThreshold: (driverLow + driverHigh) / 2,
+            displayEffectPoints: displayEffectPoints,
+            effectPoints: displayEffectPoints,
+            confidence: confidence,
+            matchedDays: matchedDays,
+            highDriverAverageOutcome: outcomeHighDriver,
+            highDriverAverageOutcomeRawLabel: highOutcomeLabel,
+            lowDriverAverageOutcome: outcomeLowDriver,
+            lowDriverAverageOutcomeRawLabel: lowOutcomeLabel,
+            rankingScore: rankingScore,
+            chartPoints: mockChartPoints(
+                idBase: id,
+                matchedDays: matchedDays,
+                driverLow: driverLow,
+                driverHigh: driverHigh,
+                outcomeLowDriver: outcomeLowDriver,
+                outcomeHighDriver: outcomeHighDriver,
+                highRaw: highRaw,
+                lowRaw: lowRaw,
+                highLabel: highOutcomeLabel,
+                lowLabel: lowOutcomeLabel
+            )
+        )
+    }
+
+    private static func mockChartPoints(
+        idBase: String,
+        matchedDays: Int,
+        driverLow: Double,
+        driverHigh: Double,
+        outcomeLowDriver: Double,
+        outcomeHighDriver: Double,
+        highRaw: Double,
+        lowRaw: Double,
+        highLabel: String,
+        lowLabel: String
+    ) -> [SQInsightExplorerChartPoint] {
+        let calendar = Calendar.current
+        let startDate = calendar.date(byAdding: .day, value: -matchedDays, to: .now) ?? .now
+
+        return (0..<matchedDays).map { index in
+            let isHighDriverDay = index % 5 == 1 || index % 5 == 2
+            let phase = Double(index % 7)
+            let driverValue = isHighDriverDay
+                ? min(100, driverHigh + phase - 3)
+                : max(0, driverLow + phase - 3)
+            let outcomeValue = isHighDriverDay
+                ? min(100, outcomeHighDriver + (phase - 3) * 0.8)
+                : max(0, outcomeLowDriver + (phase - 3) * 0.8)
+            let rawValue = isHighDriverDay ? highRaw : lowRaw
+            let date = calendar.date(byAdding: .day, value: index, to: startDate) ?? startDate
+
+            return .init(
+                id: "\(idBase)-\(index)",
+                date: date,
+                driverValue: driverValue,
+                driverDisplayLabel: "\(driverValue.sqStringRoundedTo(places: 0))%",
+                outcomeValue: outcomeValue,
+                outcomeRawValue: rawValue,
+                outcomeDisplayLabel: isHighDriverDay ? highLabel : lowLabel,
+                outcomeUtilityValue: outcomeValue
+            )
+        }
     }
 }
 
