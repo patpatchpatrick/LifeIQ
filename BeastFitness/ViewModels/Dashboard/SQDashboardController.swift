@@ -64,6 +64,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
+    private var lastLoadedAllTimeWorkouts: [SQWorkoutSessionable] = []
     private let remoteConfigManager: SQRemoteConfigManaging
     var healthKitAccessCtaViewModel: SQCallToActionViewModel?
     var runtimeControlCtaViewModel: SQCallToActionViewModel?
@@ -213,6 +214,31 @@ final class SQDashboardController: SQDashboardInterface {
         state.hub.domainEvents.send(
             .pushDashboardRoute(.workoutSummary(controller: .init(workout: workout, mode: .standard)))
         )
+    }
+
+    func displayWorkoutsList() {
+        let workouts = lastLoadedAllTimeWorkouts.isEmpty
+            ? dashboardWorkoutsFromCurrentSections()
+            : lastLoadedAllTimeWorkouts
+        state.hub.domainEvents.send(
+            .pushDashboardRoute(
+                .workoutsList(
+                    workouts: workouts,
+                    initialTimeRange: state.selectedTimeRange
+                )
+            )
+        )
+    }
+
+    private func dashboardWorkoutsFromCurrentSections() -> [SQWorkoutSessionable] {
+        state.uncustomizedSectionGroups
+            .flatMap(\.sections)
+            .first(where: { $0.id == "activities" })?
+            .activeRows
+            .compactMap { $0 as? SQDashboardActivityRowViewModel }
+            .flatMap { activityRow in
+                activityRow.workoutGroupViewModels.flatMap { $0.workouts.workouts }
+            } ?? []
     }
 
     func displayPerformanceRow(_ row: SQDashboardMetricPerformanceRowViewModel) {
@@ -913,6 +939,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
             lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
+            lastLoadedAllTimeWorkouts = allTimeWorkouts
             lastSuccessfulLoadAt = .now
 
             if showLoadingState {

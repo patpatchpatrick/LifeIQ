@@ -79,7 +79,7 @@ private extension SQDashboardGridView {
             title: "Sleep",
             icon: .bedDoubleFill,
             accentColor: .accentSecondary(1),
-            onTap: {
+            onViewMore: {
                 controller.displayDashboardDetail(
                     title: "Sleep",
                     sectionIds: [
@@ -125,7 +125,7 @@ private extension SQDashboardGridView {
             title: "Sleep Phases",
             icon: .moonZzzFill,
             accentColor: .accentSecondary(1),
-            onTap: {
+            onViewMore: {
                 controller.displayDashboardDetail(
                     title: "Sleep Phases",
                     sectionIds: ["sleep-phases", "sleep-access-warning", "sleep-empty-warning"]
@@ -157,21 +157,39 @@ private extension SQDashboardGridView {
             title: "Top Insight",
             icon: .sparkles,
             accentColor: .dashboardGlowMint,
-            onTap: {
-                if let insightRow {
-                    insightRow.onInfoTap?()
-                } else if lifeScoreViewModel != nil {
-                    controller.handleLifeScoreTap()
-                }
+            onViewMore: {
+                controller.displayDashboardDetail(title: "Insights", sectionIds: ["insights"])
             }
         ) {
             if let insight {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
-                    Text(insight.title)
-                        .sqFont(.bodySemiBold)
-                        .sqForegroundColor(.textPrimary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Button {
+                        if let insightRow {
+                            insightRow.onInfoTap?()
+                        } else if lifeScoreViewModel != nil {
+                            controller.handleLifeScoreTap()
+                        }
+                    } label: {
+                        HStack(alignment: .top, spacing: .SQSpace.s) {
+                            Text(insight.title)
+                                .sqFont(.bodySemiBold)
+                                .sqForegroundColor(.textPrimary)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Spacer(minLength: 0)
+
+                            SQImageView(
+                                image: .init(
+                                    symbol: .chevronRight,
+                                    symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                                )
+                            )
+                            .frame(width: 9, height: 9)
+                            .padding(.top, 4)
+                        }
+                    }
+                    .buttonStyle(.plain)
 
                     Text(insight.confidence.badgeTitle)
                         .sqFont(.bodyExtraSmall)
@@ -201,7 +219,7 @@ private extension SQDashboardGridView {
             title: "Key Metrics",
             icon: .chartBar,
             accentColor: .dashboardGlowBlue,
-            onTap: {
+            onViewMore: {
                 controller.displayDashboardDetail(title: "Key Metrics", sectionIds: ["metrics"])
             }
         ) {
@@ -236,23 +254,33 @@ private extension SQDashboardGridView {
             title: "Latest Workout",
             icon: workout?.activityType.imageSymbol ?? .figureRun,
             accentColor: .dashboardTrendWarm,
-            onTap: {
-                if let workout {
-                    controller.displayWorkoutDetail(workout)
-                } else {
-                    controller.displayDashboardDetail(
-                        title: "Workouts",
-                        sectionIds: ["activities", "workouts-access-warning", "workouts-empty-warning"]
-                    )
-                }
+            onViewMore: {
+                controller.displayWorkoutsList()
             }
         ) {
             if let workout {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    Text(workout.activityType.name)
-                        .sqFont(.bodySemiBold)
-                        .sqForegroundColor(.textPrimary)
-                        .lineLimit(1)
+                    Button {
+                        controller.displayWorkoutDetail(workout)
+                    } label: {
+                        HStack(spacing: .SQSpace.s) {
+                            Text(workout.activityType.name)
+                                .sqFont(.bodySemiBold)
+                                .sqForegroundColor(.textPrimary)
+                                .lineLimit(1)
+
+                            Spacer(minLength: 0)
+
+                            SQImageView(
+                                image: .init(
+                                    symbol: .chevronRight,
+                                    symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                                )
+                            )
+                            .frame(width: 9, height: 9)
+                        }
+                    }
+                    .buttonStyle(.plain)
 
                     if let startDate = workout.startDate {
                         Text(startDate.formattedString(with: .medium))
@@ -286,7 +314,7 @@ private extension SQDashboardGridView {
             title: "Activity & Calories",
             icon: .flame,
             accentColor: .dashboardTrendWarm,
-            onTap: {
+            onViewMore: {
                 controller.displayDashboardDetail(
                     title: "Activity & Calories",
                     sectionIds: ["totals", "activities", "workouts-access-warning", "workouts-empty-warning"]
@@ -327,7 +355,7 @@ private extension SQDashboardGridView {
             title: "VO₂ Max",
             icon: .heart,
             accentColor: .colorFadedRed,
-            onTap: {
+            onViewMore: {
                 if let row {
                     controller.displayPerformanceRow(row)
                 } else {
@@ -364,7 +392,7 @@ private extension SQDashboardGridView {
             title: "Heart Overview",
             icon: .heart,
             accentColor: .colorFadedRed,
-            onTap: {
+            onViewMore: {
                 controller.displayDashboardDetail(
                     title: "Heart Overview",
                     sectionIds: ["heart-rate", "heart-access-warning", "heart-empty-warning"]
@@ -426,42 +454,42 @@ private struct SQDashboardGridCard<Content: View>: View {
     let title: String
     let icon: SQImageSymbol
     let accentColor: SQColor
-    let onTap: () -> Void
+    let onViewMore: () -> Void
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: .SQSpace.m) {
-                HStack(alignment: .center, spacing: .SQSpace.s) {
-                    SQImageView(
-                        image: .init(
-                            symbol: icon,
-                            symbolStyle: .colorWithFont(accentColor, font: .bodySmall)
-                        )
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            HStack(alignment: .center, spacing: .SQSpace.s) {
+                SQImageView(
+                    image: .init(
+                        symbol: icon,
+                        symbolStyle: .colorWithFont(accentColor, font: .bodySmall)
                     )
-                    .frame(width: 18, height: 18)
+                )
+                .frame(width: 18, height: 18)
 
-                    Text(title)
-                        .sqFont(.bodyBold)
-                        .sqForegroundColor(.textPrimary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
-
-                    Spacer(minLength: 0)
-                }
-
-                content()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(title)
+                    .sqFont(.bodyBold)
+                    .sqForegroundColor(.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
 
                 Spacer(minLength: 0)
+            }
 
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer(minLength: 0)
+
+            Button(action: onViewMore) {
                 SQDashboardViewMoreLabel()
             }
-            .padding(.SQSpace.l)
-            .frame(maxWidth: .infinity, minHeight: 166, alignment: .topLeading)
-            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .padding(.SQSpace.l)
+        .frame(maxWidth: .infinity, minHeight: 166, alignment: .topLeading)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
     }
 }
 

@@ -38,8 +38,12 @@ struct SQRootTabView: View {
             SQRecoveryScoreDetailView(controller: controller)
         case .editWorkout(workout: let workout):
             SQEditWorkoutView(controller: .init(workout: workout))
-        case .workoutsList(workouts: let workouts):
-            SQWorkoutsListView(controller: .init(eventHub: SQAppState.shared.hub, workouts: workouts))
+        case .workoutsList(workouts: let workouts, initialTimeRange: let initialTimeRange):
+            SQWorkoutsListView(controller: .init(
+                eventHub: SQAppState.shared.hub,
+                workouts: workouts,
+                initialTimeRange: initialTimeRange
+            ))
         case .leaderboard(controller: let controller):
             SQLeaderboardView(controller: controller)
         case .sleepPhaseTrends(controller: let controller):

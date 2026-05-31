@@ -49,7 +49,7 @@ struct SQWorkoutsListView: View {
                     symbol: nil
                 )
 
-                Text("Newest first")
+                Text(controller.rangeSubtitle)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }
@@ -106,6 +106,17 @@ struct SQWorkoutsListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("Workouts")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let timeRangeMenuViewModel = controller.timeRangeMenuViewModel {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SQDropDownMenu(
+                        menuViewModel: timeRangeMenuViewModel,
+                        isDisabled: false,
+                        showBackground: false
+                    )
+                }
+            }
+        }
         .background {
             SQSheetBackground()
         }

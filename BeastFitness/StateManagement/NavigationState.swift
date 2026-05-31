@@ -90,7 +90,7 @@ protocol NavigationStating: AnyObject {
 
 struct SQNavRoute {
     enum DashboardRoute: Identifiable, Hashable, Equatable {
-        case workoutsList(workouts: [SQWorkoutSessionable])
+        case workoutsList(workouts: [SQWorkoutSessionable], initialTimeRange: AppTimeRange? = nil)
         case workoutSummary(controller: SQWorkoutSummaryController)
         case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
         case insightDetail(model: SQInsight, explorerController: SQInsightExplorerController?)
@@ -118,9 +118,9 @@ struct SQNavRoute {
         
         var id: String {
             switch self {
-            case .workoutsList(workouts: let workouts):
+            case .workoutsList(workouts: let workouts, initialTimeRange: let initialTimeRange):
                 let workoutsIds = workouts.map(\.id).joined(separator: ",")
-                return "workoutsList-\(workoutsIds)"
+                return "workoutsList-\(initialTimeRange?.rawValue ?? "all")-\(workoutsIds)"
             case .workoutReview(workouts: let workouts):
                 let workoutsIds = workouts.map(\.id).joined(separator: ",")
                 return "workoutReview-\(workoutsIds)"
