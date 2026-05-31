@@ -21,6 +21,18 @@ protocol SQDashboardInterface {
 
 @Observable @MainActor
 final class SQDashboardController: SQDashboardInterface {
+    private enum DashboardGridCardID {
+        static let group = "dashboard-grid"
+        static let sleep = "sleep-overview"
+        static let sleepPhases = "sleep-phases"
+        static let topInsight = "top-insight"
+        static let keyMetrics = "key-metrics"
+        static let latestWorkout = "latest-workout"
+        static let activityCalories = "activity-calories"
+        static let vo2Max = "vo2-max"
+        static let heartOverview = "heart-overview"
+    }
+
     private static let automaticForegroundRefreshMinimumInterval: TimeInterval = 180
     private var cancellables = Set<AnyCancellable>()
     var state: DashboardStating
@@ -139,10 +151,11 @@ final class SQDashboardController: SQDashboardInterface {
 
         if !userState.hasResolvedInitialAuthState {
             let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+            let mockGridGroups = Self.buildDashboardGridLayoutGroups()
             state.updateUncustomizedSectionGroups(mockGroups)
-            availableLayoutGroups = self.dashboardLayoutService.descriptors(from: mockGroups)
+            availableLayoutGroups = self.dashboardLayoutService.descriptors(from: mockGridGroups)
             state.updateAvailableLayoutGroups(availableLayoutGroups)
-            state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGroups))
+            state.updateSectionGroups(to: self.dashboardLayoutService.apply(to: mockGridGroups))
             state.setLoading(true)
             state.updateLoadingProgress(0.05)
         }
@@ -173,6 +186,46 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         state.hub.domainEvents.send(.pushDashboardRoute(.dashboardLayout(controller: controller)))
+    }
+
+    func displayDashboardDetail(title: String, sectionIds: [String]) {
+        let sections = state.uncustomizedSectionGroups
+            .flatMap(\.sections)
+            .filter { sectionIds.contains($0.id) }
+            .map { section -> SQDashboardSubsectionViewModel in
+                let clone = section.cloned()
+                clone.isCollapsed = false
+                return clone
+            }
+
+        guard !sections.isEmpty else { return }
+
+        state.hub.domainEvents.send(
+            .pushDashboardRoute(
+                .dashboardDetail(
+                    controller: .init(title: title, sections: sections)
+                )
+            )
+        )
+    }
+
+    func displayWorkoutDetail(_ workout: SQWorkoutSessionable) {
+        state.hub.domainEvents.send(
+            .pushDashboardRoute(.workoutSummary(controller: .init(workout: workout, mode: .standard)))
+        )
+    }
+
+    func displayPerformanceRow(_ row: SQDashboardMetricPerformanceRowViewModel) {
+        if row.isPremiumLocked {
+            SQSubscriptionManager.displaySubscriptionScreen(
+                source: "dashboard_grid_performance_row",
+                feature: row.scoreKind?.rawValue ?? row.title.analyticsKey
+            )
+            return
+        }
+
+        guard let leaderboardMode = row.leaderboardMode else { return }
+        state.displayLeaderboard(mode: leaderboardMode)
     }
 
     func handleSeeMoreInsightsTap() {
@@ -213,6 +266,35 @@ final class SQDashboardController: SQDashboardInterface {
     func handleViewLabTrigger() {
         guard SQAdminConfig.viewLabEnabled else { return }
         state.hub.domainEvents.send(.pushDashboardRoute(.viewLab(controller: .init())))
+    }
+
+    private static func buildDashboardGridLayoutGroups() -> [SQDashboardSectionGroupViewModel] {
+        let cards: [(id: String, title: String, priority: Int)] = [
+            (DashboardGridCardID.sleep, "Sleep", 10),
+            (DashboardGridCardID.sleepPhases, "Sleep Phases", 20),
+            (DashboardGridCardID.topInsight, "Top Insight", 30),
+            (DashboardGridCardID.keyMetrics, "Key Metrics", 40),
+            (DashboardGridCardID.latestWorkout, "Latest Workout", 50),
+            (DashboardGridCardID.activityCalories, "Activity & Calories", 60),
+            (DashboardGridCardID.vo2Max, "VO₂ Max", 70),
+            (DashboardGridCardID.heartOverview, "Heart Overview", 80)
+        ]
+
+        return [
+            SQDashboardSectionGroupViewModel(
+                id: DashboardGridCardID.group,
+                title: "Dashboard Cards",
+                defaultPriority: 10,
+                sections: cards.map {
+                    SQDashboardSubsectionViewModel(
+                        id: $0.id,
+                        title: $0.title,
+                        defaultPriority: $0.priority,
+                        rowsByFilter: ["All": []]
+                    )
+                }
+            )
+        ]
     }
     
     private func handleEventSubscriptions(hub: EventHub) {
@@ -330,7 +412,7 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     private func applyLayoutCustomizationToCurrentState() {
-        state.updateSectionGroups(to: dashboardLayoutService.apply(to: state.uncustomizedSectionGroups))
+        state.updateSectionGroups(to: dashboardLayoutService.apply(to: Self.buildDashboardGridLayoutGroups()))
     }
 
     private func refreshRuntimeControlCtaViewModel() {
@@ -817,8 +899,9 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange: priorTimeRange,
                 context: context
             )
-            let appliedSectionGroups = dashboardLayoutService.apply(to: sectionGroups)
-            let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: sectionGroups)
+            let gridLayoutGroups = Self.buildDashboardGridLayoutGroups()
+            let appliedSectionGroups = dashboardLayoutService.apply(to: gridLayoutGroups)
+            let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: gridLayoutGroups)
 
             state.updateUncustomizedSectionGroups(sectionGroups)
             availableLayoutGroups = updatedAvailableLayoutGroups
@@ -2265,21 +2348,19 @@ final class SQDashboardController: SQDashboardInterface {
             sectionGroups.append(dailyStatsGroup)
         }
 
-        if state.selectedTimeRange != .today {
-            let insightsSection = buildInsightsSubsection(
-                result: insightsResult,
-                explorerInput: insightExplorerInput
-            )
-            let explorerSection = buildInsightExplorerSubsection(input: insightExplorerInput)
+        let insightsSection = buildInsightsSubsection(
+            result: insightsResult,
+            explorerInput: insightExplorerInput
+        )
+        let explorerSection = buildInsightExplorerSubsection(input: insightExplorerInput)
 
-            let insightsGroup = SQDashboardSectionGroupViewModel(
-                id: "insights",
-                title: "Insights",
-                defaultPriority: 25,
-                sections: [insightsSection, explorerSection]
-            )
-            sectionGroups.append(insightsGroup)
-        }
+        let insightsGroup = SQDashboardSectionGroupViewModel(
+            id: "insights",
+            title: "Insights",
+            defaultPriority: 25,
+            sections: [insightsSection, explorerSection]
+        )
+        sectionGroups.append(insightsGroup)
 
         if let sleepData, let sleepGroup = buildSleepSectionGroup(with: sleepData) {
             sectionGroups.append(sleepGroup)

@@ -149,6 +149,121 @@ struct SQLifeScoreHeroCard: View {
     }
 }
 
+struct SQLifeScoreCommandCard: View {
+    let viewModel: SQLifeScoreViewModel
+    let onOpenDetail: (() -> Void)?
+
+    private var summaryText: String {
+        if let headlineText = viewModel.headlineText {
+            return headlineText
+        }
+
+        if let primaryInsight = viewModel.primaryInsight {
+            return primaryInsight.title
+        }
+
+        return viewModel.state.summary
+    }
+
+    private var driverChips: [SQInsightDriver] {
+        Array(viewModel.drivers.prefix(3))
+    }
+
+    var body: some View {
+        Button {
+            onOpenDetail?()
+        } label: {
+            HStack(alignment: .center, spacing: .SQSpace.l) {
+                SQLifeScoreOrbView(viewModel: viewModel, size: 118, scoreFont: .title1)
+                    .frame(width: 124, height: 124)
+
+                VStack(alignment: .leading, spacing: .SQSpace.m) {
+                    HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
+                        Text("Life Score")
+                            .sqFont(.title2)
+                            .sqForegroundColor(.textPrimary)
+
+                        SQImageView(
+                            image: .init(
+                                symbol: .infoCircle,
+                                symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                            )
+                        )
+                        .frame(width: 12, height: 12)
+
+                        Spacer(minLength: 0)
+
+                        if onOpenDetail != nil {
+                            SQDashboardViewMoreLabel()
+                        }
+                    }
+
+                    Text(summaryText)
+                        .sqFont(.bodySmall)
+                        .sqForegroundColor(.textSecondary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !driverChips.isEmpty {
+                        HStack(spacing: .SQSpace.s) {
+                            ForEach(driverChips) { driver in
+                                SQDashboardDriverPill(driver: driver)
+                            }
+                        }
+                    } else {
+                        Text(viewModel.state.title)
+                            .sqFont(.bodySmallSemiBold)
+                            .sqForegroundColor(viewModel.state.primaryColor)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.SQSpace.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
+        }
+        .buttonStyle(.plain)
+        .disabled(onOpenDetail == nil)
+    }
+}
+
+private struct SQDashboardDriverPill: View {
+    let driver: SQInsightDriver
+
+    private var color: SQColor {
+        driver.direction == .supportive ? .dashboardGlowMint : .colorErrorRed
+    }
+
+    private var stateText: String {
+        driver.direction == .supportive ? "Helping" : "Hurting"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(driver.title)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Text(stateText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(color)
+        }
+        .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+        .padding(.horizontal, .SQSpace.s)
+        .padding(.vertical, .SQSpace.s)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.96))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
+                        .stroke(color.color.opacity(SQColor.isDarkMode ? 0.24 : 0.18), lineWidth: 1)
+                }
+        }
+    }
+}
+
 struct SQLifeScoreRecentChangesCard: View {
     let changes: [SQInsightChange]
     let onAccessoryTap: (() -> Void)?

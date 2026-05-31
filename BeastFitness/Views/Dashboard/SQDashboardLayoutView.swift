@@ -16,7 +16,7 @@ struct SQDashboardLayoutView: View {
                     .listRowBackground(Color.clear)
             }
 
-            Section("Sections") {
+            Section("Cards") {
                 ForEach(controller.editableGroups) { group in
                     groupRow(group)
                         .listRowInsets(.init(top: .SQSpace.s, leading: .SQSpace.l, bottom: .SQSpace.s, trailing: .SQSpace.l))
@@ -30,7 +30,7 @@ struct SQDashboardLayoutView: View {
         .background {
             SQSheetBackground()
         }
-        .navigationTitle("Customize Dashboard")
+        .navigationTitle("Customize Cards")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -83,11 +83,11 @@ struct SQDashboardLayoutView: View {
                     }
 
                 VStack(alignment: .leading, spacing: .SQSpace.xs) {
-                    Text("Reorder and hide dashboard content")
+                    Text("Reorder and hide dashboard cards")
                         .sqFont(.bodySemiBold)
                         .sqForegroundColor(.textPrimary)
 
-                    Text("Drag sections into the order you want, hide anything you don’t want on the dashboard, and tap into a section to manage its subsections. New app sections fall back to their built-in default priority.")
+                    Text("Drag cards into the order you want and hide anything you don’t need on the daily dashboard. New cards fall back to their built-in default priority.")
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -120,7 +120,7 @@ struct SQDashboardLayoutView: View {
                 controller.displaySubsections(for: group.id)
             } label: {
                 HStack(spacing: .SQSpace.xs) {
-                    Text("Subsections")
+                    Text("Cards")
                         .sqFont(.bodyExtraSmall)
                         .sqForegroundColor(.textPrimary)
 
@@ -173,7 +173,7 @@ struct SQDashboardSubsectionLayoutView: View {
                         .listRowBackground(Color.clear)
                 }
 
-                Section("Subsections") {
+                Section("Cards") {
                     ForEach(group.subsections) { subsection in
                         subsectionRow(subsection, in: group)
                             .listRowInsets(.init(top: .SQSpace.s, leading: .SQSpace.l, bottom: .SQSpace.s, trailing: .SQSpace.l))
@@ -190,17 +190,17 @@ struct SQDashboardSubsectionLayoutView: View {
         .background {
             SQSheetBackground()
         }
-        .navigationTitle(group?.title ?? "Subsections")
+        .navigationTitle(group?.title ?? "Cards")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private func subsectionOverviewCard(_ group: SQDashboardLayoutEditableGroup) -> some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            Text("Reorder and hide \(group.title.lowercased()) content")
+            Text("Reorder and hide \(group.title.lowercased())")
                 .sqFont(.bodySemiBold)
                 .sqForegroundColor(.textPrimary)
 
-            Text("Drag subsections into the order you want for \(group.title). Hide any subsection you don’t want on the dashboard.")
+            Text("Drag cards into the order you want. Hide any card you don’t want on the dashboard.")
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -223,7 +223,7 @@ struct SQDashboardSubsectionLayoutView: View {
                     .sqFont(.body)
                     .sqForegroundColor(.textPrimary)
 
-                Text(subsection.isHidden ? "Hidden in \(group.title)" : "Shown in \(group.title)")
+                Text(subsection.isHidden ? "Hidden on the dashboard" : "Shown on the dashboard")
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textSecondary)
             }

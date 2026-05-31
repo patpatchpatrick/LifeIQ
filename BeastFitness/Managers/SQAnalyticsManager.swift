@@ -479,6 +479,8 @@ private extension SQNavRoute.DashboardRoute {
             properties["insight_category"] = model.category.rawValue.analyticsKey
         case .dashboardSubsectionLayout(_, let groupId):
             properties["group_id"] = groupId
+        case .dashboardDetail(let controller):
+            properties["detail_title"] = controller.title.analyticsKey
         default:
             break
         }
@@ -514,6 +516,8 @@ private extension SQNavRoute.DashboardRoute {
             return "leaderboard"
         case .sleepPhaseTrends:
             return "sleep_phase_trends"
+        case .dashboardDetail:
+            return "dashboard_detail"
         case .launchTutorial:
             return "launch_tutorial"
         case .metricDetail:

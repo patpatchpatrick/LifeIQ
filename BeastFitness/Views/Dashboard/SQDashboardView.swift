@@ -30,66 +30,61 @@ struct SQDashboardView: View {
     var mainScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Dashboard controls
-                ZStack {
-                    HStack {
+                HStack(alignment: .center, spacing: .SQSpace.m) {
+                    Text("LifeIQ")
+                        .sqFont(.titleNav)
+                        .sqForegroundColor(.textPrimary)
+                        .contentShape(Rectangle())
+                        .onLongPressGesture(minimumDuration: 0.9) {
+                            controller.handleViewLabTrigger()
+                        }
+
+                    Spacer()
+
+                    HStack(spacing: .SQSpace.m) {
+                        Button {
+                            controller.handleLayoutButtonTap()
+                        } label: {
+                            SQImageView(
+                                image: .init(
+                                    symbol: .sliderHorizontal3,
+                                    symbolStyle: .colorWithFont(.textPrimary, font: .body)
+                                )
+                            )
+                            .frame(width: 20, height: 20)
+                        }
+                        .accessibilityLabel("Customize dashboard")
+
                         SQDropDownMenu(
                             menuViewModel: controller.timeRangeMenuViewModel,
                             isDisabled: false
                         )
 
-                        Spacer()
-
-                        HStack(spacing: .SQSpace.m) {
-                            Button {
-                                controller.handleLayoutButtonTap()
-                            } label: {
+                        Button {
+                            controller.handleAuthButtonTap()
+                        } label: {
+                            if let user = controller.userState.loggedInUser {
+                                SQUserIcon(user: user, size: 30)
+                            } else {
                                 SQImageView(
                                     image: .init(
-                                        symbol: .sliderHorizontal3,
+                                        symbol: controller.authButtonSymbol,
                                         symbolStyle: .colorWithFont(.textPrimary, font: .body)
                                     )
                                 )
-                                .frame(width: 20, height: 20)
+                                .frame(width: 28, height: 28)
                             }
-                            .accessibilityLabel("Customize dashboard")
-
-                            Button {
-                                controller.handleAuthButtonTap()
-                            } label: {
-                                if let user = controller.userState.loggedInUser {
-                                    SQUserIcon(user: user, size: 30)
-                                } else {
-                                    SQImageView(
-                                        image: .init(
-                                            symbol: controller.authButtonSymbol,
-                                            symbolStyle: .colorWithFont(.textPrimary, font: .body)
-                                        )
-                                    )
-                                    .frame(width: 28, height: 28)
-                                }
-                            }
-                            .accessibilityLabel(controller.userState.isLoggedIn ? "Profile" : "Sign in")
                         }
+                        .accessibilityLabel(controller.userState.isLoggedIn ? "Profile" : "Sign in")
                     }
-
-                    Text("LifeIQ")
-                        .sqFont(.title2)
-                        .sqForegroundColor(.textPrimary)
-                        .opacity(SQColor.isDarkMode ? 0.24 : 0.18)
-                        .contentShape(Rectangle())
-                        .onLongPressGesture(minimumDuration: 0.9) {
-                            controller.handleViewLabTrigger()
-                        }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 10)
-                .padding(.bottom, 10)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
 
                 if let lifeScoreViewModel = displayedLifeScoreViewModel {
-                    SQLifeScoreHeroCard(
+                    SQLifeScoreCommandCard(
                         viewModel: lifeScoreViewModel,
-                        timeRange: controller.state.selectedTimeRange,
                         onOpenDetail: controller.lifeScoreViewModel != nil && !controller.state.isLoading
                             ? { controller.handleLifeScoreTap() }
                             : nil
@@ -130,12 +125,10 @@ struct SQDashboardView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                 } else {
-                    // Main sections - always rendered so mock data shows as a redacted skeleton
-                    LazyVStack(spacing: .SQSpace.s, pinnedViews: [.sectionHeaders]) {
-                        ForEach(controller.state.sectionGroups) { sectionGroup in
-                            SQDashboardSectionGroupView(sectionGroup: sectionGroup)
-                        }
-                    }
+                    SQDashboardGridView(
+                        controller: controller,
+                        lifeScoreViewModel: displayedLifeScoreViewModel
+                    )
                 }
 
                 Spacer()
