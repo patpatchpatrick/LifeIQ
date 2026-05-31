@@ -393,12 +393,7 @@ private extension SQDashboardGridView {
             title: "Heart Overview",
             icon: .heart,
             accentColor: .colorFadedRed,
-            onViewMore: {
-                controller.displayDashboardDetail(
-                    title: "Heart Overview",
-                    sectionIds: ["heart-rate", "heart-access-warning", "heart-empty-warning"]
-                )
-            }
+            onViewMore: nil
         ) {
             if let row {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
@@ -455,7 +450,7 @@ private struct SQDashboardGridCard<Content: View>: View {
     let title: String
     let icon: SQImageSymbol
     let accentColor: SQColor
-    let onViewMore: () -> Void
+    let onViewMore: (() -> Void)?
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -484,10 +479,12 @@ private struct SQDashboardGridCard<Content: View>: View {
 
             Spacer(minLength: 0)
 
-            Button(action: onViewMore) {
-                SQDashboardViewMoreLabel()
+            if let onViewMore {
+                Button(action: onViewMore) {
+                    SQDashboardViewMoreLabel()
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.SQSpace.l)
         .frame(maxWidth: .infinity, minHeight: 166, alignment: .topLeading)

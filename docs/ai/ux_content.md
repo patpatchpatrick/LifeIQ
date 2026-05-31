@@ -37,6 +37,9 @@ The dashboard is a scanning surface.
 - Prefer metric values, trend labels, confidence tags, and short insight summaries.
 - Move deeper explanation into sheets/detail screens.
 - Avoid placing instructions in the UI when the control itself is understandable.
+- Make the primary value or takeaway visually dominant over the card title.
+- Treat repeated labels, timestamps, units, and action chrome as secondary or tertiary text unless they are the main thing the user needs to act on.
+- Use color and weight to highlight meaningful change, not to decorate every card.
 
 ## Insight Content
 
@@ -70,6 +73,8 @@ Good empty states:
 - distinguish empty data from an error or failed load
 
 Loading states should be calm and short. Avoid fake precision.
+
+When a visible surface is repopulating after an async change such as a time range or filter update, use a redacted loading state rather than leaving stale values fully active. This keeps the UI from feeling broken or laggy while preserving the user's mental model of the layout.
 
 ## Detail Screens
 

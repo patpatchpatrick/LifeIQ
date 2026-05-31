@@ -29,13 +29,12 @@ struct SQDropDownMenuOverlayCard: View {
         .padding(.vertical, 6)
         .background(
             Capsule(style: .continuous)
-                .fill(SQColor.backgroundSecondary.color.opacity(SQColor.isDarkMode ? 0.88 : 0.94))
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.92 : 0.96))
         )
         .overlay(
             Capsule(style: .continuous)
-                .stroke(SQColor.dashboardGlowBlue.color.opacity(0.4), lineWidth: 1)
+                .stroke(SQColor.glassStroke.color.opacity(0.8), lineWidth: 1)
         )
-        .shadow(color: SQColor.dashboardGlowBlue.color.opacity(0.14), radius: 10, x: 0, y: 4)
         .allowsHitTesting(false)
     }
 
@@ -92,7 +91,9 @@ struct SQDropDownMenuOverlayCard: View {
                 .buttonStyle(.plain)
 
                 if index < menu.items.count - 1 {
-                    Divider()
+                    Rectangle()
+                        .fill(SQColor.glassStroke.color.opacity(0.72))
+                        .frame(height: 1)
                         .padding(.leading, 16)
                 }
             }
@@ -116,6 +117,18 @@ struct SQDropDownMenuOverlayCard: View {
         }
         .frame(minWidth: 160)
         .fixedSize(horizontal: false, vertical: true)
-        .sqGlassSurface(level: .floating, cornerRadius: .SQCornerRadius.xl)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.backgroundTertiaryDark.color.opacity(SQColor.isDarkMode ? 0.96 : 0.98))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.62 : 0.86))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.86 : 0.72), lineWidth: 1)
+                }
+        }
+        .shadow(color: Color.black.opacity(SQColor.isDarkMode ? 0.18 : 0.08), radius: 14, x: 0, y: 8)
     }
 }

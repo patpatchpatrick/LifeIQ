@@ -52,6 +52,7 @@ final class SQDashboardController: SQDashboardInterface {
     let dashboardLayoutService: SQDashboardLayoutServicing
     private(set) var hasLoadedUI = false
     private var isLoadUIInProgress = false
+    private var isApplyingDetailTimeRangeChange = false
     private var pendingForcedRefresh = false
     private var pendingRefreshShowsLoadingState = false
     private var pendingRefreshSuppressesErrorAlert = false
@@ -190,24 +191,79 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     func displayDashboardDetail(title: String, sectionIds: [String]) {
+        let sections = clonedDetailSections(sectionIds: sectionIds)
+        guard !sections.isEmpty else { return }
+
+        let controller = SQDashboardDetailController(
+            title: title,
+            sections: sections,
+            selectedTimeRange: state.selectedTimeRange,
+            showsTimeRangePicker: true
+        ) { [weak self] selectedRange, detailController in
+            guard let self else { return }
+            Task {
+                await self.updateDashboardDetail(
+                    detailController,
+                    selectedRange: selectedRange,
+                    sectionIds: sectionIds
+                )
+            }
+        }
+
+        state.hub.domainEvents.send(
+            .pushDashboardRoute(
+                .dashboardDetail(controller: controller)
+            )
+        )
+    }
+
+    private func clonedDetailSections(sectionIds: [String]) -> [SQDashboardSubsectionViewModel] {
         let sections = state.uncustomizedSectionGroups
             .flatMap(\.sections)
             .filter { sectionIds.contains($0.id) }
             .map { section -> SQDashboardSubsectionViewModel in
                 let clone = section.cloned()
                 clone.isCollapsed = false
+                if clone.id == "metrics" {
+                    clone.maxVisibleRows = nil
+                }
                 return clone
             }
 
-        guard !sections.isEmpty else { return }
+        return sections
+    }
 
-        state.hub.domainEvents.send(
-            .pushDashboardRoute(
-                .dashboardDetail(
-                    controller: .init(title: title, sections: sections)
-                )
-            )
+    private func updateDashboardDetail(
+        _ detailController: SQDashboardDetailController,
+        selectedRange: AppTimeRange,
+        sectionIds: [String]
+    ) async {
+        guard let modelContext = SQAppState.shared.modelContext else {
+            detailController.setLoading(false)
+            return
+        }
+
+        defer {
+            detailController.setLoading(false)
+        }
+
+        isApplyingDetailTimeRangeChange = true
+        state.selectedTimeRange = selectedRange
+        isApplyingDetailTimeRangeChange = false
+
+        await loadUI(
+            for: modelContext,
+            shouldForceRefresh: true,
+            showLoadingState: true
         )
+
+        let updatedSections = clonedDetailSections(sectionIds: sectionIds)
+        if !updatedSections.isEmpty {
+            detailController.updateSections(
+                updatedSections,
+                selectedTimeRange: selectedRange
+            )
+        }
     }
 
     func displayWorkoutDetail(_ workout: SQWorkoutSessionable) {
@@ -388,6 +444,7 @@ final class SQDashboardController: SQDashboardInterface {
         state.selectedTimeRangePublisher
             .sink { [weak self] _ in
                 guard let self else { return }
+                guard !self.isApplyingDetailTimeRangeChange else { return }
                 SQLogger.shared.log("Time range changed, reloading dashboard", .debug, context: .dashboard)
                 guard let modelContext = SQAppState.shared.modelContext else { return }
                 Task {
@@ -529,10 +586,11 @@ final class SQDashboardController: SQDashboardInterface {
         if showLoadingState {
             // Show mock skeleton while real data loads.
             let mockGroups = SQDashboardSectionGroupViewModel.mock(for: state.selectedTimeRange)
+            let mockGridGroups = Self.buildDashboardGridLayoutGroups()
             state.updateUncustomizedSectionGroups(mockGroups)
-            availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGroups)
+            availableLayoutGroups = dashboardLayoutService.descriptors(from: mockGridGroups)
             state.updateAvailableLayoutGroups(availableLayoutGroups)
-            state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGroups))
+            state.updateSectionGroups(to: dashboardLayoutService.apply(to: mockGridGroups))
             state.setLoading(true)
             state.updateLoadingProgress(0.05)
         }
@@ -1548,8 +1606,20 @@ final class SQDashboardController: SQDashboardInterface {
         workouts: [SQWorkoutSessionable],
         allTimeWorkouts: [SQWorkoutSessionable]
     ) async -> SQDashboardSubsectionViewModel? {
-        // Skip if no workouts
-        guard !workouts.isEmpty else { return nil }
+        guard !workouts.isEmpty else {
+            return SQDashboardSubsectionViewModel(
+                id: "activities",
+                title: "Activities",
+                defaultPriority: 20,
+                rowsByFilter: ["All": []],
+                emptyState: .init(
+                    title: "No activities in this range",
+                    subtitle: "Try a broader time range, or record a workout to populate this view.",
+                    icon: .figureRun,
+                    onTap: nil
+                )
+            )
+        }
 
         // Extract unique activity types from workouts
         var uniqueActivityTypes = Set<String>()

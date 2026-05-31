@@ -199,15 +199,15 @@ indirect enum SQColor {
                 : UIColor(hexString: "#E7F0FA")!
         case .sheetGradientStart:
             return Self.isDarkMode
-                ? UIColor(hexString: "#071118")!
+                ? UIColor(hexString: "#040A0E")!
                 : UIColor(hexString: "#F5F9FA")!
         case .sheetGradientMid:
             return Self.isDarkMode
-                ? UIColor(hexString: "#0D1A22")!
+                ? UIColor(hexString: "#08141A")!
                 : UIColor(hexString: "#EDF4F4")!
         case .sheetGradientEnd:
             return Self.isDarkMode
-                ? UIColor(hexString: "#13242B")!
+                ? UIColor(hexString: "#0D2027")!
                 : UIColor(hexString: "#EAF0F6")!
         case .dashboardGlowBlue:
             return Self.isDarkMode
@@ -229,16 +229,16 @@ indirect enum SQColor {
         // MARK: - Glass Surfaces
         case .glassCardTint:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.06)
-                : UIColor.white.withAlphaComponent(0.58)
+                ? UIColor.white.withAlphaComponent(0.045)
+                : UIColor.white.withAlphaComponent(0.50)
         case .glassPopoverTint:
             return Self.isDarkMode
                 ? UIColor.white.withAlphaComponent(0.12)
                 : UIColor.white.withAlphaComponent(0.72)
         case .glassStroke:
             return Self.isDarkMode
-                ? UIColor.white.withAlphaComponent(0.10)
-                : UIColor.white.withAlphaComponent(0.52)
+                ? UIColor.white.withAlphaComponent(0.075)
+                : UIColor.white.withAlphaComponent(0.42)
         case .glassStrokeStrong:
             return Self.isDarkMode
                 ? UIColor.white.withAlphaComponent(0.18)

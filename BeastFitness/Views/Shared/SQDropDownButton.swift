@@ -44,6 +44,7 @@ struct SQDropDownButton: View {
     
     var body: some View {
         button
+            .buttonStyle(.plain)
             .padding(.horizontal, .SQSpace.m)
             .padding(.vertical, .SQSpace.s)
             .if(showBackground) {

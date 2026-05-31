@@ -39,6 +39,8 @@ This file tracks durable implementation and product rules for AI assistants work
 - Use `SQColor`, `SQFont`, and `SQImageSymbol` wrappers rather than hardcoded visual values or system image strings.
 - User-facing errors must use the shared alert/modal/toast systems. Do not handle visible failures with only logs, disabled controls, or silent returns.
 - Major screens and major dashboard sections should include explicit empty states for no data, missing permissions, locked access, and first-run setup where applicable.
+- Visual hierarchy should favor subtle containers and prominent data: card backgrounds/borders stay quiet, labels and repeated chrome use secondary/tertiary text, and the key value/takeaway gets the strongest weight, size, color, or placement.
+- Async data-dependent surfaces should show redacted loading placeholders while visible content is being repopulated, especially after time range or filter changes.
 
 ## Dashboard Customization
 

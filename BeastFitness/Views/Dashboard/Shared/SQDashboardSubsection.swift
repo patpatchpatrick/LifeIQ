@@ -42,7 +42,7 @@ struct SQDashboardSubsection<Content: View>: View {
                 HStack {
                     Text(title)
                         .sqFont(.title4)
-                        .sqForegroundColor(.textPrimary)
+                        .sqForegroundColor(.textSecondary)
 
                     if let titleButton = titleButton {
                         Button {
@@ -52,7 +52,7 @@ struct SQDashboardSubsection<Content: View>: View {
                                 SQImageView(
                                     image: .init(
                                         symbol: titleButton.icon,
-                                        symbolStyle: .colorWithFont(.textPrimary, font: .headerSmall)
+                                        symbolStyle: .colorWithFont(.textSecondary, font: .headerSmall)
                                     )
                                 )
                                 .frame(width: 10, height: 10)
@@ -60,7 +60,7 @@ struct SQDashboardSubsection<Content: View>: View {
                                 if let title = titleButton.title {
                                     Text(title)
                                         .sqFont(.bodyExtraSmall)
-                                        .sqForegroundColor(.textPrimary)
+                                        .sqForegroundColor(.textSecondary)
                                 }
                             }
                             .padding(.vertical, 6)
@@ -86,7 +86,7 @@ struct SQDashboardSubsection<Content: View>: View {
                     SQImageView(
                         image: .init(
                             symbol: isCollapsed ? .chevronDown : .chevronUp,
-                            symbolStyle: .colorWithFont(.textPrimary, font: .bodySmall)
+                            symbolStyle: .colorWithFont(.textSecondary, font: .bodySmall)
                         )
                     )
                     .frame(width: 12, height: 12)

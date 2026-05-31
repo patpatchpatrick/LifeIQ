@@ -82,6 +82,15 @@ Empty states should:
 - stay concise and avoid setup walls on the main dashboard
 - distinguish empty data from failed data
 
+## Loading States
+
+Surfaces that depend on async or background data loading should show an intentional loading state whenever the visible content is being repopulated.
+
+- Prefer redacted placeholders for existing rows/cards/sections so the layout remains stable while data refreshes.
+- Disable interactive controls that would conflict with the in-flight refresh.
+- Keep stable controls visible when useful, but avoid showing stale data as if it is final.
+- Do not leave a sheet, dashboard, or detail screen visually unchanged while a time range, filter, or background data reload is still pending.
+
 ## Forms and Inputs
 
 - Default to `SQUITextField` for single-line inputs.
@@ -96,6 +105,19 @@ Empty states should:
 - Avoid adding new palettes or surface styles for one screen.
 - Keep cards compact unless the content truly needs space.
 - Use the orb/Que as a meaningful status or brand object, not random decoration.
+
+## Visual Hierarchy Direction
+
+LifeIQ should use subtle containers and stronger content hierarchy. The screen background, section backgrounds, and card backgrounds should stay close in value so containers group content without competing with it. Important user data should be what pops.
+
+- Prefer quiet card chrome: low-contrast fills, restrained borders, minimal shadows, and soft highlights.
+- Let values, trends, selected states, and high-priority statuses carry emphasis.
+- Use secondary or tertiary text for card titles, labels, helper copy, timestamps, and repeated chrome like `View more`.
+- Use primary text, bolder weights, larger type, or accent color for the most important value or takeaway in a card.
+- Avoid pairing card titles and card values at the same bold white weight; this makes the hierarchy unclear.
+- Use accent color sparingly for signal: positive/negative trend, selected state, score state, confidence, or an actionable change.
+- Keep dense surfaces closer to clean finance/market dashboards than decorative wellness cards: scannable rows, crisp values, muted labels, and low visual noise.
+- Prefer shared surfaces such as `sqGlassSurface(level: .card)` over one-off card backgrounds so this restrained treatment stays consistent across screens.
 
 ## When to Add a New Shared Component
 
