@@ -47,6 +47,10 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         mode.title
     }
 
+    func close() {
+        hub.domainEvents.send(.popDashboardRoute)
+    }
+
     var isPremiumLocked: Bool {
         mode.requiresPremium
             && !SQSubscriptionManager.hasPremiumAccess

@@ -474,9 +474,9 @@ private extension SQNavRoute.DashboardRoute {
         var properties: [String: Any] = ["route": analyticsRouteName]
 
         switch self {
-        case .insightDetail(let model, _):
-            properties["insight_id"] = model.id
-            properties["insight_category"] = model.category.rawValue.analyticsKey
+        case .insightDetail(let controller):
+            properties["insight_id"] = controller.model.id
+            properties["insight_category"] = controller.model.category.rawValue.analyticsKey
         case .dashboardSubsectionLayout(_, let groupId):
             properties["group_id"] = groupId
         case .dashboardDetail(let controller):

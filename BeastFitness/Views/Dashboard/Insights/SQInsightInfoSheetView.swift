@@ -7,9 +7,52 @@
 
 import SwiftUI
 
-struct SQInsightInfoSheetView: View {
+@MainActor
+@Observable
+final class SQInsightInfoController: Identifiable {
+    let id = UUID().uuidString
     let model: SQInsight
-    let explorerController: SQInsightExplorerController?
+    private(set) var explorerController: SQInsightExplorerController?
+    private(set) var isLoading: Bool
+    @ObservationIgnored private let makeExplorerController: (() -> SQInsightExplorerController?)?
+    @ObservationIgnored private var hasLoadedExplorer = false
+
+    init(
+        model: SQInsight,
+        explorerController: SQInsightExplorerController? = nil,
+        makeExplorerController: (() -> SQInsightExplorerController?)? = nil
+    ) {
+        self.model = model
+        self.explorerController = explorerController
+        self.makeExplorerController = makeExplorerController
+        self.isLoading = explorerController == nil && makeExplorerController != nil
+    }
+
+    func loadExplorerIfNeeded() async {
+        guard !hasLoadedExplorer else { return }
+        hasLoadedExplorer = true
+        guard let makeExplorerController else {
+            isLoading = false
+            return
+        }
+
+        isLoading = true
+        await Task.yield()
+        explorerController = makeExplorerController()
+        isLoading = false
+    }
+}
+
+struct SQInsightInfoSheetView: View {
+    @Bindable var controller: SQInsightInfoController
+
+    private var model: SQInsight {
+        controller.model
+    }
+
+    private var explorerController: SQInsightExplorerController? {
+        controller.explorerController
+    }
 
     private var effectTone: SQDashboardTrendTone {
         switch model.effect {
@@ -115,10 +158,15 @@ struct SQInsightInfoSheetView: View {
         }
         .navigationTitle("Insight")
         .navigationBarTitleDisplayMode(.inline)
+        .redacted(controller.isLoading, reason: .placeholder)
+        .disabled(controller.isLoading)
         .background {
             SQSheetBackground()
         }
         .tint(accentColor.color)
+        .task {
+            await controller.loadExplorerIfNeeded()
+        }
     }
 
     private func infoSection(title: String, text: String) -> some View {

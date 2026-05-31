@@ -12,15 +12,6 @@ struct SQLeaderboardView: View {
     @State var controller: SQLeaderboardController
     @Environment(\.modelContext) private var modelContext
 
-    var navTitleView: some View {
-        Text(controller.title)
-            .sqFont(.title2)
-            .sqForegroundColor(.textPrimary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.68)
-            .allowsTightening(true)
-    }
-
     // MARK: - Empty State
 
     var emptyStateView: some View {
@@ -201,29 +192,56 @@ struct SQLeaderboardView: View {
     }
 
     var navView: some View {
-        mainView
-            .redacted(controller.isLoading, reason: .placeholder)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle(controller.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    navTitleView
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    SQDropDownMenu(
-                        menuViewModel: controller.timeRangeMenuViewModel,
-                        isDisabled: controller.isLoading,
-                        showBackground: false
+        VStack(spacing: 0) {
+            header
+
+            mainView
+                .redacted(controller.isLoading, reason: .placeholder)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background {
+            SQSheetBackground()
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await controller.loadUI(for: modelContext)
+        }
+    }
+
+    var header: some View {
+        HStack(alignment: .center, spacing: .SQSpace.m) {
+            Button {
+                controller.close()
+            } label: {
+                SQImageView(
+                    image: .init(
+                        symbol: .chevronLeft,
+                        symbolStyle: .colorWithFont(.textPrimary, font: .body)
                     )
-                }
+                )
+                .frame(width: 18, height: 18)
             }
-            .background {
-                SQSheetBackground()
-            }
-            .task {
-                await controller.loadUI(for: modelContext)
-            }
+            .buttonStyle(.plain)
+            .frame(width: 32, height: 32)
+
+            Text(controller.title)
+                .sqFont(.title2)
+                .sqForegroundColor(.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+                .allowsTightening(true)
+
+            Spacer(minLength: .SQSpace.s)
+
+            SQDropDownMenu(
+                menuViewModel: controller.timeRangeMenuViewModel,
+                isDisabled: controller.isLoading
+            )
+            .unredacted()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 8)
     }
 
     var body: some View {

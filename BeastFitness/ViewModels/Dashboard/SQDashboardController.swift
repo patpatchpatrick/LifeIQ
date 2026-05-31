@@ -2652,20 +2652,8 @@ final class SQDashboardController: SQDashboardInterface {
             if let firstInsight = insights.first {
                 rows.append(SQDashboardInsightRowViewModel(
                     model: firstInsight,
-                    onInfoTap: { [weak state] in
-                        SQAnalyticsManager.shared.track(.insightOpened(
-                            insightId: firstInsight.id,
-                            insightType: firstInsight.familyKey.analyticsKey,
-                            sourceScreen: "dashboard",
-                            insightCategory: firstInsight.category.rawValue.analyticsKey
-                        ))
-                        state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
-                            model: firstInsight,
-                            explorerController: self.makeInsightExplorerController(
-                                input: explorerInput,
-                                insight: firstInsight
-                            )
-                        )))
+                    onInfoTap: { [weak self] in
+                        self?.displayInsightDetail(firstInsight, explorerInput: explorerInput)
                     }
                 ))
             }
@@ -2674,20 +2662,8 @@ final class SQDashboardController: SQDashboardInterface {
                 for insight in insights.dropFirst() {
                     rows.append(SQDashboardInsightRowViewModel(
                         model: insight,
-                        onInfoTap: { [weak state] in
-                            SQAnalyticsManager.shared.track(.insightOpened(
-                                insightId: insight.id,
-                                insightType: insight.familyKey.analyticsKey,
-                                sourceScreen: "dashboard",
-                                insightCategory: insight.category.rawValue.analyticsKey
-                            ))
-                            state?.hub.domainEvents.send(.pushDashboardRoute(.insightDetail(
-                                model: insight,
-                                explorerController: self.makeInsightExplorerController(
-                                    input: explorerInput,
-                                    insight: insight
-                                )
-                            )))
+                        onInfoTap: { [weak self] in
+                            self?.displayInsightDetail(insight, explorerInput: explorerInput)
                         }
                     ))
                 }
@@ -2786,6 +2762,34 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return sectionViewModel
+    }
+
+    private func displayInsightDetail(
+        _ insight: SQInsight,
+        explorerInput: SQHealthIntelligenceInput
+    ) {
+        SQAnalyticsManager.shared.track(.insightOpened(
+            insightId: insight.id,
+            insightType: insight.familyKey.analyticsKey,
+            sourceScreen: "dashboard",
+            insightCategory: insight.category.rawValue.analyticsKey
+        ))
+
+        let controller = SQInsightInfoController(
+            model: insight,
+            makeExplorerController: insight.supportsInsightExplorer
+                ? { [weak self] in
+                    self?.makeInsightExplorerController(
+                        input: explorerInput,
+                        insight: insight
+                    )
+                }
+                : nil
+        )
+
+        state.hub.domainEvents.send(
+            .pushDashboardRoute(.insightDetail(controller: controller))
+        )
     }
 
     private func buildInsightExplorerSubsection(input: SQHealthIntelligenceInput) -> SQDashboardSubsectionViewModel {

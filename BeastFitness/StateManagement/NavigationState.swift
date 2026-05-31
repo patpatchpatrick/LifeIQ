@@ -93,7 +93,7 @@ struct SQNavRoute {
         case workoutsList(workouts: [SQWorkoutSessionable], initialTimeRange: AppTimeRange? = nil)
         case workoutSummary(controller: SQWorkoutSummaryController)
         case workoutInsightDetail(controller: SQWorkoutInsightDetailController)
-        case insightDetail(model: SQInsight, explorerController: SQInsightExplorerController?)
+        case insightDetail(controller: SQInsightInfoController)
         case insightExplorer(controller: SQInsightExplorerController)
         case insightLibrary(controller: SQInsightLibraryController)
         case webContent(title: String, urlString: String)
@@ -128,8 +128,8 @@ struct SQNavRoute {
                 return "workoutSummary-\(controller.id)"
             case .workoutInsightDetail(let controller):
                 return "workoutInsightDetail-\(controller.id)"
-            case .insightDetail(let model, _):
-                return "insightDetail-\(model.id)"
+            case .insightDetail(let controller):
+                return "insightDetail-\(controller.id)"
             case .insightExplorer(let controller):
                 return "insightExplorer-\(controller.id)"
             case .insightLibrary(let controller):
