@@ -324,7 +324,8 @@ private extension SQDashboardGridView {
             if let timeRow {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
                     Text(timeRow.currentValueAndTrend.value)
-                        .sqFont(.title3)
+                        .sqFont(.title1)
+                        .monospacedDigit()
                         .sqForegroundColor(.textPrimary)
 
                     if let trend = timeRow.currentValueAndTrend.trend {
@@ -436,13 +437,13 @@ struct SQDashboardViewMoreLabel: View {
         HStack(spacing: 4) {
             Text("View more")
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textPrimary)
+                .sqForegroundColor(.textTertiary)
                 .lineLimit(1)
 
             SQImageView(
                 image: .init(
                     symbol: .chevronRight,
-                    symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                    symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
                 )
             )
             .frame(width: 9, height: 9)
@@ -467,10 +468,11 @@ private struct SQDashboardGridCard<Content: View>: View {
                     )
                 )
                 .frame(width: 18, height: 18)
+                .opacity(0.82)
 
                 Text(title)
-                    .sqFont(.bodyBold)
-                    .sqForegroundColor(.textPrimary)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
 
@@ -489,7 +491,14 @@ private struct SQDashboardGridCard<Content: View>: View {
         }
         .padding(.SQSpace.l)
         .frame(maxWidth: .infinity, minHeight: 166, alignment: .topLeading)
-        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl, showsShadow: false)
+        .background {
+            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.64 : 0.82))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.58 : 0.72), lineWidth: 1)
+                }
+        }
     }
 }
 
@@ -501,13 +510,14 @@ private struct SQDashboardPrimaryValue: View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(value)
                 .sqFont(.title1)
+                .monospacedDigit()
                 .sqForegroundColor(.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.74)
 
             Text(unit)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(.textTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
@@ -532,16 +542,18 @@ private struct SQDashboardMiniStat: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title.uppercased())
                 .sqFont(.headerSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(.textTertiary)
 
             if let value = value as? AttributedString {
                 Text(value)
-                    .sqFont(.bodySmallSemiBold)
+                    .sqFont(.bodySmallBold)
                     .sqForegroundColor(.textPrimary)
+                    .monospacedDigit()
                     .lineLimit(1)
             } else {
                 Text(value as? String ?? "")
-                    .sqFont(.bodySmallSemiBold)
+                    .sqFont(.bodySmallBold)
+                    .monospacedDigit()
                     .sqForegroundColor(.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
@@ -564,7 +576,7 @@ private struct SQDashboardMetricLine: View {
         HStack(alignment: .firstTextBaseline, spacing: .SQSpace.s) {
             Text(title)
                 .sqFont(.bodySmall)
-                .sqForegroundColor(.textPrimary)
+                .sqForegroundColor(.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
@@ -572,13 +584,15 @@ private struct SQDashboardMetricLine: View {
 
             Text(value)
                 .sqFont(.bodySmallSemiBold)
-                .sqForegroundColor(.textSecondary)
+                .monospacedDigit()
+                .sqForegroundColor(.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
             if let trailing {
                 Text(trailing)
-                    .sqFont(.bodyExtraSmall)
+                    .sqFont(.bodySmallSemiBold)
+                    .monospacedDigit()
                     .sqForegroundColor(trailingColor)
                     .lineLimit(1)
             }
@@ -594,7 +608,7 @@ private struct SQDashboardCardEmptyState: View {
         VStack(alignment: .leading, spacing: .SQSpace.s) {
             Text(title)
                 .sqFont(.bodySmallSemiBold)
-                .sqForegroundColor(.textPrimary)
+                .sqForegroundColor(.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(subtitle)
@@ -651,17 +665,18 @@ private struct SQDashboardTrendText: View {
         HStack(spacing: .SQSpace.xs) {
             Text(trend.prefix)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(.textTertiary)
 
             if let emphasizedValue = trend.emphasizedValue {
                 Text(emphasizedValue)
                     .sqFont(.bodySmallSemiBold)
+                    .monospacedDigit()
                     .sqForegroundColor(trend.tone.accentColor)
             }
 
             Text(trend.suffix)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(.textSecondary)
+                .sqForegroundColor(.textTertiary)
         }
         .lineLimit(1)
         .minimumScaleFactor(0.72)
