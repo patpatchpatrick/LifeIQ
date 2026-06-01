@@ -65,12 +65,14 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
+    private var lastLoadedLatestWorkoutPremiumInsightsModel: SQWorkoutPremiumInsightsModel?
     private var lastLoadedAllTimeWorkouts: [SQWorkoutSessionable] = []
     private var hasLoadedAllTimeWorkouts = false
     private let remoteConfigManager: SQRemoteConfigManaging
     var healthKitAccessCtaViewModel: SQCallToActionViewModel?
     var runtimeControlCtaViewModel: SQCallToActionViewModel?
     var lifeScoreViewModel: SQLifeScoreViewModel?
+    private(set) var latestWorkoutPremiumInsightsModel: SQWorkoutPremiumInsightsModel?
     let emailVerificationController: SQEmailVerificationController
     private(set) var emailVerificationRequirement: SQEmailVerificationRequirement?
 
@@ -311,6 +313,17 @@ final class SQDashboardController: SQDashboardInterface {
         state.displayLeaderboard(mode: leaderboardMode)
     }
 
+    func displayWorkoutScoreDetail(_ score: SQWorkoutPremiumInsightScore) {
+        displayWorkoutInsightDetail(score.detailModel)
+    }
+
+    func displayWorkoutScoreSubscription(source: String) {
+        SQSubscriptionManager.displaySubscriptionScreen(
+            source: source,
+            feature: "workout_scores"
+        )
+    }
+
     func handleSeeMoreInsightsTap() {
         guard state.selectedTimeRange == .today else { return }
         timeRangeMenuViewModel.defaultItem = .init(title: AppTimeRange.pastSevenDays.rawValue)
@@ -388,9 +401,19 @@ final class SQDashboardController: SQDashboardInterface {
                 lastLoadedAllTimeWorkouts = lastLoadedAllTimeWorkouts.map { workout in
                     workoutMap[workout.id] ?? workout
                 }
+                if let workoutId = latestWorkoutPremiumInsightsModel?.workoutId,
+                   workoutMap[workoutId] != nil {
+                    latestWorkoutPremiumInsightsModel = nil
+                    lastLoadedLatestWorkoutPremiumInsightsModel = nil
+                }
                 self.refreshFromGlobalContext()
             case .workoutsDeleted(let workoutMap):
                 lastLoadedAllTimeWorkouts = lastLoadedAllTimeWorkouts.filter { workoutMap[$0.id] == nil }
+                if let workoutId = latestWorkoutPremiumInsightsModel?.workoutId,
+                   workoutMap[workoutId] != nil {
+                    latestWorkoutPremiumInsightsModel = nil
+                    lastLoadedLatestWorkoutPremiumInsightsModel = nil
+                }
                 self.refreshFromGlobalContext()
             case .activeWorkoutUpdate:
                 break
@@ -990,6 +1013,10 @@ final class SQDashboardController: SQDashboardInterface {
                 priorTimeRange: priorTimeRange,
                 context: context
             )
+            latestWorkoutPremiumInsightsModel = await buildLatestWorkoutPremiumInsightsModel(
+                workouts: currentWorkouts,
+                allTimeWorkouts: allTimeWorkouts
+            )
             let gridLayoutGroups = Self.buildDashboardGridLayoutGroups()
             let appliedSectionGroups = dashboardLayoutService.apply(to: gridLayoutGroups)
             let updatedAvailableLayoutGroups = dashboardLayoutService.descriptors(from: gridLayoutGroups)
@@ -1004,6 +1031,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
             lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
+            lastLoadedLatestWorkoutPremiumInsightsModel = latestWorkoutPremiumInsightsModel
             lastLoadedAllTimeWorkouts = allTimeWorkouts
             hasLoadedAllTimeWorkouts = true
             lastSuccessfulLoadAt = .now
@@ -1028,6 +1056,7 @@ final class SQDashboardController: SQDashboardInterface {
             state.updateSectionGroups(to: lastLoadedSectionGroups)
             lifeScoreViewModel = lastLoadedLifeScoreViewModel
             healthKitAccessCtaViewModel = lastLoadedHealthKitAccessCtaViewModel
+            latestWorkoutPremiumInsightsModel = lastLoadedLatestWorkoutPremiumInsightsModel
 
             if showLoadingState {
                 state.setLoading(false)
@@ -1813,6 +1842,23 @@ final class SQDashboardController: SQDashboardInterface {
             title: "Performance Insights",
             defaultPriority: 5,
             rowsByFilter: ["All": [row as SQDashboardRowViewModel]]
+        )
+    }
+
+    private func buildLatestWorkoutPremiumInsightsModel(
+        workouts: [SQWorkoutSessionable],
+        allTimeWorkouts: [SQWorkoutSessionable]
+    ) async -> SQWorkoutPremiumInsightsModel? {
+        guard let latestWorkout = workouts.max(by: {
+            ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast)
+        }) else {
+            return nil
+        }
+
+        return await workoutScoreService.insights(
+            for: latestWorkout,
+            allTimeWorkouts: allTimeWorkouts,
+            isPremiumUnlocked: SQSubscriptionManager.hasPremiumAccess
         )
     }
 

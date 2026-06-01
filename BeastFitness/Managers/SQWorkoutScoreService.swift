@@ -50,6 +50,7 @@ struct SQWorkoutPremiumInsightScore: Identifiable {
 }
 
 struct SQWorkoutPremiumInsightsModel {
+    let workoutId: String
     let title: String
     let subtitle: String
     let badgeTitle: String
@@ -538,6 +539,7 @@ private extension SQWorkoutScoreService {
         lockedSubtitle: String
     ) -> SQWorkoutPremiumInsightsModel {
         SQWorkoutPremiumInsightsModel(
+            workoutId: scoredWorkout.workout.id,
             title: scoredWorkout.title,
             subtitle: scoredWorkout.subtitle,
             badgeTitle: "Premium Insight",

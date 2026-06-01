@@ -192,6 +192,8 @@ private extension SQDashboardGridView {
                             .frame(width: 9, height: 9)
                             .padding(.top, 4)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
 
@@ -283,6 +285,8 @@ private extension SQDashboardGridView {
                             )
                             .frame(width: 9, height: 9)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
 
@@ -299,6 +303,20 @@ private extension SQDashboardGridView {
                         if let calories = workout.totalCalories {
                             SQDashboardMiniStat(title: "Calories", value: "\(Int(calories.rounded()))")
                         }
+                    }
+
+                    if let scoreModel = controller.latestWorkoutPremiumInsightsModel {
+                        SQDashboardLatestWorkoutScorePreview(
+                            model: scoreModel,
+                            onScoreTap: { score in
+                                controller.displayWorkoutScoreDetail(score)
+                            },
+                            onLockedTap: {
+                                controller.displayWorkoutScoreSubscription(
+                                    source: "dashboard_latest_workout_score_preview"
+                                )
+                            }
+                        )
                     }
                 }
             } else {
@@ -584,6 +602,125 @@ private struct SQDashboardMiniStat: View {
                     .minimumScaleFactor(0.78)
             }
         }
+    }
+}
+
+private struct SQDashboardLatestWorkoutScorePreview: View {
+    let model: SQWorkoutPremiumInsightsModel
+    let onScoreTap: (SQWorkoutPremiumInsightScore) -> Void
+    let onLockedTap: () -> Void
+
+    private var isLocked: Bool {
+        model.availability == .locked
+    }
+
+    private var lockedSubtitle: String? {
+        model.lockedSubtitle
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.s) {
+            HStack(spacing: .SQSpace.xs) {
+                Text("Scores")
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textTertiary)
+
+                if isLocked {
+                    SQImageView(
+                        image: .init(
+                            symbol: .lockFill,
+                            symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
+                        )
+                    )
+                    .frame(width: 9, height: 9)
+                }
+            }
+
+            ZStack {
+                HStack(spacing: .SQSpace.s) {
+                    ForEach(model.scores.prefix(2)) { score in
+                        scoreChip(score)
+                    }
+                }
+                .blur(radius: isLocked ? 4.5 : 0)
+                .opacity(isLocked ? 0.72 : 1)
+
+                if isLocked {
+                    Button(action: onLockedTap) {
+                        HStack(spacing: .SQSpace.xs) {
+                            SQImageView(
+                                image: .init(
+                                    symbol: .lockFill,
+                                    symbolStyle: .colorWithFont(.textPrimary, font: .bodyExtraSmall)
+                                )
+                            )
+                            .frame(width: 10, height: 10)
+
+                            Text("Unlock")
+                                .sqFont(.bodySmallSemiBold)
+                                .sqForegroundColor(.textPrimary)
+                        }
+                        .padding(.horizontal, .SQSpace.s)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule(style: .continuous))
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .stroke(SQColor.glassStrokeStrong.color.opacity(0.48), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if isLocked, let lockedSubtitle {
+                Text(lockedSubtitle)
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textTertiary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+            }
+        }
+    }
+
+    private func scoreChip(_ score: SQWorkoutPremiumInsightScore) -> some View {
+        Button {
+            if isLocked {
+                onLockedTap()
+            } else {
+                onScoreTap(score)
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(score.title.uppercased())
+                    .sqFont(.headerSmall)
+                    .sqForegroundColor(.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(score.value)")
+                        .sqFont(.bodySmallBold)
+                        .monospacedDigit()
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("/100")
+                        .sqFont(.bodyExtraSmall)
+                        .sqForegroundColor(.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, .SQSpace.s)
+            .padding(.vertical, 7)
+            .background {
+                RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                    .fill(score.accentColor.color.opacity(SQColor.isDarkMode ? 0.12 : 0.10))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
+                            .stroke(score.accentColor.color.opacity(SQColor.isDarkMode ? 0.28 : 0.20), lineWidth: 1)
+                    }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
