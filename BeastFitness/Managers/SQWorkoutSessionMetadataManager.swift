@@ -36,6 +36,10 @@ actor SQWorkoutSessionMetadataManager {
         heartRateZoneSummaryCache[sourceId] = summary
     }
 
+    func removeCachedHeartRateZoneSummary(for sourceId: String) {
+        heartRateZoneSummaryCache.removeValue(forKey: sourceId)
+    }
+
     func invalidate() {
         metricCache.removeAll()
         heartRateZoneSummaryCache.removeAll()

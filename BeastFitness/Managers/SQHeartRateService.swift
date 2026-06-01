@@ -108,6 +108,18 @@ struct SQHeartRateWorkoutZoneSummary: Sendable {
     let recordedDurationSeconds: Double
 }
 
+private extension SQHeartRateWorkoutZoneSummary {
+    var hasPlausibleHeartRateValues: Bool {
+        let plausibleHeartRateRange: ClosedRange<Double> = 25...240
+        return plausibleHeartRateRange.contains(minimumObservedHeartRate)
+            && plausibleHeartRateRange.contains(averageHeartRate)
+            && plausibleHeartRateRange.contains(maximumObservedHeartRate)
+            && minimumObservedHeartRate <= averageHeartRate
+            && averageHeartRate <= maximumObservedHeartRate
+            && recordedDurationSeconds > 0
+    }
+}
+
 @MainActor
 protocol SQHeartRateServicing {
     func buildDashboardRowViewModel(
@@ -183,7 +195,16 @@ final class SQHeartRateService: SQHeartRateServicing {
 
     func buildWorkoutZoneSummary(for workout: SQWorkoutSessionable) async -> SQHeartRateWorkoutZoneSummary? {
         if let cached = await SQWorkoutSession.metadataManager.cachedHeartRateZoneSummary(for: workout.id) {
-            return cached
+            if cached.hasPlausibleHeartRateValues {
+                return cached
+            }
+
+            await SQWorkoutSession.metadataManager.removeCachedHeartRateZoneSummary(for: workout.id)
+            SQLogger.shared.log(
+                "Discarded implausible cached workout HR zone summary for \(workout.id): avg=\(cached.averageHeartRate), min=\(cached.minimumObservedHeartRate), max=\(cached.maximumObservedHeartRate)",
+                .debug,
+                context: .healthKit
+            )
         }
 
         do {
@@ -256,6 +277,15 @@ final class SQHeartRateService: SQHeartRateServicing {
                 maximumObservedHeartRate: maximumObservedHeartRate,
                 recordedDurationSeconds: recordedDurationSeconds
             )
+
+            guard summary.hasPlausibleHeartRateValues else {
+                SQLogger.shared.log(
+                    "Skipping implausible workout HR zone summary for \(workout.id): avg=\(summary.averageHeartRate), min=\(summary.minimumObservedHeartRate), max=\(summary.maximumObservedHeartRate)",
+                    .debug,
+                    context: .healthKit
+                )
+                return nil
+            }
 
             await SQWorkoutSession.metadataManager.cacheHeartRateZoneSummary(summary, for: workout.id)
             return summary
