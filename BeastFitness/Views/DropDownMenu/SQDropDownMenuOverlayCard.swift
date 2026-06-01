@@ -119,16 +119,25 @@ struct SQDropDownMenuOverlayCard: View {
         .fixedSize(horizontal: false, vertical: true)
         .background {
             RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                .fill(SQColor.backgroundTertiaryDark.color.opacity(SQColor.isDarkMode ? 0.96 : 0.98))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            SQColor.sheetGradientMid.color.opacity(SQColor.isDarkMode ? 0.98 : 0.96),
+                            SQColor.sheetGradientEnd.color.opacity(SQColor.isDarkMode ? 0.96 : 0.94)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .overlay {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.62 : 0.86))
+                        .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.34 : 0.70))
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                        .stroke(SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.86 : 0.72), lineWidth: 1)
+                        .stroke(SQColor.glassStrokeStrong.color.opacity(SQColor.isDarkMode ? 0.62 : 0.72), lineWidth: 1)
                 }
         }
-        .shadow(color: Color.black.opacity(SQColor.isDarkMode ? 0.18 : 0.08), radius: 14, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(SQColor.isDarkMode ? 0.12 : 0.08), radius: 14, x: 0, y: 8)
     }
 }

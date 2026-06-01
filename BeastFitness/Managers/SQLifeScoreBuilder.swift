@@ -615,13 +615,13 @@ struct SQLifeScoreV2Builder {
                 )
             }
         )
-        let fallbackEvidence = signals.isEmpty
-            ? recentHabitEvidenceItems(
-                snapshots: snapshots,
-                referenceDate: referenceDate,
-                metricDefinitionsById: metricDefinitionsById
-            )
-            : []
+        let recentEvidence = recentHabitEvidenceItems(
+            snapshots: snapshots,
+            referenceDate: referenceDate,
+            metricDefinitionsById: metricDefinitionsById,
+            minimumDayAge: signals.isEmpty ? 0 : 1,
+            limit: signals.isEmpty ? 4 : 3
+        )
 
         return component(
             id: "habitsBehaviors",
@@ -630,7 +630,8 @@ struct SQLifeScoreV2Builder {
             weight: 10,
             fallbackScore: 74,
             positiveScoreCap: 78,
-            fallbackEvidence: fallbackEvidence
+            fallbackEvidence: signals.isEmpty ? recentEvidence : [],
+            additionalEvidence: signals.isEmpty ? [] : recentEvidence
         )
     }
 
@@ -690,11 +691,13 @@ struct SQLifeScoreV2Builder {
     private func recentHabitEvidenceItems(
         snapshots: [SQInsightFeatureSnapshot],
         referenceDate: Date,
-        metricDefinitionsById: [String: SQMetricDefinition]
+        metricDefinitionsById: [String: SQMetricDefinition],
+        minimumDayAge: Int = 0,
+        limit: Int = 4
     ) -> [SQLifeScoreV2ComponentEvidence] {
         let candidates = snapshots.flatMap { snapshot -> [(signal: ScoredSignal, age: Int)] in
             let dayAge = dayAge(from: snapshot.date, to: referenceDate)
-            guard dayAge >= 0, dayAge <= 7 else { return [] }
+            guard dayAge >= minimumDayAge, dayAge <= 7 else { return [] }
             return habitSignals(
                 in: snapshot,
                 metricDefinitionsById: metricDefinitionsById,
@@ -710,9 +713,8 @@ struct SQLifeScoreV2Builder {
                 }
                 return abs($0.signal.driverImpact) > abs($1.signal.driverImpact)
             }
-            .prefix(2)
-            .enumerated()
-            .map { index, candidate in
+            .prefix(limit)
+            .map { candidate in
                 let valueText: String
                 if let rawValueText = candidate.signal.rawValueText {
                     valueText = evidenceValueText(
@@ -727,10 +729,21 @@ struct SQLifeScoreV2Builder {
                 return .init(
                     title: candidate.signal.title,
                     valueText: valueText,
-                    summary: "",
-                    effect: index == 0 && candidate.signal.driverImpact <= -5 ? .negative : .neutral
+                    summary: candidate.age > 0
+                        ? "Recent habit context can still affect today's score."
+                        : "",
+                    effect: evidenceEffect(for: candidate.signal)
                 )
             }
+    }
+
+    private func evidenceEffect(for signal: ScoredSignal) -> SQLifeScoreSignalEffect {
+        if signal.driverImpact >= 5 {
+            return .positive
+        } else if signal.driverImpact <= -5 {
+            return .negative
+        }
+        return .neutral
     }
 
     private func recordedAgeContextText(_ age: Int) -> String {
@@ -878,7 +891,8 @@ struct SQLifeScoreV2Builder {
         fallbackScore: Double?,
         fallbackConfidence: Double = 0.3,
         positiveScoreCap: Double,
-        fallbackEvidence: [SQLifeScoreV2ComponentEvidence] = []
+        fallbackEvidence: [SQLifeScoreV2ComponentEvidence] = [],
+        additionalEvidence: [SQLifeScoreV2ComponentEvidence] = []
     ) -> RawComponent? {
         if signals.isEmpty {
             guard let fallbackScore else { return nil }
@@ -935,11 +949,30 @@ struct SQLifeScoreV2Builder {
             negativeDrivers: Array(negatives),
             positiveCapHits: uncappedScore > positiveScoreCap ? [title] : [],
             confidence: confidence,
-            evidence: evidenceItems(
-                for: signals,
-                componentTitle: title
+            evidence: mergedEvidenceItems(
+                additionalEvidence + evidenceItems(
+                    for: signals,
+                    componentTitle: title
+                )
             )
         )
+    }
+
+    private func mergedEvidenceItems(
+        _ items: [SQLifeScoreV2ComponentEvidence],
+        limit: Int = 6
+    ) -> [SQLifeScoreV2ComponentEvidence] {
+        var seen = Set<String>()
+        var merged = [SQLifeScoreV2ComponentEvidence]()
+
+        for item in items {
+            let key = "\(item.title)|\(item.valueText)"
+            guard seen.insert(key).inserted else { continue }
+            merged.append(item)
+            guard merged.count < limit else { break }
+        }
+
+        return merged
     }
 
     private func v2Drivers(
