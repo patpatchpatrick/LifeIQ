@@ -235,7 +235,7 @@ struct SQLaunchTutorialView: View {
             tutorialFeatureBlock(
                 symbol: .edit,
                 title: "Log your first check-in",
-                subtitle: "Start with the Check In card on the dashboard."
+                subtitle: "Use the Check In button on the dashboard to log today's data."
             ) {
                 SQLaunchTutorialCheckInCtaPreview()
             }

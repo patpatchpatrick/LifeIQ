@@ -63,6 +63,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedUncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] = []
     private var lastLoadedAvailableLayoutGroups: [SQDashboardLayoutGroupDescriptor] = []
     private var lastLoadedDailyCheckInCtaViewModel: SQCallToActionViewModel?
+    private var lastLoadedDailyCheckInActionViewModel: SQDashboardCheckInActionViewModel?
     private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
     private var lastLoadedLatestWorkoutPremiumInsightsModel: SQWorkoutPremiumInsightsModel?
@@ -710,6 +711,10 @@ final class SQDashboardController: SQDashboardInterface {
                 sleepSchedule: sleepSchedule
             )
             let currentCheckInPromptPeriod = currentCheckInPromptContext?.period
+            let currentCheckInActionPeriod = currentCheckInPromptPeriod ?? DashboardState.checkInPeriod(
+                for: dashboardReferenceDate,
+                sleepSchedule: sleepSchedule
+            )
             let yesterdayReferenceDate = Calendar.current.date(byAdding: .day, value: -1, to: dashboardReferenceDate) ?? dashboardReferenceDate
             let yesterdayCheckInPromptContext = DashboardState.currentCheckInPromptContext(
                 for: yesterdayReferenceDate,
@@ -730,6 +735,11 @@ final class SQDashboardController: SQDashboardInterface {
             } else {
                 hasCompletedCurrentCheckIn = true
             }
+            let hasCompletedCurrentActionCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
+                for: currentCheckInDate,
+                period: currentCheckInActionPeriod,
+                context: context
+            )) ?? false
             let hasCompletedYesterdayCheckIn: Bool
             if let yesterdayCheckInPromptPeriod {
                 hasCompletedYesterdayCheckIn = (try? await metricEntryManager.hasCompletedCheckIn(
@@ -801,6 +811,7 @@ final class SQDashboardController: SQDashboardInterface {
             )
             let useMockDashboardData = useDashboardDemoData
             let effectiveHasCompletedCurrentCheckIn = useMockDashboardData ? true : hasCompletedCurrentCheckIn
+            let effectiveHasCompletedCurrentActionCheckIn = useMockDashboardData ? true : hasCompletedCurrentActionCheckIn
             let effectiveTodaysMorningSleepCheckIn = useMockDashboardData
                 ? SQHealthKitManager.shared.mockHealthData.dailyCheckIn(on: currentCheckInDate, period: .morning)
                 : todaysMorningSleepCheckIn
@@ -815,6 +826,12 @@ final class SQDashboardController: SQDashboardInterface {
             }
 
             state.updateLoadingProgress(0.62)
+
+            updateDailyCheckInActionViewModel(
+                period: currentCheckInActionPeriod,
+                isCompleted: effectiveHasCompletedCurrentActionCheckIn,
+                context: context
+            )
 
             // Set the daily check-in CTA view model if no stats exist
             if
@@ -1029,6 +1046,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedSectionGroups = appliedSectionGroups
             lastLoadedAvailableLayoutGroups = updatedAvailableLayoutGroups
             lastLoadedDailyCheckInCtaViewModel = state.dailyCheckInCtaViewModel
+            lastLoadedDailyCheckInActionViewModel = state.dailyCheckInActionViewModel
             lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
             lastLoadedLatestWorkoutPremiumInsightsModel = latestWorkoutPremiumInsightsModel
@@ -1050,6 +1068,7 @@ final class SQDashboardController: SQDashboardInterface {
 
             /// Restore the last loaded data, to ensure that we're never showing mock data whenever we get errors fetching healthKit data
             state.updateDailyCheckInCtaViewModel(lastLoadedDailyCheckInCtaViewModel)
+            state.updateDailyCheckInActionViewModel(lastLoadedDailyCheckInActionViewModel)
             state.updateUncustomizedSectionGroups(lastLoadedUncustomizedSectionGroups)
             availableLayoutGroups = lastLoadedAvailableLayoutGroups
             state.updateAvailableLayoutGroups(lastLoadedAvailableLayoutGroups)
@@ -1080,6 +1099,48 @@ final class SQDashboardController: SQDashboardInterface {
             for: context,
             shouldForceRefresh: true,
             showLoadingState: false
+        )
+    }
+
+    private func updateDailyCheckInActionViewModel(
+        period: SQMetricPeriod,
+        isCompleted: Bool,
+        context: ModelContext
+    ) {
+        guard userState.isLoggedIn else {
+            let preferredMode: SQLoginMode = remoteConfigManager.snapshot.signupDisabled ? .login : .signup
+            state.updateDailyCheckInActionViewModel(
+                .init(
+                    state: .guest,
+                    title: "Check In",
+                    subtitle: remoteConfigManager.snapshot.signupDisabled ? "Log in to track daily data" : "Create an account to track daily data",
+                    icon: .plus,
+                    onTap: { [weak self] in
+                        guard let self else { return }
+                        let controller = SQLoginController(
+                            mode: preferredMode,
+                            hub: self.state.hub,
+                            remoteConfigManager: self.remoteConfigManager
+                        )
+                        self.state.hub.domainEvents.send(.pushDashboardRoute(.login(controller: controller)))
+                    }
+                )
+            )
+            return
+        }
+
+        let periodTitle = title(for: period)
+        state.updateDailyCheckInActionViewModel(
+            .init(
+                state: isCompleted ? .complete : .incomplete,
+                title: isCompleted ? "Edit Check-In" : "Check In",
+                subtitle: isCompleted ? "\(periodTitle) complete" : "\(periodTitle) check-in due",
+                icon: isCompleted ? .checkmarkCircleFill : .plus,
+                onTap: { [weak self] in
+                    guard let self else { return }
+                    Task { await self.displayDailyCheckInSheet(for: context) }
+                }
+            )
         )
     }
     

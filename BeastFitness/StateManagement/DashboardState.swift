@@ -29,6 +29,7 @@ protocol DashboardStating: AnyObject {
     var isDailyCheckInSheetVisible: Bool { get }
     var dailyCheckInViewModel: SQDailyCheckInViewModel? { get }
     var dailyCheckInCtaViewModel: SQCallToActionViewModel? { get }
+    var dailyCheckInActionViewModel: SQDashboardCheckInActionViewModel? { get }
     var availableLayoutGroups: [SQDashboardLayoutGroupDescriptor] { get }
     var uncustomizedSectionGroups: [SQDashboardSectionGroupViewModel] { get }
 
@@ -38,6 +39,7 @@ protocol DashboardStating: AnyObject {
     func toggleDailyCheckInSheetVisibility(_ isVisible: Bool)
     func displayDailyCheckInSheet(with stats: SQDailyCheckInStats?, for date: Date?, period: SQMetricPeriod?)
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?)
+    func updateDailyCheckInActionViewModel(_ viewModel: SQDashboardCheckInActionViewModel?)
     func updateAvailableLayoutGroups(_ groups: [SQDashboardLayoutGroupDescriptor])
     func updateUncustomizedSectionGroups(_ groups: [SQDashboardSectionGroupViewModel])
 
@@ -54,6 +56,20 @@ protocol DashboardStating: AnyObject {
 struct SQCheckInPromptContext {
     let date: Date
     let period: SQMetricPeriod
+}
+
+struct SQDashboardCheckInActionViewModel {
+    enum State {
+        case incomplete
+        case complete
+        case guest
+    }
+
+    let state: State
+    let title: String
+    let subtitle: String?
+    let icon: SQImageSymbol
+    let onTap: () -> Void
 }
 
 @MainActor
@@ -82,6 +98,7 @@ struct SQCheckInPromptContext {
     private(set) var isLoading: Bool = false
     private(set) var loadingProgress: Double?
     private(set) var dailyCheckInCtaViewModel: SQCallToActionViewModel?
+    private(set) var dailyCheckInActionViewModel: SQDashboardCheckInActionViewModel?
 
     init(hub: EventHub) {
         self.hub = hub
@@ -105,6 +122,10 @@ struct SQCheckInPromptContext {
 
     func updateDailyCheckInCtaViewModel(_ viewModel: SQCallToActionViewModel?) {
         self.dailyCheckInCtaViewModel = viewModel
+    }
+
+    func updateDailyCheckInActionViewModel(_ viewModel: SQDashboardCheckInActionViewModel?) {
+        self.dailyCheckInActionViewModel = viewModel
     }
 
     func setLoading(_ isLoading: Bool) {
