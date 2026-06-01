@@ -41,6 +41,7 @@ This file tracks durable implementation and product rules for AI assistants work
 - Major screens and major dashboard sections should include explicit empty states for no data, missing permissions, locked access, and first-run setup where applicable.
 - Visual hierarchy should favor subtle containers and prominent data: card backgrounds/borders stay quiet, labels and repeated chrome use secondary/tertiary text, and the key value/takeaway gets the strongest weight, size, color, or placement.
 - Async data-dependent surfaces should show redacted loading placeholders while visible content is being repopulated, especially after time range or filter changes.
+- Dashboard cards and sheets that display averaged values for a non-`Today` time range should show a visible `Avg` label near the value or grouped content so users can distinguish averages from today's point-in-time values.
 
 ## Dashboard Customization
 

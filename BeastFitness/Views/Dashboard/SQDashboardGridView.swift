@@ -64,6 +64,41 @@ struct SQDashboardGridView: View {
         detailSections.first(where: { $0.id == id })
     }
 
+    private var showsAverageContext: Bool {
+        controller.state.selectedTimeRange != .today
+    }
+
+    private var currentRangeWorkouts: [SQWorkoutSessionable] {
+        let rows = (section("activities")?.activeRows as? [SQDashboardActivityRowViewModel]) ?? []
+        return rows
+            .flatMap { $0.workoutGroupViewModels }
+            .flatMap { $0.workouts.workouts }
+    }
+
+    private var selectedRangeAverageDayCount: Double {
+        switch controller.state.selectedTimeRange {
+        case .today:
+            return 1
+        case .pastSevenDays:
+            return 7
+        case .past30Days:
+            return 30
+        case .pastYear:
+            return 365
+        case .allTime:
+            let dates = currentRangeWorkouts.compactMap(\.startDate)
+            guard let firstDate = dates.min(), let lastDate = dates.max() else {
+                return 1
+            }
+
+            let calendar = Calendar.current
+            let firstDay = calendar.startOfDay(for: firstDate)
+            let lastDay = calendar.startOfDay(for: lastDate)
+            let days = calendar.dateComponents([.day], from: firstDay, to: lastDay).day ?? 0
+            return Double(max(1, days + 1))
+        }
+    }
+
 }
 
 // MARK: - Cards
@@ -95,7 +130,16 @@ private extension SQDashboardGridView {
         ) {
             if let scoreRow {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQDashboardPrimaryValue(value: "\(Int(scoreRow.totalScore.rounded()))", unit: scoreRow.scoreValueLabel)
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+                    }
+
+                    SQDashboardPrimaryValue(
+                        value: "\(Int(scoreRow.totalScore.rounded()))",
+                        unit: showsAverageContext
+                            ? scoreRow.scoreValueLabel.replacingOccurrences(of: "Avg ", with: "")
+                            : scoreRow.scoreValueLabel
+                    )
 
                     if let trendDelta = scoreRow.trendDelta {
                         SQDashboardTrendDeltaPill(viewModel: trendDelta)
@@ -143,6 +187,10 @@ private extension SQDashboardGridView {
                 )
             } else {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+                    }
+
                     SQDashboardPhaseBar(rows: rows)
 
                     ForEach(rows.prefix(4)) { row in
@@ -241,6 +289,10 @@ private extension SQDashboardGridView {
                 )
             } else {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+                    }
+
                     ForEach(rows.prefix(4)) { row in
                         SQDashboardMetricLine(
                             title: row.title,
@@ -331,6 +383,10 @@ private extension SQDashboardGridView {
     var activityCaloriesCard: some View {
         let timeRow = section("totals")?.rowsByFilter["Time"]?.first as? SQDashboardWorkoutTotalsRowViewModel
         let caloriesRow = section("totals")?.rowsByFilter["Kilocalories"]?.first as? SQDashboardWorkoutTotalsRowViewModel
+        let workouts = currentRangeWorkouts
+        let averageDayCount = selectedRangeAverageDayCount
+        let averageActiveSeconds = workouts.reduce(0) { $0 + ($1.activeDuration ?? 0) } / averageDayCount
+        let averageCalories = workouts.reduce(0) { $0 + ($1.totalCalories ?? 0) } / averageDayCount
 
         return SQDashboardGridCard(
             title: "Activity & Calories",
@@ -345,17 +401,33 @@ private extension SQDashboardGridView {
         ) {
             if let timeRow {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    Text(timeRow.currentValueAndTrend.value)
-                        .sqFont(.title1)
-                        .monospacedDigit()
-                        .sqForegroundColor(.textPrimary)
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+
+                        SQDashboardPrimaryValue(
+                            value: SQDashboardGridFormatter.duration(averageActiveSeconds),
+                            unit: "per day"
+                        )
+                    } else {
+                        Text(timeRow.currentValueAndTrend.value)
+                            .sqFont(.title1)
+                            .monospacedDigit()
+                            .sqForegroundColor(.textPrimary)
+                    }
 
                     if let trend = timeRow.currentValueAndTrend.trend {
                         SQDashboardTrendText(trend: trend)
                     }
 
                     if let caloriesRow {
-                        SQDashboardMiniStat(title: "Calories", value: caloriesRow.currentValueAndTrend.value)
+                        if showsAverageContext {
+                            SQDashboardMiniStat(
+                                title: "Calories",
+                                value: "\(Int(averageCalories.rounded())) kcal"
+                            )
+                        } else {
+                            SQDashboardMiniStat(title: "Calories", value: caloriesRow.currentValueAndTrend.value)
+                        }
                     }
 
                     SQDashboardMiniBars(points: timeRow.currentChartDataPoints)
@@ -391,7 +463,16 @@ private extension SQDashboardGridView {
         ) {
             if let row {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQDashboardPrimaryValue(value: row.bestValue, unit: row.valueUnitLabel)
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+                    }
+
+                    SQDashboardPrimaryValue(
+                        value: row.bestValue,
+                        unit: showsAverageContext
+                            ? row.valueUnitLabel.replacingOccurrences(of: "avg ", with: "")
+                            : row.valueUnitLabel
+                    )
 
                     if let trendDelta = row.trendDelta {
                         SQDashboardTrendDeltaPill(viewModel: trendDelta)
@@ -423,6 +504,10 @@ private extension SQDashboardGridView {
         ) {
             if let row {
                 VStack(alignment: .leading, spacing: .SQSpace.s) {
+                    if showsAverageContext {
+                        SQDashboardAverageBadge()
+                    }
+
                     ForEach(row.items.prefix(3)) { item in
                         SQDashboardMetricLine(
                             title: item.title,
@@ -441,10 +526,7 @@ private extension SQDashboardGridView {
     }
 
     var latestWorkout: SQWorkoutSessionable? {
-        let rows = (section("activities")?.activeRows as? [SQDashboardActivityRowViewModel]) ?? []
-        return rows
-            .flatMap { $0.workoutGroupViewModels }
-            .flatMap { $0.workouts.workouts }
+        currentRangeWorkouts
             .max { lhs, rhs in
                 (lhs.startDate ?? .distantPast) < (rhs.startDate ?? .distantPast)
             }
@@ -567,6 +649,24 @@ private struct SQDashboardPrimaryValue: View {
     }
 }
 
+private struct SQDashboardAverageBadge: View {
+    var body: some View {
+        Text("Avg")
+            .sqFont(.headerSmall)
+            .sqForegroundColor(.textTertiary)
+            .padding(.horizontal, .SQSpace.s)
+            .padding(.vertical, 4)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.48 : 0.62))
+                    .overlay {
+                        Capsule(style: .continuous)
+                            .stroke(SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.48 : 0.58), lineWidth: 1)
+                    }
+            }
+    }
+}
+
 private struct SQDashboardMiniStat: View {
     let title: String
     let value: Any
@@ -676,8 +776,7 @@ private struct SQDashboardLatestWorkoutScorePreview: View {
                 Text(lockedSubtitle)
                     .sqFont(.bodyExtraSmall)
                     .sqForegroundColor(.textTertiary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

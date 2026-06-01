@@ -118,6 +118,7 @@ LifeIQ should use subtle containers and stronger content hierarchy. The screen b
 - Use accent color sparingly for signal: positive/negative trend, selected state, score state, confidence, or an actionable change.
 - Keep dense surfaces closer to clean finance/market dashboards than decorative wellness cards: scannable rows, crisp values, muted labels, and low visual noise.
 - Prefer shared surfaces such as `sqGlassSurface(level: .card)` over one-off card backgrounds so this restrained treatment stays consistent across screens.
+- When a dashboard card or sheet shows averaged values for a non-`Today` time range, include a visible `Avg` label near the value or grouped content. Non-today averages should not look identical to today's point-in-time values.
 
 ## When to Add a New Shared Component
 
