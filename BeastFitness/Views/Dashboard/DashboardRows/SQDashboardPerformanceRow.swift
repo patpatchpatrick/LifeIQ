@@ -43,17 +43,29 @@ struct SQDashboardPerformanceRow: View {
     private var trailingColumns: some View {
         HStack(spacing: 12) {
             HStack(spacing: 4) {
-                Text(data.bestValue)
-                    .font(.sqFont(.bodySmallSemiBold))
-                    .sqForegroundColor(.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.82)
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text(data.bestValue)
+                            .font(.sqFont(.bodySmallSemiBold))
+                            .sqForegroundColor(.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
 
-                Text(data.unit)
-                    .font(.sqFont(.bodyExtraSmall))
-                    .sqForegroundColor(.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+                        Text(data.unit)
+                            .font(.sqFont(.bodyExtraSmall))
+                            .sqForegroundColor(.textSecondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                    }
+
+                    if let trendDelta = data.trendDelta {
+                        SQDashboardTrendBadge(
+                            text: trendDelta.valueText,
+                            tone: trendDelta.tone,
+                            symbol: trendDelta.symbol
+                        )
+                    }
+                }
             }
             .frame(width: 82, alignment: .trailing)
 
@@ -105,13 +117,23 @@ struct SQDashboardPerformanceRow: View {
                 }
                 .frame(width: 24)
 
-                Text(data.title)
-                    .font(.sqFont(.body))
-                    .sqForegroundColor(.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-                    .truncationMode(.tail)
-                    .layoutPriority(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(data.title)
+                        .font(.sqFont(.body))
+                        .sqForegroundColor(.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                        .truncationMode(.tail)
+
+                    if let trendDelta = data.trendDelta {
+                        Text(trendDelta.comparisonText)
+                            .font(.sqFont(.bodyExtraSmall))
+                            .sqForegroundColor(.textTertiary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.74)
+                    }
+                }
+                .layoutPriority(1)
 
                 Spacer()
             }

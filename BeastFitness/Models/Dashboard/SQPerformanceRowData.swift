@@ -6,6 +6,30 @@
 import Foundation
 import HealthKit
 
+struct SQDashboardTrendDeltaViewModel {
+    let delta: Double
+    let valueText: String
+    let comparisonText: String
+
+    var isPositive: Bool {
+        delta >= 0
+    }
+
+    var tone: SQDashboardTrendTone {
+        isPositive ? .positive : .negative
+    }
+
+    var symbol: SQImageSymbol {
+        isPositive ? .arrowUp : .arrowDown
+    }
+
+    init(delta: Double, valueText: String, comparisonText: String) {
+        self.delta = delta
+        self.valueText = valueText
+        self.comparisonText = comparisonText
+    }
+}
+
 struct SQPerformanceRowData: Identifiable {
     let id: String
     let icon: String  // Emoji or SF Symbol name
@@ -17,6 +41,7 @@ struct SQPerformanceRowData: Identifiable {
     let isPremiumLocked: Bool
     let premiumLockText: String
     let scoreKind: SQWorkoutScoreKind?
+    let trendDelta: SQDashboardTrendDeltaViewModel?
 
     init(
         id: String,
@@ -28,7 +53,8 @@ struct SQPerformanceRowData: Identifiable {
         leaderboardMode: SQLeaderboardMode? = nil,
         isPremiumLocked: Bool = false,
         premiumLockText: String = "",
-        scoreKind: SQWorkoutScoreKind? = nil
+        scoreKind: SQWorkoutScoreKind? = nil,
+        trendDelta: SQDashboardTrendDeltaViewModel? = nil
     ) {
         self.id = id
         self.icon = icon
@@ -40,5 +66,6 @@ struct SQPerformanceRowData: Identifiable {
         self.isPremiumLocked = isPremiumLocked
         self.premiumLockText = premiumLockText
         self.scoreKind = scoreKind
+        self.trendDelta = trendDelta
     }
 }

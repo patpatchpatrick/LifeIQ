@@ -84,8 +84,24 @@ final class SQWorkoutManager: SQWorkoutManaging {
             let healthKitWorkouts = try await healthKitManager.fetchWorkouts(timeRange)
 
             for hkWorkout in healthKitWorkouts {
+                let source = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
+
+                if let userId,
+                   let deletedEntity = try? SQWorkoutSessionEntity.getDeletedHealthKitEntity(
+                       hkWorkoutId: hkWorkout.uuid.uuidString,
+                       workoutId: source.sourcableData.sourceId,
+                       userId: userId,
+                       context: modelContext
+                   ) {
+                    SQLogger.shared.log(
+                        "Skipping locally deleted HealthKit workout: \(deletedEntity.workoutId)",
+                        .debug,
+                        context: .workoutManager
+                    )
+                    continue
+                }
+
                 do {
-                    let source = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
                     let savedWorkout = try getWorkout(
                         withHkWorkoutId: hkWorkout.uuid.uuidString,
                         workoutSource: source,
@@ -108,8 +124,7 @@ final class SQWorkoutManager: SQWorkoutManaging {
                     }
 
                 } catch {
-                    let workoutSource = SQWorkoutSource.hkWorkout(.init(hkWorkout: hkWorkout))
-                    let sqHkWorkout = SQWorkoutSession(workoutSource: workoutSource, overrideData: nil, hkWorkoutId: nil)
+                    let sqHkWorkout = SQWorkoutSession(workoutSource: source, overrideData: nil, hkWorkoutId: nil)
                     if seenWorkoutIds.insert(sqHkWorkout.id).inserted {
                         allWorkouts.appendIfNotNil(safeguardedWorkout(workout: sqHkWorkout))
                     }

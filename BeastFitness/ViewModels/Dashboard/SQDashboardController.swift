@@ -66,6 +66,7 @@ final class SQDashboardController: SQDashboardInterface {
     private var lastLoadedHealthKitAccessCtaViewModel: SQCallToActionViewModel?
     private var lastLoadedLifeScoreViewModel: SQLifeScoreViewModel?
     private var lastLoadedAllTimeWorkouts: [SQWorkoutSessionable] = []
+    private var hasLoadedAllTimeWorkouts = false
     private let remoteConfigManager: SQRemoteConfigManaging
     var healthKitAccessCtaViewModel: SQCallToActionViewModel?
     var runtimeControlCtaViewModel: SQCallToActionViewModel?
@@ -273,9 +274,9 @@ final class SQDashboardController: SQDashboardInterface {
     }
 
     func displayWorkoutsList() {
-        let workouts = lastLoadedAllTimeWorkouts.isEmpty
-            ? dashboardWorkoutsFromCurrentSections()
-            : lastLoadedAllTimeWorkouts
+        let workouts = hasLoadedAllTimeWorkouts
+            ? lastLoadedAllTimeWorkouts
+            : dashboardWorkoutsFromCurrentSections()
         state.hub.domainEvents.send(
             .pushDashboardRoute(
                 .workoutsList(
@@ -383,7 +384,13 @@ final class SQDashboardController: SQDashboardInterface {
         hub.workoutEvents.sink { [weak self] event in
             guard let self else { return }
             switch event {
-            case .workoutsUpdated, .workoutsDeleted:
+            case .workoutsUpdated(let workoutMap):
+                lastLoadedAllTimeWorkouts = lastLoadedAllTimeWorkouts.map { workout in
+                    workoutMap[workout.id] ?? workout
+                }
+                self.refreshFromGlobalContext()
+            case .workoutsDeleted(let workoutMap):
+                lastLoadedAllTimeWorkouts = lastLoadedAllTimeWorkouts.filter { workoutMap[$0.id] == nil }
                 self.refreshFromGlobalContext()
             case .activeWorkoutUpdate:
                 break
@@ -998,6 +1005,7 @@ final class SQDashboardController: SQDashboardInterface {
             lastLoadedHealthKitAccessCtaViewModel = healthKitAccessCtaViewModel
             lastLoadedLifeScoreViewModel = lifeScoreViewModel
             lastLoadedAllTimeWorkouts = allTimeWorkouts
+            hasLoadedAllTimeWorkouts = true
             lastSuccessfulLoadAt = .now
 
             if showLoadingState {
@@ -1450,21 +1458,33 @@ final class SQDashboardController: SQDashboardInterface {
         vo2MaxSamples: [SQVO2MaxSample],
         vo2MaxAllTime: [SQVO2MaxSample],
         workouts: [SQWorkoutSessionable],
-        allTimeWorkouts: [SQWorkoutSessionable]
+        allTimeWorkouts: [SQWorkoutSessionable],
+        timeRange: SQTimeRange,
+        priorTimeRange: SQTimeRange
     ) async -> SQDashboardSubsectionViewModel? {
         var sharedRows = [SQDashboardMetricPerformanceRowViewModel]()
         var activityRowsByFilter = [String: [SQDashboardMetricPerformanceRowViewModel]]()
+        let effectiveVO2MaxSamples: [SQVO2MaxSample]
+        if timeRange == .today,
+           let latestVO2MaxSample = vo2MaxAllTime.max(by: { $0.endDate < $1.endDate }) {
+            effectiveVO2MaxSamples = [latestVO2MaxSample]
+        } else {
+            effectiveVO2MaxSamples = vo2MaxSamples
+        }
 
         // Add VO2 Max row if we have samples
-        if !vo2MaxSamples.isEmpty {
-            let vo2Values = vo2MaxSamples.map(\.value)
-            let averageVO2Max = vo2Values.reduce(0, +) / Double(vo2Values.count)
+        if !effectiveVO2MaxSamples.isEmpty {
+            let displayedVO2Max = vo2DisplayValue(
+                samples: effectiveVO2MaxSamples,
+                allTimeSamples: vo2MaxAllTime,
+                timeRange: timeRange
+            )
 
-            let valueString = String(format: "%.1f", averageVO2Max)
+            let valueString = String(format: "%.1f", displayedVO2Max)
 
             let historicalValues = vo2MaxAllTime.map { $0.value }
             let percentileRank = SQPercentileCalculator.calculatePercentile(
-                currentBest: averageVO2Max,
+                currentBest: displayedVO2Max,
                 historicalValues: historicalValues,
                 isLowerBetter: false
             )
@@ -1472,11 +1492,18 @@ final class SQDashboardController: SQDashboardInterface {
             let vo2MaxRow = SQDashboardMetricPerformanceRowViewModel(
                 metricId: "vo2-max",
                 icon: SQImageSymbol.heart.rawValue,
-                title: "VO₂ Max",
+                title: timeRange == .today ? "VO₂ Max" : "Avg VO₂ Max",
                 bestValue: valueString,
                 unit: "mL/kg/min",
+                valueUnitLabel: timeRange == .today ? nil : "avg mL/kg/min",
                 percentileRank: percentileRank,
-                leaderboardMode: .vo2Max
+                leaderboardMode: .vo2Max,
+                trendDelta: vo2TrendDelta(
+                    currentSamples: effectiveVO2MaxSamples,
+                    allTimeSamples: vo2MaxAllTime,
+                    timeRange: timeRange,
+                    priorTimeRange: priorTimeRange
+                )
             )
             sharedRows.append(vo2MaxRow)
         }
@@ -1557,6 +1584,82 @@ final class SQDashboardController: SQDashboardInterface {
         }
 
         return sectionViewModel
+    }
+
+    private func vo2DisplayValue(
+        samples: [SQVO2MaxSample],
+        allTimeSamples: [SQVO2MaxSample],
+        timeRange: SQTimeRange
+    ) -> Double {
+        if timeRange == .today,
+           let latest = allTimeSamples.max(by: { $0.endDate < $1.endDate }) {
+            return latest.value
+        }
+
+        let values = samples.map(\.value)
+        return values.reduce(0, +) / Double(max(values.count, 1))
+    }
+
+    private func vo2TrendDelta(
+        currentSamples: [SQVO2MaxSample],
+        allTimeSamples: [SQVO2MaxSample],
+        timeRange: SQTimeRange,
+        priorTimeRange: SQTimeRange
+    ) -> SQDashboardTrendDeltaViewModel? {
+        guard timeRange != .allTime else { return nil }
+
+        let currentValue: Double
+        let priorValue: Double
+        let comparisonText: String
+
+        if timeRange == .today {
+            let sortedSamples = allTimeSamples.sorted { $0.endDate > $1.endDate }
+            guard sortedSamples.count >= 2 else { return nil }
+            currentValue = sortedSamples[0].value
+            priorValue = sortedSamples[1].value
+            comparisonText = "vs last reading"
+        } else {
+            let priorSamples = allTimeSamples.filter { sample in
+                sample.endDate >= priorTimeRange.startDate && sample.endDate <= priorTimeRange.endDate
+            }
+            guard let currentAverage = currentSamples.map(\.value).average,
+                  let priorAverage = priorSamples.map(\.value).average else {
+                return nil
+            }
+            currentValue = currentAverage
+            priorValue = priorAverage
+            comparisonText = trendComparisonText(for: priorTimeRange)
+        }
+
+        let delta = currentValue - priorValue
+        return SQDashboardTrendDeltaViewModel(
+            delta: delta,
+            valueText: String(format: "%.1f", abs(delta)),
+            comparisonText: comparisonText
+        )
+    }
+
+    private func trendComparisonText(for timeRange: SQTimeRange?) -> String {
+        switch timeRange {
+        case .yesterday:
+            return "vs yesterday"
+        case .weekBeforeLast:
+            return "vs prior 7 days"
+        case .thirtyDaysBeforeLast:
+            return "vs prior 30 days"
+        case .yearBeforeLast:
+            return "vs prior year"
+        case .pastWeek:
+            return "vs past 7 days"
+        case .past30Days:
+            return "vs past 30 days"
+        case .pastYear:
+            return "vs past year"
+        case .today:
+            return "vs today"
+        case .allTime, .none:
+            return "vs prior"
+        }
     }
 
     // MARK: - Totals Subsection Builder
@@ -1811,6 +1914,7 @@ final class SQDashboardController: SQDashboardInterface {
         let scoreRow = SQDashboardSleepScoreRowViewModel(
             totalScore: totalScore,
             scoreLabel: "\(Int(round(totalScore)))/100",
+            scoreValueLabel: state.selectedTimeRange == .today ? "Sleep Score" : "Avg Sleep Score",
             components: [
                 .init(
                     id: "duration",
@@ -1844,7 +1948,8 @@ final class SQDashboardController: SQDashboardInterface {
                     color: .dashboardGlowMint,
                     detailText: architectureDetailText(for: data.currentNights, prefix: detailPrefix)
                 )
-            ]
+            ],
+            trendDelta: sleepScoreTrendDelta(for: data, timeRange: state.selectedTimeRange)
         )
 
         return SQDashboardSubsectionViewModel(
@@ -1858,6 +1963,41 @@ final class SQDashboardController: SQDashboardInterface {
             : .init(icon: .infoCircle, title: "Guest") { [weak self] in
                 self?.presentGuestSleepAccuracyAlert()
             }
+        )
+    }
+
+    private func sleepScoreTrendDelta(
+        for data: SQSleepDashboardData,
+        timeRange: AppTimeRange
+    ) -> SQDashboardTrendDeltaViewModel? {
+        guard timeRange != .allTime else { return nil }
+
+        let currentScore: Double
+        let priorScore: Double
+        let comparisonText: String
+
+        if timeRange == .today {
+            guard let latestNight = data.currentNights.max(by: { $0.wakeDay < $1.wakeDay }),
+                  let priorNight = data.priorNights.max(by: { $0.wakeDay < $1.wakeDay }) else {
+                return nil
+            }
+            currentScore = sleepAggregationService.score(for: latestNight).totalScore
+            priorScore = sleepAggregationService.score(for: priorNight).totalScore
+            comparisonText = "vs previous night"
+        } else {
+            guard let currentAverage = data.averageScore?.totalScore else { return nil }
+            let priorScores = data.priorNights.map { sleepAggregationService.score(for: $0).totalScore }
+            guard let priorAverage = priorScores.average else { return nil }
+            currentScore = currentAverage
+            priorScore = priorAverage
+            comparisonText = trendComparisonText(for: timeRange.previousSqTimeRange)
+        }
+
+        let delta = currentScore - priorScore
+        return SQDashboardTrendDeltaViewModel(
+            delta: delta,
+            valueText: "\(Int(abs(delta).rounded())) pts",
+            comparisonText: comparisonText
         )
     }
 
@@ -2540,7 +2680,9 @@ final class SQDashboardController: SQDashboardInterface {
             vo2MaxSamples: vo2MaxSamples,
             vo2MaxAllTime: vo2MaxAllTime,
             workouts: workouts,
-            allTimeWorkouts: allTimeWorkouts
+            allTimeWorkouts: allTimeWorkouts,
+            timeRange: timeRange,
+            priorTimeRange: priorTimeRange
         ) {
             workoutsSections.append(performanceSection)
         }

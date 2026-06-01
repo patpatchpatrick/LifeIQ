@@ -435,6 +435,44 @@ extension SQWorkoutSessionEntity {
         return try context.fetch(descriptor).first
     }
 
+    static func getEntity(hkWorkoutId: String, userId: String, context: ModelContext) throws -> SQWorkoutSessionEntity? {
+        let descriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate { $0.userId == userId && $0.hkWorkoutId == hkWorkoutId }
+        )
+        return try context.fetch(descriptor).first
+    }
+
+    static func getDeletedHealthKitEntity(
+        hkWorkoutId: String?,
+        workoutId: String,
+        userId: String,
+        context: ModelContext
+    ) throws -> SQWorkoutSessionEntity? {
+        let workoutDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate {
+                $0.userId == userId &&
+                $0.workoutId == workoutId &&
+                $0.deletedAt != nil
+            }
+        )
+
+        if let entity = try context.fetch(workoutDescriptor).first {
+            return entity
+        }
+
+        guard let hkWorkoutId else { return nil }
+
+        let healthKitDescriptor = FetchDescriptor<SQWorkoutSessionEntity>(
+            predicate: #Predicate {
+                $0.userId == userId &&
+                $0.hkWorkoutId == hkWorkoutId &&
+                $0.deletedAt != nil
+            }
+        )
+
+        return try context.fetch(healthKitDescriptor).first
+    }
+
     static func getPendingSyncEntities(userId: String, context: ModelContext) throws -> [SQWorkoutSessionEntity] {
         let pendingUpload = SQSyncStatus.pendingUpload.rawValue
         let pendingDelete = SQSyncStatus.pendingDelete.rawValue
@@ -487,7 +525,29 @@ extension SQWorkoutSessionEntity {
         in context: ModelContext,
         mode: DeleteMode = .soft
     ) throws {
-        try delete(workoutId: workoutSession.id, userId: userId, in: context, mode: mode)
+        if try getEntity(workoutId: workoutSession.id, userId: userId, context: context) != nil {
+            try delete(workoutId: workoutSession.id, userId: userId, in: context, mode: mode)
+            return
+        }
+
+        if let hkWorkoutId = workoutSession.hkWorkoutId,
+           let existing = try getEntity(hkWorkoutId: hkWorkoutId, userId: userId, context: context) {
+            try delete(workoutId: existing.workoutId, userId: userId, in: context, mode: mode)
+            return
+        }
+
+        guard mode == .soft else { return }
+
+        let now = Date()
+        let tombstone = SQWorkoutSessionEntity(from: workoutSession, userId: userId)
+        tombstone.createdAt = tombstone.createdAt ?? now
+        tombstone.updatedAt = now
+        tombstone.deletedAt = now
+        tombstone.syncStatusRaw = SQSyncStatus.pendingDelete.rawValue
+        tombstone.remoteId = tombstone.remoteId ?? workoutSession.id
+
+        context.insert(tombstone)
+        try context.save()
     }
 
     /// Deletes (soft or hard) by workoutId.

@@ -18,20 +18,26 @@ final class SQDashboardSleepScoreRowViewModel: SQDashboardRowViewModel {
 
     let totalScore: Double
     let scoreLabel: String
+    let scoreValueLabel: String
     let components: [Component]
     let isSliceSelectionEnabled: Bool
+    let trendDelta: SQDashboardTrendDeltaViewModel?
     var selectedComponentId: String?
 
     init(
         totalScore: Double,
         scoreLabel: String,
+        scoreValueLabel: String = "Sleep Score",
         components: [Component],
-        isSliceSelectionEnabled: Bool = true
+        isSliceSelectionEnabled: Bool = true,
+        trendDelta: SQDashboardTrendDeltaViewModel? = nil
     ) {
         self.totalScore = totalScore
         self.scoreLabel = scoreLabel
+        self.scoreValueLabel = scoreValueLabel
         self.components = components
         self.isSliceSelectionEnabled = isSliceSelectionEnabled
+        self.trendDelta = trendDelta
         self.selectedComponentId = nil
 
         super.init(rowId: .sleepScore, rowType: .sleepScore)

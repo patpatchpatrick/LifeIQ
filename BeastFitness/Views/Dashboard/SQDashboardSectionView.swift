@@ -100,7 +100,8 @@ struct SQDashboardSectionView: View {
                                                     leaderboardMode: vm.leaderboardMode,
                                                     isPremiumLocked: vm.isPremiumLocked,
                                                     premiumLockText: vm.premiumLockText,
-                                                    scoreKind: vm.scoreKind
+                                                    scoreKind: vm.scoreKind,
+                                                    trendDelta: vm.trendDelta
                                                 )
                                             )
                                         }

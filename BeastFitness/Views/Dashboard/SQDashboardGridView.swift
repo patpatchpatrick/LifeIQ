@@ -95,7 +95,11 @@ private extension SQDashboardGridView {
         ) {
             if let scoreRow {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQDashboardPrimaryValue(value: "\(Int(scoreRow.totalScore.rounded()))", unit: "Sleep Score")
+                    SQDashboardPrimaryValue(value: "\(Int(scoreRow.totalScore.rounded()))", unit: scoreRow.scoreValueLabel)
+
+                    if let trendDelta = scoreRow.trendDelta {
+                        SQDashboardTrendDeltaPill(viewModel: trendDelta)
+                    }
 
                     VStack(alignment: .leading, spacing: .SQSpace.s) {
                         if let duration {
@@ -369,7 +373,11 @@ private extension SQDashboardGridView {
         ) {
             if let row {
                 VStack(alignment: .leading, spacing: .SQSpace.m) {
-                    SQDashboardPrimaryValue(value: row.bestValue, unit: row.unit)
+                    SQDashboardPrimaryValue(value: row.bestValue, unit: row.valueUnitLabel)
+
+                    if let trendDelta = row.trendDelta {
+                        SQDashboardTrendDeltaPill(viewModel: trendDelta)
+                    }
 
                     if let percentileRank = row.percentileRank {
                         Text("Top \(max(1, Int(ceil((1.0 - percentileRank) * 100))))%")
@@ -442,6 +450,26 @@ struct SQDashboardViewMoreLabel: View {
                 )
             )
             .frame(width: 9, height: 9)
+        }
+    }
+}
+
+struct SQDashboardTrendDeltaPill: View {
+    let viewModel: SQDashboardTrendDeltaViewModel
+
+    var body: some View {
+        HStack(spacing: .SQSpace.xs) {
+            SQDashboardTrendBadge(
+                text: viewModel.valueText,
+                tone: viewModel.tone,
+                symbol: viewModel.symbol
+            )
+
+            Text(viewModel.comparisonText)
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
         }
     }
 }

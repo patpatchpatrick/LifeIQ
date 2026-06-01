@@ -26,6 +26,10 @@ struct SQDashboardSleepScoreRowView: View {
         let selectedComponent = viewModel.components.first(where: { $0.id == viewModel.selectedComponentId })
 
         return VStack(alignment: .leading, spacing: .SQSpace.l) {
+            if let trendDelta = viewModel.trendDelta {
+                SQDashboardTrendDeltaPill(viewModel: trendDelta)
+            }
+
             HStack(alignment: .center, spacing: .SQSpace.xl) {
                 SQSleepScorePieChart(
                     components: viewModel.components,
