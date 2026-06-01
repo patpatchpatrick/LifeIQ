@@ -174,10 +174,7 @@ private extension SQDashboardGridView {
             icon: .moonZzzFill,
             accentColor: .accentSecondary(1),
             onViewMore: {
-                controller.displayDashboardDetail(
-                    title: "Sleep Phases",
-                    sectionIds: ["sleep-phases", "sleep-access-warning", "sleep-empty-warning"]
-                )
+                controller.displaySleepPhaseTrends()
             }
         ) {
             if rows.isEmpty {
@@ -278,10 +275,17 @@ private extension SQDashboardGridView {
             }
         ) {
             if section?.isLocked == true {
-                SQDashboardCardEmptyState(
-                    title: "Log in to unlock",
-                    subtitle: "Your check-in metrics are saved to your account."
-                )
+                Button {
+                    section?.onLockedTap?()
+                } label: {
+                    SQDashboardCardEmptyState(
+                        title: "Log in to unlock",
+                        subtitle: "Your check-in metrics are saved to your account."
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             } else if rows.isEmpty {
                 SQDashboardCardEmptyState(
                     title: "No metrics yet",
@@ -430,8 +434,10 @@ private extension SQDashboardGridView {
                         }
                     }
 
-                    SQDashboardMiniBars(points: timeRow.currentChartDataPoints)
-                        .frame(height: 54)
+                    if showsAverageContext {
+                        SQDashboardMiniBars(points: timeRow.currentChartDataPoints)
+                            .frame(height: 54)
+                    }
                 }
             } else {
                 SQDashboardCardEmptyState(

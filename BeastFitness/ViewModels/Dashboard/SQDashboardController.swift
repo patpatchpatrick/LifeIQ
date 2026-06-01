@@ -2193,9 +2193,9 @@ final class SQDashboardController: SQDashboardInterface {
         )
     }
 
-    private func displaySleepPhaseTrends(focusedPhase: SQSleepPhase) {
+    func displaySleepPhaseTrends(focusedPhase: SQSleepPhase? = nil) {
         SQLogger.shared.log(
-            "Displaying sleep phase trends for '\(focusedPhase.title)'",
+            "Displaying sleep phase trends for '\(focusedPhase?.title ?? "all phases")'",
             .debug,
             context: .dashboard
         )

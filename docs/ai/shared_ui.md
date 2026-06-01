@@ -41,6 +41,8 @@ Before creating a new component, search for an existing pattern in `BeastFitness
 - Do not build feature-specific alert/toast UI unless the shared system cannot support the need.
 - User-facing failures should never be log-only or silently swallowed. Save, sync, purchase, permission, and loading failures should present a shared alert/modal when the user needs to know or act.
 - Use modal/detail flows for complex recovery guidance; use alerts for focused blocking errors; use toasts only for non-blocking confirmations or transient status.
+- Alerts should use the same dark blue, subtle surface family as dropdown menus and dashboard sheets. Avoid system-looking silver material backgrounds or high-contrast floating chrome for app alerts.
+- Toasts should follow the same dark blue, subtle surface family as alerts and dropdown menus. Avoid silver material styling or saturated shadows for transient feedback.
 
 ## Dashboard UI
 

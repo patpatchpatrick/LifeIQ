@@ -141,6 +141,7 @@
 		F68C80532F365A0C00327250 /* SQDashboardSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804C2F365A0C00327250 /* SQDashboardSectionHeader.swift */; };
 		F68C80552F365A0C00327250 /* SQDashboardStatRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */; };
 		F68C80562F365A0C00327250 /* SQDashboardSubsection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */; };
+		F68C80592F365A0C00327250 /* SQDashboardCheckInBottomAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C805A2F365A0C00327250 /* SQDashboardCheckInBottomAction.swift */; };
 		F68C80592F365A3200327250 /* SQStatRowData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C80572F365A3200327250 /* SQStatRowData.swift */; };
 		F68D702B2F01D24000543561 /* SQAlertDropDownViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */; };
 		F68D702D2F01D86900543561 /* SQPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68D702C2F01D86700543561 /* SQPicker.swift */; };
@@ -516,6 +517,7 @@
 		F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSubsection.swift; sourceTree = "<group>"; };
 		F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardStatRow.swift; sourceTree = "<group>"; };
 		F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubsectionEmptyState.swift; sourceTree = "<group>"; };
+		F68C805A2F365A0C00327250 /* SQDashboardCheckInBottomAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardCheckInBottomAction.swift; sourceTree = "<group>"; };
 		F68C80572F365A3200327250 /* SQStatRowData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStatRowData.swift; sourceTree = "<group>"; };
 		F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertDropDownViewModel.swift; sourceTree = "<group>"; };
 		F68D702C2F01D86700543561 /* SQPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPicker.swift; sourceTree = "<group>"; };
@@ -1341,6 +1343,7 @@
 				F68C804C2F365A0C00327250 /* SQDashboardSectionHeader.swift */,
 				F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */,
 				F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */,
+				F68C805A2F365A0C00327250 /* SQDashboardCheckInBottomAction.swift */,
 				F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */,
 				F639F0C22F3E3C5E004AC701 /* SQColumnHeaderRow.swift */,
 			);
@@ -2427,6 +2430,7 @@
 				F68C80532F365A0C00327250 /* SQDashboardSectionHeader.swift in Sources */,
 				F68C80552F365A0C00327250 /* SQDashboardStatRow.swift in Sources */,
 				F68C80562F365A0C00327250 /* SQDashboardSubsection.swift in Sources */,
+				F68C80592F365A0C00327250 /* SQDashboardCheckInBottomAction.swift in Sources */,
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,
 				F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */,
 				F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */,

@@ -87,11 +87,11 @@ struct SQToastView: View {
     var body: some View {
         HStack(alignment: .top, spacing: .SQSpace.m) {
             RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
-                .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.20 : 0.14))
+                .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.14 : 0.12))
                 .frame(width: 36, height: 36)
                 .overlay {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.m, style: .continuous)
-                        .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                        .stroke(accentColor.color.opacity(SQColor.isDarkMode ? 0.32 : 0.24), lineWidth: 1)
                 }
                 .overlay {
                     SQImageView(
@@ -111,10 +111,10 @@ struct SQToastView: View {
                     .padding(.vertical, 4)
                     .background {
                         Capsule(style: .continuous)
-                            .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.16 : 0.12))
+                            .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.12 : 0.10))
                             .overlay {
                                 Capsule(style: .continuous)
-                                    .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                                    .stroke(SQColor.glassStroke.color.opacity(0.72), lineWidth: 1)
                             }
                     }
 
@@ -135,17 +135,17 @@ struct SQToastView: View {
             if toast.isUserDismissable {
                 Button(action: onDismiss) {
                     Circle()
-                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.16 : 0.12))
+                        .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.68 : 0.90))
                         .frame(width: 28, height: 28)
                         .overlay {
                             Circle()
-                                .stroke(SQColor.glassStrokeStrong.color, lineWidth: 1)
+                                .stroke(SQColor.glassStroke.color.opacity(0.78), lineWidth: 1)
                         }
                         .overlay {
                             SQImageView(
                                 image: .init(
                                     symbol: .xMark,
-                                    symbolStyle: .colorWithFont(accentColor, font: .bodyExtraSmall)
+                                    symbolStyle: .colorWithFont(.textTertiary, font: .bodyExtraSmall)
                                 )
                             )
                             .frame(width: 10, height: 10)
@@ -158,13 +158,26 @@ struct SQToastView: View {
         .padding(.vertical, .SQSpace.m)
         .background {
             RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
-                .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.96 : 1))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            SQColor.sheetGradientMid.color.opacity(SQColor.isDarkMode ? 0.98 : 0.96),
+                            SQColor.sheetGradientEnd.color.opacity(SQColor.isDarkMode ? 0.96 : 0.94)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.30 : 0.62))
+                }
                 .overlay {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(SQColor.isDarkMode ? 0.08 : 0.14),
+                                    Color.white.opacity(SQColor.isDarkMode ? 0.045 : 0.14),
                                     Color.clear
                                 ],
                                 startPoint: .topLeading,
@@ -174,18 +187,21 @@ struct SQToastView: View {
                 }
                 .overlay(alignment: .leading) {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.s, style: .continuous)
-                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.9 : 0.7))
+                        .fill(accentColor.color.opacity(SQColor.isDarkMode ? 0.72 : 0.52))
                         .frame(width: 4)
                         .padding(.vertical, .SQSpace.m)
                         .padding(.leading, .SQSpace.s)
                 }
+                .overlay {
+                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                        .stroke(SQColor.glassStrokeStrong.color.opacity(SQColor.isDarkMode ? 0.52 : 0.66), lineWidth: 1)
+                }
         }
-        .sqGlassSurface(level: .floating, cornerRadius: .SQCornerRadius.xl)
         .shadow(
-            color: accentColor.color.opacity(SQColor.isDarkMode ? 0.24 : 0.16),
-            radius: 24,
+            color: Color.black.opacity(SQColor.isDarkMode ? 0.16 : 0.10),
+            radius: 16,
             x: 0,
-            y: 12
+            y: 8
         )
         .contentShape(Rectangle())
         .onTapGesture {

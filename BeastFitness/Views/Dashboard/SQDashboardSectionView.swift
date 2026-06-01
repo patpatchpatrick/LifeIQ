@@ -153,12 +153,34 @@ struct SQDashboardSectionView: View {
 
                         if section.isLocked {
                             Button(action: { section.onLockedTap?() }) {
-                                Text("Log in to unlock your stats")
-                                    .sqFont(.body)
-                                    .foregroundStyle(SQColor.textPrimary.color)
-                                    .padding(.horizontal, .SQSpace.xl)
-                                    .padding(.vertical, .SQSpace.m)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                                HStack(spacing: .SQSpace.s) {
+                                    SQImageView(
+                                        image: .init(
+                                            symbol: .lockFill,
+                                            symbolStyle: .colorWithFont(.dashboardGlowBlue, font: .bodyExtraSmall)
+                                        )
+                                    )
+                                    .frame(width: 12, height: 12)
+
+                                    Text("Log in to unlock")
+                                        .sqFont(.bodySmallSemiBold)
+                                        .sqForegroundColor(.textPrimary)
+                                }
+                                .padding(.horizontal, .SQSpace.l)
+                                .padding(.vertical, .SQSpace.m)
+                                .background {
+                                    RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                                        .fill(SQColor.sheetGradientMid.color.opacity(SQColor.isDarkMode ? 0.96 : 0.92))
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                                                .fill(SQColor.glassPopoverTint.color.opacity(SQColor.isDarkMode ? 0.28 : 0.58))
+                                        }
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
+                                                .stroke(SQColor.glassStrokeStrong.color.opacity(SQColor.isDarkMode ? 0.54 : 0.66), lineWidth: 1)
+                                        }
+                                }
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                         }

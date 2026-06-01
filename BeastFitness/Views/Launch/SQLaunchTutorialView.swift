@@ -471,13 +471,19 @@ private struct SQLaunchTutorialInsightPreview: View {
 }
 
 private struct SQLaunchTutorialCheckInCtaPreview: View {
-    private let viewModel = SQCallToActionViewModel.guestDailyCheckInPrompt(signupEnabled: true)
+    private let viewModel = SQDashboardCheckInActionViewModel(
+        state: .incomplete,
+        title: "Check In",
+        subtitle: "Morning check-in due",
+        icon: .plus,
+        onTap: {}
+    )
 
     var body: some View {
         VStack(alignment: .leading, spacing: .SQSpace.m) {
-            exampleBadge(text: "Dashboard CTA")
+            exampleBadge(text: "Dashboard Button")
 
-            SQCallToAction(viewModel: viewModel)
+            SQDashboardCheckInBottomAction(viewModel: viewModel)
                 .allowsHitTesting(false)
         }
     }

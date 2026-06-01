@@ -72,6 +72,78 @@ struct SQSleepPhaseTrendsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var averageSummarySection: some View {
+        VStack(alignment: .leading, spacing: .SQSpace.l) {
+            VStack(alignment: .leading, spacing: .SQSpace.xs) {
+                HStack(spacing: .SQSpace.s) {
+                    Text("Average phases")
+                        .sqFont(.title3)
+                        .sqForegroundColor(.textPrimary)
+
+                    Text("Avg")
+                        .sqFont(.headerSmall)
+                        .sqForegroundColor(.textTertiary)
+                        .padding(.horizontal, .SQSpace.s)
+                        .padding(.vertical, .SQSpace.xs)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.48 : 0.62))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .stroke(SQColor.glassStroke.color.opacity(SQColor.isDarkMode ? 0.48 : 0.58), lineWidth: 1)
+                        )
+                }
+
+                Text("Average nightly duration for \(controller.selectedTimeRange.rawValue.lowercased()).")
+                    .sqFont(.bodyExtraSmall)
+                    .sqForegroundColor(.textSecondary)
+            }
+
+            VStack(spacing: .SQSpace.s) {
+                ForEach(controller.trendRows) { row in
+                    averageSummaryRow(row)
+                }
+            }
+        }
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
+    }
+
+    private func averageSummaryRow(_ row: SQSleepPhaseTrendRowViewModel) -> some View {
+        HStack(spacing: .SQSpace.m) {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(row.color)
+                .frame(width: 4, height: 22)
+
+            Text(row.title)
+                .sqFont(.bodySmallSemiBold)
+                .sqForegroundColor(.textSecondary)
+                .lineLimit(1)
+
+            Spacer(minLength: .SQSpace.m)
+
+            Text(row.averageText)
+                .sqFont(.bodySmallBold)
+                .sqForegroundColor(.textPrimary)
+                .monospacedDigit()
+                .lineLimit(1)
+
+            Text(row.deltaText)
+                .sqFont(.bodyExtraSmall)
+                .foregroundStyle(row.deltaColor)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+        }
+        .padding(.vertical, .SQSpace.xs)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(SQColor.glassStroke.color.opacity(0.42))
+                .frame(height: 1)
+        }
+    }
+
     private var trendSection: some View {
         VStack(alignment: .leading, spacing: .SQSpace.l) {
             VStack(alignment: .leading, spacing: .SQSpace.xs) {
@@ -226,8 +298,14 @@ struct SQSleepPhaseTrendsView: View {
                         RoundedRectangle(cornerRadius: .SQCornerRadius.xl, style: .continuous)
                             .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.5 : 0.9))
                             .frame(height: controller.chartHeight + 120)
-                    } else if let chartModel = controller.chartModel {
-                        chartSection(chartModel)
+                    } else {
+                        if !controller.trendRows.isEmpty {
+                            averageSummarySection
+                        }
+
+                        if let chartModel = controller.chartModel {
+                            chartSection(chartModel)
+                        }
                     }
 
                     if !controller.trendBuckets.isEmpty {

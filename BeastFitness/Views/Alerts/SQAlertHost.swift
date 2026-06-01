@@ -15,19 +15,19 @@ struct SQAlertHost: View {
         ZStack {
             if let alert = alerts.current {
                 ZStack {
-                    Color.black.opacity(SQColor.isDarkMode ? 0.36 : 0.18)
+                    SQColor.dashboardGradientStart.color
+                        .opacity(SQColor.isDarkMode ? 0.72 : 0.28)
 
                     LinearGradient(
                         colors: [
-                            SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.08 : 0.12),
-                            Color.clear,
-                            SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.05 : 0.08)
+                            SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.10 : 0.16),
+                            SQColor.dashboardGradientMid.color.opacity(SQColor.isDarkMode ? 0.34 : 0.18),
+                            SQColor.dashboardGlowMint.color.opacity(SQColor.isDarkMode ? 0.05 : 0.10)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 }
-                    .background(.ultraThinMaterial)
                     .ignoresSafeArea()
                     .onTapGesture {
                         alerts.dismissCurrent()
