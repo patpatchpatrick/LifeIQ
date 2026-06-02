@@ -91,6 +91,7 @@ final class SQMetricFormViewModel {
         didSet {
             updateKindMenuSelection()
             kindChanged(from: oldValue)
+            refreshUnitMenuViewModel()
         }
     }
     var selectedUnit: SQMetricUnit = .none {
@@ -195,6 +196,12 @@ final class SQMetricFormViewModel {
 
     var isScaleQuantityMappingEnabled: Bool = false {
         didSet {
+            if isScaleQuantityMappingEnabled,
+               selectedKind == .scale,
+               (selectedUnit == .none || selectedUnit == .unknown) {
+                selectedUnit = .count
+            }
+            refreshUnitMenuViewModel()
             calculateValidity()
         }
     }
@@ -1183,7 +1190,7 @@ final class SQMetricFormViewModel {
 
         unitMenuViewModel = SQDropDownMenuViewModel(
             defaultItem: .init(title: Self.displayName(for: selectedUnit)),
-            items: Self.unitDisplayItems
+            items: unitDisplayItemsForCurrentContext
         ) { [weak self] title in
             self?.selectedUnit = Self.unit(fromDisplayName: title)
         }
@@ -1306,6 +1313,29 @@ final class SQMetricFormViewModel {
         if unitMenuViewModel.mainButton.title != title {
             unitMenuViewModel.defaultItem = .init(title: title)
         }
+    }
+
+    private var unitDisplayItemsForCurrentContext: [SQDropDownMenuViewModel.Item] {
+        shouldUseMappedUnitMenu ? Self.mappableUnitDisplayItems : Self.unitDisplayItems
+    }
+
+    private var shouldUseMappedUnitMenu: Bool {
+        showsScaleQuantityFields && canEditScaleQuantityUnit
+    }
+
+    private func refreshUnitMenuViewModel() {
+        guard hasFinishedInitialSetup else { return }
+
+        if shouldUseMappedUnitMenu,
+           (selectedUnit == .none || selectedUnit == .unknown) {
+            selectedUnit = .count
+            return
+        }
+
+        unitMenuViewModel.updateItems(
+            unitDisplayItemsForCurrentContext,
+            defaultItem: .init(title: Self.displayName(for: selectedUnit))
+        )
     }
 
     private func updateKindMenuSelection() {
@@ -1983,6 +2013,12 @@ final class SQMetricFormViewModel {
     private static var unitDisplayItems: [SQDropDownMenuViewModel.Item] {
         SQMetricUnit.allCases
             .filter { $0 != .unknown }
+            .map { SQDropDownMenuViewModel.Item(title: displayName(for: $0)) }
+    }
+
+    private static var mappableUnitDisplayItems: [SQDropDownMenuViewModel.Item] {
+        SQMetricUnit.allCases
+            .filter { $0 != .unknown && $0 != .none }
             .map { SQDropDownMenuViewModel.Item(title: displayName(for: $0)) }
     }
 

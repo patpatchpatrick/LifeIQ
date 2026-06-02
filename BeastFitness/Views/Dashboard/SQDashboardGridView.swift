@@ -274,7 +274,7 @@ private extension SQDashboardGridView {
                         SQDashboardAverageBadge()
                     }
 
-                    SQDashboardPhaseBar(rows: rows)
+                    SQDashboardPhaseBar(rows: rows, isRedacted: controller.state.isLoading)
 
                     ForEach(rows.prefix(4)) { row in
                         SQDashboardMetricLine(title: row.title, value: row.avgValue, trailing: row.changePercent?.toPercentageString(decimals: 0))
@@ -521,7 +521,7 @@ private extension SQDashboardGridView {
                     }
 
                     if showsAverageContext {
-                        SQDashboardMiniBars(points: timeRow.currentChartDataPoints)
+                        SQDashboardMiniBars(points: timeRow.currentChartDataPoints, isRedacted: controller.state.isLoading)
                             .frame(height: 54)
                     }
                 }
@@ -974,6 +974,7 @@ private struct SQDashboardCardEmptyState: View {
 
 private struct SQDashboardPhaseBar: View {
     let rows: [SQDashboardMetricStatsRowViewModel]
+    let isRedacted: Bool
 
     private let colors: [SQColor] = [.accentSecondary(1), .dashboardGlowBlue, .dashboardGlowMint, .dashboardTrendWarm]
 
@@ -981,17 +982,26 @@ private struct SQDashboardPhaseBar: View {
         HStack(spacing: 2) {
             ForEach(Array(rows.prefix(4).enumerated()), id: \.element.id) { index, row in
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(colors[index % colors.count].color)
+                    .fill(fillColor(for: index))
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel(row.title)
             }
         }
         .frame(height: 12)
     }
+
+    private func fillColor(for index: Int) -> Color {
+        if isRedacted {
+            return SQColor.glassStrokeStrong.color.opacity(SQColor.isDarkMode ? 0.22 : 0.32)
+        }
+
+        return colors[index % colors.count].color
+    }
 }
 
 private struct SQDashboardMiniBars: View {
     let points: [SQDashboardWorkoutTotalsRowViewModel.ChartDataPoint]
+    let isRedacted: Bool
 
     var body: some View {
         let maxValue = points.map(\.value).max() ?? 1
@@ -999,7 +1009,7 @@ private struct SQDashboardMiniBars: View {
             ForEach(points.prefix(12)) { point in
                 VStack(spacing: 3) {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(SQColor.dashboardTrendWarm.color.opacity(0.88))
+                        .fill(barFillColor)
                         .frame(height: max(6, CGFloat(point.value / max(maxValue, 1)) * 42))
                     Text(point.label)
                         .sqFont(.bodyExtraSmall)
@@ -1008,6 +1018,14 @@ private struct SQDashboardMiniBars: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    private var barFillColor: Color {
+        if isRedacted {
+            return SQColor.glassStrokeStrong.color.opacity(SQColor.isDarkMode ? 0.22 : 0.32)
+        }
+
+        return SQColor.dashboardTrendWarm.color.opacity(0.88)
     }
 }
 

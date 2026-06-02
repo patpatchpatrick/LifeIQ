@@ -538,7 +538,6 @@ struct SQMetricFormView: View {
 
                 saveButton
             }
-            .background(.ultraThinMaterial)
         }
         .toolbar {
             if viewModel.canDelete {
