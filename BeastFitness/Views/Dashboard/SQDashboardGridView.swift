@@ -41,6 +41,8 @@ struct SQDashboardGridView: View {
         switch cardId {
         case "sleep-overview":
             sleepCard
+        case "recovery-score-card":
+            recoveryCard
         case "sleep-phases":
             sleepPhasesCard
         case "top-insight":
@@ -163,6 +165,90 @@ private extension SQDashboardGridView {
                     subtitle: "Connect Sleep in Health or wear Apple Watch overnight."
                 )
             }
+        }
+    }
+
+    var recoveryCard: some View {
+        let row = section("recovery-score")?.activeRows.first as? SQDashboardBodyBatteryRowViewModel
+        let recoveryComponent = lifeScoreViewModel?.components.first { $0.id == "recoveryReadiness" }
+        let trendDelta = row?.trendDelta ?? latestRecoveryTrendDelta(from: recoveryComponent)
+
+        return SQDashboardGridCard(
+            title: "Recovery",
+            icon: .heart,
+            accentColor: .dashboardGlowMint,
+            onViewMore: row.map { row in
+                {
+                    controller.handleRecoveryScoreInfoTap(row: row)
+                }
+            }
+        ) {
+            if let row {
+                VStack(alignment: .leading, spacing: .SQSpace.m) {
+                    SQDashboardPrimaryValue(
+                        value: row.score.map(String.init) ?? "--",
+                        unit: "/100"
+                    )
+
+                    if let trendDelta {
+                        SQDashboardTrendDeltaPill(viewModel: trendDelta)
+                    }
+
+                    Text(recoveryStatusText(row.statusTitle))
+                        .sqFont(.bodySmallSemiBold)
+                        .sqForegroundColor(recoveryStatusColor(row.statusTone))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    ForEach(row.drivers.prefix(2)) { driver in
+                        SQDashboardMetricLine(
+                            title: driver.title,
+                            value: driver.valueText,
+                            trailing: nil
+                        )
+                    }
+                }
+            } else {
+                SQDashboardCardEmptyState(
+                    title: "No recovery score yet",
+                    subtitle: "Log recovery check-ins or enable sleep, workouts, and heart data."
+                )
+            }
+        }
+    }
+
+    private func latestRecoveryTrendDelta(
+        from component: SQLifeScoreComponent?
+    ) -> SQDashboardTrendDeltaViewModel? {
+        guard let scoreDelta = component?.scoreDeltaFromPreviousDay,
+              scoreDelta != 0 else {
+            return nil
+        }
+
+        return SQDashboardTrendDeltaViewModel(
+            delta: Double(scoreDelta),
+            valueText: "\(abs(scoreDelta)) pts",
+            comparisonText: "vs yesterday"
+        )
+    }
+
+    private func recoveryStatusText(_ statusTitle: String) -> String {
+        switch statusTitle {
+        case "Solid":
+            return "Strong"
+        default:
+            return statusTitle
+        }
+    }
+
+    private func recoveryStatusColor(_ tone: SQDashboardTrendTone) -> SQColor {
+        switch tone {
+        case .positive:
+            return .dashboardGlowMint
+        case .negative:
+            return .dashboardTrendWarm
+        case .neutral:
+            return .dashboardGlowBlue
         }
     }
 

@@ -165,8 +165,64 @@ struct SQLifeScoreCommandCard: View {
         return viewModel.state.summary
     }
 
-    private var driverChips: [SQInsightDriver] {
-        Array(viewModel.drivers.prefix(3))
+    private var shouldUseNeutralDataChips: Bool {
+        viewModel.state == .calibrating
+    }
+
+    private var driverChips: [SQLifeScoreDriverChipViewModel] {
+        let chips = Array(viewModel.drivers.prefix(3)).map { driver in
+            shouldUseNeutralDataChips
+                ? neutralDataChip(from: driver)
+                : .init(
+                    id: driver.id,
+                    title: driver.title,
+                    stateText: driver.direction == .supportive ? "Helping" : "Hurting",
+                    tone: driver.direction == .supportive ? .supportive : .drag
+                )
+        }
+
+        if !chips.isEmpty {
+            return chips
+        }
+
+        guard shouldUseNeutralDataChips else { return [] }
+        return [
+            .init(
+                id: "life-score-neutral-more-data",
+                title: "More data needed",
+                stateText: "Incomplete",
+                tone: .neutral
+            )
+        ]
+    }
+
+    private func neutralDataChip(from driver: SQInsightDriver) -> SQLifeScoreDriverChipViewModel {
+        let title: String
+        let stateText: String
+
+        if driver.signalId == "insight.dataConfidence" {
+            title = "More data needed"
+            stateText = "Incomplete"
+        } else if driver.category == .training || driver.title.localizedCaseInsensitiveContains("training") {
+            title = "Training unavailable"
+            stateText = "No signal"
+        } else if driver.category == .sleep {
+            title = "Sleep incomplete"
+            stateText = "No signal"
+        } else if driver.category == .habits {
+            title = "Check-in needed"
+            stateText = "Missing"
+        } else {
+            title = "More data needed"
+            stateText = "Incomplete"
+        }
+
+        return .init(
+            id: "neutral-\(driver.id)",
+            title: title,
+            stateText: stateText,
+            tone: .neutral
+        )
     }
 
     var body: some View {
@@ -206,8 +262,8 @@ struct SQLifeScoreCommandCard: View {
 
                     if !driverChips.isEmpty {
                         HStack(spacing: .SQSpace.s) {
-                            ForEach(driverChips) { driver in
-                                SQDashboardDriverPill(driver: driver)
+                            ForEach(driverChips) { chip in
+                                SQDashboardDriverPill(chip: chip)
                             }
                         }
                     } else {
@@ -227,28 +283,53 @@ struct SQLifeScoreCommandCard: View {
     }
 }
 
+private enum SQLifeScoreDriverChipTone {
+    case supportive
+    case drag
+    case neutral
+
+    var color: SQColor {
+        switch self {
+        case .supportive:
+            return .dashboardGlowMint
+        case .drag:
+            return .colorErrorRed
+        case .neutral:
+            return .textTertiary
+        }
+    }
+
+    var strokeOpacity: Double {
+        switch self {
+        case .supportive, .drag:
+            return SQColor.isDarkMode ? 0.24 : 0.18
+        case .neutral:
+            return SQColor.isDarkMode ? 0.34 : 0.28
+        }
+    }
+}
+
+private struct SQLifeScoreDriverChipViewModel: Identifiable {
+    let id: String
+    let title: String
+    let stateText: String
+    let tone: SQLifeScoreDriverChipTone
+}
+
 private struct SQDashboardDriverPill: View {
-    let driver: SQInsightDriver
-
-    private var color: SQColor {
-        driver.direction == .supportive ? .dashboardGlowMint : .colorErrorRed
-    }
-
-    private var stateText: String {
-        driver.direction == .supportive ? "Helping" : "Hurting"
-    }
+    let chip: SQLifeScoreDriverChipViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(driver.title)
+            Text(chip.title)
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
-            Text(stateText)
+            Text(chip.stateText)
                 .sqFont(.bodyExtraSmall)
-                .sqForegroundColor(color)
+                .sqForegroundColor(chip.tone.color)
         }
         .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
         .padding(.horizontal, .SQSpace.s)
@@ -258,7 +339,7 @@ private struct SQDashboardDriverPill: View {
                 .fill(SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.72 : 0.96))
                 .overlay {
                     RoundedRectangle(cornerRadius: .SQCornerRadius.l, style: .continuous)
-                        .stroke(color.color.opacity(SQColor.isDarkMode ? 0.24 : 0.18), lineWidth: 1)
+                        .stroke(chip.tone.color.color.opacity(chip.tone.strokeOpacity), lineWidth: 1)
                 }
         }
     }

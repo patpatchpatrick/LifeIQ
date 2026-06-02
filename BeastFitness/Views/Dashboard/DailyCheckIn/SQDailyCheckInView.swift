@@ -117,7 +117,6 @@ struct SQDailyCheckInView: View {
 
                         submitButton
                     }
-                    .background(.ultraThinMaterial)
                 }
                 .sheet(isPresented: $viewModel.isAddMetricSheetDisplayed) {
                     SQMetricsListView(controller: viewModel.metricsListController)

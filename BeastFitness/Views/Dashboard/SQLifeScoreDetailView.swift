@@ -251,6 +251,8 @@ struct SQLifeScoreDetailView: View {
                     .sqForegroundColor(.textPrimary)
             }
         )
+        .tint(SQColor.textPrimary.color)
+        .accentColor(SQColor.textPrimary.color)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.SQSpace.xl)
         .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)

@@ -153,6 +153,7 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
             signalId: definition.signalId,
             title: title,
             summary: driverSummary(
+                signalId: definition.signalId,
                 title: title,
                 direction: direction,
                 effectMagnitude: effectMagnitude
@@ -214,15 +215,31 @@ struct SQInsightDriverBuilder: SQInsightDriverBuilding {
     }
 
     private func driverSummary(
+        signalId: String,
         title: String,
         direction: SQInsightDriverDirection,
         effectMagnitude: Double
     ) -> String {
+        let magnitudeText = format(effectMagnitude)
+
+        switch (signalId, direction) {
+        case (SQInsightAnalysisMetricId.workoutDifficulty, .supportive):
+            return "Recent training load is about \(magnitudeText) points lighter than your usual pattern, which should make recovery easier."
+        case (SQInsightAnalysisMetricId.workoutDifficulty, .drag):
+            return "Recent training load is about \(magnitudeText) points heavier than your usual pattern, which can make recovery harder."
+        case (SQInsightAnalysisMetricId.workoutPerformance, .supportive):
+            return "Workout performance is about \(magnitudeText) points above your usual pattern, so training quality looks strong."
+        case (SQInsightAnalysisMetricId.workoutPerformance, .drag):
+            return "Workout performance is about \(magnitudeText) points below your usual pattern, so training quality may be slipping."
+        default:
+            break
+        }
+
         switch direction {
         case .supportive:
-            return "\(title) is helping right now by \(format(effectMagnitude)) versus baseline."
+            return "\(title) is about \(magnitudeText) points better than your usual pattern right now."
         case .drag:
-            return "\(title) is dragging right now by \(format(effectMagnitude)) versus baseline."
+            return "\(title) is about \(magnitudeText) points worse than your usual pattern right now."
         }
     }
 

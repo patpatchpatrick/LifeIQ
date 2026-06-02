@@ -74,7 +74,6 @@ struct SQWorkoutReviewView: View {
             .padding(.top, .SQSpace.m)
             .padding(.bottom, .SQSpace.l)
         }
-        .background(.ultraThinMaterial)
         .interactiveDismissDisabled()
     }
 

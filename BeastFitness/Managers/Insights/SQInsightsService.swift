@@ -1875,16 +1875,16 @@ final class SQInsightsService: SQInsightsServicing {
             title = "Sleep is helping, but other signals are still dragging"
             summary = "Sleep looks supportive, but the overall day still has pressure from other signals."
         } else if signalIds.contains(SQInsightAnalysisMetricId.restingHeartRate) {
-            title = "Recovery is one bright spot today"
-            summary = "Recovery looks supportive, but the overall day still has pressure from other signals."
+            title = "Recovery is holding up better than the rest of today"
+            summary = "Your recovery signal looks supportive, even though the overall day still has pressure from other areas."
         } else if signalIds.contains(SQMetricId.soreness)
                     || signalIds.contains(SQInsightAnalysisMetricId.workoutDifficulty)
                     || signalIds.contains(SQInsightAnalysisMetricId.workoutPerformance) {
-            title = "Readiness is one bright spot today"
-            summary = "Training readiness looks supportive, but the overall day still has pressure from other signals."
+            title = "Training load looks manageable today"
+            summary = "Your training signal looks supportive, even though the overall day still has pressure from other areas."
         } else {
-            title = "\(insight.driverText) is one bright spot today"
-            summary = "\(insight.driverText) looks supportive, but the overall day still has pressure from other signals."
+            title = "\(insight.driverText) is holding up better than the rest of today"
+            summary = "\(insight.driverText) looks supportive, even though the overall day still has pressure from other areas."
         }
 
         return insight.withPresentation(
@@ -2388,11 +2388,11 @@ final class SQInsightsService: SQInsightsServicing {
         case "sleep":
             return "Sleep is helping, but other signals are still dragging"
         case "recovery":
-            return "Recovery is one bright spot today"
+            return "Recovery is holding up better than the rest of today"
         case "soreness", "strain", "performance":
-            return "Readiness is one bright spot today"
+            return "Training load looks manageable today"
         default:
-            return "\(primaryTheme.displayTitle) is one bright spot today"
+            return "\(primaryTheme.displayTitle) is holding up better than the rest of today"
         }
     }
 

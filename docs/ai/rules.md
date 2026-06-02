@@ -16,6 +16,7 @@ This file tracks durable implementation and product rules for AI assistants work
 - LifeIQ should turn HealthKit, workouts, sleep, and check-ins into actionable personal health intelligence, not just display raw data.
 - Prefer features that improve trustworthiness, actionability, clarity, reliable data handling, and daily usefulness before monetization or extra visual polish.
 - Do not duplicate detailed Insights or Life Score engine definitions here; keep those in `docs/ai/Definitions.md` and `docs/ai/engines/`.
+- Keep the LifeIQ web landing page at `/Users/patrickdoyle/Developer/mweb/lifeiqweb` current with major iOS UI/product changes. When dashboard, Life Score, screenshots, app icon, core feature framing, or public-facing app copy changes materially in the iOS app, update the web app assets/copy in the same pass when practical.
 
 ## Architecture Boundaries
 

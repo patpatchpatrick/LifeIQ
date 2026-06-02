@@ -28,13 +28,19 @@ enum SQAdminConfig {
 
     /// Debug-only local override for testing subscription states. When non-nil, this wins
     /// over the user's stored Firestore subscription level without changing that record.
-    static var subscriptionLevelOverride: SQSubscriptionLevel? = nil
+    static var subscriptionLevelOverride: SQSubscriptionLevel? = .premium
     static var freeCustomMetricLimit = 1
 
     /// Debug-only toggle for rendering canned health data without requiring
     /// a populated HealthKit store on the current simulator or device.
     static var useMockDashboardHealthData = false
     static var useMockHealthData: Bool { useMockDashboardHealthData }
+
+    /// Debug-only visual QA switch. When enabled, the dashboard presents the
+    /// workout review sheet for the latest available workouts even if they were
+    /// already marked processed or included in the review baseline.
+    static var forceWorkoutReviewSheet = false
+
     static var verboseLoggingEnabled = false
     static var firestoreSafetyEnabled = true
     static var firestoreMaxReadsPerMinute = 10_000
@@ -72,6 +78,7 @@ enum SQAdminConfig {
     static let freeCustomMetricLimit = 1
     static let useMockDashboardHealthData = false
     static let useMockHealthData = false
+    static let forceWorkoutReviewSheet = false
     static let verboseLoggingEnabled = false
     static let firestoreSafetyEnabled = true
     static let firestoreMaxReadsPerMinute = 10_000

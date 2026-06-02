@@ -99,7 +99,14 @@ struct SQButton: View {
             isDisabled: isDisabled || isLoading
         )
 
-        if style.usesGlassTreatment {
+        if style == .glassPrimary {
+            RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                .fill(backgroundColor)
+                .overlay {
+                    RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                        .fill(SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.10 : 0.12))
+                }
+        } else if style.usesGlassTreatment {
             RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
                 .fill(backgroundColor)
         } else {
@@ -162,14 +169,14 @@ struct SQButton: View {
             case .secondary:
                 return SQColor.glassCardTint.color.opacity(SQColor.isDarkMode ? 0.82 : 0.96)
             case .glassPrimary:
-                return SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.80 : 0.62)
+                return SQColor.dashboardGradientEnd.color.opacity(SQColor.isDarkMode ? 0.94 : 0.84)
             }
         }
 
         var foregroundColor: SQColor {
             switch self {
             case .glassPrimary:
-                .dashboardGlowBlueForeground
+                .textPrimary
             default:
                 .textPrimary
             }
@@ -205,7 +212,7 @@ struct SQButton: View {
         var strokeColor: Color {
             switch self {
             case .glassPrimary:
-                return SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.46 : 0.34)
+                return SQColor.dashboardGlowBlue.color.opacity(SQColor.isDarkMode ? 0.42 : 0.30)
             case .secondary:
                 return SQColor.glassStroke.color
             case .primary, .primarySmall:
@@ -216,7 +223,7 @@ struct SQButton: View {
         var glassHighlightOpacity: Double {
             switch self {
             case .glassPrimary:
-                return SQColor.isDarkMode ? 0.14 : 0.22
+                return SQColor.isDarkMode ? 0.11 : 0.18
             case .secondary:
                 return SQColor.isDarkMode ? 0.10 : 0.18
             case .primary, .primarySmall:

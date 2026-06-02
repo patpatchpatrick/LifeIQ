@@ -52,6 +52,7 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
     let headline: String
     let summary: String
     let drivers: [Driver]
+    let trendDelta: SQDashboardTrendDeltaViewModel?
     let formulaAlert: SQAlertViewModel
     let dataQualityWarning: String?
     let footer: String
@@ -63,6 +64,7 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
         headline: String,
         summary: String,
         drivers: [Driver],
+        trendDelta: SQDashboardTrendDeltaViewModel? = nil,
         formulaAlert: SQAlertViewModel,
         dataQualityWarning: String? = nil,
         footer: String
@@ -73,6 +75,7 @@ final class SQDashboardBodyBatteryRowViewModel: SQDashboardRowViewModel {
         self.headline = headline
         self.summary = summary
         self.drivers = drivers
+        self.trendDelta = trendDelta
         self.formulaAlert = formulaAlert
         self.dataQualityWarning = dataQualityWarning
         self.footer = footer

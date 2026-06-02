@@ -24,6 +24,7 @@ final class SQDashboardController: SQDashboardInterface {
     private enum DashboardGridCardID {
         static let group = "dashboard-grid"
         static let sleep = "sleep-overview"
+        static let recovery = "recovery-score-card"
         static let sleepPhases = "sleep-phases"
         static let topInsight = "top-insight"
         static let keyMetrics = "key-metrics"
@@ -368,13 +369,14 @@ final class SQDashboardController: SQDashboardInterface {
     private static func buildDashboardGridLayoutGroups() -> [SQDashboardSectionGroupViewModel] {
         let cards: [(id: String, title: String, priority: Int)] = [
             (DashboardGridCardID.sleep, "Sleep", 10),
-            (DashboardGridCardID.sleepPhases, "Sleep Phases", 20),
-            (DashboardGridCardID.topInsight, "Top Insight", 30),
-            (DashboardGridCardID.keyMetrics, "Key Metrics", 40),
-            (DashboardGridCardID.latestWorkout, "Latest Workout", 50),
-            (DashboardGridCardID.activityCalories, "Activity & Calories", 60),
-            (DashboardGridCardID.vo2Max, "VO₂ Max", 70),
-            (DashboardGridCardID.heartOverview, "Heart Overview", 80)
+            (DashboardGridCardID.recovery, "Recovery", 20),
+            (DashboardGridCardID.sleepPhases, "Sleep Phases", 30),
+            (DashboardGridCardID.topInsight, "Top Insight", 40),
+            (DashboardGridCardID.keyMetrics, "Key Metrics", 50),
+            (DashboardGridCardID.latestWorkout, "Latest Workout", 60),
+            (DashboardGridCardID.activityCalories, "Activity & Calories", 70),
+            (DashboardGridCardID.vo2Max, "VO₂ Max", 80),
+            (DashboardGridCardID.heartOverview, "Heart Overview", 90)
         ]
 
         return [
@@ -1339,6 +1341,29 @@ final class SQDashboardController: SQDashboardInterface {
         let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
         let processedIds = workoutManager.fetchProcessedSourceIds(context: context)
         let reviewStartDate = user.createdAt ?? SQUserDefaults.shared.appInstallDate ?? .distantPast
+
+        if SQAdminConfig.forceWorkoutReviewSheet {
+            let forcedWorkouts = Array(workouts
+                .filter { $0.startDate != nil }
+                .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
+                .prefix(2))
+
+            guard !forcedWorkouts.isEmpty else {
+                SQLogger.shared.log("Forced workout review sheet skipped - no workouts available", .debug, context: .dashboard)
+                return
+            }
+
+            SQLogger.shared.log(
+                "Forcing workout review sheet for \(forcedWorkouts.count) workout(s)",
+                .info,
+                context: .dashboard
+            )
+
+            if navState.dashboardRootSheetView == nil {
+                state.hub.domainEvents.send(.pushDashboardRoute(.workoutReview(workouts: forcedWorkouts)))
+            }
+            return
+        }
 
         let reviewableWorkouts = workouts.filter { workout in
             guard let startDate = workout.startDate else { return false }
@@ -2648,14 +2673,13 @@ final class SQDashboardController: SQDashboardInterface {
     ) async throws -> [SQDashboardSectionGroupViewModel] {
         var sectionGroups: [SQDashboardSectionGroupViewModel] = []
 
-        if timeRange == .today,
-           let recoveryGroup = try await buildRecoverySectionGroup(
+        if let recoveryGroup = try await buildRecoverySectionGroup(
                 todaysWorkouts: todaysWorkouts,
                 yesterdaysWorkouts: yesterdaysWorkouts,
                 sleepData: sleepData,
                 includeHeartRateData: includeHeartRateData,
                 context: context
-           ) {
+        ) {
             sectionGroups.append(recoveryGroup)
         }
 
