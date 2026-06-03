@@ -22,8 +22,15 @@ final class SQInsightLibraryController {
     private let input: SQHealthIntelligenceInput
     private let analyzer = SQInsightExplorerAnalyzer()
     private let source: String
+    private let userState: SQUserStating
 
     private(set) var relationships: [SQInsightExplorerRelationshipResult] = []
+
+    private var shouldUseDemoData: Bool {
+        SQAdminConfig.useMockDashboardHealthData
+            || SQAdminConfig.useMockHealthData
+            || userState.loggedInUser?.usesAppReviewDemoData == true
+    }
 
     var selectedRange: SQInsightExplorerRange {
         didSet { rebuildRelationships() }
@@ -37,12 +44,14 @@ final class SQInsightLibraryController {
         input: SQHealthIntelligenceInput,
         initialRange: SQInsightExplorerRange = .days90,
         initialSort: SQInsightLibrarySort = .confidence,
-        source: String
+        source: String,
+        userState: SQUserStating = SQAppState.shared.userState
     ) {
         self.input = input
         self.selectedRange = initialRange
         self.selectedSort = initialSort
         self.source = source
+        self.userState = userState
         rebuildRelationships()
     }
 
@@ -66,7 +75,7 @@ final class SQInsightLibraryController {
     }
 
     private func rebuildRelationships() {
-        let allRelationships = SQAdminConfig.useMockHealthData
+        let allRelationships = shouldUseDemoData
             ? Self.mockAppStoreRelationships(range: selectedRange)
             : analyzer.topRelationships(input: input, range: selectedRange)
         relationships = SQAdminConfig.hideScreenshotSensitiveInsights

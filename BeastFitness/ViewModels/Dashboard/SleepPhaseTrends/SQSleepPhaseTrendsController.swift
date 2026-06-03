@@ -56,6 +56,11 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
     private var chartSeries: [MultiLineChartSeries] = []
     private var focusPointIDByPhase: [SQSleepPhase: String] = [:]
 
+    private var shouldUseDemoData: Bool {
+        SQAdminConfig.useMockDashboardHealthData
+            || userState.loggedInUser?.usesAppReviewDemoData == true
+    }
+
     var title: String {
         "Sleep Phase Trends"
     }
@@ -175,10 +180,9 @@ final class SQSleepPhaseTrendsController: SQSleepPhaseTrendsInterface {
             for: timeRange,
             sleepSchedule: sleepSchedule
         )
-        let sleepSegments = try await healthKitManager.fetchSleepSegments(
-            from: window.fetchStartDate,
-            to: window.fetchEndDate
-        )
+        let sleepSegments = shouldUseDemoData
+            ? SQHealthKitManager.shared.mockHealthData.sleepSegments(from: window.fetchStartDate, to: window.fetchEndDate)
+            : try await healthKitManager.fetchSleepSegments(from: window.fetchStartDate, to: window.fetchEndDate)
         let dashboardData = sleepAggregationService.buildDashboardData(
             segments: sleepSegments,
             window: window,

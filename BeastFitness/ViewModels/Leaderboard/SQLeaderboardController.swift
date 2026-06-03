@@ -34,6 +34,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     private weak var modelContext: ModelContext?
 
     private let hub: EventHub
+    private let userState: SQUserStating
     let mode: SQLeaderboardMode
     private(set) var rows: [SQLeaderboardRowViewModel] = []
     private(set) var chartModel: LineChartModel?
@@ -42,6 +43,11 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     var focusedEntryId: String?
     private(set) var hasFreeWorkoutScorePreviewAccess = false
     private(set) var premiumLockedSubtitle = SQSubscriptionManager.weeklyScorePreviewLockedSubtitle
+
+    private var shouldUseDemoData: Bool {
+        SQAdminConfig.useMockDashboardHealthData
+            || userState.loggedInUser?.usesAppReviewDemoData == true
+    }
 
     var title: String {
         mode.title
@@ -69,13 +75,15 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         mode: SQLeaderboardMode,
         initialTimeRange: AppTimeRange = .allTime,
         workoutManager: SQWorkoutManaging = SQWorkoutManager.shared,
-        workoutScoreService: SQWorkoutScoreServicing? = nil
+        workoutScoreService: SQWorkoutScoreServicing? = nil,
+        userState: SQUserStating = SQAppState.shared.userState
     ) {
         self.hub = hub
         self.selectedTimeRange = initialTimeRange
         self.mode = mode
         self.workoutManager = workoutManager
         self.workoutScoreService = workoutScoreService ?? SQWorkoutScoreService()
+        self.userState = userState
 
         let items = AppTimeRange.allCases
             .sorted(by: { $0.sortOrder < $1.sortOrder })
@@ -412,7 +420,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
         )
 
         do {
-            let samples = try await SQHealthKitManager.shared.fetchVO2MaxSamples(selectedTimeRange.sqTimeRange)
+            let samples = try await vo2MaxSamples(for: selectedTimeRange.sqTimeRange)
 
             // Group by calendar day, keep highest value per day
             let calendar = Calendar.current
@@ -515,7 +523,7 @@ final class SQLeaderboardController: SQLeaderboardInterface {
     /// Loads all-time VO2 max values (deduplicated by day), used for percentile calculation
     /// when the current leaderboard is filtered to a sub-range.
     private func fetchAllTimeVO2MaxValues() async -> [Double] {
-        guard let samples = try? await SQHealthKitManager.shared.fetchVO2MaxSamples(.allTime) else {
+        guard let samples = try? await vo2MaxSamples(for: .allTime) else {
             return []
         }
         let calendar = Calendar.current
@@ -525,6 +533,14 @@ final class SQLeaderboardController: SQLeaderboardInterface {
             bestByDay[dayStart] = max(bestByDay[dayStart] ?? 0, sample.value)
         }
         return Array(bestByDay.values)
+    }
+
+    private func vo2MaxSamples(for timeRange: SQTimeRange) async throws -> [SQVO2MaxSample] {
+        if shouldUseDemoData {
+            return SQHealthKitManager.shared.mockHealthData.vo2MaxSamples(for: timeRange)
+        }
+
+        return try await SQHealthKitManager.shared.fetchVO2MaxSamples(timeRange)
     }
 
     // MARK: - Chart
