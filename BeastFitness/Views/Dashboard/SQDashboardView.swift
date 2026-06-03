@@ -22,6 +22,10 @@ struct SQDashboardView: View {
         controller.lifeScoreViewModel ?? (controller.state.isLoading ? .mock : nil)
     }
 
+    private var isEmailVerificationGatePresented: Bool {
+        controller.emailVerificationRequirement != nil
+    }
+
     private var loadingPercentText: String {
         let progress = controller.state.loadingProgress ?? 0
         return "\(Int((progress * 100).rounded()))%"
@@ -148,7 +152,7 @@ struct SQDashboardView: View {
             SQDashboardBackground()
 
             mainScroll
-                .disabled(controller.state.isLoading || controller.emailVerificationRequirement != nil)
+                .disabled(controller.state.isLoading || isEmailVerificationGatePresented)
 
             if controller.state.isLoading {
                 loadingProgressOverlay
@@ -156,9 +160,10 @@ struct SQDashboardView: View {
                     .unredacted()
             }
 
-            if controller.emailVerificationRequirement != nil {
+            if isEmailVerificationGatePresented {
                 SQEmailVerificationGateView(controller: controller.emailVerificationController)
                     .zIndex(2)
+                    .unredacted()
             }
         }
         .navigationBarTitleDisplayMode(.inline)

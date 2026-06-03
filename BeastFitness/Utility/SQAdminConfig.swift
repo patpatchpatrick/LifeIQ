@@ -24,7 +24,7 @@ enum SQAdminConfig {
 
     /// Temporary debug-time toggle for auth experiments. This is intentionally mutable
     /// so a future dev/admin menu can flip it without reworking the call sites.
-    static var enforceEmailVerificationForEmailPasswordAccounts = false
+    static var enforceEmailVerificationForEmailPasswordAccounts = true
 
     /// Stored-profile fallback for new users and admin/debug mirrors. Runtime entitlement
     /// checks should use Apple's StoreKit state through SQSubscriptionManager.

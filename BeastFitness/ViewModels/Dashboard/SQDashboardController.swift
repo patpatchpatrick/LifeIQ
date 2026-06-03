@@ -565,6 +565,8 @@ final class SQDashboardController: SQDashboardInterface {
             return
         }
 
+        refreshEmailVerificationRequirement()
+
         if shouldPresentLaunchTutorial {
             presentLaunchTutorialIfNeeded(context: context)
             return
