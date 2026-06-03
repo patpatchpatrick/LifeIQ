@@ -971,27 +971,38 @@ final class SQDashboardController: SQDashboardInterface {
             var insightsResult = buildDashboardInsightsResult(
                 input: healthIntelligenceInput
             )
+
+            var lifeScoreHealthIntelligenceInput = state.selectedTimeRange == .today
+                ? healthIntelligenceInput
+                : buildHealthIntelligenceInput(for: .today)
+            var lifeScoreInsightsResult = state.selectedTimeRange == .today
+                ? insightsResult
+                : buildDashboardInsightsResult(input: lifeScoreHealthIntelligenceInput)
             lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
                 input: .init(
-                    intelligenceInput: healthIntelligenceInput,
-                    insightsResult: insightsResult
+                    intelligenceInput: lifeScoreHealthIntelligenceInput,
+                    insightsResult: lifeScoreInsightsResult
                 )
             )
 
-            if state.selectedTimeRange.insightSurfaceIntent == .today,
-               let currentLifeScoreViewModel = lifeScoreViewModel {
-                healthIntelligenceInput = healthIntelligenceInput.withScoreContext(
+            if let currentLifeScoreViewModel = lifeScoreViewModel {
+                lifeScoreHealthIntelligenceInput = lifeScoreHealthIntelligenceInput.withScoreContext(
                     scoreContext(from: currentLifeScoreViewModel)
                 )
-                insightsResult = buildDashboardInsightsResult(
-                    input: healthIntelligenceInput
+                lifeScoreInsightsResult = buildDashboardInsightsResult(
+                    input: lifeScoreHealthIntelligenceInput
                 )
                 lifeScoreViewModel = lifeScoreBuilder.buildViewModel(
                     input: .init(
-                        intelligenceInput: healthIntelligenceInput,
-                        insightsResult: insightsResult
+                        intelligenceInput: lifeScoreHealthIntelligenceInput,
+                        insightsResult: lifeScoreInsightsResult
                     )
                 )
+
+                if state.selectedTimeRange == .today {
+                    healthIntelligenceInput = lifeScoreHealthIntelligenceInput
+                    insightsResult = lifeScoreInsightsResult
+                }
             }
 
             for timeRange in [AppTimeRange.pastSevenDays, .pastYear] where timeRange != state.selectedTimeRange {
