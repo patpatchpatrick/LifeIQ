@@ -40,6 +40,12 @@ final class SQUserDefaults {
     /// Map: userId -> resend-attempt epoch seconds for email verification resends.
     private static let keyEmailVerificationResendHistory = "auth.email-verification.resend-history"
 
+    /// Map: userId -> distinct local day keys when daily check-ins were submitted.
+    private static let keyAppReviewCheckInSubmissionDays = "app-review.check-in-submission-days"
+
+    /// Map: userId -> native review prompt request epoch seconds.
+    private static let keyAppReviewPromptRequestHistory = "app-review.prompt-request-history"
+
 
     // MARK: - Private helpers (Workouts)
 
@@ -98,6 +104,24 @@ final class SQUserDefaults {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Self.keyEmailVerificationResendHistory)
+        }
+    }
+
+    private var appReviewCheckInSubmissionDaysValue: [String: [String]] {
+        get {
+            (UserDefaults.standard.dictionary(forKey: Self.keyAppReviewCheckInSubmissionDays) as? [String: [String]]) ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.keyAppReviewCheckInSubmissionDays)
+        }
+    }
+
+    private var appReviewPromptRequestHistoryValue: [String: [Double]] {
+        get {
+            (UserDefaults.standard.dictionary(forKey: Self.keyAppReviewPromptRequestHistory) as? [String: [Double]]) ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.keyAppReviewPromptRequestHistory)
         }
     }
 
@@ -227,6 +251,7 @@ final class SQUserDefaults {
         clearPendingOnboarding(for: userId)
         clearWorkoutReviewBaseline(for: userId)
         clearEmailVerificationResendHistory(for: userId)
+        clearAppReviewPromptHistory(for: userId)
         SQSubscriptionManager.clearWeeklyWorkoutScorePreview(for: userId)
         setPreferredUnitSystem(nil)
     }
@@ -280,5 +305,50 @@ final class SQUserDefaults {
 
     func clearEmailVerificationResendHistory(for userId: String) {
         setEmailVerificationResendAttemptDates([], for: userId)
+    }
+
+    // MARK: - Public API (App Review Prompt)
+
+    func appReviewCheckInSubmissionDayKeys(for userId: String) -> Set<String> {
+        Set(appReviewCheckInSubmissionDaysValue[userId] ?? [])
+    }
+
+    func recordAppReviewCheckInSubmission(for userId: String, date: Date) {
+        var history = appReviewCheckInSubmissionDaysValue
+        var dayKeys = Set(history[userId] ?? [])
+        dayKeys.insert(Self.appReviewDayKey(for: date))
+        history[userId] = Array(dayKeys).sorted()
+        appReviewCheckInSubmissionDaysValue = history
+    }
+
+    func appReviewPromptRequestDates(for userId: String) -> [Date] {
+        let timestamps = appReviewPromptRequestHistoryValue[userId] ?? []
+        return timestamps.map { Date(timeIntervalSince1970: $0) }.sorted()
+    }
+
+    func appendAppReviewPromptRequest(for userId: String, at date: Date = .now) {
+        var history = appReviewPromptRequestHistoryValue
+        var timestamps = history[userId] ?? []
+        timestamps.append(date.timeIntervalSince1970)
+        history[userId] = timestamps.sorted()
+        appReviewPromptRequestHistoryValue = history
+    }
+
+    func clearAppReviewPromptHistory(for userId: String) {
+        var checkInHistory = appReviewCheckInSubmissionDaysValue
+        checkInHistory.removeValue(forKey: userId)
+        appReviewCheckInSubmissionDaysValue = checkInHistory
+
+        var requestHistory = appReviewPromptRequestHistoryValue
+        requestHistory.removeValue(forKey: userId)
+        appReviewPromptRequestHistoryValue = requestHistory
+    }
+
+    private static func appReviewDayKey(for date: Date) -> String {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        let year = components.year ?? 0
+        let month = components.month ?? 0
+        let day = components.day ?? 0
+        return String(format: "%04d-%02d-%02d", year, month, day)
     }
 }

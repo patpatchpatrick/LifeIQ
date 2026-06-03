@@ -33,6 +33,7 @@ final class SQDailyCheckInViewModel: Identifiable {
     private let healthKitManager: SQHealthKitManaging
     private let sleepAggregationService: SQSleepAggregationService
     private let userState: SQUserStating
+    private let appReviewPromptManager: SQAppReviewPromptManaging
 
     var isEditingPastDate: Bool {
         !Calendar.current.isDateInToday(targetDate)
@@ -62,6 +63,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         healthKitManager: SQHealthKitManaging = SQHealthKitManager.shared,
         sleepAggregationService: SQSleepAggregationService = .init(),
         userState: SQUserStating = SQAppState.shared.userState,
+        appReviewPromptManager: SQAppReviewPromptManaging = SQAppState.shared.appReviewPromptManager,
         onDismiss: @escaping () -> Void
     ) {
         self.eventHub = eventHub
@@ -73,6 +75,7 @@ final class SQDailyCheckInViewModel: Identifiable {
         self.healthKitManager = healthKitManager
         self.sleepAggregationService = sleepAggregationService
         self.userState = userState
+        self.appReviewPromptManager = appReviewPromptManager
         self.onDismiss = onDismiss
 
         handleEventSubscriptions(hub: eventHub)
@@ -636,6 +639,11 @@ final class SQDailyCheckInViewModel: Identifiable {
             ))
             onDismiss()
             eventHub.metricEvents.send(.metricEntriesUpdated)
+            appReviewPromptManager.dailyCheckInSubmitted(
+                user: userState.loggedInUser,
+                date: targetDate,
+                isPastDateEntry: isEditingPastDate
+            )
         } catch {
             eventHub.alertEvents.send(
                 .present(.init(SQError.standard(withDescription: "Error saving check in data: \(error.localizedDescription).")))

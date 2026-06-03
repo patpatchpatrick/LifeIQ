@@ -9,6 +9,10 @@ import Foundation
 import BeastFitnessCore
 
 enum SQAdminConfig {
+    static let appReviewPromptExcludedEmails: Set<String> = [
+        "lifeiq.app+appreview@gmail.com"
+    ]
+
     #if DEBUG
     /// Debug performance kill switch for disabling every SQLogger log call at the
     /// logger boundary. Useful when attached to Xcode and investigating scroll lag.

@@ -339,6 +339,7 @@
 		F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200032FFF000100B20001 /* SQSubscriptionController.swift */; };
 		F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200052FFF000100B20001 /* SQSubscriptionView.swift */; };
 		F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200092FFF000100B20001 /* SQSubscriptionService.swift */; };
+		F8C300023000300100AC3001 /* SQAppReviewPromptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C300013000300100AC3001 /* SQAppReviewPromptManager.swift */; };
 		F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQAdminConfig.swift */; };
 		F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */; };
 		F8E100052FE5000100AB1001 /* SQEmailVerificationGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */; };
@@ -704,6 +705,7 @@
 		F8B200032FFF000100B20001 /* SQSubscriptionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionController.swift; sourceTree = "<group>"; };
 		F8B200052FFF000100B20001 /* SQSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionView.swift; sourceTree = "<group>"; };
 		F8B200092FFF000100B20001 /* SQSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionService.swift; sourceTree = "<group>"; };
+		F8C300013000300100AC3001 /* SQAppReviewPromptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppReviewPromptManager.swift; sourceTree = "<group>"; };
 		F8E100002FE5000100AB1001 /* SQAdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAdminConfig.swift; sourceTree = "<group>"; };
 		F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationController.swift; sourceTree = "<group>"; };
 		F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationGateView.swift; sourceTree = "<group>"; };
@@ -1480,6 +1482,7 @@
 				F6AEB6102F880089008D747B /* SQAnalyticsManager.swift */,
 				F6B710022FA1100100A1B710 /* SQAppBlockerState.swift */,
 				F6B700042FA0000100A1B700 /* SQRemoteConfigManager.swift */,
+				F8C300013000300100AC3001 /* SQAppReviewPromptManager.swift */,
 				F7F010012FB0000100AF1001 /* SQSubscriptionManager.swift */,
 				F8B200092FFF000100B20001 /* SQSubscriptionService.swift */,
 				F7A417142FFD310100AA4101 /* SQWebViewManager.swift */,
@@ -2256,6 +2259,7 @@
 				F61593B62EF3728600223A63 /* SQSettingsController.swift in Sources */,
 				F8B200042FFF000100B20001 /* SQSubscriptionController.swift in Sources */,
 				F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */,
+				F8C300023000300100AC3001 /* SQAppReviewPromptManager.swift in Sources */,
 				F6F4D41A2ED61D1100ECE0BC /* SQSegmentedControl.swift in Sources */,
 				F602DA6C2EC92BB100404878 /* SQWorkouts.swift in Sources */,
 				F6940F2D2F37B1310008A2A0 /* SQDashboardWorkoutGroupViewModel.swift in Sources */,
