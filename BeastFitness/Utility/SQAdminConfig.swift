@@ -55,8 +55,8 @@ enum SQAdminConfig {
     /// Gates the internal scenario/gallery lab used to QA dashboard and future view states.
     static var viewLabEnabled = true
 
-    /// Forces weekly/yearly insight freshness UI for on-device testing without waiting for
-    /// the real surfacing-memory conditions and cooldowns to line up.
+    /// Forces non-Today insight freshness UI for on-device testing, including the
+    /// time range picker, dashboard Top Insight indicator, and insight sheet badges.
     static var forceInsightFreshnessBadges = false
 
     /// Temporary App Store screenshot guard. Keeps sensitive habit insights out of the

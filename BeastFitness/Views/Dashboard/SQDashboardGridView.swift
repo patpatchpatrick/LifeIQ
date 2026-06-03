@@ -292,6 +292,7 @@ private extension SQDashboardGridView {
             title: "Top Insight",
             icon: .sparkles,
             accentColor: .dashboardGlowMint,
+            showsViewMoreIndicatorDot: insight?.isNew == true,
             onViewMore: {
                 controller.displayDashboardDetail(title: "Insights", sectionIds: ["insights"])
             }
@@ -628,8 +629,14 @@ private extension SQDashboardGridView {
 // MARK: - Shared Pieces
 
 struct SQDashboardViewMoreLabel: View {
+    var showsNewBadge = false
+
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: .SQSpace.xs) {
+            if showsNewBadge {
+                SQDashboardNewBadge()
+            }
+
             Text("View more")
                 .sqFont(.bodyExtraSmall)
                 .sqForegroundColor(.textTertiary)
@@ -670,6 +677,7 @@ private struct SQDashboardGridCard<Content: View>: View {
     let title: String
     let icon: SQImageSymbol
     let accentColor: SQColor
+    var showsViewMoreIndicatorDot = false
     let onViewMore: (() -> Void)?
     @ViewBuilder let content: () -> Content
 
@@ -701,7 +709,7 @@ private struct SQDashboardGridCard<Content: View>: View {
 
             if let onViewMore {
                 Button(action: onViewMore) {
-                    SQDashboardViewMoreLabel()
+                    SQDashboardViewMoreLabel(showsNewBadge: showsViewMoreIndicatorDot)
                 }
                 .buttonStyle(.plain)
             }
