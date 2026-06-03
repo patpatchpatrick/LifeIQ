@@ -174,7 +174,7 @@ final class SQMetricsListController {
     func createMetricTapped() {
         let metrics = metricsManager.allMetrics(includeArchived: false)
         guard SQSubscriptionManager.canCreateCustomMetric(existingMetrics: metrics) else {
-            SQSubscriptionManager.displaySubscriptionScreen(
+            displaySubscriptionScreen(
                 source: "metrics_list_create_metric_limit",
                 feature: "custom_metrics"
             )
@@ -198,7 +198,7 @@ final class SQMetricsListController {
     /// Toggle tracking state when tapped: tracked -> untrack, untracked -> track
     func metricTapped(_ row: SQMetricsListItemViewModel, using context: ModelContext) {
         if row.isLocked {
-            SQSubscriptionManager.displaySubscriptionScreen(
+            displaySubscriptionScreen(
                 source: "metrics_list_locked_metric",
                 feature: "custom_metrics"
             )
@@ -227,6 +227,11 @@ final class SQMetricsListController {
             )
             presentError("Error updating metric tracking: \(error.localizedDescription)")
         }
+    }
+
+    private func displaySubscriptionScreen(source: String, feature: String?) {
+        SQSubscriptionManager.recordSubscriptionScreenRequested(source: source, feature: feature)
+        navigationPath.append(SQMetricNavTarget.subscription(source: source, feature: feature))
     }
 
     var isSearching: Bool {

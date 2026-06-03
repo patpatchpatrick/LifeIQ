@@ -62,6 +62,15 @@ enum SQSubscriptionManager {
 
     @MainActor
     static func displaySubscriptionScreen(source: String, feature: String? = nil) {
+        recordSubscriptionScreenRequested(source: source, feature: feature)
+
+        SQAppState.shared.hub.domainEvents.send(
+            .pushDashboardRoute(.subscription(controller: .init(source: source, feature: feature)))
+        )
+    }
+
+    @MainActor
+    static func recordSubscriptionScreenRequested(source: String, feature: String? = nil) {
         SQAnalyticsManager.shared.track(.subscriptionScreenRequested(source: source, feature: feature))
 
         let featureText = feature.map { " feature=\($0)" } ?? ""
@@ -70,10 +79,6 @@ enum SQSubscriptionManager {
             .info,
             context: .dashboard,
             isPriority: true
-        )
-
-        SQAppState.shared.hub.domainEvents.send(
-            .pushDashboardRoute(.subscription(controller: .init(source: source, feature: feature)))
         )
     }
 

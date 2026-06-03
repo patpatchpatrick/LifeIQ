@@ -13,6 +13,7 @@ import BeastFitnessCore
 enum SQMetricNavTarget: Hashable {
     case create
     case edit(String)   // metric ID
+    case subscription(source: String, feature: String?)
 }
 
 // MARK: - Form View Model

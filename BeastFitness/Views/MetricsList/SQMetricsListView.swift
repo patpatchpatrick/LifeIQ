@@ -266,6 +266,8 @@ struct SQMetricsListView: View {
                                 metricsManager: controller.metricsManager
                             ))
                         }
+                    case .subscription(let source, let feature):
+                        SQSubscriptionView(controller: .init(source: source, feature: feature))
                     }
                 }
         }
