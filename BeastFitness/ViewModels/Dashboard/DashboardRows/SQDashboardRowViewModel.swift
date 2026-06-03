@@ -8,6 +8,7 @@
 import Foundation
 
 enum SQDashboardRowType {
+    case helperNote
     case bodyBattery
     case heartSummary
     case insight
@@ -26,6 +27,7 @@ enum SQDashboardRowType {
 }
 
 enum SQDashboardRowIdentifier {
+    case helperNote
     case bodyBattery
     case heartSummary
     case insight

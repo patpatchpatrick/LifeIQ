@@ -2935,6 +2935,12 @@ final class SQDashboardController: SQDashboardInterface {
         func buildRows(for insights: [SQInsight]) -> [SQDashboardRowViewModel] {
             var rows = [SQDashboardRowViewModel]()
 
+            if !displayInsights.isEmpty {
+                rows.append(SQDashboardHelperNoteRowViewModel(
+                    message: "Insights get more personal as you check in consistently and build more history."
+                ))
+            }
+
             if let firstInsight = insights.first {
                 rows.append(SQDashboardInsightRowViewModel(
                     model: firstInsight,

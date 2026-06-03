@@ -340,6 +340,8 @@
 		F8B200062FFF000100B20001 /* SQSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200052FFF000100B20001 /* SQSubscriptionView.swift */; };
 		F8B2000A2FFF000100B20001 /* SQSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B200092FFF000100B20001 /* SQSubscriptionService.swift */; };
 		F8C300023000300100AC3001 /* SQAppReviewPromptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C300013000300100AC3001 /* SQAppReviewPromptManager.swift */; };
+		F8C300043000300200AC3001 /* SQDashboardHelperNoteRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C300033000300200AC3001 /* SQDashboardHelperNoteRowViewModel.swift */; };
+		F8C300063000300300AC3001 /* SQDashboardHelperNoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C300053000300300AC3001 /* SQDashboardHelperNoteRowView.swift */; };
 		F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQAdminConfig.swift */; };
 		F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */; };
 		F8E100052FE5000100AB1001 /* SQEmailVerificationGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */; };
@@ -706,6 +708,8 @@
 		F8B200052FFF000100B20001 /* SQSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionView.swift; sourceTree = "<group>"; };
 		F8B200092FFF000100B20001 /* SQSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubscriptionService.swift; sourceTree = "<group>"; };
 		F8C300013000300100AC3001 /* SQAppReviewPromptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAppReviewPromptManager.swift; sourceTree = "<group>"; };
+		F8C300033000300200AC3001 /* SQDashboardHelperNoteRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHelperNoteRowViewModel.swift; sourceTree = "<group>"; };
+		F8C300053000300300AC3001 /* SQDashboardHelperNoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardHelperNoteRowView.swift; sourceTree = "<group>"; };
 		F8E100002FE5000100AB1001 /* SQAdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAdminConfig.swift; sourceTree = "<group>"; };
 		F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationController.swift; sourceTree = "<group>"; };
 		F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationGateView.swift; sourceTree = "<group>"; };
@@ -857,6 +861,7 @@
 				F6B2B0032F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift */,
 				F6B2B00C2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift */,
 				F7D1000F2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift */,
+				F8C300033000300200AC3001 /* SQDashboardHelperNoteRowViewModel.swift */,
 				F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */,
 				F639F0FC2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift */,
 				F6E179892F57DA400099CAF2 /* Sleep */,
@@ -870,6 +875,7 @@
 				F6940F2A2F37A6680008A2A0 /* SQDashboardActivityListRowView.swift */,
 				F6B2B0042F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift */,
 				F6B2B00E2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift */,
+				F8C300053000300300AC3001 /* SQDashboardHelperNoteRowView.swift */,
 				F6940F282F37A5560008A2A0 /* SQDashboardWorkoutTotalsRowView.swift */,
 				F639F1002F4277E8004AC701 /* SQDashboardPerformanceRow.swift */,
 				F6E1798E2F57DA5A0099CAF2 /* Sleep */,
@@ -2323,6 +2329,7 @@
 				F6C5FDAE2F33A0DF00BF1022 /* SQMetricDefinitionRoute.swift in Sources */,
 				F639F0FD2F427506004AC701 /* SQDashboardMetricPerformanceRowViewModel.swift in Sources */,
 				F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */,
+				F8C300043000300200AC3001 /* SQDashboardHelperNoteRowViewModel.swift in Sources */,
 				F6B2B0012F92400100A1B001 /* SQDashboardBodyBatteryRowViewModel.swift in Sources */,
 				F6B2B00B2F92440100A1B001 /* SQDashboardHeartSummaryRowViewModel.swift in Sources */,
 				F7D1000E2F98010100AA1001 /* SQDashboardWorkoutPremiumInsightRowViewModel.swift in Sources */,
@@ -2438,6 +2445,7 @@
 				F6940F292F37A55B0008A2A0 /* SQDashboardWorkoutTotalsRowView.swift in Sources */,
 				F6B2B0022F92400100A1B001 /* SQDashboardBodyBatteryRowView.swift in Sources */,
 				F6B2B00D2F92440100A1B001 /* SQDashboardHeartSummaryRowView.swift in Sources */,
+				F8C300063000300300AC3001 /* SQDashboardHelperNoteRowView.swift in Sources */,
 				F8B100163000200C00AB2001 /* SQDashboardInsightActionRowView.swift in Sources */,
 				F8B1000E3000200800AB2001 /* SQDashboardInsightChangeRowView.swift in Sources */,
 				F7E400282FFE200100AA4001 /* SQDashboardInsightRowView.swift in Sources */,

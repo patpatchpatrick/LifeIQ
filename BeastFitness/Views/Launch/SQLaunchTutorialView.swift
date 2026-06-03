@@ -171,7 +171,7 @@ struct SQLaunchTutorialView: View {
             tutorialFeatureBlock(
                 symbol: .checkmarkSquareFill,
                 title: "Track daily check-ins",
-                subtitle: "Track your daily habits, behavior, and stats in a quick check-in."
+                subtitle: "The more consistently you check in, the better LifeIQ can personalize your scores, trends, and insights."
             ) {
                 SQLaunchTutorialDailyCheckInPreview()
             }

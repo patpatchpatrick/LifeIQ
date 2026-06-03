@@ -48,6 +48,11 @@ struct SQDashboardSectionView: View {
                         VStack(spacing: section.rowSpacing ?? SQDashboardView.uiConfig.sectionRowSpacing) {
                             ForEach(section.visibleRows) { row in
                                 switch row.rowType {
+                                case .helperNote:
+                                    if let vm = row as? SQDashboardHelperNoteRowViewModel {
+                                        SQDashboardHelperNoteRowView(viewModel: vm)
+                                    }
+
                                 case .bodyBattery:
                                     if let vm = row as? SQDashboardBodyBatteryRowViewModel {
                                         SQDashboardBodyBatteryRowView(viewModel: vm)
