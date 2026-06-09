@@ -208,6 +208,20 @@ final class SQSettingsController: SQSettingsInterface {
             },
 
             .init(
+                title: "Terms of Use (EULA)",
+                subtitle: "Review the Apple standard terms that apply to LifeIQ subscriptions.",
+                icon: .infoCircle,
+                showsChevron: true
+            ) { [weak self] in
+                SQAnalyticsManager.shared.track(.settingsActionTaken(action: "terms_of_use"))
+                self?.state.hub.domainEvents.send(
+                    .pushDashboardRoute(
+                        .webContent(title: "Terms of Use (EULA)", urlString: SQAppLinks.termsOfUseURLString)
+                    )
+                )
+            },
+
+            .init(
                 title: "Send Feedback",
                 subtitle: "We'd love to hear what's working, what's not, and what you'd like to see next.",
                 icon: .faceSmiling,

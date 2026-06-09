@@ -15,17 +15,20 @@ final class SQSubscriptionController: Hashable {
     let subscriptionState: SQSubscriptionState
 
     private let subscriptionService: SQSubscriptionServicing
+    private let hub: EventHub
 
     init(
         source: String,
         feature: String?,
         subscriptionState: SQSubscriptionState = SQAppState.shared.subscriptionState,
-        subscriptionService: SQSubscriptionServicing = SQAppState.shared.subscriptionService
+        subscriptionService: SQSubscriptionServicing = SQAppState.shared.subscriptionService,
+        hub: EventHub = SQAppState.shared.hub
     ) {
         self.source = source
         self.feature = feature
         self.subscriptionState = subscriptionState
         self.subscriptionService = subscriptionService
+        self.hub = hub
     }
 
     var products: [Product] {
@@ -72,6 +75,22 @@ final class SQSubscriptionController: Hashable {
         Task { @MainActor in
             await subscriptionService.manageSubscriptions()
         }
+    }
+
+    func openPrivacyPolicy() {
+        hub.domainEvents.send(
+            .pushDashboardRoute(
+                .webContent(title: "Privacy Policy", urlString: SQAppLinks.privacyPolicyURLString)
+            )
+        )
+    }
+
+    func openTermsOfUse() {
+        hub.domainEvents.send(
+            .pushDashboardRoute(
+                .webContent(title: "Terms of Use (EULA)", urlString: SQAppLinks.termsOfUseURLString)
+            )
+        )
     }
 
     nonisolated static func == (lhs: SQSubscriptionController, rhs: SQSubscriptionController) -> Bool {

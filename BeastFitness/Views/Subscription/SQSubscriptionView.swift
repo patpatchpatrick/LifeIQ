@@ -14,8 +14,8 @@ struct SQSubscriptionView: View {
             VStack(alignment: .leading, spacing: .SQSpace.l) {
                 header
                 productsSection
-                restoreSection
                 termsSection
+                restoreSection
             }
             .padding(.horizontal, .SQSpace.l)
             .padding(.top, .SQSpace.l)
@@ -166,19 +166,37 @@ struct SQSubscriptionView: View {
     }
 
     private var termsSection: some View {
-        Text("Payment is handled by Apple. Subscriptions renew automatically unless canceled in App Store settings.")
-            .sqFont(.bodyExtraSmall)
-            .sqForegroundColor(.textSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, .SQSpace.xs)
+        VStack(alignment: .leading, spacing: .SQSpace.m) {
+            Text("Legal")
+                .sqFont(.bodySmallSemiBold)
+                .sqForegroundColor(.textPrimary)
+
+            Text("Payment is handled by Apple. Subscriptions renew automatically unless canceled in App Store settings.")
+                .sqFont(.bodyExtraSmall)
+                .sqForegroundColor(.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(spacing: .SQSpace.s) {
+                legalRow(title: "Privacy Policy") {
+                    controller.openPrivacyPolicy()
+                }
+
+                legalRow(title: "Terms of Use (EULA)") {
+                    controller.openTermsOfUse()
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.SQSpace.l)
+        .sqGlassSurface(level: .card, cornerRadius: .SQCornerRadius.xl)
     }
 
     private func title(for product: Product) -> String {
         switch product.id {
         case SQSubscriptionManager.ProductID.annual:
-            return "Annual"
+            return "LifeIQ Pro Annual"
         case SQSubscriptionManager.ProductID.monthly:
-            return "Monthly"
+            return "LifeIQ Pro Monthly"
         default:
             return product.displayName
         }
@@ -187,11 +205,34 @@ struct SQSubscriptionView: View {
     private func subtitle(for product: Product) -> String {
         switch product.id {
         case SQSubscriptionManager.ProductID.annual:
-            return "Best value for full Pro access."
+            return "1 year of full Pro access."
         case SQSubscriptionManager.ProductID.monthly:
-            return "Flexible monthly access."
+            return "1 month of full Pro access."
         default:
             return product.description
         }
+    }
+
+    private func legalRow(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: .SQSpace.s) {
+                Text(title)
+                    .sqFont(.bodySmallSemiBold)
+                    .sqForegroundColor(.textPrimary)
+
+                Spacer(minLength: .SQSpace.m)
+
+                SQImageView(
+                    image: .init(
+                        symbol: .chevronRight,
+                        symbolStyle: .colorWithFont(.textSecondary, font: .bodyExtraSmall)
+                    )
+                )
+                .frame(width: 10, height: 10)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, .SQSpace.xs)
+        }
+        .buttonStyle(.plain)
     }
 }
