@@ -16,9 +16,6 @@
 		F602DA332EC4107000404878 /* SQRootTabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */; };
 		F602DA372EC4111100404878 /* SQRootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA362EC4110D00404878 /* SQRootTabView.swift */; };
 		F602DA3A2EC4118900404878 /* SQDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA392EC4118600404878 /* SQDashboardView.swift */; };
-		F9D500112FFF300100AD5001 /* SQDashboardDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500012FFF300100AD5001 /* SQDashboardDetailController.swift */; };
-		F9D500122FFF300100AD5001 /* SQDashboardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500022FFF300100AD5001 /* SQDashboardDetailView.swift */; };
-		F9D500132FFF300100AD5001 /* SQDashboardGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500032FFF300100AD5001 /* SQDashboardGridView.swift */; };
 		F602DA3D2EC4E9FF00404878 /* SQDashboardRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */; };
 		F602DA442EC4EDBF00404878 /* CGFloat+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */; };
 		F602DA4B2EC6A5FC00404878 /* SQWorkoutSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F602DA4A2EC6A5F900404878 /* SQWorkoutSource.swift */; };
@@ -345,6 +342,9 @@
 		F8E100012FE5000100AB1001 /* SQAdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100002FE5000100AB1001 /* SQAdminConfig.swift */; };
 		F8E100032FE5000100AB1001 /* SQEmailVerificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */; };
 		F8E100052FE5000100AB1001 /* SQEmailVerificationGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */; };
+		F9D500112FFF300100AD5001 /* SQDashboardDetailController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500012FFF300100AD5001 /* SQDashboardDetailController.swift */; };
+		F9D500122FFF300100AD5001 /* SQDashboardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500022FFF300100AD5001 /* SQDashboardDetailView.swift */; };
+		F9D500132FFF300100AD5001 /* SQDashboardGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D500032FFF300100AD5001 /* SQDashboardGridView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -388,9 +388,6 @@
 		F602DA322EC4106C00404878 /* SQRootTabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabViewModel.swift; sourceTree = "<group>"; };
 		F602DA362EC4110D00404878 /* SQRootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQRootTabView.swift; sourceTree = "<group>"; };
 		F602DA392EC4118600404878 /* SQDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardView.swift; sourceTree = "<group>"; };
-		F9D500012FFF300100AD5001 /* SQDashboardDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardDetailController.swift; sourceTree = "<group>"; };
-		F9D500022FFF300100AD5001 /* SQDashboardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardDetailView.swift; sourceTree = "<group>"; };
-		F9D500032FFF300100AD5001 /* SQDashboardGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardGridView.swift; sourceTree = "<group>"; };
 		F602DA3C2EC4E9FB00404878 /* SQDashboardRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardRowViewModel.swift; sourceTree = "<group>"; };
 		F602DA432EC4EDBB00404878 /* CGFloat+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGFloat+Extensions.swift"; sourceTree = "<group>"; };
 		F602DA4A2EC6A5F900404878 /* SQWorkoutSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQWorkoutSource.swift; sourceTree = "<group>"; };
@@ -520,8 +517,8 @@
 		F68C804D2F365A0C00327250 /* SQDashboardSubsection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSubsection.swift; sourceTree = "<group>"; };
 		F68C804E2F365A0C00327250 /* SQDashboardStatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardStatRow.swift; sourceTree = "<group>"; };
 		F68C80502F365A0C00327250 /* SQSubsectionEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQSubsectionEmptyState.swift; sourceTree = "<group>"; };
-		F68C805A2F365A0C00327250 /* SQDashboardCheckInBottomAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardCheckInBottomAction.swift; sourceTree = "<group>"; };
 		F68C80572F365A3200327250 /* SQStatRowData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQStatRowData.swift; sourceTree = "<group>"; };
+		F68C805A2F365A0C00327250 /* SQDashboardCheckInBottomAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardCheckInBottomAction.swift; sourceTree = "<group>"; };
 		F68D702A2F01D23C00543561 /* SQAlertDropDownViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAlertDropDownViewModel.swift; sourceTree = "<group>"; };
 		F68D702C2F01D86700543561 /* SQPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQPicker.swift; sourceTree = "<group>"; };
 		F6940F182F36AC0F0008A2A0 /* SQDashboardSectionGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardSectionGroupView.swift; sourceTree = "<group>"; };
@@ -713,6 +710,9 @@
 		F8E100002FE5000100AB1001 /* SQAdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQAdminConfig.swift; sourceTree = "<group>"; };
 		F8E100022FE5000100AB1001 /* SQEmailVerificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationController.swift; sourceTree = "<group>"; };
 		F8E100042FE5000100AB1001 /* SQEmailVerificationGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQEmailVerificationGateView.swift; sourceTree = "<group>"; };
+		F9D500012FFF300100AD5001 /* SQDashboardDetailController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardDetailController.swift; sourceTree = "<group>"; };
+		F9D500022FFF300100AD5001 /* SQDashboardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardDetailView.swift; sourceTree = "<group>"; };
+		F9D500032FFF300100AD5001 /* SQDashboardGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQDashboardGridView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -2879,7 +2879,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -2904,7 +2904,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2922,7 +2922,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -2947,7 +2947,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3443,7 +3443,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -3469,7 +3469,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq.internal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3487,7 +3487,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -3513,7 +3513,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq.internal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3531,7 +3531,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -3557,7 +3557,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3575,7 +3575,7 @@
 				CODE_SIGN_ENTITLEMENTS = BeastFitness/BeastFitness.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"BeastFitness/Preview Content\"";
 				DEVELOPMENT_TEAM = L5NNPGXMNP;
@@ -3601,7 +3601,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gurussoftware.lifeiq;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
