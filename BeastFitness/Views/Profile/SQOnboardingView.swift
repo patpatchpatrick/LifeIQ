@@ -142,12 +142,14 @@ struct SQOnboardingView: View {
                 .sqForegroundColor(.textPrimary)
 
             VStack(alignment: .leading, spacing: .SQSpace.m) {
-                labeledRow(label: "First Name") {
-                    SQUITextField(viewModel: controller.firstNameField)
-                }
+                if controller.shouldShowNameFields {
+                    labeledRow(label: "First Name (optional)") {
+                        SQUITextField(viewModel: controller.firstNameField)
+                    }
 
-                labeledRow(label: "Last Name") {
-                    SQUITextField(viewModel: controller.lastNameField)
+                    labeledRow(label: "Last Name (optional)") {
+                        SQUITextField(viewModel: controller.lastNameField)
+                    }
                 }
 
                 labeledRow(label: "Height") {

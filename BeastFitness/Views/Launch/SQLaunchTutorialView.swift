@@ -268,12 +268,6 @@ struct SQLaunchTutorialView: View {
                 ) {
                     controller.enableHealthKitTapped()
                 }
-
-                if controller.shouldShowSkipHealthKitButton {
-                    SQButton(style: .secondary, title: "Not Now") {
-                        controller.skipHealthKitTapped()
-                    }
-                }
             case .ready:
                 SQButton(style: .glassPrimary, title: "Continue to Dashboard") {
                     controller.finishTapped()
@@ -346,7 +340,7 @@ struct SQLaunchTutorialView: View {
         case .overview:
             return "Track daily check-ins, combine them with Health data, and use the dashboard to understand what is helping or hurting your health."
         case .healthKit:
-            return "Enable Apple Health access for the best experience. It makes your dashboard, sleep, workouts, and recovery views more useful. More shared data improves insights and utility."
+            return "Connect Apple Health for the best experience. It makes your dashboard, sleep, workouts, and recovery views more useful. More shared data improves insights and utility."
         case .ready:
             return "You're all set to start exploring the dashboard, create your account, and log your first check-in."
         }

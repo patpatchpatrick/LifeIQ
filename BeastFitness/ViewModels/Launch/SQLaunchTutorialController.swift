@@ -59,12 +59,8 @@ import BeastFitnessCore
         healthKitAccessStatus == .available
     }
 
-    var shouldShowSkipHealthKitButton: Bool {
-        currentStep == .healthKit && !isHealthKitConnected
-    }
-
     var healthKitButtonTitle: String {
-        isHealthKitConnected ? "HealthKit Already Connected" : "Enable HealthKit for Best Experience"
+        "Continue"
     }
 
     var readySubtitle: String {
@@ -80,7 +76,7 @@ import BeastFitnessCore
     }
 
     var canGoBack: Bool {
-        currentStep != .overview
+        currentStep == .ready
     }
 
     func goBack() {
@@ -107,10 +103,6 @@ import BeastFitnessCore
         Task {
             await requestHealthKitAccess()
         }
-    }
-
-    func skipHealthKitTapped() {
-        currentStep = .ready
     }
 
     func finishTapped() {

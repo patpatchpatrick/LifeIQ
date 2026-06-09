@@ -12,7 +12,7 @@ import BeastFitnessCore
 @MainActor
 protocol SQUserManaging: AnyObject {
     func handleAuthStateChange(firebaseUser: FirebaseAuth.User?, userState: SQUserState) async
-    func createUserDocument(uid: String, email: String) async throws -> SQUser
+    func createUserDocument(uid: String, email: String, displayName: String?) async throws -> SQUser
     func saveUser(_ user: SQUser) async throws -> SQUser
     func updateSubscriptionLevel(for user: SQUser, level: SQSubscriptionLevel) async throws -> SQUser
     func fetchUser(uid: String) async throws -> SQUser
@@ -89,8 +89,8 @@ final class SQUserManager: SQUserManaging {
     // MARK: - User Document
 
     /// Creates the user's Firestore document after signup.
-    func createUserDocument(uid: String, email: String) async throws -> SQUser {
-        let user = try await SQUserService.createUser(uid: uid, email: email)
+    func createUserDocument(uid: String, email: String, displayName: String? = nil) async throws -> SQUser {
+        let user = try await SQUserService.createUser(uid: uid, email: email, displayName: displayName)
         SQLogger.shared.log("✅ Created user document for \(uid)", .info, context: .network)
         return user
     }

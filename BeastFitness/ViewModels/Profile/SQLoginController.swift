@@ -302,6 +302,19 @@ protocol SQLoginInterface: AnyObject {
         }
     }
 
+    private static func displayName(from result: AuthDataResult) -> String? {
+        if let displayName = result.user.displayName?.trimmingCharacters(in: .whitespacesAndNewlines), !displayName.isEmpty {
+            return displayName
+        }
+
+        if let profileName = result.additionalUserInfo?.profile?["name"] as? String {
+            let trimmedName = profileName.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmedName.isEmpty ? nil : trimmedName
+        }
+
+        return nil
+    }
+
     private func completeAuthentication(
         result: AuthDataResult,
         fallbackEmail: String?,
@@ -319,7 +332,11 @@ protocol SQLoginInterface: AnyObject {
                 throw SQAuthError(description: "Could not determine your account email.")
             }
 
-            let user = try await SQUserManager.shared.createUserDocument(uid: result.user.uid, email: resolvedEmail)
+            let user = try await SQUserManager.shared.createUserDocument(
+                uid: result.user.uid,
+                email: resolvedEmail,
+                displayName: Self.displayName(from: result)
+            )
             SQUserDefaults.shared.markPendingOnboarding(for: result.user.uid)
             SQAppState.shared.userState.updateLoggedInUser(
                 user,

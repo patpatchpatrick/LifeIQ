@@ -9,15 +9,17 @@ import Foundation
 
 final class SQUserService: SQNetworkService {
 
-    static func createUser(uid: String, email: String) async throws -> SQUser {
+    static func createUser(uid: String, email: String, displayName: String? = nil) async throws -> SQUser {
+        let trimmedDisplayName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let parsedNameParts = nameParts(from: trimmedDisplayName)
         let user = SQUser(
             id: uid,
             createdAt: .now,
-            name: "",
+            name: trimmedDisplayName,
             email: email,
             emailVerificationBypass: nil,
-            firstName: nil,
-            lastName: nil,
+            firstName: parsedNameParts.first,
+            lastName: parsedNameParts.last,
             dateOfBirth: nil,
             heightCentimeters: nil,
             weightKilograms: nil,
@@ -31,6 +33,19 @@ final class SQUserService: SQNetworkService {
         )
         let _: SQVoidWrite = try await performRequest(SQUserRoute.createUser(user))
         return user
+    }
+
+    private static func nameParts(from fullName: String) -> (first: String?, last: String?) {
+        guard !fullName.isEmpty else { return (nil, nil) }
+
+        let parts = fullName
+            .split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            .map(String.init)
+
+        return (
+            parts.first,
+            parts.count > 1 ? parts[1] : nil
+        )
     }
 
     static func saveUser(_ user: SQUser) async throws -> SQUser {

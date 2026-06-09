@@ -58,7 +58,7 @@ import BeastFitnessCore
         self.selectedUnitSystem = initialUnitSystem
 
         self.firstNameField = SQUITextFieldViewModel(
-            placeholder: "First name",
+            placeholder: "First name (optional)",
             font: SQFont(type: .body).uiFont,
             keyboardType: .default,
             autocapitalizationType: .words,
@@ -118,8 +118,9 @@ import BeastFitnessCore
             errorHandler: { _ in nil }
         )
 
-        firstNameField.setText(existingUser?.firstName ?? "")
-        lastNameField.setText(existingUser?.lastName ?? "")
+        let fallbackNameParts = Self.nameParts(from: existingUser?.name)
+        firstNameField.setText(existingUser?.firstName ?? fallbackNameParts.first ?? "")
+        lastNameField.setText(existingUser?.lastName ?? fallbackNameParts.last ?? "")
         applyMeasurementFieldPlaceholders()
         populateMeasurementFields(
             heightCentimeters: existingUser?.heightCentimeters,
@@ -191,6 +192,10 @@ import BeastFitnessCore
         }
     }
 
+    var shouldShowNameFields: Bool {
+        mode == .editProfile || !SQAuthManager.shared.currentAuthProviders().contains(.apple)
+    }
+
     var saveButtonTitle: String {
         switch mode {
         case .setup:
@@ -223,7 +228,6 @@ import BeastFitnessCore
 
     var canSave: Bool {
         let _ = validationRevision
-        guard !firstNameField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         guard sleepTimeOfDay != wakeTimeOfDay else { return false }
         let trimmedHeightPrimary = heightFeetField.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedHeightSecondary = heightInchesField.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -235,9 +239,6 @@ import BeastFitnessCore
 
     var saveDisabledMessage: String? {
         let _ = validationRevision
-        if firstNameField.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "First name is required."
-        }
         let trimmedHeightPrimary = heightFeetField.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedHeightSecondary = heightInchesField.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasHeightInput = !trimmedHeightPrimary.isEmpty || !trimmedHeightSecondary.isEmpty
@@ -293,14 +294,16 @@ import BeastFitnessCore
         let fullName = [trimmedFirstName, trimmedLastName]
             .filter { !$0.isEmpty }
             .joined(separator: " ")
+        let existingName = existingUser.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedFullName = fullName.isEmpty && mode == .setup ? existingName : fullName
 
         let updatedUser = SQUser(
             id: existingUser.id,
             createdAt: existingUser.createdAt,
-            name: fullName,
+            name: resolvedFullName,
             email: existingUser.email,
             emailVerificationBypass: existingUser.emailVerificationBypass,
-            firstName: trimmedFirstName,
+            firstName: trimmedFirstName.isEmpty ? nil : trimmedFirstName,
             lastName: trimmedLastName.isEmpty ? nil : trimmedLastName,
             dateOfBirth: includesDateOfBirth ? selectedDateOfBirth : nil,
             heightCentimeters: canonicalHeightCentimeters,
@@ -429,6 +432,21 @@ import BeastFitnessCore
             return "\(Int(value))"
         }
         return String(format: "%.1f", value)
+    }
+
+    private static func nameParts(from fullName: String?) -> (first: String?, last: String?) {
+        guard let fullName = fullName?.trimmingCharacters(in: .whitespacesAndNewlines), !fullName.isEmpty else {
+            return (nil, nil)
+        }
+
+        let parts = fullName
+            .split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            .map(String.init)
+
+        return (
+            parts.first,
+            parts.count > 1 ? parts[1] : nil
+        )
     }
 
     func squiTextFieldFocused(_ viewModel: SQUITextFieldViewModel) {}
