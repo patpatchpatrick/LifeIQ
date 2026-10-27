@@ -1,5 +1,7 @@
 # LifeIQ
 
+[LifeIQ](https://apps.apple.com/us/app/life-iq-health-insights/id6768780947)
+
 **Track and improve your life and health with data.**
 
 LifeIQ brings Apple Health data, workouts, sleep, and daily check-ins together to help you understand your health, habits, and performance. It turns everyday signals into a clearer picture of what is supporting you, what is changing, and what deserves attention.
