@@ -1,6 +1,6 @@
 # LifeIQ
 
-[LifeIQ](https://apps.apple.com/us/app/life-iq-health-insights/id6768780947)
+[iOS App Store](https://apps.apple.com/us/app/life-iq-health-insights/id6768780947)
 
 **Track and improve your life and health with data.**
 
