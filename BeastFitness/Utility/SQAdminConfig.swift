@@ -24,7 +24,7 @@ enum SQAdminConfig {
 
     /// Temporary debug-time toggle for auth experiments. This is intentionally mutable
     /// so a future dev/admin menu can flip it without reworking the call sites.
-    static var enforceEmailVerificationForEmailPasswordAccounts = true
+    static var enforceEmailVerificationForEmailPasswordAccounts = false
 
     /// Stored-profile fallback for new users and admin/debug mirrors. Runtime entitlement
     /// checks should use Apple's StoreKit state through SQSubscriptionManager.
@@ -32,7 +32,7 @@ enum SQAdminConfig {
 
     /// Debug-only local override for testing subscription states. When non-nil, this wins
     /// over the user's stored Firestore subscription level without changing that record.
-    static var subscriptionLevelOverride: SQSubscriptionLevel? = nil
+    static var subscriptionLevelOverride: SQSubscriptionLevel? = .premium
     static var freeCustomMetricLimit = 1
 
     /// Debug-only toggle for rendering canned health data without requiring
